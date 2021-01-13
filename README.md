@@ -1,2 +1,2 @@
-# Vulkan-Quarantine-Engine
+# Vulkan Quarantine Engine
 Game engine written with Vulkan API.
