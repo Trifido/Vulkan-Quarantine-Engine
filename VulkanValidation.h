@@ -2,21 +2,28 @@
 
 #include <vector>
 
+#ifdef NDEBUG
+const bool validationEnabled = false;
+#else
 const bool validationEnabled = true;
+#endif
 
 // List of validation layers to use
 // VK_LAYER_LUNARG_standard_validation = All standard validation layers
+const std::vector<const char*> validationLayers = {
+	"VK_LAYER_KHRONOS_validation"
+};
 
 // Callback function for validation debugging (will be called when validation information record)
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 	VkDebugReportFlagsEXT flags,				// Type of error
 	VkDebugReportObjectTypeEXT objType,			// Type of object causing error
 	uint64_t obj,								// ID of object
-	size_t location, 
-	int32_t code, 
-	const char * layerPrefix,
-	const char * message,						// Validation Information
-	void * userData)
+	size_t location,
+	int32_t code,
+	const char* layerPrefix,
+	const char* message,						// Validation Information
+	void* userData)
 {
 	// If validation ERROR, then output error and return failure
 	if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)

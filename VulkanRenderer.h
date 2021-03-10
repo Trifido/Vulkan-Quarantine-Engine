@@ -2,6 +2,7 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -12,53 +13,43 @@
 #include <array>
 
 #include "Mesh.h"
+#include "VulkanValidation.h"
 #include "Utilities.h"
-
-VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, 
-	const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, 
-	const VkAllocationCallbacks* pAllocator, 
-	VkDebugUtilsMessengerEXT* pDebugMessenger);
-
-
-void DestroyDebugUtilsMessengerEXT(VkInstance instance,
-	VkDebugUtilsMessengerEXT debugMessenger,
-	const VkAllocationCallbacks* pAllocator);
 
 class VulkanRenderer
 {
 public:
 	VulkanRenderer();
-	~VulkanRenderer();
 
-	// - Destroy Functions
+	int init(GLFWwindow* newWindow);
+
+	void updateModel(glm::mat4 newModel);
+
+	void draw();
 	void cleanup();
 
-	// - Init Functions
-	int init(GLFWwindow* new_window);
-	
-	// - Draw Functions
-	void draw();
+	~VulkanRenderer();
+
 private:
 	GLFWwindow* window;
+
 	int currentFrame = 0;
 
-	// Scene objects
+	// Scene Objects
 	std::vector<Mesh> meshList;
 
-	//MVP
-	struct MVP
-	{
-		glm::mat4 model;
-		glm::mat4 view;
+	// Scene Settings
+	struct MVP {
 		glm::mat4 projection;
+		glm::mat4 view;
+		glm::mat4 model;
 	} mvp;
 
 	// Vulkan Components
 	// - Main
 	VkInstance instance;
-	VkDebugUtilsMessengerEXT debugMessenger;
-	struct
-	{
+	VkDebugReportCallbackEXT callback;
+	struct {
 		VkPhysicalDevice physicalDevice;
 		VkDevice logicalDevice;
 	} mainDevice;
@@ -66,18 +57,21 @@ private:
 	VkQueue presentationQueue;
 	VkSurfaceKHR surface;
 	VkSwapchainKHR swapchain;
-	std::vector<SwapChainImage> swapChainImages;
+
+	std::vector<SwapchainImage> swapChainImages;
 	std::vector<VkFramebuffer> swapChainFramebuffers;
 	std::vector<VkCommandBuffer> commandBuffers;
 
 	// - Descriptors
 	VkDescriptorSetLayout descriptorSetLayout;
+
 	VkDescriptorPool descriptorPool;
 	std::vector<VkDescriptorSet> descriptorSets;
+
 	std::vector<VkBuffer> uniformBuffer;
 	std::vector<VkDeviceMemory> uniformBufferMemory;
 
-	// - VKPipeline Layout
+	// - Pipeline
 	VkPipeline graphicsPipeline;
 	VkPipelineLayout pipelineLayout;
 	VkRenderPass renderPass;
@@ -95,8 +89,9 @@ private:
 	std::vector<VkFence> drawFences;
 
 	// Vulkan Functions
-	// - Create Functions (MAIN)
+	// - Create Functions
 	void createInstance();
+	void createDebugCallback();
 	void createLogicalDevice();
 	void createSurface();
 	void createSwapChain();
@@ -105,48 +100,39 @@ private:
 	void createGraphicsPipeline();
 	void createFramebuffers();
 	void createCommandPool();
-	void createCommandBuffer();
-	void createSynchronisation();// V
+	void createCommandBuffers();
+	void createSynchronisation();
 
-	void createUniformBuffers(); // V
-	void createDescriptorPool(); // V
-	void createDescriptorSets(); // V
+	void createUniformBuffers();
+	void createDescriptorPool();
+	void createDescriptorSets();
 
-	void updateUniformBuffer(uint32_t imageIndex); //V
+	void updateUniformBuffer(uint32_t imageIndex);
 
 	// - Record Functions
-	void recordCommands();	// V
+	void recordCommands();
 
-	// - GET Functions
+	// - Get Functions
 	void getPhysicalDevice();
 
 	// - Support Functions
 	// -- Checker Functions
 	bool checkInstanceExtensionSupport(std::vector<const char*>* checkExtensions);
-	bool checkValidationLayerSupport(std::vector<const char*> checklayers);
-	bool checkPhysicalDeviceSuitable(VkPhysicalDevice device);
 	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
+	bool checkValidationLayerSupport();
+	bool checkDeviceSuitable(VkPhysicalDevice device);
 
 	// -- Getter Functions
 	QueueFamilyIndices getQueueFamilies(VkPhysicalDevice device);
 	SwapChainDetails getSwapChainDetails(VkPhysicalDevice device);
 
-	// -- Debug Functions
-	void setupDebugMessenger();
-	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-		VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-		VkDebugUtilsMessageTypeFlagsEXT messageType,
-		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-		void* pUserData);
-	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
-
 	// -- Choose Functions
 	VkSurfaceFormatKHR chooseBestSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& formats);
-	VkPresentModeKHR chooseBestPresentationMode(const std::vector<VkPresentModeKHR>& presentationModes);
+	VkPresentModeKHR chooseBestPresentationMode(const std::vector<VkPresentModeKHR> presentationModes);
 	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& surfaceCapabilities);
 
-	// - Create Functions (SUPPORT)
+	// -- Create Functions
 	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
-	VkShaderModule createShaderModule(const std::vector<char> &code);
+	VkShaderModule createShaderModule(const std::vector<char>& code);
 };
 
