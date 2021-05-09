@@ -1,0 +1,268 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="imgui">
+      <UniqueIdentifier>{20b90ce4-7fcb-4731-b9a0-075f875de82d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sources">
+      <UniqueIdentifier>{f18ab499-84e1-499f-8eff-9754361e0e52}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="GUI">
+      <UniqueIdentifier>{52d0ad18-49df-468f-80bd-defb0611329b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="App">
+      <UniqueIdentifier>{e466b138-8c0b-4514-a402-395031c930a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel">
+      <UniqueIdentifier>{4eb6fed0-13fa-494f-b773-72f054ee6370}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\SetUp">
+      <UniqueIdentifier>{b9d189ed-ab45-4236-9688-2a9375ddb612}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\SetUp\sources">
+      <UniqueIdentifier>{51a61441-542a-4ed3-b73a-460e3703ea0c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\SetUp\headers">
+      <UniqueIdentifier>{d0beef7d-5832-43d6-90b4-705de0c991ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Presentation">
+      <UniqueIdentifier>{2580ffe9-e298-4224-8b17-df481a4244ab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Presentation\headers">
+      <UniqueIdentifier>{b0b81838-7780-4f7e-ba48-dd98b2cfb242}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Presentation\sources">
+      <UniqueIdentifier>{d2e0b4c8-4cf7-464b-8491-5056617a42e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\GraphicsPipeline">
+      <UniqueIdentifier>{42c557f6-d63e-43d9-8f16-5b467f764348}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\GraphicsPipeline\headers">
+      <UniqueIdentifier>{a18b3027-1502-465b-9127-bb49bfc70e48}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\GraphicsPipeline\sources">
+      <UniqueIdentifier>{e4043ad5-a377-4797-8bc7-5acba5ce5128}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{d79e10ec-97e2-40f6-9088-425cbe559db4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Draw">
+      <UniqueIdentifier>{d1850089-beb2-454c-b3ac-2a4a1081b196}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Draw\headers">
+      <UniqueIdentifier>{2ece9db2-5774-4aa3-8fbd-58e797ec77ec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Draw\sources">
+      <UniqueIdentifier>{49004daf-4735-46db-8028-e14d8a3c72c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Geometry">
+      <UniqueIdentifier>{b2621079-bd91-4b9d-b385-fae1dfda6546}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Geometry\headers">
+      <UniqueIdentifier>{a1b68ed6-6600-43a2-8861-df1e4a8da6a0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Geometry\sources">
+      <UniqueIdentifier>{6079029d-304f-4da4-808d-284eb4965b1b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Memory">
+      <UniqueIdentifier>{277e7ce8-775c-4fe1-a8da-c3fb3f4c4cf4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Memory\headers">
+      <UniqueIdentifier>{49fa6b27-456b-4bfd-a008-a4d49ed1c234}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Memory\sources">
+      <UniqueIdentifier>{294d2205-60bc-4958-9efd-208d6472d8a0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\backends\imgui_impl_glfw.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\backends\imgui_impl_vulkan.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\external\imgui\imgui.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\external\imgui\imgui_demo.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\external\imgui\imgui_draw.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\external\imgui\imgui_tables.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\external\imgui\imgui_widgets.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="GUIWindow.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneWindow.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="App.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
+    <ClCompile Include="SetUp\VulkanLayerAndExtension.cpp">
+      <Filter>Kernel\SetUp\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="SetUp\DeviceModule.cpp">
+      <Filter>Kernel\SetUp\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="SetUp\VulkanInstance.cpp">
+      <Filter>Kernel\SetUp\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Presentation\SwapChainModule.cpp">
+      <Filter>Kernel\Presentation\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Presentation\WindowSurface.cpp">
+      <Filter>Kernel\Presentation\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsPipeline\ShaderModule.cpp">
+      <Filter>Kernel\GraphicsPipeline\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsPipeline\GraphicsPipelineModule.cpp">
+      <Filter>Kernel\GraphicsPipeline\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Presentation\ImageViewModule.cpp">
+      <Filter>Kernel\Presentation\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Draw\FrameBufferModule.cpp">
+      <Filter>Kernel\Draw\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Draw\CommandPoolModule.cpp">
+      <Filter>Kernel\Draw\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Draw\SynchronizationModule.cpp">
+      <Filter>Kernel\Draw\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Geometry\GeometryModule.cpp">
+      <Filter>Kernel\Geometry\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Memory\BufferManageModule.cpp">
+      <Filter>Kernel\Memory\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Memory\DescriptorModule.cpp">
+      <Filter>Kernel\Memory\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Memory\TextureModule.cpp">
+      <Filter>Kernel\Memory\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Presentation\DepthBufferModule.cpp">
+      <Filter>Kernel\Presentation\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Memory\TextureManagerModule.cpp">
+      <Filter>Kernel\Memory\sources</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\backends\imgui_impl_glfw.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\backends\imgui_impl_vulkan.h">
+      <Filter>sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\external\imgui\imconfig.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\external\imgui\imgui.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\external\imgui\imgui_internal.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="GUIWindow.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneWindow.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="App.h">
+      <Filter>App</Filter>
+    </ClInclude>
+    <ClInclude Include="SetUp\DeviceModule.h">
+      <Filter>Kernel\SetUp\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="SetUp\QueueFamiliesModule.h">
+      <Filter>Kernel\SetUp\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="SetUp\QueueModule.h">
+      <Filter>Kernel\SetUp\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="SetUp\VulkanInstance.h">
+      <Filter>Kernel\SetUp\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="SetUp\VulkanLayerAndExtension.h">
+      <Filter>Kernel\SetUp\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Presentation\SwapChainModule.h">
+      <Filter>Kernel\Presentation\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Presentation\WindowSurface.h">
+      <Filter>Kernel\Presentation\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsPipeline\ShaderModule.h">
+      <Filter>Kernel\GraphicsPipeline\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsPipeline\GraphicsPipelineModule.h">
+      <Filter>Kernel\GraphicsPipeline\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Presentation\ImageViewModule.h">
+      <Filter>Kernel\Presentation\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Draw\FrameBufferModule.h">
+      <Filter>Kernel\Draw\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Draw\CommandPoolModule.h">
+      <Filter>Kernel\Draw\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Draw\SynchronizationModule.h">
+      <Filter>Kernel\Draw\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Geometry\GeometryModule.h">
+      <Filter>Kernel\Geometry\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\BufferManageModule.h">
+      <Filter>Kernel\Memory\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Presentation\SwapChainTool.hpp">
+      <Filter>Kernel\Presentation\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\DescriptorModule.h">
+      <Filter>Kernel\Memory\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\TextureModule.h">
+      <Filter>Kernel\Memory\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Presentation\DepthBufferModule.h">
+      <Filter>Kernel\Presentation\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\ImageMemoryTools.h">
+      <Filter>Kernel\Memory\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\TextureManagerModule.h">
+      <Filter>Kernel\Memory\headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\README.txt" />
+    <None Include="..\..\misc\debuggers\imgui.natvis">
+      <Filter>sources</Filter>
+    </None>
+    <None Include="..\..\resources\shaders\example.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\resources\shaders\example.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\resources\shaders\compile.bat">
+      <Filter>Shaders</Filter>
+    </None>
+  </ItemGroup>
+</Project>
