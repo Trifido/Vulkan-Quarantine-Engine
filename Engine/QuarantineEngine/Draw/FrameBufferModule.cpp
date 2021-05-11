@@ -7,15 +7,21 @@ FramebufferModule::FramebufferModule()
     deviceModule = DeviceModule::getInstance();
 }
 
+void FramebufferModule::addAntialiasingModule(AntiAliasingModule& antialiasingModule)
+{
+    antialias_ptr = &antialiasingModule;
+}
+
 void FramebufferModule::createFramebuffer(VkRenderPass& renderPass, std::vector<VkImageView>& swapChainImageViews, VkExtent2D& swapChainExtent, DepthBufferModule& depthBufferModule)
 {
     swapChainFramebuffers.resize(swapChainImageViews.size());
 
     for (size_t i = 0; i < swapChainImageViews.size(); i++)
     {
-        std::array<VkImageView, 2> attachments = {
-            swapChainImageViews[i],
-            depthBufferModule.imageView
+        std::array<VkImageView, 3> attachments = {
+            antialias_ptr->imageView,
+            depthBufferModule.imageView,
+            swapChainImageViews[i]
         };
 
         VkFramebufferCreateInfo framebufferInfo{};

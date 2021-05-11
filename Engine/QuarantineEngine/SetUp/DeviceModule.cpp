@@ -6,6 +6,22 @@
 
 DeviceModule* DeviceModule::instance = nullptr;
 
+VkSampleCountFlagBits DeviceModule::getMaxUsableSampleCount()
+{
+    VkPhysicalDeviceProperties physicalDeviceProperties;
+    vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+
+    VkSampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
+    if (counts & VK_SAMPLE_COUNT_64_BIT) { return VK_SAMPLE_COUNT_64_BIT; }
+    if (counts & VK_SAMPLE_COUNT_32_BIT) { return VK_SAMPLE_COUNT_32_BIT; }
+    if (counts & VK_SAMPLE_COUNT_16_BIT) { return VK_SAMPLE_COUNT_16_BIT; }
+    if (counts & VK_SAMPLE_COUNT_8_BIT) { return VK_SAMPLE_COUNT_8_BIT; }
+    if (counts & VK_SAMPLE_COUNT_4_BIT) { return VK_SAMPLE_COUNT_4_BIT; }
+    if (counts & VK_SAMPLE_COUNT_2_BIT) { return VK_SAMPLE_COUNT_2_BIT; }
+
+    return VK_SAMPLE_COUNT_1_BIT;
+}
+
 void DeviceModule::pickPhysicalDevice(const VkInstance &instance, VkSurfaceKHR& surface)
 {
     uint32_t deviceCount = 0;
@@ -21,6 +37,7 @@ void DeviceModule::pickPhysicalDevice(const VkInstance &instance, VkSurfaceKHR& 
     for (const auto& device : devices) {
         if (isDeviceSuitable(device, surface)) {
             physicalDevice = device;
+            msaaSamples = getMaxUsableSampleCount();
             break;
         }
     }
@@ -56,6 +73,9 @@ void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& queue
         queueCreateInfo.pQueuePriorities = &queuePriority;
         queueCreateInfos.push_back(queueCreateInfo);
     }
+
+    physicalDeviceFeatures.samplerAnisotropy = VK_TRUE;
+    physicalDeviceFeatures.sampleRateShading = VK_TRUE;
 
     VkDeviceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -108,6 +128,11 @@ VkFormat DeviceModule::findSupportedFormat(const std::vector<VkFormat>& candidat
 
         throw std::runtime_error("failed to find supported format!");
     }
+}
+
+VkSampleCountFlagBits* DeviceModule::getMsaaSamples()
+{
+    return &msaaSamples;
 }
 
 bool DeviceModule::isDeviceSuitable(VkPhysicalDevice newDevice, VkSurfaceKHR& surface) {

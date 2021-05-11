@@ -5,6 +5,11 @@ DepthBufferModule::DepthBufferModule()
     deviceModule = DeviceModule::getInstance();
 }
 
+void DepthBufferModule::addAntiAliasingModule(AntiAliasingModule& antialiasingModule)
+{
+    this->antialiasingModule = &antialiasingModule;
+}
+
 void DepthBufferModule::createDepthResources(VkExtent2D& swapChainExtent, QueueModule& queueModule, CommandPoolModule& commandPoolModule)
 {
     ptrCommandPool = &commandPoolModule.getCommandPool();
@@ -13,18 +18,11 @@ void DepthBufferModule::createDepthResources(VkExtent2D& swapChainExtent, QueueM
     VkFormat depthFormat = findDepthFormat();
 
     createImage(swapChainExtent.width, swapChainExtent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, deviceMemory);
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1U, *antialiasingModule->msaaSamples);
 
     imageView = IMT::createImageView(deviceModule->device, image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 
-    transitionImageLayout(image, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-}
-
-void DepthBufferModule::cleanup()
-{
-    vkDestroyImageView(deviceModule->device, imageView, nullptr);
-    vkDestroyImage(deviceModule->device, image, nullptr);
-    vkFreeMemory(deviceModule->device, deviceMemory, nullptr);
+    transitionImageLayout(image, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_ASPECT_DEPTH_BIT);
 }
 
 VkFormat DepthBufferModule::findDepthFormat()

@@ -35,7 +35,7 @@ void TextureManagerModule::endSingleTimeCommands(VkCommandBuffer commandBuffer)
     vkFreeCommandBuffers(deviceModule->device, *ptrCommandPool, 1, &commandBuffer);
 }
 
-void TextureManagerModule::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
+void TextureManagerModule::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageAspectFlags aspectFlag)
 {
     VkCommandBuffer commandBuffer = beginSingleTimeCommands();
     VkImageMemoryBarrier barrier{};
@@ -45,9 +45,9 @@ void TextureManagerModule::transitionImageLayout(VkImage image, VkFormat format,
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.image = image;
-    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.aspectMask = aspectFlag;// VK_IMAGE_ASPECT_COLOR_BIT | VK_IMAGE_ASPECT_DEPTH_BIT;
     barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.levelCount = mipLevels;
     barrier.subresourceRange.baseArrayLayer = 0;
     barrier.subresourceRange.layerCount = 1;
     barrier.srcAccessMask = 0; // TODO
@@ -98,7 +98,7 @@ TextureManagerModule::TextureManagerModule()
     deviceModule = DeviceModule::getInstance();
 }
 
-void TextureManagerModule::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
+void TextureManagerModule::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, uint32_t mipLevels, VkSampleCountFlagBits numSamples)
 {
     VkImageCreateInfo imageInfo{};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -106,13 +106,13 @@ void TextureManagerModule::createImage(uint32_t width, uint32_t height, VkFormat
     imageInfo.extent.width = width;
     imageInfo.extent.height = height;
     imageInfo.extent.depth = 1;
-    imageInfo.mipLevels = 1;
+    imageInfo.mipLevels = mipLevels;
     imageInfo.arrayLayers = 1;
     imageInfo.format = format;
     imageInfo.tiling = tiling;
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     imageInfo.usage = usage;
-    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.samples = numSamples;
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     if (vkCreateImage(deviceModule->device, &imageInfo, nullptr, &image) != VK_SUCCESS) {
@@ -127,9 +127,16 @@ void TextureManagerModule::createImage(uint32_t width, uint32_t height, VkFormat
     allocInfo.allocationSize = memRequirements.size;
     allocInfo.memoryTypeIndex = IMT::findMemoryType(memRequirements.memoryTypeBits, properties, deviceModule->physicalDevice);
 
-    if (vkAllocateMemory(deviceModule->device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
+    if (vkAllocateMemory(deviceModule->device, &allocInfo, nullptr, &deviceMemory) != VK_SUCCESS) {
         throw std::runtime_error("failed to allocate image memory!");
     }
 
-    vkBindImageMemory(deviceModule->device, image, imageMemory, 0);
+    vkBindImageMemory(deviceModule->device, image, deviceMemory, 0);
+}
+
+void TextureManagerModule::cleanup()
+{
+    vkDestroyImageView(deviceModule->device, imageView, nullptr);
+    vkDestroyImage(deviceModule->device, image, nullptr);
+    vkFreeMemory(deviceModule->device, deviceMemory, nullptr);
 }
