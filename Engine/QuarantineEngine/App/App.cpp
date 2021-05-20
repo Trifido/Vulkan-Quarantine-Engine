@@ -11,6 +11,7 @@ void App::run()
 void App::initWindow()
 {
     mainWindow.init();
+    camera.AddWindow(*mainWindow.getWindow());
 }
 
 void App::initVulkan()
@@ -41,7 +42,7 @@ void App::initVulkan()
     bufferModule.addGeometryQueueData(model, queueModule);
     bufferModule.createVertexBuffer();
     bufferModule.createIndexBuffer();
-    bufferModule.createUniformBuffers(swapchainModule.getNumSwapChainImages());
+    bufferModule.createUniformBuffers(swapchainModule.getNumSwapChainImages(), sizeof(Camera)); //sizeof(UniformBufferObject)
 
     descriptorModule.addPtrData(&bufferModule, &textureModule);
     descriptorModule.createDescriptorSetLayout();
@@ -70,6 +71,7 @@ void App::mainLoop()
 {
     while (!glfwWindowShouldClose(mainWindow.getWindow())) {
         glfwPollEvents();
+        camera.checkCameraMovement();
         drawFrame();
     }
     vkDeviceWaitIdle(deviceModule->device);
@@ -124,7 +126,8 @@ void App::drawFrame()
 
     synchronizationModule.synchronizeCurrentFrame(imageIndex);
 
-    bufferModule.updateUniformBuffer(imageIndex, swapchainModule.swapChainExtent);
+    //bufferModule.updateUniformBuffer(imageIndex, swapchainModule.swapChainExtent);
+    bufferModule.updateUniformBufferCamera(imageIndex, swapchainModule.swapChainExtent, camera);
 
     synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer(imageIndex), queueModule);
 
@@ -178,7 +181,7 @@ void App::recreateSwapchain()
     graphicsPipelineModule.createRenderPass(swapchainModule.swapChainImageFormat, depthBufferModule);
     graphicsPipelineModule.createGraphicsPipeline(swapchainModule.swapChainExtent, descriptorModule.getDescriptorSetLayout());
     framebufferModule.createFramebuffer(graphicsPipelineModule.renderPass, imageViewModule.swapChainImageViews, swapchainModule.swapChainExtent, depthBufferModule);
-    bufferModule.createUniformBuffers(swapchainModule.getNumSwapChainImages());
+    bufferModule.createUniformBuffers(swapchainModule.getNumSwapChainImages(), sizeof(Camera));
     descriptorModule.createDescriptorPool(swapchainModule.getNumSwapChainImages());
     descriptorModule.createDescriptorSets();
     commandPoolModule->createCommandBuffers(framebufferModule.swapChainFramebuffers, graphicsPipelineModule.renderPass, swapchainModule.swapChainExtent,

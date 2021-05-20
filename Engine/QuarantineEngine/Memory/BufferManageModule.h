@@ -16,6 +16,7 @@
 #include "DeviceModule.h"
 #include "CommandPoolModule.h"
 #include "QueueFamiliesModule.h"
+#include "Camera.h"
 
 class CommandPoolModule;
 
@@ -42,10 +43,11 @@ public:
     GeometryModule* getGeometryData();
     void createVertexBuffer();
     void createIndexBuffer();
-    void createUniformBuffers(size_t numImagesSwapChain);
+    void createUniformBuffers(size_t numImagesSwapChain, VkDeviceSize size);
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     void updateUniformBuffer(uint32_t currentImage, VkExtent2D extent);
+    void updateUniformBufferCamera(uint32_t currentImage, VkExtent2D extent, Camera& camera);
     void cleanup();
     void cleanupDescriptorBuffer();
 };

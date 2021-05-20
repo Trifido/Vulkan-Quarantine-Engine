@@ -25,6 +25,7 @@
 #include "DepthBufferModule.h"
 #include "AntiAliasingModule.h"
 #include "RayTracingModule.h"
+#include "Camera.h"
 
 const std::string MODEL_PATH = "../../resources/models/viking_room.obj";
 const std::string TEXTURE_PATH = "../../resources/textures/viking_room.png";
@@ -74,5 +75,7 @@ private:
 
     Model                   model;
     TextureModule           textureModule;
+
+    Camera                  camera;
 };
 

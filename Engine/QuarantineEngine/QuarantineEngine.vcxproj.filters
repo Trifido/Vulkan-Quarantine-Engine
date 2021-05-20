@@ -80,6 +80,12 @@
     <Filter Include="Kernel\RayTracing">
       <UniqueIdentifier>{c11c40f2-3e60-4c18-a88f-c99ffbd9062b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GUI\headers">
+      <UniqueIdentifier>{f78e6fe7-0667-45db-8900-7a3b4cdc6f8d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GUI\sources">
+      <UniqueIdentifier>{33f771b8-d83a-4ee8-9d4c-ce65ede56e8a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -105,15 +111,6 @@
     </ClCompile>
     <ClCompile Include="..\..\external\imgui\imgui_widgets.cpp">
       <Filter>imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="GUIWindow.cpp">
-      <Filter>GUI</Filter>
-    </ClCompile>
-    <ClCompile Include="SceneWindow.cpp">
-      <Filter>GUI</Filter>
-    </ClCompile>
-    <ClCompile Include="App.cpp">
-      <Filter>App</Filter>
     </ClCompile>
     <ClCompile Include="SetUp\VulkanLayerAndExtension.cpp">
       <Filter>Kernel\SetUp\sources</Filter>
@@ -178,6 +175,18 @@
     <ClCompile Include="Utilities\Material.cpp">
       <Filter>Kernel\Utilities</Filter>
     </ClCompile>
+    <ClCompile Include="Utilities\Camera.cpp">
+      <Filter>Kernel\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\GUIWindow.cpp">
+      <Filter>GUI\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\SceneWindow.cpp">
+      <Filter>GUI\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="App\App.cpp">
+      <Filter>App</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\backends\imgui_impl_glfw.h">
@@ -194,15 +203,6 @@
     </ClInclude>
     <ClInclude Include="..\..\external\imgui\imgui_internal.h">
       <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="GUIWindow.h">
-      <Filter>GUI</Filter>
-    </ClInclude>
-    <ClInclude Include="SceneWindow.h">
-      <Filter>GUI</Filter>
-    </ClInclude>
-    <ClInclude Include="App.h">
-      <Filter>App</Filter>
     </ClInclude>
     <ClInclude Include="SetUp\DeviceModule.h">
       <Filter>Kernel\SetUp\headers</Filter>
@@ -278,6 +278,18 @@
     </ClInclude>
     <ClInclude Include="Utilities\Material.h">
       <Filter>Kernel\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Camera.h">
+      <Filter>Kernel\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\GUIWindow.h">
+      <Filter>GUI\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\SceneWindow.h">
+      <Filter>GUI\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="App\App.h">
+      <Filter>App</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

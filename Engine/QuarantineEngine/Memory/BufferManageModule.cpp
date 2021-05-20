@@ -66,10 +66,10 @@ void BufferManageModule::createIndexBuffer()
     vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
 }
 
-void BufferManageModule::createUniformBuffers(size_t numImagesSwapChain)
+void BufferManageModule::createUniformBuffers(size_t numImagesSwapChain, VkDeviceSize size)
 {
     numSwapchainImages = numImagesSwapChain;
-    VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+    VkDeviceSize bufferSize = size;// sizeof(UniformBufferObject);
 
     uniformBuffers.resize(numSwapchainImages);
     uniformBuffersMemory.resize(numSwapchainImages);
@@ -150,14 +150,22 @@ void BufferManageModule::updateUniformBuffer(uint32_t currentImage, VkExtent2D e
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
     UniformBufferObject ubo{};
-    //ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    //ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    //ubo.proj = glm::perspective(glm::radians(45.0f), extent.width / (float)extent.height, 0.1f, 10.0f);
-    //ubo.proj[1][1] *= -1;
+    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.proj = glm::perspective(glm::radians(45.0f), extent.width / (float)extent.height, 0.1f, 10.0f);
+    ubo.proj[1][1] *= -1;
 
     void* data;
     vkMapMemory(deviceModule->device, uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
     memcpy(data, &ubo, sizeof(ubo));
+    vkUnmapMemory(deviceModule->device, uniformBuffersMemory[currentImage]);
+}
+
+void BufferManageModule::updateUniformBufferCamera(uint32_t currentImage, VkExtent2D extent, Camera& camera)
+{
+    void* data;
+    vkMapMemory(deviceModule->device, uniformBuffersMemory[currentImage], 0, sizeof(Camera), 0, &data);
+    memcpy(data, &camera, sizeof(Camera));
     vkUnmapMemory(deviceModule->device, uniformBuffersMemory[currentImage]);
 }
 
