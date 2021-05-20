@@ -31,10 +31,16 @@ namespace std {
     };
 }
 
-struct UniformBufferObject {
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 proj;
+struct UniformBufferObject {    //CAMERA
+    //glm::mat4 model;
+    //glm::mat4 view;
+    //glm::mat4 proj;
+    float position[4];
+    float right[4];
+    float up[4];
+    float forward[4];
+
+    uint32_t frameCount;
 };
 
 class GeometryModule
