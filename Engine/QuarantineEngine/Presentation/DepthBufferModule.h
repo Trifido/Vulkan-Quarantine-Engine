@@ -4,7 +4,7 @@
 #define DEPTH_BUFFER_MODULE_H
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 #include <vector>
 #include <stdexcept>
 

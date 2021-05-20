@@ -3,7 +3,7 @@
 #ifndef DESCRIPTOR_MODULE_H
 #define DESCRIPTOR_MODULE_H
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 #include "DeviceModule.h"
 #include "BufferManageModule.h"
 #include "TextureModule.h"

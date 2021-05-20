@@ -30,8 +30,9 @@ VkResult VulkanInstance::createInstance()
 
 
     auto extensions = getRequiredExtensions();
-    createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
-    createInfo.ppEnabledExtensionNames = extensions.data();
+
+    createInfo.enabledExtensionCount = static_cast<uint32_t>(instanceExtensions.size());
+    createInfo.ppEnabledExtensionNames = instanceExtensions.data();
 
 
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;

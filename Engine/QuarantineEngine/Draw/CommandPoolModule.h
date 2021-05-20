@@ -2,7 +2,7 @@
 #ifndef COMMAND_POOL_MODULE_H
 #define COMMAND_POOL_MODULE_H
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 #include <vector>
 #include "GeometryModule.h"
 #include "GraphicsPipelineModule.h"

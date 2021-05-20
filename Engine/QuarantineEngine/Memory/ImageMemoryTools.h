@@ -3,7 +3,7 @@
 #ifndef IMAGE_MEMORY_TOOLS_H
 #define IMAGE_MEMORY_TOOLS_H
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 #include <stdexcept>
 
 namespace IMT

@@ -62,7 +62,7 @@ void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& queue
     QueueFamilyIndices indices = QueueFamilyIndices::findQueueFamilies(physicalDevice, surface);
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-    std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };
+    std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value(), indices.computeFamily.value() };
     float queuePriority = 1.0f;
 
     for (uint32_t queueFamily : uniqueQueueFamilies) {
@@ -77,10 +77,34 @@ void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& queue
     physicalDeviceFeatures.samplerAnisotropy = VK_TRUE;
     physicalDeviceFeatures.sampleRateShading = VK_TRUE;
 
+    //Raytracing features
+    VkPhysicalDeviceBufferDeviceAddressFeaturesEXT bufferDeviceAddressFeatures = {};
+    bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_EXT;
+    bufferDeviceAddressFeatures.pNext = NULL;
+    bufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
+    bufferDeviceAddressFeatures.bufferDeviceAddressCaptureReplay = VK_FALSE;
+    bufferDeviceAddressFeatures.bufferDeviceAddressMultiDevice = VK_FALSE;
+
+    VkPhysicalDeviceRayTracingPipelineFeaturesKHR rayTracingPipelineFeatures = {};
+    rayTracingPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
+    rayTracingPipelineFeatures.pNext = &bufferDeviceAddressFeatures;
+    rayTracingPipelineFeatures.rayTracingPipeline = VK_TRUE;
+
+    VkPhysicalDeviceAccelerationStructureFeaturesKHR accelerationStructureFeatures = {};
+    accelerationStructureFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
+    accelerationStructureFeatures.pNext = &rayTracingPipelineFeatures;
+    accelerationStructureFeatures.accelerationStructure = VK_TRUE;
+    accelerationStructureFeatures.accelerationStructureCaptureReplay = VK_TRUE;
+    accelerationStructureFeatures.accelerationStructureIndirectBuild = VK_FALSE;
+    accelerationStructureFeatures.accelerationStructureHostCommands = VK_FALSE;
+    accelerationStructureFeatures.descriptorBindingAccelerationStructureUpdateAfterBind = VK_FALSE;
+    
+
     VkDeviceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
     createInfo.pQueueCreateInfos = queueCreateInfos.data();
+    createInfo.pNext = &accelerationStructureFeatures;
 
     createInfo.pEnabledFeatures = &physicalDeviceFeatures;
     createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
@@ -100,6 +124,7 @@ void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& queue
 
     vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &queueModule.graphicsQueue);
     vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &queueModule.presentQueue);
+    vkGetDeviceQueue(device, indices.computeFamily.value(), 0, &queueModule.computeQueue);
 }
 
 void DeviceModule::cleanup()

@@ -74,6 +74,12 @@
     <Filter Include="Kernel\Memory\sources">
       <UniqueIdentifier>{294d2205-60bc-4958-9efd-208d6472d8a0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Kernel\Utilities">
+      <UniqueIdentifier>{f727e80c-0a59-4d70-98cf-fcecac7fc314}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\RayTracing">
+      <UniqueIdentifier>{c11c40f2-3e60-4c18-a88f-c99ffbd9062b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -159,6 +165,18 @@
     </ClCompile>
     <ClCompile Include="Memory\TextureManagerModule.cpp">
       <Filter>Kernel\Memory\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Model.cpp">
+      <Filter>Kernel\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Presentation\AntiAliasingModule.cpp">
+      <Filter>Kernel\Presentation\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="RayTracing\RayTracingModule.cpp">
+      <Filter>Kernel\RayTracing</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Material.cpp">
+      <Filter>Kernel\Utilities</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -248,6 +266,18 @@
     </ClInclude>
     <ClInclude Include="Memory\TextureManagerModule.h">
       <Filter>Kernel\Memory\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Model.h">
+      <Filter>Kernel\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Presentation\AntiAliasingModule.h">
+      <Filter>Kernel\Presentation\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="RayTracing\RayTracingModule.h">
+      <Filter>Kernel\RayTracing</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Material.h">
+      <Filter>Kernel\Utilities</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

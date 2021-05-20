@@ -2,7 +2,7 @@
 #ifndef SYNCHRONIZATION_MODULE_H
 #define SYNCHRONIZATION_MODULE_H
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 #include <vector>
 #include "QueueModule.h"
 #include "DeviceModule.h"

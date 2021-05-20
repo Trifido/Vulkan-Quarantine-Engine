@@ -4,7 +4,7 @@
 
 #include <vector>
 #include <string>
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 
 #include "GeometryModule.h"
 #include "DeviceModule.h"

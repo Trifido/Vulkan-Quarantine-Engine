@@ -2,7 +2,7 @@
 #ifndef ANTIALIASING_MODULE
 #define ANTIALIASING_MODULE
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 
 #include "TextureManagerModule.h"
 #include "SwapChainModule.h"

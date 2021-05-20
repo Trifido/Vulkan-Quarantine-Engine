@@ -2,8 +2,9 @@
 
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
+
 #include <GLFW/glfw3.h>
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 #include "GUIWindow.h"
 #include "VulkanInstance.h"
 #include "VulkanLayerAndExtension.h"
@@ -16,12 +17,17 @@
 #include "FrameBufferModule.h"
 #include "CommandPoolModule.h"
 #include "SynchronizationModule.h"
-#include "GeometryModule.h"
+#include "Model.h"
 #include "BufferManageModule.h"
 #include "TextureManagerModule.h"
 #include "TextureModule.h"
 #include "DescriptorModule.h"
 #include "DepthBufferModule.h"
+#include "AntiAliasingModule.h"
+#include "RayTracingModule.h"
+
+const std::string MODEL_PATH = "../../resources/models/viking_room.obj";
+const std::string TEXTURE_PATH = "../../resources/textures/viking_room.png";
 
 enum class ERROR_RESIZE
 {
@@ -59,10 +65,14 @@ private:
     FramebufferModule       framebufferModule;
     CommandPoolModule*      commandPoolModule;
     SynchronizationModule   synchronizationModule;
-    GeometryModule          geometryModule;
     BufferManageModule      bufferModule;
     DescriptorModule        descriptorModule;
-    TextureModule           textureModule;
     DepthBufferModule       depthBufferModule;
+    AntiAliasingModule      antialiasingModule;
+
+    RayTracingModule        raytracingModule;
+
+    Model                   model;
+    TextureModule           textureModule;
 };
 

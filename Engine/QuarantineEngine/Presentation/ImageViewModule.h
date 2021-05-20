@@ -2,7 +2,7 @@
 #ifndef IMAGE_VIEW_MODULE_H
 #define IMAGE_VIEW_MODULE_H
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 #include <vector>
 
 #include "SwapChainModule.h"

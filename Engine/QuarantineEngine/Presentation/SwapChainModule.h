@@ -2,7 +2,7 @@
 #ifndef SWAPCHAINMODULE_H
 #define SWAPCHAINMODULE_H
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 #include <vector>
 #include <cstdint> // Necessary for UINT32_MAX
 #include <algorithm> // Necessary for std::min/std::max

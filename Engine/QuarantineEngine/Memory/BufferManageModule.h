@@ -4,7 +4,7 @@
 
 #define GLM_FORCE_RADIANS
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -26,6 +26,8 @@ private:
     DeviceModule*       deviceModule;
     CommandPoolModule*  commandPoolInstance;
     size_t              numSwapchainImages;
+    GeometryModule*     geoModule;
+    QueueModule*        queueModule;
 public:
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
@@ -36,11 +38,13 @@ public:
 
 public:
     BufferManageModule();
-    void createVertexBuffer(GeometryModule& geoModule, QueueModule& queueModule);
-    void createIndexBuffer(GeometryModule& geoModule, QueueModule& queueModule);
+    void addGeometryQueueData(GeometryModule& geometryModule, QueueModule& queueModule);
+    GeometryModule* getGeometryData();
+    void createVertexBuffer();
+    void createIndexBuffer();
     void createUniformBuffers(size_t numImagesSwapChain);
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
-    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, QueueModule& queueModule);
+    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     void updateUniformBuffer(uint32_t currentImage, VkExtent2D extent);
     void cleanup();
     void cleanupDescriptorBuffer();

@@ -42,4 +42,7 @@ void Model::loadModel(std::string pathfile)
             indices.push_back(uniqueVertices[vertex]);
         }
     }
+
+    numVertices = indices.size();
+    numFaces = numVertices / 3;
 }

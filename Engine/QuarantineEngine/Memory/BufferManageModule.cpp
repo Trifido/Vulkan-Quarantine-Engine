@@ -9,9 +9,20 @@ BufferManageModule::BufferManageModule()
     commandPoolInstance = CommandPoolModule::getInstance();
 }
 
-void BufferManageModule::createVertexBuffer(GeometryModule& geoModule, QueueModule& queueModule)
+void BufferManageModule::addGeometryQueueData(GeometryModule& geometryModule, QueueModule& queueModule)
 {
-    VkDeviceSize bufferSize = sizeof(geoModule.vertices[0]) * geoModule.vertices.size();
+    geoModule = &geometryModule;
+    this->queueModule = &queueModule;
+}
+
+GeometryModule* BufferManageModule::getGeometryData()
+{
+    return geoModule;
+}
+
+void BufferManageModule::createVertexBuffer()
+{
+    VkDeviceSize bufferSize = sizeof(geoModule->vertices[0]) * geoModule->vertices.size();
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
@@ -19,20 +30,22 @@ void BufferManageModule::createVertexBuffer(GeometryModule& geoModule, QueueModu
 
     void* data;
     vkMapMemory(deviceModule->device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, geoModule.vertices.data(), (size_t)bufferSize);
+    memcpy(data, geoModule->vertices.data(), (size_t)bufferSize);
     vkUnmapMemory(deviceModule->device, stagingBufferMemory);
 
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
+    //Rasterization -> VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
+    //RayTracing -> VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
+    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
 
-    copyBuffer(stagingBuffer, vertexBuffer, bufferSize, queueModule);
+    copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
 
     vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
     vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
 }
 
-void BufferManageModule::createIndexBuffer(GeometryModule& geoModule, QueueModule& queueModule)
+void BufferManageModule::createIndexBuffer()
 {
-    VkDeviceSize bufferSize = sizeof(geoModule.indices[0]) * geoModule.indices.size();
+    VkDeviceSize bufferSize = sizeof(geoModule->indices[0]) * geoModule->indices.size();
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
@@ -40,12 +53,14 @@ void BufferManageModule::createIndexBuffer(GeometryModule& geoModule, QueueModul
 
     void* data;
     vkMapMemory(deviceModule->device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, geoModule.indices.data(), (size_t)bufferSize);
+    memcpy(data, geoModule->indices.data(), (size_t)bufferSize);
     vkUnmapMemory(deviceModule->device, stagingBufferMemory);
 
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
+    //Rasterization -> VK_BUFFER_USAGE_INDEX_BUFFER_BIT
+    //RayTracing -> VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
+    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
 
-    copyBuffer(stagingBuffer, indexBuffer, bufferSize, queueModule);
+    copyBuffer(stagingBuffer, indexBuffer, bufferSize);
 
     vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
     vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
@@ -91,7 +106,7 @@ void BufferManageModule::createBuffer(VkDeviceSize size, VkBufferUsageFlags usag
     vkBindBufferMemory(deviceModule->device, buffer, bufferMemory, 0);
 }
 
-void BufferManageModule::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, QueueModule& queueModule)
+void BufferManageModule::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
 {
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -121,8 +136,8 @@ void BufferManageModule::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDe
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &commandBuffer;
 
-    vkQueueSubmit(queueModule.graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-    vkQueueWaitIdle(queueModule.graphicsQueue);
+    vkQueueSubmit(queueModule->graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(queueModule->graphicsQueue);
 
     vkFreeCommandBuffers(deviceModule->device, commandPoolInstance->getCommandPool(), 1, &commandBuffer);
 }

@@ -2,7 +2,7 @@
 #ifndef FRAME_BUFFER_MODULE_H
 #define FRAME_BUFFER_MODULE_H
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 #include <vector>
 #include "DeviceModule.h"
 #include "DepthBufferModule.h"

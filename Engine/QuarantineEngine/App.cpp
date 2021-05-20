@@ -28,14 +28,19 @@ void App::initVulkan()
     commandPoolModule = CommandPoolModule::getInstance();
     commandPoolModule->createCommandPool(windowSurface.getSurface());
 
+    antialiasingModule.createColorResources(swapchainModule);
+
+    depthBufferModule.addAntiAliasingModule(antialiasingModule);
     depthBufferModule.createDepthResources(swapchainModule.swapChainExtent, queueModule, *commandPoolModule);
 
-    textureModule.createTextureImage(bufferModule, queueModule, *commandPoolModule);
+    textureModule.createTextureImage(TEXTURE_PATH, bufferModule, queueModule, *commandPoolModule);
     textureModule.createTextureImageView();
     textureModule.createTextureSampler();
 
-    bufferModule.createVertexBuffer(geometryModule, queueModule);
-    bufferModule.createIndexBuffer(geometryModule, queueModule);
+    model.loadModel(MODEL_PATH);
+    bufferModule.addGeometryQueueData(model, queueModule);
+    bufferModule.createVertexBuffer();
+    bufferModule.createIndexBuffer();
     bufferModule.createUniformBuffers(swapchainModule.getNumSwapChainImages());
 
     descriptorModule.addPtrData(&bufferModule, &textureModule);
@@ -43,15 +48,20 @@ void App::initVulkan()
     descriptorModule.createDescriptorPool(swapchainModule.getNumSwapChainImages());
     descriptorModule.createDescriptorSets();
 
-    shaderModule.createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv", geometryModule);
+    raytracingModule.addModules(bufferModule, queueModule);
+    raytracingModule.initRayTracing();
+
+    shaderModule.createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv", model);
+    graphicsPipelineModule.addAntialiasingModule(antialiasingModule);
     graphicsPipelineModule.addShaderModules(shaderModule);
     graphicsPipelineModule.createRenderPass(swapchainModule.swapChainImageFormat, depthBufferModule);
     graphicsPipelineModule.createGraphicsPipeline(swapchainModule.swapChainExtent, descriptorModule.getDescriptorSetLayout());
 
+    framebufferModule.addAntialiasingModule(antialiasingModule);
     framebufferModule.createFramebuffer(graphicsPipelineModule.renderPass, imageViewModule.swapChainImageViews, swapchainModule.swapChainExtent, depthBufferModule);
     commandPoolModule->createCommandBuffers(framebufferModule.swapChainFramebuffers, graphicsPipelineModule.renderPass, swapchainModule.swapChainExtent,
                                             graphicsPipelineModule.pipelineLayout, graphicsPipelineModule.graphicsPipeline,
-                                            geometryModule, bufferModule, descriptorModule.getDescriptorSet());
+                                            model, bufferModule, descriptorModule.getDescriptorSet());
 
     synchronizationModule.createSyncObjects(swapchainModule.getNumSwapChainImages());
 }
@@ -90,6 +100,7 @@ void App::cleanUp()
 
 void App::cleanUpSwapchain()
 {
+    antialiasingModule.cleanup();
     depthBufferModule.cleanup();
     framebufferModule.cleanup();
 
@@ -160,7 +171,8 @@ void App::recreateSwapchain()
 
     swapchainModule.createSwapChain(windowSurface.getSurface(), mainWindow.getWindow());
     imageViewModule.createImageViews(swapchainModule);
-    shaderModule.createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv", geometryModule);
+    shaderModule.createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv", model);
+    antialiasingModule.createColorResources(swapchainModule);
     depthBufferModule.createDepthResources(swapchainModule.swapChainExtent, queueModule, *commandPoolModule);
     graphicsPipelineModule.addShaderModules(shaderModule);
     graphicsPipelineModule.createRenderPass(swapchainModule.swapChainImageFormat, depthBufferModule);
@@ -171,5 +183,5 @@ void App::recreateSwapchain()
     descriptorModule.createDescriptorSets();
     commandPoolModule->createCommandBuffers(framebufferModule.swapChainFramebuffers, graphicsPipelineModule.renderPass, swapchainModule.swapChainExtent,
         graphicsPipelineModule.pipelineLayout, graphicsPipelineModule.graphicsPipeline,
-        geometryModule, bufferModule, descriptorModule.getDescriptorSet());
+        model, bufferModule, descriptorModule.getDescriptorSet());
 }

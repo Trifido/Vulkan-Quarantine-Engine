@@ -3,7 +3,7 @@
 #ifndef GEOMETRY_MODULE_H
 #define GEOMETRY_MODULE_H
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 #include <glm/glm.hpp>
 #include <vector>
 #include <array>
@@ -42,7 +42,8 @@ class GeometryModule
 public:
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
-
+    unsigned int numVertices;
+    unsigned int numFaces;
 public:
     static VkVertexInputBindingDescription  getBindingDescription();
     static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions();

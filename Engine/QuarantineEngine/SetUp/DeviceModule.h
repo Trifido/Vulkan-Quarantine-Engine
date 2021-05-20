@@ -2,7 +2,7 @@
 #ifndef DEVICEMODULE_H
 #define DEVICEMODULE_H
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 #include <vector>
 
 #include "VulkanLayerAndExtension.h"

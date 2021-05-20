@@ -4,7 +4,7 @@
 #define TEXTURE_MODULE_H
 #define STB_IMAGE_IMPLEMENTATION
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 
 #include "CommandPoolModule.h"
 #include "BufferManageModule.h"

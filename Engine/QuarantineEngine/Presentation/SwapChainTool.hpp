@@ -2,7 +2,7 @@
 #ifndef SWAPCHAIN_TOOL_H
 #define SWAPCHAIN_TOOL_H
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 #include <vector>
 
 struct SwapChainSupportDetails
