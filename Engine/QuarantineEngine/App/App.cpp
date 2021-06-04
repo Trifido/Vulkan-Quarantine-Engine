@@ -11,7 +11,7 @@ void App::run()
 void App::initWindow()
 {
     mainWindow.init();
-    camera.AddWindow(*mainWindow.getWindow());
+    //camera.AddWindow(*mainWindow.getWindow());
 }
 
 void App::initVulkan()
@@ -42,15 +42,15 @@ void App::initVulkan()
     bufferModule.addGeometryQueueData(model, queueModule);
     bufferModule.createVertexBuffer();
     bufferModule.createIndexBuffer();
-    bufferModule.createUniformBuffers(swapchainModule.getNumSwapChainImages(), sizeof(Camera)); //sizeof(UniformBufferObject)
+    bufferModule.createUniformBuffers(swapchainModule.getNumSwapChainImages());
 
     descriptorModule.addPtrData(&bufferModule, &textureModule);
     descriptorModule.createDescriptorSetLayout();
     descriptorModule.createDescriptorPool(swapchainModule.getNumSwapChainImages());
     descriptorModule.createDescriptorSets();
 
-    raytracingModule.addModules(bufferModule, queueModule);
-    raytracingModule.initRayTracing();
+    //raytracingModule.addModules(bufferModule, queueModule);
+    //raytracingModule.initRayTracing();
 
     shaderModule.createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv", model);
     graphicsPipelineModule.addAntialiasingModule(antialiasingModule);
@@ -71,7 +71,7 @@ void App::mainLoop()
 {
     while (!glfwWindowShouldClose(mainWindow.getWindow())) {
         glfwPollEvents();
-        camera.checkCameraMovement();
+
         drawFrame();
     }
     vkDeviceWaitIdle(deviceModule->device);
@@ -126,8 +126,8 @@ void App::drawFrame()
 
     synchronizationModule.synchronizeCurrentFrame(imageIndex);
 
-    //bufferModule.updateUniformBuffer(imageIndex, swapchainModule.swapChainExtent);
-    bufferModule.updateUniformBufferCamera(imageIndex, swapchainModule.swapChainExtent, camera);
+    bufferModule.updateUniformBuffer(imageIndex, swapchainModule.swapChainExtent);
+    //bufferModule.updateUniformBufferCamera(imageIndex, swapchainModule.swapChainExtent, camera);
 
     synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer(imageIndex), queueModule);
 
@@ -181,7 +181,7 @@ void App::recreateSwapchain()
     graphicsPipelineModule.createRenderPass(swapchainModule.swapChainImageFormat, depthBufferModule);
     graphicsPipelineModule.createGraphicsPipeline(swapchainModule.swapChainExtent, descriptorModule.getDescriptorSetLayout());
     framebufferModule.createFramebuffer(graphicsPipelineModule.renderPass, imageViewModule.swapChainImageViews, swapchainModule.swapChainExtent, depthBufferModule);
-    bufferModule.createUniformBuffers(swapchainModule.getNumSwapChainImages(), sizeof(Camera));
+    bufferModule.createUniformBuffers(swapchainModule.getNumSwapChainImages());
     descriptorModule.createDescriptorPool(swapchainModule.getNumSwapChainImages());
     descriptorModule.createDescriptorSets();
     commandPoolModule->createCommandBuffers(framebufferModule.swapChainFramebuffers, graphicsPipelineModule.renderPass, swapchainModule.swapChainExtent,

@@ -24,8 +24,8 @@
 #include "DescriptorModule.h"
 #include "DepthBufferModule.h"
 #include "AntiAliasingModule.h"
-#include "RayTracingModule.h"
-#include "Camera.h"
+//#include "RayTracingModule.h"
+//#include "Camera.h"
 
 const std::string MODEL_PATH = "../../resources/models/viking_room.obj";
 const std::string TEXTURE_PATH = "../../resources/textures/viking_room.png";
@@ -71,11 +71,11 @@ private:
     DepthBufferModule       depthBufferModule;
     AntiAliasingModule      antialiasingModule;
 
-    RayTracingModule        raytracingModule;
+    //RayTracingModule        raytracingModule;
 
     Model                   model;
     TextureModule           textureModule;
 
-    Camera                  camera;
+    //Camera                  camera;
 };
 

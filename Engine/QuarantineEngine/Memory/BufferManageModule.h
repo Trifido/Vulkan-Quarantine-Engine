@@ -43,7 +43,7 @@ public:
     GeometryModule* getGeometryData();
     void createVertexBuffer();
     void createIndexBuffer();
-    void createUniformBuffers(size_t numImagesSwapChain, VkDeviceSize size);
+    void createUniformBuffers(size_t numImagesSwapChain);
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     void updateUniformBuffer(uint32_t currentImage, VkExtent2D extent);

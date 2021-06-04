@@ -66,10 +66,10 @@ void BufferManageModule::createIndexBuffer()
     vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
 }
 
-void BufferManageModule::createUniformBuffers(size_t numImagesSwapChain, VkDeviceSize size)
+void BufferManageModule::createUniformBuffers(size_t numImagesSwapChain)
 {
     numSwapchainImages = numImagesSwapChain;
-    VkDeviceSize bufferSize = size;// sizeof(UniformBufferObject);
+    VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
     uniformBuffers.resize(numSwapchainImages);
     uniformBuffersMemory.resize(numSwapchainImages);
