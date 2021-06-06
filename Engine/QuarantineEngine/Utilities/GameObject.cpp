@@ -4,7 +4,6 @@ GameObject::GameObject()
 {
     deviceModule = DeviceModule::getInstance();
     queueModule = QueueModule::getInstance();
-    std::cout << "CONSTRUCTOR GAMEOBJECT" << std::endl;
 }
 
 GameObject::GameObject(std::string meshPath, std::string albedoPath, uint32_t numSwapChain, VkCommandPool& commandPool)

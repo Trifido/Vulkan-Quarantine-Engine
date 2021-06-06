@@ -71,8 +71,6 @@ private:
     FramebufferModule       framebufferModule;
     CommandPoolModule*      commandPoolModule;
     SynchronizationModule   synchronizationModule;
-    //BufferManageModule      bufferModule;
-    //DescriptorModule        descriptorModule;
     DepthBufferModule       depthBufferModule;
     AntiAliasingModule      antialiasingModule;
 

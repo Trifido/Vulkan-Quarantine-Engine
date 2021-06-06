@@ -25,7 +25,7 @@ private:
     std::unique_ptr<Texture>        ptrTexture;
 
     DeviceModule*                   deviceModule;
-    size_t                          descriptorCount;
+    size_t                          descriptorCount ;
 public:
     DescriptorModule() {}
     DescriptorModule(DeviceModule& deviceModule);

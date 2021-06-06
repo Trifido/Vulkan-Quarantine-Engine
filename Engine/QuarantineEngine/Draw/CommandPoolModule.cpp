@@ -75,25 +75,12 @@ void CommandPoolModule::createCommandBuffers(std::vector<VkFramebuffer>& swapCha
 
             gameObject.drawCommand(commandBuffers[i], pipelineLayout, pipeline, i);
 
-            //vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-            //VkBuffer vertexBuffers[] = { bufferManagerModule.vertexBuffer };
-            //VkBuffer* indexBuffers = &bufferManagerModule.indexBuffer;
-            //VkDeviceSize offsets[] = { 0 };
-            //vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
-            //vkCmdBindIndexBuffer(commandBuffers[i], bufferManagerModule.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-
-            //vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr);
-            ////vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(geometryModule.vertices.size()), 1, 0, 0);
-            //vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(geometryModule->indices.size()), 1, 0, 0, 0);
-            ////vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
-
         vkCmdEndRenderPass(commandBuffers[i]);
 
         if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
             throw std::runtime_error("failed to record command buffer!");
         }
     }
-
 }
 
 void CommandPoolModule::cleanup()
