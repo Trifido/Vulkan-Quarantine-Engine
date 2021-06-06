@@ -3,6 +3,7 @@
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
 
+#include <memory>
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.hpp>
 #include "GUIWindow.h"
@@ -17,13 +18,15 @@
 #include "FrameBufferModule.h"
 #include "CommandPoolModule.h"
 #include "SynchronizationModule.h"
-#include "Model.h"
+#include "Mesh.h"
+#include "Transform.h"
 #include "BufferManageModule.h"
 #include "TextureManagerModule.h"
 #include "TextureModule.h"
 #include "DescriptorModule.h"
 #include "DepthBufferModule.h"
 #include "AntiAliasingModule.h"
+#include "GameObject.h"
 //#include "RayTracingModule.h"
 //#include "Camera.h"
 
@@ -73,8 +76,9 @@ private:
 
     //RayTracingModule        raytracingModule;
 
-    Model                   model;
-    TextureModule           textureModule;
+    std::shared_ptr<Mesh>       mesh;
+    std::shared_ptr<Transform>  transform;
+    TextureModule               textureModule;
 
     //Camera                  camera;
 };

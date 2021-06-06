@@ -9,13 +9,13 @@ BufferManageModule::BufferManageModule()
     commandPoolInstance = CommandPoolModule::getInstance();
 }
 
-void BufferManageModule::addGeometryQueueData(GeometryModule& geometryModule, QueueModule& queueModule)
+void BufferManageModule::addGeometryQueueData(std::shared_ptr<Mesh> geometryModule, QueueModule& queueModule)
 {
-    geoModule = &geometryModule;
+    geoModule = geometryModule;
     this->queueModule = &queueModule;
 }
 
-GeometryModule* BufferManageModule::getGeometryData()
+std::shared_ptr<Mesh> BufferManageModule::getGeometryData()
 {
     return geoModule;
 }
@@ -142,22 +142,24 @@ void BufferManageModule::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDe
     vkFreeCommandBuffers(deviceModule->device, commandPoolInstance->getCommandPool(), 1, &commandBuffer);
 }
 
-void BufferManageModule::updateUniformBuffer(uint32_t currentImage, VkExtent2D extent)
+void BufferManageModule::updateUniformBuffer(uint32_t currentImage, VkExtent2D extent, std::shared_ptr<Transform> transform)
 {
     static auto startTime = std::chrono::high_resolution_clock::now();
 
     auto currentTime = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-    UniformBufferObject ubo{};
-    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.proj = glm::perspective(glm::radians(45.0f), extent.width / (float)extent.height, 0.1f, 10.0f);
-    ubo.proj[1][1] *= -1;
+    //UniformBufferObject ubo{};
+    //ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    //ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    //ubo.proj = glm::perspective(glm::radians(45.0f), extent.width / (float)extent.height, 0.1f, 10.0f);
+    //ubo.proj[1][1] *= -1;
+
+    transform->updateMVP(time, extent.width / (float)extent.height);
 
     void* data;
-    vkMapMemory(deviceModule->device, uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
-    memcpy(data, &ubo, sizeof(ubo));
+    vkMapMemory(deviceModule->device, uniformBuffersMemory[currentImage], 0, sizeof(transform->getMVP()), 0, &data);
+    memcpy(data, &transform->getMVP(), sizeof(transform->getMVP()));
     vkUnmapMemory(deviceModule->device, uniformBuffersMemory[currentImage]);
 }
 

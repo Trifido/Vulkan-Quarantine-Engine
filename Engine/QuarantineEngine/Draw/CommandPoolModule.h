@@ -4,8 +4,8 @@
 
 #include <vulkan/vulkan.hpp>
 #include <vector>
-#include "GeometryModule.h"
 #include "GraphicsPipelineModule.h"
+#include "Mesh.h"
 
 class BufferManageModule;
 
@@ -26,7 +26,7 @@ public:
     VkCommandBuffer& getCommandBuffer(uint32_t idx) { return commandBuffers.at(idx); }
     void createCommandPool(VkSurfaceKHR& surface);
     void createCommandBuffers(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass,
-        VkExtent2D& swapChainExtent, VkPipelineLayout& pipelineLayout, VkPipeline& pipeline,GeometryModule& geometryModule,
+        VkExtent2D& swapChainExtent, VkPipelineLayout& pipelineLayout, VkPipeline& pipeline, std::shared_ptr<Mesh> geometryModule,
         BufferManageModule& bufferManagerModule, std::vector<VkDescriptorSet>& descriptorSets);
     void cleanup();
 };

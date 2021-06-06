@@ -4,8 +4,9 @@
 #define MATERIAL_H
 
 #include <glm/glm.hpp>
+#include "GameComponent.h"
 
-class Material
+class Material : public GameComponent
 {
 public:
     glm::vec3 ambient;

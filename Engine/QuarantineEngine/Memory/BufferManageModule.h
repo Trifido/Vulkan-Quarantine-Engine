@@ -11,8 +11,10 @@
 #include <chrono>
 #include <vector>
 #include <array>
+#include <memory>
 
-#include "GeometryModule.h"
+#include "Mesh.h"
+#include "Transform.h"
 #include "DeviceModule.h"
 #include "CommandPoolModule.h"
 #include "QueueFamiliesModule.h"
@@ -27,8 +29,8 @@ private:
     DeviceModule*       deviceModule;
     CommandPoolModule*  commandPoolInstance;
     size_t              numSwapchainImages;
-    GeometryModule*     geoModule;
-    QueueModule*        queueModule;
+    std::shared_ptr<Mesh>   geoModule;
+    QueueModule*            queueModule;
 public:
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
@@ -39,14 +41,14 @@ public:
 
 public:
     BufferManageModule();
-    void addGeometryQueueData(GeometryModule& geometryModule, QueueModule& queueModule);
-    GeometryModule* getGeometryData();
+    void addGeometryQueueData(std::shared_ptr<Mesh> geometryModule, QueueModule& queueModule);
+    std::shared_ptr<Mesh> getGeometryData();
     void createVertexBuffer();
     void createIndexBuffer();
     void createUniformBuffers(size_t numImagesSwapChain);
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-    void updateUniformBuffer(uint32_t currentImage, VkExtent2D extent);
+    void updateUniformBuffer(uint32_t currentImage, VkExtent2D extent, std::shared_ptr<Transform> transform);
     void updateUniformBufferCamera(uint32_t currentImage, VkExtent2D extent, Camera& camera);
     void cleanup();
     void cleanupDescriptorBuffer();

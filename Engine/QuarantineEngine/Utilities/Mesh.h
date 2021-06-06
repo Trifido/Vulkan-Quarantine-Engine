@@ -1,15 +1,11 @@
 #pragma once
-#pragma once
-#ifndef GEOMETRY_MODULE_H
-#define GEOMETRY_MODULE_H
+#ifndef MESH_H
+#define MESH_H
 
 #include <vulkan/vulkan.hpp>
-#include <glm/glm.hpp>
-#include <vector>
-#include <array>
+#include <string>
 
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/hash.hpp>
+#include "GameComponent.h"
 
 struct Vertex {
     glm::vec3 pos;
@@ -31,22 +27,20 @@ namespace std {
     };
 }
 
-struct UniformBufferObject {    //CAMERA
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 proj;
-};
-
-class GeometryModule
+class Mesh : public GameComponent
 {
 public:
+    std::string path;
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
     unsigned int numVertices;
     unsigned int numFaces;
 public:
+    void loadMesh(std::string pathfile);
     static VkVertexInputBindingDescription  getBindingDescription();
     static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions();
 };
 
-#endif
+#endif // !MESH_H
+
+

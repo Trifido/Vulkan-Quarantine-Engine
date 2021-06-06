@@ -190,8 +190,12 @@
     <ClCompile Include="SetUp\VulkanInstance.cpp" />
     <ClCompile Include="SetUp\VulkanLayerAndExtension.cpp" />
     <ClCompile Include="Utilities\Camera.cpp" />
+    <ClCompile Include="Utilities\GameComponent.cpp" />
+    <ClCompile Include="Utilities\GameObject.cpp" />
     <ClCompile Include="Utilities\Material.cpp" />
-    <ClCompile Include="Utilities\Model.cpp" />
+    <ClCompile Include="Utilities\Mesh.cpp" />
+    <ClCompile Include="Utilities\Texture.cpp" />
+    <ClCompile Include="Utilities\Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\backends\imgui_impl_glfw.h" />
@@ -226,8 +230,12 @@
     <ClInclude Include="SetUp\VulkanInstance.h" />
     <ClInclude Include="SetUp\VulkanLayerAndExtension.h" />
     <ClInclude Include="Utilities\Camera.h" />
+    <ClInclude Include="Utilities\GameComponent.h" />
+    <ClInclude Include="Utilities\GameObject.h" />
     <ClInclude Include="Utilities\Material.h" />
-    <ClInclude Include="Utilities\Model.h" />
+    <ClInclude Include="Utilities\Mesh.h" />
+    <ClInclude Include="Utilities\Texture.h" />
+    <ClInclude Include="Utilities\Transform.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\misc\debuggers\imgui.natvis" />

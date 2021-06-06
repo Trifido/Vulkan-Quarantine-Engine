@@ -26,7 +26,7 @@ std::vector<char> ShaderModule::readFile(const std::string& filename)
     return buffer;
 }
 
-void ShaderModule::createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment, GeometryModule& geometryModule)
+void ShaderModule::createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment, std::shared_ptr<Mesh> geometryModule)
 {
     vertShaderStageInfo = createShader(deviceModule->device, filename_vertex, SHADER_TYPE::VERTEX_SHADER);
     fragShaderStageInfo = createShader(deviceModule->device, filename_fragment, SHADER_TYPE::FRAGMENT_SHADER);
@@ -34,8 +34,8 @@ void ShaderModule::createShaderModule(const std::string& filename_vertex, const 
     shaderStages.push_back(vertShaderStageInfo);
     shaderStages.push_back(fragShaderStageInfo);
 
-    bindingDescription = GeometryModule::getBindingDescription();
-    attributeDescriptions = GeometryModule::getAttributeDescriptions();
+    bindingDescription = Mesh::getBindingDescription();
+    attributeDescriptions = Mesh::getAttributeDescriptions();
 
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputInfo.vertexBindingDescriptionCount = 1;
