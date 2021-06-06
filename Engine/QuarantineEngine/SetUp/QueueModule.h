@@ -7,11 +7,12 @@
 class QueueModule
 {
 public:
-    VkQueue graphicsQueue;
-    VkQueue presentQueue;
-    VkQueue computeQueue;
+    static QueueModule* instance;
+    VkQueue             graphicsQueue;
+    VkQueue             presentQueue;
+    VkQueue             computeQueue;
 public:
-    QueueModule() {}
+    static QueueModule* getInstance();
 };
 
 #endif

@@ -6,10 +6,10 @@
 #include <vulkan/vulkan.hpp>
 #include "DeviceModule.h"
 #include "BufferManageModule.h"
-#include "TextureModule.h"
+#include "Texture.h"
 
 class BufferManageModule;
-class TextureModule;
+class Texture;
 
 class DescriptorModule
 {
@@ -19,7 +19,7 @@ private:
     VkDescriptorSetLayout           descriptorSetLayout;
 
     BufferManageModule*             bufferModule;
-    TextureModule*                  textureModule;
+    std::unique_ptr<Texture>        ptrTexture;
 
     DeviceModule*                   deviceModule;
     size_t                          descriptorCount;
@@ -31,7 +31,7 @@ public:
     std::vector<VkDescriptorSet>    getDescriptorSet() { return descriptorSets; }
     void    createDescriptorPool(size_t numSwapchainImgs);
     void    createDescriptorSets();
-    void    addPtrData(BufferManageModule* bufferManageModule, TextureModule* texModule);
+    void    addPtrData(BufferManageModule* bufferManageModule, Texture& texModule);
     void    cleanup();
     void    cleanupDescriptorPool();
 };

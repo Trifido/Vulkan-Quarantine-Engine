@@ -23,7 +23,7 @@ private:
 public:
     DepthBufferModule();
     void addAntiAliasingModule(AntiAliasingModule& antialiasingModule);
-    void createDepthResources(VkExtent2D& swapChainExtent, QueueModule& queueModule, CommandPoolModule& commandPoolModule);
+    void createDepthResources(VkExtent2D& swapChainExtent, CommandPoolModule& commandPoolModule);
     VkFormat findDepthFormat();
 private:
     bool hasStencilComponent(VkFormat format);

@@ -13,25 +13,25 @@ class SynchronizationModule
 {
 public:
 private:
-    DeviceModule* deviceModule;
-    size_t currentFrame = 0;
-    std::vector<VkSemaphore> imageAvailableSemaphores;
-    std::vector<VkSemaphore> renderFinishedSemaphores;
-    std::vector<VkFence> inFlightFences;
-    std::vector<VkFence> imagesInFlight;
-    VkSemaphore* waitSemaphores;
-    VkSemaphore* signalSemaphores;
+    DeviceModule*               deviceModule;
+    QueueModule*                queueModule;
+    size_t                      currentFrame = 0;
+    std::vector<VkSemaphore>    imageAvailableSemaphores;
+    std::vector<VkSemaphore>    renderFinishedSemaphores;
+    std::vector<VkFence>        inFlightFences;
+    std::vector<VkFence>        imagesInFlight;
+    VkSemaphore*                waitSemaphores;
+    VkSemaphore*                signalSemaphores;
 
 public:
     SynchronizationModule();
     VkSemaphore getImageAvailableSemaphore() { return imageAvailableSemaphores[currentFrame]; };
     void createSyncObjects(uint32_t swapChainImagesNum);
     void cleanup();
-    void submitCommandBuffer(VkCommandBuffer& commandBuffer, QueueModule& queueModule);
-    VkResult presentSwapchain(VkSwapchainKHR& swapChain, const uint32_t& imageIdx, QueueModule& queueModule);
+    void submitCommandBuffer(VkCommandBuffer& commandBuffer);
+    VkResult presentSwapchain(VkSwapchainKHR& swapChain, const uint32_t& imageIdx);
     void synchronizeWaitFences();
     void synchronizeCurrentFrame(const uint32_t& imageIdx);
-    
 };
 
 #endif

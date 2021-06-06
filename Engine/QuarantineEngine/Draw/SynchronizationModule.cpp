@@ -34,7 +34,7 @@ void SynchronizationModule::cleanup()
     }
 }
 
-void SynchronizationModule::submitCommandBuffer(VkCommandBuffer& commandBuffer, QueueModule& queueModule)
+void SynchronizationModule::submitCommandBuffer(VkCommandBuffer& commandBuffer)
 {
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -54,12 +54,12 @@ void SynchronizationModule::submitCommandBuffer(VkCommandBuffer& commandBuffer, 
 
     vkResetFences(deviceModule->device, 1, &inFlightFences[currentFrame]);
 
-    if (vkQueueSubmit(queueModule.graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
+    if (vkQueueSubmit(queueModule->graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
         throw std::runtime_error("failed to submit draw command buffer!");
     }
 }
 
-VkResult SynchronizationModule::presentSwapchain(VkSwapchainKHR& swapChain, const uint32_t& imageIdx, QueueModule& queueModule)
+VkResult SynchronizationModule::presentSwapchain(VkSwapchainKHR& swapChain, const uint32_t& imageIdx)
 {
     VkPresentInfoKHR presentInfo{};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -73,7 +73,7 @@ VkResult SynchronizationModule::presentSwapchain(VkSwapchainKHR& swapChain, cons
     presentInfo.pImageIndices = &imageIdx;
     presentInfo.pResults = nullptr;
 
-    VkResult result = vkQueuePresentKHR(queueModule.presentQueue, &presentInfo);
+    VkResult result = vkQueuePresentKHR(queueModule->presentQueue, &presentInfo);
 
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
@@ -83,6 +83,7 @@ VkResult SynchronizationModule::presentSwapchain(VkSwapchainKHR& swapChain, cons
 SynchronizationModule::SynchronizationModule()
 {
     deviceModule = DeviceModule::getInstance();
+    queueModule = QueueModule::getInstance();
 }
 
 void SynchronizationModule::synchronizeWaitFences()

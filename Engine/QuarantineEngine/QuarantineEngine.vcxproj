@@ -170,7 +170,6 @@
     <ClCompile Include="Draw\CommandPoolModule.cpp" />
     <ClCompile Include="Draw\FrameBufferModule.cpp" />
     <ClCompile Include="Draw\SynchronizationModule.cpp" />
-    <ClCompile Include="Geometry\GeometryModule.cpp" />
     <ClCompile Include="GraphicsPipeline\GraphicsPipelineModule.cpp" />
     <ClCompile Include="GraphicsPipeline\ShaderModule.cpp" />
     <ClCompile Include="GUI\GUIWindow.cpp" />
@@ -179,7 +178,6 @@
     <ClCompile Include="Memory\BufferManageModule.cpp" />
     <ClCompile Include="Memory\DescriptorModule.cpp" />
     <ClCompile Include="Memory\TextureManagerModule.cpp" />
-    <ClCompile Include="Memory\TextureModule.cpp" />
     <ClCompile Include="Presentation\AntiAliasingModule.cpp" />
     <ClCompile Include="Presentation\DepthBufferModule.cpp" />
     <ClCompile Include="Presentation\ImageViewModule.cpp" />
@@ -187,6 +185,7 @@
     <ClCompile Include="Presentation\WindowSurface.cpp" />
     <ClCompile Include="RayTracing\RayTracingModule.cpp" />
     <ClCompile Include="SetUp\DeviceModule.cpp" />
+    <ClCompile Include="SetUp\QueueModule.cpp" />
     <ClCompile Include="SetUp\VulkanInstance.cpp" />
     <ClCompile Include="SetUp\VulkanLayerAndExtension.cpp" />
     <ClCompile Include="Utilities\Camera.cpp" />
@@ -207,7 +206,6 @@
     <ClInclude Include="Draw\CommandPoolModule.h" />
     <ClInclude Include="Draw\FrameBufferModule.h" />
     <ClInclude Include="Draw\SynchronizationModule.h" />
-    <ClInclude Include="Geometry\GeometryModule.h" />
     <ClInclude Include="GraphicsPipeline\GraphicsPipelineModule.h" />
     <ClInclude Include="GraphicsPipeline\ShaderModule.h" />
     <ClInclude Include="GUI\GUIWindow.h" />
@@ -216,7 +214,6 @@
     <ClInclude Include="Memory\DescriptorModule.h" />
     <ClInclude Include="Memory\ImageMemoryTools.h" />
     <ClInclude Include="Memory\TextureManagerModule.h" />
-    <ClInclude Include="Memory\TextureModule.h" />
     <ClInclude Include="Presentation\AntiAliasingModule.h" />
     <ClInclude Include="Presentation\DepthBufferModule.h" />
     <ClInclude Include="Presentation\ImageViewModule.h" />

@@ -6,6 +6,8 @@
 #include <memory>
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.hpp>
+
+//  Kernel
 #include "GUIWindow.h"
 #include "VulkanInstance.h"
 #include "VulkanLayerAndExtension.h"
@@ -18,16 +20,18 @@
 #include "FrameBufferModule.h"
 #include "CommandPoolModule.h"
 #include "SynchronizationModule.h"
-#include "Mesh.h"
-#include "Transform.h"
 #include "BufferManageModule.h"
 #include "TextureManagerModule.h"
-#include "TextureModule.h"
 #include "DescriptorModule.h"
 #include "DepthBufferModule.h"
 #include "AntiAliasingModule.h"
-#include "GameObject.h"
 //#include "RayTracingModule.h"
+
+//  Utilities
+#include "GameObject.h"
+#include "Mesh.h"
+#include "Transform.h"
+#include "Material.h"
 //#include "Camera.h"
 
 const std::string MODEL_PATH = "../../resources/models/viking_room.obj";
@@ -60,7 +64,7 @@ private:
     VulkanInstance          vulkanInstance;
     VulkanLayerAndExtension layerExtensionModule;
     DeviceModule*           deviceModule;
-    QueueModule             queueModule;
+    QueueModule*            queueModule;
     WindowSurface           windowSurface;
     SwapChainModule         swapchainModule;
     ImageViewModule         imageViewModule;
@@ -76,10 +80,7 @@ private:
 
     //RayTracingModule        raytracingModule;
 
-    std::shared_ptr<Mesh>       mesh;
-    std::shared_ptr<Transform>  transform;
-    TextureModule               textureModule;
+    std::shared_ptr<GameObject> model;
 
     //Camera                  camera;
 };
-

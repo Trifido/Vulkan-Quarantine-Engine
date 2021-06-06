@@ -27,10 +27,11 @@ class BufferManageModule
 private:
     void*               data;
     DeviceModule*       deviceModule;
+    QueueModule*        queueModule;
     CommandPoolModule*  commandPoolInstance;
     size_t              numSwapchainImages;
     std::shared_ptr<Mesh>   geoModule;
-    QueueModule*            queueModule;
+
 public:
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
@@ -41,12 +42,12 @@ public:
 
 public:
     BufferManageModule();
-    void addGeometryQueueData(std::shared_ptr<Mesh> geometryModule, QueueModule& queueModule);
+    void addGeometryData(std::shared_ptr<Mesh> geometryModule);
     std::shared_ptr<Mesh> getGeometryData();
     void createVertexBuffer();
     void createIndexBuffer();
     void createUniformBuffers(size_t numImagesSwapChain);
-    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+    static void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory, DeviceModule& deviceModule);
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     void updateUniformBuffer(uint32_t currentImage, VkExtent2D extent, std::shared_ptr<Transform> transform);
     void updateUniformBufferCamera(uint32_t currentImage, VkExtent2D extent, Camera& camera);

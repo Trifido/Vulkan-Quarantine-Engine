@@ -29,8 +29,8 @@ void TextureManagerModule::endSingleTimeCommands(VkCommandBuffer commandBuffer)
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &commandBuffer;
 
-    vkQueueSubmit(*ptrGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-    vkQueueWaitIdle(*ptrGraphicsQueue);
+    vkQueueSubmit(queueModule->graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(queueModule->graphicsQueue);
 
     vkFreeCommandBuffers(deviceModule->device, *ptrCommandPool, 1, &commandBuffer);
 }

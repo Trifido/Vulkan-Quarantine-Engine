@@ -73,15 +73,15 @@ void RayTracingModule::initBLAS()
         &accelerationStructureBuildGeometryInfo.geometryCount,
         &accelerationStructureBuildSizesInfo);
 
-    bufferManageModule->createBuffer(accelerationStructureBuildSizesInfo.accelerationStructureSize, VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, bottomLevelAccelerationStructureBuffer, bottomLevelAccelerationStructureBufferMemory);
+    BufferManageModule::createBuffer(accelerationStructureBuildSizesInfo.accelerationStructureSize, VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, bottomLevelAccelerationStructureBuffer, bottomLevelAccelerationStructureBufferMemory, *deviceModule);
 
     VkBuffer scratchBuffer;
     VkDeviceMemory scratchBufferMemory;
-    bufferManageModule->createBuffer(accelerationStructureBuildSizesInfo.buildScratchSize,
+    BufferManageModule::createBuffer(accelerationStructureBuildSizesInfo.buildScratchSize,
         VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         scratchBuffer,
-        scratchBufferMemory);
+        scratchBufferMemory, *deviceModule);
 
     VkBufferDeviceAddressInfo scratchBufferDeviceAddressInfo = {};
     scratchBufferDeviceAddressInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
@@ -179,7 +179,7 @@ void RayTracingModule::initTLAS()
 
     VkBuffer geometryInstanceStagingBuffer;
     VkDeviceMemory geometryInstanceStagingBufferMemory;
-    bufferManageModule->createBuffer(geometryInstanceBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, geometryInstanceStagingBuffer, geometryInstanceStagingBufferMemory);
+    BufferManageModule::createBuffer(geometryInstanceBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, geometryInstanceStagingBuffer, geometryInstanceStagingBufferMemory, *deviceModule);
 
     void* geometryInstanceData;
     vkMapMemory(deviceModule->device, geometryInstanceStagingBufferMemory, 0, geometryInstanceBufferSize, 0, &geometryInstanceData);
@@ -188,7 +188,7 @@ void RayTracingModule::initTLAS()
 
     VkBuffer geometryInstanceBuffer;
     VkDeviceMemory geometryInstanceBufferMemory;
-    bufferManageModule->createBuffer(geometryInstanceBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, geometryInstanceBuffer, geometryInstanceBufferMemory);
+    BufferManageModule::createBuffer(geometryInstanceBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, geometryInstanceBuffer, geometryInstanceBufferMemory, *deviceModule);
 
     bufferManageModule->copyBuffer(geometryInstanceStagingBuffer, geometryInstanceBuffer, geometryInstanceBufferSize);
 
@@ -246,7 +246,7 @@ void RayTracingModule::initTLAS()
         &accelerationStructureBuildGeometryInfo.geometryCount,
         &accelerationStructureBuildSizesInfo);
 
-    bufferManageModule->createBuffer(accelerationStructureBuildSizesInfo.accelerationStructureSize, VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, topLevelAccelerationStructureBuffer, topLevelAccelerationStructureBufferMemory);
+    bufferManageModule->createBuffer(accelerationStructureBuildSizesInfo.accelerationStructureSize, VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, topLevelAccelerationStructureBuffer, topLevelAccelerationStructureBufferMemory, *deviceModule);
 
     VkBuffer scratchBuffer;
     VkDeviceMemory scratchBufferMemory;
@@ -255,7 +255,7 @@ void RayTracingModule::initTLAS()
         VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         scratchBuffer,
-        scratchBufferMemory);
+        scratchBufferMemory, *deviceModule);
 
 
     VkBufferDeviceAddressInfo scratchBufferDeviceAddressInfo = {};

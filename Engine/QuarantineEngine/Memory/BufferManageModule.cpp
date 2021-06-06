@@ -6,13 +6,13 @@
 BufferManageModule::BufferManageModule()
 {
     deviceModule = DeviceModule::getInstance();
+    queueModule = QueueModule::getInstance();
     commandPoolInstance = CommandPoolModule::getInstance();
 }
 
-void BufferManageModule::addGeometryQueueData(std::shared_ptr<Mesh> geometryModule, QueueModule& queueModule)
+void BufferManageModule::addGeometryData(std::shared_ptr<Mesh> geometryModule)
 {
     geoModule = geometryModule;
-    this->queueModule = &queueModule;
 }
 
 std::shared_ptr<Mesh> BufferManageModule::getGeometryData()
@@ -26,7 +26,7 @@ void BufferManageModule::createVertexBuffer()
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory, *deviceModule);
 
     void* data;
     vkMapMemory(deviceModule->device, stagingBufferMemory, 0, bufferSize, 0, &data);
@@ -35,7 +35,7 @@ void BufferManageModule::createVertexBuffer()
 
     //Rasterization -> VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
     //RayTracing -> VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
+    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory, *deviceModule);
 
     copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
 
@@ -49,7 +49,7 @@ void BufferManageModule::createIndexBuffer()
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory, *deviceModule);
 
     void* data;
     vkMapMemory(deviceModule->device, stagingBufferMemory, 0, bufferSize, 0, &data);
@@ -58,7 +58,7 @@ void BufferManageModule::createIndexBuffer()
 
     //Rasterization -> VK_BUFFER_USAGE_INDEX_BUFFER_BIT
     //RayTracing -> VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
+    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory, *deviceModule);
 
     copyBuffer(stagingBuffer, indexBuffer, bufferSize);
 
@@ -75,11 +75,11 @@ void BufferManageModule::createUniformBuffers(size_t numImagesSwapChain)
     uniformBuffersMemory.resize(numSwapchainImages);
 
     for (size_t i = 0; i < numSwapchainImages; i++) {
-        createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i], uniformBuffersMemory[i]);
+        createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i], uniformBuffersMemory[i], *deviceModule);
     }
 }
 
-void BufferManageModule::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
+void BufferManageModule::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory, DeviceModule& deviceModule)
 {
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -87,23 +87,23 @@ void BufferManageModule::createBuffer(VkDeviceSize size, VkBufferUsageFlags usag
     bufferInfo.usage = usage;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    if (vkCreateBuffer(deviceModule->device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
+    if (vkCreateBuffer(deviceModule.device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
         throw std::runtime_error("failed to create vertex buffer!");
     }
 
     VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements(deviceModule->device, buffer, &memRequirements);
+    vkGetBufferMemoryRequirements(deviceModule.device, buffer, &memRequirements);
 
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = IMT::findMemoryType(memRequirements.memoryTypeBits, properties, deviceModule->physicalDevice);
+    allocInfo.memoryTypeIndex = IMT::findMemoryType(memRequirements.memoryTypeBits, properties, deviceModule.physicalDevice);
 
-    if (vkAllocateMemory(deviceModule->device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
+    if (vkAllocateMemory(deviceModule.device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
         throw std::runtime_error("failed to allocate vertex buffer memory!");
     }
 
-    vkBindBufferMemory(deviceModule->device, buffer, bufferMemory, 0);
+    vkBindBufferMemory(deviceModule.device, buffer, bufferMemory, 0);
 }
 
 void BufferManageModule::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)

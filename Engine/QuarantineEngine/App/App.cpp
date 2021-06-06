@@ -20,9 +20,10 @@ void App::initVulkan()
     vulkanInstance.createInstance();
     layerExtensionModule.setupDebugMessenger(vulkanInstance.getInstance(), vulkanInstance.debug_level);
     windowSurface.createSurface(vulkanInstance.getInstance(), mainWindow.getWindow());
+    queueModule = QueueModule::getInstance();
     deviceModule = DeviceModule::getInstance();
     deviceModule->pickPhysicalDevice(vulkanInstance.getInstance(), windowSurface.getSurface());
-    deviceModule->createLogicalDevice(windowSurface.getSurface(), queueModule);
+    deviceModule->createLogicalDevice(windowSurface.getSurface(), *queueModule);
     swapchainModule.createSwapChain(windowSurface.getSurface(), mainWindow.getWindow());
     imageViewModule.createImageViews(swapchainModule);
 
@@ -32,22 +33,16 @@ void App::initVulkan()
     antialiasingModule.createColorResources(swapchainModule);
 
     depthBufferModule.addAntiAliasingModule(antialiasingModule);
-    depthBufferModule.createDepthResources(swapchainModule.swapChainExtent, queueModule, *commandPoolModule);
+    depthBufferModule.createDepthResources(swapchainModule.swapChainExtent, *commandPoolModule);
 
-    textureModule.createTextureImage(TEXTURE_PATH, bufferModule, queueModule, *commandPoolModule);
-    textureModule.createTextureImageView();
-    textureModule.createTextureSampler();
+    model = std::make_shared<GameObject>(GameObject(MODEL_PATH, TEXTURE_PATH));
 
-    mesh = std::make_shared<Mesh>();
-    mesh->loadMesh(MODEL_PATH);
-    transform = std::make_shared<Transform>();
-
-    bufferModule.addGeometryQueueData(mesh, queueModule);
+    bufferModule.addGeometryData(model->mesh);
     bufferModule.createVertexBuffer();
     bufferModule.createIndexBuffer();
     bufferModule.createUniformBuffers(swapchainModule.getNumSwapChainImages());
 
-    descriptorModule.addPtrData(&bufferModule, &textureModule);
+    descriptorModule.addPtrData(&bufferModule, model->material->getAlbedo());
     descriptorModule.createDescriptorSetLayout();
     descriptorModule.createDescriptorPool(swapchainModule.getNumSwapChainImages());
     descriptorModule.createDescriptorSets();
@@ -55,7 +50,7 @@ void App::initVulkan()
     //raytracingModule.addModules(bufferModule, queueModule);
     //raytracingModule.initRayTracing();
 
-    shaderModule.createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv", mesh);
+    shaderModule.createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv");
     graphicsPipelineModule.addAntialiasingModule(antialiasingModule);
     graphicsPipelineModule.addShaderModules(shaderModule);
     graphicsPipelineModule.createRenderPass(swapchainModule.swapChainImageFormat, depthBufferModule);
@@ -65,7 +60,7 @@ void App::initVulkan()
     framebufferModule.createFramebuffer(graphicsPipelineModule.renderPass, imageViewModule.swapChainImageViews, swapchainModule.swapChainExtent, depthBufferModule);
     commandPoolModule->createCommandBuffers(framebufferModule.swapChainFramebuffers, graphicsPipelineModule.renderPass, swapchainModule.swapChainExtent,
                                             graphicsPipelineModule.pipelineLayout, graphicsPipelineModule.graphicsPipeline,
-                                            mesh, bufferModule, descriptorModule.getDescriptorSet());
+                                            model->mesh, bufferModule, descriptorModule.getDescriptorSet());
 
     synchronizationModule.createSyncObjects(swapchainModule.getNumSwapChainImages());
 }
@@ -84,7 +79,7 @@ void App::cleanUp()
 {
     cleanUpSwapchain();
 
-    textureModule.cleanup();
+    model->material->cleanup();
     descriptorModule.cleanup();
     bufferModule.cleanup();
     synchronizationModule.cleanup();
@@ -129,12 +124,12 @@ void App::drawFrame()
 
     synchronizationModule.synchronizeCurrentFrame(imageIndex);
 
-    bufferModule.updateUniformBuffer(imageIndex, swapchainModule.swapChainExtent, transform);
+    bufferModule.updateUniformBuffer(imageIndex, swapchainModule.swapChainExtent, model->transform);
     //bufferModule.updateUniformBufferCamera(imageIndex, swapchainModule.swapChainExtent, camera);
 
-    synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer(imageIndex), queueModule);
+    synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer(imageIndex));
 
-    result = synchronizationModule.presentSwapchain(swapchainModule.getSwapchain(), imageIndex, queueModule);
+    result = synchronizationModule.presentSwapchain(swapchainModule.getSwapchain(), imageIndex);
     resizeSwapchain(result, ERROR_RESIZE::IMAGE_ERROR);
 }
 
@@ -177,9 +172,9 @@ void App::recreateSwapchain()
 
     swapchainModule.createSwapChain(windowSurface.getSurface(), mainWindow.getWindow());
     imageViewModule.createImageViews(swapchainModule);
-    shaderModule.createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv", mesh);
+    shaderModule.createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv");
     antialiasingModule.createColorResources(swapchainModule);
-    depthBufferModule.createDepthResources(swapchainModule.swapChainExtent, queueModule, *commandPoolModule);
+    depthBufferModule.createDepthResources(swapchainModule.swapChainExtent, *commandPoolModule);
     graphicsPipelineModule.addShaderModules(shaderModule);
     graphicsPipelineModule.createRenderPass(swapchainModule.swapChainImageFormat, depthBufferModule);
     graphicsPipelineModule.createGraphicsPipeline(swapchainModule.swapChainExtent, descriptorModule.getDescriptorSetLayout());
@@ -189,5 +184,5 @@ void App::recreateSwapchain()
     descriptorModule.createDescriptorSets();
     commandPoolModule->createCommandBuffers(framebufferModule.swapChainFramebuffers, graphicsPipelineModule.renderPass, swapchainModule.swapChainExtent,
         graphicsPipelineModule.pipelineLayout, graphicsPipelineModule.graphicsPipeline,
-        mesh, bufferModule, descriptorModule.getDescriptorSet());
+        model->mesh, bufferModule, descriptorModule.getDescriptorSet());
 }

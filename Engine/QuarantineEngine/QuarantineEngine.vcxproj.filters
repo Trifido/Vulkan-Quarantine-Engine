@@ -56,15 +56,6 @@
     <Filter Include="Kernel\Draw\sources">
       <UniqueIdentifier>{49004daf-4735-46db-8028-e14d8a3c72c5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Kernel\Geometry">
-      <UniqueIdentifier>{b2621079-bd91-4b9d-b385-fae1dfda6546}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Kernel\Geometry\headers">
-      <UniqueIdentifier>{a1b68ed6-6600-43a2-8861-df1e4a8da6a0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Kernel\Geometry\sources">
-      <UniqueIdentifier>{6079029d-304f-4da4-808d-284eb4965b1b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Kernel\Memory">
       <UniqueIdentifier>{277e7ce8-775c-4fe1-a8da-c3fb3f4c4cf4}</UniqueIdentifier>
     </Filter>
@@ -151,16 +142,10 @@
     <ClCompile Include="Draw\SynchronizationModule.cpp">
       <Filter>Kernel\Draw\sources</Filter>
     </ClCompile>
-    <ClCompile Include="Geometry\GeometryModule.cpp">
-      <Filter>Kernel\Geometry\sources</Filter>
-    </ClCompile>
     <ClCompile Include="Memory\BufferManageModule.cpp">
       <Filter>Kernel\Memory\sources</Filter>
     </ClCompile>
     <ClCompile Include="Memory\DescriptorModule.cpp">
-      <Filter>Kernel\Memory\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="Memory\TextureModule.cpp">
       <Filter>Kernel\Memory\sources</Filter>
     </ClCompile>
     <ClCompile Include="Presentation\DepthBufferModule.cpp">
@@ -184,9 +169,6 @@
     <ClCompile Include="App\App.cpp">
       <Filter>App</Filter>
     </ClCompile>
-    <ClCompile Include="Utilities\Texture.cpp">
-      <Filter>Kernel\Utilities\sources</Filter>
-    </ClCompile>
     <ClCompile Include="Utilities\Camera.cpp">
       <Filter>Kernel\Utilities\sources</Filter>
     </ClCompile>
@@ -204,6 +186,12 @@
     </ClCompile>
     <ClCompile Include="Utilities\Transform.cpp">
       <Filter>Kernel\Utilities\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Texture.cpp">
+      <Filter>Kernel\Utilities\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="SetUp\QueueModule.cpp">
+      <Filter>Kernel\SetUp\sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -261,9 +249,6 @@
     <ClInclude Include="Draw\SynchronizationModule.h">
       <Filter>Kernel\Draw\headers</Filter>
     </ClInclude>
-    <ClInclude Include="Geometry\GeometryModule.h">
-      <Filter>Kernel\Geometry\headers</Filter>
-    </ClInclude>
     <ClInclude Include="Memory\BufferManageModule.h">
       <Filter>Kernel\Memory\headers</Filter>
     </ClInclude>
@@ -271,9 +256,6 @@
       <Filter>Kernel\Presentation\headers</Filter>
     </ClInclude>
     <ClInclude Include="Memory\DescriptorModule.h">
-      <Filter>Kernel\Memory\headers</Filter>
-    </ClInclude>
-    <ClInclude Include="Memory\TextureModule.h">
       <Filter>Kernel\Memory\headers</Filter>
     </ClInclude>
     <ClInclude Include="Presentation\DepthBufferModule.h">
@@ -306,9 +288,6 @@
     <ClInclude Include="Utilities\Material.h">
       <Filter>Kernel\Utilities\headers</Filter>
     </ClInclude>
-    <ClInclude Include="Utilities\Texture.h">
-      <Filter>Kernel\Utilities\headers</Filter>
-    </ClInclude>
     <ClInclude Include="Utilities\GameObject.h">
       <Filter>Kernel\Utilities\headers</Filter>
     </ClInclude>
@@ -319,6 +298,9 @@
       <Filter>Kernel\Utilities\headers</Filter>
     </ClInclude>
     <ClInclude Include="Utilities\Transform.h">
+      <Filter>Kernel\Utilities\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Texture.h">
       <Filter>Kernel\Utilities\headers</Filter>
     </ClInclude>
   </ItemGroup>

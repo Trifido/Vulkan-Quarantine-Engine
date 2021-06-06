@@ -77,8 +77,8 @@ void DescriptorModule::createDescriptorSets()
 
         VkDescriptorImageInfo imageInfo{};
         imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        imageInfo.imageView = textureModule->imageView;
-        imageInfo.sampler = textureModule->textureSampler;
+        imageInfo.imageView = ptrTexture->imageView;
+        imageInfo.sampler = ptrTexture->textureSampler;
 
         std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
 
@@ -102,10 +102,10 @@ void DescriptorModule::createDescriptorSets()
     }
 }
 
-void DescriptorModule::addPtrData(BufferManageModule* bufferManageModule, TextureModule* texModule)
+void DescriptorModule::addPtrData(BufferManageModule* bufferManageModule, Texture& texModule)
 {
     bufferModule = bufferManageModule;
-    textureModule = texModule;
+    ptrTexture = std::make_unique<Texture>(texModule);
 }
 
 void DescriptorModule::cleanup()

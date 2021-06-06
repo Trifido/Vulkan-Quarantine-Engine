@@ -3,6 +3,7 @@
 DepthBufferModule::DepthBufferModule()
 {
     deviceModule = DeviceModule::getInstance();
+    queueModule = QueueModule::getInstance();
 }
 
 void DepthBufferModule::addAntiAliasingModule(AntiAliasingModule& antialiasingModule)
@@ -10,10 +11,9 @@ void DepthBufferModule::addAntiAliasingModule(AntiAliasingModule& antialiasingMo
     this->antialiasingModule = &antialiasingModule;
 }
 
-void DepthBufferModule::createDepthResources(VkExtent2D& swapChainExtent, QueueModule& queueModule, CommandPoolModule& commandPoolModule)
+void DepthBufferModule::createDepthResources(VkExtent2D& swapChainExtent, CommandPoolModule& commandPoolModule)
 {
     ptrCommandPool = &commandPoolModule.getCommandPool();
-    ptrGraphicsQueue = &queueModule.graphicsQueue;
 
     VkFormat depthFormat = findDepthFormat();
 
