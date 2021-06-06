@@ -46,6 +46,9 @@ void Mesh::loadMesh(std::string pathfile)
 
     numVertices = indices.size();
     numFaces = numVertices / 3;
+
+    createVertexBuffer();
+    createIndexBuffer();
 }
 
 VkVertexInputBindingDescription Mesh::getBindingDescription()
@@ -76,4 +79,65 @@ std::array<VkVertexInputAttributeDescription, 3> Mesh::getAttributeDescriptions(
     attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
 
     return attributeDescriptions;
+}
+
+Mesh::Mesh(DeviceModule& deviceModule, VkCommandPool& commandPool, QueueModule& queueModule)
+{
+    deviceModule_ptr = &deviceModule;
+    commandPool_ptr = &commandPool;
+    queueModule_ptr = &queueModule;
+}
+
+void Mesh::cleanup()
+{
+    vkDestroyBuffer(deviceModule_ptr->device, indexBuffer, nullptr);
+    vkFreeMemory(deviceModule_ptr->device, indexBufferMemory, nullptr);
+    vkDestroyBuffer(deviceModule_ptr->device, vertexBuffer, nullptr);
+    vkFreeMemory(deviceModule_ptr->device, vertexBufferMemory, nullptr);
+}
+
+void Mesh::createVertexBuffer()
+{
+    VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+    BufferManageModule::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory, *deviceModule_ptr);
+
+    void* data;
+    vkMapMemory(deviceModule_ptr->device, stagingBufferMemory, 0, bufferSize, 0, &data);
+    memcpy(data, vertices.data(), (size_t)bufferSize);
+    vkUnmapMemory(deviceModule_ptr->device, stagingBufferMemory);
+
+    //Rasterization -> VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
+    //RayTracing -> VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
+    BufferManageModule::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory, *deviceModule_ptr);
+
+    BufferManageModule::copyBuffer(stagingBuffer, vertexBuffer, bufferSize, *commandPool_ptr, *queueModule_ptr, *deviceModule_ptr);
+
+    vkDestroyBuffer(deviceModule_ptr->device, stagingBuffer, nullptr);
+    vkFreeMemory(deviceModule_ptr->device, stagingBufferMemory, nullptr);
+}
+
+void Mesh::createIndexBuffer()
+{
+    VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+    BufferManageModule::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory, *deviceModule_ptr);
+
+    void* data;
+    vkMapMemory(deviceModule_ptr->device, stagingBufferMemory, 0, bufferSize, 0, &data);
+    memcpy(data, indices.data(), (size_t)bufferSize);
+    vkUnmapMemory(deviceModule_ptr->device, stagingBufferMemory);
+
+    //Rasterization -> VK_BUFFER_USAGE_INDEX_BUFFER_BIT
+    //RayTracing -> VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
+    BufferManageModule::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory, *deviceModule_ptr);
+
+    BufferManageModule::copyBuffer(stagingBuffer, indexBuffer, bufferSize, *commandPool_ptr, *queueModule_ptr, *deviceModule_ptr);
+
+    vkDestroyBuffer(deviceModule_ptr->device, stagingBuffer, nullptr);
+    vkFreeMemory(deviceModule_ptr->device, stagingBufferMemory, nullptr);
 }

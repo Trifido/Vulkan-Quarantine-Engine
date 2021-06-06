@@ -3,6 +3,7 @@
 
 void RayTracingModule::initBLAS()
 {
+    /*
     PFN_vkGetAccelerationStructureBuildSizesKHR pvkGetAccelerationStructureBuildSizesKHR = (PFN_vkGetAccelerationStructureBuildSizesKHR)vkGetDeviceProcAddr(deviceModule->device, "vkGetAccelerationStructureBuildSizesKHR");
     PFN_vkCreateAccelerationStructureKHR pvkCreateAccelerationStructureKHR = (PFN_vkCreateAccelerationStructureKHR)vkGetDeviceProcAddr(deviceModule->device, "vkCreateAccelerationStructureKHR");
     PFN_vkGetBufferDeviceAddressKHR pvkGetBufferDeviceAddressKHR = (PFN_vkGetBufferDeviceAddressKHR)vkGetDeviceProcAddr(deviceModule->device, "vkGetBufferDeviceAddressKHR");
@@ -146,10 +147,12 @@ void RayTracingModule::initBLAS()
 
     vkDestroyBuffer(deviceModule->device, scratchBuffer, NULL);
     vkFreeMemory(deviceModule->device, scratchBufferMemory, NULL);
+    */
 }
 
 void RayTracingModule::initTLAS()
 {
+    /*
     PFN_vkGetAccelerationStructureBuildSizesKHR pvkGetAccelerationStructureBuildSizesKHR = (PFN_vkGetAccelerationStructureBuildSizesKHR)vkGetDeviceProcAddr(deviceModule->device, "vkGetAccelerationStructureBuildSizesKHR");
     PFN_vkCreateAccelerationStructureKHR pvkCreateAccelerationStructureKHR = (PFN_vkCreateAccelerationStructureKHR)vkGetDeviceProcAddr(deviceModule->device, "vkCreateAccelerationStructureKHR");
     PFN_vkGetBufferDeviceAddressKHR pvkGetBufferDeviceAddressKHR = (PFN_vkGetBufferDeviceAddressKHR)vkGetDeviceProcAddr(deviceModule->device, "vkGetBufferDeviceAddressKHR");
@@ -320,6 +323,7 @@ void RayTracingModule::initTLAS()
 
     vkDestroyBuffer(deviceModule->device, scratchBuffer, NULL);
     vkFreeMemory(deviceModule->device, scratchBufferMemory, NULL);
+    */
 }
 
 RayTracingModule::RayTracingModule()

@@ -1,8 +1,8 @@
 #include "DescriptorModule.h"
 
-DescriptorModule::DescriptorModule()
+DescriptorModule::DescriptorModule(DeviceModule& deviceModule)
 {
-    deviceModule = DeviceModule::getInstance();
+    this->deviceModule = &deviceModule;
 }
 
 void DescriptorModule::createDescriptorSetLayout()
@@ -71,7 +71,7 @@ void DescriptorModule::createDescriptorSets()
     for (size_t i = 0; i < descriptorCount; i++)
     {
         VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = bufferModule->uniformBuffers[i];
+        bufferInfo.buffer = uniformBuffers[i];
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(UniformBufferObject);
 
@@ -102,9 +102,8 @@ void DescriptorModule::createDescriptorSets()
     }
 }
 
-void DescriptorModule::addPtrData(BufferManageModule* bufferManageModule, Texture& texModule)
+void DescriptorModule::addPtrData(Texture& texModule)
 {
-    bufferModule = bufferManageModule;
     ptrTexture = std::make_unique<Texture>(texModule);
 }
 
@@ -116,4 +115,48 @@ void DescriptorModule::cleanup()
 void DescriptorModule::cleanupDescriptorPool()
 {
     vkDestroyDescriptorPool(deviceModule->device, descriptorPool, nullptr);
+}
+
+void DescriptorModule::createUniformBuffers(size_t numImagesSwapChain)
+{
+    numSwapchainImages = numImagesSwapChain;
+    VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+
+    uniformBuffers.resize(numSwapchainImages);
+    uniformBuffersMemory.resize(numSwapchainImages);
+
+    for (size_t i = 0; i < numSwapchainImages; i++) {
+        BufferManageModule::createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i], uniformBuffersMemory[i], *deviceModule);
+    }
+}
+
+void DescriptorModule::updateUniformBuffer(uint32_t currentImage, VkExtent2D extent, std::shared_ptr<Transform> transform)
+{
+    static auto startTime = std::chrono::high_resolution_clock::now();
+
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+    transform->updateMVP(time, extent.width / (float)extent.height);
+
+    void* data;
+    vkMapMemory(deviceModule->device, uniformBuffersMemory[currentImage], 0, sizeof(transform->getMVP()), 0, &data);
+    memcpy(data, &transform->getMVP(), sizeof(transform->getMVP()));
+    vkUnmapMemory(deviceModule->device, uniformBuffersMemory[currentImage]);
+}
+
+void DescriptorModule::recreateUniformBuffer(uint32_t numSwapChain)
+{
+    createUniformBuffers(numSwapChain);
+    createDescriptorPool(numSwapChain);
+    createDescriptorSets();
+}
+
+void DescriptorModule::cleanupDescriptorBuffer()
+{
+    for (size_t i = 0; i < numSwapchainImages; i++)
+    {
+        vkDestroyBuffer(deviceModule->device, uniformBuffers[i], nullptr);
+        vkFreeMemory(deviceModule->device, uniformBuffersMemory[i], nullptr);
+    }
 }

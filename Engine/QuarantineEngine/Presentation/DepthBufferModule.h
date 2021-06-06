@@ -10,10 +10,7 @@
 
 #include "TextureManagerModule.h"
 #include "SwapChainModule.h"
-#include "CommandPoolModule.h"
 #include "AntiAliasingModule.h"
-
-class CommandPoolModule;
 
 class DepthBufferModule : public TextureManagerModule
 {
@@ -23,7 +20,7 @@ private:
 public:
     DepthBufferModule();
     void addAntiAliasingModule(AntiAliasingModule& antialiasingModule);
-    void createDepthResources(VkExtent2D& swapChainExtent, CommandPoolModule& commandPoolModule);
+    void createDepthResources(VkExtent2D& swapChainExtent, VkCommandPool& commandPool);
     VkFormat findDepthFormat();
 private:
     bool hasStencilComponent(VkFormat format);

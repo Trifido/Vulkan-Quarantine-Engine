@@ -2,6 +2,8 @@
 
 #include <stb_image.h>
 
+#include "BufferManageModule.h"
+
 void Texture::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 {
     VkCommandBuffer commandBuffer = beginSingleTimeCommands();
@@ -127,9 +129,9 @@ Texture::Texture()
     queueModule = QueueModule::getInstance();
 }
 
-void Texture::createTextureImage(std::string path, CommandPoolModule& commandPoolModule)
+void Texture::createTextureImage(std::string path, VkCommandPool& commandPool)
 {
-    ptrCommandPool = &commandPoolModule.getCommandPool();
+    ptrCommandPool = &commandPool;
     stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
     VkDeviceSize imageSize = texWidth * texHeight * 4;

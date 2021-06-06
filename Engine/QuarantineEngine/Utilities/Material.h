@@ -6,14 +6,9 @@
 #include <glm/glm.hpp>
 #include "GameComponent.h"
 #include "Texture.h"
-#include "CommandPoolModule.h"
-#include "BufferManageModule.h"
 
 class Material : public GameComponent
 {
-private:
-    CommandPoolModule* commandPoolModule;
-    BufferManageModule* bufferManagerModule;
 public:
     glm::vec3 ambient;
     glm::vec3 diffuse;
@@ -24,7 +19,7 @@ public:
 
 public:
     Material();
-    void addAlbedo(std::string path);
+    void addAlbedo(std::string path, VkCommandPool& commandPool);
     Texture getAlbedo() { return *albedo; }
 
     void cleanup();

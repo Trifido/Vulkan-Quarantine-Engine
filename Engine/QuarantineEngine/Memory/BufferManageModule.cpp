@@ -5,78 +5,6 @@
 
 BufferManageModule::BufferManageModule()
 {
-    deviceModule = DeviceModule::getInstance();
-    queueModule = QueueModule::getInstance();
-    commandPoolInstance = CommandPoolModule::getInstance();
-}
-
-void BufferManageModule::addGeometryData(std::shared_ptr<Mesh> geometryModule)
-{
-    geoModule = geometryModule;
-}
-
-std::shared_ptr<Mesh> BufferManageModule::getGeometryData()
-{
-    return geoModule;
-}
-
-void BufferManageModule::createVertexBuffer()
-{
-    VkDeviceSize bufferSize = sizeof(geoModule->vertices[0]) * geoModule->vertices.size();
-
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory, *deviceModule);
-
-    void* data;
-    vkMapMemory(deviceModule->device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, geoModule->vertices.data(), (size_t)bufferSize);
-    vkUnmapMemory(deviceModule->device, stagingBufferMemory);
-
-    //Rasterization -> VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
-    //RayTracing -> VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory, *deviceModule);
-
-    copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
-
-    vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
-    vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
-}
-
-void BufferManageModule::createIndexBuffer()
-{
-    VkDeviceSize bufferSize = sizeof(geoModule->indices[0]) * geoModule->indices.size();
-
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory, *deviceModule);
-
-    void* data;
-    vkMapMemory(deviceModule->device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, geoModule->indices.data(), (size_t)bufferSize);
-    vkUnmapMemory(deviceModule->device, stagingBufferMemory);
-
-    //Rasterization -> VK_BUFFER_USAGE_INDEX_BUFFER_BIT
-    //RayTracing -> VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory, *deviceModule);
-
-    copyBuffer(stagingBuffer, indexBuffer, bufferSize);
-
-    vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
-    vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
-}
-
-void BufferManageModule::createUniformBuffers(size_t numImagesSwapChain)
-{
-    numSwapchainImages = numImagesSwapChain;
-    VkDeviceSize bufferSize = sizeof(UniformBufferObject);
-
-    uniformBuffers.resize(numSwapchainImages);
-    uniformBuffersMemory.resize(numSwapchainImages);
-
-    for (size_t i = 0; i < numSwapchainImages; i++) {
-        createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i], uniformBuffersMemory[i], *deviceModule);
-    }
 }
 
 void BufferManageModule::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory, DeviceModule& deviceModule)
@@ -106,16 +34,16 @@ void BufferManageModule::createBuffer(VkDeviceSize size, VkBufferUsageFlags usag
     vkBindBufferMemory(deviceModule.device, buffer, bufferMemory, 0);
 }
 
-void BufferManageModule::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+void BufferManageModule::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, VkCommandPool& commandPool, QueueModule& queueModule, DeviceModule& deviceModule)
 {
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandPool = commandPoolInstance->getCommandPool();
+    allocInfo.commandPool = commandPool;
     allocInfo.commandBufferCount = 1;
 
     VkCommandBuffer commandBuffer;
-    vkAllocateCommandBuffers(deviceModule->device, &allocInfo, &commandBuffer);
+    vkAllocateCommandBuffers(deviceModule.device, &allocInfo, &commandBuffer);
 
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -136,54 +64,18 @@ void BufferManageModule::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDe
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &commandBuffer;
 
-    vkQueueSubmit(queueModule->graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-    vkQueueWaitIdle(queueModule->graphicsQueue);
+    vkQueueSubmit(queueModule.graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(queueModule.graphicsQueue);
 
-    vkFreeCommandBuffers(deviceModule->device, commandPoolInstance->getCommandPool(), 1, &commandBuffer);
+    vkFreeCommandBuffers(deviceModule.device, commandPool, 1, &commandBuffer);
 }
 
-void BufferManageModule::updateUniformBuffer(uint32_t currentImage, VkExtent2D extent, std::shared_ptr<Transform> transform)
-{
-    static auto startTime = std::chrono::high_resolution_clock::now();
+//void BufferManageModule::updateUniformBufferCamera(uint32_t currentImage, VkExtent2D extent, Camera& camera)
+//{
+//    void* data;
+//    vkMapMemory(deviceModule->device, uniformBuffersMemory[currentImage], 0, sizeof(Camera), 0, &data);
+//    memcpy(data, &camera, sizeof(Camera));
+//    vkUnmapMemory(deviceModule->device, uniformBuffersMemory[currentImage]);
+//}
 
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-    //UniformBufferObject ubo{};
-    //ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    //ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    //ubo.proj = glm::perspective(glm::radians(45.0f), extent.width / (float)extent.height, 0.1f, 10.0f);
-    //ubo.proj[1][1] *= -1;
-
-    transform->updateMVP(time, extent.width / (float)extent.height);
-
-    void* data;
-    vkMapMemory(deviceModule->device, uniformBuffersMemory[currentImage], 0, sizeof(transform->getMVP()), 0, &data);
-    memcpy(data, &transform->getMVP(), sizeof(transform->getMVP()));
-    vkUnmapMemory(deviceModule->device, uniformBuffersMemory[currentImage]);
-}
-
-void BufferManageModule::updateUniformBufferCamera(uint32_t currentImage, VkExtent2D extent, Camera& camera)
-{
-    void* data;
-    vkMapMemory(deviceModule->device, uniformBuffersMemory[currentImage], 0, sizeof(Camera), 0, &data);
-    memcpy(data, &camera, sizeof(Camera));
-    vkUnmapMemory(deviceModule->device, uniformBuffersMemory[currentImage]);
-}
-
-void BufferManageModule::cleanup()
-{
-    vkDestroyBuffer(deviceModule->device, indexBuffer, nullptr);
-    vkFreeMemory(deviceModule->device, indexBufferMemory, nullptr);
-    vkDestroyBuffer(deviceModule->device, vertexBuffer, nullptr);
-    vkFreeMemory(deviceModule->device, vertexBufferMemory, nullptr);
-}
-
-void BufferManageModule::cleanupDescriptorBuffer()
-{
-    for (size_t i = 0; i < numSwapchainImages; i++)
-    {
-        vkDestroyBuffer(deviceModule->device, uniformBuffers[i], nullptr);
-        vkFreeMemory(deviceModule->device, uniformBuffersMemory[i], nullptr);
-    }
-}

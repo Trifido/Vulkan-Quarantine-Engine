@@ -11,9 +11,9 @@ void DepthBufferModule::addAntiAliasingModule(AntiAliasingModule& antialiasingMo
     this->antialiasingModule = &antialiasingModule;
 }
 
-void DepthBufferModule::createDepthResources(VkExtent2D& swapChainExtent, CommandPoolModule& commandPoolModule)
+void DepthBufferModule::createDepthResources(VkExtent2D& swapChainExtent, VkCommandPool& commandPool)
 {
-    ptrCommandPool = &commandPoolModule.getCommandPool();
+    ptrCommandPool = &commandPool;
 
     VkFormat depthFormat = findDepthFormat();
 

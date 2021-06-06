@@ -6,7 +6,6 @@
 #include <string>
 #include <vulkan/vulkan.hpp>
 #include "DeviceModule.h"
-#include "Mesh.h"
 
 enum class SHADER_TYPE
 {

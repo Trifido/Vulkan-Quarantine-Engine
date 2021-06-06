@@ -3,6 +3,7 @@
 #define RAYTRACING_MODULE
 
 #include "BufferManageModule.h"
+#include "CommandPoolModule.h"
 
 class RayTracingModule
 {

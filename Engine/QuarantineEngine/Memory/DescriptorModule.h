@@ -7,33 +7,42 @@
 #include "DeviceModule.h"
 #include "BufferManageModule.h"
 #include "Texture.h"
+#include "Transform.h"
 
-class BufferManageModule;
 class Texture;
 
 class DescriptorModule
 {
 private:
+    size_t                          numSwapchainImages;
+    std::vector<VkBuffer>           uniformBuffers;
+    std::vector<VkDeviceMemory>     uniformBuffersMemory;
+
     std::vector<VkDescriptorSet>    descriptorSets;
     VkDescriptorPool                descriptorPool;
     VkDescriptorSetLayout           descriptorSetLayout;
 
-    BufferManageModule*             bufferModule;
     std::unique_ptr<Texture>        ptrTexture;
 
     DeviceModule*                   deviceModule;
     size_t                          descriptorCount;
 public:
-    DescriptorModule();
+    DescriptorModule() {}
+    DescriptorModule(DeviceModule& deviceModule);
     void                            createDescriptorSetLayout();
     VkDescriptorSetLayout&          getDescriptorSetLayout() { return descriptorSetLayout; }
     VkDescriptorSet*                getDescriptorSet(size_t id) { return &descriptorSets.at(id); }
     std::vector<VkDescriptorSet>    getDescriptorSet() { return descriptorSets; }
     void    createDescriptorPool(size_t numSwapchainImgs);
     void    createDescriptorSets();
-    void    addPtrData(BufferManageModule* bufferManageModule, Texture& texModule);
+    void    addPtrData(Texture& texModule);
     void    cleanup();
     void    cleanupDescriptorPool();
+    void    cleanupDescriptorBuffer();
+
+    void    createUniformBuffers(size_t numImagesSwapChain);
+    void    updateUniformBuffer(uint32_t currentImage, VkExtent2D extent, std::shared_ptr<Transform> transform);
+    void    recreateUniformBuffer(uint32_t numSwapChain);
 };
 
 #endif

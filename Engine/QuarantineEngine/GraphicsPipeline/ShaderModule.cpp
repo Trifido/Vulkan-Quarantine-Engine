@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
+#include "Mesh.h"
 
 ShaderModule::ShaderModule()
 {

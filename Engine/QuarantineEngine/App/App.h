@@ -20,9 +20,6 @@
 #include "FrameBufferModule.h"
 #include "CommandPoolModule.h"
 #include "SynchronizationModule.h"
-#include "BufferManageModule.h"
-#include "TextureManagerModule.h"
-#include "DescriptorModule.h"
 #include "DepthBufferModule.h"
 #include "AntiAliasingModule.h"
 //#include "RayTracingModule.h"
@@ -46,6 +43,7 @@ enum class ERROR_RESIZE
 class App
 {
 public:
+    App();
     void run();
 private:
     void initWindow();
@@ -73,8 +71,8 @@ private:
     FramebufferModule       framebufferModule;
     CommandPoolModule*      commandPoolModule;
     SynchronizationModule   synchronizationModule;
-    BufferManageModule      bufferModule;
-    DescriptorModule        descriptorModule;
+    //BufferManageModule      bufferModule;
+    //DescriptorModule        descriptorModule;
     DepthBufferModule       depthBufferModule;
     AntiAliasingModule      antialiasingModule;
 

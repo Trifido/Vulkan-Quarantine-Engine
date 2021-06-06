@@ -5,9 +5,7 @@
 #include <vulkan/vulkan.hpp>
 #include <vector>
 #include "GraphicsPipelineModule.h"
-#include "Mesh.h"
-
-class BufferManageModule;
+#include "GameObject.h"
 
 class CommandPoolModule
 {
@@ -20,14 +18,14 @@ private:
 public:
     CommandPoolModule();
     static CommandPoolModule* getInstance();
-    VkCommandPool& getCommandPool() { return commandPool; }
-    std::vector<VkCommandBuffer>& getCommandBuffers() { return commandBuffers; }
-    uint32_t getNumCommandBuffers() { return static_cast<uint32_t>(commandBuffers.size()); }
-    VkCommandBuffer& getCommandBuffer(uint32_t idx) { return commandBuffers.at(idx); }
+
+    VkCommandPool&                  getCommandPool() { return commandPool; }
+    std::vector<VkCommandBuffer>&   getCommandBuffers() { return commandBuffers; }
+    uint32_t                        getNumCommandBuffers() { return static_cast<uint32_t>(commandBuffers.size()); }
+    VkCommandBuffer&                getCommandBuffer(uint32_t idx) { return commandBuffers.at(idx); }
+
     void createCommandPool(VkSurfaceKHR& surface);
-    void createCommandBuffers(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass,
-        VkExtent2D& swapChainExtent, VkPipelineLayout& pipelineLayout, VkPipeline& pipeline, std::shared_ptr<Mesh> geometryModule,
-        BufferManageModule& bufferManagerModule, std::vector<VkDescriptorSet>& descriptorSets);
+    void createCommandBuffers(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass, VkExtent2D& swapChainExtent, VkPipelineLayout& pipelineLayout, VkPipeline& pipeline, GameObject& gameObject);
     void cleanup();
 };
 

@@ -1,5 +1,9 @@
 #include "App.h"
 
+App::App()
+{
+}
+
 void App::run()
 {
     initWindow();
@@ -33,19 +37,9 @@ void App::initVulkan()
     antialiasingModule.createColorResources(swapchainModule);
 
     depthBufferModule.addAntiAliasingModule(antialiasingModule);
-    depthBufferModule.createDepthResources(swapchainModule.swapChainExtent, *commandPoolModule);
+    depthBufferModule.createDepthResources(swapchainModule.swapChainExtent, commandPoolModule->getCommandPool());
 
-    model = std::make_shared<GameObject>(GameObject(MODEL_PATH, TEXTURE_PATH));
-
-    bufferModule.addGeometryData(model->mesh);
-    bufferModule.createVertexBuffer();
-    bufferModule.createIndexBuffer();
-    bufferModule.createUniformBuffers(swapchainModule.getNumSwapChainImages());
-
-    descriptorModule.addPtrData(&bufferModule, model->material->getAlbedo());
-    descriptorModule.createDescriptorSetLayout();
-    descriptorModule.createDescriptorPool(swapchainModule.getNumSwapChainImages());
-    descriptorModule.createDescriptorSets();
+    model = std::make_shared<GameObject>(GameObject(MODEL_PATH, TEXTURE_PATH, swapchainModule.getNumSwapChainImages(), commandPoolModule->getCommandPool()));
 
     //raytracingModule.addModules(bufferModule, queueModule);
     //raytracingModule.initRayTracing();
@@ -54,13 +48,13 @@ void App::initVulkan()
     graphicsPipelineModule.addAntialiasingModule(antialiasingModule);
     graphicsPipelineModule.addShaderModules(shaderModule);
     graphicsPipelineModule.createRenderPass(swapchainModule.swapChainImageFormat, depthBufferModule);
-    graphicsPipelineModule.createGraphicsPipeline(swapchainModule.swapChainExtent, descriptorModule.getDescriptorSetLayout());
+    graphicsPipelineModule.createGraphicsPipeline(swapchainModule.swapChainExtent, model->descriptorModule->getDescriptorSetLayout());
 
     framebufferModule.addAntialiasingModule(antialiasingModule);
     framebufferModule.createFramebuffer(graphicsPipelineModule.renderPass, imageViewModule.swapChainImageViews, swapchainModule.swapChainExtent, depthBufferModule);
     commandPoolModule->createCommandBuffers(framebufferModule.swapChainFramebuffers, graphicsPipelineModule.renderPass, swapchainModule.swapChainExtent,
                                             graphicsPipelineModule.pipelineLayout, graphicsPipelineModule.graphicsPipeline,
-                                            model->mesh, bufferModule, descriptorModule.getDescriptorSet());
+                                            *model);
 
     synchronizationModule.createSyncObjects(swapchainModule.getNumSwapChainImages());
 }
@@ -79,9 +73,9 @@ void App::cleanUp()
 {
     cleanUpSwapchain();
 
-    model->material->cleanup();
-    descriptorModule.cleanup();
-    bufferModule.cleanup();
+    model->cleanup();
+    model->descriptorModule->cleanup();
+
     synchronizationModule.cleanup();
     commandPoolModule->cleanup();
 
@@ -110,8 +104,8 @@ void App::cleanUpSwapchain()
     imageViewModule.cleanup();
     swapchainModule.cleanup();
 
-    bufferModule.cleanupDescriptorBuffer();
-    descriptorModule.cleanupDescriptorPool();
+    model->descriptorModule->cleanupDescriptorBuffer();
+    model->descriptorModule->cleanupDescriptorPool();
 }
 
 void App::drawFrame()
@@ -124,7 +118,7 @@ void App::drawFrame()
 
     synchronizationModule.synchronizeCurrentFrame(imageIndex);
 
-    bufferModule.updateUniformBuffer(imageIndex, swapchainModule.swapChainExtent, model->transform);
+    model->descriptorModule->updateUniformBuffer(imageIndex, swapchainModule.swapChainExtent, model->transform);
     //bufferModule.updateUniformBufferCamera(imageIndex, swapchainModule.swapChainExtent, camera);
 
     synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer(imageIndex));
@@ -174,15 +168,14 @@ void App::recreateSwapchain()
     imageViewModule.createImageViews(swapchainModule);
     shaderModule.createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv");
     antialiasingModule.createColorResources(swapchainModule);
-    depthBufferModule.createDepthResources(swapchainModule.swapChainExtent, *commandPoolModule);
+    depthBufferModule.createDepthResources(swapchainModule.swapChainExtent, commandPoolModule->getCommandPool());
     graphicsPipelineModule.addShaderModules(shaderModule);
     graphicsPipelineModule.createRenderPass(swapchainModule.swapChainImageFormat, depthBufferModule);
-    graphicsPipelineModule.createGraphicsPipeline(swapchainModule.swapChainExtent, descriptorModule.getDescriptorSetLayout());
+    graphicsPipelineModule.createGraphicsPipeline(swapchainModule.swapChainExtent, model->descriptorModule->getDescriptorSetLayout());
     framebufferModule.createFramebuffer(graphicsPipelineModule.renderPass, imageViewModule.swapChainImageViews, swapchainModule.swapChainExtent, depthBufferModule);
-    bufferModule.createUniformBuffers(swapchainModule.getNumSwapChainImages());
-    descriptorModule.createDescriptorPool(swapchainModule.getNumSwapChainImages());
-    descriptorModule.createDescriptorSets();
+
+    model->descriptorModule->recreateUniformBuffer(swapchainModule.getNumSwapChainImages());
     commandPoolModule->createCommandBuffers(framebufferModule.swapChainFramebuffers, graphicsPipelineModule.renderPass, swapchainModule.swapChainExtent,
         graphicsPipelineModule.pipelineLayout, graphicsPipelineModule.graphicsPipeline,
-        model->mesh, bufferModule, descriptorModule.getDescriptorSet());
+        *model);
 }
