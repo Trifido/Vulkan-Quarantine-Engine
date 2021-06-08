@@ -19,7 +19,7 @@ private:
     glm::mat4 view;
     glm::mat4 proj;
 public:
-    std::unique_ptr<UniformBufferObject> ubo;
+    UniformBufferObject ubo;
 
 public:
     Transform();

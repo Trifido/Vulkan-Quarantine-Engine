@@ -119,7 +119,10 @@ void App::drawFrame()
     synchronizationModule.synchronizeCurrentFrame(imageIndex);
 
     model->descriptorModule->updateUniformBuffer(imageIndex, swapchainModule.swapChainExtent, model->transform);
-    //bufferModule.updateUniformBufferCamera(imageIndex, swapchainModule.swapChainExtent, camera);
+
+    commandPoolModule->createCommandBuffers(framebufferModule.swapChainFramebuffers, graphicsPipelineModule.renderPass, swapchainModule.swapChainExtent,
+        graphicsPipelineModule.pipelineLayout, graphicsPipelineModule.graphicsPipeline,
+        *model);
 
     synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer(imageIndex));
 

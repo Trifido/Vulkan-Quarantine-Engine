@@ -29,10 +29,12 @@ private:
 public:
     DescriptorModule() {}
     DescriptorModule(DeviceModule& deviceModule);
-    void                            createDescriptorSetLayout();
-    VkDescriptorSetLayout&          getDescriptorSetLayout() { return descriptorSetLayout; }
+
+    VkDescriptorSetLayout&          getDescriptorSetLayout()    { return descriptorSetLayout; }
     VkDescriptorSet*                getDescriptorSet(size_t id) { return &descriptorSets.at(id); }
-    std::vector<VkDescriptorSet>    getDescriptorSet() { return descriptorSets; }
+    std::vector<VkDescriptorSet>    getDescriptorSet()          { return descriptorSets; }
+
+    void    createDescriptorSetLayout();
     void    createDescriptorPool(size_t numSwapchainImgs);
     void    createDescriptorSets();
     void    addPtrData(Texture& texModule);
