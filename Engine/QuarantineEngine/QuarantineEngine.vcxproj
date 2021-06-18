@@ -206,6 +206,7 @@
     <ClInclude Include="Draw\CommandPoolModule.h" />
     <ClInclude Include="Draw\FrameBufferModule.h" />
     <ClInclude Include="Draw\SynchronizationModule.h" />
+    <ClInclude Include="Draw\SyncTool.h" />
     <ClInclude Include="GraphicsPipeline\GraphicsPipelineModule.h" />
     <ClInclude Include="GraphicsPipeline\ShaderModule.h" />
     <ClInclude Include="GUI\GUIWindow.h" />

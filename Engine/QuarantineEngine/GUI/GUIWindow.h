@@ -4,6 +4,10 @@
 #include <GLFW/glfw3.h>
 #include "imgui.h"
 
+#include "DeviceModule.h"
+#include "QueueModule.h"
+#include "CommandPoolModule.h"
+
 static void ShowDockingDisabledMessage()
 {
     ImGuiIO& io = ImGui::GetIO();
@@ -26,6 +30,8 @@ private:
     std::string title;
     bool isRunning;
     GLFWmonitor* monitor;
+
+public:
     GLFWwindow* window;
 
 public:
@@ -35,7 +41,9 @@ public:
     void renderMainWindow();
     GLFWwindow* getWindow();
     void checkMinimize();
+    void setupNewFrame();
 private:
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
+    void setupImgui();
 };
 

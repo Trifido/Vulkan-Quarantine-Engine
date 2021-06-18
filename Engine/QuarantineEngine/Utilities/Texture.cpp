@@ -3,10 +3,11 @@
 #include <stb_image.h>
 
 #include "BufferManageModule.h"
+#include "SyncTool.h"
 
 void Texture::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 {
-    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands(deviceModule->device, *ptrCommandPool);
     VkBufferImageCopy region{};
     region.bufferOffset = 0;
     region.bufferRowLength = 0;
@@ -31,7 +32,7 @@ void Texture::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, 
         1,
         &region
     );
-    endSingleTimeCommands(commandBuffer);
+    endSingleTimeCommands(deviceModule->device, queueModule->graphicsQueue, *ptrCommandPool, commandBuffer);
 }
 
 void Texture::generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels)
@@ -44,7 +45,7 @@ void Texture::generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWi
         throw std::runtime_error("texture image format does not support linear blitting!");
     }
 
-    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands(deviceModule->device, *ptrCommandPool);
 
     VkImageMemoryBarrier barrier{};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -121,7 +122,7 @@ void Texture::generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWi
         1, &barrier);
 
 
-    endSingleTimeCommands(commandBuffer);
+    endSingleTimeCommands(deviceModule->device, queueModule->graphicsQueue, *ptrCommandPool, commandBuffer);
 }
 
 Texture::Texture()

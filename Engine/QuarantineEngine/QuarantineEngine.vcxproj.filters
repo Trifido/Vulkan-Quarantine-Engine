@@ -303,6 +303,9 @@
     <ClInclude Include="Utilities\Texture.h">
       <Filter>Kernel\Utilities\headers</Filter>
     </ClInclude>
+    <ClInclude Include="Draw\SyncTool.h">
+      <Filter>Kernel\Draw\headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.txt" />

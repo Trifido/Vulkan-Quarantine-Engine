@@ -22,6 +22,7 @@
 #include "SynchronizationModule.h"
 #include "DepthBufferModule.h"
 #include "AntiAliasingModule.h"
+
 //#include "RayTracingModule.h"
 
 //  Utilities
@@ -29,7 +30,7 @@
 #include "Mesh.h"
 #include "Transform.h"
 #include "Material.h"
-//#include "Camera.h"
+#include "Camera.h"
 
 const std::string MODEL_PATH = "../../resources/models/viking_room.obj";
 const std::string TEXTURE_PATH = "../../resources/textures/viking_room.png";
@@ -45,8 +46,12 @@ class App
 public:
     App();
     void run();
-private:
+
+    void addWindow(GLFWwindow& window);
     void initWindow();
+    void init_imgui();
+private:
+    void computeDeltaTime();
     void initVulkan();
     void mainLoop();  
     void drawFrame();  
@@ -54,11 +59,14 @@ private:
     void cleanUpSwapchain();
     void resizeSwapchain(VkResult result, ERROR_RESIZE errorResize);
     void recreateSwapchain();
-
+    //bool createFontsTexture(VkCommandBuffer& commandBuffer);
+    //void setupImguiUploadFonts();
 public:
     GUIWindow               mainWindow;
     bool                    framebufferResized = false;
 private:
+    float       deltaTime;
+    float       lastFrame;
     VulkanInstance          vulkanInstance;
     VulkanLayerAndExtension layerExtensionModule;
     DeviceModule*           deviceModule;
@@ -73,10 +81,13 @@ private:
     SynchronizationModule   synchronizationModule;
     DepthBufferModule       depthBufferModule;
     AntiAliasingModule      antialiasingModule;
+    VkDescriptorPool        imguiPool;
+    bool show_demo_window = true;
+    bool show_another_window = true;
+    //FontResourcesModule     fontModule;
 
     //RayTracingModule        raytracingModule;
 
     std::shared_ptr<GameObject> model;
-
-    //Camera                  camera;
+    std::shared_ptr<Camera>     camera_ptr;
 };

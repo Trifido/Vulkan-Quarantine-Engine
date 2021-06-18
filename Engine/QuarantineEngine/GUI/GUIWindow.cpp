@@ -1,6 +1,9 @@
 #include "GUIWindow.h"
 #include "App.h"
 
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_vulkan.h>
+
 GUIWindow::GUIWindow()
 {
     monitor = glfwGetPrimaryMonitor();
@@ -27,6 +30,14 @@ bool GUIWindow::init(bool fullScreen)
     glfwSetWindowUserPointer(window, this);
     glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 
+    if (!glfwVulkanSupported())
+    {
+        printf("GLFW: Vulkan Not Supported\n");
+        return 1;
+    }
+
+    setupImgui();
+
     return true;
 }
 
@@ -38,7 +49,7 @@ void GUIWindow::renderGUIWindow()
 void GUIWindow::renderMainWindow()
 {
     bool p_open = true;
-    static bool opt_fullscreen = false;
+    static bool opt_fullscreen = true;
     static bool opt_padding = false;
     static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
@@ -64,6 +75,7 @@ void GUIWindow::renderMainWindow()
 
     if (!opt_padding)
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
     ImGui::Begin("DockSpace Demo", &p_open, window_flags);
     if (!opt_padding)
         ImGui::PopStyleVar();
@@ -130,4 +142,34 @@ void GUIWindow::framebufferResizeCallback(GLFWwindow* window, int width, int hei
 {
     auto app = reinterpret_cast<App*>(glfwGetWindowUserPointer(window));
     app->framebufferResized = true;
+}
+
+void GUIWindow::setupImgui()
+{
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
+    //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+    //io.ConfigViewportsNoAutoMerge = true;
+    //io.ConfigViewportsNoTaskBarIcon = true;
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+
+    // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
+    ImGuiStyle& style = ImGui::GetStyle();
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        style.WindowRounding = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+    }
+}
+
+void GUIWindow::setupNewFrame()
+{
+    ImGui_ImplGlfw_NewFrame();
 }

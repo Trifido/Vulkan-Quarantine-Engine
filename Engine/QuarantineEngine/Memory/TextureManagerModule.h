@@ -19,9 +19,6 @@ protected:
     VkDeviceMemory  deviceMemory;
     VkCommandPool*  ptrCommandPool;
 
-protected:
-    VkCommandBuffer beginSingleTimeCommands();
-    void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 public:
     TextureManagerModule();
     void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageAspectFlags aspectFlag);

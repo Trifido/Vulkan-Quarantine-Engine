@@ -26,6 +26,7 @@ public:
 
     void createCommandPool(VkSurfaceKHR& surface);
     void createCommandBuffers(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass, VkExtent2D& swapChainExtent, VkPipelineLayout& pipelineLayout, VkPipeline& pipeline, GameObject& gameObject);
+    void recreateCommandBuffers(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass, VkExtent2D& swapChainExtent, VkPipelineLayout& pipelineLayout, VkPipeline& pipeline, GameObject& gameObject);
     void cleanup();
 };
 

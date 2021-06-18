@@ -3,6 +3,8 @@
 
 #include <stdexcept>
 
+#include <backends/imgui_impl_vulkan.h>
+
 CommandPoolModule* CommandPoolModule::instance = nullptr;
 
 CommandPoolModule::CommandPoolModule()
@@ -27,7 +29,7 @@ void CommandPoolModule::createCommandPool(VkSurfaceKHR& surface)
     VkCommandPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
-    poolInfo.flags = 0; // Optional
+    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT; // Optional
 
     if (vkCreateCommandPool(deviceModule->device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
         throw std::runtime_error("failed to create command pool!");
@@ -48,6 +50,11 @@ void CommandPoolModule::createCommandBuffers(std::vector<VkFramebuffer>& swapCha
         throw std::runtime_error("failed to allocate command buffers!");
     }
 
+    recreateCommandBuffers(swapChainFramebuffers, renderPass, swapChainExtent, pipelineLayout, pipeline, gameObject);
+}
+
+void CommandPoolModule::recreateCommandBuffers(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass, VkExtent2D& swapChainExtent, VkPipelineLayout& pipelineLayout, VkPipeline& pipeline, GameObject& gameObject)
+{
     for (size_t i = 0; i < commandBuffers.size(); i++) {
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -73,7 +80,11 @@ void CommandPoolModule::createCommandBuffers(std::vector<VkFramebuffer>& swapCha
 
         vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-            gameObject.drawCommand(commandBuffers[i], pipelineLayout, pipeline, i);
+        gameObject.drawCommand(commandBuffers[i], pipelineLayout, pipeline, i);
+
+
+        if(ImGui::GetDrawData() != nullptr)
+            ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[i]);
 
         vkCmdEndRenderPass(commandBuffers[i]);
 
