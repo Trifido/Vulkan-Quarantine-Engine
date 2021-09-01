@@ -36,7 +36,7 @@ void CommandPoolModule::createCommandPool(VkSurfaceKHR& surface)
     }
 }
 
-void CommandPoolModule::createCommandBuffers(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass, VkExtent2D& swapChainExtent, VkPipelineLayout& pipelineLayout, VkPipeline& pipeline, GameObject& gameObject)
+void CommandPoolModule::createCommandBuffers(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass, VkExtent2D& swapChainExtent, VkPipelineLayout& pipelineLayout, VkPipeline& pipeline, std::vector<std::shared_ptr<GameObject>>& gameObjects)
 {
     commandBuffers.resize(swapChainFramebuffers.size());
 
@@ -50,10 +50,10 @@ void CommandPoolModule::createCommandBuffers(std::vector<VkFramebuffer>& swapCha
         throw std::runtime_error("failed to allocate command buffers!");
     }
 
-    recreateCommandBuffers(swapChainFramebuffers, renderPass, swapChainExtent, pipelineLayout, pipeline, gameObject);
+    recreateCommandBuffers(swapChainFramebuffers, renderPass, swapChainExtent, pipelineLayout, pipeline, gameObjects);
 }
 
-void CommandPoolModule::recreateCommandBuffers(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass, VkExtent2D& swapChainExtent, VkPipelineLayout& pipelineLayout, VkPipeline& pipeline, GameObject& gameObject)
+void CommandPoolModule::recreateCommandBuffers(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass, VkExtent2D& swapChainExtent, VkPipelineLayout& pipelineLayout, VkPipeline& pipeline, std::vector<std::shared_ptr<GameObject>>& gameObjects)
 {
     for (size_t i = 0; i < commandBuffers.size(); i++) {
         VkCommandBufferBeginInfo beginInfo{};
@@ -80,8 +80,10 @@ void CommandPoolModule::recreateCommandBuffers(std::vector<VkFramebuffer>& swapC
 
         vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        gameObject.drawCommand(commandBuffers[i], pipelineLayout, pipeline, i);
-
+        for (int i = 0; i < gameObjects.size(); i++)
+        {
+            gameObjects.at(i)->drawCommand(commandBuffers[i], pipelineLayout, pipeline, i);
+        }
 
         if(ImGui::GetDrawData() != nullptr)
             ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[i]);

@@ -82,12 +82,15 @@ private:
     DepthBufferModule       depthBufferModule;
     AntiAliasingModule      antialiasingModule;
     VkDescriptorPool        imguiPool;
+
+    std::shared_ptr<DescriptorModule>   descriptorModule;
+
     bool show_demo_window = true;
     bool show_another_window = true;
     //FontResourcesModule     fontModule;
 
     //RayTracingModule        raytracingModule;
 
-    std::shared_ptr<GameObject> model;
+    std::vector<std::shared_ptr<GameObject>> models;
     std::shared_ptr<Camera>     camera_ptr;
 };

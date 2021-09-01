@@ -41,6 +41,7 @@ public:
     void    cleanup();
     void    cleanupDescriptorPool();
     void    cleanupDescriptorBuffer();
+    void    init(uint32_t numSwapChain, Texture& texModule);
 
     void    createUniformBuffers(size_t numImagesSwapChain);
     void    updateUniformBuffer(uint32_t currentImage, VkExtent2D extent, std::shared_ptr<Transform> transform);

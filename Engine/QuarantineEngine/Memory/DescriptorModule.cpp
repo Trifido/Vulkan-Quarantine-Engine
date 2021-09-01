@@ -139,10 +139,19 @@ void DescriptorModule::updateUniformBuffer(uint32_t currentImage, VkExtent2D ext
 
     transform->updateMVP(time, extent.width / (float)extent.height);
 
-    void* data;
-    vkMapMemory(deviceModule->device, uniformBuffersMemory[currentImage], 0, sizeof(transform->getMVP()), 0, &data);
-    memcpy(data, &transform->getMVP(), sizeof(transform->getMVP()));
-    vkUnmapMemory(deviceModule->device, uniformBuffersMemory[currentImage]);
+    //void* data;
+    //vkMapMemory(deviceModule->device, uniformBuffersMemory[currentImage], 0, sizeof(transform->getMVP()), 0, &data);
+    //memcpy(data, &transform->getMVP(), sizeof(transform->getMVP()));
+    //vkUnmapMemory(deviceModule->device, uniformBuffersMemory[currentImage]);
+}
+
+void DescriptorModule::init(uint32_t numSwapChain, Texture& texModule)
+{
+    createUniformBuffers(numSwapChain);
+    addPtrData(texModule);
+    createDescriptorSetLayout();
+    createDescriptorPool(numSwapChain);
+    createDescriptorSets();
 }
 
 void DescriptorModule::recreateUniformBuffer(uint32_t numSwapChain)

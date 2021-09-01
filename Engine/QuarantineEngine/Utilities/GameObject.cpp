@@ -6,7 +6,7 @@ GameObject::GameObject()
     queueModule = QueueModule::getInstance();
 }
 
-GameObject::GameObject(std::string meshPath, std::string albedoPath, uint32_t numSwapChain, VkCommandPool& commandPool)
+GameObject::GameObject(std::string meshPath, std::string albedoPath, uint32_t numSwapChain, VkCommandPool& commandPool, std::shared_ptr<DescriptorModule> descriptor)
 {
     deviceModule = DeviceModule::getInstance();
     queueModule = QueueModule::getInstance();
@@ -16,13 +16,7 @@ GameObject::GameObject(std::string meshPath, std::string albedoPath, uint32_t nu
     mesh = std::make_shared<Mesh>(Mesh(*deviceModule, commandPool, *queueModule));
     mesh->loadMesh(meshPath);
     transform = std::make_shared<Transform>();
-
-    descriptorModule = std::make_shared<DescriptorModule>(DescriptorModule(*deviceModule));
-    descriptorModule->createUniformBuffers(numSwapChain);
-    descriptorModule->addPtrData(material->getAlbedo());
-    descriptorModule->createDescriptorSetLayout();
-    descriptorModule->createDescriptorPool(numSwapChain);
-    descriptorModule->createDescriptorSets();
+    this->descriptorModule = descriptor;
 }
 
 void GameObject::cleanup()
