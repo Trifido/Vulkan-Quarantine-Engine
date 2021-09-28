@@ -36,7 +36,8 @@ void CommandPoolModule::createCommandPool(VkSurfaceKHR& surface)
     }
 }
 
-void CommandPoolModule::createCommandBuffers(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass, VkExtent2D& swapChainExtent, VkPipelineLayout& pipelineLayout, VkPipeline& pipeline, std::vector<std::shared_ptr<GameObject>>& gameObjects)
+void CommandPoolModule::createCommandBuffers(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass,
+    VkExtent2D& swapChainExtent, VkPipelineLayout& pipelineLayout, VkPipeline& pipeline, std::vector<std::shared_ptr<GameObject>>& gameObjects)
 {
     commandBuffers.resize(swapChainFramebuffers.size());
 
@@ -53,7 +54,8 @@ void CommandPoolModule::createCommandBuffers(std::vector<VkFramebuffer>& swapCha
     recreateCommandBuffers(swapChainFramebuffers, renderPass, swapChainExtent, pipelineLayout, pipeline, gameObjects);
 }
 
-void CommandPoolModule::recreateCommandBuffers(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass, VkExtent2D& swapChainExtent, VkPipelineLayout& pipelineLayout, VkPipeline& pipeline, std::vector<std::shared_ptr<GameObject>>& gameObjects)
+void CommandPoolModule::recreateCommandBuffers(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass,
+    VkExtent2D& swapChainExtent, VkPipelineLayout& pipelineLayout, VkPipeline& pipeline, std::vector<std::shared_ptr<GameObject>>& gameObjects)
 {
     for (size_t i = 0; i < commandBuffers.size(); i++) {
         VkCommandBufferBeginInfo beginInfo{};
@@ -80,9 +82,9 @@ void CommandPoolModule::recreateCommandBuffers(std::vector<VkFramebuffer>& swapC
 
         vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        for (int i = 0; i < gameObjects.size(); i++)
+        for (int j = 0; j < gameObjects.size(); j++)
         {
-            gameObjects.at(i)->drawCommand(commandBuffers[i], pipelineLayout, pipeline, i);
+            gameObjects.at(j)->drawCommand(commandBuffers[i], pipelineLayout, pipeline, i);
         }
 
         if(ImGui::GetDrawData() != nullptr)
