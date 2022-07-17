@@ -37,14 +37,14 @@ public:
     void    createDescriptorSetLayout();
     void    createDescriptorPool(size_t numSwapchainImgs);
     void    createDescriptorSets();
-    void    addPtrData(Texture& texModule);
+    void    addPtrData(const Texture& texModule);
     void    cleanup();
     void    cleanupDescriptorPool();
     void    cleanupDescriptorBuffer();
-    void    init(uint32_t numSwapChain, Texture& texModule);
+    void    init(uint32_t numSwapChain, const Texture& texModule);
 
     void    createUniformBuffers(size_t numImagesSwapChain);
-    void    updateUniformBuffer(uint32_t currentImage, VkExtent2D extent, std::shared_ptr<Transform> transform);
+    void    updateUniformBuffer(/*uint32_t currentImage,*/ VkExtent2D extent, std::shared_ptr<Transform> transform, int num);
     void    recreateUniformBuffer(uint32_t numSwapChain);
 };
 

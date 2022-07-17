@@ -8,21 +8,6 @@
 #include "QueueModule.h"
 #include "CommandPoolModule.h"
 
-static void ShowDockingDisabledMessage()
-{
-    ImGuiIO& io = ImGui::GetIO();
-    ImGui::Text("ERROR: Docking is not enabled! See Demo > Configuration.");
-    ImGui::Text("Set io.ConfigFlags |= ImGuiConfigFlags_DockingEnable in your code, or ");
-    ImGui::SameLine(0.0f, 0.0f);
-    if (ImGui::SmallButton("click here"))
-        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-}
-
-static void glfw_error_callback(int error, const char* description)
-{
-    fprintf(stderr, "Glfw Error %d: %s\n", error, description);
-}
-
 class GUIWindow
 {
 private:

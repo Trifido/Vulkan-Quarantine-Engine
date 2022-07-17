@@ -11,7 +11,7 @@ SwapChainModule::SwapChainModule()
 
 void SwapChainModule::createSwapChain(VkSurfaceKHR& surface, GLFWwindow* window)
 {
-    SwapChainSupportDetails swapChainSupport = querySwapChainSupport(deviceModule->physicalDevice, surface);
+    SwapChainSupportDetails swapChainSupport = SwapChainSupportDetails::querySwapChainSupport(deviceModule->physicalDevice, surface);
 
     VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
     VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);

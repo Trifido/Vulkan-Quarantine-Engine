@@ -10,7 +10,7 @@ struct SwapChainSupportDetails
     VkSurfaceCapabilitiesKHR capabilities;
     std::vector<VkSurfaceFormatKHR> formats;
     std::vector<VkPresentModeKHR> presentModes;
-};
+
 
 static SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR& surface)
 {
@@ -35,5 +35,6 @@ static SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, Vk
 
     return details;
 }
+};
 
 #endif

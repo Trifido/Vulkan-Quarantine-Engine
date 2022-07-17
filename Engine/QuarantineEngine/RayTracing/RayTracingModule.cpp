@@ -332,10 +332,10 @@ RayTracingModule::RayTracingModule()
     commandPoolInstance = CommandPoolModule::getInstance();
 }
 
-void RayTracingModule::addModules(BufferManageModule& bufferModule, QueueModule& queueModule)
+void RayTracingModule::addModules(BufferManageModule& bufferModule, QueueModule& newQueueModule)
 {
     bufferManageModule = &bufferModule;
-    this->queueModule = &queueModule;
+    this->queueModule = &newQueueModule;
 }
 
 void RayTracingModule::initRayTracing()

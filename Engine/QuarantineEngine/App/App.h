@@ -32,6 +32,9 @@
 #include "Material.h"
 #include "Camera.h"
 
+// Keyboard controller
+#include "KeyboardController.h"
+
 const std::string MODEL_PATH = "../../resources/models/viking_room.obj";
 const std::string TEXTURE_PATH = "../../resources/textures/viking_room.png";
 
@@ -65,23 +68,23 @@ public:
     GUIWindow               mainWindow;
     bool                    framebufferResized = false;
 private:
-    float       deltaTime;
-    float       lastFrame;
-    VulkanInstance          vulkanInstance;
-    VulkanLayerAndExtension layerExtensionModule;
-    DeviceModule*           deviceModule;
-    QueueModule*            queueModule;
-    WindowSurface           windowSurface;
+    double       deltaTime;
+    double       lastFrame;
+    VulkanInstance          vulkanInstance {};
+    VulkanLayerAndExtension layerExtensionModule {};
+    DeviceModule* deviceModule {};
+    QueueModule*            queueModule {};
+    WindowSurface           windowSurface {};
     SwapChainModule         swapchainModule;
     ImageViewModule         imageViewModule;
     ShaderModule            shaderModule;
     GraphicsPipelineModule  graphicsPipelineModule;
     FramebufferModule       framebufferModule;
-    CommandPoolModule*      commandPoolModule;
+    CommandPoolModule*      commandPoolModule {};
     SynchronizationModule   synchronizationModule;
     DepthBufferModule       depthBufferModule;
     AntiAliasingModule      antialiasingModule;
-    VkDescriptorPool        imguiPool;
+    VkDescriptorPool        imguiPool {};
 
     std::shared_ptr<DescriptorModule>   descriptorModule;
 
@@ -93,4 +96,6 @@ private:
 
     std::vector<std::shared_ptr<GameObject>> models;
     std::shared_ptr<Camera>     camera_ptr;
+
+    KeyboardController* keyboard_ptr {};
 };

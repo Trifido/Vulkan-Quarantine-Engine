@@ -6,9 +6,9 @@ DepthBufferModule::DepthBufferModule()
     queueModule = QueueModule::getInstance();
 }
 
-void DepthBufferModule::addAntiAliasingModule(AntiAliasingModule& antialiasingModule)
+void DepthBufferModule::addAntiAliasingModule(AntiAliasingModule& newAntialiasingModule)
 {
-    this->antialiasingModule = &antialiasingModule;
+    this->antialiasingModule = &newAntialiasingModule;
 }
 
 void DepthBufferModule::createDepthResources(VkExtent2D& swapChainExtent, VkCommandPool& commandPool)
@@ -22,7 +22,7 @@ void DepthBufferModule::createDepthResources(VkExtent2D& swapChainExtent, VkComm
 
     imageView = IMT::createImageView(deviceModule->device, image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 
-    transitionImageLayout(image, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_ASPECT_DEPTH_BIT);
+    transitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_ASPECT_DEPTH_BIT);
 }
 
 VkFormat DepthBufferModule::findDepthFormat()

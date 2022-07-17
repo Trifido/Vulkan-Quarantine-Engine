@@ -6,7 +6,9 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     VkDebugUtilsMessageTypeFlagsEXT messageType,
     const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
     void* pUserData) {
-
+    messageSeverity = messageSeverity;
+    messageType = messageType;
+    pUserData = pUserData;
     std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
 
     return VK_FALSE;
@@ -104,7 +106,7 @@ void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& create
 VkResult VulkanLayerAndExtension::getExtensionProperties(LayerProperties& layerProps, VkPhysicalDevice* gpu)
 {
     uint32_t    extensionCount = 0;
-    VkResult    result;
+    VkResult    result {};
     char*       layerName = layerProps.properties.layerName;
 
     do

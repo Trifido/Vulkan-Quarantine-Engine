@@ -22,21 +22,21 @@ VkSampleCountFlagBits DeviceModule::getMaxUsableSampleCount()
     return VK_SAMPLE_COUNT_1_BIT;
 }
 
-void DeviceModule::pickPhysicalDevice(const VkInstance &instance, VkSurfaceKHR& surface)
+void DeviceModule::pickPhysicalDevice(const VkInstance &newInstance, VkSurfaceKHR& surface)
 {
     uint32_t deviceCount = 0;
-    vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+    vkEnumeratePhysicalDevices(newInstance, &deviceCount, nullptr);
 
     if (deviceCount == 0) {
         throw std::runtime_error("failed to find GPUs with Vulkan support!");
     }
 
     std::vector<VkPhysicalDevice> devices(deviceCount);
-    vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+    vkEnumeratePhysicalDevices(newInstance, &deviceCount, devices.data());
 
-    for (const auto& device : devices) {
-        if (isDeviceSuitable(device, surface)) {
-            physicalDevice = device;
+    for (const auto& nDevice : devices) {
+        if (isDeviceSuitable(nDevice, surface)) {
+            physicalDevice = nDevice;
             msaaSamples = getMaxUsableSampleCount();
             break;
         }
@@ -57,7 +57,7 @@ DeviceModule* DeviceModule::getInstance()
     return instance;
 }
 
-void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& queueModule)
+void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& nQueueModule)
 {
     QueueFamilyIndices indices = QueueFamilyIndices::findQueueFamilies(physicalDevice, surface);
 
@@ -76,6 +76,7 @@ void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& queue
 
     physicalDeviceFeatures.samplerAnisotropy = VK_TRUE;
     physicalDeviceFeatures.sampleRateShading = VK_TRUE;
+    physicalDeviceFeatures.fillModeNonSolid = VK_TRUE;
 
     //Raytracing features
     VkPhysicalDeviceBufferDeviceAddressFeaturesEXT bufferDeviceAddressFeatures = {};
@@ -122,9 +123,9 @@ void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& queue
         throw std::runtime_error("failed to create logical device!");
     }
 
-    vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &queueModule.graphicsQueue);
-    vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &queueModule.presentQueue);
-    vkGetDeviceQueue(device, indices.computeFamily.value(), 0, &queueModule.computeQueue);
+    vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &nQueueModule.graphicsQueue);
+    vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &nQueueModule.presentQueue);
+    vkGetDeviceQueue(device, indices.computeFamily.value(), 0, &nQueueModule.computeQueue);
 }
 
 void DeviceModule::cleanup()
@@ -153,6 +154,8 @@ VkFormat DeviceModule::findSupportedFormat(const std::vector<VkFormat>& candidat
 
         throw std::runtime_error("failed to find supported format!");
     }
+
+    return VkFormat::VK_FORMAT_UNDEFINED;
 }
 
 VkSampleCountFlagBits* DeviceModule::getMsaaSamples()
@@ -167,7 +170,7 @@ bool DeviceModule::isDeviceSuitable(VkPhysicalDevice newDevice, VkSurfaceKHR& su
 
     bool swapChainAdequate = false;
     if (extensionsSupported) {
-        SwapChainSupportDetails swapChainSupport = querySwapChainSupport(newDevice, surface);
+        SwapChainSupportDetails swapChainSupport = SwapChainSupportDetails::querySwapChainSupport(newDevice, surface);
         swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
     }
 

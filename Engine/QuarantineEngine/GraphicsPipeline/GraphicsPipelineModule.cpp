@@ -1,9 +1,14 @@
 #include "GraphicsPipelineModule.h"
 #include <stdexcept>
+#include <stdio.h>
 
 GraphicsPipelineModule::GraphicsPipelineModule()
 {
     deviceModule = DeviceModule::getInstance();
+    keyboard_ptr = KeyboardController::getInstance();
+    PoligonMode = VkPolygonMode::VK_POLYGON_MODE_FILL;
+
+    hookKeyboardEvents();
 }
 
 void GraphicsPipelineModule::createRenderPass(VkFormat& swapChainImageFormat, DepthBufferModule& depthBufferModule)
@@ -218,4 +223,33 @@ void GraphicsPipelineModule::cleanup()
     vkDestroyPipeline(deviceModule->device, graphicsPipeline, nullptr);
     vkDestroyPipelineLayout(deviceModule->device, pipelineLayout, nullptr);
     vkDestroyRenderPass(deviceModule->device, renderPass, nullptr);
+
+    this->unhookKeyboardEvents();
+}
+
+void GraphicsPipelineModule::hookKeyboardEvents()
+{
+    __hook(&KeyboardController::PolygonModeEvent, keyboard_ptr, &GraphicsPipelineModule::updatePolygonMode);
+}
+
+void GraphicsPipelineModule::unhookKeyboardEvents()
+{
+    __unhook(&KeyboardController::PolygonModeEvent, keyboard_ptr, &GraphicsPipelineModule::updatePolygonMode);
+}
+
+void GraphicsPipelineModule::updatePolygonMode(__int8 polygonType)
+{
+    switch (polygonType)
+    {
+    default:
+    case 1:
+        this->PoligonMode = VkPolygonMode::VK_POLYGON_MODE_FILL;
+        break;
+    case 2:
+        this->PoligonMode = VkPolygonMode::VK_POLYGON_MODE_LINE;
+        break;
+    case 3:
+        this->PoligonMode = VkPolygonMode::VK_POLYGON_MODE_POINT;
+        break;
+    }
 }

@@ -1,7 +1,7 @@
 #include "TextureManagerModule.h"
 #include "SyncTool.h"
 
-void TextureManagerModule::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageAspectFlags aspectFlag)
+void TextureManagerModule::transitionImageLayout(VkImage newImage, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageAspectFlags aspectFlag)
 {
     VkCommandBuffer commandBuffer = beginSingleTimeCommands(deviceModule->device, *ptrCommandPool);
     VkImageMemoryBarrier barrier{};
@@ -10,7 +10,7 @@ void TextureManagerModule::transitionImageLayout(VkImage image, VkFormat format,
     barrier.newLayout = newLayout;
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.image = image;
+    barrier.image = newImage;
     barrier.subresourceRange.aspectMask = aspectFlag;// VK_IMAGE_ASPECT_COLOR_BIT | VK_IMAGE_ASPECT_DEPTH_BIT;
     barrier.subresourceRange.baseMipLevel = 0;
     barrier.subresourceRange.levelCount = mipLevels;
@@ -64,7 +64,7 @@ TextureManagerModule::TextureManagerModule()
     deviceModule = DeviceModule::getInstance();
 }
 
-void TextureManagerModule::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, uint32_t mipLevels, VkSampleCountFlagBits numSamples)
+void TextureManagerModule::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, uint32_t newMipLevels, VkSampleCountFlagBits numSamples)
 {
     VkImageCreateInfo imageInfo{};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -72,7 +72,7 @@ void TextureManagerModule::createImage(uint32_t width, uint32_t height, VkFormat
     imageInfo.extent.width = width;
     imageInfo.extent.height = height;
     imageInfo.extent.depth = 1;
-    imageInfo.mipLevels = mipLevels;
+    imageInfo.mipLevels = newMipLevels;
     imageInfo.arrayLayers = 1;
     imageInfo.format = format;
     imageInfo.tiling = tiling;

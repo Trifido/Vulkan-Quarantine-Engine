@@ -108,7 +108,7 @@ void Camera::EditorRotate()
     }
 }
 
-void Camera::CheckCameraAttributes(float* positionCamera, float* frontCamera, float fov, float nearPlane, float farPlane)
+void Camera::CheckCameraAttributes(float* positionCamera, float* frontCamera, float nfov, float nPlane, float fPlane)
 {
     bool posEqual = true;
     bool lookAtEqual = true;
@@ -116,7 +116,7 @@ void Camera::CheckCameraAttributes(float* positionCamera, float* frontCamera, fl
         posEqual = false;
     if (frontCamera[0] != cameraFront.x || frontCamera[1] != cameraFront.y || frontCamera[2] != cameraFront.z)
         lookAtEqual = false;
-    if (!posEqual || !lookAtEqual || fov != this->fov || nearPlane != this->nearPlane || farPlane != this->farPlane)
+    if (!posEqual || !lookAtEqual || nfov != this->fov || nPlane != this->nearPlane || fPlane != this->farPlane)
     {
         cameraPos.x = positionCamera[0];
         cameraPos.y = positionCamera[1];
@@ -124,9 +124,9 @@ void Camera::CheckCameraAttributes(float* positionCamera, float* frontCamera, fl
         cameraFront.x = frontCamera[0];
         cameraFront.y = frontCamera[1];
         cameraFront.z = frontCamera[2];
-        this->fov = fov;
-        this->nearPlane = nearPlane;
-        this->farPlane = farPlane;
+        this->fov = nfov;
+        this->nearPlane = nPlane;
+        this->farPlane = fPlane;
 
         view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
         projection = glm::perspective(glm::radians(fov), (float)WIDTH / (float)HEIGHT, nearPlane, farPlane);

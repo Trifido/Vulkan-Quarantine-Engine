@@ -7,8 +7,11 @@
 
 App::App()
 {
-    deltaTime = 0;
-    lastFrame = 0.0f;
+    deltaTime = lastFrame = 0;
+
+    commandPoolModule = CommandPoolModule::getInstance();
+    queueModule = QueueModule::getInstance();
+    deviceModule = DeviceModule::getInstance();
 }
 
 void App::run()
@@ -21,7 +24,7 @@ void App::run()
 
 void App::computeDeltaTime()
 {
-    float currentFrame = glfwGetTime();
+    double currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
 }
@@ -55,7 +58,7 @@ void App::init_imgui()
     pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
     pool_info.maxSets = 1000;
-    pool_info.poolSizeCount = std::size(pool_sizes);
+    pool_info.poolSizeCount = (uint32_t)std::size(pool_sizes);
     pool_info.pPoolSizes = pool_sizes;
 
     vkCreateDescriptorPool(deviceModule->device, &pool_info, nullptr, &imguiPool);
@@ -102,14 +105,11 @@ void App::initVulkan()
     vulkanInstance.createInstance();
     layerExtensionModule.setupDebugMessenger(vulkanInstance.getInstance(), vulkanInstance.debug_level);
     windowSurface.createSurface(vulkanInstance.getInstance(), mainWindow.getWindow());
-    queueModule = QueueModule::getInstance();
-    deviceModule = DeviceModule::getInstance();
     deviceModule->pickPhysicalDevice(vulkanInstance.getInstance(), windowSurface.getSurface());
     deviceModule->createLogicalDevice(windowSurface.getSurface(), *queueModule);
     swapchainModule.createSwapChain(windowSurface.getSurface(), mainWindow.getWindow());
     imageViewModule.createImageViews(swapchainModule);
 
-    commandPoolModule = CommandPoolModule::getInstance();
     commandPoolModule->createCommandPool(windowSurface.getSurface());
 
     antialiasingModule.createColorResources(swapchainModule);
@@ -119,6 +119,7 @@ void App::initVulkan()
 
     descriptorModule = std::make_shared<DescriptorModule>(DescriptorModule(*deviceModule));
     models.push_back(std::make_shared<GameObject>(GameObject(MODEL_PATH, TEXTURE_PATH, swapchainModule.getNumSwapChainImages(), commandPoolModule->getCommandPool(), descriptorModule)));
+    //models.push_back(std::make_shared<GameObject>(GameObject(MODEL_PATH, TEXTURE_PATH, swapchainModule.getNumSwapChainImages(), commandPoolModule->getCommandPool(), descriptorModule)));
     descriptorModule->init(swapchainModule.getNumSwapChainImages(), models.at(0)->material->getAlbedo());
 
     //raytracingModule.addModules(bufferModule, queueModule);
@@ -138,6 +139,8 @@ void App::initVulkan()
     synchronizationModule.createSyncObjects(swapchainModule.getNumSwapChainImages());
 
     init_imgui();
+
+    keyboard_ptr =  new KeyboardController();
 }
 
 void App::mainLoop()
@@ -145,7 +148,8 @@ void App::mainLoop()
     while (!glfwWindowShouldClose(mainWindow.getWindow())) {
         glfwPollEvents();
         computeDeltaTime();
-        camera_ptr->CameraController(deltaTime);
+        keyboard_ptr->ReadKeyboardEvents();
+        camera_ptr->CameraController((float)deltaTime);
 
         {
             ImGui_ImplGlfw_NewFrame();
@@ -212,8 +216,10 @@ void App::cleanUp()
     for (uint32_t i = 0; i < models.size(); i++)
     {
         models.at(i)->cleanup();
-        models.at(i)->descriptorModule->cleanup();
+        //models.at(i)->descriptorModule->cleanup();
     }
+
+    descriptorModule->cleanup();
 
     synchronizationModule.cleanup();
     commandPoolModule->cleanup();
@@ -257,7 +263,10 @@ void App::drawFrame()
 
     synchronizationModule.synchronizeCurrentFrame(imageIndex);
 
-    descriptorModule->updateUniformBuffer(imageIndex, swapchainModule.swapChainExtent, models.at(0)->transform);
+    for (uint32_t i = 0; i < models.size(); i++)
+    {
+        descriptorModule->updateUniformBuffer(/*imageIndex,*/ swapchainModule.swapChainExtent, models.at(i)->transform, i);
+    }
     vkDeviceWaitIdle(deviceModule->device);
     commandPoolModule->recreateCommandBuffers(framebufferModule.swapChainFramebuffers, graphicsPipelineModule.renderPass, swapchainModule.swapChainExtent,
         graphicsPipelineModule.pipelineLayout, graphicsPipelineModule.graphicsPipeline, models);

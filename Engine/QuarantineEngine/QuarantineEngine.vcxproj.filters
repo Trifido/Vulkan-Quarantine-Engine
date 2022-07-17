@@ -83,6 +83,9 @@
     <Filter Include="Kernel\Utilities\sources">
       <UniqueIdentifier>{24fcc2b6-6ba6-47eb-af5f-946158765a42}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Input">
+      <UniqueIdentifier>{5ece5c4b-5470-443d-8622-c4f880cf2143}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -192,6 +195,9 @@
     </ClCompile>
     <ClCompile Include="SetUp\QueueModule.cpp">
       <Filter>Kernel\SetUp\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Input\KeyboardController.cpp">
+      <Filter>Input</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -305,6 +311,9 @@
     </ClInclude>
     <ClInclude Include="Draw\SyncTool.h">
       <Filter>Kernel\Draw\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Input\KeyboardController.h">
+      <Filter>Input</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

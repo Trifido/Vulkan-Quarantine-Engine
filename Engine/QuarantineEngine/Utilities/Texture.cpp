@@ -5,7 +5,7 @@
 #include "BufferManageModule.h"
 #include "SyncTool.h"
 
-void Texture::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
+void Texture::copyBufferToImage(VkBuffer buffer, VkImage nImage, uint32_t width, uint32_t height)
 {
     VkCommandBuffer commandBuffer = beginSingleTimeCommands(deviceModule->device, *ptrCommandPool);
     VkBufferImageCopy region{};
@@ -27,7 +27,7 @@ void Texture::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, 
     vkCmdCopyBufferToImage(
         commandBuffer,
         buffer,
-        image,
+        nImage,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         1,
         &region
@@ -35,7 +35,7 @@ void Texture::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, 
     endSingleTimeCommands(deviceModule->device, queueModule->graphicsQueue, *ptrCommandPool, commandBuffer);
 }
 
-void Texture::generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels)
+void Texture::generateMipmaps(VkImage nImage, VkFormat imageFormat, int32_t nTexWidth, int32_t nTexHeight, uint32_t nMipLevels)
 {
     // Check if image format supports linear blitting
     VkFormatProperties formatProperties;
@@ -49,7 +49,7 @@ void Texture::generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWi
 
     VkImageMemoryBarrier barrier{};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    barrier.image = image;
+    barrier.image = nImage;
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -57,8 +57,8 @@ void Texture::generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWi
     barrier.subresourceRange.layerCount = 1;
     barrier.subresourceRange.levelCount = 1;
 
-    int32_t mipWidth = texWidth;
-    int32_t mipHeight = texHeight;
+    int32_t mipWidth = nTexWidth;
+    int32_t mipHeight = nTexHeight;
 
     for (uint32_t i = 1; i < mipLevels; i++)
     {
@@ -109,7 +109,7 @@ void Texture::generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWi
         if (mipHeight > 1) mipHeight /= 2;
     }
 
-    barrier.subresourceRange.baseMipLevel = mipLevels - 1;
+    barrier.subresourceRange.baseMipLevel = nMipLevels - 1;
     barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -159,7 +159,7 @@ void Texture::createTextureImage(std::string path, VkCommandPool& commandPool)
     createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mipLevels);
 
-    transitionImageLayout(image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
+    transitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
     copyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
 
     //If not mipmap

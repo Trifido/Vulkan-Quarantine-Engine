@@ -4,11 +4,26 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
 
+static void glfw_error_callback(int error, const char* description)
+{
+    fprintf(stderr, "Glfw Error %d: %s\n", error, description);
+}
+
 GUIWindow::GUIWindow()
 {
     monitor = glfwGetPrimaryMonitor();
     title = "Vulkan Quarantine Engine";
     glfwGetMonitorPhysicalSize(monitor, &width, &height);
+}
+
+static void ShowDockingDisabledMessage()
+{
+    ImGuiIO& io = ImGui::GetIO();
+    ImGui::Text("ERROR: Docking is not enabled! See Demo > Configuration.");
+    ImGui::Text("Set io.ConfigFlags |= ImGuiConfigFlags_DockingEnable in your code, or ");
+    ImGui::SameLine(0.0f, 0.0f);
+    if (ImGui::SmallButton("click here"))
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 }
 
 bool GUIWindow::init(bool fullScreen)
@@ -130,7 +145,7 @@ GLFWwindow* GUIWindow::getWindow()
 
 void GUIWindow::checkMinimize()
 {
-    int width = 0, height = 0;
+    width = 0; height = 0;
     glfwGetFramebufferSize(window, &width, &height);
     while (width == 0 || height == 0) {
         glfwGetFramebufferSize(window, &width, &height);

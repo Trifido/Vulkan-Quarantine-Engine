@@ -102,7 +102,7 @@ void DescriptorModule::createDescriptorSets()
     }
 }
 
-void DescriptorModule::addPtrData(Texture& texModule)
+void DescriptorModule::addPtrData(const Texture& texModule)
 {
     ptrTexture = std::make_unique<Texture>(texModule);
 }
@@ -130,14 +130,15 @@ void DescriptorModule::createUniformBuffers(size_t numImagesSwapChain)
     }
 }
 
-void DescriptorModule::updateUniformBuffer(uint32_t currentImage, VkExtent2D extent, std::shared_ptr<Transform> transform)
+void DescriptorModule::updateUniformBuffer(/*uint32_t currentImage, */VkExtent2D extent, std::shared_ptr<Transform> transform, int num)
 {
     static auto startTime = std::chrono::high_resolution_clock::now();
 
     auto currentTime = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-    transform->updateMVP(time, extent.width / (float)extent.height);
+    if(num == 0)
+        transform->updateMVP(time, extent.width / (float)extent.height);
 
     //void* data;
     //vkMapMemory(deviceModule->device, uniformBuffersMemory[currentImage], 0, sizeof(transform->getMVP()), 0, &data);
@@ -145,7 +146,7 @@ void DescriptorModule::updateUniformBuffer(uint32_t currentImage, VkExtent2D ext
     //vkUnmapMemory(deviceModule->device, uniformBuffersMemory[currentImage]);
 }
 
-void DescriptorModule::init(uint32_t numSwapChain, Texture& texModule)
+void DescriptorModule::init(uint32_t numSwapChain, const Texture& texModule)
 {
     createUniformBuffers(numSwapChain);
     addPtrData(texModule);

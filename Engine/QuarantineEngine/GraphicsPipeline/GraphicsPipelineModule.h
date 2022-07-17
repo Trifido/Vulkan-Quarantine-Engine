@@ -6,6 +6,7 @@
 #include "DescriptorModule.h"
 #include "DepthBufferModule.h"
 #include "AntiAliasingModule.h"
+#include "KeyboardController.h"
 
 class DepthBufferModule;
 
@@ -19,6 +20,9 @@ private:
     DeviceModule*               deviceModule;
     std::vector<ShaderModule*>  shaderModules;
     AntiAliasingModule*         antialias_ptr;
+    KeyboardController*         keyboard_ptr;
+    VkPolygonMode               PoligonMode;
+    
 public:
     GraphicsPipelineModule();
     void createRenderPass(VkFormat& swapChainImageFormat, DepthBufferModule& depthBufferModule);
@@ -26,6 +30,10 @@ public:
     void addShaderModules(ShaderModule& shader_module);
     void addAntialiasingModule(AntiAliasingModule& antialiasingModule);
     void cleanup();
+private:
+    void hookKeyboardEvents();
+    void unhookKeyboardEvents();
+    void updatePolygonMode(__int8 polygonType);
 };
 
 #endif

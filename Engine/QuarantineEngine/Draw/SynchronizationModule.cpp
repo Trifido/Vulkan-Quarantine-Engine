@@ -89,6 +89,7 @@ SynchronizationModule::SynchronizationModule()
 void SynchronizationModule::synchronizeWaitFences()
 {
     vkWaitForFences(deviceModule->device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+   // vkResetFences(deviceModule->device, 1, &inFlightFences[currentFrame]);
 }
 
 void SynchronizationModule::synchronizeCurrentFrame(const uint32_t& imageIdx)
