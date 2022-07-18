@@ -1,240 +1,47 @@
 #include "GraphicsPipelineModule.h"
-#include <stdexcept>
-#include <stdio.h>
 
 GraphicsPipelineModule::GraphicsPipelineModule()
 {
-    deviceModule = DeviceModule::getInstance();
     keyboard_ptr = KeyboardController::getInstance();
-    PoligonMode = VkPolygonMode::VK_POLYGON_MODE_FILL;
+    keyboard_ptr->Attach(this);
 
-    hookKeyboardEvents();
+    this->gp_fill = new GraphicsPipeline(GraphicsPipeline::PolygonRenderType::FILL);
+    this->gp_line = new GraphicsPipeline(GraphicsPipeline::PolygonRenderType::LINE);
+    this->gp_point = new GraphicsPipeline(GraphicsPipeline::PolygonRenderType::POINT);
+
+    this->gp_current = this->gp_fill;
 }
-
-void GraphicsPipelineModule::createRenderPass(VkFormat& swapChainImageFormat, DepthBufferModule& depthBufferModule)
+void GraphicsPipelineModule::Initialize(AntiAliasingModule& AAModule, std::shared_ptr<ShaderModule> SModule, SwapChainModule& SCModule, DepthBufferModule& DBModule, std::shared_ptr<DescriptorModule> DModule)
 {
-    VkAttachmentDescription colorAttachment{};
-    colorAttachment.format = swapChainImageFormat;
-    colorAttachment.samples = *antialias_ptr->msaaSamples;
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    this->gp_fill->addAntialiasingModule(AAModule);
+    this->gp_fill->addShaderModules(SModule);
+    this->gp_fill->createRenderPass(SCModule.swapChainImageFormat, DBModule);
+    this->gp_fill->createGraphicsPipeline(SCModule.swapChainExtent, DModule->getDescriptorSetLayout());
 
-    VkAttachmentReference colorAttachmentRef{};
-    colorAttachmentRef.attachment = 0;
-    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    this->gp_line->addAntialiasingModule(AAModule);
+    this->gp_line->addShaderModules(SModule);
+    this->gp_line->createRenderPass(SCModule.swapChainImageFormat, DBModule);
+    this->gp_line->createGraphicsPipeline(SCModule.swapChainExtent, DModule->getDescriptorSetLayout());
 
-    VkAttachmentDescription depthAttachment{};
-    depthAttachment.format = depthBufferModule.findDepthFormat();
-    depthAttachment.samples = *antialias_ptr->msaaSamples;
-    depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    this->gp_point->addAntialiasingModule(AAModule);
+    this->gp_point->addShaderModules(SModule);
+    this->gp_point->createRenderPass(SCModule.swapChainImageFormat, DBModule);
+    this->gp_point->createGraphicsPipeline(SCModule.swapChainExtent, DModule->getDescriptorSetLayout());
 
-    VkAttachmentReference depthAttachmentRef{};
-    depthAttachmentRef.attachment = 1;
-    depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    VkAttachmentDescription colorAttachmentResolve{};
-    colorAttachmentResolve.format = swapChainImageFormat;
-    colorAttachmentResolve.samples = VK_SAMPLE_COUNT_1_BIT;
-    colorAttachmentResolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachmentResolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachmentResolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachmentResolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    colorAttachmentResolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachmentResolve.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    VkAttachmentReference colorAttachmentResolveRef{};
-    colorAttachmentResolveRef.attachment = 2;
-    colorAttachmentResolveRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkSubpassDescription subpass{};
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &colorAttachmentRef;
-    subpass.pDepthStencilAttachment = &depthAttachmentRef;
-    subpass.pResolveAttachments = &colorAttachmentResolveRef;
-
-    VkSubpassDependency dependency{};
-    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubpass = 0;
-    dependency.srcAccessMask = 0;
-    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
-    std::array<VkAttachmentDescription, 3> attachments = { colorAttachment, depthAttachment, colorAttachmentResolve };
-
-    VkRenderPassCreateInfo renderPassInfo{};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-    renderPassInfo.pAttachments = attachments.data();
-    renderPassInfo.subpassCount = 1;
-    renderPassInfo.pSubpasses = &subpass;
-    renderPassInfo.dependencyCount = 1;
-    renderPassInfo.pDependencies = &dependency;
-
-    if (vkCreateRenderPass(deviceModule->device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create render pass!");
-    }
-}
-
-void GraphicsPipelineModule::createGraphicsPipeline(VkExtent2D& swapChainExtent, VkDescriptorSetLayout& descriptorSetLayout)
-{
-    VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
-    inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    inputAssembly.primitiveRestartEnable = VK_FALSE;
-
-    VkViewport viewport{};
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width = (float)swapChainExtent.width;
-    viewport.height = (float)swapChainExtent.height;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-
-    VkRect2D scissor{};
-    scissor.offset = { 0, 0 };
-    scissor.extent = swapChainExtent;
-
-    VkPipelineViewportStateCreateInfo viewportState{};
-    viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewportState.viewportCount = 1;
-    viewportState.pViewports = &viewport;
-    viewportState.scissorCount = 1;
-    viewportState.pScissors = &scissor;
-
-    VkPipelineRasterizationStateCreateInfo rasterizer{};
-    rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    rasterizer.depthClampEnable = VK_FALSE;
-    rasterizer.rasterizerDiscardEnable = VK_FALSE;
-
-    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-    rasterizer.lineWidth = 1.0f;
-    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-    rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-
-    rasterizer.depthBiasEnable = VK_FALSE;
-    rasterizer.depthBiasConstantFactor = 0.0f; // Optional
-    rasterizer.depthBiasClamp = 0.0f; // Optional
-    rasterizer.depthBiasSlopeFactor = 0.0f; // Optional
-
-    VkPipelineMultisampleStateCreateInfo multisampling{};
-    multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    //multisampling.sampleShadingEnable = VK_FALSE;
-    multisampling.rasterizationSamples = *antialias_ptr->msaaSamples;
-   // multisampling.minSampleShading = 1.0f; // Optional
-    multisampling.pSampleMask = nullptr; // Optional
-    multisampling.alphaToCoverageEnable = VK_FALSE; // Optional
-    multisampling.alphaToOneEnable = VK_FALSE; // Optional
-
-    multisampling.sampleShadingEnable = VK_TRUE; // enable sample shading in the pipeline
-    multisampling.minSampleShading = .2f;
-
-    VkPipelineColorBlendAttachmentState colorBlendAttachment{};
-    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    colorBlendAttachment.blendEnable = VK_FALSE;
-
-    VkPipelineColorBlendStateCreateInfo colorBlending{};
-    colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    colorBlending.logicOpEnable = VK_FALSE;
-    colorBlending.logicOp = VK_LOGIC_OP_COPY; // Optional
-    colorBlending.attachmentCount = 1;
-    colorBlending.pAttachments = &colorBlendAttachment;
-    colorBlending.blendConstants[0] = 0.0f; // Optional
-    colorBlending.blendConstants[1] = 0.0f; // Optional
-    colorBlending.blendConstants[2] = 0.0f; // Optional
-    colorBlending.blendConstants[3] = 0.0f; // Optional
-
-    VkPipelineDepthStencilStateCreateInfo depthStencil{};
-    depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depthStencil.depthTestEnable = VK_TRUE;
-    depthStencil.depthWriteEnable = VK_TRUE;
-    depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
-    depthStencil.depthBoundsTestEnable = VK_FALSE;
-    depthStencil.minDepthBounds = 0.0f; // Optional
-    depthStencil.maxDepthBounds = 1.0f; // Optional
-    depthStencil.stencilTestEnable = VK_FALSE;
-    depthStencil.front = {}; // Optional
-    depthStencil.back = {}; // Optional
-
-    // Setup the push constants. It's a single mat4 in the vertex shader.
-    VkPushConstantRange pushConstantInfo = { 0 };
-    pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    pushConstantInfo.offset = 0;
-    pushConstantInfo.size = sizeof(glm::mat4);
-
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 1; // Number of descriptor sets
-    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout; // Ptr to descriptor set layout
-    pipelineLayoutInfo.pushConstantRangeCount = 1; // Optional
-    pipelineLayoutInfo.pPushConstantRanges = &pushConstantInfo; // Optional
-
-    if (vkCreatePipelineLayout(deviceModule->device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create pipeline layout!");
-    }
-
-    VkGraphicsPipelineCreateInfo pipelineInfo{};
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.stageCount = static_cast<uint32_t>(shaderModules.at(0)->shaderStages.size());
-    pipelineInfo.pStages = shaderModules.at(0)->shaderStages.data();
-    pipelineInfo.pVertexInputState = &shaderModules.at(0)->vertexInputInfo;
-    pipelineInfo.pInputAssemblyState = &inputAssembly;
-    pipelineInfo.pViewportState = &viewportState;
-    pipelineInfo.pRasterizationState = &rasterizer;
-    pipelineInfo.pMultisampleState = &multisampling;
-    pipelineInfo.pDepthStencilState = &depthStencil;
-    pipelineInfo.pColorBlendState = &colorBlending;
-    pipelineInfo.pDynamicState = nullptr; // Optional
-    pipelineInfo.layout = pipelineLayout;
-    pipelineInfo.renderPass = renderPass;
-    pipelineInfo.subpass = 0;
-    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
-    pipelineInfo.basePipelineIndex = -1; // Optional
-
-    if (vkCreateGraphicsPipelines(deviceModule->device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create graphics pipeline!");
-    }
-
-    shaderModules.at(0)->cleanUp();
-}
-
-void GraphicsPipelineModule::addShaderModules(ShaderModule& shader_module)
-{
-    shaderModules.push_back(&shader_module);
-}
-
-void GraphicsPipelineModule::addAntialiasingModule(AntiAliasingModule& antialiasingModule)
-{
-    antialias_ptr = &antialiasingModule;
+    shaderModule_ptr = SModule;
 }
 
 void GraphicsPipelineModule::cleanup()
 {
-    shaderModules.clear();
-
-    vkDestroyPipeline(deviceModule->device, graphicsPipeline, nullptr);
-    vkDestroyPipelineLayout(deviceModule->device, pipelineLayout, nullptr);
-    vkDestroyRenderPass(deviceModule->device, renderPass, nullptr);
-
-    this->unhookKeyboardEvents();
+    shaderModule_ptr->cleanup();
+    this->gp_fill->cleanup();
+    this->gp_line->cleanup();
+    this->gp_point->cleanup();
 }
 
-void GraphicsPipelineModule::hookKeyboardEvents()
+void GraphicsPipelineModule::Update(const __int8& message_from_subject)
 {
-    __hook(&KeyboardController::PolygonModeEvent, keyboard_ptr, &GraphicsPipelineModule::updatePolygonMode);
-}
-
-void GraphicsPipelineModule::unhookKeyboardEvents()
-{
-    __unhook(&KeyboardController::PolygonModeEvent, keyboard_ptr, &GraphicsPipelineModule::updatePolygonMode);
+    updatePolygonMode(message_from_subject);
 }
 
 void GraphicsPipelineModule::updatePolygonMode(__int8 polygonType)
@@ -243,13 +50,13 @@ void GraphicsPipelineModule::updatePolygonMode(__int8 polygonType)
     {
     default:
     case 1:
-        this->PoligonMode = VkPolygonMode::VK_POLYGON_MODE_FILL;
+        this->gp_current = this->gp_fill;
         break;
     case 2:
-        this->PoligonMode = VkPolygonMode::VK_POLYGON_MODE_LINE;
+        this->gp_current = this->gp_line;
         break;
     case 3:
-        this->PoligonMode = VkPolygonMode::VK_POLYGON_MODE_POINT;
+        this->gp_current = this->gp_point;
         break;
     }
 }

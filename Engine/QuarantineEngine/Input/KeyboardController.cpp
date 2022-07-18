@@ -4,6 +4,7 @@
 
 KeyboardController* KeyboardController::instance = nullptr;
 
+
 KeyboardController* KeyboardController::getInstance()
 {
 	if (instance == NULL)
@@ -33,16 +34,40 @@ void KeyboardController::cleanup()
 
 void KeyboardController::ReadPolygonModeKeys()
 {
-    if (ImGui::IsKeyPressed('1'))
+    if (ImGui::IsKeyDown('1'))
     {
-        __raise this->PolygonModeEvent(1);
+        Notify(1);
     }
-    else if(ImGui::IsKeyPressed('2'))
+    else if(ImGui::IsKeyDown('2'))
     {
-        __raise this->PolygonModeEvent(2);
+        Notify(2);
     }
-    else if (ImGui::IsKeyPressed('3'))
+    else if (ImGui::IsKeyDown('3'))
     {
-        __raise this->PolygonModeEvent(3);
+        Notify(3);
+    }
+}
+
+KeyboardController::~KeyboardController() {
+    std::cout << "Goodbye, I was the Subject.\n";
+}
+
+void KeyboardController::Attach(IObserver* observer)
+{
+    list_observer_.push_back(observer);
+}
+
+void KeyboardController::Detach(IObserver* observer)
+{
+    list_observer_.remove(observer);
+}
+
+void KeyboardController::Notify(__int8 keyNum)
+{
+    std::list<IObserver*>::iterator iterator = list_observer_.begin();
+
+    while (iterator != list_observer_.end()) {
+        (*iterator)->Update(keyNum);
+        ++iterator;
     }
 }

@@ -155,6 +155,8 @@ void GUIWindow::checkMinimize()
 
 void GUIWindow::framebufferResizeCallback(GLFWwindow* window, int width, int height)
 {
+    height = height;
+    width = width;
     auto app = reinterpret_cast<App*>(glfwGetWindowUserPointer(window));
     app->framebufferResized = true;
 }

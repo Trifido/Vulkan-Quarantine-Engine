@@ -77,7 +77,6 @@ private:
     WindowSurface           windowSurface {};
     SwapChainModule         swapchainModule;
     ImageViewModule         imageViewModule;
-    ShaderModule            shaderModule;
     GraphicsPipelineModule  graphicsPipelineModule;
     FramebufferModule       framebufferModule;
     CommandPoolModule*      commandPoolModule {};
@@ -86,6 +85,7 @@ private:
     AntiAliasingModule      antialiasingModule;
     VkDescriptorPool        imguiPool {};
 
+    std::shared_ptr<ShaderModule>       shaderModule;
     std::shared_ptr<DescriptorModule>   descriptorModule;
 
     bool show_demo_window = true;

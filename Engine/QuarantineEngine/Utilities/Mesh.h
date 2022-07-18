@@ -45,8 +45,8 @@ public:
     std::string path;
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
-    unsigned int numVertices;
-    unsigned int numFaces;
+    uint32_t numVertices;
+    uint32_t numFaces;
 
 private:
     void createVertexBuffer();

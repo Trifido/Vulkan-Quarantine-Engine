@@ -2,37 +2,27 @@
 #ifndef GRAPHICS_PIPELINE_MODULE_H
 #define GRAPHICS_PIPELINE_MODULE_H
 
-#include "ShaderModule.h"
-#include "DescriptorModule.h"
-#include "DepthBufferModule.h"
-#include "AntiAliasingModule.h"
+#include "GraphicsPipeline.h"
 #include "KeyboardController.h"
 
-class DepthBufferModule;
+//class DepthBufferModule;
 
-class GraphicsPipelineModule
+class GraphicsPipelineModule : IObserver
 {
 public:
-    VkRenderPass                renderPass;
-    VkPipeline                  graphicsPipeline;
-    VkPipelineLayout            pipelineLayout;
+    GraphicsPipeline* gp_current = nullptr;
 private:
-    DeviceModule*               deviceModule;
-    std::vector<ShaderModule*>  shaderModules;
-    AntiAliasingModule*         antialias_ptr;
-    KeyboardController*         keyboard_ptr;
-    VkPolygonMode               PoligonMode;
-    
+    GraphicsPipeline* gp_fill = nullptr;
+    GraphicsPipeline* gp_line = nullptr;
+    GraphicsPipeline* gp_point = nullptr;
+    KeyboardController* keyboard_ptr = nullptr;
+    std::shared_ptr<ShaderModule> shaderModule_ptr;
 public:
     GraphicsPipelineModule();
-    void createRenderPass(VkFormat& swapChainImageFormat, DepthBufferModule& depthBufferModule);
-    void createGraphicsPipeline(VkExtent2D& swapChainExtent, VkDescriptorSetLayout& descriptorSetLayout);
-    void addShaderModules(ShaderModule& shader_module);
-    void addAntialiasingModule(AntiAliasingModule& antialiasingModule);
+    void Initialize(AntiAliasingModule& AAModule, std::shared_ptr<ShaderModule> SModule, SwapChainModule& SCModule, DepthBufferModule& DBModule, std::shared_ptr<DescriptorModule> DModule);
     void cleanup();
+    void Update(const __int8& message_from_subject);
 private:
-    void hookKeyboardEvents();
-    void unhookKeyboardEvents();
     void updatePolygonMode(__int8 polygonType);
 };
 

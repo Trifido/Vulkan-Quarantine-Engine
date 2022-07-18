@@ -6,7 +6,7 @@ GameObject::GameObject()
     queueModule = QueueModule::getInstance();
 }
 
-GameObject::GameObject(std::string meshPath, std::string albedoPath, uint32_t numSwapChain, VkCommandPool& commandPool, std::shared_ptr<DescriptorModule> descriptor)
+GameObject::GameObject(std::string meshPath, std::string albedoPath, VkCommandPool& commandPool, std::shared_ptr<DescriptorModule> descriptor)
 {
     deviceModule = DeviceModule::getInstance();
     queueModule = QueueModule::getInstance();
@@ -25,11 +25,11 @@ void GameObject::cleanup()
     mesh->cleanup();
 }
 
-void GameObject::drawCommand(VkCommandBuffer& commandBuffer, VkPipelineLayout& pipelineLayout, VkPipeline& pipeline, unsigned int idx)
+void GameObject::drawCommand(VkCommandBuffer& commandBuffer, VkPipelineLayout& pipelineLayout, VkPipeline& pipeline, uint32_t idx)
 {
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
     VkBuffer vertexBuffers[] = { mesh->vertexBuffer };
-    VkBuffer* indexBuffers = &mesh->indexBuffer;
+    //VkBuffer* indexBuffers = &mesh->indexBuffer;
     VkDeviceSize offsets[] = { 0 };
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
     vkCmdBindIndexBuffer(commandBuffer, mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);

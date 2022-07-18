@@ -45,7 +45,7 @@ void ShaderModule::createShaderModule(const std::string& filename_vertex, const 
     vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data(); // Optional
 }
 
-void ShaderModule::cleanUp()
+void ShaderModule::cleanup()
 {
     shaderStages.clear();
 

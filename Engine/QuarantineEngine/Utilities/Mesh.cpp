@@ -44,7 +44,7 @@ void Mesh::loadMesh(std::string pathfile)
         }
     }
 
-    numVertices = indices.size();
+    numVertices = (uint32_t)indices.size();
     numFaces = numVertices / 3;
 
     createVertexBuffer();

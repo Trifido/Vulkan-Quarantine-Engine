@@ -9,6 +9,7 @@ App::App()
 {
     deltaTime = lastFrame = 0;
 
+    keyboard_ptr = KeyboardController::getInstance();
     commandPoolModule = CommandPoolModule::getInstance();
     queueModule = QueueModule::getInstance();
     deviceModule = DeviceModule::getInstance();
@@ -83,7 +84,7 @@ void App::init_imgui()
     init_info.ImageCount = 3;
     init_info.MSAASamples = *deviceModule->getMsaaSamples();//VK_SAMPLE_COUNT_1_BIT;
 
-    ImGui_ImplVulkan_Init(&init_info, graphicsPipelineModule.renderPass);
+    ImGui_ImplVulkan_Init(&init_info, graphicsPipelineModule.gp_current->renderPass);
 
     //execute a gpu command to upload imgui font textures
     VkCommandBuffer commandBuffer = beginSingleTimeCommands(deviceModule->device, commandPoolModule->getCommandPool());
@@ -118,29 +119,29 @@ void App::initVulkan()
     depthBufferModule.createDepthResources(swapchainModule.swapChainExtent, commandPoolModule->getCommandPool());
 
     descriptorModule = std::make_shared<DescriptorModule>(DescriptorModule(*deviceModule));
-    models.push_back(std::make_shared<GameObject>(GameObject(MODEL_PATH, TEXTURE_PATH, swapchainModule.getNumSwapChainImages(), commandPoolModule->getCommandPool(), descriptorModule)));
+    models.push_back(std::make_shared<GameObject>(GameObject(MODEL_PATH, TEXTURE_PATH, commandPoolModule->getCommandPool(), descriptorModule)));
     //models.push_back(std::make_shared<GameObject>(GameObject(MODEL_PATH, TEXTURE_PATH, swapchainModule.getNumSwapChainImages(), commandPoolModule->getCommandPool(), descriptorModule)));
     descriptorModule->init(swapchainModule.getNumSwapChainImages(), models.at(0)->material->getAlbedo());
 
     //raytracingModule.addModules(bufferModule, queueModule);
     //raytracingModule.initRayTracing();
 
-    shaderModule.createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv");
-    graphicsPipelineModule.addAntialiasingModule(antialiasingModule);
-    graphicsPipelineModule.addShaderModules(shaderModule);
-    graphicsPipelineModule.createRenderPass(swapchainModule.swapChainImageFormat, depthBufferModule);
-    graphicsPipelineModule.createGraphicsPipeline(swapchainModule.swapChainExtent, descriptorModule->getDescriptorSetLayout());
+    shaderModule = std::make_shared<ShaderModule>(ShaderModule());
+    shaderModule->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv");
+    graphicsPipelineModule.Initialize(antialiasingModule, shaderModule, swapchainModule, depthBufferModule, descriptorModule);
+    //graphicsPipelineModule.addAntialiasingModule(antialiasingModule);
+    //graphicsPipelineModule.addShaderModules(shaderModule);
+    //graphicsPipelineModule.createRenderPass(swapchainModule.swapChainImageFormat, depthBufferModule);
+    //graphicsPipelineModule.createGraphicsPipeline(swapchainModule.swapChainExtent, descriptorModule->getDescriptorSetLayout());
 
     framebufferModule.addAntialiasingModule(antialiasingModule);
-    framebufferModule.createFramebuffer(graphicsPipelineModule.renderPass, imageViewModule.swapChainImageViews, swapchainModule.swapChainExtent, depthBufferModule);
-    commandPoolModule->createCommandBuffers(framebufferModule.swapChainFramebuffers, graphicsPipelineModule.renderPass, swapchainModule.swapChainExtent,
-                                            graphicsPipelineModule.pipelineLayout, graphicsPipelineModule.graphicsPipeline, models);
+    framebufferModule.createFramebuffer(graphicsPipelineModule.gp_current->renderPass, imageViewModule.swapChainImageViews, swapchainModule.swapChainExtent, depthBufferModule);
+    commandPoolModule->createCommandBuffers(framebufferModule.swapChainFramebuffers, graphicsPipelineModule.gp_current->renderPass, swapchainModule.swapChainExtent,
+        graphicsPipelineModule.gp_current->pipelineLayout, graphicsPipelineModule.gp_current->graphicsPipeline, models);
 
     synchronizationModule.createSyncObjects(swapchainModule.getNumSwapChainImages());
 
     init_imgui();
-
-    keyboard_ptr =  new KeyboardController();
 }
 
 void App::mainLoop()
@@ -268,8 +269,8 @@ void App::drawFrame()
         descriptorModule->updateUniformBuffer(/*imageIndex,*/ swapchainModule.swapChainExtent, models.at(i)->transform, i);
     }
     vkDeviceWaitIdle(deviceModule->device);
-    commandPoolModule->recreateCommandBuffers(framebufferModule.swapChainFramebuffers, graphicsPipelineModule.renderPass, swapchainModule.swapChainExtent,
-        graphicsPipelineModule.pipelineLayout, graphicsPipelineModule.graphicsPipeline, models);
+    commandPoolModule->recreateCommandBuffers(framebufferModule.swapChainFramebuffers, graphicsPipelineModule.gp_current->renderPass, swapchainModule.swapChainExtent,
+        graphicsPipelineModule.gp_current->pipelineLayout, graphicsPipelineModule.gp_current->graphicsPipeline, models);
 
     synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer(imageIndex));
 
@@ -316,15 +317,17 @@ void App::recreateSwapchain()
 
     swapchainModule.createSwapChain(windowSurface.getSurface(), mainWindow.getWindow());
     imageViewModule.createImageViews(swapchainModule);
-    shaderModule.createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv");
+    shaderModule->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv");
     antialiasingModule.createColorResources(swapchainModule);
     depthBufferModule.createDepthResources(swapchainModule.swapChainExtent, commandPoolModule->getCommandPool());
-    graphicsPipelineModule.addShaderModules(shaderModule);
-    graphicsPipelineModule.createRenderPass(swapchainModule.swapChainImageFormat, depthBufferModule);
-    graphicsPipelineModule.createGraphicsPipeline(swapchainModule.swapChainExtent, descriptorModule->getDescriptorSetLayout());
-    framebufferModule.createFramebuffer(graphicsPipelineModule.renderPass, imageViewModule.swapChainImageViews, swapchainModule.swapChainExtent, depthBufferModule);
+
+    graphicsPipelineModule.Initialize(antialiasingModule, shaderModule, swapchainModule, depthBufferModule, descriptorModule);
+    //graphicsPipelineModule.addShaderModules(shaderModule);
+    //graphicsPipelineModule.createRenderPass(swapchainModule.swapChainImageFormat, depthBufferModule);
+    //graphicsPipelineModule.createGraphicsPipeline(swapchainModule.swapChainExtent, descriptorModule->getDescriptorSetLayout());
+    framebufferModule.createFramebuffer(graphicsPipelineModule.gp_current->renderPass, imageViewModule.swapChainImageViews, swapchainModule.swapChainExtent, depthBufferModule);
 
     descriptorModule->recreateUniformBuffer(swapchainModule.getNumSwapChainImages());
-    commandPoolModule->createCommandBuffers(framebufferModule.swapChainFramebuffers, graphicsPipelineModule.renderPass, swapchainModule.swapChainExtent,
-        graphicsPipelineModule.pipelineLayout, graphicsPipelineModule.graphicsPipeline, models);
+    commandPoolModule->createCommandBuffers(framebufferModule.swapChainFramebuffers, graphicsPipelineModule.gp_current->renderPass, swapchainModule.swapChainExtent,
+        graphicsPipelineModule.gp_current->pipelineLayout, graphicsPipelineModule.gp_current->graphicsPipeline, models);
 }

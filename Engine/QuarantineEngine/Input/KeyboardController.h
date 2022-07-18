@@ -4,19 +4,39 @@
 #define KEYBOARD_CONTROLLER_H
 
 #include <stdio.h>
+#include <list>
 
-[event_source(native)]
-class KeyboardController
+class IObserver {
+public:
+    virtual ~IObserver() {};
+    virtual void Update(const __int8& message_from_subject) = 0;
+};
+
+class IKeyboardController
 {
 public:
-    __event void PolygonModeEvent(__int8 polygonType);
-    static KeyboardController* instance;
+    virtual ~IKeyboardController() {};
+    virtual void Attach(IObserver* observer) = 0;
+    virtual void Detach(IObserver* observer) = 0;
+    virtual void Notify(__int8 keyNum) = 0;
+};
+
+class KeyboardController : IKeyboardController
+{
 private:
+    static KeyboardController* instance;
     bool isEditorProfile = true;
+    std::list<IObserver*> list_observer_;
+
 public:
     static KeyboardController* getInstance();
     void ReadKeyboardEvents();
     void cleanup();
+
+    virtual ~KeyboardController();
+    void Attach(IObserver* observer) override;
+    void Detach(IObserver* observer) override;
+    void Notify(__int8 keyNum) override;
 private:
     void ReadPolygonModeKeys();
 };

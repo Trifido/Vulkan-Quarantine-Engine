@@ -152,7 +152,7 @@ VkFormat DeviceModule::findSupportedFormat(const std::vector<VkFormat>& candidat
             return format;
         }
 
-        throw std::runtime_error("failed to find supported format!");
+        //throw std::runtime_error("failed to find supported format!");
     }
 
     return VkFormat::VK_FORMAT_UNDEFINED;

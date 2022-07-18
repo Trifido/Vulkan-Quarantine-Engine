@@ -57,7 +57,7 @@ void CommandPoolModule::createCommandBuffers(std::vector<VkFramebuffer>& swapCha
 void CommandPoolModule::recreateCommandBuffers(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass,
     VkExtent2D& swapChainExtent, VkPipelineLayout& pipelineLayout, VkPipeline& pipeline, std::vector<std::shared_ptr<GameObject>>& gameObjects)
 {
-    for (size_t i = 0; i < commandBuffers.size(); i++) {
+    for (uint32_t i = 0; i < commandBuffers.size(); i++) {
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         beginInfo.flags = 0; // Optional
@@ -83,7 +83,7 @@ void CommandPoolModule::recreateCommandBuffers(std::vector<VkFramebuffer>& swapC
 
         vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        for (int j = 0; j < gameObjects.size(); j++)
+        for (uint32_t j = 0; j < gameObjects.size(); j++)
         {
             gameObjects.at(j)->drawCommand(commandBuffers[i], pipelineLayout, pipeline, i);
         }

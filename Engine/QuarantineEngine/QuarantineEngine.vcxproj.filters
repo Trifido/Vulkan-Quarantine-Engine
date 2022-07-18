@@ -199,6 +199,12 @@
     <ClCompile Include="Input\KeyboardController.cpp">
       <Filter>Input</Filter>
     </ClCompile>
+    <ClCompile Include="GraphicsPipeline\GraphicsPipelineBase.cpp">
+      <Filter>Kernel\GraphicsPipeline\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsPipeline\GraphicsPipeline.cpp">
+      <Filter>Kernel\GraphicsPipeline\sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\backends\imgui_impl_glfw.h">
@@ -314,6 +320,12 @@
     </ClInclude>
     <ClInclude Include="Input\KeyboardController.h">
       <Filter>Input</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsPipeline\GraphicsPipelineBase.h">
+      <Filter>Kernel\GraphicsPipeline\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsPipeline\GraphicsPipeline.h">
+      <Filter>Kernel\GraphicsPipeline\headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
