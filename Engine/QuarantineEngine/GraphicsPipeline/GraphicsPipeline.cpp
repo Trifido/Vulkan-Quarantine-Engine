@@ -31,7 +31,7 @@ void GraphicsPipeline::createGraphicsPipeline(VkExtent2D& swapChainExtent, VkDes
 {
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    inputAssembly.topology = this->getInputTopology();
     inputAssembly.primitiveRestartEnable = VK_FALSE;
 
     VkViewport viewport{};
@@ -183,6 +183,23 @@ void GraphicsPipeline::updatePolygonMode(PolygonRenderType polygonType)
         break;
     case PolygonRenderType::POINT:
         this->PoligonMode = VkPolygonMode::VK_POLYGON_MODE_POINT;
+        break;
+    }
+}
+
+VkPrimitiveTopology GraphicsPipeline::getInputTopology()
+{
+    switch (inputTopology)
+    {
+    default:
+    case GraphicsPipelineBase::TRIANGLE_LIST:
+        return VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        break;
+    case GraphicsPipelineBase::LINES:
+        return VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+        break;
+    case GraphicsPipelineBase::POINTS:
+        return VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
         break;
     }
 }

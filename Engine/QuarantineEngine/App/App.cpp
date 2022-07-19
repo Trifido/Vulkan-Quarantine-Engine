@@ -129,10 +129,6 @@ void App::initVulkan()
     shaderModule = std::make_shared<ShaderModule>(ShaderModule());
     shaderModule->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv");
     graphicsPipelineModule.Initialize(antialiasingModule, shaderModule, swapchainModule, depthBufferModule, descriptorModule);
-    //graphicsPipelineModule.addAntialiasingModule(antialiasingModule);
-    //graphicsPipelineModule.addShaderModules(shaderModule);
-    //graphicsPipelineModule.createRenderPass(swapchainModule.swapChainImageFormat, depthBufferModule);
-    //graphicsPipelineModule.createGraphicsPipeline(swapchainModule.swapChainExtent, descriptorModule->getDescriptorSetLayout());
 
     framebufferModule.addAntialiasingModule(antialiasingModule);
     framebufferModule.createFramebuffer(graphicsPipelineModule.gp_current->renderPass, imageViewModule.swapChainImageViews, swapchainModule.swapChainExtent, depthBufferModule);
@@ -322,9 +318,7 @@ void App::recreateSwapchain()
     depthBufferModule.createDepthResources(swapchainModule.swapChainExtent, commandPoolModule->getCommandPool());
 
     graphicsPipelineModule.Initialize(antialiasingModule, shaderModule, swapchainModule, depthBufferModule, descriptorModule);
-    //graphicsPipelineModule.addShaderModules(shaderModule);
-    //graphicsPipelineModule.createRenderPass(swapchainModule.swapChainImageFormat, depthBufferModule);
-    //graphicsPipelineModule.createGraphicsPipeline(swapchainModule.swapChainExtent, descriptorModule->getDescriptorSetLayout());
+
     framebufferModule.createFramebuffer(graphicsPipelineModule.gp_current->renderPass, imageViewModule.swapChainImageViews, swapchainModule.swapChainExtent, depthBufferModule);
 
     descriptorModule->recreateUniformBuffer(swapchainModule.getNumSwapChainImages());

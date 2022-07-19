@@ -13,6 +13,7 @@ public:
         LINE,
         POINT
     };
+
 private:
     std::vector<std::shared_ptr<ShaderModule> > shaderModules;
     VkPolygonMode               PoligonMode;
@@ -26,6 +27,7 @@ public:
     void cleanup();
 private:
     void updatePolygonMode(PolygonRenderType polygonType);
+    VkPrimitiveTopology getInputTopology();
 };
 
 #endif

@@ -11,6 +11,14 @@ class DepthBufferModule;
 class GraphicsPipelineBase
 {
 public:
+
+    enum InputTopology
+    {
+        TRIANGLE_LIST,
+        LINES,
+        POINTS
+    } inputTopology = TRIANGLE_LIST;
+
     VkRenderPass                renderPass;
     VkPipeline                  graphicsPipeline;
     VkPipelineLayout            pipelineLayout;
