@@ -4,6 +4,7 @@
 GraphicsPipeline::GraphicsPipeline()
 {
     this->PoligonMode = VkPolygonMode::VK_POLYGON_MODE_FILL;
+    this->depthBufferMode = VK_TRUE;
 }
 
 GraphicsPipeline::GraphicsPipeline(PolygonRenderType type)
@@ -21,6 +22,7 @@ GraphicsPipeline::GraphicsPipeline(PolygonRenderType type)
         this->PoligonMode = VkPolygonMode::VK_POLYGON_MODE_POINT;
         break;
     }
+    this->depthBufferMode = VK_TRUE;
 }
 
 GraphicsPipeline::~GraphicsPipeline()
@@ -70,15 +72,12 @@ void GraphicsPipeline::createGraphicsPipeline(VkExtent2D& swapChainExtent, VkDes
 
     VkPipelineMultisampleStateCreateInfo multisampling{};
     multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    //multisampling.sampleShadingEnable = VK_FALSE;
+    multisampling.sampleShadingEnable = VK_TRUE;
+    multisampling.minSampleShading = .2f;
     multisampling.rasterizationSamples = *antialias_ptr->msaaSamples;
-    // multisampling.minSampleShading = 1.0f; // Optional
     multisampling.pSampleMask = nullptr; // Optional
     multisampling.alphaToCoverageEnable = VK_FALSE; // Optional
     multisampling.alphaToOneEnable = VK_FALSE; // Optional
-
-    multisampling.sampleShadingEnable = VK_TRUE; // enable sample shading in the pipeline
-    multisampling.minSampleShading = .2f;
 
     VkPipelineColorBlendAttachmentState colorBlendAttachment{};
     colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
@@ -109,8 +108,8 @@ void GraphicsPipeline::createGraphicsPipeline(VkExtent2D& swapChainExtent, VkDes
 
     VkPipelineDepthStencilStateCreateInfo depthStencil{};
     depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depthStencil.depthTestEnable = VK_TRUE;
-    depthStencil.depthWriteEnable = VK_TRUE;
+    depthStencil.depthTestEnable = this->depthBufferMode;
+    depthStencil.depthWriteEnable = this->depthBufferMode;
     depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
     depthStencil.depthBoundsTestEnable = VK_FALSE;
     depthStencil.minDepthBounds = 0.0f; // Optional
@@ -183,6 +182,20 @@ void GraphicsPipeline::updatePolygonMode(PolygonRenderType polygonType)
         break;
     case PolygonRenderType::POINT:
         this->PoligonMode = VkPolygonMode::VK_POLYGON_MODE_POINT;
+        break;
+    }
+}
+
+void GraphicsPipeline::updateDepthBufferMode(DepthBufferMode depthBufferMode)
+{
+    switch (depthBufferMode)
+    {
+    default:
+    case GraphicsPipeline::ENABLED:
+        this->depthBufferMode = VK_TRUE;
+        break;
+    case GraphicsPipeline::DISABLED:
+        this->depthBufferMode = VK_FALSE;
         break;
     }
 }

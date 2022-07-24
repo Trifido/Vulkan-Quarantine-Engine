@@ -15,11 +15,11 @@
 class DepthBufferModule : public TextureManagerModule
 {
 private:
-    AntiAliasingModule* antialiasingModule;
+    std::shared_ptr<AntiAliasingModule> antialiasingModule;
 
 public:
     DepthBufferModule();
-    void addAntiAliasingModule(AntiAliasingModule& antialiasingModule);
+    void addAntiAliasingModule(std::shared_ptr<AntiAliasingModule> antialiasingModule);
     void createDepthResources(VkExtent2D& swapChainExtent, VkCommandPool& commandPool);
     VkFormat findDepthFormat();
 private:

@@ -113,7 +113,9 @@ void App::initVulkan()
 
     commandPoolModule->createCommandPool(windowSurface.getSurface());
 
-    antialiasingModule.createColorResources(swapchainModule);
+
+    antialiasingModule = std::make_shared<AntiAliasingModule>(AntiAliasingModule());
+    antialiasingModule->createColorResources(swapchainModule);
 
     depthBufferModule.addAntiAliasingModule(antialiasingModule);
     depthBufferModule.createDepthResources(swapchainModule.swapChainExtent, commandPoolModule->getCommandPool());
@@ -127,7 +129,7 @@ void App::initVulkan()
     //raytracingModule.initRayTracing();
 
     shaderModule = std::make_shared<ShaderModule>(ShaderModule());
-    shaderModule->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv");
+    shaderModule->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv", models.at(0)->mesh);
     graphicsPipelineModule.Initialize(antialiasingModule, shaderModule, swapchainModule, depthBufferModule, descriptorModule);
 
     framebufferModule.addAntialiasingModule(antialiasingModule);
@@ -236,7 +238,7 @@ void App::cleanUp()
 
 void App::cleanUpSwapchain()
 {
-    antialiasingModule.cleanup();
+    antialiasingModule->cleanup();
     depthBufferModule.cleanup();
     framebufferModule.cleanup();
 
@@ -313,8 +315,8 @@ void App::recreateSwapchain()
 
     swapchainModule.createSwapChain(windowSurface.getSurface(), mainWindow.getWindow());
     imageViewModule.createImageViews(swapchainModule);
-    shaderModule->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv");
-    antialiasingModule.createColorResources(swapchainModule);
+    shaderModule->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv", models.at(0)->mesh);
+    antialiasingModule->createColorResources(swapchainModule);
     depthBufferModule.createDepthResources(swapchainModule.swapChainExtent, commandPoolModule->getCommandPool());
 
     graphicsPipelineModule.Initialize(antialiasingModule, shaderModule, swapchainModule, depthBufferModule, descriptorModule);

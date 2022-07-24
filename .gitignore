@@ -72,6 +72,9 @@ StyleCopReport.xml
 *.meta
 *.obj
 *.iobj
+*.png
+*.mtl
+*.jpg
 *.pch
 *.pdb
 *.ipdb
@@ -92,6 +95,9 @@ StyleCopReport.xml
 *.pidb
 *.svclog
 *.scc
+*.txt
+*.spv
+*.bat
 
 # Chutzpah Test files
 _Chutzpah*
@@ -348,3 +354,7 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+
+# External Engine folders
+.external/
+.resources/ 

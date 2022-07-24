@@ -12,11 +12,12 @@
 
 struct Vertex {
     glm::vec3 pos;
-    glm::vec3 color;
+    glm::vec3 norm;
+    //glm::vec3 color;
     glm::vec2 texCoord;
 
     bool operator==(const Vertex& other) const {
-        return pos == other.pos && color == other.color && texCoord == other.texCoord;
+        return pos == other.pos /*&& color == other.color*/ && texCoord == other.texCoord && norm == other.norm;
     }
 };
 
@@ -24,7 +25,7 @@ namespace std {
     template<> struct hash<Vertex> {
         size_t operator()(Vertex const& vertex) const {
             return ((hash<glm::vec3>()(vertex.pos) ^
-                (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
+                (hash<glm::vec3>()(vertex.norm) << 1)) >> 1) ^
                 (hash<glm::vec2>()(vertex.texCoord) << 1);
         }
     };
@@ -36,9 +37,8 @@ private:
     DeviceModule*       deviceModule_ptr;
     VkCommandPool*      commandPool_ptr;
     QueueModule*        queueModule_ptr;
-private:
-    VkDeviceMemory vertexBufferMemory;
-    VkDeviceMemory indexBufferMemory;
+    VkDeviceMemory      vertexBufferMemory;
+    VkDeviceMemory      indexBufferMemory;
 public:
     VkBuffer vertexBuffer;
     VkBuffer indexBuffer;
@@ -54,8 +54,8 @@ private:
 public:
     Mesh(DeviceModule& deviceModule, VkCommandPool& commandPool, QueueModule& queueModule);
     void loadMesh(std::string pathfile);
-    static VkVertexInputBindingDescription  getBindingDescription();
-    static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions();
+    VkVertexInputBindingDescription  getBindingDescription();
+    std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions();
     void cleanup();
 };
 

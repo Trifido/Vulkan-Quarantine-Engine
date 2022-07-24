@@ -2,7 +2,6 @@
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
-#include "Mesh.h"
 
 ShaderModule::ShaderModule()
 {
@@ -27,7 +26,7 @@ std::vector<char> ShaderModule::readFile(const std::string& filename)
     return buffer;
 }
 
-void ShaderModule::createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment)
+void ShaderModule::createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment, std::shared_ptr<Mesh> mesh)
 {
     vertShaderStageInfo = createShader(deviceModule->device, filename_vertex, SHADER_TYPE::VERTEX_SHADER);
     fragShaderStageInfo = createShader(deviceModule->device, filename_fragment, SHADER_TYPE::FRAGMENT_SHADER);
@@ -35,8 +34,8 @@ void ShaderModule::createShaderModule(const std::string& filename_vertex, const 
     shaderStages.push_back(vertShaderStageInfo);
     shaderStages.push_back(fragShaderStageInfo);
 
-    bindingDescription = Mesh::getBindingDescription();
-    attributeDescriptions = Mesh::getAttributeDescriptions();
+    bindingDescription = mesh->getBindingDescription();
+    attributeDescriptions = mesh->getAttributeDescriptions();
 
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputInfo.vertexBindingDescriptionCount = 1;

@@ -19,7 +19,7 @@ private:
     std::shared_ptr<ShaderModule> shaderModule_ptr;
 public:
     GraphicsPipelineModule();
-    void Initialize(AntiAliasingModule& AAModule, std::shared_ptr<ShaderModule> SModule, SwapChainModule& SCModule, DepthBufferModule& DBModule, std::shared_ptr<DescriptorModule> DModule);
+    void Initialize(std::shared_ptr<AntiAliasingModule> AAModule, std::shared_ptr<ShaderModule> SModule, SwapChainModule& SCModule, DepthBufferModule& DBModule, std::shared_ptr<DescriptorModule> DModule);
     void cleanup();
     void Update(const __int8& message_from_subject);
 private:

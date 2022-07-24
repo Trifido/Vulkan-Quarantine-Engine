@@ -105,12 +105,12 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\external\tinyobjloader-master;..\external\imgui;..\external\imgui\backends;..\external\stb-master;..\..\external\imgui;%VULKAN_SDK%\include;..\libs\glfw\include;..\libs;.\setup;.\Presentation;.\GraphicsPipeline;.\Draw;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Input;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\external\tinyobjloader-master;..\external\imgui;..\external\imgui\backends;..\external\stb-master;..\..\external\imgui;%VULKAN_SDK%\include;..\libs\glfw\include;..\libs;.\setup;.\Presentation;.\GraphicsPipeline;.\Draw;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Input;..\libs\vma;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>%VULKAN_SDK%\lib;..\libs\glfw\lib-vc2010-64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>%VULKAN_SDK%\lib;..\libs\glfw\lib-vc2010-64;..\libs\vma;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>

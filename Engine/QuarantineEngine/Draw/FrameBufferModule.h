@@ -12,13 +12,13 @@ class FramebufferModule
 {
 private:
     DeviceModule* deviceModule;
-    AntiAliasingModule* antialias_ptr;
+    std::shared_ptr<AntiAliasingModule> antialias_ptr;
 public:
     std::vector<VkFramebuffer> swapChainFramebuffers;
     
 public:
     FramebufferModule();
-    void addAntialiasingModule(AntiAliasingModule& antialiasingModule);
+    void addAntialiasingModule(std::shared_ptr<AntiAliasingModule> antialiasingModule);
     void createFramebuffer(VkRenderPass& renderPass, std::vector<VkImageView>& swapChainImageViews, VkExtent2D& swapChainExtent, DepthBufferModule& depthBufferModule);
     void cleanup();
 };

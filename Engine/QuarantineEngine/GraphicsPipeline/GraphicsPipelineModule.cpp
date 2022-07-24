@@ -11,19 +11,19 @@ GraphicsPipelineModule::GraphicsPipelineModule()
 
     this->gp_current = this->gp_fill;
 }
-void GraphicsPipelineModule::Initialize(AntiAliasingModule& AAModule, std::shared_ptr<ShaderModule> SModule, SwapChainModule& SCModule, DepthBufferModule& DBModule, std::shared_ptr<DescriptorModule> DModule)
+void GraphicsPipelineModule::Initialize(std::shared_ptr<AntiAliasingModule> AAModule, std::shared_ptr<ShaderModule> SModule, SwapChainModule& SCModule, DepthBufferModule& DBModule, std::shared_ptr<DescriptorModule> DModule)
 {
-    this->gp_fill->addAntialiasingModule(AAModule);
+    this->gp_fill->addAntialiasingModule(*AAModule);
     this->gp_fill->addShaderModules(SModule);
     this->gp_fill->createRenderPass(SCModule.swapChainImageFormat, DBModule);
     this->gp_fill->createGraphicsPipeline(SCModule.swapChainExtent, DModule->getDescriptorSetLayout());
 
-    this->gp_line->addAntialiasingModule(AAModule);
+    this->gp_line->addAntialiasingModule(*AAModule);
     this->gp_line->addShaderModules(SModule);
     this->gp_line->createRenderPass(SCModule.swapChainImageFormat, DBModule);
     this->gp_line->createGraphicsPipeline(SCModule.swapChainExtent, DModule->getDescriptorSetLayout());
 
-    this->gp_point->addAntialiasingModule(AAModule);
+    this->gp_point->addAntialiasingModule(*AAModule);
     this->gp_point->addShaderModules(SModule);
     this->gp_point->createRenderPass(SCModule.swapChainImageFormat, DBModule);
     this->gp_point->createGraphicsPipeline(SCModule.swapChainExtent, DModule->getDescriptorSetLayout());

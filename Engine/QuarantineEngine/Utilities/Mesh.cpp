@@ -28,12 +28,25 @@ void Mesh::loadMesh(std::string pathfile)
                 attrib.vertices[3 * index.vertex_index + 2]
             };
 
+            if (!attrib.normals.empty())
+            {
+                vertex.norm = {
+                    attrib.normals[3 * index.normal_index + 0],
+                    attrib.normals[3 * index.normal_index + 1],
+                    attrib.normals[3 * index.normal_index + 2]
+                };
+            }
+            else
+            {
+                vertex.norm = { 1.0f, 1.0f, 1.0f };
+            }
+
             vertex.texCoord = {
                 attrib.texcoords[2 * index.texcoord_index + 0],
                 1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
             };
 
-            vertex.color = { 1.0f, 1.0f, 1.0f };
+            //vertex.color = { 1.0f, 1.0f, 1.0f };
 
             if (uniqueVertices.count(vertex) == 0) {
                 uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
@@ -71,7 +84,12 @@ std::array<VkVertexInputAttributeDescription, 3> Mesh::getAttributeDescriptions(
     attributeDescriptions[1].binding = 0;
     attributeDescriptions[1].location = 1;
     attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[1].offset = offsetof(Vertex, color);
+    attributeDescriptions[1].offset = offsetof(Vertex, norm);
+
+    //attributeDescriptions[1].binding = 0;
+    //attributeDescriptions[1].location = 2;
+    //attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+    //attributeDescriptions[1].offset = offsetof(Vertex, color);
 
     attributeDescriptions[2].binding = 0;
     attributeDescriptions[2].location = 2;

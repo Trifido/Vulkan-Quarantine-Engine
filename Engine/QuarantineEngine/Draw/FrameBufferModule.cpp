@@ -7,9 +7,9 @@ FramebufferModule::FramebufferModule()
     deviceModule = DeviceModule::getInstance();
 }
 
-void FramebufferModule::addAntialiasingModule(AntiAliasingModule& antialiasingModule)
+void FramebufferModule::addAntialiasingModule(std::shared_ptr<AntiAliasingModule> antialiasingModule)
 {
-    antialias_ptr = &antialiasingModule;
+    antialias_ptr = antialiasingModule;
 }
 
 void FramebufferModule::createFramebuffer(VkRenderPass& renderPass, std::vector<VkImageView>& swapChainImageViews, VkExtent2D& swapChainExtent, DepthBufferModule& depthBufferModule)

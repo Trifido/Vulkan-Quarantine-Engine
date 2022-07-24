@@ -10,7 +10,7 @@
 class AntiAliasingModule : public TextureManagerModule
 {
 public:
-    VkSampleCountFlagBits*   msaaSamples;
+    VkSampleCountFlagBits*   msaaSamples = nullptr;
 
 public:
     AntiAliasingModule();

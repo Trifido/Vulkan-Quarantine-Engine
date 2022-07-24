@@ -14,9 +14,16 @@ public:
         POINT
     };
 
+    enum DepthBufferMode
+    {
+        ENABLED,
+        DISABLED
+    };
+
 private:
     std::vector<std::shared_ptr<ShaderModule> > shaderModules;
-    VkPolygonMode               PoligonMode;
+    VkPolygonMode   PoligonMode;
+    VkBool32        depthBufferMode;
 
 public:
     GraphicsPipeline();
@@ -27,6 +34,7 @@ public:
     void cleanup();
 private:
     void updatePolygonMode(PolygonRenderType polygonType);
+    void updateDepthBufferMode(DepthBufferMode depthBufferMode);
     VkPrimitiveTopology getInputTopology();
 };
 

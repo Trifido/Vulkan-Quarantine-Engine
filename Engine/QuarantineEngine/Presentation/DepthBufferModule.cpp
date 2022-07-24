@@ -6,9 +6,9 @@ DepthBufferModule::DepthBufferModule()
     queueModule = QueueModule::getInstance();
 }
 
-void DepthBufferModule::addAntiAliasingModule(AntiAliasingModule& newAntialiasingModule)
+void DepthBufferModule::addAntiAliasingModule(std::shared_ptr<AntiAliasingModule> newAntialiasingModule)
 {
-    this->antialiasingModule = &newAntialiasingModule;
+    this->antialiasingModule = newAntialiasingModule;
 }
 
 void DepthBufferModule::createDepthResources(VkExtent2D& swapChainExtent, VkCommandPool& commandPool)

@@ -36,8 +36,8 @@
 // Keyboard controller
 #include "KeyboardController.h"
 
-const std::string MODEL_PATH = "../../resources/models/viking_room.obj";
-const std::string TEXTURE_PATH = "../../resources/textures/viking_room.png";
+const std::string MODEL_PATH = "../../resources/models/head/head.obj";
+const std::string TEXTURE_PATH = "../../resources/models/head/lambertian.jpg";
 
 enum class ERROR_RESIZE
 {
@@ -83,11 +83,11 @@ private:
     CommandPoolModule*      commandPoolModule {};
     SynchronizationModule   synchronizationModule;
     DepthBufferModule       depthBufferModule;
-    AntiAliasingModule      antialiasingModule;
     VkDescriptorPool        imguiPool {};
 
     std::shared_ptr<ShaderModule>       shaderModule;
     std::shared_ptr<DescriptorModule>   descriptorModule;
+    std::shared_ptr<AntiAliasingModule> antialiasingModule;
 
     bool show_demo_window = true;
     bool show_another_window = true;
