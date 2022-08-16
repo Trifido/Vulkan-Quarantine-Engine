@@ -41,6 +41,8 @@
 
 const std::string MODEL_PATH = "../../resources/models/head/head.obj";
 const std::string TEXTURE_PATH = "../../resources/models/head/lambertian.jpg";
+const std::string MODEL_HOUSE_PATH = "../../resources/models/viking_room.obj";
+const std::string TEXTURE_HOUSE_PATH = "../../resources/textures/viking_room.png";
 
 enum class ERROR_RESIZE
 {
@@ -93,9 +95,12 @@ private:
 
     std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule;
     std::shared_ptr<ShaderModule>       shaderModule;
+    std::shared_ptr<ShaderModule>       shaderModuleHouse;
     std::shared_ptr<DescriptorModule>   descriptorModule;
+    std::shared_ptr<DescriptorModule>   descriptorModuleHouse;
 
     std::shared_ptr<Texture> albedo;
+    std::shared_ptr<Texture> albedoHouse;
 
 
     bool show_demo_window = true;
