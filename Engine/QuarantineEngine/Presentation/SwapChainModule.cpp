@@ -2,7 +2,20 @@
 #include "QueueFamiliesModule.h"
 #include <stdexcept>
 
+#include "ImageMemoryTools.h"
 #include "SwapChainTool.hpp"
+
+SwapChainModule* SwapChainModule::instance = nullptr;
+
+SwapChainModule* SwapChainModule::getInstance()
+{
+    if (instance == NULL)
+        instance = new SwapChainModule();
+    else
+        std::cout << "Getting existing swapchain module instance" << std::endl;
+
+    return instance;
+}
 
 SwapChainModule::SwapChainModule()
 {
@@ -62,10 +75,21 @@ void SwapChainModule::createSwapChain(VkSurfaceKHR& surface, GLFWwindow* window)
 
     swapChainImageFormat = surfaceFormat.format;
     swapChainExtent = extent;
+
+    swapChainImageViews.resize(this->numSwapChainImages);
+
+    for (size_t i = 0; i < this->numSwapChainImages; i++)
+    {
+        swapChainImageViews[i] = IMT::createImageView(deviceModule->device, this->swapChainImages[i], this->swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
+    }
 }
 
 void SwapChainModule::cleanup()
 {
+    for (auto imageView : swapChainImageViews) {
+        vkDestroyImageView(deviceModule->device, imageView, nullptr);
+    }
+
     vkDestroySwapchainKHR(deviceModule->device, swapChain, nullptr);
 }
 

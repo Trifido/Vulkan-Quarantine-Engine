@@ -6,6 +6,7 @@
 #include "ImageMemoryTools.h"
 #include "QueueModule.h"
 #include "DeviceModule.h"
+#include <SwapChainModule.h>
 
 class TextureManagerModule
 {
@@ -18,6 +19,7 @@ protected:
     VkImage         image;
     VkDeviceMemory  deviceMemory;
     VkCommandPool*  ptrCommandPool;
+    SwapChainModule* swapchainModule = nullptr;
 
 public:
     TextureManagerModule();

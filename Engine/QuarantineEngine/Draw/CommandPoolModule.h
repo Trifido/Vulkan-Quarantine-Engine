@@ -10,10 +10,12 @@
 class CommandPoolModule
 {
 private:
-    static CommandPoolModule* instance;
-    DeviceModule* deviceModule;
-    VkCommandPool commandPool;
-    std::vector<VkCommandBuffer> commandBuffers;
+    static CommandPoolModule*       instance;
+    DeviceModule*                   deviceModule;
+    SwapChainModule*                swapchainModule;
+
+    VkCommandPool                   commandPool;
+    std::vector<VkCommandBuffer>    commandBuffers;
 
 public:
     CommandPoolModule();
@@ -25,8 +27,8 @@ public:
     VkCommandBuffer&                getCommandBuffer(uint32_t idx) { return commandBuffers.at(idx); }
 
     void createCommandPool(VkSurfaceKHR& surface);
-    void createCommandBuffers(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass, VkExtent2D& swapChainExtent, VkPipelineLayout& pipelineLayout, VkPipeline& pipeline, std::vector<std::shared_ptr<GameObject>>& gameObjects);
-    void recreateCommandBuffers(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass, VkExtent2D& swapChainExtent, VkPipelineLayout& pipelineLayout, VkPipeline& pipeline, std::vector<std::shared_ptr<GameObject>>& gameObjects);
+    void createCommandBuffers();
+    void Render(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass, std::vector<std::shared_ptr<GameObject>>& gameObjects);
     void cleanup();
 };
 

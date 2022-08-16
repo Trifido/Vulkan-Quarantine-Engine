@@ -20,9 +20,10 @@ public:
 
 public:
     GameObject();
-    GameObject(std::string meshPath, std::string albedoPath, VkCommandPool& commandPool, std::shared_ptr<DescriptorModule> descriptor);
+    GameObject(std::string meshPath, VkCommandPool& commandPool, std::shared_ptr<DescriptorModule> descriptor);
     void cleanup();
-    void drawCommand(VkCommandBuffer& commandBuffer, VkPipelineLayout& pipelineLayout, VkPipeline& pipeline, uint32_t idx);
+    void drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
+    void addMaterial(std::shared_ptr<Material> material_ptr);
 };
 
 #endif

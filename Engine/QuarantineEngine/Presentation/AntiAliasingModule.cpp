@@ -1,11 +1,23 @@
 #include "AntiAliasingModule.h"
 
-void AntiAliasingModule::createColorResources(SwapChainModule& swapChainModule)
+AntiAliasingModule* AntiAliasingModule::instance = nullptr;
+
+void AntiAliasingModule::createColorResources()
 {
-    VkFormat colorFormat = swapChainModule.swapChainImageFormat;
-    createImage(swapChainModule.swapChainExtent.width, swapChainModule.swapChainExtent.height, colorFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1, *msaaSamples);
+    VkFormat colorFormat = this->swapchainModule->swapChainImageFormat;
+    createImage(this->swapchainModule->swapChainExtent.width, this->swapchainModule->swapChainExtent.height, colorFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1, *msaaSamples);
 
     imageView = IMT::createImageView(deviceModule->device, image, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT);
+}
+
+AntiAliasingModule* AntiAliasingModule::getInstance()
+{
+	if (instance == NULL)
+		instance = new AntiAliasingModule();
+	else
+		std::cout << "Getting existing AntiAliasing module instance" << std::endl;
+
+	return instance;
 }
 
 AntiAliasingModule::AntiAliasingModule()

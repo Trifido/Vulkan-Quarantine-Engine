@@ -1,14 +1,22 @@
 #include "DepthBufferModule.h"
 
+DepthBufferModule* DepthBufferModule::instance = nullptr;
+
+DepthBufferModule* DepthBufferModule::getInstance()
+{
+	if (instance == NULL)
+		instance = new DepthBufferModule();
+	else
+		std::cout << "Getting existing depth buffer module instance" << std::endl;
+
+	return instance;
+}
+
 DepthBufferModule::DepthBufferModule()
 {
     deviceModule = DeviceModule::getInstance();
     queueModule = QueueModule::getInstance();
-}
-
-void DepthBufferModule::addAntiAliasingModule(std::shared_ptr<AntiAliasingModule> newAntialiasingModule)
-{
-    this->antialiasingModule = newAntialiasingModule;
+    antialiasingModule = AntiAliasingModule::getInstance();
 }
 
 void DepthBufferModule::createDepthResources(VkExtent2D& swapChainExtent, VkCommandPool& commandPool)

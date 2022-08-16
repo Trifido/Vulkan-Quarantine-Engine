@@ -16,13 +16,16 @@
 #include "WindowSurface.h"
 #include "SwapChainModule.h"
 #include "QueueModule.h"
-#include "ImageViewModule.h"
+//#include "ImageViewModule.h"
 #include "GraphicsPipelineModule.h"
 #include "FrameBufferModule.h"
 #include "CommandPoolModule.h"
 #include "SynchronizationModule.h"
 #include "DepthBufferModule.h"
 #include "AntiAliasingModule.h"
+#include "RenderPassModule.h"
+
+//#include "MaterialModule.h"
 
 //#include "RayTracingModule.h"
 
@@ -76,18 +79,24 @@ private:
     DeviceModule* deviceModule {};
     QueueModule*            queueModule {};
     WindowSurface           windowSurface {};
-    SwapChainModule         swapchainModule;
-    ImageViewModule         imageViewModule;
-    GraphicsPipelineModule  graphicsPipelineModule;
+    SwapChainModule*        swapchainModule {};
+    //ImageViewModule         imageViewModule;
     FramebufferModule       framebufferModule;
     CommandPoolModule*      commandPoolModule {};
     SynchronizationModule   synchronizationModule;
-    DepthBufferModule       depthBufferModule;
     VkDescriptorPool        imguiPool {};
 
+    DepthBufferModule*                  depthBufferModule;
+    AntiAliasingModule*                 antialiasingModule;
+    RenderPassModule*                   renderPassModule;
+    //std::shared_ptr<MaterialModule>     materialModule;
+
+    std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule;
     std::shared_ptr<ShaderModule>       shaderModule;
     std::shared_ptr<DescriptorModule>   descriptorModule;
-    std::shared_ptr<AntiAliasingModule> antialiasingModule;
+
+    std::shared_ptr<Texture> albedo;
+
 
     bool show_demo_window = true;
     bool show_another_window = true;
@@ -97,6 +106,8 @@ private:
 
     std::vector<std::shared_ptr<GameObject>> models;
     std::shared_ptr<Camera>     camera_ptr;
+
+    std::unordered_map<std::string, std::shared_ptr<Material>> _materials;
 
     KeyboardController* keyboard_ptr {};
 };

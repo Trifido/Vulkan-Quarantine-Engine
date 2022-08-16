@@ -62,6 +62,7 @@ void TextureManagerModule::transitionImageLayout(VkImage newImage, VkImageLayout
 TextureManagerModule::TextureManagerModule()
 {
     deviceModule = DeviceModule::getInstance();
+    swapchainModule = SwapChainModule::getInstance();
 }
 
 void TextureManagerModule::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, uint32_t newMipLevels, VkSampleCountFlagBits numSamples)

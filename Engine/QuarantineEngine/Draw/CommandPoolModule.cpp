@@ -10,6 +10,7 @@ CommandPoolModule* CommandPoolModule::instance = nullptr;
 CommandPoolModule::CommandPoolModule()
 {
     deviceModule = DeviceModule::getInstance();
+    swapchainModule = SwapChainModule::getInstance();
 }
 
 CommandPoolModule* CommandPoolModule::getInstance()
@@ -36,10 +37,9 @@ void CommandPoolModule::createCommandPool(VkSurfaceKHR& surface)
     }
 }
 
-void CommandPoolModule::createCommandBuffers(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass,
-    VkExtent2D& swapChainExtent, VkPipelineLayout& pipelineLayout, VkPipeline& pipeline, std::vector<std::shared_ptr<GameObject>>& gameObjects)
+void CommandPoolModule::createCommandBuffers()
 {
-    commandBuffers.resize(swapChainFramebuffers.size());
+    commandBuffers.resize(swapchainModule->getNumSwapChainImages());
 
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -50,12 +50,9 @@ void CommandPoolModule::createCommandBuffers(std::vector<VkFramebuffer>& swapCha
     if (vkAllocateCommandBuffers(deviceModule->device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
         throw std::runtime_error("failed to allocate command buffers!");
     }
-
-    recreateCommandBuffers(swapChainFramebuffers, renderPass, swapChainExtent, pipelineLayout, pipeline, gameObjects);
 }
 
-void CommandPoolModule::recreateCommandBuffers(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass,
-    VkExtent2D& swapChainExtent, VkPipelineLayout& pipelineLayout, VkPipeline& pipeline, std::vector<std::shared_ptr<GameObject>>& gameObjects)
+void CommandPoolModule::Render(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass, std::vector<std::shared_ptr<GameObject>>& gameObjects)
 {
     for (uint32_t i = 0; i < commandBuffers.size(); i++) {
         VkCommandBufferBeginInfo beginInfo{};
@@ -73,7 +70,7 @@ void CommandPoolModule::recreateCommandBuffers(std::vector<VkFramebuffer>& swapC
         renderPassInfo.renderPass = renderPass;
         renderPassInfo.framebuffer = swapChainFramebuffers[i];
         renderPassInfo.renderArea.offset = { 0, 0 };
-        renderPassInfo.renderArea.extent = swapChainExtent;
+        renderPassInfo.renderArea.extent = swapchainModule->swapChainExtent;
 
         std::array<VkClearValue, 2> clearValues{};
         clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -85,7 +82,7 @@ void CommandPoolModule::recreateCommandBuffers(std::vector<VkFramebuffer>& swapC
 
         for (uint32_t j = 0; j < gameObjects.size(); j++)
         {
-            gameObjects.at(j)->drawCommand(commandBuffers[i], pipelineLayout, pipeline, i);
+            gameObjects.at(j)->drawCommand(commandBuffers[i], i);
         }
 
         if(ImGui::GetDrawData() != nullptr)
