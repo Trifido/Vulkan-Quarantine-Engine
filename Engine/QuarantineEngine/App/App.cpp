@@ -317,8 +317,8 @@ void App::drawFrame()
     synchronizationModule.synchronizeCurrentFrame(imageIndex);
 
 
-    descriptorModule->updateUniformBuffer(/*imageIndex,*/ swapchainModule->swapChainExtent, models.at(0)->transform, 0);
-    descriptorModuleHouse->updateUniformBuffer(/*imageIndex,*/ swapchainModule->swapChainExtent, models.at(1)->transform, 1);
+    descriptorModule->updateUniformBuffer(/*imageIndex,*/ swapchainModule->swapChainExtent, models.at(0)->transform);
+    descriptorModuleHouse->updateUniformBuffer(/*imageIndex,*/ swapchainModule->swapChainExtent, models.at(1)->transform);
 
 
     vkDeviceWaitIdle(deviceModule->device);
