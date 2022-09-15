@@ -33,7 +33,7 @@ void App::computeDeltaTime()
 void App::initWindow()
 {
     mainWindow.init();
-    camera_ptr = std::make_shared<Camera>(Camera(1280, 720));
+    sceneCamera = std::make_shared<Camera>(Camera(mainWindow.width, mainWindow.height));
 }
 
 void App::init_imgui()
@@ -84,7 +84,7 @@ void App::init_imgui()
     init_info.ImageCount = 3;
     init_info.MSAASamples = *deviceModule->getMsaaSamples();//VK_SAMPLE_COUNT_1_BIT;
 
-    ImGui_ImplVulkan_Init(&init_info, graphicsPipelineModule.gp_current->renderPass);
+    ImGui_ImplVulkan_Init(&init_info, renderPassModule->renderPass);
 
     //execute a gpu command to upload imgui font textures
     VkCommandBuffer commandBuffer = beginSingleTimeCommands(deviceModule->device, commandPoolModule->getCommandPool());
@@ -108,36 +108,77 @@ void App::initVulkan()
     windowSurface.createSurface(vulkanInstance.getInstance(), mainWindow.getWindow());
     deviceModule->pickPhysicalDevice(vulkanInstance.getInstance(), windowSurface.getSurface());
     deviceModule->createLogicalDevice(windowSurface.getSurface(), *queueModule);
-    swapchainModule.createSwapChain(windowSurface.getSurface(), mainWindow.getWindow());
-    imageViewModule.createImageViews(swapchainModule);
 
+    //Inicializamos el Swapchain Module
+    swapchainModule = SwapChainModule::getInstance();
+    swapchainModule->createSwapChain(windowSurface.getSurface(), mainWindow.getWindow());
+
+    //Creamos el Command pool module y los Command buffers
     commandPoolModule->createCommandPool(windowSurface.getSurface());
+    commandPoolModule->createCommandBuffers();
 
+    //Creamos el antialiasing module
+    antialiasingModule = AntiAliasingModule::getInstance();
+    antialiasingModule->createColorResources();
 
-    antialiasingModule = std::make_shared<AntiAliasingModule>(AntiAliasingModule());
-    antialiasingModule->createColorResources(swapchainModule);
+    //Creamos el depth buffer module
+    depthBufferModule = DepthBufferModule::getInstance();
+    depthBufferModule->createDepthResources(swapchainModule->swapChainExtent, commandPoolModule->getCommandPool());
 
-    depthBufferModule.addAntiAliasingModule(antialiasingModule);
-    depthBufferModule.createDepthResources(swapchainModule.swapChainExtent, commandPoolModule->getCommandPool());
+    //Creamos el graphics pipeline Module
+    graphicsPipelineModule = std::make_shared<GraphicsPipelineModule>();
 
+    //Creamos el Render Pass
+    renderPassModule = new RenderPassModule();
+    renderPassModule->createRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
+
+    //Creamos el frame buffer
+    framebufferModule.createFramebuffer(renderPassModule->renderPass);
+
+    // INIT ------------------------- Mesh & Material -------------------------------
+
+    //Creamos la textura
+    albedo = std::make_shared<Texture>();
+    albedo->createTextureImage(TEXTURE_PATH, commandPoolModule->getCommandPool());
+    //Creamos la textura
+    //albedoHouse = std::make_shared<Texture>();
+    //albedoHouse->createTextureImage(TEXTURE_HOUSE_PATH, commandPoolModule->getCommandPool());
+
+    //Creamos el descriptor para el shader y lo inicializamos
     descriptorModule = std::make_shared<DescriptorModule>(DescriptorModule(*deviceModule));
-    models.push_back(std::make_shared<GameObject>(GameObject(MODEL_PATH, TEXTURE_PATH, commandPoolModule->getCommandPool(), descriptorModule)));
-    //models.push_back(std::make_shared<GameObject>(GameObject(MODEL_PATH, TEXTURE_PATH, swapchainModule.getNumSwapChainImages(), commandPoolModule->getCommandPool(), descriptorModule)));
-    descriptorModule->init(swapchainModule.getNumSwapChainImages(), models.at(0)->material->getAlbedo());
+    descriptorModule->init(swapchainModule->getNumSwapChainImages(), *albedo);
+    //Creamos el descriptor para el shader y lo inicializamos
+    //descriptorModuleHouse = std::make_shared<DescriptorModule>(DescriptorModule(*deviceModule));
+    //descriptorModuleHouse->init(swapchainModule->getNumSwapChainImages(), *albedoHouse);
 
-    //raytracingModule.addModules(bufferModule, queueModule);
-    //raytracingModule.initRayTracing();
+    models.push_back(std::make_shared<GameObject>(GameObject(MODEL_PATH, commandPoolModule->getCommandPool(), descriptorModule)));    //Esto hay que cambiarlo
+    //models.push_back(std::make_shared<GameObject>(GameObject(MODEL_HOUSE_PATH, commandPoolModule->getCommandPool(), descriptorModuleHouse)));    //Esto hay que cambiarlo
 
+    //Creamos el shader module
     shaderModule = std::make_shared<ShaderModule>(ShaderModule());
     shaderModule->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv", models.at(0)->mesh);
-    graphicsPipelineModule.Initialize(antialiasingModule, shaderModule, swapchainModule, depthBufferModule, descriptorModule);
+    //Creamos el shader module
+    //shaderModuleHouse = std::make_shared<ShaderModule>(ShaderModule());
+    //shaderModuleHouse->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv", models.at(1)->mesh);
 
-    framebufferModule.addAntialiasingModule(antialiasingModule);
-    framebufferModule.createFramebuffer(graphicsPipelineModule.gp_current->renderPass, imageViewModule.swapChainImageViews, swapchainModule.swapChainExtent, depthBufferModule);
-    commandPoolModule->createCommandBuffers(framebufferModule.swapChainFramebuffers, graphicsPipelineModule.gp_current->renderPass, swapchainModule.swapChainExtent,
-        graphicsPipelineModule.gp_current->pipelineLayout, graphicsPipelineModule.gp_current->graphicsPipeline, models);
+    //Creamos el material
+    _materials["mat"] = std::make_shared<Material>(Material(shaderModule, descriptorModule));
+    _materials["mat"]->addAlbedo(albedo);
+    _materials["mat"]->initPipelineMaterial(graphicsPipelineModule, renderPassModule->renderPass);
+    //Creamos el material
+    //_materials["house"] = std::make_shared<Material>(Material(shaderModuleHouse, descriptorModuleHouse));
+    //_materials["house"]->addAlbedo(albedoHouse);
+    //_materials["house"]->initPipelineMaterial(graphicsPipelineModule, renderPassModule->renderPass);
 
-    synchronizationModule.createSyncObjects(swapchainModule.getNumSwapChainImages());
+    //Linkamos el material al gameobject
+    models.at(0)->addMaterial(_materials["mat"]);
+    //models.at(1)->addMaterial(_materials["house"]);
+    // END -------------------------- Mesh & Material -------------------------------
+
+
+    commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass, models);
+
+    synchronizationModule.createSyncObjects(swapchainModule->getNumSwapChainImages());
 
     init_imgui();
 }
@@ -148,7 +189,7 @@ void App::mainLoop()
         glfwPollEvents();
         computeDeltaTime();
         keyboard_ptr->ReadKeyboardEvents();
-        camera_ptr->CameraController((float)deltaTime);
+        sceneCamera->CameraController((float)deltaTime);
 
         {
             ImGui_ImplGlfw_NewFrame();
@@ -215,10 +256,15 @@ void App::cleanUp()
     for (uint32_t i = 0; i < models.size(); i++)
     {
         models.at(i)->cleanup();
-        //models.at(i)->descriptorModule->cleanup();
+    }
+
+    for (auto& it : _materials)
+    {
+        it.second->cleanupTextures();
     }
 
     descriptorModule->cleanup();
+    //descriptorModuleHouse->cleanup();
 
     synchronizationModule.cleanup();
     commandPoolModule->cleanup();
@@ -239,17 +285,25 @@ void App::cleanUp()
 void App::cleanUpSwapchain()
 {
     antialiasingModule->cleanup();
-    depthBufferModule.cleanup();
+    depthBufferModule->cleanup();
     framebufferModule.cleanup();
 
     vkFreeCommandBuffers(deviceModule->device, commandPoolModule->getCommandPool(), commandPoolModule->getNumCommandBuffers(), commandPoolModule->getCommandBuffers().data());
 
-    graphicsPipelineModule.cleanup();
-    imageViewModule.cleanup();
-    swapchainModule.cleanup();
+    renderPassModule->cleanup();
+    //Limpiamos los VKPipelines, VkPipelineLayouts y shader del material
+    for (auto& it : _materials)
+    {
+        it.second->cleanup();
+    }
+
+    swapchainModule->cleanup();
 
     descriptorModule->cleanupDescriptorBuffer();
     descriptorModule->cleanupDescriptorPool();
+
+    //descriptorModuleHouse->cleanupDescriptorBuffer();
+    //descriptorModuleHouse->cleanupDescriptorPool();
 }
 
 void App::drawFrame()
@@ -257,25 +311,26 @@ void App::drawFrame()
     synchronizationModule.synchronizeWaitFences();
 
     uint32_t imageIndex;
-    VkResult result = vkAcquireNextImageKHR(deviceModule->device, swapchainModule.getSwapchain(), UINT64_MAX, synchronizationModule.getImageAvailableSemaphore(), VK_NULL_HANDLE, &imageIndex);
+    VkResult result = vkAcquireNextImageKHR(deviceModule->device, swapchainModule->getSwapchain(), UINT64_MAX, synchronizationModule.getImageAvailableSemaphore(), VK_NULL_HANDLE, &imageIndex);
     resizeSwapchain(result, ERROR_RESIZE::SWAPCHAIN_ERROR);
 
     synchronizationModule.synchronizeCurrentFrame(imageIndex);
 
-    for (uint32_t i = 0; i < models.size(); i++)
+    //Update MVP's
+    for each (std::shared_ptr<GameObject> var in models)
     {
-        descriptorModule->updateUniformBuffer(/*imageIndex,*/ swapchainModule.swapChainExtent, models.at(i)->transform, i);
+        var->transform->updateMVP(this->sceneCamera->VP);
     }
+
     vkDeviceWaitIdle(deviceModule->device);
-    commandPoolModule->recreateCommandBuffers(framebufferModule.swapChainFramebuffers, graphicsPipelineModule.gp_current->renderPass, swapchainModule.swapChainExtent,
-        graphicsPipelineModule.gp_current->pipelineLayout, graphicsPipelineModule.gp_current->graphicsPipeline, models);
+
+    commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass, models);
 
     synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer(imageIndex));
 
-    result = synchronizationModule.presentSwapchain(swapchainModule.getSwapchain(), imageIndex);
+    result = synchronizationModule.presentSwapchain(swapchainModule->getSwapchain(), imageIndex);
     resizeSwapchain(result, ERROR_RESIZE::IMAGE_ERROR);
 }
-
 
 void App::resizeSwapchain(VkResult result, ERROR_RESIZE errorResize)
 {
@@ -311,19 +366,37 @@ void App::recreateSwapchain()
 
     vkDeviceWaitIdle(deviceModule->device);
 
+    //Recreamos el swapchain
     cleanUpSwapchain();
+    swapchainModule->createSwapChain(windowSurface.getSurface(), mainWindow.getWindow());
 
-    swapchainModule.createSwapChain(windowSurface.getSurface(), mainWindow.getWindow());
-    imageViewModule.createImageViews(swapchainModule);
+    //Actualizamos el formato de la cámara
+    this->sceneCamera->UpdateSize(swapchainModule->swapChainExtent);
+
     shaderModule->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv", models.at(0)->mesh);
-    antialiasingModule->createColorResources(swapchainModule);
-    depthBufferModule.createDepthResources(swapchainModule.swapChainExtent, commandPoolModule->getCommandPool());
+    //shaderModuleHouse->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv", models.at(1)->mesh);
 
-    graphicsPipelineModule.Initialize(antialiasingModule, shaderModule, swapchainModule, depthBufferModule, descriptorModule);
+    //Recreamos el antialiasing module
+    antialiasingModule->createColorResources();
+    //Recreamos el depth buffer module
+    depthBufferModule->createDepthResources(swapchainModule->swapChainExtent, commandPoolModule->getCommandPool());
 
-    framebufferModule.createFramebuffer(graphicsPipelineModule.gp_current->renderPass, imageViewModule.swapChainImageViews, swapchainModule.swapChainExtent, depthBufferModule);
+    //Recreamos el render pass
+    renderPassModule->createRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
 
-    descriptorModule->recreateUniformBuffer(swapchainModule.getNumSwapChainImages());
-    commandPoolModule->createCommandBuffers(framebufferModule.swapChainFramebuffers, graphicsPipelineModule.gp_current->renderPass, swapchainModule.swapChainExtent,
-        graphicsPipelineModule.gp_current->pipelineLayout, graphicsPipelineModule.gp_current->graphicsPipeline, models);
+    //Recreamos los graphics pipeline de los materiales
+    for (auto& it : _materials)
+    {
+        it.second->recreatePipelineMaterial(renderPassModule->renderPass);
+    }
+
+    //Recreamos el frame buffer
+    framebufferModule.createFramebuffer(renderPassModule->renderPass);
+
+    descriptorModule->recreateUniformBuffer(swapchainModule->getNumSwapChainImages());
+    //descriptorModuleHouse->recreateUniformBuffer(swapchainModule->getNumSwapChainImages());
+
+    commandPoolModule->createCommandBuffers();
+
+    commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass, models);
 }

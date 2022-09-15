@@ -5,16 +5,16 @@
 #include <vulkan/vulkan.hpp>
 
 #include "TextureManagerModule.h"
-#include "SwapChainModule.h"
 
 class AntiAliasingModule : public TextureManagerModule
 {
 public:
-    VkSampleCountFlagBits*   msaaSamples = nullptr;
-
+    static AntiAliasingModule* instance;
+    VkSampleCountFlagBits*  msaaSamples = nullptr;
 public:
+    static AntiAliasingModule* getInstance();
     AntiAliasingModule();
-    void createColorResources(SwapChainModule& swapChainModule);
+    void createColorResources();
 };
 
 #endif // !ANTIALIASING_MODULE

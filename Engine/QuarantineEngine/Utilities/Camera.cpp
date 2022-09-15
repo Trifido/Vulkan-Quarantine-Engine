@@ -4,7 +4,7 @@
 Camera::Camera(float width, float height)
 {
     cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-    cameraPos = glm::vec3(0.0f, 15.0f, 15.0f);
+    cameraPos = glm::vec3(0.0f, 0.0f, 2.0f);
     WIDTH = width;
     HEIGHT = height;
     lastX = WIDTH / 2.0f;
@@ -23,7 +23,6 @@ void Camera::CameraController(float deltaTime)
         (ImGui::GetIO().KeyShift && ImGui::IsKeyDown('W')) ||
         (ImGui::GetIO().KeyShift && ImGui::IsKeyDown('w')))
     {
-        printf("LO HE CONSEGUIDO\n");
         cameraPos += cameraSpeed * deltaTime * cameraFront;
     }
 
@@ -50,7 +49,8 @@ void Camera::CameraController(float deltaTime)
 
     view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
     projection = glm::perspective(glm::radians(fov), (float)WIDTH / (float)HEIGHT, nearPlane, farPlane);
-    VP = view * projection;
+    projection[1][1] *= -1;
+    VP = projection * view;
 }
 
 void Camera::EditorScroll()
@@ -95,6 +95,7 @@ void Camera::EditorRotate()
         if (pitch < -89.0f)
             pitch = -89.0f;
 
+
         glm::vec3 front;
         front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
         front.y = sin(glm::radians(pitch));
@@ -130,7 +131,8 @@ void Camera::CheckCameraAttributes(float* positionCamera, float* frontCamera, fl
 
         view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
         projection = glm::perspective(glm::radians(fov), (float)WIDTH / (float)HEIGHT, nearPlane, farPlane);
-        VP = view * projection;
+        projection[1][1] *= -1;
+        VP = projection * view;
     }
 }
 
@@ -147,5 +149,11 @@ void Camera::InvertPitch(float heightPos)
     cameraFront = glm::normalize(front);
     //cameraUp = -cameraUp;
     view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+}
+
+void Camera::UpdateSize(VkExtent2D size)
+{
+    this->WIDTH = size.width;
+    this->HEIGHT = size.height;
 }
 

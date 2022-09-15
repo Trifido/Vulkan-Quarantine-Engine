@@ -1,25 +1,26 @@
-#include "GraphicsPipelineBase.h"
-#include "GraphicsPipelineBase.h"
-#include <stdexcept>
-#include <stdio.h>
+#include "RenderPassModule.h"
+#include <array>
 
-GraphicsPipelineBase::GraphicsPipelineBase()
+RenderPassModule::RenderPassModule()
 {
-    deviceModule = DeviceModule::getInstance();
+    device_ptr = DeviceModule::getInstance();
 }
 
-GraphicsPipelineBase::~GraphicsPipelineBase()
+RenderPassModule::~RenderPassModule()
 {
-    deviceModule = nullptr;
-    delete antialias_ptr;
-    antialias_ptr = nullptr;
+    device_ptr = nullptr;
 }
 
-void GraphicsPipelineBase::createRenderPass(VkFormat& swapChainImageFormat, DepthBufferModule& depthBufferModule)
+void RenderPassModule::cleanup()
+{
+    vkDestroyRenderPass(device_ptr->device, renderPass, nullptr);
+}
+
+void RenderPassModule::createRenderPass(VkFormat swapchainFormat, VkFormat depthFormat, VkSampleCountFlagBits msaaSamples)
 {
     VkAttachmentDescription colorAttachment{};
-    colorAttachment.format = swapChainImageFormat;
-    colorAttachment.samples = *antialias_ptr->msaaSamples;
+    colorAttachment.format = swapchainFormat;
+    colorAttachment.samples = msaaSamples;
     colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -30,8 +31,8 @@ void GraphicsPipelineBase::createRenderPass(VkFormat& swapChainImageFormat, Dept
     colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
     VkAttachmentDescription depthAttachment{};
-    depthAttachment.format = depthBufferModule.findDepthFormat();
-    depthAttachment.samples = *antialias_ptr->msaaSamples;
+    depthAttachment.format = depthFormat;
+    depthAttachment.samples = msaaSamples;
     depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -44,7 +45,7 @@ void GraphicsPipelineBase::createRenderPass(VkFormat& swapChainImageFormat, Dept
     depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
     VkAttachmentDescription colorAttachmentResolve{};
-    colorAttachmentResolve.format = swapChainImageFormat;
+    colorAttachmentResolve.format = swapchainFormat;
     colorAttachmentResolve.samples = VK_SAMPLE_COUNT_1_BIT;
     colorAttachmentResolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     colorAttachmentResolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -83,19 +84,7 @@ void GraphicsPipelineBase::createRenderPass(VkFormat& swapChainImageFormat, Dept
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies = &dependency;
 
-    if (vkCreateRenderPass(deviceModule->device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
+    if (vkCreateRenderPass(device_ptr->device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
         throw std::runtime_error("failed to create render pass!");
     }
-}
-
-
-void GraphicsPipelineBase::addAntialiasingModule(AntiAliasingModule& antialiasingModule)
-{
-    antialias_ptr = &antialiasingModule;
-}
-
-void GraphicsPipelineBase::cleanup()
-{
-    vkDestroyPipelineLayout(deviceModule->device, pipelineLayout, nullptr);
-    vkDestroyRenderPass(deviceModule->device, renderPass, nullptr);
 }

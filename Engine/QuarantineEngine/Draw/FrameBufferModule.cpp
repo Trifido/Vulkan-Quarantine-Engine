@@ -5,23 +5,22 @@
 FramebufferModule::FramebufferModule()
 {
     deviceModule = DeviceModule::getInstance();
+    antialiasingModule = AntiAliasingModule::getInstance();
+    swapchainModule = SwapChainModule::getInstance();
+    depthbufferModule = DepthBufferModule::getInstance();
 }
 
-void FramebufferModule::addAntialiasingModule(std::shared_ptr<AntiAliasingModule> antialiasingModule)
+void FramebufferModule::createFramebuffer(VkRenderPass& renderPass)
 {
-    antialias_ptr = antialiasingModule;
-}
+    size_t numSwapchainImageViews = swapchainModule->swapChainImageViews.size();
+    swapChainFramebuffers.resize(numSwapchainImageViews);
 
-void FramebufferModule::createFramebuffer(VkRenderPass& renderPass, std::vector<VkImageView>& swapChainImageViews, VkExtent2D& swapChainExtent, DepthBufferModule& depthBufferModule)
-{
-    swapChainFramebuffers.resize(swapChainImageViews.size());
-
-    for (size_t i = 0; i < swapChainImageViews.size(); i++)
+    for (size_t i = 0; i < numSwapchainImageViews; i++)
     {
         std::array<VkImageView, 3> attachments = {
-            antialias_ptr->imageView,
-            depthBufferModule.imageView,
-            swapChainImageViews[i]
+            antialiasingModule->imageView,
+            depthbufferModule->imageView,
+            swapchainModule->swapChainImageViews[i]
         };
 
         VkFramebufferCreateInfo framebufferInfo{};
@@ -29,8 +28,8 @@ void FramebufferModule::createFramebuffer(VkRenderPass& renderPass, std::vector<
         framebufferInfo.renderPass = renderPass;
         framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
         framebufferInfo.pAttachments = attachments.data();
-        framebufferInfo.width = swapChainExtent.width;
-        framebufferInfo.height = swapChainExtent.height;
+        framebufferInfo.width = swapchainModule->swapChainExtent.width;
+        framebufferInfo.height = swapchainModule->swapChainExtent.height;
         framebufferInfo.layers = 1;
 
         if (vkCreateFramebuffer(deviceModule->device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {

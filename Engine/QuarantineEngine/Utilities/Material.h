@@ -6,6 +6,8 @@
 #include <glm/glm.hpp>
 #include "GameComponent.h"
 #include "Texture.h"
+#include <GraphicsPipelineModule.h>
+#include <RenderPassModule.h>
 
 class Material : public GameComponent
 {
@@ -15,14 +17,26 @@ public:
     glm::vec3 specular;
     glm::vec3 emission;
 
-    std::unique_ptr<Texture> albedo;
+    std::shared_ptr<Texture> albedo_ptr;
 
+    VkPipeline             pipeline;
+    VkPipelineLayout       pipelineLayout;
+
+private:
+    std::shared_ptr<ShaderModule>           shader;
+    std::shared_ptr<DescriptorModule>       descriptor;
+    std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule;
 public:
     Material();
-    void addAlbedo(std::string path, VkCommandPool& commandPool);
-    Texture getAlbedo() { return *albedo; }
+    Material(std::shared_ptr<ShaderModule> shader_ptr, std::shared_ptr<DescriptorModule> descriptor_ptr);
+
+    void addAlbedo(std::shared_ptr<Texture> albedo);
+    Texture getAlbedo() { return *albedo_ptr; }
 
     void cleanup();
+    void cleanupTextures();
+    void initPipelineMaterial(std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule_ptr, VkRenderPass renderPass);
+    void recreatePipelineMaterial(VkRenderPass renderPass);
 };
 
 #endif // !MATERIAL_H

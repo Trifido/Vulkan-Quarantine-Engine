@@ -2,28 +2,49 @@
 #ifndef GRAPHICS_PIPELINE_MODULE_H
 #define GRAPHICS_PIPELINE_MODULE_H
 
-#include "GraphicsPipeline.h"
-#include "KeyboardController.h"
+#include "ShaderModule.h"
+#include "DescriptorModule.h"
+#include <AntiAliasingModule.h>
 
-//class DepthBufferModule;
-
-class GraphicsPipelineModule : IObserver
+class GraphicsPipelineModule
 {
-public:
-    GraphicsPipeline* gp_current = nullptr;
 private:
-    GraphicsPipeline* gp_fill = nullptr;
-    GraphicsPipeline* gp_line = nullptr;
-    GraphicsPipeline* gp_point = nullptr;
-    KeyboardController* keyboard_ptr = nullptr;
-    std::shared_ptr<ShaderModule> shaderModule_ptr;
+    DeviceModule*       deviceModule = nullptr;
+    SwapChainModule*    swapChainModule = nullptr;
+    AntiAliasingModule* antialiasingModule = nullptr;
+    VkPolygonMode       PoligonMode;
+    VkBool32            depthBufferMode;
+
+public:
+    enum InputTopology
+    {
+        TRIANGLE_LIST,
+        LINES,
+        POINTS
+    } inputTopology = TRIANGLE_LIST;
+
+    enum PolygonRenderType
+    {
+        FILL,
+        LINE,
+        POINT
+    };
+
+    enum DepthBufferMode
+    {
+        ENABLED,
+        DISABLED
+    }; 
 public:
     GraphicsPipelineModule();
-    void Initialize(std::shared_ptr<AntiAliasingModule> AAModule, std::shared_ptr<ShaderModule> SModule, SwapChainModule& SCModule, DepthBufferModule& DBModule, std::shared_ptr<DescriptorModule> DModule);
-    void cleanup();
-    void Update(const __int8& message_from_subject);
+    ~GraphicsPipelineModule();
+    void CreateGraphicsPipeline(VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, std::shared_ptr<ShaderModule> shader, std::shared_ptr<DescriptorModule> descriptor_ptr, VkRenderPass renderPass);
+    void cleanup(VkPipeline pipeline, VkPipelineLayout pipelineLayout, std::shared_ptr<ShaderModule> shader);
+
 private:
-    void updatePolygonMode(__int8 polygonType);
+    void updatePolygonMode(PolygonRenderType polygonType);
+    void updateDepthBufferMode(DepthBufferMode depthBufferMode);
+    VkPrimitiveTopology getInputTopology();
 };
 
 #endif

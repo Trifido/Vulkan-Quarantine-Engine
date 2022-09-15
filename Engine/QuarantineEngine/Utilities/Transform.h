@@ -24,7 +24,7 @@ public:
 public:
     Transform();
     UniformBufferObject getMVP();
-    void updateMVP(float time, float ratio);
+    void updateMVP(glm::mat4& VPMainCamera);
 };
 
 #endif

@@ -37,10 +37,17 @@ bool GUIWindow::init(bool fullScreen)
 
     const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
-    if(fullScreen)
-        window = glfwCreateWindow(mode->width, mode->height, title.c_str(), monitor, NULL);
+    if (fullScreen)
+    {
+        this->width = mode->width;
+        this->height = mode->height;
+    }
     else
-        window = glfwCreateWindow(1280, 720, title.c_str(), NULL, NULL);
+    {
+        this->width = 1280;
+        this->height = 720;
+    }
+    window = glfwCreateWindow(this->width, this->height, title.c_str(), monitor, NULL);
 
     glfwSetWindowUserPointer(window, this);
     glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);

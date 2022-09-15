@@ -169,9 +169,8 @@
     <ClCompile Include="App\App.cpp" />
     <ClCompile Include="Draw\CommandPoolModule.cpp" />
     <ClCompile Include="Draw\FrameBufferModule.cpp" />
+    <ClCompile Include="Draw\RenderPassModule.cpp" />
     <ClCompile Include="Draw\SynchronizationModule.cpp" />
-    <ClCompile Include="GraphicsPipeline\GraphicsPipeline.cpp" />
-    <ClCompile Include="GraphicsPipeline\GraphicsPipelineBase.cpp" />
     <ClCompile Include="GraphicsPipeline\GraphicsPipelineModule.cpp" />
     <ClCompile Include="GraphicsPipeline\ShaderModule.cpp" />
     <ClCompile Include="GUI\GUIWindow.cpp" />
@@ -208,10 +207,9 @@
     <ClInclude Include="App\App.h" />
     <ClInclude Include="Draw\CommandPoolModule.h" />
     <ClInclude Include="Draw\FrameBufferModule.h" />
+    <ClInclude Include="Draw\RenderPassModule.h" />
     <ClInclude Include="Draw\SynchronizationModule.h" />
     <ClInclude Include="Draw\SyncTool.h" />
-    <ClInclude Include="GraphicsPipeline\GraphicsPipeline.h" />
-    <ClInclude Include="GraphicsPipeline\GraphicsPipelineBase.h" />
     <ClInclude Include="GraphicsPipeline\GraphicsPipelineModule.h" />
     <ClInclude Include="GraphicsPipeline\ShaderModule.h" />
     <ClInclude Include="GUI\GUIWindow.h" />

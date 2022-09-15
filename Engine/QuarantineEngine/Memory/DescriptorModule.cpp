@@ -88,6 +88,7 @@ void DescriptorModule::createDescriptorSets()
         descriptorWrites[0].dstArrayElement = 0;
         descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         descriptorWrites[0].descriptorCount = 1;
+        descriptorWrites[0].pImageInfo = VK_NULL_HANDLE;
         descriptorWrites[0].pBufferInfo = &bufferInfo;
 
         descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -96,15 +97,16 @@ void DescriptorModule::createDescriptorSets()
         descriptorWrites[1].dstArrayElement = 0;
         descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         descriptorWrites[1].descriptorCount = 1;
+        descriptorWrites[1].pBufferInfo = VK_NULL_HANDLE;
         descriptorWrites[1].pImageInfo = &imageInfo;
 
         vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
 }
 
-void DescriptorModule::addPtrData(const Texture& texModule)
+void DescriptorModule::addPtrData(Texture& texModule)
 {
-    ptrTexture = std::make_unique<Texture>(texModule);
+    ptrTexture = std::make_shared<Texture>(texModule);
 }
 
 void DescriptorModule::cleanup()
@@ -130,15 +132,14 @@ void DescriptorModule::createUniformBuffers(size_t numImagesSwapChain)
     }
 }
 
-void DescriptorModule::updateUniformBuffer(/*uint32_t currentImage, */VkExtent2D extent, std::shared_ptr<Transform> transform, int num)
+void DescriptorModule::updateUniformBuffer(/*uint32_t currentImage, */VkExtent2D extent, glm::mat4& VPMainCamera, std::shared_ptr<Transform> transform)
 {
     static auto startTime = std::chrono::high_resolution_clock::now();
 
     auto currentTime = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-    if(num == 0)
-        transform->updateMVP(time, extent.width / (float)extent.height);
+    //transform->updateMVP(time, VPMainCamera, extent.width / (float)extent.height);
 
     //void* data;
     //vkMapMemory(deviceModule->device, uniformBuffersMemory[currentImage], 0, sizeof(transform->getMVP()), 0, &data);
@@ -146,7 +147,7 @@ void DescriptorModule::updateUniformBuffer(/*uint32_t currentImage, */VkExtent2D
     //vkUnmapMemory(deviceModule->device, uniformBuffersMemory[currentImage]);
 }
 
-void DescriptorModule::init(uint32_t numSwapChain, const Texture& texModule)
+void DescriptorModule::init(uint32_t numSwapChain, Texture& texModule)
 {
     createUniformBuffers(numSwapChain);
     addPtrData(texModule);
