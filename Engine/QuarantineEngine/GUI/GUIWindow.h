@@ -12,13 +12,13 @@
 class GUIWindow
 {
 private:
-    int width, height;
     std::string title;
     bool isRunning;
     GLFWmonitor* monitor;
 
 public:
     GLFWwindow* window;
+    int width, height;
 
 public:
     GUIWindow();

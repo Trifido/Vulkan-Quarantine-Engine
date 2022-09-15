@@ -132,14 +132,14 @@ void DescriptorModule::createUniformBuffers(size_t numImagesSwapChain)
     }
 }
 
-void DescriptorModule::updateUniformBuffer(/*uint32_t currentImage, */VkExtent2D extent, std::shared_ptr<Transform> transform)
+void DescriptorModule::updateUniformBuffer(/*uint32_t currentImage, */VkExtent2D extent, glm::mat4& VPMainCamera, std::shared_ptr<Transform> transform)
 {
     static auto startTime = std::chrono::high_resolution_clock::now();
 
     auto currentTime = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-    transform->updateMVP(time, extent.width / (float)extent.height);
+    //transform->updateMVP(time, VPMainCamera, extent.width / (float)extent.height);
 
     //void* data;
     //vkMapMemory(deviceModule->device, uniformBuffersMemory[currentImage], 0, sizeof(transform->getMVP()), 0, &data);

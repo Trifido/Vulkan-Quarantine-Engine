@@ -110,7 +110,7 @@ private:
     //RayTracingModule        raytracingModule;
 
     std::vector<std::shared_ptr<GameObject>> models;
-    std::shared_ptr<Camera>     camera_ptr;
+    std::shared_ptr<Camera>     sceneCamera;
 
     std::unordered_map<std::string, std::shared_ptr<Material>> _materials;
 

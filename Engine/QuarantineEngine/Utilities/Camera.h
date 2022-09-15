@@ -7,6 +7,7 @@
 #include <math.h>
 #include <GLFW/glfw3.h>
 #include <imgui.h>
+#include <vulkan/vulkan_core.h>
 
 class Camera
 {
@@ -41,6 +42,7 @@ public:
     float* GetRawCameraFront() { return &cameraFront[0]; }
     void CheckCameraAttributes(float* positionCamera, float* frontCamera, float fov, float nearPlane, float farPlane);
     void InvertPitch(float heightPos);
+    void UpdateSize(VkExtent2D size);
 };
 
 #endif // !CAMERA_H

@@ -46,7 +46,7 @@ public:
     void    init(uint32_t numSwapChain, Texture& texModule);
 
     void    createUniformBuffers(size_t numImagesSwapChain);
-    void    updateUniformBuffer(/*uint32_t currentImage,*/ VkExtent2D extent, std::shared_ptr<Transform> transform);
+    void    updateUniformBuffer(/*uint32_t currentImage,*/ VkExtent2D extent, glm::mat4& VPMainCamera ,std::shared_ptr<Transform> transform);
     void    recreateUniformBuffer(uint32_t numSwapChain);
 };
 
