@@ -193,6 +193,7 @@
     <ClCompile Include="Utilities\Camera.cpp" />
     <ClCompile Include="Utilities\GameComponent.cpp" />
     <ClCompile Include="Utilities\GameObject.cpp" />
+    <ClCompile Include="Utilities\GeometryComponent.cpp" />
     <ClCompile Include="Utilities\Material.cpp" />
     <ClCompile Include="Utilities\Mesh.cpp" />
     <ClCompile Include="Utilities\Texture.cpp" />
@@ -234,10 +235,12 @@
     <ClInclude Include="Utilities\Camera.h" />
     <ClInclude Include="Utilities\GameComponent.h" />
     <ClInclude Include="Utilities\GameObject.h" />
+    <ClInclude Include="Utilities\GeometryComponent.h" />
     <ClInclude Include="Utilities\Material.h" />
     <ClInclude Include="Utilities\Mesh.h" />
     <ClInclude Include="Utilities\Texture.h" />
     <ClInclude Include="Utilities\Transform.h" />
+    <ClInclude Include="Utilities\Vertex.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\misc\debuggers\imgui.natvis" />

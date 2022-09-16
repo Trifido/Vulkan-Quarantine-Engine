@@ -202,6 +202,9 @@
     <ClCompile Include="Draw\RenderPassModule.cpp">
       <Filter>Kernel\Draw\sources</Filter>
     </ClCompile>
+    <ClCompile Include="Utilities\GeometryComponent.cpp">
+      <Filter>Kernel\Utilities\sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\backends\imgui_impl_glfw.h">
@@ -320,6 +323,12 @@
     </ClInclude>
     <ClInclude Include="Draw\RenderPassModule.h">
       <Filter>Kernel\Draw\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\GeometryComponent.h">
+      <Filter>Kernel\Utilities\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Vertex.h">
+      <Filter>Kernel\Utilities\headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
