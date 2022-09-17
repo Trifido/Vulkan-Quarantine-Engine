@@ -74,32 +74,32 @@ void PrimitiveMesh::InitializePlane()
     this->vertices.resize(4);
     PrimitiveVertex vert;
 
-    vert.pos = glm::vec3(0.0f);
-    vert.norm = glm::vec3(0.0f, 1.0f, 0.0f);
-    vert.texCoord = glm::vec2(0.0f, 0.0f);
-    vert.color = glm::vec3(1.0f, 0.0f, 0.0f);
-    this->vertices[0] = vert;
-
-    vert.pos = glm::vec3(1.0f, 0.0f, 0.0f);
-    vert.norm = glm::vec3(0.0f, 1.0f, 0.0f);
-    vert.texCoord = glm::vec2(0.0f, 1.0f);
-    vert.color = glm::vec3(1.0f, 0.0f, 0.0f);
-    this->vertices[1] = vert;
-
-    vert.pos = glm::vec3(1.0f, 0.0f, 1.0f);
+    vert.pos = glm::vec3(1.0f, 1.0f, 0.0f);
     vert.norm = glm::vec3(0.0f, 1.0f, 0.0f);
     vert.texCoord = glm::vec2(1.0f, 1.0f);
     vert.color = glm::vec3(1.0f, 0.0f, 0.0f);
-    this->vertices[2] = vert;
+    this->vertices[0] = vert;
 
-    vert.pos = glm::vec3(0.0f, 0.0f, 1.0f);
+    vert.pos = glm::vec3(-1.0f, -1.0f, 0.0f);
+    vert.norm = glm::vec3(0.0f, 1.0f, 0.0f);
+    vert.texCoord = glm::vec2(0.0f, 0.0f);
+    vert.color = glm::vec3(1.0f, 0.0f, 0.0f);
+    this->vertices[1] = vert;
+
+    vert.pos = glm::vec3(-1.0f, 1.0f, 0.0f);
     vert.norm = glm::vec3(0.0f, 1.0f, 0.0f);
     vert.texCoord = glm::vec2(1.0f, 0.0f);
+    vert.color = glm::vec3(1.0f, 0.0f, 0.0f);
+    this->vertices[2] = vert;
+
+    vert.pos = glm::vec3(1.0f, -1.0f, 0.0f);
+    vert.norm = glm::vec3(0.0f, 1.0f, 0.0f);
+    vert.texCoord = glm::vec2(0.0f, 1.0f);
     vert.color = glm::vec3(1.0f, 0.0f, 0.0f);
     this->vertices[3] = vert;
 
     this->indices.resize(6);
-    this->indices = { 0, 2, 1, 0, 3, 2 };
+    this->indices = { 2, 1, 0, 3, 0, 1 };
 }
 
 void PrimitiveMesh::createVertexBuffer()

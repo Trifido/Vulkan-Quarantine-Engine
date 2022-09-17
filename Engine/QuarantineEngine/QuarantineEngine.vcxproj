@@ -243,6 +243,7 @@
     <ClInclude Include="Utilities\Geometry\Vertex.h" />
     <ClInclude Include="Utilities\Material.h" />
     <ClInclude Include="Utilities\Texture.h" />
+    <ClInclude Include="Utilities\TextureTypes.h" />
     <ClInclude Include="Utilities\Transform.h" />
   </ItemGroup>
   <ItemGroup>
@@ -250,6 +251,8 @@
     <None Include="..\..\resources\shaders\compile.bat" />
     <None Include="..\..\resources\shaders\example.frag" />
     <None Include="..\..\resources\shaders\example.vert" />
+    <None Include="..\..\resources\shaders\Grid\grid.frag" />
+    <None Include="..\..\resources\shaders\Grid\grid.vert" />
     <None Include="..\README.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

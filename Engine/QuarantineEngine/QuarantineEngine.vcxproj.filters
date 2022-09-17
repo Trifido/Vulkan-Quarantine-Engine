@@ -95,6 +95,9 @@
     <Filter Include="Kernel\Utilities\Geometry\sources">
       <UniqueIdentifier>{c9ba81bf-d5bc-4c0c-954c-3e9e7c901093}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders\Grid">
+      <UniqueIdentifier>{72acd058-6f24-4783-aa03-7ae4e3baedb1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -348,6 +351,9 @@
     <ClInclude Include="Utilities\Geometry\PrimitiveTypes.h">
       <Filter>Kernel\Utilities\Geometry\headers</Filter>
     </ClInclude>
+    <ClInclude Include="Utilities\TextureTypes.h">
+      <Filter>Kernel\Utilities\headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.txt" />
@@ -362,6 +368,12 @@
     </None>
     <None Include="..\..\resources\shaders\compile.bat">
       <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\resources\shaders\Grid\grid.frag">
+      <Filter>Shaders\Grid</Filter>
+    </None>
+    <None Include="..\..\resources\shaders\Grid\grid.vert">
+      <Filter>Shaders\Grid</Filter>
     </None>
   </ItemGroup>
 </Project>

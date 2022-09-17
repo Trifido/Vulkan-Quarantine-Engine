@@ -15,9 +15,14 @@ public:
     glm::vec3 ambient;
     glm::vec3 diffuse;
     glm::vec3 specular;
-    glm::vec3 emission;
+    glm::vec3 emissive;
 
-    std::shared_ptr<Texture> albedo_ptr;
+    std::shared_ptr<Texture> diffuseTexture;
+    std::shared_ptr<Texture> normalTexture;
+    std::shared_ptr<Texture> specularTexture;
+    std::shared_ptr<Texture> emissiveTexture;
+    std::shared_ptr<Texture> heightTexture;
+    std::shared_ptr<Texture> bumpTexture;
 
     VkPipeline             pipeline;
     VkPipelineLayout       pipelineLayout;
@@ -30,8 +35,7 @@ public:
     Material();
     Material(std::shared_ptr<ShaderModule> shader_ptr, std::shared_ptr<DescriptorModule> descriptor_ptr);
 
-    void addAlbedo(std::shared_ptr<Texture> albedo);
-    Texture getAlbedo() { return *albedo_ptr; }
+    void AddTexture(std::shared_ptr<Texture> texture);
 
     void cleanup();
     void cleanupTextures();

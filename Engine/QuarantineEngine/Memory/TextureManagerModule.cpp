@@ -1,6 +1,8 @@
 #include "TextureManagerModule.h"
 #include "SyncTool.h"
 
+QueueModule* TextureManagerModule::queueModule;
+
 void TextureManagerModule::transitionImageLayout(VkImage newImage, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageAspectFlags aspectFlag)
 {
     VkCommandBuffer commandBuffer = beginSingleTimeCommands(deviceModule->device, *ptrCommandPool);

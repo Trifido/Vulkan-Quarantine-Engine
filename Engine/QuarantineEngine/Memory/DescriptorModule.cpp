@@ -14,12 +14,15 @@ void DescriptorModule::createDescriptorSetLayout()
     uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
 
+
+    // ----------------- INICIO BUCLE CON TODAS LAS TEXTURAS
     VkDescriptorSetLayoutBinding samplerLayoutBinding{};
     samplerLayoutBinding.binding = 1;
     samplerLayoutBinding.descriptorCount = 1;
     samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     samplerLayoutBinding.pImmutableSamplers = nullptr;
     samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    // ----------------- FINAL BUCLE CON TODAS LAS TEXTURAS
 
     std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
     VkDescriptorSetLayoutCreateInfo layoutInfo{};
@@ -38,8 +41,12 @@ void DescriptorModule::createDescriptorPool(size_t numSwapchainImgs)
     std::array<VkDescriptorPoolSize, 2> poolSizes{};
     poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     poolSizes[0].descriptorCount = static_cast<uint32_t>(descriptorCount);
+
+
+    // ----------------- INICIO BUCLE CON TODAS LAS TEXTURAS
     poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     poolSizes[1].descriptorCount = static_cast<uint32_t>(descriptorCount);
+    // ----------------- FINAL BUCLE CON TODAS LAS TEXTURAS
 
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -75,11 +82,6 @@ void DescriptorModule::createDescriptorSets()
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(UniformBufferObject);
 
-        VkDescriptorImageInfo imageInfo{};
-        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        imageInfo.imageView = ptrTexture->imageView;
-        imageInfo.sampler = ptrTexture->textureSampler;
-
         std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
 
         descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -91,6 +93,13 @@ void DescriptorModule::createDescriptorSets()
         descriptorWrites[0].pImageInfo = VK_NULL_HANDLE;
         descriptorWrites[0].pBufferInfo = &bufferInfo;
 
+
+        // ----------------- INICIO BUCLE CON TODAS LAS TEXTURAS
+        VkDescriptorImageInfo imageInfo{};
+        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        imageInfo.imageView = ptrTexture->imageView;
+        imageInfo.sampler = ptrTexture->textureSampler;
+
         descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptorWrites[1].dstSet = descriptorSets[i];
         descriptorWrites[1].dstBinding = 1;
@@ -99,6 +108,8 @@ void DescriptorModule::createDescriptorSets()
         descriptorWrites[1].descriptorCount = 1;
         descriptorWrites[1].pBufferInfo = VK_NULL_HANDLE;
         descriptorWrites[1].pImageInfo = &imageInfo;
+        // ----------------- FINAL BUCLE CON TODAS LAS TEXTURAS
+
 
         vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }

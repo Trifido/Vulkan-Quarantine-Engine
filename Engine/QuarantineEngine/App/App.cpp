@@ -141,10 +141,11 @@ void App::initVulkan()
     BufferManageModule::commandPool = this->commandPoolModule->getCommandPool();
     BufferManageModule::graphicsQueue = this->queueModule->graphicsQueue;
     GeometryComponent::deviceModule_ptr = this->deviceModule;
+    TextureManagerModule::queueModule = this->queueModule;
+    Texture::commandPool = commandPoolModule->getCommandPool();
 
     //Creamos la textura
-    albedo = std::make_shared<Texture>();
-    albedo->createTextureImage(TEXTURE_PATH, commandPoolModule->getCommandPool());
+    albedo = std::make_shared<Texture>(Texture(TEXTURE_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
     //Creamos la textura
     //albedoHouse = std::make_shared<Texture>();
     //albedoHouse->createTextureImage(TEXTURE_HOUSE_PATH, commandPoolModule->getCommandPool());
@@ -160,19 +161,20 @@ void App::initVulkan()
     models.push_back(std::make_shared<GameObject>(GameObject(MODEL_PATH, descriptorModule)));    //Esto hay que cambiarlo
     models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
     //models.at(0)->transform->SetScale(glm::vec3(1.0f, 0.5f, 1.0f));
-    models.at(0)->transform->SetOrientation(glm::vec3(45.0f, 0.0f, 0.0f));
+    //models.at(0)->transform->SetOrientation(glm::vec3(45.0f, 0.0f, 0.0f));
     //models.push_back(std::make_shared<GameObject>(GameObject(MODEL_HOUSE_PATH, commandPoolModule->getCommandPool(), descriptorModuleHouse)));    //Esto hay que cambiarlo
 
     //Creamos el shader module
     shaderModule = std::make_shared<ShaderModule>(ShaderModule());
     shaderModule->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv", models.at(0)->mesh);
+    //shaderModule->createShaderModule("../../resources/shaders/Grid/grid_vert.spv", "../../resources/shaders/Grid/grid_frag.spv", models.at(0)->mesh);
     //Creamos el shader module
     //shaderModuleHouse = std::make_shared<ShaderModule>(ShaderModule());
     //shaderModuleHouse->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv", models.at(1)->mesh);
 
     //Creamos el material
     _materials["mat"] = std::make_shared<Material>(Material(shaderModule, descriptorModule));
-    _materials["mat"]->addAlbedo(albedo);
+    _materials["mat"]->AddTexture(albedo);
     _materials["mat"]->initPipelineMaterial(graphicsPipelineModule, renderPassModule->renderPass);
     //Creamos el material
     //_materials["house"] = std::make_shared<Material>(Material(shaderModuleHouse, descriptorModuleHouse));

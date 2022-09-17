@@ -2,7 +2,7 @@
 
 Material::Material()
 {
-    ambient = diffuse = specular = emission = glm::vec3(0.0f);
+    ambient = diffuse = specular = emissive = glm::vec3(0.0f);
 }
 
 Material::Material(std::shared_ptr<ShaderModule> shader_ptr, std::shared_ptr<DescriptorModule> descriptor_ptr)
@@ -11,9 +11,31 @@ Material::Material(std::shared_ptr<ShaderModule> shader_ptr, std::shared_ptr<Des
     this->descriptor = descriptor_ptr;
 }
 
-void Material::addAlbedo(std::shared_ptr<Texture> albedo)
+void Material::AddTexture(std::shared_ptr<Texture> texture)
 {
-    this->albedo_ptr = albedo;
+    switch (texture->type)
+    {
+    case TEXTURE_TYPE::DIFFUSE_TYPE:
+    default:
+        diffuseTexture = texture;
+        break;
+
+    case TEXTURE_TYPE::NORMAL_TYPE:
+        normalTexture = texture;
+        break;
+    case TEXTURE_TYPE::SPECULAR_TYPE:
+        specularTexture = texture;
+        break;
+    case TEXTURE_TYPE::HEIGHT_TYPE:
+        heightTexture = texture;
+        break;
+    case TEXTURE_TYPE::EMISSIVE_TYPE:
+        emissiveTexture = texture;
+        break;
+    case TEXTURE_TYPE::BUMP_TYPE:
+        bumpTexture = texture;
+        break;
+    }
 }
 
 void Material::cleanup()
@@ -24,7 +46,7 @@ void Material::cleanup()
 
 void Material::cleanupTextures()
 {
-    this->albedo_ptr->cleanup();
+    this->diffuseTexture->cleanup();
 }
 
 void Material::initPipelineMaterial(std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule_ptr, VkRenderPass renderPass)
