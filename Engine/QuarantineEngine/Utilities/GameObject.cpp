@@ -3,29 +3,20 @@
 
 GameObject::GameObject()
 {
-    deviceModule = DeviceModule::getInstance();
-    queueModule = QueueModule::getInstance();
+    this->InitializeComponents();
 }
 
 GameObject::GameObject(PRIMITIVE_TYPE type, std::shared_ptr<DescriptorModule> descriptor)
 {
-    deviceModule = DeviceModule::getInstance();
-    queueModule = QueueModule::getInstance();
-
-    mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh());
-    mesh->InitializeMesh(type);
-    transform = std::make_shared<Transform>();
+    mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh(type));
+    this->InitializeComponents();
     this->descriptorModule = descriptor;
 }
 
 GameObject::GameObject(std::string meshPath, std::shared_ptr<DescriptorModule> descriptor)
 {
-    deviceModule = DeviceModule::getInstance();
-    queueModule = QueueModule::getInstance();
-
-    mesh = std::make_shared<Mesh>(Mesh());
-    mesh->InitializeMesh(meshPath);
-    transform = std::make_shared<Transform>();
+    mesh = std::make_shared<Mesh>(Mesh(meshPath));
+    this->InitializeComponents();
     this->descriptorModule = descriptor;
 }
 
@@ -55,4 +46,12 @@ void GameObject::drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 void GameObject::addMaterial(std::shared_ptr<Material> material_ptr)
 {
     this->material = material_ptr;
+}
+
+void GameObject::InitializeComponents()
+{
+    deviceModule = DeviceModule::getInstance();
+    queueModule = QueueModule::getInstance();
+    transform = std::make_shared<Transform>();
+    mesh->InitializeMesh();
 }

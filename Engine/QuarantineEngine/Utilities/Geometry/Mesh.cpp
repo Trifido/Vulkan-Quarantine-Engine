@@ -9,6 +9,11 @@ Mesh::Mesh()
 
 }
 
+Mesh::Mesh(std::string pathfile)
+{
+    this->PATH = pathfile;
+}
+
 VkVertexInputBindingDescription Mesh::getBindingDescription()
 {
     VkVertexInputBindingDescription bindingDescription{};
@@ -45,9 +50,8 @@ std::vector<VkVertexInputAttributeDescription> Mesh::getAttributeDescriptions() 
     return attributeDescriptions;
 }
 
-void Mesh::InitializeMesh(std::string pathfile)
+void Mesh::InitializeMesh()
 {
-    this->PATH = pathfile;
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;

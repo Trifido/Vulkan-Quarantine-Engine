@@ -4,6 +4,11 @@ PrimitiveMesh::PrimitiveMesh()
 {
 }
 
+PrimitiveMesh::PrimitiveMesh(PRIMITIVE_TYPE type)
+{
+    this->type = type;
+}
+
 VkVertexInputBindingDescription PrimitiveMesh::getBindingDescription()
 {
     VkVertexInputBindingDescription bindingDescription{};
@@ -36,7 +41,7 @@ std::vector<VkVertexInputAttributeDescription> PrimitiveMesh::getAttributeDescri
 }
 
 
-void PrimitiveMesh::InitializeMesh(PRIMITIVE_TYPE type)
+void PrimitiveMesh::InitializeMesh()
 {
     this->type = type;
 

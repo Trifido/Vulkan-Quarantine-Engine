@@ -26,6 +26,9 @@ public:
     void cleanup();
     void drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
     void addMaterial(std::shared_ptr<Material> material_ptr);
+
+private:
+    void InitializeComponents();
 };
 
 #endif

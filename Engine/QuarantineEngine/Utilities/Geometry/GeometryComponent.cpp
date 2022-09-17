@@ -10,14 +10,6 @@
 
 DeviceModule* GeometryComponent::deviceModule_ptr;
 
-void GeometryComponent::InitializeMesh(std::string pathfile)
-{
-}
-
-void GeometryComponent::InitializeMesh(PRIMITIVE_TYPE type)
-{
-}
-
 void GeometryComponent::cleanup()
 {
     vkDestroyBuffer(deviceModule_ptr->device, indexBuffer, nullptr);

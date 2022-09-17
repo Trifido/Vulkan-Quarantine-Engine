@@ -13,7 +13,8 @@ private:
 
 public:
     Mesh();
-    void InitializeMesh(std::string pathfile = NULL) override;
+    Mesh(std::string pathfile);
+    void InitializeMesh() override;
     VkVertexInputBindingDescription getBindingDescription() override;
     std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions() override;
 };
