@@ -160,7 +160,7 @@ void App::initVulkan()
     models.push_back(std::make_shared<GameObject>(GameObject(MODEL_PATH, descriptorModule)));    //Esto hay que cambiarlo
     models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
     //models.at(0)->transform->SetScale(glm::vec3(1.0f, 0.5f, 1.0f));
-    models.at(0)->transform->SetOrientation(glm::vec3(0.0f, 45.0f, 0.0f));
+    models.at(0)->transform->SetOrientation(glm::vec3(45.0f, 0.0f, 0.0f));
     //models.push_back(std::make_shared<GameObject>(GameObject(MODEL_HOUSE_PATH, commandPoolModule->getCommandPool(), descriptorModuleHouse)));    //Esto hay que cambiarlo
 
     //Creamos el shader module

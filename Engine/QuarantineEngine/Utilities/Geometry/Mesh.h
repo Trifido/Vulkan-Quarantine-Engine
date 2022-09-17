@@ -10,7 +10,9 @@ class Mesh : public GeometryComponent
 {
 private:
     std::string PATH;
+    std::vector<Vertex> vertices;
 
+    void createVertexBuffer() override;
 public:
     Mesh();
     Mesh(std::string pathfile);

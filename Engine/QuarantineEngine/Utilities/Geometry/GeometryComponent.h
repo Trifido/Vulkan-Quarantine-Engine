@@ -16,14 +16,13 @@ protected:
 
     uint32_t    numAttributes;
 
-    void createVertexBuffer();
     void createIndexBuffer();
+    virtual void createVertexBuffer() = 0;
 
 public:
     static DeviceModule* deviceModule_ptr;
     VkBuffer vertexBuffer;
     VkBuffer indexBuffer;
-    std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
     uint32_t numVertices;
     uint32_t numFaces;

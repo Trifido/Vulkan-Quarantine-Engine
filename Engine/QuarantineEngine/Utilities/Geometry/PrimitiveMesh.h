@@ -11,6 +11,7 @@ class PrimitiveMesh : public GeometryComponent
 {
 public:
     PRIMITIVE_TYPE type;
+    std::vector<PrimitiveVertex> vertices;
 
     PrimitiveMesh();
     PrimitiveMesh(PRIMITIVE_TYPE type);
@@ -20,6 +21,7 @@ public:
 
 private:
     void InitializePlane();
+    void createVertexBuffer() override;
 };
 
 #endif
