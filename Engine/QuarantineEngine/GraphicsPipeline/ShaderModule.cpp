@@ -26,7 +26,7 @@ std::vector<char> ShaderModule::readFile(const std::string& filename)
     return buffer;
 }
 
-void ShaderModule::createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment, std::shared_ptr<Mesh> mesh)
+void ShaderModule::createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment, std::shared_ptr<GeometryComponent> mesh)
 {
     vertShaderStageInfo = createShader(deviceModule->device, filename_vertex, SHADER_TYPE::VERTEX_SHADER);
     fragShaderStageInfo = createShader(deviceModule->device, filename_fragment, SHADER_TYPE::FRAGMENT_SHADER);

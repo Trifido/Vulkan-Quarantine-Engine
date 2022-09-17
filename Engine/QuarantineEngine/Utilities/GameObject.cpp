@@ -1,4 +1,5 @@
 #include "GameObject.h"
+#include <PrimitiveMesh.h>
 
 GameObject::GameObject()
 {
@@ -6,13 +7,24 @@ GameObject::GameObject()
     queueModule = QueueModule::getInstance();
 }
 
-GameObject::GameObject(std::string meshPath, VkCommandPool& commandPool, std::shared_ptr<DescriptorModule> descriptor)
+GameObject::GameObject(PRIMITIVE_TYPE type, std::shared_ptr<DescriptorModule> descriptor)
 {
     deviceModule = DeviceModule::getInstance();
     queueModule = QueueModule::getInstance();
 
-    mesh = std::make_shared<Mesh>(Mesh(*deviceModule, commandPool, *queueModule));
-    mesh->loadMesh(meshPath);
+    mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh());
+    mesh->InitializeMesh(type);
+    transform = std::make_shared<Transform>();
+    this->descriptorModule = descriptor;
+}
+
+GameObject::GameObject(std::string meshPath, std::shared_ptr<DescriptorModule> descriptor)
+{
+    deviceModule = DeviceModule::getInstance();
+    queueModule = QueueModule::getInstance();
+
+    mesh = std::make_shared<Mesh>(Mesh());
+    mesh->InitializeMesh(meshPath);
     transform = std::make_shared<Transform>();
     this->descriptorModule = descriptor;
 }

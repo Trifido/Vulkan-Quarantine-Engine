@@ -7,9 +7,6 @@
 #include <glm/gtc/quaternion.hpp>
 
 struct UniformBufferObject {
-    //glm::mat4 model;
-    //glm::mat4 view;
-    //glm::mat4 proj;
     glm::mat4 mvp;
 };
 
@@ -37,6 +34,7 @@ public:
     void SetOrientation(const glm::vec3& newRotation);
     void SetScale(const glm::vec3& newScale);
     void ResetTransform();
+    const glm::mat4& GetModel();
 };
 
 #endif

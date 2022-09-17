@@ -137,6 +137,11 @@ void App::initVulkan()
 
     // INIT ------------------------- Mesh & Material -------------------------------
 
+    //Añadimos requisitos para los geometryComponent
+    BufferManageModule::commandPool = this->commandPoolModule->getCommandPool();
+    BufferManageModule::graphicsQueue = this->queueModule->graphicsQueue;
+    GeometryComponent::deviceModule_ptr = this->deviceModule;
+
     //Creamos la textura
     albedo = std::make_shared<Texture>();
     albedo->createTextureImage(TEXTURE_PATH, commandPoolModule->getCommandPool());
@@ -151,7 +156,8 @@ void App::initVulkan()
     //descriptorModuleHouse = std::make_shared<DescriptorModule>(DescriptorModule(*deviceModule));
     //descriptorModuleHouse->init(swapchainModule->getNumSwapChainImages(), *albedoHouse);
 
-    models.push_back(std::make_shared<GameObject>(GameObject(MODEL_PATH, commandPoolModule->getCommandPool(), descriptorModule)));    //Esto hay que cambiarlo
+    models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::QUAD_TYPE, descriptorModule)));    //Esto hay que cambiarlo
+    //models.push_back(std::make_shared<GameObject>(GameObject(MODEL_PATH, descriptorModule)));    //Esto hay que cambiarlo
     models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
     //models.at(0)->transform->SetScale(glm::vec3(1.0f, 0.5f, 1.0f));
     models.at(0)->transform->SetOrientation(glm::vec3(0.0f, 45.0f, 0.0f));

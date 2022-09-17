@@ -45,16 +45,16 @@ void Transform::SetScale(const glm::vec3& newScale)
 void Transform::ResetTransform()
 {
     this->Position = glm::vec3(0.0f);
-    float aux = 1.0f;
-    float aux2 = 0.0f;
-
-    glm::quat rot;
-    rot = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-    //this->Orientation = glm::quat(aux, aux2, aux2, aux2);
+    this->Orientation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
     this->Scale = glm::vec3(1.0f);
     this->model = glm::mat4(1.0f);
 
     this->trans_mat = glm::mat4(1.0f);
     this->rot_mat = glm::mat4(1.0f);
     this->scale_mat = glm::mat4(1.0f);
+}
+
+const glm::mat4& Transform::GetModel()
+{
+    return model;
 }
