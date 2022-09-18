@@ -167,7 +167,7 @@ void App::initVulkan()
 
     //Creamos el material
     _materials["matHouse"] = std::make_shared<Material>(Material(_shaders["shader"], renderPassModule->renderPass));
-    _materials["matHouse"]->AddTexture(_textures["diffuse_face"]);
+    _materials["matHouse"]->AddTexture(_textures["albedo_house"]);
     _materials["matHouse"]->AddPipeline(graphicsPipelineModule);
 
     //Linkamos el material al gameobject

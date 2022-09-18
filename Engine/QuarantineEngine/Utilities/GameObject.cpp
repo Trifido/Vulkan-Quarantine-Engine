@@ -25,6 +25,9 @@ void GameObject::cleanup()
 
 void GameObject::drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
+    if (material == nullptr)
+        return;
+
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipeline);
     VkBuffer vertexBuffers[] = { mesh->vertexBuffer };
     //VkBuffer* indexBuffers = &mesh->indexBuffer;

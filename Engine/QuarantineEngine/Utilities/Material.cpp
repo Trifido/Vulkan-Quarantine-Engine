@@ -58,10 +58,12 @@ void Material::AddPipeline(std::shared_ptr<GraphicsPipelineModule> graphicsPipel
 
 void Material::cleanup()
 {
-    this->graphicsPipelineModule->cleanup(this->pipeline, this->pipelineLayout);
-
-    this->descriptor->cleanupDescriptorBuffer();
-    this->descriptor->cleanupDescriptorPool();
+    if (this->isMeshBinding)
+    {
+        this->graphicsPipelineModule->cleanup(this->pipeline, this->pipelineLayout);
+        this->descriptor->cleanupDescriptorBuffer();
+        this->descriptor->cleanupDescriptorPool();
+    }
 }
 
 void Material::cleanupDescriptor()
@@ -71,7 +73,10 @@ void Material::cleanupDescriptor()
 
 void Material::recreatePipelineMaterial(VkRenderPass renderPass)
 {
-    this->graphicsPipelineModule->CreateGraphicsPipeline(this->pipeline, this->pipelineLayout, this->shader, this->descriptor, renderPass);
+    if (this->isMeshBinding)
+    {
+        this->graphicsPipelineModule->CreateGraphicsPipeline(this->pipeline, this->pipelineLayout, this->shader, this->descriptor, renderPass);
+    }
 }
 
 void Material::bindingMesh(std::shared_ptr<GeometryComponent> mesh)
@@ -107,5 +112,8 @@ void Material::InitializeMaterial()
 
 void Material::RecreateUniformsMaterial()
 {
-    this->descriptor->recreateUniformBuffer();
+    if (this->isMeshBinding)
+    {
+        this->descriptor->recreateUniformBuffer();
+    }
 }
