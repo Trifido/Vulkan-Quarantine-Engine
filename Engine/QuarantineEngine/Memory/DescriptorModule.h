@@ -8,46 +8,47 @@
 #include "BufferManageModule.h"
 #include "Texture.h"
 #include "Transform.h"
+#include <map>
 
 class Texture;
 
 class DescriptorModule
 {
 private:
-    size_t                          numSwapchainImages;
     std::vector<VkBuffer>           uniformBuffers;
     std::vector<VkDeviceMemory>     uniformBuffersMemory;
 
     std::vector<VkDescriptorSet>    descriptorSets;
     VkDescriptorPool                descriptorPool;
 
-    std::shared_ptr<Texture>        ptrTexture;
-
-    DeviceModule*                   deviceModule;
-    size_t                          descriptorCount;
+    std::vector<std::shared_ptr<Texture>> textures;
 
 public:
+    static  DeviceModule*           deviceModule;
+    static  uint32_t                NumSwapchainImages;
     VkDescriptorSetLayout           descriptorSetLayout;
 
 public:
-    DescriptorModule() {}
-    DescriptorModule(DeviceModule& deviceModule);
+    DescriptorModule();
 
     VkDescriptorSet*                getDescriptorSet(size_t id) { return &descriptorSets.at(id); }
     std::vector<VkDescriptorSet>    getDescriptorSet()          { return descriptorSets; }
 
     void    createDescriptorSetLayout();
-    void    createDescriptorPool(size_t numSwapchainImgs);
+    void    createDescriptorPool();
     void    createDescriptorSets();
-    void    addPtrData(Texture& texModule);
     void    cleanup();
     void    cleanupDescriptorPool();
     void    cleanupDescriptorBuffer();
-    void    init(uint32_t numSwapChain, Texture& texModule);
+    void    Initialize(std::shared_ptr <std::map<TEXTURE_TYPE, std::shared_ptr<Texture>>> textures);
 
-    void    createUniformBuffers(size_t numImagesSwapChain);
+    void    createUniformBuffers();
     void    updateUniformBuffer(/*uint32_t currentImage,*/ VkExtent2D extent, glm::mat4& VPMainCamera ,std::shared_ptr<Transform> transform);
-    void    recreateUniformBuffer(uint32_t numSwapChain);
+    void    recreateUniformBuffer();
+
+private:
+    void    InitializeTextureOrder(std::shared_ptr <std::map<TEXTURE_TYPE, std::shared_ptr<Texture>>> textureMap);
+    void    CheckTextures(std::shared_ptr <std::map<TEXTURE_TYPE, std::shared_ptr<Texture>>> textureMap, TEXTURE_TYPE type);
 };
 
 #endif

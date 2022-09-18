@@ -143,49 +143,30 @@ void App::initVulkan()
     GeometryComponent::deviceModule_ptr = this->deviceModule;
     TextureManagerModule::queueModule = this->queueModule;
     Texture::commandPool = commandPoolModule->getCommandPool();
+    DescriptorModule::deviceModule = this->deviceModule;
+    DescriptorModule::NumSwapchainImages = this->swapchainModule->getNumSwapChainImages();
 
     //Creamos la textura
     albedo = std::make_shared<Texture>(Texture(TEXTURE_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
-    //Creamos la textura
-    //albedoHouse = std::make_shared<Texture>();
-    //albedoHouse->createTextureImage(TEXTURE_HOUSE_PATH, commandPoolModule->getCommandPool());
 
-    //Creamos el descriptor para el shader y lo inicializamos
-    descriptorModule = std::make_shared<DescriptorModule>(DescriptorModule(*deviceModule));
-    descriptorModule->init(swapchainModule->getNumSwapChainImages(), *albedo);
-    //Creamos el descriptor para el shader y lo inicializamos
-    //descriptorModuleHouse = std::make_shared<DescriptorModule>(DescriptorModule(*deviceModule));
-    //descriptorModuleHouse->init(swapchainModule->getNumSwapChainImages(), *albedoHouse);
-
-    //models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::QUAD_TYPE, descriptorModule)));    //Esto hay que cambiarlo
-    models.push_back(std::make_shared<GameObject>(GameObject(MODEL_PATH, descriptorModule)));    //Esto hay que cambiarlo
+    //models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::QUAD_TYPE)));    
+    models.push_back(std::make_shared<GameObject>(GameObject(MODEL_PATH)));    
     models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-    //models.at(0)->transform->SetScale(glm::vec3(1.0f, 0.5f, 1.0f));
-    //models.at(0)->transform->SetOrientation(glm::vec3(45.0f, 0.0f, 0.0f));
-    //models.push_back(std::make_shared<GameObject>(GameObject(MODEL_HOUSE_PATH, commandPoolModule->getCommandPool(), descriptorModuleHouse)));    //Esto hay que cambiarlo
 
-    //Creamos el shader module
+    //Creamos el shader module para el material
     shaderModule = std::make_shared<ShaderModule>(ShaderModule());
-    shaderModule->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv", models.at(0)->mesh);
-    //shaderModule->createShaderModule("../../resources/shaders/Grid/grid_vert.spv", "../../resources/shaders/Grid/grid_frag.spv", models.at(0)->mesh);
-    //Creamos el shader module
-    //shaderModuleHouse = std::make_shared<ShaderModule>(ShaderModule());
-    //shaderModuleHouse->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv", models.at(1)->mesh);
-
+    shaderModule->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv");
     //Creamos el material
-    _materials["mat"] = std::make_shared<Material>(Material(shaderModule, descriptorModule));
+    _materials["mat"] = std::make_shared<Material>(Material(shaderModule, renderPassModule->renderPass));
     _materials["mat"]->AddTexture(albedo);
-    _materials["mat"]->initPipelineMaterial(graphicsPipelineModule, renderPassModule->renderPass);
-    //Creamos el material
-    //_materials["house"] = std::make_shared<Material>(Material(shaderModuleHouse, descriptorModuleHouse));
-    //_materials["house"]->addAlbedo(albedoHouse);
-    //_materials["house"]->initPipelineMaterial(graphicsPipelineModule, renderPassModule->renderPass);
+    _materials["mat"]->AddPipeline(graphicsPipelineModule);
 
     //Linkamos el material al gameobject
     models.at(0)->addMaterial(_materials["mat"]);
-    //models.at(1)->addMaterial(_materials["house"]);
     // END -------------------------- Mesh & Material -------------------------------
 
+
+    _materials["mat"]->InitializeMaterial();
 
     commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass, models);
 
@@ -274,9 +255,6 @@ void App::cleanUp()
         it.second->cleanupTextures();
     }
 
-    descriptorModule->cleanup();
-    //descriptorModuleHouse->cleanup();
-
     synchronizationModule.cleanup();
     commandPoolModule->cleanup();
 
@@ -309,12 +287,6 @@ void App::cleanUpSwapchain()
     }
 
     swapchainModule->cleanup();
-
-    descriptorModule->cleanupDescriptorBuffer();
-    descriptorModule->cleanupDescriptorPool();
-
-    //descriptorModuleHouse->cleanupDescriptorBuffer();
-    //descriptorModuleHouse->cleanupDescriptorPool();
 }
 
 void App::drawFrame()
@@ -384,7 +356,7 @@ void App::recreateSwapchain()
     //Actualizamos el formato de la cámara
     this->sceneCamera->UpdateSize(swapchainModule->swapChainExtent);
 
-    shaderModule->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv", models.at(0)->mesh);
+    shaderModule->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv");
     //shaderModuleHouse->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv", models.at(1)->mesh);
 
     //Recreamos el antialiasing module
@@ -404,7 +376,7 @@ void App::recreateSwapchain()
     //Recreamos el frame buffer
     framebufferModule.createFramebuffer(renderPassModule->renderPass);
 
-    descriptorModule->recreateUniformBuffer(swapchainModule->getNumSwapChainImages());
+    _materials["mat"]->RecreateUniformsMaterial();
     //descriptorModuleHouse->recreateUniformBuffer(swapchainModule->getNumSwapChainImages());
 
     commandPoolModule->createCommandBuffers();
