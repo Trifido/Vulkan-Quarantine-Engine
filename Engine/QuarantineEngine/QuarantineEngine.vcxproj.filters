@@ -86,6 +86,18 @@
     <Filter Include="Input">
       <UniqueIdentifier>{5ece5c4b-5470-443d-8622-c4f880cf2143}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Kernel\Utilities\Geometry">
+      <UniqueIdentifier>{917bab5f-3fc6-402a-99f9-0b706a22c125}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Utilities\Geometry\headers">
+      <UniqueIdentifier>{367dba87-a6a0-4779-9449-4d754e164856}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Utilities\Geometry\sources">
+      <UniqueIdentifier>{c9ba81bf-d5bc-4c0c-954c-3e9e7c901093}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\Grid">
+      <UniqueIdentifier>{72acd058-6f24-4783-aa03-7ae4e3baedb1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -184,9 +196,6 @@
     <ClCompile Include="Utilities\GameComponent.cpp">
       <Filter>Kernel\Utilities\sources</Filter>
     </ClCompile>
-    <ClCompile Include="Utilities\Mesh.cpp">
-      <Filter>Kernel\Utilities\sources</Filter>
-    </ClCompile>
     <ClCompile Include="Utilities\Transform.cpp">
       <Filter>Kernel\Utilities\sources</Filter>
     </ClCompile>
@@ -201,6 +210,15 @@
     </ClCompile>
     <ClCompile Include="Draw\RenderPassModule.cpp">
       <Filter>Kernel\Draw\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Geometry\GeometryComponent.cpp">
+      <Filter>Kernel\Utilities\Geometry\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Geometry\Mesh.cpp">
+      <Filter>Kernel\Utilities\Geometry\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Geometry\PrimitiveMesh.cpp">
+      <Filter>Kernel\Utilities\Geometry\sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -303,9 +321,6 @@
     <ClInclude Include="Utilities\GameComponent.h">
       <Filter>Kernel\Utilities\headers</Filter>
     </ClInclude>
-    <ClInclude Include="Utilities\Mesh.h">
-      <Filter>Kernel\Utilities\headers</Filter>
-    </ClInclude>
     <ClInclude Include="Utilities\Transform.h">
       <Filter>Kernel\Utilities\headers</Filter>
     </ClInclude>
@@ -321,6 +336,24 @@
     <ClInclude Include="Draw\RenderPassModule.h">
       <Filter>Kernel\Draw\headers</Filter>
     </ClInclude>
+    <ClInclude Include="Utilities\Geometry\GeometryComponent.h">
+      <Filter>Kernel\Utilities\Geometry\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Geometry\Mesh.h">
+      <Filter>Kernel\Utilities\Geometry\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Geometry\Vertex.h">
+      <Filter>Kernel\Utilities\Geometry\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Geometry\PrimitiveMesh.h">
+      <Filter>Kernel\Utilities\Geometry\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Geometry\PrimitiveTypes.h">
+      <Filter>Kernel\Utilities\Geometry\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\TextureTypes.h">
+      <Filter>Kernel\Utilities\headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.txt" />
@@ -335,6 +368,12 @@
     </None>
     <None Include="..\..\resources\shaders\compile.bat">
       <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\resources\shaders\Grid\grid.frag">
+      <Filter>Shaders\Grid</Filter>
+    </None>
+    <None Include="..\..\resources\shaders\Grid\grid.vert">
+      <Filter>Shaders\Grid</Filter>
     </None>
   </ItemGroup>
 </Project>

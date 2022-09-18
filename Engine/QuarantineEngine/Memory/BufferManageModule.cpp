@@ -3,6 +3,10 @@
 
 #include "ImageMemoryTools.h"
 
+
+VkCommandPool BufferManageModule::commandPool;
+VkQueue BufferManageModule::graphicsQueue;
+
 BufferManageModule::BufferManageModule()
 {
 }
@@ -34,7 +38,7 @@ void BufferManageModule::createBuffer(VkDeviceSize size, VkBufferUsageFlags usag
     vkBindBufferMemory(deviceModule.device, buffer, bufferMemory, 0);
 }
 
-void BufferManageModule::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, VkCommandPool& commandPool, QueueModule& queueModule, DeviceModule& deviceModule)
+void BufferManageModule::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, DeviceModule& deviceModule)
 {
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -64,8 +68,8 @@ void BufferManageModule::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDe
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &commandBuffer;
 
-    vkQueueSubmit(queueModule.graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-    vkQueueWaitIdle(queueModule.graphicsQueue);
+    vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(graphicsQueue);
 
     vkFreeCommandBuffers(deviceModule.device, commandPool, 1, &commandBuffer);
 }

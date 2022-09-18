@@ -5,6 +5,8 @@
 #include "BufferManageModule.h"
 #include "SyncTool.h"
 
+VkCommandPool Texture::commandPool;
+
 void Texture::copyBufferToImage(VkBuffer buffer, VkImage nImage, uint32_t width, uint32_t height)
 {
     VkCommandBuffer commandBuffer = beginSingleTimeCommands(deviceModule->device, *ptrCommandPool);
@@ -127,10 +129,15 @@ void Texture::generateMipmaps(VkImage nImage, VkFormat imageFormat, int32_t nTex
 
 Texture::Texture()
 {
-    queueModule = QueueModule::getInstance();
 }
 
-void Texture::createTextureImage(std::string path, VkCommandPool& commandPool)
+Texture::Texture(std::string path, TEXTURE_TYPE type)
+{
+    this->createTextureImage(path);
+    this->type = type;
+}
+
+void Texture::createTextureImage(std::string path)
 {
     ptrCommandPool = &commandPool;
     stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);

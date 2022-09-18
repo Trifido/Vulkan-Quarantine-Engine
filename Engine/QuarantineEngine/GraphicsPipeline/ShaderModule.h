@@ -6,7 +6,7 @@
 #include <string>
 #include <vulkan/vulkan.hpp>
 #include "DeviceModule.h"
-#include "Mesh.h"
+#include "GeometryComponent.h"
 
 enum class SHADER_TYPE
 {
@@ -27,7 +27,7 @@ private:
     VkPipelineShaderStageCreateInfo                 fragShaderStageInfo{};
 
     VkVertexInputBindingDescription                     bindingDescription;
-    std::array<VkVertexInputAttributeDescription, 3>    attributeDescriptions;
+    std::vector<VkVertexInputAttributeDescription>      attributeDescriptions;
 public:
     std::vector<VkPipelineShaderStageCreateInfo>    shaderStages;
     VkPipelineVertexInputStateCreateInfo            vertexInputInfo{};
@@ -35,7 +35,8 @@ public:
 public:
     ShaderModule();
     static std::vector<char> readFile(const std::string& filename);
-    void createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment, std::shared_ptr<Mesh> mesh);
+    void createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment);
+    void createShaderBindings(std::shared_ptr<GeometryComponent> mesh);
     void cleanup();
 private:
     VkPipelineShaderStageCreateInfo createShader(VkDevice& device, const std::string& filename, SHADER_TYPE shaderType);

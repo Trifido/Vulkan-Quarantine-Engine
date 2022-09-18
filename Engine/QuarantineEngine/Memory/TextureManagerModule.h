@@ -13,8 +13,8 @@ class TextureManagerModule
 public:
     uint32_t        mipLevels = 1;
     DeviceModule*   deviceModule;
-    QueueModule*    queueModule;
     VkImageView     imageView;
+    static QueueModule* queueModule;
 protected:
     VkImage         image;
     VkDeviceMemory  deviceMemory;

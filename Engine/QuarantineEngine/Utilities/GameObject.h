@@ -6,6 +6,7 @@
 #include "Transform.h"
 #include "Material.h"
 #include "DescriptorModule.h"
+#include <PrimitiveTypes.h>
 
 class GameObject
 {
@@ -13,17 +14,20 @@ private:
     DeviceModule*       deviceModule;
     QueueModule*        queueModule;
 public:
-    std::shared_ptr<Mesh>               mesh;
+    std::shared_ptr<GeometryComponent>  mesh;
     std::shared_ptr<Transform>          transform;
     std::shared_ptr<Material>           material;
-    std::shared_ptr<DescriptorModule>   descriptorModule;
 
 public:
     GameObject();
-    GameObject(std::string meshPath, VkCommandPool& commandPool, std::shared_ptr<DescriptorModule> descriptor);
+    GameObject(PRIMITIVE_TYPE type);
+    GameObject(std::string meshPath);
     void cleanup();
     void drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
     void addMaterial(std::shared_ptr<Material> material_ptr);
+
+private:
+    void InitializeComponents();
 };
 
 #endif

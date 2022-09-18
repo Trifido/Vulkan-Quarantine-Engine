@@ -15,9 +15,8 @@ GraphicsPipelineModule::~GraphicsPipelineModule()
     this->antialiasingModule = nullptr;
 }
 
-void GraphicsPipelineModule::cleanup(VkPipeline pipeline, VkPipelineLayout pipelineLayout, std::shared_ptr<ShaderModule> shader)
+void GraphicsPipelineModule::cleanup(VkPipeline pipeline, VkPipelineLayout pipelineLayout)
 {
-    shader->cleanup();
     vkDestroyPipeline(deviceModule->device, pipeline, nullptr);
     vkDestroyPipelineLayout(deviceModule->device, pipelineLayout, nullptr);
 }

@@ -1,8 +1,11 @@
 #include "DescriptorModule.h"
 
-DescriptorModule::DescriptorModule(DeviceModule& deviceModule)
+
+DeviceModule* DescriptorModule::deviceModule;
+uint32_t DescriptorModule::NumSwapchainImages;
+
+DescriptorModule::DescriptorModule()
 {
-    this->deviceModule = &deviceModule;
 }
 
 void DescriptorModule::createDescriptorSetLayout()
@@ -14,14 +17,25 @@ void DescriptorModule::createDescriptorSetLayout()
     uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
 
-    VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-    samplerLayoutBinding.binding = 1;
-    samplerLayoutBinding.descriptorCount = 1;
-    samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    samplerLayoutBinding.pImmutableSamplers = nullptr;
-    samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-    std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
+    // ----------------- INICIO BUCLE CON TODAS LAS TEXTURAS
+    std::vector<VkDescriptorSetLayoutBinding> samplerLayoutBinding;
+    samplerLayoutBinding.resize(textures.size());
+
+    for (size_t id = 0; id < textures.size(); id++)
+    {
+        samplerLayoutBinding[id].binding = id + 1;
+        samplerLayoutBinding[id].descriptorCount = 1;
+        samplerLayoutBinding[id].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        samplerLayoutBinding[id].pImmutableSamplers = nullptr;
+        samplerLayoutBinding[id].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    }
+    
+    // ----------------- FINAL BUCLE CON TODAS LAS TEXTURAS
+
+    std::vector<VkDescriptorSetLayoutBinding> bindings = { uboLayoutBinding };
+    bindings.insert(bindings.end(), samplerLayoutBinding.begin(), samplerLayoutBinding.end());
+
     VkDescriptorSetLayoutCreateInfo layoutInfo{};
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
@@ -32,20 +46,23 @@ void DescriptorModule::createDescriptorSetLayout()
     }
 }
 
-void DescriptorModule::createDescriptorPool(size_t numSwapchainImgs)
+void DescriptorModule::createDescriptorPool()
 {
-    descriptorCount = numSwapchainImgs;
-    std::array<VkDescriptorPoolSize, 2> poolSizes{};
+    VkDescriptorPoolSize textureSize = {};
+    textureSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    textureSize.descriptorCount = static_cast<uint32_t>(this->NumSwapchainImages);
+
+    std::vector<VkDescriptorPoolSize> poolSizes;
+    poolSizes.resize(1 + textures.size(), textureSize);
+
     poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    poolSizes[0].descriptorCount = static_cast<uint32_t>(descriptorCount);
-    poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    poolSizes[1].descriptorCount = static_cast<uint32_t>(descriptorCount);
+    poolSizes[0].descriptorCount = static_cast<uint32_t>(this->NumSwapchainImages);
 
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
     poolInfo.pPoolSizes = poolSizes.data();
-    poolInfo.maxSets = static_cast<uint32_t>(descriptorCount);
+    poolInfo.maxSets = static_cast<uint32_t>(this->NumSwapchainImages);
 
     if (vkCreateDescriptorPool(deviceModule->device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
     {
@@ -55,32 +72,30 @@ void DescriptorModule::createDescriptorPool(size_t numSwapchainImgs)
 
 void DescriptorModule::createDescriptorSets()
 {
-    std::vector<VkDescriptorSetLayout> layouts(descriptorCount, descriptorSetLayout);
+    std::vector<VkDescriptorSetLayout> layouts(this->NumSwapchainImages, descriptorSetLayout);
     VkDescriptorSetAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocInfo.descriptorPool = descriptorPool;
-    allocInfo.descriptorSetCount = static_cast<uint32_t>(descriptorCount);
+    allocInfo.descriptorSetCount = static_cast<uint32_t>(this->NumSwapchainImages);
     allocInfo.pSetLayouts = layouts.data();
 
-    descriptorSets.resize(descriptorCount);
+    descriptorSets.resize(this->NumSwapchainImages);
     if (vkAllocateDescriptorSets(deviceModule->device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
         throw std::runtime_error("failed to allocate descriptor sets!");
     }
 
+    size_t numDescriptors = textures.size() + 1;
+
     //bufferModule->updateDescriptors(descriptorSets);
-    for (size_t i = 0; i < descriptorCount; i++)
+    for (size_t i = 0; i < this->NumSwapchainImages; i++)
     {
         VkDescriptorBufferInfo bufferInfo{};
         bufferInfo.buffer = uniformBuffers[i];
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(UniformBufferObject);
 
-        VkDescriptorImageInfo imageInfo{};
-        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        imageInfo.imageView = ptrTexture->imageView;
-        imageInfo.sampler = ptrTexture->textureSampler;
-
-        std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+        std::vector<VkWriteDescriptorSet> descriptorWrites{};
+        descriptorWrites.resize(numDescriptors);
 
         descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptorWrites[0].dstSet = descriptorSets[i];
@@ -91,22 +106,27 @@ void DescriptorModule::createDescriptorSets()
         descriptorWrites[0].pImageInfo = VK_NULL_HANDLE;
         descriptorWrites[0].pBufferInfo = &bufferInfo;
 
-        descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrites[1].dstSet = descriptorSets[i];
-        descriptorWrites[1].dstBinding = 1;
-        descriptorWrites[1].dstArrayElement = 0;
-        descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        descriptorWrites[1].descriptorCount = 1;
-        descriptorWrites[1].pBufferInfo = VK_NULL_HANDLE;
-        descriptorWrites[1].pImageInfo = &imageInfo;
+        // ----------------- INICIO BUCLE CON TODAS LAS TEXTURAS
+        for (size_t id = 1; id < numDescriptors; id++)
+        {
+            VkDescriptorImageInfo imageInfo{};
+            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            imageInfo.imageView = textures[id - 1]->imageView;
+            imageInfo.sampler = textures[id - 1]->textureSampler;
+
+            descriptorWrites[id].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrites[id].dstSet = descriptorSets[i];
+            descriptorWrites[id].dstBinding = id;
+            descriptorWrites[id].dstArrayElement = 0;
+            descriptorWrites[id].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            descriptorWrites[id].descriptorCount = 1;
+            descriptorWrites[id].pBufferInfo = VK_NULL_HANDLE;
+            descriptorWrites[id].pImageInfo = &imageInfo;
+        }
+        // ----------------- FINAL BUCLE CON TODAS LAS TEXTURAS
 
         vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
-}
-
-void DescriptorModule::addPtrData(Texture& texModule)
-{
-    ptrTexture = std::make_shared<Texture>(texModule);
 }
 
 void DescriptorModule::cleanup()
@@ -119,15 +139,14 @@ void DescriptorModule::cleanupDescriptorPool()
     vkDestroyDescriptorPool(deviceModule->device, descriptorPool, nullptr);
 }
 
-void DescriptorModule::createUniformBuffers(size_t numImagesSwapChain)
+void DescriptorModule::createUniformBuffers()
 {
-    numSwapchainImages = numImagesSwapChain;
     VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
-    uniformBuffers.resize(numSwapchainImages);
-    uniformBuffersMemory.resize(numSwapchainImages);
+    uniformBuffers.resize(this->NumSwapchainImages);
+    uniformBuffersMemory.resize(this->NumSwapchainImages);
 
-    for (size_t i = 0; i < numSwapchainImages; i++) {
+    for (size_t i = 0; i < this->NumSwapchainImages; i++) {
         BufferManageModule::createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i], uniformBuffersMemory[i], *deviceModule);
     }
 }
@@ -147,27 +166,45 @@ void DescriptorModule::updateUniformBuffer(/*uint32_t currentImage, */VkExtent2D
     //vkUnmapMemory(deviceModule->device, uniformBuffersMemory[currentImage]);
 }
 
-void DescriptorModule::init(uint32_t numSwapChain, Texture& texModule)
+void DescriptorModule::Initialize(std::shared_ptr<std::map<TEXTURE_TYPE, std::shared_ptr<Texture>>> textures)
 {
-    createUniformBuffers(numSwapChain);
-    addPtrData(texModule);
-    createDescriptorSetLayout();
-    createDescriptorPool(numSwapChain);
-    createDescriptorSets();
+    this->InitializeTextureOrder(textures);
+
+    this->createUniformBuffers();
+    this->createDescriptorSetLayout();
+    this->createDescriptorPool();
+    this->createDescriptorSets();
 }
 
-void DescriptorModule::recreateUniformBuffer(uint32_t numSwapChain)
+void DescriptorModule::recreateUniformBuffer()
 {
-    createUniformBuffers(numSwapChain);
-    createDescriptorPool(numSwapChain);
-    createDescriptorSets();
+    this->createUniformBuffers();
+    this->createDescriptorPool();
+    this->createDescriptorSets();
 }
+
 
 void DescriptorModule::cleanupDescriptorBuffer()
 {
-    for (size_t i = 0; i < numSwapchainImages; i++)
+    for (size_t i = 0; i < this->NumSwapchainImages; i++)
     {
         vkDestroyBuffer(deviceModule->device, uniformBuffers[i], nullptr);
         vkFreeMemory(deviceModule->device, uniformBuffersMemory[i], nullptr);
     }
+}
+
+void DescriptorModule::InitializeTextureOrder(std::shared_ptr<std::map<TEXTURE_TYPE, std::shared_ptr<Texture>>> textureMap)
+{
+    CheckTextures(textureMap, TEXTURE_TYPE::DIFFUSE_TYPE);
+    CheckTextures(textureMap, TEXTURE_TYPE::NORMAL_TYPE);
+    CheckTextures(textureMap, TEXTURE_TYPE::SPECULAR_TYPE);
+    CheckTextures(textureMap, TEXTURE_TYPE::EMISSIVE_TYPE);
+    CheckTextures(textureMap, TEXTURE_TYPE::BUMP_TYPE);
+}
+
+void DescriptorModule::CheckTextures(std::shared_ptr<std::map<TEXTURE_TYPE, std::shared_ptr<Texture>>> textureMap, TEXTURE_TYPE type)
+{
+    std::map<TEXTURE_TYPE, std::shared_ptr<Texture>>::iterator it = textureMap->find(type);
+    if (it != textureMap->end())
+        this->textures.push_back(it->second);
 }

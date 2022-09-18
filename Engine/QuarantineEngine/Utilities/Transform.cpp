@@ -1,12 +1,12 @@
 #include "Transform.h"
-
+#include <glm/gtx/quaternion.hpp>
 Transform::Transform()
 {
     model = glm::mat4(1.0f);
-    view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    proj = glm::mat4(1.0f);
     ubo = UniformBufferObject();
     ubo.mvp = glm::mat4(1.0);
+
+    this->ResetTransform();
 }
 
 UniformBufferObject Transform::getMVP()
@@ -17,4 +17,44 @@ UniformBufferObject Transform::getMVP()
 void Transform::updateMVP(glm::mat4& VPMainCamera)
 {
     ubo.mvp = VPMainCamera * model;
+}
+
+void Transform::SetPosition(const glm::vec3& newPosition)
+{
+    this->Position = newPosition;
+    this->trans_mat = glm::translate(glm::mat4(1.0f), this->Position);
+    this->model = this->scale_mat * this->rot_mat * this->trans_mat;
+}
+
+void Transform::SetOrientation(const glm::vec3& newRotation)
+{
+    this->Orientation = glm::quat(newRotation);
+    this->rot_mat = glm::toMat4(Orientation);
+    //this->Orientation = glm::fquat(newRotation);
+    //this->rot_mat = glm::mat4_cast(this->Orientation);
+    this->model = this->scale_mat * this->rot_mat * this->trans_mat;
+}
+
+void Transform::SetScale(const glm::vec3& newScale)
+{
+    this->Scale = newScale;
+    this->scale_mat = glm::scale(glm::mat4(1.0f), this->Scale);
+    this->model = this->scale_mat * this->rot_mat * this->trans_mat;
+}
+
+void Transform::ResetTransform()
+{
+    this->Position = glm::vec3(0.0f);
+    this->Orientation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+    this->Scale = glm::vec3(1.0f);
+    this->model = glm::mat4(1.0f);
+
+    this->trans_mat = glm::mat4(1.0f);
+    this->rot_mat = glm::mat4(1.0f);
+    this->scale_mat = glm::mat4(1.0f);
+}
+
+const glm::mat4& Transform::GetModel()
+{
+    return model;
 }

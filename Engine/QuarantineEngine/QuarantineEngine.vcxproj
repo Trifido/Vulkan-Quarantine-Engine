@@ -105,12 +105,12 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\external\tinyobjloader-master;..\external\imgui;..\external\imgui\backends;..\external\stb-master;..\..\external\imgui;%VULKAN_SDK%\include;..\libs\glfw\include;..\libs;.\setup;.\Presentation;.\GraphicsPipeline;.\Draw;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Input;..\libs\vma;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\external\tinyobjloader-master;..\external\imgui;..\external\imgui\backends;..\external\stb-master;..\..\external\imgui;%VULKAN_SDK%\include;..\libs\glfw\include;..\libs;.\setup;.\Presentation;.\GraphicsPipeline;.\Draw;.\Utilities\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Input;..\libs\vma;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>%VULKAN_SDK%\lib;..\libs\glfw\lib-vc2010-64;..\libs\vma;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>%VULKAN_SDK%\lib;..\libs\glfw\lib-vc2010-64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
@@ -193,8 +193,10 @@
     <ClCompile Include="Utilities\Camera.cpp" />
     <ClCompile Include="Utilities\GameComponent.cpp" />
     <ClCompile Include="Utilities\GameObject.cpp" />
+    <ClCompile Include="Utilities\Geometry\GeometryComponent.cpp" />
+    <ClCompile Include="Utilities\Geometry\Mesh.cpp" />
+    <ClCompile Include="Utilities\Geometry\PrimitiveMesh.cpp" />
     <ClCompile Include="Utilities\Material.cpp" />
-    <ClCompile Include="Utilities\Mesh.cpp" />
     <ClCompile Include="Utilities\Texture.cpp" />
     <ClCompile Include="Utilities\Transform.cpp" />
   </ItemGroup>
@@ -234,9 +236,14 @@
     <ClInclude Include="Utilities\Camera.h" />
     <ClInclude Include="Utilities\GameComponent.h" />
     <ClInclude Include="Utilities\GameObject.h" />
+    <ClInclude Include="Utilities\Geometry\GeometryComponent.h" />
+    <ClInclude Include="Utilities\Geometry\Mesh.h" />
+    <ClInclude Include="Utilities\Geometry\PrimitiveMesh.h" />
+    <ClInclude Include="Utilities\Geometry\PrimitiveTypes.h" />
+    <ClInclude Include="Utilities\Geometry\Vertex.h" />
     <ClInclude Include="Utilities\Material.h" />
-    <ClInclude Include="Utilities\Mesh.h" />
     <ClInclude Include="Utilities\Texture.h" />
+    <ClInclude Include="Utilities\TextureTypes.h" />
     <ClInclude Include="Utilities\Transform.h" />
   </ItemGroup>
   <ItemGroup>
@@ -244,6 +251,8 @@
     <None Include="..\..\resources\shaders\compile.bat" />
     <None Include="..\..\resources\shaders\example.frag" />
     <None Include="..\..\resources\shaders\example.vert" />
+    <None Include="..\..\resources\shaders\Grid\grid.frag" />
+    <None Include="..\..\resources\shaders\Grid\grid.vert" />
     <None Include="..\README.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

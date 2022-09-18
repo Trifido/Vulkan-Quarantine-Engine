@@ -1,0 +1,17 @@
+#pragma once
+
+#ifndef PRIMITIVE_TYPES_H
+#define PRIMITIVE_TYPES_H
+
+enum PRIMITIVE_TYPE
+{
+    POINT_TYPE,
+    TRIANGLE_TYPE,
+    QUAD_TYPE,
+    CUBE_TYPE,
+    SPHERE_TYPE,
+    PYRAMID_TYPE,
+    CYLINDER_TYPE
+};
+
+#endif

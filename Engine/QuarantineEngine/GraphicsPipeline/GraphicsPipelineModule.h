@@ -39,7 +39,7 @@ public:
     GraphicsPipelineModule();
     ~GraphicsPipelineModule();
     void CreateGraphicsPipeline(VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, std::shared_ptr<ShaderModule> shader, std::shared_ptr<DescriptorModule> descriptor_ptr, VkRenderPass renderPass);
-    void cleanup(VkPipeline pipeline, VkPipelineLayout pipelineLayout, std::shared_ptr<ShaderModule> shader);
+    void cleanup(VkPipeline pipeline, VkPipelineLayout pipelineLayout);
 
 private:
     void updatePolygonMode(PolygonRenderType polygonType);
