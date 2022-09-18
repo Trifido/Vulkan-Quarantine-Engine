@@ -43,7 +43,7 @@ public:
     void AddPipeline(std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule_ptr);
 
     void cleanup();
-    void cleanupTextures();
+    void cleanupDescriptor();
     void recreatePipelineMaterial(VkRenderPass renderPass);
     void bindingMesh(std::shared_ptr<GeometryComponent> mesh);
     void InitializeMaterial();

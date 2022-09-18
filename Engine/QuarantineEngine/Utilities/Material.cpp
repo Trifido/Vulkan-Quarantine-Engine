@@ -64,16 +64,8 @@ void Material::cleanup()
     this->descriptor->cleanupDescriptorPool();
 }
 
-void Material::cleanupTextures()
+void Material::cleanupDescriptor()
 {
-    std::map<TEXTURE_TYPE, std::shared_ptr<Texture>>::iterator it;
-
-    for (it = textures->begin(); it != textures->end(); it++)
-    {
-        if (it->second != nullptr)
-            it->second->cleanup();
-    }
-
     this->descriptor->cleanup();
 }
 
