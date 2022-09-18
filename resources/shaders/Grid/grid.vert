@@ -6,8 +6,12 @@ layout(std430, push_constant) uniform PushConstants
     mat4 MVP;
 } constants;
 
-layout(location = 0) in vec3 inPosition;
+layout(set = 0, binding = 0) uniform ViewUniforms {
+    mat4 view;
+    mat4 proj;
+} view;
 
+layout(location = 0) in vec3 inPosition;
 layout(location = 1) out vec3 nearPoint;
 layout(location = 2) out vec3 farPoint;
 

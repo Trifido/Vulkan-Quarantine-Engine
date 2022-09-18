@@ -154,19 +154,21 @@ void App::initVulkan()
     models.push_back(std::make_shared<GameObject>(GameObject(MODEL_PATH)));
     models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 
-    models.push_back(std::make_shared<GameObject>(GameObject(MODEL_HOUSE_PATH)));
-    models.at(1)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::QUAD_TYPE)));
+    models.at(1)->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 0.0f));
 
     //Creamos el shader module para el material
     _shaders["shader"] = std::make_shared<ShaderModule>(ShaderModule());
     _shaders["shader"]->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv");
+    _shaders["shader2"] = std::make_shared<ShaderModule>(ShaderModule());
+    _shaders["shader2"]->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv");
     //Creamos el material
     _materials["mat"] = std::make_shared<Material>(Material(_shaders["shader"], renderPassModule->renderPass));
     _materials["mat"]->AddTexture(_textures["diffuse_face"]);
     _materials["mat"]->AddPipeline(graphicsPipelineModule);
 
     //Creamos el material
-    _materials["matHouse"] = std::make_shared<Material>(Material(_shaders["shader"], renderPassModule->renderPass));
+    _materials["matHouse"] = std::make_shared<Material>(Material(_shaders["shader2"], renderPassModule->renderPass));
     _materials["matHouse"]->AddTexture(_textures["albedo_house"]);
     _materials["matHouse"]->AddPipeline(graphicsPipelineModule);
 
