@@ -106,7 +106,6 @@ void DescriptorModule::createDescriptorSets()
         descriptorWrites[0].pImageInfo = VK_NULL_HANDLE;
         descriptorWrites[0].pBufferInfo = &bufferInfo;
 
-
         // ----------------- INICIO BUCLE CON TODAS LAS TEXTURAS
         for (size_t id = 1; id < numDescriptors; id++)
         {
@@ -125,7 +124,6 @@ void DescriptorModule::createDescriptorSets()
             descriptorWrites[id].pImageInfo = &imageInfo;
         }
         // ----------------- FINAL BUCLE CON TODAS LAS TEXTURAS
-
 
         vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }

@@ -82,7 +82,6 @@ private:
     QueueModule*            queueModule {};
     WindowSurface           windowSurface {};
     SwapChainModule*        swapchainModule {};
-    //ImageViewModule         imageViewModule;
     FramebufferModule       framebufferModule;
     CommandPoolModule*      commandPoolModule {};
     SynchronizationModule   synchronizationModule;
@@ -91,17 +90,8 @@ private:
     DepthBufferModule*                  depthBufferModule;
     AntiAliasingModule*                 antialiasingModule;
     RenderPassModule*                   renderPassModule;
-    //std::shared_ptr<MaterialModule>     materialModule;
 
     std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule;
-    std::shared_ptr<ShaderModule>       shaderModule;
-    std::shared_ptr<ShaderModule>       shaderModuleHouse;
-    std::shared_ptr<DescriptorModule>   descriptorModule;
-    std::shared_ptr<DescriptorModule>   descriptorModuleHouse;
-
-    std::shared_ptr<Texture> albedo;
-    std::shared_ptr<Texture> albedoHouse;
-
 
     bool show_demo_window = true;
     bool show_another_window = true;
@@ -113,6 +103,8 @@ private:
     std::shared_ptr<Camera>     sceneCamera;
 
     std::unordered_map<std::string, std::shared_ptr<Material>> _materials;
+    std::unordered_map<std::string, std::shared_ptr<ShaderModule>> _shaders;
+    std::unordered_map<std::string, std::shared_ptr<Texture>> _textures;
 
     KeyboardController* keyboard_ptr {};
 };

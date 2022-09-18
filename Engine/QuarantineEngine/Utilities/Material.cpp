@@ -58,8 +58,7 @@ void Material::AddPipeline(std::shared_ptr<GraphicsPipelineModule> graphicsPipel
 
 void Material::cleanup()
 {
-    //this->albedo_ptr->cleanup();
-    this->graphicsPipelineModule->cleanup(this->pipeline, this->pipelineLayout, this->shader);
+    this->graphicsPipelineModule->cleanup(this->pipeline, this->pipelineLayout);
 
     this->descriptor->cleanupDescriptorBuffer();
     this->descriptor->cleanupDescriptorPool();
