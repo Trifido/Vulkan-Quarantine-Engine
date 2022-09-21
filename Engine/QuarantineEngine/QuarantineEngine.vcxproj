@@ -105,7 +105,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\external\tinyobjloader-master;..\external\imgui;..\external\imgui\backends;..\external\stb-master;..\..\external\imgui;%VULKAN_SDK%\include;..\libs\glfw\include;..\libs;.\setup;.\Presentation;.\GraphicsPipeline;.\Draw;.\Utilities\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Input;..\libs\vma;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\external\tinyobjloader-master;..\external\imgui;..\external\imgui\backends;..\external\stb-master;..\..\external\imgui;%VULKAN_SDK%\include;..\libs\glfw\include;..\libs;.\setup;.\Presentation;.\GraphicsPipeline;.\Draw;.\Utilities\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Input;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -143,7 +143,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\..\external\tinyobjloader-master;..\external\imgui;..\external\imgui\backends;..\external\stb-master;..\..\external\imgui;%VULKAN_SDK%\include;..\libs\glfw\include;..\libs;.\setup;.\Presentation;.\GraphicsPipeline;.\Draw;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\external\tinyobjloader-master;..\external\imgui;..\external\imgui\backends;..\external\stb-master;..\..\external\imgui;%VULKAN_SDK%\include;..\libs\glfw\include;..\libs;.\setup;.\Presentation;.\GraphicsPipeline;.\Draw;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Utilities\Geometry;.\Input;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -180,6 +180,7 @@
     <ClCompile Include="Memory\BufferManageModule.cpp" />
     <ClCompile Include="Memory\DescriptorModule.cpp" />
     <ClCompile Include="Memory\TextureManagerModule.cpp" />
+    <ClCompile Include="Memory\UBO.cpp" />
     <ClCompile Include="Presentation\AntiAliasingModule.cpp" />
     <ClCompile Include="Presentation\DepthBufferModule.cpp" />
     <ClCompile Include="Presentation\ImageViewModule.cpp" />
@@ -221,6 +222,7 @@
     <ClInclude Include="Memory\DescriptorModule.h" />
     <ClInclude Include="Memory\ImageMemoryTools.h" />
     <ClInclude Include="Memory\TextureManagerModule.h" />
+    <ClInclude Include="Memory\UBO.h" />
     <ClInclude Include="Presentation\AntiAliasingModule.h" />
     <ClInclude Include="Presentation\DepthBufferModule.h" />
     <ClInclude Include="Presentation\ImageViewModule.h" />

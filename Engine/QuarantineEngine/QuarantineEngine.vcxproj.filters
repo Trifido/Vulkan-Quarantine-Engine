@@ -220,6 +220,9 @@
     <ClCompile Include="Utilities\Geometry\PrimitiveMesh.cpp">
       <Filter>Kernel\Utilities\Geometry\sources</Filter>
     </ClCompile>
+    <ClCompile Include="Memory\UBO.cpp">
+      <Filter>Kernel\Memory\sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\backends\imgui_impl_glfw.h">
@@ -354,6 +357,9 @@
     <ClInclude Include="Utilities\TextureTypes.h">
       <Filter>Kernel\Utilities\headers</Filter>
     </ClInclude>
+    <ClInclude Include="Memory\UBO.h">
+      <Filter>Kernel\Memory\headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.txt" />
@@ -366,13 +372,13 @@
     <None Include="..\..\resources\shaders\example.vert">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\..\resources\shaders\compile.bat">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\..\resources\shaders\Grid\grid.frag">
       <Filter>Shaders\Grid</Filter>
     </None>
     <None Include="..\..\resources\shaders\Grid\grid.vert">
+      <Filter>Shaders\Grid</Filter>
+    </None>
+    <None Include="..\..\resources\shaders\compile.bat">
       <Filter>Shaders\Grid</Filter>
     </None>
   </ItemGroup>

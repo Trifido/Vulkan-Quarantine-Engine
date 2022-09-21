@@ -3,13 +3,13 @@
 Transform::Transform()
 {
     model = glm::mat4(1.0f);
-    ubo = UniformBufferObject();
+    ubo = TransformUniform();
     ubo.mvp = glm::mat4(1.0);
 
     this->ResetTransform();
 }
 
-UniformBufferObject Transform::getMVP()
+TransformUniform Transform::getMVP()
 {
     return ubo;
 }
@@ -30,8 +30,6 @@ void Transform::SetOrientation(const glm::vec3& newRotation)
 {
     this->Orientation = glm::quat(newRotation);
     this->rot_mat = glm::toMat4(Orientation);
-    //this->Orientation = glm::fquat(newRotation);
-    //this->rot_mat = glm::mat4_cast(this->Orientation);
     this->model = this->scale_mat * this->rot_mat * this->trans_mat;
 }
 

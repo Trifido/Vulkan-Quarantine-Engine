@@ -10,7 +10,8 @@ enum TEXTURE_TYPE
     SPECULAR_TYPE,
     EMISSIVE_TYPE,
     HEIGHT_TYPE,
-    BUMP_TYPE
+    BUMP_TYPE,
+    NULL_TYPE
 };
 
 #endif

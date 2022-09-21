@@ -6,35 +6,39 @@ uint32_t DescriptorModule::NumSwapchainImages;
 
 DescriptorModule::DescriptorModule()
 {
+    this->cameraUBO = std::make_shared<UniformBufferObject>();
+    this->materialUBO = std::make_shared<UniformBufferObject>();
+    this->lightUBO = std::make_shared<UniformBufferObject>();
 }
 
 void DescriptorModule::createDescriptorSetLayout()
 {
-    VkDescriptorSetLayoutBinding uboLayoutBinding{};
-    uboLayoutBinding.binding = 0;
-    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    uboLayoutBinding.descriptorCount = 1;
-    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
+    std::vector<VkDescriptorSetLayoutBinding> uboLayoutBinding{};
+    uboLayoutBinding.resize(this->numUBOs);
 
-
-    // ----------------- INICIO BUCLE CON TODAS LAS TEXTURAS
-    std::vector<VkDescriptorSetLayoutBinding> samplerLayoutBinding;
-    samplerLayoutBinding.resize(textures.size());
-
-    for (size_t id = 0; id < textures.size(); id++)
+    // Inicializamos los descriptor layouts de los UBO's
+    for (size_t i = 0; i < this->numUBOs; i++)
     {
-        samplerLayoutBinding[id].binding = id + 1;
-        samplerLayoutBinding[id].descriptorCount = 1;
-        samplerLayoutBinding[id].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        samplerLayoutBinding[id].pImmutableSamplers = nullptr;
-        samplerLayoutBinding[id].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+        uboLayoutBinding[i].binding = this->numBinding;
+        uboLayoutBinding[i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        uboLayoutBinding[i].descriptorCount = 1;
+        uboLayoutBinding[i].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+        uboLayoutBinding[i].pImmutableSamplers = nullptr; // Optional
+        this->numBinding++;
     }
-    
-    // ----------------- FINAL BUCLE CON TODAS LAS TEXTURAS
 
+    // Inicializamos el descriptor layouts de las texturas que será un array texture
+    VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
+    samplerLayoutBinding.binding = this->numBinding;
+    samplerLayoutBinding.descriptorCount = textures->size();
+    samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    samplerLayoutBinding.pImmutableSamplers = nullptr;
+    samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    this->numBinding++;
+    
+    // Formamos el layout total
     std::vector<VkDescriptorSetLayoutBinding> bindings = { uboLayoutBinding };
-    bindings.insert(bindings.end(), samplerLayoutBinding.begin(), samplerLayoutBinding.end());
+    bindings.push_back(samplerLayoutBinding);
 
     VkDescriptorSetLayoutCreateInfo layoutInfo{};
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -48,15 +52,20 @@ void DescriptorModule::createDescriptorSetLayout()
 
 void DescriptorModule::createDescriptorPool()
 {
-    VkDescriptorPoolSize textureSize = {};
-    textureSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    textureSize.descriptorCount = static_cast<uint32_t>(this->NumSwapchainImages);
-
     std::vector<VkDescriptorPoolSize> poolSizes;
-    poolSizes.resize(1 + textures.size(), textureSize);
+    poolSizes.resize(this->numBinding);
 
-    poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    poolSizes[0].descriptorCount = static_cast<uint32_t>(this->NumSwapchainImages);
+    size_t idx = 0;
+    while (idx < this->numUBOs)
+    {
+        poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        poolSizes[idx].descriptorCount = static_cast<uint32_t>(this->NumSwapchainImages);
+        idx++;
+    }
+
+    poolSizes[idx].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    poolSizes[idx].descriptorCount = static_cast<uint32_t>(this->NumSwapchainImages);
+
 
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -84,44 +93,52 @@ void DescriptorModule::createDescriptorSets()
         throw std::runtime_error("failed to allocate descriptor sets!");
     }
 
-    size_t numDescriptors = textures.size() + 1;
+    size_t numDescriptors = this->numBinding;
 
     //bufferModule->updateDescriptors(descriptorSets);
     for (size_t i = 0; i < this->NumSwapchainImages; i++)
     {
-        VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = uniformBuffers[i];
-        bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(UniformBufferObject);
-
         std::vector<VkWriteDescriptorSet> descriptorWrites{};
         descriptorWrites.resize(numDescriptors);
 
-        descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrites[0].dstSet = descriptorSets[i];
-        descriptorWrites[0].dstBinding = 0;
-        descriptorWrites[0].dstArrayElement = 0;
-        descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptorWrites[0].descriptorCount = 1;
-        descriptorWrites[0].pImageInfo = VK_NULL_HANDLE;
-        descriptorWrites[0].pBufferInfo = &bufferInfo;
+        if (this->materialUniform != nullptr)
+        {
+            VkDescriptorBufferInfo bufferInfo{};
+            bufferInfo.buffer = this->materialUBO->uniformBuffers[i];
+            bufferInfo.offset = 0;
+            bufferInfo.range = sizeof(MaterialUniform);
+
+            descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrites[0].dstSet = descriptorSets[i];
+            descriptorWrites[0].dstBinding = 0;
+            descriptorWrites[0].dstArrayElement = 0;
+            descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptorWrites[0].descriptorCount = 1;
+            descriptorWrites[0].pImageInfo = VK_NULL_HANDLE;
+            descriptorWrites[0].pBufferInfo = &bufferInfo;
+        }
 
         // ----------------- INICIO BUCLE CON TODAS LAS TEXTURAS
-        for (size_t id = 1; id < numDescriptors; id++)
+        std::vector<VkDescriptorImageInfo> imageInfo;
+        imageInfo.resize(textures->size());
+        for (uint32_t id = 0; id < textures->size(); ++id)
         {
-            VkDescriptorImageInfo imageInfo{};
-            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            imageInfo.imageView = textures[id - 1]->imageView;
-            imageInfo.sampler = textures[id - 1]->textureSampler;
+            imageInfo[id].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            imageInfo[id].imageView = textures->at(id)->imageView;
+            imageInfo[id].sampler = textures->at(id)->textureSampler;
+        }
 
+        for (size_t id = this->numUBOs; id < numDescriptors; id++)
+        {
+            descriptorWrites[id] = {};
             descriptorWrites[id].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrites[id].dstSet = descriptorSets[i];
             descriptorWrites[id].dstBinding = id;
             descriptorWrites[id].dstArrayElement = 0;
             descriptorWrites[id].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            descriptorWrites[id].descriptorCount = 1;
+            descriptorWrites[id].descriptorCount = textures->size();
             descriptorWrites[id].pBufferInfo = VK_NULL_HANDLE;
-            descriptorWrites[id].pImageInfo = &imageInfo;
+            descriptorWrites[id].dstSet = descriptorSets[i];
+            descriptorWrites[id].pImageInfo = imageInfo.data();
         }
         // ----------------- FINAL BUCLE CON TODAS LAS TEXTURAS
 
@@ -141,13 +158,25 @@ void DescriptorModule::cleanupDescriptorPool()
 
 void DescriptorModule::createUniformBuffers()
 {
-    VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+    // Camera UBO
+    if (this->cameraUniform != nullptr)
+    {
+        this->cameraUBO->CreateUniformBuffer(sizeof(CameraUniform), this->NumSwapchainImages, *deviceModule);
+        this->numUBOs++;
+    }
 
-    uniformBuffers.resize(this->NumSwapchainImages);
-    uniformBuffersMemory.resize(this->NumSwapchainImages);
+    // Material UBO
+    if (this->materialUniform != nullptr)
+    {
+        this->materialUBO->CreateUniformBuffer(sizeof(MaterialUniform), this->NumSwapchainImages, *deviceModule);
+        this->numUBOs++;
+    }
 
-    for (size_t i = 0; i < this->NumSwapchainImages; i++) {
-        BufferManageModule::createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i], uniformBuffersMemory[i], *deviceModule);
+    // Light UBO
+    if (this->lightUniform != nullptr)
+    {
+        this->lightUBO->CreateUniformBuffer(sizeof(LightUniform), this->NumSwapchainImages, *deviceModule);
+        this->numUBOs++;
     }
 }
 
@@ -166,9 +195,10 @@ void DescriptorModule::updateUniformBuffer(/*uint32_t currentImage, */VkExtent2D
     //vkUnmapMemory(deviceModule->device, uniformBuffersMemory[currentImage]);
 }
 
-void DescriptorModule::Initialize(std::shared_ptr<std::map<TEXTURE_TYPE, std::shared_ptr<Texture>>> textures)
+void DescriptorModule::Initialize(std::shared_ptr <std::vector<std::shared_ptr<Texture>>> textures, std::shared_ptr <MaterialUniform> uniformMaterial)
 {
-    this->InitializeTextureOrder(textures);
+    this->textures = textures;
+    this->materialUniform = uniformMaterial;
 
     this->createUniformBuffers();
     this->createDescriptorSetLayout();
@@ -181,30 +211,40 @@ void DescriptorModule::recreateUniformBuffer()
     this->createUniformBuffers();
     this->createDescriptorPool();
     this->createDescriptorSets();
-}
 
+    for (size_t i = 0; i < this->NumSwapchainImages; i++)
+    {
+        void* data;
+        vkMapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[i], 0, sizeof(this->cameraUniform), 0, &data);
+        memcpy(data, &this->cameraUniform, sizeof(this->cameraUniform));
+        vkUnmapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[i]);
+    }
+}
 
 void DescriptorModule::cleanupDescriptorBuffer()
 {
     for (size_t i = 0; i < this->NumSwapchainImages; i++)
     {
-        vkDestroyBuffer(deviceModule->device, uniformBuffers[i], nullptr);
-        vkFreeMemory(deviceModule->device, uniformBuffersMemory[i], nullptr);
+        if (this->cameraUniform != nullptr)
+        {
+            vkDestroyBuffer(deviceModule->device, this->cameraUBO->uniformBuffers[i], nullptr);
+            vkFreeMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[i], nullptr);
+        }
+
+        // Material UBO
+        if (this->materialUniform != nullptr)
+        {
+            vkDestroyBuffer(deviceModule->device, this->materialUBO->uniformBuffers[i], nullptr);
+            vkFreeMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[i], nullptr);
+        }
+
+        // Light UBO
+        if (this->lightUniform != nullptr)
+        {
+            vkDestroyBuffer(deviceModule->device, this->lightUBO->uniformBuffers[i], nullptr);
+            vkFreeMemory(deviceModule->device, this->lightUBO->uniformBuffersMemory[i], nullptr);
+        }
     }
+    this->numUBOs = 0;
 }
 
-void DescriptorModule::InitializeTextureOrder(std::shared_ptr<std::map<TEXTURE_TYPE, std::shared_ptr<Texture>>> textureMap)
-{
-    CheckTextures(textureMap, TEXTURE_TYPE::DIFFUSE_TYPE);
-    CheckTextures(textureMap, TEXTURE_TYPE::NORMAL_TYPE);
-    CheckTextures(textureMap, TEXTURE_TYPE::SPECULAR_TYPE);
-    CheckTextures(textureMap, TEXTURE_TYPE::EMISSIVE_TYPE);
-    CheckTextures(textureMap, TEXTURE_TYPE::BUMP_TYPE);
-}
-
-void DescriptorModule::CheckTextures(std::shared_ptr<std::map<TEXTURE_TYPE, std::shared_ptr<Texture>>> textureMap, TEXTURE_TYPE type)
-{
-    std::map<TEXTURE_TYPE, std::shared_ptr<Texture>>::iterator it = textureMap->find(type);
-    if (it != textureMap->end())
-        this->textures.push_back(it->second);
-}

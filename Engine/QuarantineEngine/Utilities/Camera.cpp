@@ -12,6 +12,8 @@ Camera::Camera(float width, float height)
     nearPlane = 0.1f;
     farPlane = 500.0f;
     view = projection = VP = glm::mat4(1.0);
+    this->cameraUniform = std::make_shared<CameraUniform>();
+    this->UpdateUBO();
 }
 
 void Camera::CameraController(float deltaTime)
@@ -51,6 +53,8 @@ void Camera::CameraController(float deltaTime)
     projection = glm::perspective(glm::radians(fov), (float)WIDTH / (float)HEIGHT, nearPlane, farPlane);
     projection[1][1] *= -1;
     VP = projection * view;
+
+    this->UpdateUBO();
 }
 
 void Camera::EditorScroll()
@@ -133,6 +137,8 @@ void Camera::CheckCameraAttributes(float* positionCamera, float* frontCamera, fl
         projection = glm::perspective(glm::radians(fov), (float)WIDTH / (float)HEIGHT, nearPlane, farPlane);
         projection[1][1] *= -1;
         VP = projection * view;
+
+        this->UpdateUBO();
     }
 }
 
@@ -149,11 +155,19 @@ void Camera::InvertPitch(float heightPos)
     cameraFront = glm::normalize(front);
     //cameraUp = -cameraUp;
     view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
+    this->UpdateUBO();
 }
 
 void Camera::UpdateSize(VkExtent2D size)
 {
     this->WIDTH = size.width;
     this->HEIGHT = size.height;
+}
+
+void Camera::UpdateUBO()
+{
+    this->cameraUniform->projection = this->projection;
+    this->cameraUniform->view = this->view;
 }
 

@@ -129,6 +129,8 @@ void Texture::generateMipmaps(VkImage nImage, VkFormat imageFormat, int32_t nTex
 
 Texture::Texture()
 {
+    this->type = TEXTURE_TYPE::NULL_TYPE;
+    this->createTextureImage("");
 }
 
 Texture::Texture(std::string path, TEXTURE_TYPE type)
@@ -140,8 +142,21 @@ Texture::Texture(std::string path, TEXTURE_TYPE type)
 void Texture::createTextureImage(std::string path)
 {
     ptrCommandPool = &commandPool;
-    stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    stbi_uc* pixels;
+
+    if (path.empty())
+    {
+        this->texHeight = this->texWidth = 1;
+        this->texChannels = 3;
+        pixels = new unsigned char(0);
+    }
+    else
+    {
+        pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    }
+
     mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
+
     VkDeviceSize imageSize = texWidth * texHeight * 4;
 
     if (!pixels) {

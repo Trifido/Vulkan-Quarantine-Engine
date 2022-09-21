@@ -6,8 +6,17 @@ layout(location = 1) in vec2 fragTexCoord;
 
 layout(location = 0) out vec4 outColor;
 
-layout(binding = 1) uniform sampler2D texSampler;
+layout(set = 0, binding = 0) uniform UniformMaterial {
+    int idxDiffuse;
+    int idxNormal;
+    int idxSpecular;
+    int idxEmissive;
+    int idxHeight;
+    int idxBump;
+} uboMaterial;
+
+layout(binding = 1) uniform sampler2D texSampler[6];
 
 void main() {
-    outColor = texture(texSampler, fragTexCoord);
+    outColor = texture(texSampler[uboMaterial.idxDiffuse], fragTexCoord);
 }

@@ -9,12 +9,18 @@
 #include <GraphicsPipelineModule.h>
 #include <RenderPassModule.h>
 #include <map>
+#include <UBO.h>
 
 class Material : public GameComponent
 {
 private:
     bool isMeshBinding = false;
-    std::shared_ptr<std::map<TEXTURE_TYPE, std::shared_ptr<Texture>>> textures;
+    std::shared_ptr<Texture> emptyTexture;
+    std::shared_ptr <std::vector<std::shared_ptr<Texture>>> texture_vector;
+    std::shared_ptr<MaterialUniform> uniform;
+
+    const int TOTAL_NUM_TEXTURES = 6;
+    int numTextures;
 public:
     glm::vec3 ambient;
     glm::vec3 diffuse;
@@ -40,6 +46,7 @@ public:
     Material(std::shared_ptr<ShaderModule> shader_ptr, VkRenderPass renderPass);
 
     void AddTexture(std::shared_ptr<Texture> texture);
+    void AddNullTexture(std::shared_ptr<Texture> texture);
     void AddPipeline(std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule_ptr);
 
     void cleanup();
@@ -48,6 +55,10 @@ public:
     void bindingMesh(std::shared_ptr<GeometryComponent> mesh);
     void InitializeMaterial();
     void RecreateUniformsMaterial();
+
+private:
+    std::shared_ptr<Texture> findTextureByType(TEXTURE_TYPE newtype);
+    void fillEmptyTextures();
 };
 
 #endif // !MATERIAL_H

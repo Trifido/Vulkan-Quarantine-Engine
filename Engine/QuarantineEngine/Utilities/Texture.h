@@ -23,7 +23,7 @@ private:
 public:
     Texture();
     Texture(std::string path, TEXTURE_TYPE type);
-    void createTextureImage(std::string path);
+    void createTextureImage(std::string path = NULL);
     void createTextureImageView();
     void createTextureSampler();
     void cleanup();

@@ -8,6 +8,8 @@
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 #include <vulkan/vulkan_core.h>
+#include <memory>
+#include "UBO.h"
 
 class Camera
 {
@@ -23,6 +25,7 @@ private:
     float yaw = -90.0f;	// yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right so we initially rotate a bit to the left.
     float pitch = 0.0f;
 public:
+    std::shared_ptr<CameraUniform>  cameraUniform;
     float WIDTH, HEIGHT;
     glm::vec3 cameraFront;
     glm::vec3 cameraPos;
@@ -43,6 +46,9 @@ public:
     void CheckCameraAttributes(float* positionCamera, float* frontCamera, float fov, float nearPlane, float farPlane);
     void InvertPitch(float heightPos);
     void UpdateSize(VkExtent2D size);
+
+private:
+    void UpdateUBO();
 };
 
 #endif // !CAMERA_H
