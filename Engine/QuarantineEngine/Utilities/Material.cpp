@@ -102,6 +102,11 @@ void Material::recreatePipelineMaterial(VkRenderPass renderPass)
     }
 }
 
+void Material::bindingCamera(std::shared_ptr<Camera> editorCamera)
+{
+    this->descriptor->cameraUniform = editorCamera->cameraUniform;
+}
+
 void Material::bindingMesh(std::shared_ptr<GeometryComponent> mesh)
 {
     this->shader->createShaderBindings(mesh);

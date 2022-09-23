@@ -181,7 +181,10 @@ void App::initVulkan()
     // END -------------------------- Mesh & Material -------------------------------
 
     for (auto& it : _materials)
+    {
+        it.second->bindingCamera(this->sceneCamera);
         it.second->InitializeMaterial();
+    }
 
     commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass, models);
 
@@ -325,10 +328,15 @@ void App::drawFrame()
 
     synchronizationModule.synchronizeCurrentFrame(imageIndex);
 
+    for (auto& it : _materials)
+    {
+        it.second->descriptor->updateCameraUniform(imageIndex);
+    }
+
     //Update MVP's
     for each (std::shared_ptr<GameObject> var in models)
     {
-        var->transform->updateMVP(this->sceneCamera->VP);
+        var->transform->updateModelUniform();
     }
 
     vkDeviceWaitIdle(deviceModule->device);

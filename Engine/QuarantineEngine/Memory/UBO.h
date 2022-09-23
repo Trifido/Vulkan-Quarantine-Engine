@@ -25,6 +25,7 @@ struct CameraUniform
 {
     glm::mat4 view;
     glm::mat4 projection;
+    glm::mat4 viewproj;
 };
 
 struct MaterialUniform
@@ -43,7 +44,7 @@ struct MaterialUniform
 
 struct TransformUniform
 {
-    glm::mat4 mvp;
+    glm::mat4 model;
 };
 
 class UniformBufferObject

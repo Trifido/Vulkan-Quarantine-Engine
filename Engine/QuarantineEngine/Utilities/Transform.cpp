@@ -4,7 +4,7 @@ Transform::Transform()
 {
     model = glm::mat4(1.0f);
     ubo = TransformUniform();
-    ubo.mvp = glm::mat4(1.0);
+    ubo.model = this->model;
 
     this->ResetTransform();
 }
@@ -14,9 +14,9 @@ TransformUniform Transform::getMVP()
     return ubo;
 }
 
-void Transform::updateMVP(glm::mat4& VPMainCamera)
+void Transform::updateModelUniform()
 {
-    ubo.mvp = VPMainCamera * model;
+    ubo.model = model;
 }
 
 void Transform::SetPosition(const glm::vec3& newPosition)

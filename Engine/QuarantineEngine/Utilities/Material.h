@@ -10,6 +10,7 @@
 #include <RenderPassModule.h>
 #include <map>
 #include <UBO.h>
+#include "Camera.h"
 
 class Material : public GameComponent
 {
@@ -53,6 +54,7 @@ public:
     void cleanupDescriptor();
     void recreatePipelineMaterial(VkRenderPass renderPass);
     void bindingMesh(std::shared_ptr<GeometryComponent> mesh);
+    void bindingCamera(std::shared_ptr<Camera> editorCamera);
     void InitializeMaterial();
     void RecreateUniformsMaterial();
 

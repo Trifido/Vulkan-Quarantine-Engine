@@ -53,11 +53,8 @@ public:
     void    Initialize(std::shared_ptr <std::vector<std::shared_ptr<Texture>>> textures, std::shared_ptr <MaterialUniform> uniformMaterial);
 
     void    createUniformBuffers();
-    void    updateUniformBuffer(/*uint32_t currentImage,*/ VkExtent2D extent, glm::mat4& VPMainCamera ,std::shared_ptr<Transform> transform);
+    void    updateCameraUniform(uint32_t currentImage);
     void    recreateUniformBuffer();
-
-//    void    InitializeTextureOrder(std::shared_ptr <std::map<TEXTURE_TYPE, std::shared_ptr<Texture>>> textureMap);
-//    void    CheckTextures(std::shared_ptr <std::map<TEXTURE_TYPE, std::shared_ptr<Texture>>> textureMap, TEXTURE_TYPE type);
 };
 
 #endif

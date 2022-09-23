@@ -22,7 +22,7 @@ void DescriptorModule::createDescriptorSetLayout()
         uboLayoutBinding[i].binding = this->numBinding;
         uboLayoutBinding[i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         uboLayoutBinding[i].descriptorCount = 1;
-        uboLayoutBinding[i].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+        uboLayoutBinding[i].stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         uboLayoutBinding[i].pImmutableSamplers = nullptr; // Optional
         this->numBinding++;
     }
@@ -32,8 +32,8 @@ void DescriptorModule::createDescriptorSetLayout()
     samplerLayoutBinding.binding = this->numBinding;
     samplerLayoutBinding.descriptorCount = textures->size();
     samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    samplerLayoutBinding.pImmutableSamplers = nullptr;
     samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    samplerLayoutBinding.pImmutableSamplers = nullptr;
     this->numBinding++;
     
     // Formamos el layout total
@@ -95,18 +95,17 @@ void DescriptorModule::createDescriptorSets()
 
     size_t numDescriptors = this->numBinding;
 
-    //bufferModule->updateDescriptors(descriptorSets);
     for (size_t i = 0; i < this->NumSwapchainImages; i++)
     {
         std::vector<VkWriteDescriptorSet> descriptorWrites{};
         descriptorWrites.resize(numDescriptors);
 
-        if (this->materialUniform != nullptr)
+        if (this->cameraUniform != nullptr)
         {
-            VkDescriptorBufferInfo bufferInfo{};
-            bufferInfo.buffer = this->materialUBO->uniformBuffers[i];
-            bufferInfo.offset = 0;
-            bufferInfo.range = sizeof(MaterialUniform);
+            VkDescriptorBufferInfo bufferCameraInfo{};
+            bufferCameraInfo.buffer = this->cameraUBO->uniformBuffers[i];
+            bufferCameraInfo.offset = 0;
+            bufferCameraInfo.range = sizeof(CameraUniform);
 
             descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             descriptorWrites[0].dstSet = descriptorSets[i];
@@ -115,7 +114,24 @@ void DescriptorModule::createDescriptorSets()
             descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
             descriptorWrites[0].descriptorCount = 1;
             descriptorWrites[0].pImageInfo = VK_NULL_HANDLE;
-            descriptorWrites[0].pBufferInfo = &bufferInfo;
+            descriptorWrites[0].pBufferInfo = &bufferCameraInfo;
+        }
+
+        if (this->materialUniform != nullptr)
+        {
+            VkDescriptorBufferInfo bufferMaterialInfo{};
+            bufferMaterialInfo.buffer = this->materialUBO->uniformBuffers[i];
+            bufferMaterialInfo.offset = 0;
+            bufferMaterialInfo.range = sizeof(MaterialUniform);
+
+            descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrites[1].dstSet = descriptorSets[i];
+            descriptorWrites[1].dstBinding = 1;
+            descriptorWrites[1].dstArrayElement = 0;
+            descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptorWrites[1].descriptorCount = 1;
+            descriptorWrites[1].pImageInfo = VK_NULL_HANDLE;
+            descriptorWrites[1].pBufferInfo = &bufferMaterialInfo;
         }
 
         // ----------------- INICIO BUCLE CON TODAS LAS TEXTURAS
@@ -180,19 +196,24 @@ void DescriptorModule::createUniformBuffers()
     }
 }
 
-void DescriptorModule::updateUniformBuffer(/*uint32_t currentImage, */VkExtent2D extent, glm::mat4& VPMainCamera, std::shared_ptr<Transform> transform)
+void DescriptorModule::updateCameraUniform(uint32_t currentImage)
 {
-    static auto startTime = std::chrono::high_resolution_clock::now();
+    //static auto startTime = std::chrono::high_resolution_clock::now();
 
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+    //auto currentTime = std::chrono::high_resolution_clock::now();
+    //float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
     //transform->updateMVP(time, VPMainCamera, extent.width / (float)extent.height);
 
-    //void* data;
-    //vkMapMemory(deviceModule->device, uniformBuffersMemory[currentImage], 0, sizeof(transform->getMVP()), 0, &data);
-    //memcpy(data, &transform->getMVP(), sizeof(transform->getMVP()));
-    //vkUnmapMemory(deviceModule->device, uniformBuffersMemory[currentImage]);
+    void* data;
+    vkMapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentImage], 0, sizeof(CameraUniform), 0, &data);
+    memcpy(data, static_cast<const void*>(this->cameraUniform.get()), sizeof(CameraUniform));
+    vkUnmapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentImage]);
+
+    //Material
+    vkMapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentImage], 0, sizeof(this->materialUniform), 0, &data);
+    memcpy(data, static_cast<const void*>(this->materialUniform.get()), sizeof(this->materialUniform));
+    vkUnmapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentImage]);
 }
 
 void DescriptorModule::Initialize(std::shared_ptr <std::vector<std::shared_ptr<Texture>>> textures, std::shared_ptr <MaterialUniform> uniformMaterial)
@@ -215,8 +236,15 @@ void DescriptorModule::recreateUniformBuffer()
     for (size_t i = 0; i < this->NumSwapchainImages; i++)
     {
         void* data;
-        vkMapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[i], 0, sizeof(this->cameraUniform), 0, &data);
+
+        //Camera
+        vkMapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[i], 0, sizeof(this->cameraUniform), 0, &data);
         memcpy(data, &this->cameraUniform, sizeof(this->cameraUniform));
+        vkUnmapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[i]);
+
+        //Material
+        vkMapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[i], 0, sizeof(this->materialUniform), 0, &data);
+        memcpy(data, &this->materialUniform, sizeof(this->materialUniform));
         vkUnmapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[i]);
     }
 }
@@ -225,6 +253,7 @@ void DescriptorModule::cleanupDescriptorBuffer()
 {
     for (size_t i = 0; i < this->NumSwapchainImages; i++)
     {
+        // Camera UBO
         if (this->cameraUniform != nullptr)
         {
             vkDestroyBuffer(deviceModule->device, this->cameraUBO->uniformBuffers[i], nullptr);

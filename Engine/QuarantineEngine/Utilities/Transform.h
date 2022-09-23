@@ -25,7 +25,7 @@ public:
 public:
     Transform();
     TransformUniform getMVP();
-    void updateMVP(glm::mat4& VPMainCamera);
+    void updateModelUniform();
 
     void SetPosition(const glm::vec3& newPosition);
     void SetOrientation(const glm::vec3& newRotation);
