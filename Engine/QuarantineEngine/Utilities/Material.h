@@ -11,6 +11,7 @@
 #include <map>
 #include <UBO.h>
 #include "Camera.h"
+#include <LightManager.h>
 
 class Material : public GameComponent
 {
@@ -27,6 +28,7 @@ public:
     glm::vec3 diffuse;
     glm::vec3 specular;
     glm::vec3 emissive;
+    float shininess;
 
     std::shared_ptr<Texture> diffuseTexture;
     std::shared_ptr<Texture> normalTexture;
@@ -55,12 +57,14 @@ public:
     void recreatePipelineMaterial(VkRenderPass renderPass);
     void bindingMesh(std::shared_ptr<GeometryComponent> mesh);
     void bindingCamera(std::shared_ptr<Camera> editorCamera);
+    void bindingLights(std::shared_ptr<LightManager> lightManager);
     void InitializeMaterial();
     void RecreateUniformsMaterial();
 
 private:
     std::shared_ptr<Texture> findTextureByType(TEXTURE_TYPE newtype);
     void fillEmptyTextures();
+    void updateUniformData();
 };
 
 #endif // !MATERIAL_H

@@ -3,9 +3,11 @@
 Material::Material()
 {
     ambient = diffuse = specular = emissive = glm::vec3(0.0f);
+    this->shininess = 32.0f;
     this->descriptor = std::make_shared<DescriptorModule>(DescriptorModule());
     this->uniform = std::make_shared<MaterialUniform>();
     this->uniform->idxDiffuse = this->uniform->idxNormal = this->uniform->idxSpecular = this->uniform->idxEmissive = this->uniform->idxHeight = this->uniform->idxBump = -1;
+    this->uniform->shininess = this->shininess;
     this->texture_vector = std::make_shared<std::vector<std::shared_ptr<Texture>>>();
     this->texture_vector->resize(this->TOTAL_NUM_TEXTURES, nullptr);
     this->numTextures = 0;
@@ -14,11 +16,13 @@ Material::Material()
 Material::Material(std::shared_ptr<ShaderModule> shader_ptr, VkRenderPass renderPass)
 {
     ambient = diffuse = specular = emissive = glm::vec3(0.0f);
+    this->shininess = 32.0f;
     this->shader = shader_ptr;
     this->renderPass = renderPass;
     this->descriptor = std::make_shared<DescriptorModule>(DescriptorModule());
     this->uniform = std::make_shared<MaterialUniform>();
     this->uniform->idxDiffuse = this->uniform->idxNormal = this->uniform->idxSpecular = this->uniform->idxEmissive = this->uniform->idxHeight = this->uniform->idxBump = -1;
+    this->uniform->shininess = this->shininess;
     this->texture_vector = std::make_shared<std::vector<std::shared_ptr<Texture>>>();
     this->texture_vector->resize(this->TOTAL_NUM_TEXTURES, nullptr);
     this->numTextures = 0;
@@ -64,7 +68,7 @@ void Material::AddTexture(std::shared_ptr<Texture> texture)
             break;
         case TEXTURE_TYPE::BUMP_TYPE:
             bumpTexture = texture;
-            if (isInserted) this->uniform->idxEmissive = this->numTextures++;
+            if (isInserted) this->uniform->idxBump = this->numTextures++;
             break;
     }
 }
@@ -105,6 +109,11 @@ void Material::recreatePipelineMaterial(VkRenderPass renderPass)
 void Material::bindingCamera(std::shared_ptr<Camera> editorCamera)
 {
     this->descriptor->cameraUniform = editorCamera->cameraUniform;
+}
+
+void Material::bindingLights(std::shared_ptr<LightManager> lightManager)
+{
+    this->descriptor->lightUniform = lightManager->lightManagerUniform;
 }
 
 void Material::bindingMesh(std::shared_ptr<GeometryComponent> mesh)
@@ -173,4 +182,9 @@ void Material::fillEmptyTextures()
             this->texture_vector->at(i) = emptyTexture;
         }
     }
+}
+
+void Material::updateUniformData()
+{
+    this->uniform->shininess = this->shininess;
 }

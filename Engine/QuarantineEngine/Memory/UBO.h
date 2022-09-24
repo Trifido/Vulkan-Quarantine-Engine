@@ -9,16 +9,21 @@
 
 struct LightUniform
 {
-    glm::vec3 position;
-    glm::vec3 direction;
+    glm::vec4 position;
     glm::vec3 diffuse;
     glm::vec3 specular;
-    glm::vec3 ambient;
-    float cutOff;
-    float outerCutOff;
+    //glm::vec3 ambient;
+    //float cutOff;
+    //float outerCutOff;
     float constant;
     float linear;
     float quadratic;
+};
+
+struct LightManagerUniform
+{
+    int numLights;
+    alignas(16) LightUniform lights[8];
 };
 
 struct CameraUniform
@@ -26,6 +31,7 @@ struct CameraUniform
     glm::mat4 view;
     glm::mat4 projection;
     glm::mat4 viewproj;
+    glm::vec3 position;
 };
 
 struct MaterialUniform
@@ -33,13 +39,13 @@ struct MaterialUniform
     //float heightScale;
     //float min_uv;
     //float max_uv;
-    //float shininess;
     int idxDiffuse;
     int idxNormal;
     int idxSpecular;
     int idxEmissive;
     int idxHeight;
     int idxBump;
+    float shininess;
 };
 
 struct TransformUniform

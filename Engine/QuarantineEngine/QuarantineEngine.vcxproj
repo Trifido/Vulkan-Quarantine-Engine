@@ -105,7 +105,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\external\tinyobjloader-master;..\external\imgui;..\external\imgui\backends;..\external\stb-master;..\..\external\imgui;%VULKAN_SDK%\include;..\libs\glfw\include;..\libs;.\setup;.\Presentation;.\GraphicsPipeline;.\Draw;.\Utilities\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Input;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\external\tinyobjloader-master;..\external\imgui;..\external\imgui\backends;..\external\stb-master;..\..\external\imgui;%VULKAN_SDK%\include;..\libs\glfw\include;..\libs;.\setup;.\Presentation;.\GraphicsPipeline;.\Draw;.\Utilities\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Input;.\Utilities\Light;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -197,6 +197,9 @@
     <ClCompile Include="Utilities\Geometry\GeometryComponent.cpp" />
     <ClCompile Include="Utilities\Geometry\Mesh.cpp" />
     <ClCompile Include="Utilities\Geometry\PrimitiveMesh.cpp" />
+    <ClCompile Include="Utilities\Light\Light.cpp" />
+    <ClCompile Include="Utilities\Light\LightManager.cpp" />
+    <ClCompile Include="Utilities\Light\PointLight.cpp" />
     <ClCompile Include="Utilities\Material.cpp" />
     <ClCompile Include="Utilities\Texture.cpp" />
     <ClCompile Include="Utilities\Transform.cpp" />
@@ -243,6 +246,9 @@
     <ClInclude Include="Utilities\Geometry\PrimitiveMesh.h" />
     <ClInclude Include="Utilities\Geometry\PrimitiveTypes.h" />
     <ClInclude Include="Utilities\Geometry\Vertex.h" />
+    <ClInclude Include="Utilities\Light\Light.h" />
+    <ClInclude Include="Utilities\Light\LightManager.h" />
+    <ClInclude Include="Utilities\Light\PointLight.h" />
     <ClInclude Include="Utilities\Material.h" />
     <ClInclude Include="Utilities\Texture.h" />
     <ClInclude Include="Utilities\TextureTypes.h" />

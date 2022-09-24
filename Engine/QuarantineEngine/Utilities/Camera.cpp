@@ -170,5 +170,6 @@ void Camera::UpdateUBO()
     this->cameraUniform->projection = this->projection;
     this->cameraUniform->view = this->view;
     this->cameraUniform->viewproj = this->projection * this->view;
+    this->cameraUniform->position = this->cameraPos;
 }
 

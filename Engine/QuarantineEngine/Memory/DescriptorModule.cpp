@@ -66,7 +66,6 @@ void DescriptorModule::createDescriptorPool()
     poolSizes[idx].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     poolSizes[idx].descriptorCount = static_cast<uint32_t>(this->NumSwapchainImages);
 
-
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
@@ -94,9 +93,9 @@ void DescriptorModule::createDescriptorSets()
     }
 
     size_t numDescriptors = this->numBinding;
-
     for (size_t i = 0; i < this->NumSwapchainImages; i++)
     {
+        uint32_t idx = 0;
         std::vector<VkWriteDescriptorSet> descriptorWrites{};
         descriptorWrites.resize(numDescriptors);
 
@@ -107,14 +106,16 @@ void DescriptorModule::createDescriptorSets()
             bufferCameraInfo.offset = 0;
             bufferCameraInfo.range = sizeof(CameraUniform);
 
-            descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrites[0].dstSet = descriptorSets[i];
-            descriptorWrites[0].dstBinding = 0;
-            descriptorWrites[0].dstArrayElement = 0;
-            descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            descriptorWrites[0].descriptorCount = 1;
-            descriptorWrites[0].pImageInfo = VK_NULL_HANDLE;
-            descriptorWrites[0].pBufferInfo = &bufferCameraInfo;
+            descriptorWrites[idx].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrites[idx].dstSet = descriptorSets[i];
+            descriptorWrites[idx].dstBinding = idx;
+            descriptorWrites[idx].dstArrayElement = 0;
+            descriptorWrites[idx].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptorWrites[idx].descriptorCount = 1;
+            descriptorWrites[idx].pImageInfo = VK_NULL_HANDLE;
+            descriptorWrites[idx].pBufferInfo = &bufferCameraInfo;
+
+            idx++;
         }
 
         if (this->materialUniform != nullptr)
@@ -124,14 +125,35 @@ void DescriptorModule::createDescriptorSets()
             bufferMaterialInfo.offset = 0;
             bufferMaterialInfo.range = sizeof(MaterialUniform);
 
-            descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrites[1].dstSet = descriptorSets[i];
-            descriptorWrites[1].dstBinding = 1;
-            descriptorWrites[1].dstArrayElement = 0;
-            descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            descriptorWrites[1].descriptorCount = 1;
-            descriptorWrites[1].pImageInfo = VK_NULL_HANDLE;
-            descriptorWrites[1].pBufferInfo = &bufferMaterialInfo;
+            descriptorWrites[idx].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrites[idx].dstSet = descriptorSets[i];
+            descriptorWrites[idx].dstBinding = idx;
+            descriptorWrites[idx].dstArrayElement = 0;
+            descriptorWrites[idx].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptorWrites[idx].descriptorCount = 1;
+            descriptorWrites[idx].pImageInfo = VK_NULL_HANDLE;
+            descriptorWrites[idx].pBufferInfo = &bufferMaterialInfo;
+
+            idx++;
+        }
+
+        if (this->lightUniform != nullptr)
+        {
+            VkDescriptorBufferInfo lightMaterialInfo{};
+            lightMaterialInfo.buffer = this->lightUBO->uniformBuffers[i];
+            lightMaterialInfo.offset = 0;
+            lightMaterialInfo.range = sizeof(LightManagerUniform);
+
+            descriptorWrites[idx].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrites[idx].dstSet = descriptorSets[i];
+            descriptorWrites[idx].dstBinding = idx;
+            descriptorWrites[idx].dstArrayElement = 0;
+            descriptorWrites[idx].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptorWrites[idx].descriptorCount = 1;
+            descriptorWrites[idx].pImageInfo = VK_NULL_HANDLE;
+            descriptorWrites[idx].pBufferInfo = &lightMaterialInfo;
+
+            idx++;
         }
 
         // ----------------- INICIO BUCLE CON TODAS LAS TEXTURAS
@@ -191,12 +213,12 @@ void DescriptorModule::createUniformBuffers()
     // Light UBO
     if (this->lightUniform != nullptr)
     {
-        this->lightUBO->CreateUniformBuffer(sizeof(LightUniform), this->NumSwapchainImages, *deviceModule);
+        this->lightUBO->CreateUniformBuffer(sizeof(LightManagerUniform), this->NumSwapchainImages, *deviceModule);
         this->numUBOs++;
     }
 }
 
-void DescriptorModule::updateCameraUniform(uint32_t currentImage)
+void DescriptorModule::updateUniforms(uint32_t currentImage)
 {
     //static auto startTime = std::chrono::high_resolution_clock::now();
 
@@ -211,9 +233,14 @@ void DescriptorModule::updateCameraUniform(uint32_t currentImage)
     vkUnmapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentImage]);
 
     //Material
-    vkMapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentImage], 0, sizeof(this->materialUniform), 0, &data);
-    memcpy(data, static_cast<const void*>(this->materialUniform.get()), sizeof(this->materialUniform));
+    vkMapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentImage], 0, sizeof(MaterialUniform), 0, &data);
+    memcpy(data, static_cast<const void*>(this->materialUniform.get()), sizeof(MaterialUniform));
     vkUnmapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentImage]);
+
+    //Light
+    vkMapMemory(deviceModule->device, this->lightUBO->uniformBuffersMemory[currentImage], 0, sizeof(LightManagerUniform), 0, &data);
+    memcpy(data, static_cast<const void*>(this->lightUniform.get()), sizeof(LightManagerUniform));
+    vkUnmapMemory(deviceModule->device, this->lightUBO->uniformBuffersMemory[currentImage]);
 }
 
 void DescriptorModule::Initialize(std::shared_ptr <std::vector<std::shared_ptr<Texture>>> textures, std::shared_ptr <MaterialUniform> uniformMaterial)
@@ -238,14 +265,19 @@ void DescriptorModule::recreateUniformBuffer()
         void* data;
 
         //Camera
-        vkMapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[i], 0, sizeof(this->cameraUniform), 0, &data);
-        memcpy(data, &this->cameraUniform, sizeof(this->cameraUniform));
+        vkMapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[i], 0, sizeof(CameraUniform), 0, &data);
+        memcpy(data, static_cast<const void*>(this->cameraUniform.get()), sizeof(CameraUniform));
         vkUnmapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[i]);
 
         //Material
-        vkMapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[i], 0, sizeof(this->materialUniform), 0, &data);
-        memcpy(data, &this->materialUniform, sizeof(this->materialUniform));
+        vkMapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[i], 0, sizeof(MaterialUniform), 0, &data);
+        memcpy(data, static_cast<const void*>(this->materialUniform.get()), sizeof(MaterialUniform));
         vkUnmapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[i]);
+
+        //Light
+        vkMapMemory(deviceModule->device, this->lightUBO->uniformBuffersMemory[i], 0, sizeof(LightManagerUniform), 0, &data);
+        memcpy(data, static_cast<const void*>(this->lightUniform.get()), sizeof(LightManagerUniform));
+        vkUnmapMemory(deviceModule->device, this->lightUBO->uniformBuffersMemory[i]);
     }
 }
 

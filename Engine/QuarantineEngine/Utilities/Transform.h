@@ -14,18 +14,18 @@ private:
     glm::mat4 scale_mat;
     glm::mat4 rot_mat;
     glm::mat4 trans_mat;
-
-    glm::vec3 Position;
-    glm::quat Orientation;
     glm::vec3 Scale;
+
 public:
+    glm::vec3 Position;
+    glm::vec3 Direction;
+    glm::quat Orientation;
 
     TransformUniform ubo;
 
 public:
     Transform();
     TransformUniform getMVP();
-    void updateModelUniform();
 
     void SetPosition(const glm::vec3& newPosition);
     void SetOrientation(const glm::vec3& newRotation);

@@ -34,9 +34,9 @@ public:
     std::shared_ptr<UniformBufferObject>    lightUBO;
 
     //UNIFORM's
-    std::shared_ptr<CameraUniform>      cameraUniform;
-    std::shared_ptr<MaterialUniform>    materialUniform;
-    std::shared_ptr<LightUniform>       lightUniform;
+    std::shared_ptr<CameraUniform>          cameraUniform;
+    std::shared_ptr<MaterialUniform>        materialUniform;
+    std::shared_ptr<LightManagerUniform>    lightUniform;
 
 public:
     DescriptorModule();
@@ -53,7 +53,7 @@ public:
     void    Initialize(std::shared_ptr <std::vector<std::shared_ptr<Texture>>> textures, std::shared_ptr <MaterialUniform> uniformMaterial);
 
     void    createUniformBuffers();
-    void    updateCameraUniform(uint32_t currentImage);
+    void    updateUniforms(uint32_t currentImage);
     void    recreateUniformBuffer();
 };
 
