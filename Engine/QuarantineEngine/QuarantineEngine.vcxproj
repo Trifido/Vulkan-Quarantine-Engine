@@ -196,6 +196,7 @@
     <ClCompile Include="Utilities\GameObject.cpp" />
     <ClCompile Include="Utilities\Geometry\GeometryComponent.cpp" />
     <ClCompile Include="Utilities\Geometry\Mesh.cpp" />
+    <ClCompile Include="Utilities\Geometry\MeshImporter.cpp" />
     <ClCompile Include="Utilities\Geometry\PrimitiveMesh.cpp" />
     <ClCompile Include="Utilities\Light\Light.cpp" />
     <ClCompile Include="Utilities\Light\LightManager.cpp" />
@@ -243,6 +244,7 @@
     <ClInclude Include="Utilities\GameObject.h" />
     <ClInclude Include="Utilities\Geometry\GeometryComponent.h" />
     <ClInclude Include="Utilities\Geometry\Mesh.h" />
+    <ClInclude Include="Utilities\Geometry\MeshImporter.h" />
     <ClInclude Include="Utilities\Geometry\PrimitiveMesh.h" />
     <ClInclude Include="Utilities\Geometry\PrimitiveTypes.h" />
     <ClInclude Include="Utilities\Geometry\Vertex.h" />

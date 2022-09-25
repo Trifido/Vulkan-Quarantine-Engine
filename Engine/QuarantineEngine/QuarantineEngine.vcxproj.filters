@@ -223,26 +223,29 @@
     <ClCompile Include="Utilities\Light\PointLight.cpp">
       <Filter>Kernel\Utilities\Light\sources</Filter>
     </ClCompile>
-    <ClCompile Include="backends\imgui_impl_glfw.cpp">
+    <ClCompile Include="..\Linking\imgui\backends\imgui_impl_glfw.cpp">
       <Filter>sources</Filter>
     </ClCompile>
-    <ClCompile Include="backends\imgui_impl_vulkan.cpp">
+    <ClCompile Include="..\Linking\imgui\backends\imgui_impl_vulkan.cpp">
       <Filter>sources</Filter>
     </ClCompile>
-    <ClCompile Include="imgui.cpp">
+    <ClCompile Include="..\Linking\imgui\imgui.cpp">
       <Filter>sources</Filter>
     </ClCompile>
-    <ClCompile Include="imgui_demo.cpp">
+    <ClCompile Include="..\Linking\imgui\imgui_demo.cpp">
       <Filter>sources</Filter>
     </ClCompile>
-    <ClCompile Include="imgui_draw.cpp">
+    <ClCompile Include="..\Linking\imgui\imgui_draw.cpp">
       <Filter>sources</Filter>
     </ClCompile>
-    <ClCompile Include="imgui_tables.cpp">
+    <ClCompile Include="..\Linking\imgui\imgui_tables.cpp">
       <Filter>sources</Filter>
     </ClCompile>
-    <ClCompile Include="imgui_widgets.cpp">
+    <ClCompile Include="..\Linking\imgui\imgui_widgets.cpp">
       <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Geometry\MeshImporter.cpp">
+      <Filter>Kernel\Utilities\Geometry\sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -375,11 +378,14 @@
     <ClInclude Include="Utilities\Light\PointLight.h">
       <Filter>Kernel\Utilities\Light\headers</Filter>
     </ClInclude>
-    <ClInclude Include="backends\imgui_impl_glfw.h" />
-    <ClInclude Include="backends\imgui_impl_vulkan.h" />
-    <ClInclude Include="imconfig.h" />
-    <ClInclude Include="imgui.h" />
-    <ClInclude Include="imgui_internal.h" />
+    <ClInclude Include="..\Linking\imgui\backends\imgui_impl_glfw.h" />
+    <ClInclude Include="..\Linking\imgui\backends\imgui_impl_vulkan.h" />
+    <ClInclude Include="..\Linking\imgui\imconfig.h" />
+    <ClInclude Include="..\Linking\imgui\imgui.h" />
+    <ClInclude Include="..\Linking\imgui\imgui_internal.h" />
+    <ClInclude Include="Utilities\Geometry\MeshImporter.h">
+      <Filter>Kernel\Utilities\Geometry\headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.txt" />
