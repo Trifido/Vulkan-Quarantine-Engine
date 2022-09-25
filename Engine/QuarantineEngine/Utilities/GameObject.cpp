@@ -38,7 +38,7 @@ void GameObject::drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipelineLayout, 0, 1, material->descriptor->getDescriptorSet(idx), 0, nullptr);
     //vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(geometryModule.vertices.size()), 1, 0, 0);
 
-    vkCmdPushConstants(commandBuffer, material->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(transform->ubo.mvp), &transform->ubo.mvp);
+    vkCmdPushConstants(commandBuffer, material->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(transform->ubo.model), &transform->ubo.model);
 
     vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh->indices.size()), 1, 0, 0, 0);
     //vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
@@ -48,6 +48,11 @@ void GameObject::addMaterial(std::shared_ptr<Material> material_ptr)
 {
     this->material = material_ptr;
     this->material->bindingMesh(this->mesh);
+}
+
+void GameObject::addEditorCamera(std::shared_ptr<Camera> camera_ptr)
+{
+    this->cameraEditor = camera_ptr;
 }
 
 void GameObject::InitializeComponents()

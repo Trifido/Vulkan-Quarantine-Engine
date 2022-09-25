@@ -3,20 +3,15 @@
 Transform::Transform()
 {
     model = glm::mat4(1.0f);
-    ubo = UniformBufferObject();
-    ubo.mvp = glm::mat4(1.0);
+    ubo = TransformUniform();
+    ubo.model = this->model;
 
     this->ResetTransform();
 }
 
-UniformBufferObject Transform::getMVP()
+TransformUniform Transform::getMVP()
 {
     return ubo;
-}
-
-void Transform::updateMVP(glm::mat4& VPMainCamera)
-{
-    ubo.mvp = VPMainCamera * model;
 }
 
 void Transform::SetPosition(const glm::vec3& newPosition)
@@ -24,15 +19,15 @@ void Transform::SetPosition(const glm::vec3& newPosition)
     this->Position = newPosition;
     this->trans_mat = glm::translate(glm::mat4(1.0f), this->Position);
     this->model = this->scale_mat * this->rot_mat * this->trans_mat;
+    ubo.model = model;
 }
 
 void Transform::SetOrientation(const glm::vec3& newRotation)
 {
     this->Orientation = glm::quat(newRotation);
     this->rot_mat = glm::toMat4(Orientation);
-    //this->Orientation = glm::fquat(newRotation);
-    //this->rot_mat = glm::mat4_cast(this->Orientation);
     this->model = this->scale_mat * this->rot_mat * this->trans_mat;
+    ubo.model = model;
 }
 
 void Transform::SetScale(const glm::vec3& newScale)
@@ -40,14 +35,17 @@ void Transform::SetScale(const glm::vec3& newScale)
     this->Scale = newScale;
     this->scale_mat = glm::scale(glm::mat4(1.0f), this->Scale);
     this->model = this->scale_mat * this->rot_mat * this->trans_mat;
+    ubo.model = model;
 }
 
 void Transform::ResetTransform()
 {
     this->Position = glm::vec3(0.0f);
+    this->Direction = glm::vec3(0.0f);
     this->Orientation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
     this->Scale = glm::vec3(1.0f);
     this->model = glm::mat4(1.0f);
+    ubo.model = model;
 
     this->trans_mat = glm::mat4(1.0f);
     this->rot_mat = glm::mat4(1.0f);

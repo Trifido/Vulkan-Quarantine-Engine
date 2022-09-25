@@ -35,12 +35,16 @@
 #include "Transform.h"
 #include "Material.h"
 #include "Camera.h"
+#include "LightManager.h"
 
 // Keyboard controller
 #include "KeyboardController.h"
 
 const std::string MODEL_PATH = "../../resources/models/head/head.obj";
 const std::string TEXTURE_PATH = "../../resources/models/head/lambertian.jpg";
+const std::string TEXTURE_BUMP_PATH = "../../resources/models/head/bump.png";
+const std::string TEXTURE_WALL_PATH = "../../resources/textures/wall/brickwall.jpg";
+const std::string TEXTURE_WALL_NORMAL_PATH = "../../resources/textures/wall/brickwall_normal.jpg";
 const std::string MODEL_HOUSE_PATH = "../../resources/models/viking_room.obj";
 const std::string TEXTURE_HOUSE_PATH = "../../resources/textures/viking_room.png";
 
@@ -104,7 +108,9 @@ private:
 
     std::unordered_map<std::string, std::shared_ptr<Material>> _materials;
     std::unordered_map<std::string, std::shared_ptr<ShaderModule>> _shaders;
-    std::unordered_map<std::string, std::shared_ptr<Texture>> _textures;
+    std::unordered_map<std::string, std::shared_ptr<CustomTexture>> _textures;
+
+    std::shared_ptr<LightManager>   lightManager;
 
     KeyboardController* keyboard_ptr {};
 };

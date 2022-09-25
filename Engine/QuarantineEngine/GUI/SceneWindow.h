@@ -1,5 +1,5 @@
 #pragma once
-#include "../../external/imgui/imgui.h"
+#include "imgui.h"
 #include <glm/glm.hpp>
 class SceneWindow
 {

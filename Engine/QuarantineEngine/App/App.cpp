@@ -135,6 +135,10 @@ void App::initVulkan()
     //Creamos el frame buffer
     framebufferModule.createFramebuffer(renderPassModule->renderPass);
 
+
+    //Inicializamos el Light manager
+    this->lightManager = std::make_shared<LightManager>();
+
     // INIT ------------------------- Mesh & Material -------------------------------
 
     //Añadimos requisitos para los geometryComponent
@@ -142,41 +146,72 @@ void App::initVulkan()
     BufferManageModule::graphicsQueue = this->queueModule->graphicsQueue;
     GeometryComponent::deviceModule_ptr = this->deviceModule;
     TextureManagerModule::queueModule = this->queueModule;
-    Texture::commandPool = commandPoolModule->getCommandPool();
+    CustomTexture::commandPool = commandPoolModule->getCommandPool();
     DescriptorModule::deviceModule = this->deviceModule;
     DescriptorModule::NumSwapchainImages = this->swapchainModule->getNumSwapChainImages();
 
     //Creamos la textura
-    _textures["diffuse_face"] = std::make_shared<Texture>(Texture(TEXTURE_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
-    _textures["albedo_house"] = std::make_shared<Texture>(Texture(TEXTURE_HOUSE_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
+    _textures["NULL"] = std::make_shared<CustomTexture>(CustomTexture());
+    //_textures["diffuse_face"] = std::make_shared<CustomTexture>(CustomTexture(TEXTURE_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
+    //_textures["bump_face"] = std::make_shared<CustomTexture>(CustomTexture(TEXTURE_BUMP_PATH, TEXTURE_TYPE::BUMP_TYPE));
+    _textures["diffuse_brick"] = std::make_shared<CustomTexture>(CustomTexture(TEXTURE_WALL_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
+    _textures["normal_brick"] = std::make_shared<CustomTexture>(CustomTexture(TEXTURE_WALL_NORMAL_PATH, TEXTURE_TYPE::NORMAL_TYPE));
+    //_textures["albedo_house"] = std::make_shared<CustomTexture>(CustomTexture(TEXTURE_HOUSE_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
+   
 
-    //models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::QUAD_TYPE)));    
-    models.push_back(std::make_shared<GameObject>(GameObject(MODEL_PATH)));
-    models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    //models.push_back(std::make_shared<GameObject>(GameObject(MODEL_PATH)));
+    //models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 
-    models.push_back(std::make_shared<GameObject>(GameObject(MODEL_HOUSE_PATH)));
-    models.at(1)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::QUAD_TYPE)));
+    models.at(0)->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 0.0f));
 
     //Creamos el shader module para el material
     _shaders["shader"] = std::make_shared<ShaderModule>(ShaderModule());
     _shaders["shader"]->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv");
+    //_shaders["shader2"] = std::make_shared<ShaderModule>(ShaderModule());
+    //_shaders["shader2"]->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv");
     //Creamos el material
     _materials["mat"] = std::make_shared<Material>(Material(_shaders["shader"], renderPassModule->renderPass));
-    _materials["mat"]->AddTexture(_textures["diffuse_face"]);
+    _materials["mat"]->AddNullTexture(_textures["NULL"]);
+    _materials["mat"]->AddTexture(_textures["diffuse_brick"]);
+    _materials["mat"]->AddTexture(_textures["normal_brick"]);
     _materials["mat"]->AddPipeline(graphicsPipelineModule);
 
     //Creamos el material
-    _materials["matHouse"] = std::make_shared<Material>(Material(_shaders["shader"], renderPassModule->renderPass));
-    _materials["matHouse"]->AddTexture(_textures["albedo_house"]);
-    _materials["matHouse"]->AddPipeline(graphicsPipelineModule);
+    //_materials["matHouse"] = std::make_shared<Material>(Material(_shaders["shader2"], renderPassModule->renderPass));
+    //_materials["matHouse"]->AddNullTexture(_textures["NULL"]);
+    //_materials["matHouse"]->AddTexture(_textures["albedo_house"]);
+    //_materials["matHouse"]->AddPipeline(graphicsPipelineModule);
 
     //Linkamos el material al gameobject
     models.at(0)->addMaterial(_materials["mat"]);
-    models.at(1)->addMaterial(_materials["matHouse"]);
+    //models.at(1)->addMaterial(_materials["matHouse"]);
     // END -------------------------- Mesh & Material -------------------------------
 
+    // INIT ------------------------- Lights ----------------------------------------
+    //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight0");
+    //this->lightManager->GetLight("PointLight0")->transform->SetPosition(glm::vec3(0.0f, 0.0f, -3.0f));
+    //this->lightManager->GetLight("PointLight0")->diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
+    //this->lightManager->GetLight("PointLight0")->specular = glm::vec3(0.8f);
+    //this->lightManager->GetLight("PointLight0")->linear = 0.09f;
+    //this->lightManager->GetLight("PointLight0")->quadratic = 0.032f;
+
+    this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
+    this->lightManager->GetLight("PointLight1")->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.5f));
+    this->lightManager->GetLight("PointLight1")->diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
+    this->lightManager->GetLight("PointLight1")->specular = glm::vec3(1.0f, 1.0f, 1.0f);
+    this->lightManager->GetLight("PointLight1")->linear = 0.09f;
+    this->lightManager->GetLight("PointLight1")->quadratic = 0.032f;
+
+    this->lightManager->UpdateUniform();
+    // END -------------------------- Lights ----------------------------------------
+
     for (auto& it : _materials)
+    {
+        it.second->bindingCamera(this->sceneCamera);
+        it.second->bindingLights(this->lightManager);
         it.second->InitializeMaterial();
+    }
 
     commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass, models);
 
@@ -320,10 +355,9 @@ void App::drawFrame()
 
     synchronizationModule.synchronizeCurrentFrame(imageIndex);
 
-    //Update MVP's
-    for each (std::shared_ptr<GameObject> var in models)
+    for (auto& it : _materials)
     {
-        var->transform->updateMVP(this->sceneCamera->VP);
+        it.second->descriptor->updateUniforms(imageIndex);
     }
 
     vkDeviceWaitIdle(deviceModule->device);

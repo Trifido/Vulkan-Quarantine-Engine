@@ -4,7 +4,7 @@
 #define GAEOMETRYCOMPONENT_H
 
 #include "GameComponent.h"
-#include <Vertex.h>
+#include <Geometry/Vertex.h>
 #include <DeviceModule.h>
 #include <Geometry/PrimitiveTypes.h>
 

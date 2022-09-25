@@ -5,10 +5,7 @@
 #include "GameComponent.h"
 #include <memory>
 #include <glm/gtc/quaternion.hpp>
-
-struct UniformBufferObject {
-    glm::mat4 mvp;
-};
+#include <UBO.h>
 
 class Transform : public GameComponent
 {
@@ -17,18 +14,18 @@ private:
     glm::mat4 scale_mat;
     glm::mat4 rot_mat;
     glm::mat4 trans_mat;
-
-    glm::vec3 Position;
-    glm::quat Orientation;
     glm::vec3 Scale;
-public:
 
-    UniformBufferObject ubo;
+public:
+    glm::vec3 Position;
+    glm::vec3 Direction;
+    glm::quat Orientation;
+
+    TransformUniform ubo;
 
 public:
     Transform();
-    UniformBufferObject getMVP();
-    void updateMVP(glm::mat4& VPMainCamera);
+    TransformUniform getMVP();
 
     void SetPosition(const glm::vec3& newPosition);
     void SetOrientation(const glm::vec3& newRotation);

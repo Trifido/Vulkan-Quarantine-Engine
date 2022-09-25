@@ -7,12 +7,15 @@
 #include "Material.h"
 #include "DescriptorModule.h"
 #include <PrimitiveTypes.h>
+#include "Camera.h"
 
 class GameObject
 {
 private:
     DeviceModule*       deviceModule;
     QueueModule*        queueModule;
+
+    std::shared_ptr<Camera>             cameraEditor;
 public:
     std::shared_ptr<GeometryComponent>  mesh;
     std::shared_ptr<Transform>          transform;
@@ -25,6 +28,7 @@ public:
     void cleanup();
     void drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
     void addMaterial(std::shared_ptr<Material> material_ptr);
+    void addEditorCamera(std::shared_ptr<Camera> camera_ptr);
 
 private:
     void InitializeComponents();
