@@ -5,7 +5,7 @@
 
 #include <glm/glm.hpp>
 #include "GameComponent.h"
-#include "Texture.h"
+#include "CustomTexture.h"
 #include <GraphicsPipelineModule.h>
 #include <RenderPassModule.h>
 #include <map>
@@ -17,8 +17,8 @@ class Material : public GameComponent
 {
 private:
     bool isMeshBinding = false;
-    std::shared_ptr<Texture> emptyTexture;
-    std::shared_ptr <std::vector<std::shared_ptr<Texture>>> texture_vector;
+    std::shared_ptr<CustomTexture> emptyTexture;
+    std::shared_ptr <std::vector<std::shared_ptr<CustomTexture>>> texture_vector;
     std::shared_ptr<MaterialUniform> uniform;
 
     const int TOTAL_NUM_TEXTURES = 6;
@@ -30,12 +30,12 @@ public:
     glm::vec3 emissive;
     float shininess;
 
-    std::shared_ptr<Texture> diffuseTexture;
-    std::shared_ptr<Texture> normalTexture;
-    std::shared_ptr<Texture> specularTexture;
-    std::shared_ptr<Texture> emissiveTexture;
-    std::shared_ptr<Texture> heightTexture;
-    std::shared_ptr<Texture> bumpTexture;
+    std::shared_ptr<CustomTexture> diffuseTexture;
+    std::shared_ptr<CustomTexture> normalTexture;
+    std::shared_ptr<CustomTexture> specularTexture;
+    std::shared_ptr<CustomTexture> emissiveTexture;
+    std::shared_ptr<CustomTexture> heightTexture;
+    std::shared_ptr<CustomTexture> bumpTexture;
 
     VkRenderPass           renderPass;
     VkPipeline             pipeline;
@@ -48,8 +48,8 @@ public:
     Material();
     Material(std::shared_ptr<ShaderModule> shader_ptr, VkRenderPass renderPass);
 
-    void AddTexture(std::shared_ptr<Texture> texture);
-    void AddNullTexture(std::shared_ptr<Texture> texture);
+    void AddTexture(std::shared_ptr<CustomTexture> texture);
+    void AddNullTexture(std::shared_ptr<CustomTexture> texture);
     void AddPipeline(std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule_ptr);
 
     void cleanup();
@@ -62,7 +62,7 @@ public:
     void RecreateUniformsMaterial();
 
 private:
-    std::shared_ptr<Texture> findTextureByType(TEXTURE_TYPE newtype);
+    std::shared_ptr<CustomTexture> findTextureByType(TEXTURE_TYPE newtype);
     void fillEmptyTextures();
     void updateUniformData();
 };

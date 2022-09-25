@@ -243,7 +243,7 @@ void DescriptorModule::updateUniforms(uint32_t currentImage)
     vkUnmapMemory(deviceModule->device, this->lightUBO->uniformBuffersMemory[currentImage]);
 }
 
-void DescriptorModule::Initialize(std::shared_ptr <std::vector<std::shared_ptr<Texture>>> textures, std::shared_ptr <MaterialUniform> uniformMaterial)
+void DescriptorModule::Initialize(std::shared_ptr <std::vector<std::shared_ptr<CustomTexture>>> textures, std::shared_ptr <MaterialUniform> uniformMaterial)
 {
     this->textures = textures;
     this->materialUniform = uniformMaterial;

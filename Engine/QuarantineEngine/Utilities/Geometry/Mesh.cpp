@@ -1,10 +1,13 @@
 #include "Mesh.h"
+
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
+
 #include <unordered_map>
 #include <stdexcept>
 
 #include "BufferManageModule.h"
+
 
 Mesh::Mesh()
 {
@@ -38,11 +41,6 @@ std::vector<VkVertexInputAttributeDescription> Mesh::getAttributeDescriptions() 
     attributeDescriptions[1].location = 1;
     attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
     attributeDescriptions[1].offset = offsetof(Vertex, norm);
-
-    //attributeDescriptions[1].binding = 0;
-    //attributeDescriptions[1].location = 2;
-    //attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-    //attributeDescriptions[1].offset = offsetof(Vertex, color);
 
     attributeDescriptions[2].binding = 0;
     attributeDescriptions[2].location = 2;

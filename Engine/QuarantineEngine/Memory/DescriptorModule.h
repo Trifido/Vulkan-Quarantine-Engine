@@ -6,12 +6,12 @@
 #include <vulkan/vulkan.hpp>
 #include "DeviceModule.h"
 #include "BufferManageModule.h"
-#include "Texture.h"
+#include "CustomTexture.h"
 #include "Transform.h"
 #include "UBO.h"
 #include <map>
 
-class Texture;
+class CustomTexture;
 
 class DescriptorModule
 {
@@ -19,7 +19,7 @@ private:
     std::vector<VkDescriptorSet>    descriptorSets;
     VkDescriptorPool                descriptorPool;
 
-    std::shared_ptr <std::vector<std::shared_ptr<Texture>>> textures;
+    std::shared_ptr <std::vector<std::shared_ptr<CustomTexture>>> textures;
     uint32_t    numUBOs = 0;
     uint32_t    numBinding = 0;
 
@@ -50,7 +50,7 @@ public:
     void    cleanup();
     void    cleanupDescriptorPool();
     void    cleanupDescriptorBuffer();
-    void    Initialize(std::shared_ptr <std::vector<std::shared_ptr<Texture>>> textures, std::shared_ptr <MaterialUniform> uniformMaterial);
+    void    Initialize(std::shared_ptr <std::vector<std::shared_ptr<CustomTexture>>> textures, std::shared_ptr <MaterialUniform> uniformMaterial);
 
     void    createUniformBuffers();
     void    updateUniforms(uint32_t currentImage);

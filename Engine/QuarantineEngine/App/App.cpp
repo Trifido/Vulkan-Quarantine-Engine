@@ -146,17 +146,17 @@ void App::initVulkan()
     BufferManageModule::graphicsQueue = this->queueModule->graphicsQueue;
     GeometryComponent::deviceModule_ptr = this->deviceModule;
     TextureManagerModule::queueModule = this->queueModule;
-    Texture::commandPool = commandPoolModule->getCommandPool();
+    CustomTexture::commandPool = commandPoolModule->getCommandPool();
     DescriptorModule::deviceModule = this->deviceModule;
     DescriptorModule::NumSwapchainImages = this->swapchainModule->getNumSwapChainImages();
 
     //Creamos la textura
-    _textures["NULL"] = std::make_shared<Texture>(Texture());
-    //_textures["diffuse_face"] = std::make_shared<Texture>(Texture(TEXTURE_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
-    //_textures["bump_face"] = std::make_shared<Texture>(Texture(TEXTURE_BUMP_PATH, TEXTURE_TYPE::BUMP_TYPE));
-    _textures["diffuse_brick"] = std::make_shared<Texture>(Texture(TEXTURE_WALL_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
-    _textures["normal_brick"] = std::make_shared<Texture>(Texture(TEXTURE_WALL_NORMAL_PATH, TEXTURE_TYPE::NORMAL_TYPE));
-    //_textures["albedo_house"] = std::make_shared<Texture>(Texture(TEXTURE_HOUSE_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
+    _textures["NULL"] = std::make_shared<CustomTexture>(CustomTexture());
+    //_textures["diffuse_face"] = std::make_shared<CustomTexture>(CustomTexture(TEXTURE_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
+    //_textures["bump_face"] = std::make_shared<CustomTexture>(CustomTexture(TEXTURE_BUMP_PATH, TEXTURE_TYPE::BUMP_TYPE));
+    _textures["diffuse_brick"] = std::make_shared<CustomTexture>(CustomTexture(TEXTURE_WALL_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
+    _textures["normal_brick"] = std::make_shared<CustomTexture>(CustomTexture(TEXTURE_WALL_NORMAL_PATH, TEXTURE_TYPE::NORMAL_TYPE));
+    //_textures["albedo_house"] = std::make_shared<CustomTexture>(CustomTexture(TEXTURE_HOUSE_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
    
 
     //models.push_back(std::make_shared<GameObject>(GameObject(MODEL_PATH)));
@@ -197,7 +197,7 @@ void App::initVulkan()
     //this->lightManager->GetLight("PointLight0")->quadratic = 0.032f;
 
     this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
-    this->lightManager->GetLight("PointLight1")->transform->SetPosition(glm::vec3(-1.0f, 0.0f, 0.5f));
+    this->lightManager->GetLight("PointLight1")->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.5f));
     this->lightManager->GetLight("PointLight1")->diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
     this->lightManager->GetLight("PointLight1")->specular = glm::vec3(1.0f, 1.0f, 1.0f);
     this->lightManager->GetLight("PointLight1")->linear = 0.09f;

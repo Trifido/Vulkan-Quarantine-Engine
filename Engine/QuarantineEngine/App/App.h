@@ -108,7 +108,7 @@ private:
 
     std::unordered_map<std::string, std::shared_ptr<Material>> _materials;
     std::unordered_map<std::string, std::shared_ptr<ShaderModule>> _shaders;
-    std::unordered_map<std::string, std::shared_ptr<Texture>> _textures;
+    std::unordered_map<std::string, std::shared_ptr<CustomTexture>> _textures;
 
     std::shared_ptr<LightManager>   lightManager;
 

@@ -46,7 +46,7 @@ layout(set = 0, binding = 2) uniform UniformManagerLight
 
 layout(set = 0, binding = 3) uniform sampler2D texSampler[6];
 
-
+vec3 getNormalFromMap(vec2 TexCoords);
 //BLINN-PHONG LIGHT EQUATIONS
 vec3 ComputePointLight(LightData light, vec3 normal, vec3 viewDir, vec2 texCoords);
 
@@ -66,6 +66,7 @@ void main()
     {
         normal = texture(texSampler[uboMaterial.idxNormal], texCoords).rgb;
         normal = normalize(normal * 2.0 - 1.0);
+        //normal = getNormalFromMap(texCoords);
     }
 
     //COMPUTE LIGHT
@@ -124,4 +125,21 @@ vec3 ComputePointLight(LightData light, vec3 normal, vec3 viewDir, vec2 texCoord
     vec3 specular = light.specular * spec * resultSpecular;// * attenuation;
     vec3 emissive = resultEmissive;
     return ((ambient + diffuse + specular + emissive));
+}
+
+vec3 getNormalFromMap(vec2 TexCoords)
+{
+    vec3 tangentNormal = texture(texSampler[uboMaterial.idxNormal], TexCoords).xyz * 2.0 - 1.0;
+
+    vec3 Q1  = dFdx(fs_in.FragPos);
+    vec3 Q2  = dFdy(fs_in.FragPos);
+    vec2 st1 = dFdx(fs_in.TexCoords);
+    vec2 st2 = dFdy(fs_in.TexCoords);
+
+    vec3 N   = normalize(fs_in.Normal);
+    vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
+    vec3 B  = -normalize(cross(N, T));
+    mat3 TBN = mat3(T, B, N);
+
+    return normalize(TBN * tangentNormal);
 }

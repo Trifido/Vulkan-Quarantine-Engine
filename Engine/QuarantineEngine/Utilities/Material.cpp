@@ -8,7 +8,7 @@ Material::Material()
     this->uniform = std::make_shared<MaterialUniform>();
     this->uniform->idxDiffuse = this->uniform->idxNormal = this->uniform->idxSpecular = this->uniform->idxEmissive = this->uniform->idxHeight = this->uniform->idxBump = -1;
     this->uniform->shininess = this->shininess;
-    this->texture_vector = std::make_shared<std::vector<std::shared_ptr<Texture>>>();
+    this->texture_vector = std::make_shared<std::vector<std::shared_ptr<CustomTexture>>>();
     this->texture_vector->resize(this->TOTAL_NUM_TEXTURES, nullptr);
     this->numTextures = 0;
 }
@@ -23,16 +23,16 @@ Material::Material(std::shared_ptr<ShaderModule> shader_ptr, VkRenderPass render
     this->uniform = std::make_shared<MaterialUniform>();
     this->uniform->idxDiffuse = this->uniform->idxNormal = this->uniform->idxSpecular = this->uniform->idxEmissive = this->uniform->idxHeight = this->uniform->idxBump = -1;
     this->uniform->shininess = this->shininess;
-    this->texture_vector = std::make_shared<std::vector<std::shared_ptr<Texture>>>();
+    this->texture_vector = std::make_shared<std::vector<std::shared_ptr<CustomTexture>>>();
     this->texture_vector->resize(this->TOTAL_NUM_TEXTURES, nullptr);
     this->numTextures = 0;
 }
 
-void Material::AddTexture(std::shared_ptr<Texture> texture)
+void Material::AddTexture(std::shared_ptr<CustomTexture> texture)
 {
     bool isInserted = false;
 
-    std::shared_ptr<Texture> ptrTexture = this->findTextureByType(texture->type);
+    std::shared_ptr<CustomTexture> ptrTexture = this->findTextureByType(texture->type);
     if (ptrTexture == nullptr)
     {
         texture_vector->at(this->numTextures) = texture;
@@ -73,7 +73,7 @@ void Material::AddTexture(std::shared_ptr<Texture> texture)
     }
 }
 
-void Material::AddNullTexture(std::shared_ptr<Texture> texture)
+void Material::AddNullTexture(std::shared_ptr<CustomTexture> texture)
 {
     this->emptyTexture = texture;
 }
@@ -148,7 +148,7 @@ void Material::InitializeMaterial()
     }
 }
 
-std::shared_ptr<Texture> Material::findTextureByType(TEXTURE_TYPE newtype)
+std::shared_ptr<CustomTexture> Material::findTextureByType(TEXTURE_TYPE newtype)
 {
     for (size_t id = 0; id < texture_vector->size(); id++)
     {

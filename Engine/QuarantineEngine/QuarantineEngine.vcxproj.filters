@@ -115,27 +115,6 @@
     <ClCompile Include="main.cpp">
       <Filter>sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\backends\imgui_impl_glfw.cpp">
-      <Filter>sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\backends\imgui_impl_vulkan.cpp">
-      <Filter>sources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\external\imgui\imgui.cpp">
-      <Filter>imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\external\imgui\imgui_demo.cpp">
-      <Filter>imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\external\imgui\imgui_draw.cpp">
-      <Filter>imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\external\imgui\imgui_tables.cpp">
-      <Filter>imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\external\imgui\imgui_widgets.cpp">
-      <Filter>imgui</Filter>
-    </ClCompile>
     <ClCompile Include="SetUp\VulkanLayerAndExtension.cpp">
       <Filter>Kernel\SetUp\sources</Filter>
     </ClCompile>
@@ -208,7 +187,7 @@
     <ClCompile Include="Utilities\Transform.cpp">
       <Filter>Kernel\Utilities\sources</Filter>
     </ClCompile>
-    <ClCompile Include="Utilities\Texture.cpp">
+    <ClCompile Include="Utilities\CustomTexture.cpp">
       <Filter>Kernel\Utilities\sources</Filter>
     </ClCompile>
     <ClCompile Include="SetUp\QueueModule.cpp">
@@ -244,23 +223,29 @@
     <ClCompile Include="Utilities\Light\PointLight.cpp">
       <Filter>Kernel\Utilities\Light\sources</Filter>
     </ClCompile>
+    <ClCompile Include="backends\imgui_impl_glfw.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="backends\imgui_impl_vulkan.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_demo.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_draw.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_tables.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_widgets.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\backends\imgui_impl_glfw.h">
-      <Filter>sources</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\backends\imgui_impl_vulkan.h">
-      <Filter>sources</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\external\imgui\imconfig.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\external\imgui\imgui.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\external\imgui\imgui_internal.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
     <ClInclude Include="SetUp\DeviceModule.h">
       <Filter>Kernel\SetUp\headers</Filter>
     </ClInclude>
@@ -345,7 +330,7 @@
     <ClInclude Include="Utilities\Transform.h">
       <Filter>Kernel\Utilities\headers</Filter>
     </ClInclude>
-    <ClInclude Include="Utilities\Texture.h">
+    <ClInclude Include="Utilities\CustomTexture.h">
       <Filter>Kernel\Utilities\headers</Filter>
     </ClInclude>
     <ClInclude Include="Draw\SyncTool.h">
@@ -390,6 +375,11 @@
     <ClInclude Include="Utilities\Light\PointLight.h">
       <Filter>Kernel\Utilities\Light\headers</Filter>
     </ClInclude>
+    <ClInclude Include="backends\imgui_impl_glfw.h" />
+    <ClInclude Include="backends\imgui_impl_vulkan.h" />
+    <ClInclude Include="imconfig.h" />
+    <ClInclude Include="imgui.h" />
+    <ClInclude Include="imgui_internal.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.txt" />

@@ -90,13 +90,13 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\external\tinyobjloader-master;..\external\imgui;..\external\imgui\backends;..\external\stb-master;..\..\external\imgui;%VULKAN_SDK%\include;..\libs\glfw\include;..\libs;.\setup;.\Presentation;.\GraphicsPipeline;.\Draw;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\tinyobjloader;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\GLFW\include;%VULKAN_SDK%\include;.\setup;.\Presentation;.\GraphicsPipeline;.\Draw;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>%VULKAN_SDK%\lib32;..\libs\glfw\lib-vc2010-32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\assimp\lib\assimp;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib32;..\libs\glfw\lib-vc2010-32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
@@ -105,13 +105,13 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\external\tinyobjloader-master;..\external\imgui;..\external\imgui\backends;..\external\stb-master;..\..\external\imgui;%VULKAN_SDK%\include;..\libs\glfw\include;..\libs;.\setup;.\Presentation;.\GraphicsPipeline;.\Draw;.\Utilities\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Input;.\Utilities\Light;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\tinyobjloader;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\GLFW\include;%VULKAN_SDK%\include;.\setup;.\Presentation;.\GraphicsPipeline;.\Draw;.\Utilities\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Input;.\Utilities\Light;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>%VULKAN_SDK%\lib;..\libs\glfw\lib-vc2010-64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\assimp\lib\assimp;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib;..\libs\glfw\lib-vc2010-64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mt.lib;assimp-vc142-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
@@ -122,7 +122,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\..\external\tinyobjloader-master;..\external\imgui;..\external\imgui\backends;..\external\stb-master;..\..\external\imgui;%VULKAN_SDK%\include;..\libs\glfw\include;..\libs;.\setup;.\Presentation;.\GraphicsPipeline;.\Draw;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\tinyobjloader;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\GLFW\include;%VULKAN_SDK%\include;.\setup;.\Presentation;.\GraphicsPipeline;.\Draw;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -130,8 +130,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>%VULKAN_SDK%\lib32;..\libs\glfw\lib-vc2010-32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\assimp\lib\assimp;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib32;..\libs\glfw\lib-vc2010-32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
@@ -143,7 +143,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\..\external\tinyobjloader-master;..\external\imgui;..\external\imgui\backends;..\external\stb-master;..\..\external\imgui;%VULKAN_SDK%\include;..\libs\glfw\include;..\libs;.\setup;.\Presentation;.\GraphicsPipeline;.\Draw;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Utilities\Geometry;.\Input;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\tinyobjloader;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\GLFW\include;%VULKAN_SDK%\include;.\setup;.\Presentation;.\GraphicsPipeline;.\Draw;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Utilities\Geometry;.\Input;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -151,21 +151,21 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>%VULKAN_SDK%\lib;..\libs\glfw\lib-vc2010-64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\assimp\lib\assimp;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib;..\libs\glfw\lib-vc2010-64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\backends\imgui_impl_glfw.cpp" />
-    <ClCompile Include="..\..\backends\imgui_impl_vulkan.cpp" />
-    <ClCompile Include="..\..\external\imgui\imgui.cpp" />
-    <ClCompile Include="..\..\external\imgui\imgui_demo.cpp" />
-    <ClCompile Include="..\..\external\imgui\imgui_draw.cpp" />
-    <ClCompile Include="..\..\external\imgui\imgui_tables.cpp" />
-    <ClCompile Include="..\..\external\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="..\Linking\imgui\backends\imgui_impl_glfw.cpp" />
+    <ClCompile Include="..\Linking\imgui\backends\imgui_impl_vulkan.cpp" />
+    <ClCompile Include="..\Linking\imgui\imgui.cpp" />
+    <ClCompile Include="..\Linking\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\Linking\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\Linking\imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\Linking\imgui\imgui_widgets.cpp" />
     <ClCompile Include="App\App.cpp" />
     <ClCompile Include="Draw\CommandPoolModule.cpp" />
     <ClCompile Include="Draw\FrameBufferModule.cpp" />
@@ -201,15 +201,15 @@
     <ClCompile Include="Utilities\Light\LightManager.cpp" />
     <ClCompile Include="Utilities\Light\PointLight.cpp" />
     <ClCompile Include="Utilities\Material.cpp" />
-    <ClCompile Include="Utilities\Texture.cpp" />
+    <ClCompile Include="Utilities\CustomTexture.cpp" />
     <ClCompile Include="Utilities\Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\backends\imgui_impl_glfw.h" />
-    <ClInclude Include="..\..\backends\imgui_impl_vulkan.h" />
-    <ClInclude Include="..\..\external\imgui\imconfig.h" />
-    <ClInclude Include="..\..\external\imgui\imgui.h" />
-    <ClInclude Include="..\..\external\imgui\imgui_internal.h" />
+    <ClInclude Include="..\Linking\imgui\backends\imgui_impl_glfw.h" />
+    <ClInclude Include="..\Linking\imgui\backends\imgui_impl_vulkan.h" />
+    <ClInclude Include="..\Linking\imgui\imconfig.h" />
+    <ClInclude Include="..\Linking\imgui\imgui.h" />
+    <ClInclude Include="..\Linking\imgui\imgui_internal.h" />
     <ClInclude Include="App\App.h" />
     <ClInclude Include="Draw\CommandPoolModule.h" />
     <ClInclude Include="Draw\FrameBufferModule.h" />
@@ -250,7 +250,7 @@
     <ClInclude Include="Utilities\Light\LightManager.h" />
     <ClInclude Include="Utilities\Light\PointLight.h" />
     <ClInclude Include="Utilities\Material.h" />
-    <ClInclude Include="Utilities\Texture.h" />
+    <ClInclude Include="Utilities\CustomTexture.h" />
     <ClInclude Include="Utilities\TextureTypes.h" />
     <ClInclude Include="Utilities\Transform.h" />
   </ItemGroup>
