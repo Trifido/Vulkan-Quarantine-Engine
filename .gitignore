@@ -98,6 +98,7 @@ StyleCopReport.xml
 *.txt
 *.spv
 *.bat
+*.fbx
 
 # Chutzpah Test files
 _Chutzpah*
@@ -358,5 +359,6 @@ MigrationBackup/
 # External Engine folders
 .external/
 .resources/ 
+.resources/models/
 *.bat
 *.spv
