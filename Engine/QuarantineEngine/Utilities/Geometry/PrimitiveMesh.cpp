@@ -1,5 +1,6 @@
 #include "PrimitiveMesh.h"
 #include <BufferManageModule.h>
+#include <MeshImporter.h>
 
 PrimitiveMesh::PrimitiveMesh()
 {
@@ -14,7 +15,7 @@ VkVertexInputBindingDescription PrimitiveMesh::getBindingDescription()
 {
     VkVertexInputBindingDescription bindingDescription{};
     bindingDescription.binding = 0;
-    bindingDescription.stride = sizeof(PrimitiveVertex);
+    bindingDescription.stride = sizeof(PBRVertex);
     bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
     return bindingDescription;
 }
@@ -26,22 +27,27 @@ std::vector<VkVertexInputAttributeDescription> PrimitiveMesh::getAttributeDescri
     attributeDescriptions[0].binding = 0;
     attributeDescriptions[0].location = 0;
     attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[0].offset = offsetof(PrimitiveVertex, pos);
+    attributeDescriptions[0].offset = offsetof(PBRVertex, pos);
 
     attributeDescriptions[1].binding = 0;
     attributeDescriptions[1].location = 1;
     attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[1].offset = offsetof(PrimitiveVertex, norm);
+    attributeDescriptions[1].offset = offsetof(PBRVertex, norm);
 
     attributeDescriptions[2].binding = 0;
     attributeDescriptions[2].location = 2;
     attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-    attributeDescriptions[2].offset = offsetof(PrimitiveVertex, texCoord);
+    attributeDescriptions[2].offset = offsetof(PBRVertex, texCoord);
 
     attributeDescriptions[3].binding = 0;
     attributeDescriptions[3].location = 3;
     attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[3].offset = offsetof(PrimitiveVertex, color);
+    attributeDescriptions[3].offset = offsetof(PBRVertex, Tangents);
+
+    attributeDescriptions[4].binding = 0;
+    attributeDescriptions[4].location = 4;
+    attributeDescriptions[4].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributeDescriptions[4].offset = offsetof(PBRVertex, Bitangents);
 
     return attributeDescriptions;
 }
@@ -60,7 +66,7 @@ void PrimitiveMesh::InitializeMesh()
         break;
     }
 
-    this->numAttributes = 4;
+    this->numAttributes = 5;
 
     this->numVertices = (uint32_t)this->indices.size();
     this->numFaces = this->numVertices / 3;
@@ -72,39 +78,34 @@ void PrimitiveMesh::InitializeMesh()
 void PrimitiveMesh::InitializePlane()
 {
     this->vertices.resize(4);
-    PrimitiveVertex vert;
+    PBRVertex vert;
 
     vert.pos = glm::vec3(1.0f, 1.0f, 0.0f);
-    vert.norm = glm::vec3(0.0f, 1.0f, 0.0f);
     vert.texCoord = glm::vec2(1.0f, 1.0f);
-    vert.color = glm::vec3(1.0f, 0.0f, 0.0f);
     this->vertices[0] = vert;
 
     vert.pos = glm::vec3(-1.0f, -1.0f, 0.0f);
-    vert.norm = glm::vec3(0.0f, 1.0f, 0.0f);
     vert.texCoord = glm::vec2(0.0f, 0.0f);
-    vert.color = glm::vec3(1.0f, 0.0f, 0.0f);
     this->vertices[1] = vert;
 
     vert.pos = glm::vec3(-1.0f, 1.0f, 0.0f);
-    vert.norm = glm::vec3(0.0f, 1.0f, 0.0f);
     vert.texCoord = glm::vec2(1.0f, 0.0f);
-    vert.color = glm::vec3(1.0f, 0.0f, 0.0f);
     this->vertices[2] = vert;
 
     vert.pos = glm::vec3(1.0f, -1.0f, 0.0f);
-    vert.norm = glm::vec3(0.0f, 1.0f, 0.0f);
     vert.texCoord = glm::vec2(0.0f, 1.0f);
-    vert.color = glm::vec3(1.0f, 0.0f, 0.0f);
     this->vertices[3] = vert;
 
     this->indices.resize(6);
-    this->indices = { 2, 1, 0, 3, 0, 1 };
+    this->indices = { 0, 2, 1, 0, 1, 3 };
+
+    MeshImporter::RecreateNormals(this->vertices, this->indices);
+    MeshImporter::RecreateTangents(this->vertices, this->indices);
 }
 
 void PrimitiveMesh::createVertexBuffer()
 {
-    VkDeviceSize bufferSize = sizeof(PrimitiveVertex) * vertices.size();
+    VkDeviceSize bufferSize = sizeof(PBRVertex) * vertices.size();
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;

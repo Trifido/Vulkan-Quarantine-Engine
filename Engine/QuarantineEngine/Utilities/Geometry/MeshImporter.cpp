@@ -3,25 +3,87 @@
 
 MeshImporter::MeshImporter()
 {
-
 }
 
-MeshImporter::MeshImporter(std::string pathfile)
+void MeshImporter::RecreateNormals(std::vector<PBRVertex>& vertices, std::vector<unsigned int>& indices)
 {
+    for (size_t v = 0; v < vertices.size(); v++)
+    {
+        vertices.at(v).norm = glm::vec3(0.0f);
+    }
+
+    for (size_t idTr = 0; idTr < indices.size(); idTr += 3)
+    {
+        size_t idx0 = indices[idTr];
+        size_t idx1 = indices[idTr + 1];
+        size_t idx2 = indices[idTr + 2];
+        glm::vec3 edge1 = vertices[idx1].pos - vertices[idx0].pos;
+        glm::vec3 edge2 = vertices[idx2].pos - vertices[idx0].pos;
+        glm::vec3 crossProduct = glm::cross(edge1, edge2);
+
+        vertices[idx0].norm += crossProduct;
+        vertices[idx1].norm += crossProduct;
+        vertices[idx2].norm += crossProduct;
+    }
+
+    for (size_t v = 0; v < vertices.size(); v++)
+    {
+        vertices.at(v).norm = glm::normalize(vertices.at(v).norm);
+    }
 }
 
-void MeshImporter::LoadMesh(std::string path)
+void MeshImporter::RecreateTangents(std::vector<PBRVertex>& vertices, std::vector<unsigned int>& indices)
+{
+    for (size_t idTr = 0; idTr < indices.size(); idTr += 3)
+    {
+        size_t idx0 = indices[idTr];
+        size_t idx1 = indices[idTr + 1];
+        size_t idx2 = indices[idTr + 2];
+        glm::vec3 edge1 = vertices[idx1].pos - vertices[idx0].pos;
+        glm::vec3 edge2 = vertices[idx2].pos - vertices[idx0].pos;
+        glm::vec2 deltaUV1 = vertices[idx1].texCoord - vertices[idx0].texCoord;
+        glm::vec2 deltaUV2 = vertices[idx2].texCoord - vertices[idx0].texCoord;
+
+        float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+        glm::vec3 tangent, bitangent;
+
+        tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+        tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+        tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+        tangent = glm::normalize(tangent);
+
+        vertices[idx0].Tangents = tangent;
+        vertices[idx1].Tangents = tangent;
+        vertices[idx2].Tangents = tangent;
+
+        bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+        bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+        bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+        bitangent = glm::normalize(bitangent);
+
+        vertices[idx0].Bitangents = bitangent;
+        vertices[idx1].Bitangents = bitangent;
+        vertices[idx2].Bitangents = bitangent;
+    }
+}
+
+
+MeshData MeshImporter::LoadMesh(std::string path)
 {
     Assimp::Importer importer;
+
+    const aiScene* scene;
     scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
         fprintf(stderr, "ERROR::ASSIMP::%s", importer.GetErrorString());
-        return;
+        return MeshData();
     }
 
-    this->ProcessNode(scene->mRootNode, scene);
+    //this->ProcessNode(scene->mRootNode, scene);
+    return this->ProcessMesh(scene->mMeshes[scene->mRootNode->mMeshes[0]], scene);
 }
 
 void MeshImporter::ProcessNode(aiNode* node, const aiScene* scene)
@@ -30,7 +92,7 @@ void MeshImporter::ProcessNode(aiNode* node, const aiScene* scene)
     for (unsigned int i = 0; i < node->mNumMeshes; i++)
     {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        meshes.push_back(this->ProcessMesh(mesh, scene));
+        //meshes.push_back(this->ProcessMesh(mesh, scene));
     }
     // then do the same for each of its children
     for (unsigned int i = 0; i < node->mNumChildren; i++)
@@ -39,19 +101,23 @@ void MeshImporter::ProcessNode(aiNode* node, const aiScene* scene)
     }
 }
 
-Mesh MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
+MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 {
+    MeshData data = {};
+
     unsigned int WEIGHTS_PER_VERTEX = 4;
-    existTangent = mesh->HasTangentsAndBitangents();
-    existNormal = mesh->HasNormals();
-    std::vector<PBRVertex> vertices;
-    std::vector<unsigned int> indices;
+    bool existTangent = mesh->HasTangentsAndBitangents();
+    bool existNormal = mesh->HasNormals();
+
     std::vector<CustomTexture> textures;
 
-    numVertices = mesh->mNumVertices * 3;
-    numFaces = mesh->mNumFaces;
+    data.numPositions = mesh->mNumVertices;
+    data.numVertices = mesh->mNumVertices * 3;
+    data.numFaces = mesh->mNumFaces;
+    data.numIndices = mesh->mNumFaces * 3;
+    data.vertices.resize(data.numVertices);
 
-    for (unsigned int i = 0; i < mesh->mNumVertices; i++)
+    for (unsigned int i = 0; i < data.numPositions; i++)
     {
         PBRVertex vertex;
         // process vertex positions, normals and texture coordinates
@@ -60,8 +126,6 @@ Mesh MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
         vector.y = mesh->mVertices[i].y;
         vector.z = mesh->mVertices[i].z;
         vertex.pos = vector;
-
-        rawVertices.push_back(rp3d::Vector3(vector.x, vector.y, vector.z));
 
         if (existNormal)
         {
@@ -96,19 +160,38 @@ Mesh MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
             vertex.texCoord = glm::vec2(0.0f, 0.0f);
         }
 
-        vertices.push_back(vertex);
+        data.vertices.at(i) = vertex;
     }
+
     // process indices
+    data.numIndices = 0;
     for (unsigned int i = 0; i < mesh->mNumFaces; i++)
     {
         aiFace face = mesh->mFaces[i];
         for (unsigned int j = 0; j < face.mNumIndices; j++)
         {
-            indices.push_back(face.mIndices[j]);
+            data.numIndices += face.mNumIndices;
+            data.indices.push_back(face.mIndices[j]);
         }
     }
-    rawIndices = indices;
+    data.indices.resize(data.numIndices);
 
+
+    if (!existNormal)
+    {
+        this->RecreateNormals(data.vertices, data.indices);
+    }
+
+    if (!existTangent)
+    {
+        this->RecreateTangents(data.vertices, data.indices);
+    }
+
+    return data;
+}
+/*
+void MeshImporter::ProcessTextures(aiMesh* mesh, const aiScene* scene)
+{
     // process material
     if (mesh->mMaterialIndex >= 0)
     {
@@ -140,10 +223,9 @@ Mesh MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
             bumpMaps = this->LoadMaterialTextures(material, aiTextureType_HEIGHT);
         else
             bumpMaps = this->LoadMaterialTextures(material, aiTextureType_HEIGHT);
+
         textures.insert(textures.end(), bumpMaps.begin(), bumpMaps.end());
     }
-
-    return Mesh(vertices, indices, textures, matHandle);
 }
 
 std::vector<CustomTexture> MeshImporter::LoadMaterialTextures(aiMaterial* mat, aiTextureType type)
@@ -166,13 +248,12 @@ std::vector<CustomTexture> MeshImporter::LoadMaterialTextures(aiMaterial* mat, a
         if (!skip)
         {   // if texture hasn't been loaded already, load it
             std::string filename = std::string(str.C_Str());
-            filename = directory + '/' + filename;
+            //filename = directory + '/' + filename;
 
-            CustomTexture texture(filename);
-            texture.path = str.C_Str();
+            CustomTexture texture();
             textures.push_back(texture);
             textures_loaded.push_back(texture); // add to loaded textures
         }
     }
     return textures;
-}
+}*/

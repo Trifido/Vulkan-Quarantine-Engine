@@ -14,7 +14,7 @@ class Mesh : public GeometryComponent
 {
 private:
     std::string PATH;
-    std::vector<Vertex> vertices;
+    std::vector<PBRVertex> vertices;
 
     void createVertexBuffer() override;
 public:

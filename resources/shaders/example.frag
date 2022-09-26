@@ -6,6 +6,9 @@ const int numberOfLights = 8;
 layout(location = 0) in VS_OUT {
     vec3 FragPos;
     vec3 Normal;
+    vec3 TangentViewPos;
+    vec3 TangentFragPos;
+    mat3 TBN;
     vec2 TexCoords;
 } fs_in;
 
@@ -64,9 +67,7 @@ void main()
 
     if(uboMaterial.idxNormal > -1)
     {
-        normal = texture(texSampler[uboMaterial.idxNormal], texCoords).rgb;
-        normal = normalize(normal * 2.0 - 1.0);
-        //normal = getNormalFromMap(texCoords);
+        normal = getNormalFromMap(texCoords);
     }
 
     //COMPUTE LIGHT

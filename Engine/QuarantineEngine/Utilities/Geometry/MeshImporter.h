@@ -9,23 +9,29 @@
 #include <Geometry/Mesh.h>
 #include <CustomTexture.h>
 
+struct MeshData
+{
+    size_t numVertices;
+    size_t numFaces;
+    size_t numIndices;
+    size_t numPositions;
+    std::vector<PBRVertex> vertices;
+    std::vector<unsigned int> indices;
+};
+
 class MeshImporter 
 {
 private:
-    const aiScene* scene;
-    std::vector<aiNode*> ai_nodes;
-public:
-    std::vector<Mesh> meshes;
-
-private:
-    void LoadMesh(std::string path);
+    MeshData ProcessMesh(aiMesh* mesh, const aiScene* scene);
     void ProcessNode(aiNode* node, const aiScene* scene);
-    Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene);
-    std::vector<CustomTexture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type);
+    //void ProcessTextures(aiMesh* mesh, const aiScene* scene);
+    //std::vector<CustomTexture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type);
 
 public:
     MeshImporter();
-    MeshImporter(std::string pathfile);
+    MeshData LoadMesh(std::string path);
+    static void RecreateNormals(std::vector<PBRVertex>& vertices, std::vector<unsigned int>& indices);
+    static void RecreateTangents(std::vector<PBRVertex>& vertices, std::vector<unsigned int>& indices);
 };
 
 #endif // !MESH_H
