@@ -30,6 +30,7 @@ private:
 public:
     MeshImporter();
     MeshData LoadMesh(std::string path);
+    static MeshData LoadRawMesh(float rawData[], unsigned int numData, unsigned int offset);
     static void RecreateNormals(std::vector<PBRVertex>& vertices, std::vector<unsigned int>& indices);
     static void RecreateTangents(std::vector<PBRVertex>& vertices, std::vector<unsigned int>& indices);
 };

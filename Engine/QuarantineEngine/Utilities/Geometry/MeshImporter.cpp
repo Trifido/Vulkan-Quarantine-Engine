@@ -83,7 +83,7 @@ MeshData MeshImporter::LoadMesh(std::string path)
     }
 
     //this->ProcessNode(scene->mRootNode, scene);
-    return this->ProcessMesh(scene->mMeshes[scene->mRootNode->mMeshes[0]], scene);
+    return this->ProcessMesh(scene->mMeshes[scene->mRootNode->mChildren[0]->mChildren[0]->mMeshes[0]], scene);
 }
 
 void MeshImporter::ProcessNode(aiNode* node, const aiScene* scene)
@@ -186,6 +186,40 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
     {
         this->RecreateTangents(data.vertices, data.indices);
     }
+
+    return data;
+}
+MeshData MeshImporter::LoadRawMesh(float rawData[], unsigned int numData, unsigned int offset)
+{
+    MeshData data = {};
+    unsigned int NUMCOMP = offset;
+    for (int i = 0; i < numData; i++)
+    {
+        unsigned int index = i * NUMCOMP;
+
+        PBRVertex vertex;
+        // process vertex positions, normals and texture coordinates
+        glm::vec3 vector;
+        vector.x = rawData[index];
+        vector.y = rawData[index + 1];
+        vector.z = rawData[index + 2];
+        vertex.pos = vector;
+
+        vector.x = rawData[index + 3];
+        vector.y = rawData[index + 4];
+        vector.z = rawData[index + 5];
+        vertex.norm = vector;
+
+        glm::vec2 vec;
+        vec.x = rawData[index + 6];
+        vec.y = rawData[index + 7];
+        vertex.texCoord = vec;
+
+        data.vertices.push_back(vertex);
+        data.indices.push_back(i);
+    }
+
+    RecreateTangents(data.vertices, data.indices);
 
     return data;
 }

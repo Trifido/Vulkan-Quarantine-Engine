@@ -1,6 +1,7 @@
 #include "PrimitiveMesh.h"
 #include <BufferManageModule.h>
 #include <MeshImporter.h>
+#include "RawGeometry.h"
 
 PrimitiveMesh::PrimitiveMesh()
 {
@@ -59,6 +60,9 @@ void PrimitiveMesh::InitializeMesh()
 
     switch (this->type)
     {
+    case PRIMITIVE_TYPE::CUBE_TYPE:
+        this->InitializeCube();
+        break;
     case PRIMITIVE_TYPE::QUAD_TYPE:
         this->InitializePlane();
         break;
@@ -101,6 +105,14 @@ void PrimitiveMesh::InitializePlane()
 
     MeshImporter::RecreateNormals(this->vertices, this->indices);
     MeshImporter::RecreateTangents(this->vertices, this->indices);
+}
+
+void PrimitiveMesh::InitializeCube()
+{
+    MeshData data = MeshImporter::LoadRawMesh(cubevertices, 36, 8);
+
+    this->vertices = data.vertices;
+    this->indices = data.indices;
 }
 
 void PrimitiveMesh::createVertexBuffer()

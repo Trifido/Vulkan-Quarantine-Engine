@@ -247,6 +247,7 @@
     <ClInclude Include="Utilities\Geometry\MeshImporter.h" />
     <ClInclude Include="Utilities\Geometry\PrimitiveMesh.h" />
     <ClInclude Include="Utilities\Geometry\PrimitiveTypes.h" />
+    <ClInclude Include="Utilities\Geometry\RawGeometry.h" />
     <ClInclude Include="Utilities\Geometry\Vertex.h" />
     <ClInclude Include="Utilities\Light\Light.h" />
     <ClInclude Include="Utilities\Light\LightManager.h" />

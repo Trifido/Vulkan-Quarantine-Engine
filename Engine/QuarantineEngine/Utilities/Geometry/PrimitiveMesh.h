@@ -22,6 +22,7 @@ public:
 
 private:
     void InitializePlane();
+    void InitializeCube();
     void createVertexBuffer() override;
 };
 

@@ -386,6 +386,9 @@
     <ClInclude Include="Utilities\Geometry\MeshImporter.h">
       <Filter>Kernel\Utilities\Geometry\headers</Filter>
     </ClInclude>
+    <ClInclude Include="Utilities\Geometry\RawGeometry.h">
+      <Filter>Kernel\Utilities\Geometry\headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.txt" />

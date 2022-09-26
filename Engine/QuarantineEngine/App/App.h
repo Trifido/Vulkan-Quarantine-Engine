@@ -47,6 +47,7 @@ const std::string TEXTURE_WALL_PATH = "../../resources/textures/wall/brickwall.j
 const std::string TEXTURE_WALL_NORMAL_PATH = "../../resources/textures/wall/brickwall_normal.jpg";
 const std::string MODEL_HOUSE_PATH = "../../resources/models/viking_room.obj";
 const std::string TEXTURE_HOUSE_PATH = "../../resources/textures/viking_room.png";
+const std::string MODEL_WHEEL_PATH = "../../resources/models/scifiWheel/source/wheel.glb";
 
 enum class ERROR_RESIZE
 {
