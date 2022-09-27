@@ -83,7 +83,7 @@ MeshData MeshImporter::LoadMesh(std::string path)
     }
 
     //this->ProcessNode(scene->mRootNode, scene);
-    return this->ProcessMesh(scene->mMeshes[scene->mRootNode->mChildren[0]->mChildren[0]->mMeshes[0]], scene);
+    return this->ProcessMesh(scene->mMeshes[scene->mRootNode->mChildren[0]->mMeshes[0]], scene);
 }
 
 void MeshImporter::ProcessNode(aiNode* node, const aiScene* scene)

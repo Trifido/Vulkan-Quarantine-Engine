@@ -21,8 +21,11 @@ public:
     std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions() override;
 
 private:
+    void InitializePoint();
+    void InitializeTriangle();
     void InitializePlane();
     void InitializeCube();
+    void InitializeSphere();
     void createVertexBuffer() override;
 };
 

@@ -60,11 +60,20 @@ void PrimitiveMesh::InitializeMesh()
 
     switch (this->type)
     {
+    case PRIMITIVE_TYPE::POINT_TYPE:
+        this->InitializePoint();
+        break;
+    case PRIMITIVE_TYPE::TRIANGLE_TYPE:
+        this->InitializeTriangle();
+        break;
     case PRIMITIVE_TYPE::CUBE_TYPE:
         this->InitializeCube();
         break;
     case PRIMITIVE_TYPE::QUAD_TYPE:
         this->InitializePlane();
+        break;
+    case PRIMITIVE_TYPE::SPHERE_TYPE:
+        this->InitializeSphere();
         break;
     default:
         break;
@@ -77,6 +86,46 @@ void PrimitiveMesh::InitializeMesh()
 
     this->createVertexBuffer();
     this->createIndexBuffer();
+}
+
+void PrimitiveMesh::InitializePoint()
+{
+    this->vertices.resize(1);
+    PBRVertex vert;
+
+    vert.pos = glm::vec3(0.0f, 0.0f, 0.0f);
+    vert.texCoord = glm::vec2(0.0f, 0.0f);
+    vert.norm = glm::vec3(0.0f, 1.0f, 0.0f);
+    vert.Tangents = glm::vec3(1.0f, 0.0f, 0.0f);
+    vert.Bitangents = glm::vec3(0.0f, 0.0f, 1.0f);
+    this->vertices[0] = vert;
+
+    this->indices.resize(1);
+    this->indices = { 0 };
+}
+
+void PrimitiveMesh::InitializeTriangle()
+{
+    this->vertices.resize(3);
+    PBRVertex vert;
+
+    vert.pos = glm::vec3(1.0f, 0.0f, 0.0f);
+    vert.texCoord = glm::vec2(1.0f, 1.0f);
+    this->vertices[0] = vert;
+
+    vert.pos = glm::vec3(-1.0f, 0.0f, 0.0f);
+    vert.texCoord = glm::vec2(0.0f, 0.0f);
+    this->vertices[1] = vert;
+
+    vert.pos = glm::vec3(0.0f, 1.0f, 0.0f);
+    vert.texCoord = glm::vec2(1.0f, 0.0f);
+    this->vertices[2] = vert;
+
+    this->indices.resize(3);
+    this->indices = {0, 2, 1};
+
+    MeshImporter::RecreateNormals(this->vertices, this->indices);
+    MeshImporter::RecreateTangents(this->vertices, this->indices);
 }
 
 void PrimitiveMesh::InitializePlane()
@@ -110,6 +159,15 @@ void PrimitiveMesh::InitializePlane()
 void PrimitiveMesh::InitializeCube()
 {
     MeshData data = MeshImporter::LoadRawMesh(cubevertices, 36, 8);
+
+    this->vertices = data.vertices;
+    this->indices = data.indices;
+}
+
+void PrimitiveMesh::InitializeSphere()
+{
+    MeshImporter importer;
+    MeshData data = importer.LoadMesh("../../resources/models/Sphere.stl");
 
     this->vertices = data.vertices;
     this->indices = data.indices;
