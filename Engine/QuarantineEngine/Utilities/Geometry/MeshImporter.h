@@ -11,25 +11,29 @@
 
 struct MeshData
 {
+    std::string name;
     size_t numVertices;
     size_t numFaces;
     size_t numIndices;
     size_t numPositions;
     std::vector<PBRVertex> vertices;
     std::vector<unsigned int> indices;
+
+    glm::mat4 model = glm::mat4(1.0);
 };
 
 class MeshImporter 
 {
 private:
     MeshData ProcessMesh(aiMesh* mesh, const aiScene* scene);
-    void ProcessNode(aiNode* node, const aiScene* scene);
+    void  ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, std::vector<MeshData> &meshes);
     //void ProcessTextures(aiMesh* mesh, const aiScene* scene);
     //std::vector<CustomTexture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type);
+    glm::mat4 GetGLMMatrix(aiMatrix4x4 transform);
 
 public:
     MeshImporter();
-    MeshData LoadMesh(std::string path);
+    std::vector<MeshData> LoadMesh(std::string path);
     static MeshData LoadRawMesh(float rawData[], unsigned int numData, unsigned int offset);
     static void RecreateNormals(std::vector<PBRVertex>& vertices, std::vector<unsigned int>& indices);
     static void RecreateTangents(std::vector<PBRVertex>& vertices, std::vector<unsigned int>& indices);

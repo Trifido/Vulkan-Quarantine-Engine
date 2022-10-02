@@ -167,10 +167,10 @@ void PrimitiveMesh::InitializeCube()
 void PrimitiveMesh::InitializeSphere()
 {
     MeshImporter importer;
-    MeshData data = importer.LoadMesh("../../resources/models/Sphere.stl");
+    std::vector<MeshData> data = importer.LoadMesh("../../resources/models/Sphere.stl");
 
-    this->vertices = data.vertices;
-    this->indices = data.indices;
+    this->vertices = data[0].vertices;
+    this->indices = data[0].indices;
 }
 
 void PrimitiveMesh::createVertexBuffer()

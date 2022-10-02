@@ -21,6 +21,9 @@ public:
     std::shared_ptr<Transform>          transform;
     std::shared_ptr<Material>           material;
 
+    std::shared_ptr<GameObject>                 parent;
+    std::vector<std::shared_ptr<GameObject>>    childs;
+
 public:
     GameObject();
     GameObject(PRIMITIVE_TYPE type);

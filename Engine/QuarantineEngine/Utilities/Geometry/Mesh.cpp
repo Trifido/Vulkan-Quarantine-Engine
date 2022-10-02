@@ -18,15 +18,15 @@ Mesh::Mesh()
 Mesh::Mesh(std::string pathfile)
 {
     MeshImporter importer = {};
-    MeshData data = importer.LoadMesh(pathfile);
+    std::vector<MeshData> data = importer.LoadMesh(pathfile);
 
     this->PATH = pathfile;
 
     this->numAttributes = 3;
-    this->numVertices = data.numPositions;
-    this->numFaces = data.numFaces;
-    this->vertices = data.vertices;
-    this->indices = data.indices;
+    this->numVertices = data[0].numPositions;
+    this->numFaces = data[0].numFaces;
+    this->vertices = data[0].vertices;
+    this->indices = data[0].indices;
 }
 
 VkVertexInputBindingDescription Mesh::getBindingDescription()
@@ -72,66 +72,7 @@ std::vector<VkVertexInputAttributeDescription> Mesh::getAttributeDescriptions() 
 
 void Mesh::InitializeMesh()
 {
-    //tinyobj::attrib_t attrib;
-    //std::vector<tinyobj::shape_t> shapes;
-    //std::vector<tinyobj::material_t> materials;
-    //std::string warn, err;
-
-    //if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, this->PATH.c_str())) {
-    //    throw std::runtime_error(warn + err);
-    //}
-
-    //std::unordered_map<Vertex, uint32_t> uniqueVertices{};
-
-    //for (const auto& shape : shapes) {
-    //    for (const auto& index : shape.mesh.indices) {
-    //        PBRVertex vertex{};
-
-    //        vertex.pos = {
-    //            attrib.vertices[3 * index.vertex_index + 0],
-    //            attrib.vertices[3 * index.vertex_index + 1],
-    //            attrib.vertices[3 * index.vertex_index + 2]
-    //        };
-
-    //        if (!attrib.normals.empty())
-    //        {
-    //            vertex.norm = {
-    //                attrib.normals[3 * index.normal_index + 0],
-    //                attrib.normals[3 * index.normal_index + 1],
-    //                attrib.normals[3 * index.normal_index + 2]
-    //            };
-    //        }
-    //        else
-    //        {
-    //            vertex.norm = { 1.0f, 1.0f, 1.0f };
-    //        }
-
-    //        if (!attrib.texcoords.empty())
-    //        {
-    //            vertex.texCoord = {
-    //                attrib.texcoords[2 * index.texcoord_index + 0],
-    //                1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
-    //            };
-    //        }
-    //        else
-    //        {
-    //            vertex.texCoord = { 0.0f, 0.0f };
-    //        }
-
-    //        if (uniqueVertices.count(vertex) == 0) {
-    //            uniqueVertices[vertex] = static_cast<uint32_t>(this->vertices.size());
-    //            this->vertices.push_back(vertex);
-    //        }
-
-    //        this->indices.push_back(uniqueVertices[vertex]);
-    //    }
-    //}
-
     this->numAttributes = 5;
-
-    //this->numVertices = (uint32_t)this->indices.size();
-    //this->numFaces = this->numVertices / 3;
-
     this->createVertexBuffer();
     this->createIndexBuffer();
 }

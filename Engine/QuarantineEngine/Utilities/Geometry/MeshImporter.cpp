@@ -69,8 +69,9 @@ void MeshImporter::RecreateTangents(std::vector<PBRVertex>& vertices, std::vecto
 }
 
 
-MeshData MeshImporter::LoadMesh(std::string path)
+std::vector<MeshData> MeshImporter::LoadMesh(std::string path)
 {
+    std::vector<MeshData> meshes;
     Assimp::Importer importer;
 
     const aiScene* scene;
@@ -79,25 +80,32 @@ MeshData MeshImporter::LoadMesh(std::string path)
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
         fprintf(stderr, "ERROR::ASSIMP::%s", importer.GetErrorString());
-        return MeshData();
+        return meshes;
     }
 
-    //this->ProcessNode(scene->mRootNode, scene);
-    return this->ProcessMesh(scene->mMeshes[scene->mRootNode->mChildren[0]->mMeshes[0]], scene);
+    ProcessNode(scene->mRootNode, scene, glm::mat4(1.0f), meshes);
+
+    return meshes;
 }
 
-void MeshImporter::ProcessNode(aiNode* node, const aiScene* scene)
+void MeshImporter::ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, std::vector<MeshData>& meshes)
 {
+    glm::mat4 localTransform = this->GetGLMMatrix(node->mTransformation);
+    parentTransform = parentTransform * localTransform;
+
     // process all the node's meshes (if any)
     for (unsigned int i = 0; i < node->mNumMeshes; i++)
     {
-        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        //meshes.push_back(this->ProcessMesh(mesh, scene));
+        MeshData result = this->ProcessMesh(scene->mMeshes[node->mMeshes[i]], scene);
+        result.name = scene->mMeshes[node->mMeshes[i]]->mName.C_Str();
+        result.model = parentTransform;
+        meshes.push_back(result);
     }
+
     // then do the same for each of its children
     for (unsigned int i = 0; i < node->mNumChildren; i++)
     {
-        this->ProcessNode(node->mChildren[i], scene);
+        this->ProcessNode(node->mChildren[i], scene, parentTransform, meshes);
     }
 }
 
@@ -222,6 +230,32 @@ MeshData MeshImporter::LoadRawMesh(float rawData[], unsigned int numData, unsign
     RecreateTangents(data.vertices, data.indices);
 
     return data;
+}
+glm::mat4 MeshImporter::GetGLMMatrix(aiMatrix4x4 transform)
+{
+    glm::mat4 result;
+
+    result[0][0] = transform.a1;
+    result[0][1] = transform.a2;
+    result[0][2] = transform.a3;
+    result[0][3] = transform.a4;
+
+    result[1][0] = transform.b1;
+    result[1][1] = transform.b2;
+    result[1][2] = transform.b3;
+    result[1][3] = transform.b4;
+
+    result[2][0] = transform.c1;
+    result[2][1] = transform.c2;
+    result[2][2] = transform.c3;
+    result[2][3] = transform.c4;
+
+    result[3][0] = transform.d1;
+    result[3][1] = transform.d2;
+    result[3][2] = transform.d3;
+    result[3][3] = transform.d4;
+
+    return result;
 }
 /*
 void MeshImporter::ProcessTextures(aiMesh* mesh, const aiScene* scene)

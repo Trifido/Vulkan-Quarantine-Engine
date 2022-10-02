@@ -14,6 +14,7 @@ GameObject::GameObject(PRIMITIVE_TYPE type)
 
 GameObject::GameObject(std::string meshPath)
 {
+    // Hacer aquí las modificaciones ---------------------------------------------
     mesh = std::make_shared<Mesh>(Mesh(meshPath));
     this->InitializeComponents();
 }
