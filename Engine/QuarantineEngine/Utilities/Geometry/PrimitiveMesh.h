@@ -17,8 +17,6 @@ public:
     PrimitiveMesh();
     PrimitiveMesh(PRIMITIVE_TYPE type);
     void InitializeMesh() override;
-    VkVertexInputBindingDescription getBindingDescription() override;
-    std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions() override;
 
 private:
     void InitializePoint();

@@ -159,7 +159,7 @@ void App::initVulkan()
     //_textures["albedo_house"] = std::make_shared<CustomTexture>(CustomTexture(TEXTURE_HOUSE_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
    
 
-    models.push_back(std::make_shared<GameObject>(GameObject(MODEL_HOUSE_PATH)));
+    models.push_back(std::make_shared<GameObject>(GameObject(MODEL_PATH)));
     //models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 
     //models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE)));

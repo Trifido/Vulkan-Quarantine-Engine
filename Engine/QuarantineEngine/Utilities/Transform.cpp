@@ -1,5 +1,6 @@
 #include "Transform.h"
 #include <glm/gtx/quaternion.hpp>
+
 Transform::Transform()
 {
     model = glm::mat4(1.0f);
@@ -7,6 +8,13 @@ Transform::Transform()
     ubo.model = this->model;
 
     this->ResetTransform();
+}
+
+Transform::Transform(glm::mat4 model)
+{
+    this->ResetTransform();
+    this->model = model;
+    this->ubo.model = this->model;
 }
 
 TransformUniform Transform::getMVP()

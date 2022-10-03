@@ -44,8 +44,8 @@ const std::string MODEL_PATH = "../../resources/models/head/head.obj";
 const std::string TEXTURE_WALL_NORMAL_PATH = "../../resources/textures/wall/brickwall_normal.jpg";
 const std::string MODEL_HOUSE_PATH = "../../resources/models/viking_room.obj";
 //const std::string MODEL_WHEEL_PATH = "../../resources/models/scifiWheel/source/wheel.glb";
-const std::string MODEL_WHEEL_PATH = "../../resources/models/Bulky Knight/source/Big Night For Sketchfab.fbx";
-//const std::string MODEL_WHEEL_PATH = "../../resources/models/Modified Colt/source/Gun Low Poly.fbx";
+//const std::string MODEL_WHEEL_PATH = "../../resources/models/Bulky Knight/source/Big Night For Sketchfab.fbx";
+const std::string MODEL_WHEEL_PATH = "../../resources/models/Modified Colt/source/Gun Low Poly.fbx";
 
 const std::string TEXTURE_PATH = "../../resources/models/head/lambertian.jpg";
 const std::string TEXTURE_BUMP_PATH = "../../resources/models/head/bump.png";

@@ -12,48 +12,6 @@ PrimitiveMesh::PrimitiveMesh(PRIMITIVE_TYPE type)
     this->type = type;
 }
 
-VkVertexInputBindingDescription PrimitiveMesh::getBindingDescription()
-{
-    VkVertexInputBindingDescription bindingDescription{};
-    bindingDescription.binding = 0;
-    bindingDescription.stride = sizeof(PBRVertex);
-    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-    return bindingDescription;
-}
-
-std::vector<VkVertexInputAttributeDescription> PrimitiveMesh::getAttributeDescriptions() {
-    std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
-    attributeDescriptions.resize(this->numAttributes);
-
-    attributeDescriptions[0].binding = 0;
-    attributeDescriptions[0].location = 0;
-    attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[0].offset = offsetof(PBRVertex, pos);
-
-    attributeDescriptions[1].binding = 0;
-    attributeDescriptions[1].location = 1;
-    attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[1].offset = offsetof(PBRVertex, norm);
-
-    attributeDescriptions[2].binding = 0;
-    attributeDescriptions[2].location = 2;
-    attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-    attributeDescriptions[2].offset = offsetof(PBRVertex, texCoord);
-
-    attributeDescriptions[3].binding = 0;
-    attributeDescriptions[3].location = 3;
-    attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[3].offset = offsetof(PBRVertex, Tangents);
-
-    attributeDescriptions[4].binding = 0;
-    attributeDescriptions[4].location = 4;
-    attributeDescriptions[4].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[4].offset = offsetof(PBRVertex, Bitangents);
-
-    return attributeDescriptions;
-}
-
-
 void PrimitiveMesh::InitializeMesh()
 {
     this->type = type;

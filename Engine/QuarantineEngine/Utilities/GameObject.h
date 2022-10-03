@@ -9,19 +9,21 @@
 #include <PrimitiveTypes.h>
 #include "Camera.h"
 
+typedef class GameObject GameObject;
+
 class GameObject
 {
 private:
     DeviceModule*       deviceModule;
     QueueModule*        queueModule;
 
-    std::shared_ptr<Camera>             cameraEditor;
+    std::shared_ptr<Camera>             cameraEditor = nullptr;
 public:
-    std::shared_ptr<GeometryComponent>  mesh;
-    std::shared_ptr<Transform>          transform;
-    std::shared_ptr<Material>           material;
+    std::shared_ptr<GeometryComponent>  mesh = nullptr;
+    std::shared_ptr<Transform>          transform = nullptr;
+    std::shared_ptr<Material>           material = nullptr;
 
-    std::shared_ptr<GameObject>                 parent;
+    std::shared_ptr<GameObject>                 parent = nullptr;
     std::vector<std::shared_ptr<GameObject>>    childs;
 
 public:
@@ -35,6 +37,9 @@ public:
 
 private:
     void InitializeComponents();
+    void CreateChildsGameObject(std::string pathfile);
+    void DrawChilds(VkCommandBuffer& commandBuffer, uint32_t idx);
+    void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
 };
 
 #endif

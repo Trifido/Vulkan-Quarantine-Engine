@@ -28,8 +28,8 @@ public:
     uint32_t numFaces;
 
     virtual void InitializeMesh() = 0;
-    virtual VkVertexInputBindingDescription  getBindingDescription() = 0;
-    virtual std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions() = 0;
+    static VkVertexInputBindingDescription  getBindingDescription();
+    static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
     void cleanup();
 };
 

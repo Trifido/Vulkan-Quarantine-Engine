@@ -25,6 +25,7 @@ public:
 
 public:
     Transform();
+    Transform(glm::mat4 model);
     TransformUniform getMVP();
 
     void SetPosition(const glm::vec3& newPosition);

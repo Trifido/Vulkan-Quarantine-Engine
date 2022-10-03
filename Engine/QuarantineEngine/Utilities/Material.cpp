@@ -118,7 +118,7 @@ void Material::bindingLights(std::shared_ptr<LightManager> lightManager)
 
 void Material::bindingMesh(std::shared_ptr<GeometryComponent> mesh)
 {
-    this->shader->createShaderBindings(mesh);
+   // this->shader->createShaderBindings(mesh);
     this->isMeshBinding = true;
 }
 

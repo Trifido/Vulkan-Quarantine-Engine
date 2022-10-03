@@ -33,12 +33,14 @@ void ShaderModule::createShaderModule(const std::string& filename_vertex, const 
 
     shaderStages.push_back(vertShaderStageInfo);
     shaderStages.push_back(fragShaderStageInfo);
+
+    this->createShaderBindings();
 }
 
-void ShaderModule::createShaderBindings(std::shared_ptr<GeometryComponent> mesh)
+void ShaderModule::createShaderBindings()
 {
-    bindingDescription = mesh->getBindingDescription();
-    attributeDescriptions = mesh->getAttributeDescriptions();
+    bindingDescription = GeometryComponent::getBindingDescription();
+    attributeDescriptions = GeometryComponent::getAttributeDescriptions();
 
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputInfo.vertexBindingDescriptionCount = 1;
