@@ -35,7 +35,7 @@ public:
     std::shared_ptr<CustomTexture> specularTexture;
     std::shared_ptr<CustomTexture> emissiveTexture;
     std::shared_ptr<CustomTexture> heightTexture;
-    std::shared_ptr<CustomTexture> bumpTexture;
+    //std::shared_ptr<CustomTexture> bumpTexture;
 
     VkRenderPass           renderPass;
     VkPipeline             pipeline;
@@ -56,8 +56,8 @@ public:
     void cleanupDescriptor();
     void recreatePipelineMaterial(VkRenderPass renderPass);
     void bindingMesh(std::shared_ptr<GeometryComponent> mesh);
-    void bindingCamera(std::shared_ptr<Camera> editorCamera);
-    void bindingLights(std::shared_ptr<LightManager> lightManager);
+    void bindingCamera(Camera* editorCamera);
+    void bindingLights(LightManager* lightManager);
     void InitializeMaterial();
     void RecreateUniformsMaterial();
 

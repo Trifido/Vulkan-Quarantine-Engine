@@ -1,8 +1,22 @@
 #include "LightManager.h"
 #include <algorithm>
+
+LightManager* LightManager::instance = nullptr;
+
 LightManager::LightManager()
 {
     this->lightManagerUniform = std::make_shared<LightManagerUniform>();
+}
+
+
+LightManager* LightManager::getInstance()
+{
+    if (instance == NULL)
+        instance = new LightManager();
+    else
+        std::cout << "Getting existing instance of Light Manager" << std::endl;
+
+    return instance;
 }
 
 void LightManager::CreateLight(LightType type, std::string name)

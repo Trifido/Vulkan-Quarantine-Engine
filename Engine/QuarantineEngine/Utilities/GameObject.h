@@ -16,6 +16,7 @@ class GameObject
 private:
     DeviceModule*       deviceModule;
     QueueModule*        queueModule;
+    MaterialManager*    materialManager;
 
     std::shared_ptr<Camera>             cameraEditor = nullptr;
 public:

@@ -110,6 +110,15 @@
     <Filter Include="Kernel\Utilities\Light\sources">
       <UniqueIdentifier>{d35529f0-c9a2-497f-9c3d-7af2d7ae40c9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Kernel\Utilities\Material">
+      <UniqueIdentifier>{bc14b873-8b10-44f1-9d5c-cad3d227de79}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Utilities\Material\headers">
+      <UniqueIdentifier>{55acbbd4-f199-4b69-a550-e60d3cdef8ed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Utilities\Material\sources">
+      <UniqueIdentifier>{68b325ea-8e1e-4aa7-9d5f-e299b6a0fae1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -175,9 +184,6 @@
     <ClCompile Include="App\App.cpp">
       <Filter>App</Filter>
     </ClCompile>
-    <ClCompile Include="Utilities\Material.cpp">
-      <Filter>Kernel\Utilities\sources</Filter>
-    </ClCompile>
     <ClCompile Include="Utilities\GameObject.cpp">
       <Filter>Kernel\Utilities\sources</Filter>
     </ClCompile>
@@ -185,9 +191,6 @@
       <Filter>Kernel\Utilities\sources</Filter>
     </ClCompile>
     <ClCompile Include="Utilities\Transform.cpp">
-      <Filter>Kernel\Utilities\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="Utilities\CustomTexture.cpp">
       <Filter>Kernel\Utilities\sources</Filter>
     </ClCompile>
     <ClCompile Include="SetUp\QueueModule.cpp">
@@ -246,6 +249,24 @@
     </ClCompile>
     <ClCompile Include="Utilities\Geometry\MeshImporter.cpp">
       <Filter>Kernel\Utilities\Geometry\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Material\Material.cpp">
+      <Filter>Kernel\Utilities\Material\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Material\CustomTexture.cpp">
+      <Filter>Kernel\Utilities\Material\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Material\MaterialManager.cpp">
+      <Filter>Kernel\Utilities\Material\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\CameraEditor.cpp">
+      <Filter>Kernel\Utilities\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Material\TextureManager.cpp">
+      <Filter>Kernel\Utilities\Material\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Material\ShaderManager.cpp">
+      <Filter>Kernel\Utilities\Material\sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -321,9 +342,6 @@
     <ClInclude Include="App\App.h">
       <Filter>App</Filter>
     </ClInclude>
-    <ClInclude Include="Utilities\Material.h">
-      <Filter>Kernel\Utilities\headers</Filter>
-    </ClInclude>
     <ClInclude Include="Utilities\GameObject.h">
       <Filter>Kernel\Utilities\headers</Filter>
     </ClInclude>
@@ -331,9 +349,6 @@
       <Filter>Kernel\Utilities\headers</Filter>
     </ClInclude>
     <ClInclude Include="Utilities\Transform.h">
-      <Filter>Kernel\Utilities\headers</Filter>
-    </ClInclude>
-    <ClInclude Include="Utilities\CustomTexture.h">
       <Filter>Kernel\Utilities\headers</Filter>
     </ClInclude>
     <ClInclude Include="Draw\SyncTool.h">
@@ -360,9 +375,6 @@
     <ClInclude Include="Utilities\Geometry\PrimitiveTypes.h">
       <Filter>Kernel\Utilities\Geometry\headers</Filter>
     </ClInclude>
-    <ClInclude Include="Utilities\TextureTypes.h">
-      <Filter>Kernel\Utilities\headers</Filter>
-    </ClInclude>
     <ClInclude Include="Memory\UBO.h">
       <Filter>Kernel\Memory\headers</Filter>
     </ClInclude>
@@ -388,6 +400,27 @@
     </ClInclude>
     <ClInclude Include="Utilities\Geometry\RawGeometry.h">
       <Filter>Kernel\Utilities\Geometry\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Material\CustomTexture.h">
+      <Filter>Kernel\Utilities\Material\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Material\Material.h">
+      <Filter>Kernel\Utilities\Material\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Material\TextureTypes.h">
+      <Filter>Kernel\Utilities\Material\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Material\MaterialManager.h">
+      <Filter>Kernel\Utilities\Material\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\CameraEditor.h">
+      <Filter>Kernel\Utilities\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Material\TextureManager.h">
+      <Filter>Kernel\Utilities\Material\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Material\ShaderManager.h">
+      <Filter>Kernel\Utilities\Material\headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

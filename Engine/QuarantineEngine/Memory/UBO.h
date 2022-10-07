@@ -44,7 +44,7 @@ struct MaterialUniform
     int idxSpecular;
     int idxEmissive;
     int idxHeight;
-    int idxBump;
+    //int idxBump;
     float shininess;
 };
 

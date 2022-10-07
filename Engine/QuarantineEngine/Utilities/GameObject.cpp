@@ -6,11 +6,18 @@
 
 GameObject::GameObject()
 {
+    this->deviceModule = DeviceModule::getInstance();
+    this->queueModule = QueueModule::getInstance();
+    this->materialManager = MaterialManager::getInstance();
     this->InitializeComponents();
 }
 
 GameObject::GameObject(PRIMITIVE_TYPE type)
 {
+    this->deviceModule = DeviceModule::getInstance();
+    this->queueModule = QueueModule::getInstance();
+    this->materialManager = MaterialManager::getInstance();
+
     this->parent = nullptr;
     mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh(type));
     this->InitializeComponents();
@@ -18,6 +25,10 @@ GameObject::GameObject(PRIMITIVE_TYPE type)
 
 GameObject::GameObject(std::string meshPath)
 {
+    this->deviceModule = DeviceModule::getInstance();
+    this->queueModule = QueueModule::getInstance();
+    this->materialManager = MaterialManager::getInstance();
+
     this->parent = nullptr;
     this->CreateChildsGameObject(meshPath);
     this->InitializeComponents();
@@ -46,6 +57,9 @@ void GameObject::drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 
 void GameObject::addMaterial(std::shared_ptr<Material> material_ptr)
 {
+    if (material_ptr == nullptr)
+        return;
+
     this->material = material_ptr;
 
     if (this->mesh != nullptr)
@@ -70,9 +84,6 @@ void GameObject::addEditorCamera(std::shared_ptr<Camera> camera_ptr)
 
 void GameObject::InitializeComponents()
 {
-    this->deviceModule = DeviceModule::getInstance();
-    this->queueModule = QueueModule::getInstance();
-
     if (this->transform == nullptr)
     {
         this->transform = std::make_shared<Transform>();
@@ -107,12 +118,14 @@ void GameObject::CreateChildsGameObject(std::string pathfile)
             this->childs[id]->parent = std::make_shared<GameObject>(*this);
             this->childs[id]->mesh = std::make_shared<Mesh>(Mesh(data[id]));
             this->childs[id]->transform = std::make_shared<Transform>(Transform(data[id].model));
+            this->childs[id]->addMaterial(this->materialManager->GetMaterial(data[id].materialID));
         }
     }
     else
     {
         this->mesh = std::make_shared<Mesh>(Mesh(data[0]));
         this->transform = std::make_shared<Transform>(Transform(data[0].model));
+        this->addMaterial(this->materialManager->GetMaterial(data[0].materialID));
     }
 }
 

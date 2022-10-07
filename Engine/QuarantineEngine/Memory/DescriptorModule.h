@@ -34,7 +34,7 @@ public:
     std::shared_ptr<UniformBufferObject>    lightUBO;
 
     //UNIFORM's
-    std::shared_ptr<CameraUniform>          cameraUniform;
+    std::shared_ptr<CameraUniform>         cameraUniform;
     std::shared_ptr<MaterialUniform>        materialUniform;
     std::shared_ptr<LightManagerUniform>    lightUniform;
 

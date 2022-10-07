@@ -1,8 +1,9 @@
 #include "MeshImporter.h"
 
-
 MeshImporter::MeshImporter()
 {
+    this->materialManager = MaterialManager::getInstance();
+    this->textureManager = TextureManager::getInstance();
 }
 
 void MeshImporter::RecreateNormals(std::vector<PBRVertex>& vertices, std::vector<unsigned int>& indices)
@@ -82,8 +83,11 @@ std::vector<MeshData> MeshImporter::LoadMesh(std::string path)
         fprintf(stderr, "ERROR::ASSIMP::%s", importer.GetErrorString());
         return meshes;
     }
+    this->meshPath = path.substr(0, path.find_last_of('/'));
 
     ProcessNode(scene->mRootNode, scene, glm::mat4(1.0f), meshes);
+
+    this->currentTextures.clear();
 
     return meshes;
 }
@@ -99,6 +103,9 @@ void MeshImporter::ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 par
         MeshData result = this->ProcessMesh(scene->mMeshes[node->mMeshes[i]], scene);
         result.name = scene->mMeshes[node->mMeshes[i]]->mName.C_Str();
         result.model = parentTransform;
+
+        this->ProcessMaterial(scene->mMeshes[node->mMeshes[i]], scene, result);
+
         meshes.push_back(result);
     }
 
@@ -257,71 +264,84 @@ glm::mat4 MeshImporter::GetGLMMatrix(aiMatrix4x4 transform)
 
     return result;
 }
-/*
-void MeshImporter::ProcessTextures(aiMesh* mesh, const aiScene* scene)
+
+void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData& meshData)
 {
-    // process material
-    if (mesh->mMaterialIndex >= 0)
+    if (mesh->mMaterialIndex < 0)
+        return;
+
+    aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+
+    if (material == nullptr)
+        return;
+
+    std::string materialName = "";
+    //printf(material->GetName().data);
+
+    if (!materialManager->Exists(materialName))
     {
-        aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+        materialManager->CreateMaterial(materialName);
+        std::shared_ptr<Material> mat = materialManager->GetMaterial(materialName);
 
-        std::vector<CustomTexture> diffuseMaps = this->LoadMaterialTextures(material, aiTextureType_DIFFUSE);
-        textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+        std::string textureName = this->GetTexture(material, aiTextureType_DIFFUSE, TEXTURE_TYPE::DIFFUSE_TYPE);
+        if (textureName != "")
+        {
+            mat->AddTexture(this->textureManager->GetTexture(textureName));
+        }
 
-        std::vector<CustomTexture> specularMaps = this->LoadMaterialTextures(material, aiTextureType_SPECULAR);
-        textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-        // 3. normal maps
-        std::vector<CustomTexture> normalMaps = this->LoadMaterialTextures(material, aiTextureType_NORMALS);
-        textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-        // 4. height maps
-        std::vector<CustomTexture> heightMaps = this->LoadMaterialTextures(material, aiTextureType_AMBIENT);
-        textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
-        // metallic maps
-        std::vector<CustomTexture> metallicMaps = this->LoadMaterialTextures(material, aiTextureType_METALNESS);
-        textures.insert(textures.end(), metallicMaps.begin(), metallicMaps.end());
-        // AO maps
-        std::vector<CustomTexture> aoMaps = this->LoadMaterialTextures(material, aiTextureType_AMBIENT_OCCLUSION);
-        textures.insert(textures.end(), aoMaps.begin(), aoMaps.end());
-        // Roughness maps
-        std::vector<CustomTexture> roughMaps = this->LoadMaterialTextures(material, aiTextureType_DIFFUSE_ROUGHNESS);
-        textures.insert(textures.end(), roughMaps.begin(), roughMaps.end());
-        // Bump maps
-        std::vector<CustomTexture> bumpMaps;
-        if (normalMaps.empty())
-            bumpMaps = this->LoadMaterialTextures(material, aiTextureType_HEIGHT);
-        else
-            bumpMaps = this->LoadMaterialTextures(material, aiTextureType_HEIGHT);
+        textureName = this->GetTexture(material, aiTextureType_SPECULAR, TEXTURE_TYPE::SPECULAR_TYPE);
+        if (textureName != "")
+        {
+            mat->AddTexture(this->textureManager->GetTexture(textureName));
+        }
 
-        textures.insert(textures.end(), bumpMaps.begin(), bumpMaps.end());
+        textureName = this->GetTexture(material, aiTextureType_NORMALS, TEXTURE_TYPE::NORMAL_TYPE);
+        if (textureName != "")
+        {
+            mat->AddTexture(this->textureManager->GetTexture(textureName));
+        }
+
+        textureName = this->GetTexture(material, aiTextureType_EMISSIVE, TEXTURE_TYPE::EMISSIVE_TYPE);
+        if (textureName != "")
+        {
+            mat->AddTexture(this->textureManager->GetTexture(textureName));
+        }
+
+        textureName = this->GetTexture(material, aiTextureType_HEIGHT, TEXTURE_TYPE::HEIGHT_TYPE);
+        if (textureName != "")
+        {
+            mat->AddTexture(this->textureManager->GetTexture(textureName));
+        }
     }
+
+    meshData.materialID = materialName;
+
+    material = nullptr;
 }
 
-std::vector<CustomTexture> MeshImporter::LoadMaterialTextures(aiMaterial* mat, aiTextureType type)
+std::string MeshImporter::GetTexture(aiMaterial* mat, aiTextureType type, TEXTURE_TYPE textureType)
 {
-    std::vector<CustomTexture> textures;
-    for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
+    if (mat->GetTextureCount(type) > 0)
     {
         aiString str;
-        mat->GetTexture(type, i, &str);
-        bool skip = false;
-        for (unsigned int j = 0; j < textures_loaded.size(); j++)
-        {
-            if (std::strcmp(textures_loaded[j].path.data(), str.C_Str()) == 0)
-            {
-                textures.push_back(textures_loaded[j]);
-                skip = true;
-                break;
-            }
-        }
-        if (!skip)
-        {   // if texture hasn't been loaded already, load it
-            std::string filename = std::string(str.C_Str());
-            //filename = directory + '/' + filename;
+        mat->GetTexture(type, 0, &str);
 
-            CustomTexture texture();
-            textures.push_back(texture);
-            textures_loaded.push_back(texture); // add to loaded textures
+        std::string filePath = std::string(str.C_Str());
+        filePath = this->meshPath + '/' + filePath;
+
+        std::string finalName = "";
+
+        if (this->currentTextures.find(str.C_Str()) == this->currentTextures.end())
+        {
+            finalName = this->textureManager->AddTexture(str.C_Str(), CustomTexture(filePath, textureType));
+            this->currentTextures.insert(str.C_Str());
         }
+        else
+        {
+            finalName = str.C_Str();
+        }
+
+        return finalName;
     }
-    return textures;
-}*/
+    return "";
+}

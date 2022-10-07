@@ -34,6 +34,7 @@ public:
 
 public:
     ShaderModule();
+    ShaderModule(std::string vertexShaderName, std::string fragmentShaderName);
     static std::vector<char> readFile(const std::string& filename);
     void createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment);
     void createShaderBindings();

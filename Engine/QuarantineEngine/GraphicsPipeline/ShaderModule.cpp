@@ -8,6 +8,11 @@ ShaderModule::ShaderModule()
     deviceModule = DeviceModule::getInstance();
 }
 
+ShaderModule::ShaderModule(std::string vertexShaderName, std::string fragmentShaderName) : ShaderModule()
+{
+    this->createShaderModule(vertexShaderName, fragmentShaderName);
+}
+
 std::vector<char> ShaderModule::readFile(const std::string& filename)
 {
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);

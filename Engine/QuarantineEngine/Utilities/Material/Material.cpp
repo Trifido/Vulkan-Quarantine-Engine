@@ -6,7 +6,7 @@ Material::Material()
     this->shininess = 32.0f;
     this->descriptor = std::make_shared<DescriptorModule>(DescriptorModule());
     this->uniform = std::make_shared<MaterialUniform>();
-    this->uniform->idxDiffuse = this->uniform->idxNormal = this->uniform->idxSpecular = this->uniform->idxEmissive = this->uniform->idxHeight = this->uniform->idxBump = -1;
+    this->uniform->idxDiffuse = this->uniform->idxNormal = this->uniform->idxSpecular = this->uniform->idxEmissive = this->uniform->idxHeight = -1; // this->uniform->idxBump
     this->uniform->shininess = this->shininess;
     this->texture_vector = std::make_shared<std::vector<std::shared_ptr<CustomTexture>>>();
     this->texture_vector->resize(this->TOTAL_NUM_TEXTURES, nullptr);
@@ -21,7 +21,7 @@ Material::Material(std::shared_ptr<ShaderModule> shader_ptr, VkRenderPass render
     this->renderPass = renderPass;
     this->descriptor = std::make_shared<DescriptorModule>(DescriptorModule());
     this->uniform = std::make_shared<MaterialUniform>();
-    this->uniform->idxDiffuse = this->uniform->idxNormal = this->uniform->idxSpecular = this->uniform->idxEmissive = this->uniform->idxHeight = this->uniform->idxBump = -1;
+    this->uniform->idxDiffuse = this->uniform->idxNormal = this->uniform->idxSpecular = this->uniform->idxEmissive = this->uniform->idxHeight = -1; //this->uniform->idxBump 
     this->uniform->shininess = this->shininess;
     this->texture_vector = std::make_shared<std::vector<std::shared_ptr<CustomTexture>>>();
     this->texture_vector->resize(this->TOTAL_NUM_TEXTURES, nullptr);
@@ -66,10 +66,10 @@ void Material::AddTexture(std::shared_ptr<CustomTexture> texture)
             emissiveTexture = texture;
             if (isInserted) this->uniform->idxEmissive = this->numTextures++;
             break;
-        case TEXTURE_TYPE::BUMP_TYPE:
-            bumpTexture = texture;
-            if (isInserted) this->uniform->idxBump = this->numTextures++;
-            break;
+        //case TEXTURE_TYPE::BUMP_TYPE:
+        //    bumpTexture = texture;
+        //    if (isInserted) this->uniform->idxBump = this->numTextures++;
+        //    break;
     }
 }
 
@@ -106,19 +106,18 @@ void Material::recreatePipelineMaterial(VkRenderPass renderPass)
     }
 }
 
-void Material::bindingCamera(std::shared_ptr<Camera> editorCamera)
+void Material::bindingCamera(Camera* editorCamera)
 {
     this->descriptor->cameraUniform = editorCamera->cameraUniform;
 }
 
-void Material::bindingLights(std::shared_ptr<LightManager> lightManager)
+void Material::bindingLights(LightManager* lightManager)
 {
     this->descriptor->lightUniform = lightManager->lightManagerUniform;
 }
 
 void Material::bindingMesh(std::shared_ptr<GeometryComponent> mesh)
 {
-   // this->shader->createShaderBindings(mesh);
     this->isMeshBinding = true;
 }
 

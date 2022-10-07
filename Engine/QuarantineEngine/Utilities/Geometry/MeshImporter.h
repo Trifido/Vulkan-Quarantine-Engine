@@ -7,7 +7,9 @@
 #include <assimp/postprocess.h>
 #include <vector>
 #include <Geometry/Mesh.h>
-#include <CustomTexture.h>
+#include <MaterialManager.h>
+#include <TextureManager.h>
+#include <set>
 
 struct MeshData
 {
@@ -18,6 +20,7 @@ struct MeshData
     size_t numPositions;
     std::vector<PBRVertex> vertices;
     std::vector<unsigned int> indices;
+    std::string materialID = "default";
 
     glm::mat4 model = glm::mat4(1.0);
 };
@@ -25,11 +28,17 @@ struct MeshData
 class MeshImporter 
 {
 private:
+    MaterialManager* materialManager;
+    TextureManager* textureManager;
+    std::string meshPath;
+
+    std::set<std::string> currentTextures;
+private:
     MeshData ProcessMesh(aiMesh* mesh, const aiScene* scene);
     void  ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, std::vector<MeshData> &meshes);
-    //void ProcessTextures(aiMesh* mesh, const aiScene* scene);
-    //std::vector<CustomTexture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type);
     glm::mat4 GetGLMMatrix(aiMatrix4x4 transform);
+    void ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData& meshData);
+    std::string GetTexture(aiMaterial* mat, aiTextureType type, TEXTURE_TYPE textureType);
 
 public:
     MeshImporter();
