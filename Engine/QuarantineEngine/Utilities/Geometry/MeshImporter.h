@@ -28,17 +28,21 @@ struct MeshData
 class MeshImporter 
 {
 private:
+    const aiScene* scene;
     MaterialManager* materialManager;
     TextureManager* textureManager;
     std::string meshPath;
-
+    std::string texturePath;
+    std::string fileExtension;
     std::set<std::string> currentTextures;
+
 private:
     MeshData ProcessMesh(aiMesh* mesh, const aiScene* scene);
-    void  ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, std::vector<MeshData> &meshes);
+    void ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, std::vector<MeshData> &meshes);
     glm::mat4 GetGLMMatrix(aiMatrix4x4 transform);
     void ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData& meshData);
     std::string GetTexture(aiMaterial* mat, aiTextureType type, TEXTURE_TYPE textureType);
+    void CheckPaths(std::string path);
 
 public:
     MeshImporter();

@@ -39,7 +39,7 @@ void ShaderModule::createShaderModule(const std::string& filename_vertex, const 
     shaderStages.push_back(vertShaderStageInfo);
     shaderStages.push_back(fragShaderStageInfo);
 
-    this->createShaderBindings();
+    //this->createShaderBindings();
 }
 
 void ShaderModule::createShaderBindings()

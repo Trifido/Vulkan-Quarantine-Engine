@@ -28,9 +28,13 @@ MaterialManager::MaterialManager()
 {
     this->lightManager = LightManager::getInstance();
     this->cameraEditor = CameraEditor::getInstance();
+    this->textureManager = TextureManager::getInstance();
 
     auto shaderManager = ShaderManager::getInstance();
+    //std::shared_ptr<ShaderModule> shader_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
+    //this->shaderManager->AddShader("shader", shader_ptr);
     this->default_shader = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
+    this->default_shader->createShaderBindings();
     shaderManager->AddShader("default", this->default_shader);
 }
 
@@ -68,6 +72,7 @@ void MaterialManager::AddMaterial(std::string nameMaterial, std::shared_ptr<Mate
     std::string name = CheckName(nameMaterial);
     mat_ptr->AddPipeline(this->graphicsPipelineModule);
     _materials[name] = mat_ptr;
+    _materials[name]->AddNullTexture(this->textureManager->GetTexture("NULL_TEXTURE"));
 }
 
 void MaterialManager::AddMaterial(std::string nameMaterial, Material mat)
@@ -76,6 +81,7 @@ void MaterialManager::AddMaterial(std::string nameMaterial, Material mat)
     std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(mat);
     mat_ptr->AddPipeline(this->graphicsPipelineModule);
     _materials[name] = mat_ptr;
+    _materials[name]->AddNullTexture(this->textureManager->GetTexture("NULL_TEXTURE"));
 }
 
 void MaterialManager::CreateMaterial(std::string nameMaterial)                                                                          // --------------------- En desarrollo ------------------------

@@ -21,12 +21,9 @@ public:
     glm::vec3 Direction;
     glm::quat Orientation;
 
-    TransformUniform ubo;
-
 public:
     Transform();
     Transform(glm::mat4 model);
-    TransformUniform getMVP();
 
     void SetPosition(const glm::vec3& newPosition);
     void SetOrientation(const glm::vec3& newRotation);

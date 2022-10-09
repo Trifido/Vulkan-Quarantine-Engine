@@ -5,13 +5,17 @@
 
 #include <Material/Material.h>
 #include <CameraEditor.h>
+#include <Material/TextureManager.h>
 
 class MaterialManager
 {
 private:
     std::unordered_map<std::string, std::shared_ptr<Material>> _materials;
-    LightManager* lightManager;
+
     Camera* cameraEditor;
+    LightManager* lightManager;
+    TextureManager* textureManager;
+
     std::shared_ptr<ShaderModule> default_shader;
     std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule;
     VkRenderPass default_renderPass;

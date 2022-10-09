@@ -110,14 +110,17 @@ void GameObject::CreateChildsGameObject(std::string pathfile)
 
     if (data.size() > 1)
     {
+        this->transform = std::make_shared<Transform>();
         this->childs.resize(data.size());
+
+        glm::mat4 parentModel = this->transform->GetModel();
 
         for (size_t id = 0; id < data.size(); id++)
         {
             this->childs[id] = std::make_shared<GameObject>();
             this->childs[id]->parent = std::make_shared<GameObject>(*this);
             this->childs[id]->mesh = std::make_shared<Mesh>(Mesh(data[id]));
-            this->childs[id]->transform = std::make_shared<Transform>(Transform(data[id].model));
+            this->childs[id]->transform = std::make_shared<Transform>(Transform(parentModel * data[id].model));
             this->childs[id]->addMaterial(this->materialManager->GetMaterial(data[id].materialID));
         }
     }
@@ -152,7 +155,16 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->material->pipelineLayout, 0, 1, this->material->descriptor->getDescriptorSet(idx), 0, nullptr);
 
-        vkCmdPushConstants(commandBuffer, this->material->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(this->transform->ubo.model), &this->transform->ubo.model);
+        TransformUniform ubo;
+        ubo.model = this->transform->GetModel();
+
+        if (this->parent != nullptr)
+        {
+            ubo.model = this->parent->transform->GetModel() * ubo.model;
+            //this->transform->ComputeParentTransform(this->parent->transform);
+        }
+
+        vkCmdPushConstants(commandBuffer, this->material->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &ubo.model);
 
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->mesh->indices.size()), 1, 0, 0, 0);
     }

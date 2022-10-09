@@ -14,6 +14,21 @@ layout(std430, push_constant) uniform PushConstants
     mat4 model;
 } constants;
 
+struct LightData {
+    vec4 position;
+    vec3 diffuse;
+    vec3 specular;
+    float constant;
+    float linear;
+    float quadratic; 
+};
+
+layout(set = 0, binding = 2) uniform UniformManagerLight
+{
+    int numLights;
+	LightData lights[8];
+} uboLight;
+
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
 layout(location = 2) in vec2 inTexCoord;
@@ -25,28 +40,32 @@ layout(location = 0) out VS_OUT {
     vec3 Normal;
     vec3 TangentViewPos;
     vec3 TangentFragPos;
-    mat3 TBN;
+    vec3 TangentLightPos[8];
     vec2 TexCoords;
 } vs_out;
 
 
 void main() {
-    mat3 normalMatrix = transpose(inverse(mat3(constants.model)));
     vs_out.FragPos = vec3(constants.model * vec4(inPosition, 1.0));
-    vs_out.Normal = mat3(constants.model) * inNormal;
     vs_out.TexCoords = inTexCoord;
+    vs_out.Normal = mat3(constants.model) * inNormal;
+    
+    mat3 normalMatrix = transpose(inverse(mat3(constants.model)));
 
-    vec3 T = normalize(vec3(constants.model * vec4(inTangent,   0.0)));
-    vec3 B = normalize(vec3(constants.model * vec4(inBitangent, 0.0)));
-    vec3 N = normalize(vec3(constants.model * vec4(inNormal,    0.0)));
+    vec3 T = normalize(normalMatrix * inTangent);
+    vec3 N = normalize(normalMatrix * inNormal);
+    T = normalize(T - dot(T, N) * N);
+    vec3 B = cross(N, T);
+    
+    mat3 TBN = transpose(mat3(T, B, N));   
 
-    mat3 tTBN = transpose(mat3(T, B, N));
-    mat3 TBN = mat3(T, B, N);
+    vs_out.TangentViewPos = TBN * cameraData.position;
+    vs_out.TangentFragPos = TBN * vs_out.FragPos; 
 
-    vs_out.TBN = TBN;
-
-    vs_out.TangentViewPos = tTBN * cameraData.position;
-    vs_out.TangentFragPos = tTBN * vs_out.FragPos; 
+    for(int i = 0; i < uboLight.numLights; i++)
+    {
+        vs_out.TangentLightPos[i] = TBN * vec3(uboLight.lights[i].position);
+    }
 
     gl_Position = cameraData.viewproj * vec4(vs_out.FragPos, 1.0);
 }

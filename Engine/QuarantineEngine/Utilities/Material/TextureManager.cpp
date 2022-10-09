@@ -2,6 +2,11 @@
 
 TextureManager* TextureManager::instance = nullptr;
 
+TextureManager::TextureManager()
+{
+    this->AddTexture("NULL_TEXTURE", CustomTexture());
+}
+
 std::string TextureManager::CheckName(std::string textureName)
 {
     std::unordered_map<std::string, std::shared_ptr<CustomTexture>>::const_iterator got;

@@ -135,16 +135,6 @@ void App::initVulkan()
     //Creamos el frame buffer
     framebufferModule.createFramebuffer(renderPassModule->renderPass);
 
-    //Inicializamos el Material Manager
-    this->shaderManager = ShaderManager::getInstance();
-    this->materialManager = MaterialManager::getInstance();
-    this->textureManager = TextureManager::getInstance();
-    this->lightManager = LightManager::getInstance();
-
-    this->materialManager->InitializeMaterialManager(renderPassModule->renderPass, graphicsPipelineModule);
-
-    // INIT ------------------------- Mesh & Material -------------------------------
-
     //Añadimos requisitos para los geometryComponent
     BufferManageModule::commandPool = this->commandPoolModule->getCommandPool();
     BufferManageModule::graphicsQueue = this->queueModule->graphicsQueue;
@@ -154,44 +144,43 @@ void App::initVulkan()
     DescriptorModule::deviceModule = this->deviceModule;
     DescriptorModule::NumSwapchainImages = this->swapchainModule->getNumSwapChainImages();
 
+    // INIT ------------------------- Mesh & Material -------------------------------
+    this->shaderManager = ShaderManager::getInstance();
+    this->textureManager = TextureManager::getInstance();
+    this->lightManager = LightManager::getInstance();
+    this->materialManager = MaterialManager::getInstance();
+    this->materialManager->InitializeMaterialManager(renderPassModule->renderPass, graphicsPipelineModule);
+
+
+    MaterialManager* instanceMaterial = MaterialManager::getInstance();
     //Creamos la textura
-    ////textureManager->AddTexture("NULL", CustomTexture());
-    ////textureManager->AddTexture("diffuse_brick", CustomTexture(TEXTURE_WALL_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
-    ////textureManager->AddTexture("normal_brick", CustomTexture(TEXTURE_WALL_NORMAL_PATH, TEXTURE_TYPE::NORMAL_TYPE));
-    //_textures["diffuse_face"] = std::make_shared<CustomTexture>(CustomTexture(TEXTURE_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
-    //_textures["bump_face"] = std::make_shared<CustomTexture>(CustomTexture(TEXTURE_BUMP_PATH, TEXTURE_TYPE::BUMP_TYPE));
-    //_textures["albedo_house"] = std::make_shared<CustomTexture>(CustomTexture(TEXTURE_HOUSE_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
+    //textureManager->AddTexture("diffuse_brick", CustomTexture(TEXTURE_WALL_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
+    //textureManager->AddTexture("normal_brick", CustomTexture(TEXTURE_WALL_NORMAL_PATH, TEXTURE_TYPE::NORMAL_TYPE));
    
 
-    models.push_back(std::make_shared<GameObject>(GameObject(MODEL_KNIGHT_PATH)));
-    //models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    models.push_back(std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH)));
+    models.at(0)->transform->SetScale(glm::vec3(0.1f));
+    models.at(0)->transform->SetPosition(glm::vec3(0.0f, -4.0f, 0.0f));
 
-    //models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE)));
+    ///models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::QUAD_TYPE)));
     //models.at(0)->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 0.0f));
 
     //Creamos el shader module para el material
-
-    //std::shared_ptr<ShaderModule> shader_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
-    //this->shaderManager->AddShader("shader", shader_ptr);
-    //_shaders["shader2"] = std::make_shared<ShaderModule>(ShaderModule());
-    //_shaders["shader2"]->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv");
-    //Creamos el material
-    ////std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(Material(this->shaderManager->GetShader("shader"), renderPassModule->renderPass));
-    ////mat_ptr->AddNullTexture(textureManager->GetTexture("NULL"));
-    ////mat_ptr->AddTexture(textureManager->GetTexture("diffuse_brick"));
-    ////mat_ptr->AddTexture(textureManager->GetTexture("normal_brick"));
-    ////mat_ptr->AddPipeline(graphicsPipelineModule);
-    ////materialManager->AddMaterial("mat", mat_ptr);
+    std::shared_ptr<ShaderModule> shader_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
+    shader_ptr->createShaderBindings();
+    this->shaderManager->AddShader("shader", shader_ptr);
 
     //Creamos el material
-    //_materials["matHouse"] = std::make_shared<Material>(Material(_shaders["shader2"], renderPassModule->renderPass));
-    //_materials["matHouse"]->AddNullTexture(_textures["NULL"]);
-    //_materials["matHouse"]->AddTexture(_textures["albedo_house"]);
-    //_materials["matHouse"]->AddPipeline(graphicsPipelineModule);
+    //std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(Material(this->shaderManager->GetShader("shader"), renderPassModule->renderPass));
+    //mat_ptr->AddNullTexture(textureManager->GetTexture("NULL"));
+    //mat_ptr->AddTexture(textureManager->GetTexture("diffuse_brick"));
+    //mat_ptr->AddTexture(textureManager->GetTexture("normal_brick"));
+    //mat_ptr->AddPipeline(graphicsPipelineModule);
+    //materialManager->AddMaterial("mat", mat_ptr);
+
 
     //Linkamos el material al gameobject
-    ////models.at(0)->addMaterial(materialManager->GetMaterial("mat"));
-    //models.at(1)->addMaterial(_materials["matHouse"]);
+    //models.at(0)->addMaterial(materialManager->GetMaterial("mat"));
     // END -------------------------- Mesh & Material -------------------------------
 
     // INIT ------------------------- Lights ----------------------------------------
@@ -203,11 +192,18 @@ void App::initVulkan()
     //this->lightManager->GetLight("PointLight0")->quadratic = 0.032f;
 
     this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
-    this->lightManager->GetLight("PointLight1")->transform->SetPosition(glm::vec3(1.0f, 0.0f, 0.0f));
-    this->lightManager->GetLight("PointLight1")->diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
-    this->lightManager->GetLight("PointLight1")->specular = glm::vec3(1.0f, 1.0f, 1.0f);
+    this->lightManager->GetLight("PointLight1")->transform->SetPosition(glm::vec3(0.5f, 1.0f, 0.3f));
+    this->lightManager->GetLight("PointLight1")->diffuse = glm::vec3(0.1f);
+    this->lightManager->GetLight("PointLight1")->specular = glm::vec3(0.5f);
     this->lightManager->GetLight("PointLight1")->linear = 0.09f;
     this->lightManager->GetLight("PointLight1")->quadratic = 0.032f;
+
+    this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight0");
+this->lightManager->GetLight("PointLight0")->transform->SetPosition(glm::vec3(0.0f, 0.0f, -3.0f));
+this->lightManager->GetLight("PointLight0")->diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
+this->lightManager->GetLight("PointLight0")->specular = glm::vec3(0.8f);
+this->lightManager->GetLight("PointLight0")->linear = 0.09f;
+this->lightManager->GetLight("PointLight0")->quadratic = 0.032f;
 
     this->lightManager->UpdateUniform();
     // END -------------------------- Lights ----------------------------------------
@@ -229,6 +225,39 @@ void App::mainLoop()
 
         this->keyboard_ptr->ReadKeyboardEvents();
         this->cameraEditor->CameraController((float)deltaTime);
+
+        if (ImGui::IsKeyDown('j') || ImGui::IsKeyDown('J'))
+        {
+            glm::vec3 newPos = this->lightManager->GetLight("PointLight1")->transform->Position;
+            newPos.x += 0.1f;
+            this->lightManager->GetLight("PointLight1")->transform->SetPosition(newPos);
+
+            this->lightManager->UpdateUniform();
+        }
+        if (ImGui::IsKeyDown('l') || ImGui::IsKeyDown('L'))
+        {
+            glm::vec3 newPos = this->lightManager->GetLight("PointLight1")->transform->Position;
+            newPos.x -= 0.1f;
+            this->lightManager->GetLight("PointLight1")->transform->SetPosition(newPos);
+
+            this->lightManager->UpdateUniform();
+        }
+        if (ImGui::IsKeyDown('I'))
+        {
+            glm::vec3 newPos = this->lightManager->GetLight("PointLight1")->transform->Position;
+            newPos.y += 0.1f;
+            this->lightManager->GetLight("PointLight1")->transform->SetPosition(newPos);
+
+            this->lightManager->UpdateUniform();
+        }
+        if (ImGui::IsKeyDown('K'))
+        {
+            glm::vec3 newPos = this->lightManager->GetLight("PointLight1")->transform->Position;
+            newPos.y -= 0.1f;
+            this->lightManager->GetLight("PointLight1")->transform->SetPosition(newPos);
+
+            this->lightManager->UpdateUniform();
+        }
 
         {
             ImGui_ImplGlfw_NewFrame();

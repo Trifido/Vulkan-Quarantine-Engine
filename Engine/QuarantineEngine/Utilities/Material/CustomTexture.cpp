@@ -139,6 +139,12 @@ CustomTexture::CustomTexture(std::string path, TEXTURE_TYPE type)
     this->type = type;
 }
 
+CustomTexture::CustomTexture(aiTexel* data, unsigned int width, unsigned int height, TEXTURE_TYPE type)
+{
+    this->type = type;
+    this->createTextureRawImage(data, width, height);
+}
+
 void CustomTexture::createTextureImage(std::string path)
 {
     ptrCommandPool = &commandPool;
@@ -174,6 +180,57 @@ void CustomTexture::createTextureImage(std::string path)
     vkUnmapMemory(deviceModule->device, stagingBufferMemory);
 
     stbi_image_free(pixels);
+
+    //Raytracing ->  VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT
+    //Rasterization -> VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
+
+    createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mipLevels);
+
+    transitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT);
+    copyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+
+    //If not mipmap
+    //transitionImageLayout(image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
+    vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
+
+    generateMipmaps(image, VK_FORMAT_R8G8B8A8_SRGB, texWidth, texHeight, mipLevels);
+
+    this->createTextureImageView();
+    this->createTextureSampler();
+}
+
+void CustomTexture::createTextureRawImage(aiTexel* rawData, unsigned int width, unsigned int height)
+{
+    ptrCommandPool = &commandPool;
+    //stbi_uc* pixels;
+
+    this->texHeight = height;
+    this->texWidth = width;
+    this->texChannels = 4;
+    //pixels = rawData-;
+
+    mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
+
+    VkDeviceSize imageSize = texWidth * texHeight * 4;
+
+    if (!rawData) {
+        throw std::runtime_error("failed to load texture image!");
+    }
+
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+
+    BufferManageModule::createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory, *deviceModule);
+
+    void *data;
+    vkMapMemory(deviceModule->device, stagingBufferMemory, 0, imageSize, 0, &data);
+    memcpy(data, rawData, static_cast<size_t>(imageSize));
+    vkUnmapMemory(deviceModule->device, stagingBufferMemory);
+
+    stbi_image_free(rawData);
 
     //Raytracing ->  VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT
     //Rasterization -> VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT

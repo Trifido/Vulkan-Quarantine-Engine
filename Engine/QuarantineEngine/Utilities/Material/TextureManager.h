@@ -15,6 +15,7 @@ private:
     std::string CheckName(std::string textureName);
 
 public:
+    TextureManager();
     static TextureManager* getInstance();
     std::shared_ptr<CustomTexture> GetTexture(std::string nameTexture);
     std::string AddTexture(std::string textureName, std::shared_ptr<CustomTexture> texture_ptr);

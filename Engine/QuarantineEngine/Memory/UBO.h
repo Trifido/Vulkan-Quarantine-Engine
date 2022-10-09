@@ -36,16 +36,12 @@ struct CameraUniform
 
 struct MaterialUniform
 {
-    //float heightScale;
-    //float min_uv;
-    //float max_uv;
+    float shininess;
     int idxDiffuse;
     int idxNormal;
     int idxSpecular;
     int idxEmissive;
     int idxHeight;
-    //int idxBump;
-    float shininess;
 };
 
 struct TransformUniform
