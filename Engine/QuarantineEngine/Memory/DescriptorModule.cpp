@@ -1,6 +1,5 @@
 #include "DescriptorModule.h"
 
-
 DeviceModule* DescriptorModule::deviceModule;
 uint32_t DescriptorModule::NumSwapchainImages;
 

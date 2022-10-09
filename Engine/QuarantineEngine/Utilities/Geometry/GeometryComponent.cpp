@@ -1,13 +1,6 @@
 #include "GeometryComponent.h"
 #include "BufferManageModule.h"
 
-//void GeometryComponent::AddRequisites(DeviceModule& deviceModule, VkCommandPool& commandPool, QueueModule& queueModule)
-//{
-//    deviceModule_ptr = deviceModule;
-//    commandPool_ptr = commandPool;
-//    queueModule_ptr = queueModule;
-//}
-
 DeviceModule* GeometryComponent::deviceModule_ptr;
 
 void GeometryComponent::cleanup()
@@ -39,4 +32,45 @@ void GeometryComponent::createIndexBuffer()
 
     vkDestroyBuffer(deviceModule_ptr->device, stagingBuffer, nullptr);
     vkFreeMemory(deviceModule_ptr->device, stagingBufferMemory, nullptr);
+}
+
+VkVertexInputBindingDescription GeometryComponent::getBindingDescription()
+{
+    VkVertexInputBindingDescription bindingDescription{};
+    bindingDescription.binding = 0;
+    bindingDescription.stride = sizeof(PBRVertex);
+    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    return bindingDescription;
+}
+
+std::vector<VkVertexInputAttributeDescription> GeometryComponent::getAttributeDescriptions() {
+    std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
+    attributeDescriptions.resize(5);
+
+    attributeDescriptions[0].binding = 0;
+    attributeDescriptions[0].location = 0;
+    attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributeDescriptions[0].offset = offsetof(PBRVertex, pos);
+
+    attributeDescriptions[1].binding = 0;
+    attributeDescriptions[1].location = 1;
+    attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributeDescriptions[1].offset = offsetof(PBRVertex, norm);
+
+    attributeDescriptions[2].binding = 0;
+    attributeDescriptions[2].location = 2;
+    attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+    attributeDescriptions[2].offset = offsetof(PBRVertex, texCoord);
+
+    attributeDescriptions[3].binding = 0;
+    attributeDescriptions[3].location = 3;
+    attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributeDescriptions[3].offset = offsetof(PBRVertex, Tangents);
+
+    attributeDescriptions[4].binding = 0;
+    attributeDescriptions[4].location = 4;
+    attributeDescriptions[4].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributeDescriptions[4].offset = offsetof(PBRVertex, Bitangents);
+
+    return attributeDescriptions;
 }

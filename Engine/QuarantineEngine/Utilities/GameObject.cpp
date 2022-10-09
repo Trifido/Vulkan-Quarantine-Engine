@@ -1,53 +1,80 @@
 #include "GameObject.h"
 #include <PrimitiveMesh.h>
+#include <MeshImporter.h>
+
+#include "PrimitiveTypes.h"
 
 GameObject::GameObject()
 {
+    this->deviceModule = DeviceModule::getInstance();
+    this->queueModule = QueueModule::getInstance();
+    this->materialManager = MaterialManager::getInstance();
     this->InitializeComponents();
 }
 
 GameObject::GameObject(PRIMITIVE_TYPE type)
 {
+    this->deviceModule = DeviceModule::getInstance();
+    this->queueModule = QueueModule::getInstance();
+    this->materialManager = MaterialManager::getInstance();
+
+    this->parent = nullptr;
     mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh(type));
     this->InitializeComponents();
 }
 
 GameObject::GameObject(std::string meshPath)
 {
-    mesh = std::make_shared<Mesh>(Mesh(meshPath));
+    this->deviceModule = DeviceModule::getInstance();
+    this->queueModule = QueueModule::getInstance();
+    this->materialManager = MaterialManager::getInstance();
+
+    this->parent = nullptr;
+    this->CreateChildsGameObject(meshPath);
     this->InitializeComponents();
 }
 
 void GameObject::cleanup()
 {
-    mesh->cleanup();
+    if (mesh != nullptr)
+    {
+        mesh->cleanup();
+    }
+
+    if (!this->childs.empty())
+    {
+        for (auto& it : this->childs)
+        {
+            it->mesh->cleanup();
+        }
+    }    
 }
 
 void GameObject::drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
-    if (material == nullptr)
-        return;
-
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipeline);
-    VkBuffer vertexBuffers[] = { mesh->vertexBuffer };
-    //VkBuffer* indexBuffers = &mesh->indexBuffer;
-    VkDeviceSize offsets[] = { 0 };
-    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-    vkCmdBindIndexBuffer(commandBuffer, mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, material->pipelineLayout, 0, 1, material->descriptor->getDescriptorSet(idx), 0, nullptr);
-    //vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(geometryModule.vertices.size()), 1, 0, 0);
-
-    vkCmdPushConstants(commandBuffer, material->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(transform->ubo.model), &transform->ubo.model);
-
-    vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh->indices.size()), 1, 0, 0, 0);
-    //vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
+    this->CreateDrawCommand(commandBuffer, idx);
 }
 
 void GameObject::addMaterial(std::shared_ptr<Material> material_ptr)
 {
+    if (material_ptr == nullptr)
+        return;
+
     this->material = material_ptr;
-    this->material->bindingMesh(this->mesh);
+
+    if (this->mesh != nullptr)
+    {
+        this->material->bindingMesh(this->mesh);
+    }
+
+    if (!this->childs.empty())
+    {
+        for (auto& it : this->childs)
+        {
+            it->material = material_ptr;
+            this->material->bindingMesh(it->mesh);
+        }
+    }
 }
 
 void GameObject::addEditorCamera(std::shared_ptr<Camera> camera_ptr)
@@ -57,8 +84,90 @@ void GameObject::addEditorCamera(std::shared_ptr<Camera> camera_ptr)
 
 void GameObject::InitializeComponents()
 {
-    deviceModule = DeviceModule::getInstance();
-    queueModule = QueueModule::getInstance();
-    transform = std::make_shared<Transform>();
-    mesh->InitializeMesh();
+    if (this->transform == nullptr)
+    {
+        this->transform = std::make_shared<Transform>();
+    }
+
+    if (this->mesh != nullptr)
+    {
+        this->mesh->InitializeMesh();
+    }
+
+    if (!this->childs.empty())
+    {
+        for (auto& it : this->childs)
+        {
+            it->InitializeComponents();
+        }
+    }
+}
+
+void GameObject::CreateChildsGameObject(std::string pathfile)
+{
+    MeshImporter importer = {};
+    std::vector<MeshData> data = importer.LoadMesh(pathfile);
+
+    if (data.size() > 1)
+    {
+        this->transform = std::make_shared<Transform>();
+        this->childs.resize(data.size());
+
+        glm::mat4 parentModel = this->transform->GetModel();
+
+        for (size_t id = 0; id < data.size(); id++)
+        {
+            this->childs[id] = std::make_shared<GameObject>();
+            this->childs[id]->parent = std::make_shared<GameObject>(*this);
+            this->childs[id]->mesh = std::make_shared<Mesh>(Mesh(data[id]));
+            this->childs[id]->transform = std::make_shared<Transform>(Transform(parentModel * data[id].model));
+            this->childs[id]->addMaterial(this->materialManager->GetMaterial(data[id].materialID));
+        }
+    }
+    else
+    {
+        this->mesh = std::make_shared<Mesh>(Mesh(data[0]));
+        this->transform = std::make_shared<Transform>(Transform(data[0].model));
+        this->addMaterial(this->materialManager->GetMaterial(data[0].materialID));
+    }
+}
+
+void GameObject::DrawChilds(VkCommandBuffer& commandBuffer, uint32_t idx)
+{
+    if (!this->childs.empty())
+    {
+        for (auto& it : this->childs)
+        {
+            it->CreateDrawCommand(commandBuffer, idx);
+        }
+    }
+}
+
+void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
+{
+    if (this->material != nullptr && this->mesh != nullptr)
+    {
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->material->pipeline);
+        VkBuffer vertexBuffers[] = { this->mesh->vertexBuffer };
+        VkDeviceSize offsets[] = { 0 };
+        vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+        vkCmdBindIndexBuffer(commandBuffer, this->mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->material->pipelineLayout, 0, 1, this->material->descriptor->getDescriptorSet(idx), 0, nullptr);
+
+        TransformUniform ubo;
+        ubo.model = this->transform->GetModel();
+
+        if (this->parent != nullptr)
+        {
+            ubo.model = this->parent->transform->GetModel() * ubo.model;
+            //this->transform->ComputeParentTransform(this->parent->transform);
+        }
+
+        vkCmdPushConstants(commandBuffer, this->material->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &ubo.model);
+
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->mesh->indices.size()), 1, 0, 0, 0);
+    }
+
+    this->DrawChilds(commandBuffer, idx);
 }

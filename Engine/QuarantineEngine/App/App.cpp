@@ -7,12 +7,12 @@
 
 App::App()
 {
-    deltaTime = lastFrame = 0;
+    this->deltaTime = this->lastFrame = 0;
 
-    keyboard_ptr = KeyboardController::getInstance();
-    commandPoolModule = CommandPoolModule::getInstance();
-    queueModule = QueueModule::getInstance();
-    deviceModule = DeviceModule::getInstance();
+    this->keyboard_ptr = KeyboardController::getInstance();
+    this->commandPoolModule = CommandPoolModule::getInstance();
+    this->queueModule = QueueModule::getInstance();
+    this->deviceModule = DeviceModule::getInstance();
 }
 
 void App::run()
@@ -26,14 +26,14 @@ void App::run()
 void App::computeDeltaTime()
 {
     double currentFrame = glfwGetTime();
-    deltaTime = currentFrame - lastFrame;
-    lastFrame = currentFrame;
+    this->deltaTime = currentFrame - lastFrame;
+    this->lastFrame = currentFrame;
 }
 
 void App::initWindow()
 {
-    mainWindow.init();
-    sceneCamera = std::make_shared<Camera>(Camera(mainWindow.width, mainWindow.height));
+    this->mainWindow.init();
+    this->cameraEditor = CameraEditor::getInstance();
 }
 
 void App::init_imgui()
@@ -135,12 +135,6 @@ void App::initVulkan()
     //Creamos el frame buffer
     framebufferModule.createFramebuffer(renderPassModule->renderPass);
 
-
-    //Inicializamos el Light manager
-    this->lightManager = std::make_shared<LightManager>();
-
-    // INIT ------------------------- Mesh & Material -------------------------------
-
     //Añadimos requisitos para los geometryComponent
     BufferManageModule::commandPool = this->commandPoolModule->getCommandPool();
     BufferManageModule::graphicsQueue = this->queueModule->graphicsQueue;
@@ -150,42 +144,43 @@ void App::initVulkan()
     DescriptorModule::deviceModule = this->deviceModule;
     DescriptorModule::NumSwapchainImages = this->swapchainModule->getNumSwapChainImages();
 
+    // INIT ------------------------- Mesh & Material -------------------------------
+    this->shaderManager = ShaderManager::getInstance();
+    this->textureManager = TextureManager::getInstance();
+    this->lightManager = LightManager::getInstance();
+    this->materialManager = MaterialManager::getInstance();
+    this->materialManager->InitializeMaterialManager(renderPassModule->renderPass, graphicsPipelineModule);
+
+
+    MaterialManager* instanceMaterial = MaterialManager::getInstance();
     //Creamos la textura
-    _textures["NULL"] = std::make_shared<CustomTexture>(CustomTexture());
-    //_textures["diffuse_face"] = std::make_shared<CustomTexture>(CustomTexture(TEXTURE_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
-    //_textures["bump_face"] = std::make_shared<CustomTexture>(CustomTexture(TEXTURE_BUMP_PATH, TEXTURE_TYPE::BUMP_TYPE));
-    _textures["diffuse_brick"] = std::make_shared<CustomTexture>(CustomTexture(TEXTURE_WALL_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
-    _textures["normal_brick"] = std::make_shared<CustomTexture>(CustomTexture(TEXTURE_WALL_NORMAL_PATH, TEXTURE_TYPE::NORMAL_TYPE));
-    //_textures["albedo_house"] = std::make_shared<CustomTexture>(CustomTexture(TEXTURE_HOUSE_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
+    //textureManager->AddTexture("diffuse_brick", CustomTexture(TEXTURE_WALL_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
+    //textureManager->AddTexture("normal_brick", CustomTexture(TEXTURE_WALL_NORMAL_PATH, TEXTURE_TYPE::NORMAL_TYPE));
    
 
-    //models.push_back(std::make_shared<GameObject>(GameObject(MODEL_PATH)));
-    //models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    models.push_back(std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH)));
+    models.at(0)->transform->SetScale(glm::vec3(0.1f));
+    models.at(0)->transform->SetPosition(glm::vec3(0.0f, -4.0f, 0.0f));
 
-    models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::QUAD_TYPE)));
-    models.at(0)->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 0.0f));
+    ///models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::QUAD_TYPE)));
+    //models.at(0)->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 0.0f));
 
     //Creamos el shader module para el material
-    _shaders["shader"] = std::make_shared<ShaderModule>(ShaderModule());
-    _shaders["shader"]->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv");
-    //_shaders["shader2"] = std::make_shared<ShaderModule>(ShaderModule());
-    //_shaders["shader2"]->createShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv");
-    //Creamos el material
-    _materials["mat"] = std::make_shared<Material>(Material(_shaders["shader"], renderPassModule->renderPass));
-    _materials["mat"]->AddNullTexture(_textures["NULL"]);
-    _materials["mat"]->AddTexture(_textures["diffuse_brick"]);
-    _materials["mat"]->AddTexture(_textures["normal_brick"]);
-    _materials["mat"]->AddPipeline(graphicsPipelineModule);
+    std::shared_ptr<ShaderModule> shader_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
+    shader_ptr->createShaderBindings();
+    this->shaderManager->AddShader("shader", shader_ptr);
 
     //Creamos el material
-    //_materials["matHouse"] = std::make_shared<Material>(Material(_shaders["shader2"], renderPassModule->renderPass));
-    //_materials["matHouse"]->AddNullTexture(_textures["NULL"]);
-    //_materials["matHouse"]->AddTexture(_textures["albedo_house"]);
-    //_materials["matHouse"]->AddPipeline(graphicsPipelineModule);
+    //std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(Material(this->shaderManager->GetShader("shader"), renderPassModule->renderPass));
+    //mat_ptr->AddNullTexture(textureManager->GetTexture("NULL"));
+    //mat_ptr->AddTexture(textureManager->GetTexture("diffuse_brick"));
+    //mat_ptr->AddTexture(textureManager->GetTexture("normal_brick"));
+    //mat_ptr->AddPipeline(graphicsPipelineModule);
+    //materialManager->AddMaterial("mat", mat_ptr);
+
 
     //Linkamos el material al gameobject
-    models.at(0)->addMaterial(_materials["mat"]);
-    //models.at(1)->addMaterial(_materials["matHouse"]);
+    //models.at(0)->addMaterial(materialManager->GetMaterial("mat"));
     // END -------------------------- Mesh & Material -------------------------------
 
     // INIT ------------------------- Lights ----------------------------------------
@@ -196,22 +191,22 @@ void App::initVulkan()
     //this->lightManager->GetLight("PointLight0")->linear = 0.09f;
     //this->lightManager->GetLight("PointLight0")->quadratic = 0.032f;
 
-    this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
-    this->lightManager->GetLight("PointLight1")->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.5f));
-    this->lightManager->GetLight("PointLight1")->diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
-    this->lightManager->GetLight("PointLight1")->specular = glm::vec3(1.0f, 1.0f, 1.0f);
-    this->lightManager->GetLight("PointLight1")->linear = 0.09f;
-    this->lightManager->GetLight("PointLight1")->quadratic = 0.032f;
+    //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
+    //this->lightManager->GetLight("PointLight1")->transform->SetPosition(glm::vec3(0.5f, 1.0f, 0.3f));
+    //this->lightManager->GetLight("PointLight1")->diffuse = glm::vec3(0.1f);
+    //this->lightManager->GetLight("PointLight1")->specular = glm::vec3(0.5f);
+    //this->lightManager->GetLight("PointLight1")->linear = 0.09f;
+    //this->lightManager->GetLight("PointLight1")->quadratic = 0.032f;
+
+    this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
+    this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 0.0f));
+    this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
+    this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.8f);
 
     this->lightManager->UpdateUniform();
     // END -------------------------- Lights ----------------------------------------
 
-    for (auto& it : _materials)
-    {
-        it.second->bindingCamera(this->sceneCamera);
-        it.second->bindingLights(this->lightManager);
-        it.second->InitializeMaterial();
-    }
+    materialManager->InitializeMaterials();
 
     commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass, models);
 
@@ -225,8 +220,42 @@ void App::mainLoop()
     while (!glfwWindowShouldClose(mainWindow.getWindow())) {
         glfwPollEvents();
         computeDeltaTime();
-        keyboard_ptr->ReadKeyboardEvents();
-        sceneCamera->CameraController((float)deltaTime);
+
+        this->keyboard_ptr->ReadKeyboardEvents();
+        this->cameraEditor->CameraController((float)deltaTime);
+
+        if (ImGui::IsKeyDown('j') || ImGui::IsKeyDown('J'))
+        {
+            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
+            newPos.x += 0.1f;
+            this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
+
+            this->lightManager->UpdateUniform();
+        }
+        if (ImGui::IsKeyDown('l') || ImGui::IsKeyDown('L'))
+        {
+            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
+            newPos.x -= 0.1f;
+            this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
+
+            this->lightManager->UpdateUniform();
+        }
+        if (ImGui::IsKeyDown('I'))
+        {
+            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
+            newPos.z += 0.1f;
+            this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
+
+            this->lightManager->UpdateUniform();
+        }
+        if (ImGui::IsKeyDown('K'))
+        {
+            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
+            newPos.z -= 0.1f;
+            this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
+
+            this->lightManager->UpdateUniform();
+        }
 
         {
             ImGui_ImplGlfw_NewFrame();
@@ -288,10 +317,7 @@ void App::mainLoop()
 
 void App::cleanUp()
 {
-    for (auto& it : _shaders)
-    {
-        it.second->cleanup();
-    }
+    shaderManager->Clean();
 
     cleanUpSwapchain();
 
@@ -300,15 +326,10 @@ void App::cleanUp()
         models.at(i)->cleanup();
     }
 
-    for (auto& it : _textures)
-    {
-        it.second->cleanup();
-    }
+    textureManager->Clean();
 
-    for (auto& it : _materials)
-    {
-        it.second->cleanupDescriptor();
-    }
+
+    materialManager->CleanDescriptors();
 
     synchronizationModule.cleanup();
     commandPoolModule->cleanup();
@@ -337,10 +358,7 @@ void App::cleanUpSwapchain()
     renderPassModule->cleanup();
 
     //Limpiamos los VKPipelines, VkPipelineLayouts y shader del material
-    for (auto& it : _materials)
-    {
-        it.second->cleanup();
-    }
+    materialManager->CleanPipelines();
 
     swapchainModule->cleanup();
 }
@@ -355,10 +373,7 @@ void App::drawFrame()
 
     synchronizationModule.synchronizeCurrentFrame(imageIndex);
 
-    for (auto& it : _materials)
-    {
-        it.second->descriptor->updateUniforms(imageIndex);
-    }
+    materialManager->UpdateUniforms(imageIndex);
 
     vkDeviceWaitIdle(deviceModule->device);
 
@@ -409,7 +424,7 @@ void App::recreateSwapchain()
     swapchainModule->createSwapChain(windowSurface.getSurface(), mainWindow.getWindow());
 
     //Actualizamos el formato de la cámara
-    this->sceneCamera->UpdateSize(swapchainModule->swapChainExtent);
+    this->cameraEditor->UpdateSize(swapchainModule->swapChainExtent);
 
     //Recreamos el antialiasing module
     antialiasingModule->createColorResources();
@@ -420,11 +435,7 @@ void App::recreateSwapchain()
     renderPassModule->createRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
 
     //Recreamos los graphics pipeline de los materiales
-    for (auto& it : _materials)
-    {
-        it.second->recreatePipelineMaterial(renderPassModule->renderPass);
-        it.second->RecreateUniformsMaterial();
-    }
+    materialManager->RecreateMaterials(renderPassModule);
 
     //Recreamos el frame buffer
     framebufferModule.createFramebuffer(renderPassModule->renderPass);

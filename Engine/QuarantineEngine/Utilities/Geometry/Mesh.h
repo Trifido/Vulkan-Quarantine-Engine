@@ -6,19 +6,24 @@
 #include <string>
 #include "GeometryComponent.h"
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
+#include <MeshImporter.h>
+
+typedef struct MeshData MeshData;
+
 class Mesh : public GeometryComponent
 {
 private:
     std::string PATH;
-    std::vector<Vertex> vertices;
+    std::vector<PBRVertex> vertices;
 
     void createVertexBuffer() override;
 public:
-    Mesh();
-    Mesh(std::string pathfile);
+    Mesh(const MeshData& data);
     void InitializeMesh() override;
-    VkVertexInputBindingDescription getBindingDescription() override;
-    std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions() override;
 };
 
 #endif // !MESH_H

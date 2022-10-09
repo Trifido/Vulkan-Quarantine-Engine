@@ -39,13 +39,27 @@
 
 // Keyboard controller
 #include "KeyboardController.h"
+#include <ShaderManager.h>
+#include <MaterialManager.h>
+#include <TextureManager.h>
+#include <CameraEditor.h>
 
 const std::string MODEL_PATH = "../../resources/models/head/head.obj";
+const std::string TEXTURE_WALL_NORMAL_PATH = "../../resources/textures/wall/brickwall_normal.jpg";
+const std::string MODEL_HOUSE_PATH = "../../resources/models/viking_room.obj";
+const std::string MODEL_WHEEL_PATH = "../../resources/models/scifiWheel/source/wheel.glb";
+const std::string MODEL_KNIGHT_PATH = "../../resources/models/Bulky Knight/source/Big Night For Sketchfab.fbx";
+const std::string MODEL_GUN_PATH = "../../resources/models/Modified Colt/source/Gun Low Poly.fbx";
+const std::string MODEL_ATLAS_PATH = "../../resources/models/Atlas/Atlas.obj";
+const std::string MODEL_ARTORIAS_PATH = "../../resources/models/Artorias/source/Artorias.fbx";
+const std::string MODEL_ZELDA_PATH = "../../resources/models/Zelda/pose.obj";
+const std::string MODEL_SURVIVAL_PATH = "../../resources/models/survival/backpack.obj";
+const std::string MODEL_CRYSIS_PATH = "../../resources/models/crysis/nanosuit.obj";
+const std::string MODEL_PUMPKIN_PATH = "../../resources/models/pumpkin/pumpkin.obj";
+
 const std::string TEXTURE_PATH = "../../resources/models/head/lambertian.jpg";
 const std::string TEXTURE_BUMP_PATH = "../../resources/models/head/bump.png";
 const std::string TEXTURE_WALL_PATH = "../../resources/textures/wall/brickwall.jpg";
-const std::string TEXTURE_WALL_NORMAL_PATH = "../../resources/textures/wall/brickwall_normal.jpg";
-const std::string MODEL_HOUSE_PATH = "../../resources/models/viking_room.obj";
 const std::string TEXTURE_HOUSE_PATH = "../../resources/textures/viking_room.png";
 
 enum class ERROR_RESIZE
@@ -104,13 +118,12 @@ private:
     //RayTracingModule        raytracingModule;
 
     std::vector<std::shared_ptr<GameObject>> models;
-    std::shared_ptr<Camera>     sceneCamera;
+    Camera*     cameraEditor;
 
-    std::unordered_map<std::string, std::shared_ptr<Material>> _materials;
-    std::unordered_map<std::string, std::shared_ptr<ShaderModule>> _shaders;
-    std::unordered_map<std::string, std::shared_ptr<CustomTexture>> _textures;
-
-    std::shared_ptr<LightManager>   lightManager;
+    LightManager*       lightManager {};
+    ShaderManager*      shaderManager{};
+    MaterialManager*    materialManager {};
+    TextureManager*     textureManager{};
 
     KeyboardController* keyboard_ptr {};
 };

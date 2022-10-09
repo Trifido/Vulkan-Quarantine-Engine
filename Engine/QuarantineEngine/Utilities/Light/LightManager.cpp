@@ -1,8 +1,24 @@
 #include "LightManager.h"
 #include <algorithm>
+#include <PointLight.h>
+#include <DirectionalLight.h>
+
+LightManager* LightManager::instance = nullptr;
+
 LightManager::LightManager()
 {
     this->lightManagerUniform = std::make_shared<LightManagerUniform>();
+}
+
+
+LightManager* LightManager::getInstance()
+{
+    if (instance == NULL)
+        instance = new LightManager();
+    else
+        std::cout << "Getting existing instance of Light Manager" << std::endl;
+
+    return instance;
 }
 
 void LightManager::CreateLight(LightType type, std::string name)
@@ -12,6 +28,10 @@ void LightManager::CreateLight(LightType type, std::string name)
     default:
     case LightType::POINT_LIGHT:
         this->AddLight(std::static_pointer_cast<Light>(std::make_shared<PointLight>()), name);
+        break;
+
+    case LightType::DIRECTIONAL_LIGHT:
+        this->AddLight(std::static_pointer_cast<Light>(std::make_shared<DirectionalLight>()), name);
         break;
     }
 }

@@ -11,16 +11,19 @@ class PrimitiveMesh : public GeometryComponent
 {
 public:
     PRIMITIVE_TYPE type;
-    std::vector<PrimitiveVertex> vertices;
+    //std::vector<PrimitiveVertex> vertices;
+    std::vector<PBRVertex> vertices;
 
     PrimitiveMesh();
     PrimitiveMesh(PRIMITIVE_TYPE type);
     void InitializeMesh() override;
-    VkVertexInputBindingDescription getBindingDescription() override;
-    std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions() override;
 
 private:
+    void InitializePoint();
+    void InitializeTriangle();
     void InitializePlane();
+    void InitializeCube();
+    void InitializeSphere();
     void createVertexBuffer() override;
 };
 

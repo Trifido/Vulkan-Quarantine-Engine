@@ -34,9 +34,10 @@ public:
 
 public:
     ShaderModule();
+    ShaderModule(std::string vertexShaderName, std::string fragmentShaderName);
     static std::vector<char> readFile(const std::string& filename);
     void createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment);
-    void createShaderBindings(std::shared_ptr<GeometryComponent> mesh);
+    void createShaderBindings();
     void cleanup();
 private:
     VkPipelineShaderStageCreateInfo createShader(VkDevice& device, const std::string& filename, SHADER_TYPE shaderType);
