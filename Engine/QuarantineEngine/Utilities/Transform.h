@@ -20,6 +20,7 @@ public:
     glm::vec3 Position;
     glm::vec3 Direction;
     glm::quat Orientation;
+    glm::vec3 Rotation;
 
 public:
     Transform();

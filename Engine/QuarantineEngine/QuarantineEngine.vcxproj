@@ -199,6 +199,7 @@
     <ClCompile Include="Utilities\Geometry\Mesh.cpp" />
     <ClCompile Include="Utilities\Geometry\MeshImporter.cpp" />
     <ClCompile Include="Utilities\Geometry\PrimitiveMesh.cpp" />
+    <ClCompile Include="Utilities\Light\DirectionalLight.cpp" />
     <ClCompile Include="Utilities\Light\Light.cpp" />
     <ClCompile Include="Utilities\Light\LightManager.cpp" />
     <ClCompile Include="Utilities\Light\PointLight.cpp" />
@@ -254,6 +255,7 @@
     <ClInclude Include="Utilities\Geometry\PrimitiveTypes.h" />
     <ClInclude Include="Utilities\Geometry\RawGeometry.h" />
     <ClInclude Include="Utilities\Geometry\Vertex.h" />
+    <ClInclude Include="Utilities\Light\DirectionalLight.h" />
     <ClInclude Include="Utilities\Light\Light.h" />
     <ClInclude Include="Utilities\Light\LightManager.h" />
     <ClInclude Include="Utilities\Light\PointLight.h" />

@@ -5,7 +5,6 @@
 #include <unordered_map>
 #include <memory>
 #include <Light/Light.h>
-#include <PointLight.h>
 
 class LightManager
 {

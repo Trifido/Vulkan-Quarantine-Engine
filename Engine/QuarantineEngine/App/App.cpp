@@ -191,19 +191,17 @@ void App::initVulkan()
     //this->lightManager->GetLight("PointLight0")->linear = 0.09f;
     //this->lightManager->GetLight("PointLight0")->quadratic = 0.032f;
 
-    this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
-    this->lightManager->GetLight("PointLight1")->transform->SetPosition(glm::vec3(0.5f, 1.0f, 0.3f));
-    this->lightManager->GetLight("PointLight1")->diffuse = glm::vec3(0.1f);
-    this->lightManager->GetLight("PointLight1")->specular = glm::vec3(0.5f);
-    this->lightManager->GetLight("PointLight1")->linear = 0.09f;
-    this->lightManager->GetLight("PointLight1")->quadratic = 0.032f;
+    //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
+    //this->lightManager->GetLight("PointLight1")->transform->SetPosition(glm::vec3(0.5f, 1.0f, 0.3f));
+    //this->lightManager->GetLight("PointLight1")->diffuse = glm::vec3(0.1f);
+    //this->lightManager->GetLight("PointLight1")->specular = glm::vec3(0.5f);
+    //this->lightManager->GetLight("PointLight1")->linear = 0.09f;
+    //this->lightManager->GetLight("PointLight1")->quadratic = 0.032f;
 
-    this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight0");
-this->lightManager->GetLight("PointLight0")->transform->SetPosition(glm::vec3(0.0f, 0.0f, -3.0f));
-this->lightManager->GetLight("PointLight0")->diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
-this->lightManager->GetLight("PointLight0")->specular = glm::vec3(0.8f);
-this->lightManager->GetLight("PointLight0")->linear = 0.09f;
-this->lightManager->GetLight("PointLight0")->quadratic = 0.032f;
+    this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
+    this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 0.0f));
+    this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
+    this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.8f);
 
     this->lightManager->UpdateUniform();
     // END -------------------------- Lights ----------------------------------------
@@ -228,33 +226,33 @@ void App::mainLoop()
 
         if (ImGui::IsKeyDown('j') || ImGui::IsKeyDown('J'))
         {
-            glm::vec3 newPos = this->lightManager->GetLight("PointLight1")->transform->Position;
+            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
             newPos.x += 0.1f;
-            this->lightManager->GetLight("PointLight1")->transform->SetPosition(newPos);
+            this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
 
             this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('l') || ImGui::IsKeyDown('L'))
         {
-            glm::vec3 newPos = this->lightManager->GetLight("PointLight1")->transform->Position;
+            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
             newPos.x -= 0.1f;
-            this->lightManager->GetLight("PointLight1")->transform->SetPosition(newPos);
+            this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
 
             this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('I'))
         {
-            glm::vec3 newPos = this->lightManager->GetLight("PointLight1")->transform->Position;
-            newPos.y += 0.1f;
-            this->lightManager->GetLight("PointLight1")->transform->SetPosition(newPos);
+            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
+            newPos.z += 0.1f;
+            this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
 
             this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('K'))
         {
-            glm::vec3 newPos = this->lightManager->GetLight("PointLight1")->transform->Position;
-            newPos.y -= 0.1f;
-            this->lightManager->GetLight("PointLight1")->transform->SetPosition(newPos);
+            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
+            newPos.z -= 0.1f;
+            this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
 
             this->lightManager->UpdateUniform();
         }

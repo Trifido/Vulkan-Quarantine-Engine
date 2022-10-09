@@ -50,7 +50,8 @@ layout(set = 0, binding = 3) uniform sampler2D texSampler[6];
 
 vec3 getNormalFromMap(vec2 TexCoords);
 //BLINN-PHONG LIGHT EQUATIONS
-vec3 ComputePointLight(LightData light, vec3 normal, vec2 texCoords);
+vec3 ComputePointLight(LightData light, int id, vec3 normal, vec2 texCoords);
+vec3 ComputeDirectionalLight(LightData light, int id, vec3 normal, vec2 texCoords);
 
 void main()
 {
@@ -78,23 +79,26 @@ void main()
     }
 
     vec3 resultPoint = vec3(0.0);
-    //vec3 resultDir = vec3(0.0);
-    //vec3 resultSpot = vec3(0.0);
-    //vec3 resultFPS = vec3(0.0);
+    vec3 resultDir = vec3(0.0);
+    vec3 resultSpot = vec3(0.0);
 
     for(int i = 0; i < uboLight.numLights; i++)
     {
         if(uboLight.lights[i].position.w == 1.0)
         {
-            resultPoint += ComputePointLight(uboLight.lights[i], normal, texCoords);
+            resultPoint += ComputePointLight(uboLight.lights[i], i, normal, texCoords);
+        }
+        else if(uboLight.lights[i].linear == 0.0)
+        {
+            resultDir += ComputeDirectionalLight(uboLight.lights[i], i, normal, texCoords);
         }
     }
 
-    result = resultPoint;// + resultDir + resultSpot);
+    result = resultPoint + resultDir + resultSpot;
     outColor = vec4(result, 1.0);
 }
 
-vec3 ComputePointLight(LightData light, vec3 normal, vec2 texCoords)
+vec3 ComputePointLight(LightData light, int id, vec3 normal, vec2 texCoords)
 {
     float distance = length(fs_in.TangentViewPos - fs_in.TangentFragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
@@ -104,7 +108,7 @@ vec3 ComputePointLight(LightData light, vec3 normal, vec2 texCoords)
     if(uboMaterial.idxDiffuse > -1)
         colorDiffuse = vec3(texture(texSampler[uboMaterial.idxDiffuse], texCoords));
 
-    vec3 lightDir = normalize(fs_in.TangentLightPos[0] - fs_in.TangentFragPos);
+    vec3 lightDir = normalize(fs_in.TangentLightPos[id] - fs_in.TangentFragPos);
     float diff = max(dot(lightDir, normal), 0.0);
     vec3 diffuse = diff * light.diffuse * colorDiffuse * attenuation;
 
@@ -121,6 +125,41 @@ vec3 ComputePointLight(LightData light, vec3 normal, vec2 texCoords)
     vec3 halfwayDir = normalize(lightDir + view_dir);  
     float spec = pow(max(dot(normal, halfwayDir), 0.0), uboMaterial.shininess);
     vec3 specular = spec * light.specular * colorSpecular * attenuation;
+
+    // - EMISSIVE
+    vec3 emissive = vec3 (0.0, 0.0, 0.0);
+    if(uboMaterial.idxEmissive > -1)
+        emissive = vec3(texture(texSampler[uboMaterial.idxEmissive], texCoords));
+
+    // -- RESULT --
+    return ((ambient + diffuse + specular + emissive));
+}
+
+
+vec3 ComputeDirectionalLight(LightData light, int id, vec3 normal, vec2 texCoords)
+{
+    // - DIFFUSE
+    vec3 colorDiffuse = vec3 (1.0, 1.0, 1.0);
+    if(uboMaterial.idxDiffuse > -1)
+        colorDiffuse = vec3(texture(texSampler[uboMaterial.idxDiffuse], texCoords));
+
+    vec3 lightDir = normalize(-fs_in.TangentLightPos[id]);
+    float diff = max(dot(lightDir, normal), 0.0);
+    vec3 diffuse = diff * light.diffuse * colorDiffuse;
+
+    // - AMBIENT
+    vec3 ambient = 0.1 * colorDiffuse;
+
+    // - SPECULAR
+    vec3 colorSpecular = vec3 (1.0, 1.0, 1.0);
+    if(uboMaterial.idxSpecular > -1)
+        colorSpecular = vec3(texture(texSampler[uboMaterial.idxSpecular], texCoords));
+
+    vec3 view_dir = normalize(fs_in.TangentViewPos - fs_in.TangentFragPos);
+    vec3 reflectDir = reflect(-lightDir, normal);
+    vec3 halfwayDir = normalize(lightDir + view_dir);  
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), uboMaterial.shininess);
+    vec3 specular = spec * light.specular * colorSpecular;
 
     // - EMISSIVE
     vec3 emissive = vec3 (0.0, 0.0, 0.0);

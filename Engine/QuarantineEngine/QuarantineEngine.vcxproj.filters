@@ -268,6 +268,9 @@
     <ClCompile Include="Utilities\Material\ShaderManager.cpp">
       <Filter>Kernel\Utilities\Material\sources</Filter>
     </ClCompile>
+    <ClCompile Include="Utilities\Light\DirectionalLight.cpp">
+      <Filter>Kernel\Utilities\Light\sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SetUp\DeviceModule.h">
@@ -421,6 +424,9 @@
     </ClInclude>
     <ClInclude Include="Utilities\Material\ShaderManager.h">
       <Filter>Kernel\Utilities\Material\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Light\DirectionalLight.h">
+      <Filter>Kernel\Utilities\Light\headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
