@@ -11,6 +11,9 @@ Light::Light()
     this->linear = 0.7f;
     this->quadratic = 1.8f;
 
+    this->spotCutOff = 0.0f;
+    this->spotExponent = 0.0f;
+
     this->UpdateUniform();
 }
 

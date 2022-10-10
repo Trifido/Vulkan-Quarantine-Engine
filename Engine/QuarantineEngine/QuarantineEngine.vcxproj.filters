@@ -271,6 +271,9 @@
     <ClCompile Include="Utilities\Light\DirectionalLight.cpp">
       <Filter>Kernel\Utilities\Light\sources</Filter>
     </ClCompile>
+    <ClCompile Include="Utilities\Light\SpotLight.cpp">
+      <Filter>Kernel\Utilities\Light\sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SetUp\DeviceModule.h">
@@ -426,6 +429,9 @@
       <Filter>Kernel\Utilities\Material\headers</Filter>
     </ClInclude>
     <ClInclude Include="Utilities\Light\DirectionalLight.h">
+      <Filter>Kernel\Utilities\Light\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Light\SpotLight.h">
       <Filter>Kernel\Utilities\Light\headers</Filter>
     </ClInclude>
   </ItemGroup>

@@ -17,10 +17,13 @@ layout(std430, push_constant) uniform PushConstants
 struct LightData {
     vec4 position;
     vec3 diffuse;
-    vec3 specular;
     float constant;
+    vec3 specular;
     float linear;
+    vec3 spotDirection;
     float quadratic; 
+    float spotCutoff;
+    float spotExponent;
 };
 
 layout(set = 0, binding = 2) uniform UniformManagerLight
@@ -48,9 +51,9 @@ layout(location = 0) out VS_OUT {
 void main() {
     vs_out.FragPos = vec3(constants.model * vec4(inPosition, 1.0));
     vs_out.TexCoords = inTexCoord;
-    vs_out.Normal = mat3(constants.model) * inNormal;
     
     mat3 normalMatrix = transpose(inverse(mat3(constants.model)));
+    vs_out.Normal = normalMatrix * inNormal;
 
     vec3 T = normalize(normalMatrix * inTangent);
     vec3 N = normalize(normalMatrix * inNormal);

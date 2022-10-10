@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <PointLight.h>
 #include <DirectionalLight.h>
+#include <SpotLight.h>
 
 LightManager* LightManager::instance = nullptr;
 
@@ -32,6 +33,10 @@ void LightManager::CreateLight(LightType type, std::string name)
 
     case LightType::DIRECTIONAL_LIGHT:
         this->AddLight(std::static_pointer_cast<Light>(std::make_shared<DirectionalLight>()), name);
+        break;
+
+    case LightType::SPOT_LIGHT:
+        this->AddLight(std::static_pointer_cast<Light>(std::make_shared<SpotLight>()), name);
         break;
     }
 }
