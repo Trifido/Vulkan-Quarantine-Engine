@@ -24,6 +24,8 @@ public:
     float constant;
     float linear;
     float quadratic;
+    float spotCutOff;
+    float spotExponent;
 public:
     Light();
     virtual void UpdateUniform();

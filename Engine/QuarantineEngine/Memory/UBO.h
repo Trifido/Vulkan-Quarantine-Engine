@@ -11,13 +11,13 @@ struct LightUniform
 {
     glm::vec4 position;
     glm::vec3 diffuse;
-    glm::vec3 specular;
-    //glm::vec3 ambient;
-    //float cutOff;
-    //float outerCutOff;
     float constant;
+    glm::vec3 specular;
     float linear;
+    glm::vec3 spotDirection;
     float quadratic;
+    float spotCutOff;
+    float spotExponent;
 };
 
 struct LightManagerUniform

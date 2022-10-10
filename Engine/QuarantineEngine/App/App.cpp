@@ -158,17 +158,18 @@ void App::initVulkan()
     //textureManager->AddTexture("normal_brick", CustomTexture(TEXTURE_WALL_NORMAL_PATH, TEXTURE_TYPE::NORMAL_TYPE));
    
 
+    //models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::QUAD_TYPE)));
+    //models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    //models.at(0)->transform->SetScale(glm::vec3(1.0f, 1.0f, 1.0f));
+
     models.push_back(std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH)));
     models.at(0)->transform->SetScale(glm::vec3(0.1f));
-    models.at(0)->transform->SetPosition(glm::vec3(0.0f, -4.0f, 0.0f));
-
-    ///models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::QUAD_TYPE)));
-    //models.at(0)->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 0.0f));
+    models.at(0)->transform->SetPosition(glm::vec3(0.0f, -4.0f, 10.0f));
 
     //Creamos el shader module para el material
-    std::shared_ptr<ShaderModule> shader_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
-    shader_ptr->createShaderBindings();
-    this->shaderManager->AddShader("shader", shader_ptr);
+    //std::shared_ptr<ShaderModule> shader_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
+    //shader_ptr->createShaderBindings();
+    //this->shaderManager->AddShader("shader", shader_ptr);
 
     //Creamos el material
     //std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(Material(this->shaderManager->GetShader("shader"), renderPassModule->renderPass));
@@ -198,10 +199,14 @@ void App::initVulkan()
     //this->lightManager->GetLight("PointLight1")->linear = 0.09f;
     //this->lightManager->GetLight("PointLight1")->quadratic = 0.032f;
 
-    this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
-    this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 0.0f));
-    this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
-    this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.8f);
+    this->lightManager->CreateLight(LightType::SPOT_LIGHT, "DirectionalLight0");
+    this->lightManager->GetLight("DirectionalLight0")->transform->SetPosition(glm::vec3(0.0f, 0.0f, 3.0f));
+    this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(0.0f, 0.0f, -1.0f));
+    this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(1.0f);
+    this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.80f);
+    this->lightManager->GetLight("DirectionalLight0")->constant = 1.0f;
+    this->lightManager->GetLight("DirectionalLight0")->linear = 0.09f;
+    this->lightManager->GetLight("DirectionalLight0")->quadratic = 0.032f;
 
     this->lightManager->UpdateUniform();
     // END -------------------------- Lights ----------------------------------------
@@ -226,33 +231,33 @@ void App::mainLoop()
 
         if (ImGui::IsKeyDown('j') || ImGui::IsKeyDown('J'))
         {
-            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            newPos.x += 0.1f;
-            this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
+            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Position;
+            newPos.x += 0.01f;
+            this->lightManager->GetLight("DirectionalLight0")->transform->SetPosition(newPos);
 
             this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('l') || ImGui::IsKeyDown('L'))
         {
-            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            newPos.x -= 0.1f;
-            this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
+            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Position;
+            newPos.x -= 0.01f;
+            this->lightManager->GetLight("DirectionalLight0")->transform->SetPosition(newPos);
 
             this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('I'))
         {
-            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            newPos.z += 0.1f;
-            this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
+            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Position;
+            newPos.y += 0.01f;
+            this->lightManager->GetLight("DirectionalLight0")->transform->SetPosition(newPos);
 
             this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('K'))
         {
-            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            newPos.z -= 0.1f;
-            this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
+            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Position;
+            newPos.y -= 0.01f;
+            this->lightManager->GetLight("DirectionalLight0")->transform->SetPosition(newPos);
 
             this->lightManager->UpdateUniform();
         }
