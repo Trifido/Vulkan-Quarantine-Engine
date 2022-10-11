@@ -293,6 +293,8 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
     if (material == nullptr)
         return;
 
+    auto countTextures = material->GetTextureCount(aiTextureType_NONE);
+
     aiReturn ret;//Code which says whether loading something has been successful of not
 
     aiString rawName;
@@ -310,6 +312,22 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
         if (textureName != "")
         {
             mat->AddTexture(this->textureManager->GetTexture(textureName));
+        }
+        else
+        {
+            textureName = this->GetTexture(material, aiTextureType_BASE_COLOR, TEXTURE_TYPE::DIFFUSE_TYPE);
+            if (textureName != "")
+            {
+                mat->AddTexture(this->textureManager->GetTexture(textureName));
+            }
+            else
+            {
+                textureName = this->GetTexture(material, aiTextureType_DIFFUSE_ROUGHNESS, TEXTURE_TYPE::DIFFUSE_TYPE);
+                if (textureName != "")
+                {
+                    mat->AddTexture(this->textureManager->GetTexture(textureName));
+                }
+            }
         }
 
         textureName = this->GetTexture(material, aiTextureType_SPECULAR, TEXTURE_TYPE::SPECULAR_TYPE);
@@ -354,6 +372,7 @@ std::string MeshImporter::GetTexture(aiMaterial* mat, aiTextureType type, TEXTUR
 {
     aiString str;
     mat->Get(AI_MATKEY_TEXTURE(type, 0), str);
+
     if (auto texture = scene->GetEmbeddedTexture(str.C_Str())) {
     //    //returned pointer is not null, read texture from memory
 

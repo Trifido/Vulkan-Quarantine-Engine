@@ -93,7 +93,7 @@ void main()
         {
             resultPoint += ComputePointLight(uboLight.lights[i], i, normal, texCoords);
         }
-        else if(uboLight.lights[i].linear == 0.0 && uboLight.lights[i].spotCutoff == 0.0)
+        else if(uboLight.lights[i].spotCutoff == 0.0)
         {
             resultDir += ComputeDirectionalLight(uboLight.lights[i], i, normal, texCoords);
         }
@@ -146,12 +146,13 @@ vec3 ComputePointLight(LightData light, int id, vec3 normal, vec2 texCoords)
 
 vec3 ComputeDirectionalLight(LightData light, int id, vec3 normal, vec2 texCoords)
 {
+    vec3 lightDir = normalize(fs_in.TangentLightPos[id]);
+
     // - DIFFUSE
     vec3 colorDiffuse = vec3 (1.0, 1.0, 1.0);
     if(uboMaterial.idxDiffuse > -1)
         colorDiffuse = vec3(texture(texSampler[uboMaterial.idxDiffuse], texCoords));
 
-    vec3 lightDir = normalize(-fs_in.TangentLightPos[id]);
     float diff = max(dot(lightDir, normal), 0.0);
     vec3 diffuse = diff * light.diffuse * colorDiffuse;
 
