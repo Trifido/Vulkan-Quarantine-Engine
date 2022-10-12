@@ -119,6 +119,15 @@
     <Filter Include="Kernel\Utilities\Material\sources">
       <UniqueIdentifier>{68b325ea-8e1e-4aa7-9d5f-e299b6a0fae1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Kernel\Utilities\Physics">
+      <UniqueIdentifier>{cec6e70c-d834-44ef-8dd4-281a50208701}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Utilities\Physics\headers">
+      <UniqueIdentifier>{1a48413a-e798-41f7-a99e-750f87b0e1fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Utilities\Physics\sources">
+      <UniqueIdentifier>{debbca75-bb43-4891-bf5c-fdcbcf9a6e7d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -273,6 +282,9 @@
     </ClCompile>
     <ClCompile Include="Utilities\Light\SpotLight.cpp">
       <Filter>Kernel\Utilities\Light\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Physics\PhysicTest.cpp">
+      <Filter>Kernel\Utilities\Physics\sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -433,6 +445,9 @@
     </ClInclude>
     <ClInclude Include="Utilities\Light\SpotLight.h">
       <Filter>Kernel\Utilities\Light\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Physics\PhysicTest.h">
+      <Filter>Kernel\Utilities\Physics\headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
