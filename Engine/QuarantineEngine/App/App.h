@@ -62,6 +62,9 @@ const std::string TEXTURE_BUMP_PATH = "../../resources/models/head/bump.png";
 const std::string TEXTURE_WALL_PATH = "../../resources/textures/wall/brickwall.jpg";
 const std::string TEXTURE_HOUSE_PATH = "../../resources/textures/viking_room.png";
 
+const std::string TEXTURE_CONTAINER_PATH = "../../resources/textures/container2.png";
+const std::string TEXTURE_CONTAINERSPEC_PATH = "../../resources/textures/container2_specular.png";
+
 enum class ERROR_RESIZE
 {
     SWAPCHAIN_ERROR = 0,

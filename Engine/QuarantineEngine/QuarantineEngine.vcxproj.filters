@@ -286,6 +286,9 @@
     <ClCompile Include="Utilities\Physics\PhysicTest.cpp">
       <Filter>Kernel\Utilities\Physics\sources</Filter>
     </ClCompile>
+    <ClCompile Include="Utilities\Physics\Collider.cpp">
+      <Filter>Kernel\Utilities\Physics\sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SetUp\DeviceModule.h">
@@ -447,6 +450,9 @@
       <Filter>Kernel\Utilities\Light\headers</Filter>
     </ClInclude>
     <ClInclude Include="Utilities\Physics\PhysicTest.h">
+      <Filter>Kernel\Utilities\Physics\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Physics\Collider.h">
       <Filter>Kernel\Utilities\Physics\headers</Filter>
     </ClInclude>
   </ItemGroup>

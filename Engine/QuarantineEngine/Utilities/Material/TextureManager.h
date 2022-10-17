@@ -4,6 +4,7 @@
 #define TEXTURE_MANAGER_H
 
 #include <CustomTexture.h>
+#include <unordered_map>
 
 class TextureManager
 {

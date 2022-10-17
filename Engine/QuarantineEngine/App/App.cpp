@@ -5,6 +5,8 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
 
+#include <PhysicTest.h>
+
 App::App()
 {
     this->deltaTime = this->lastFrame = 0;
@@ -17,6 +19,8 @@ App::App()
 
 void App::run()
 {
+    //Check Physics
+
     initWindow();
     initVulkan();
     mainLoop();
@@ -154,34 +158,34 @@ void App::initVulkan()
 
     MaterialManager* instanceMaterial = MaterialManager::getInstance();
     //Creamos la textura
-    //textureManager->AddTexture("diffuse_brick", CustomTexture(TEXTURE_WALL_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
-    //textureManager->AddTexture("normal_brick", CustomTexture(TEXTURE_WALL_NORMAL_PATH, TEXTURE_TYPE::NORMAL_TYPE));
+    textureManager->AddTexture("diffuse_container", CustomTexture(TEXTURE_CONTAINER_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
+    textureManager->AddTexture("specular_container", CustomTexture(TEXTURE_CONTAINERSPEC_PATH, TEXTURE_TYPE::SPECULAR_TYPE));
    
 
-    //models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::QUAD_TYPE)));
+    models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE)));
     //models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
     //models.at(0)->transform->SetScale(glm::vec3(1.0f, 1.0f, 1.0f));
 
-    models.push_back(std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH)));
+    //models.push_back(std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH)));
     //models.at(0)->transform->SetScale(glm::vec3(0.1f));
-    models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    //models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 
     //Creamos el shader module para el material
-    //std::shared_ptr<ShaderModule> shader_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
-    //shader_ptr->createShaderBindings();
-    //this->shaderManager->AddShader("shader", shader_ptr);
+    std::shared_ptr<ShaderModule> shader_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
+    shader_ptr->createShaderBindings();
+    this->shaderManager->AddShader("shader", shader_ptr);
 
     //Creamos el material
-    //std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(Material(this->shaderManager->GetShader("shader"), renderPassModule->renderPass));
-    //mat_ptr->AddNullTexture(textureManager->GetTexture("NULL"));
-    //mat_ptr->AddTexture(textureManager->GetTexture("diffuse_brick"));
-    //mat_ptr->AddTexture(textureManager->GetTexture("normal_brick"));
-    //mat_ptr->AddPipeline(graphicsPipelineModule);
-    //materialManager->AddMaterial("mat", mat_ptr);
+    std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(Material(this->shaderManager->GetShader("shader"), renderPassModule->renderPass));
+    mat_ptr->AddNullTexture(textureManager->GetTexture("NULL"));
+    mat_ptr->AddTexture(textureManager->GetTexture("diffuse_container"));
+    mat_ptr->AddTexture(textureManager->GetTexture("specular_container"));
+    mat_ptr->AddPipeline(graphicsPipelineModule);
+    materialManager->AddMaterial("mat", mat_ptr);
 
 
     //Linkamos el material al gameobject
-    //models.at(0)->addMaterial(materialManager->GetMaterial("mat"));
+    models.at(0)->addMaterial(materialManager->GetMaterial("mat"));
     // END -------------------------- Mesh & Material -------------------------------
 
     // INIT ------------------------- Lights ----------------------------------------
