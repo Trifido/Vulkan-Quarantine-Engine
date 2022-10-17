@@ -5,8 +5,6 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
 
-#include <PhysicTest.h>
-
 App::App()
 {
     this->deltaTime = this->lastFrame = 0;
