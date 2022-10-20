@@ -25,7 +25,8 @@
 #include "AntiAliasingModule.h"
 #include "RenderPassModule.h"
 
-//#include "MaterialModule.h"
+//  Physics System
+#include "PhysicsModule.h"
 
 //#include "RayTracingModule.h"
 
@@ -108,11 +109,14 @@ private:
     SynchronizationModule   synchronizationModule;
     VkDescriptorPool        imguiPool {};
 
-    DepthBufferModule*                  depthBufferModule;
-    AntiAliasingModule*                 antialiasingModule;
-    RenderPassModule*                   renderPassModule;
+    PhysicsModule*          physicsModule;
+
+    DepthBufferModule*      depthBufferModule;
+    AntiAliasingModule*     antialiasingModule;
+    RenderPassModule*       renderPassModule;
 
     std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule;
+
 
     bool show_demo_window = true;
     bool show_another_window = true;

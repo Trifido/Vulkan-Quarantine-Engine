@@ -185,6 +185,7 @@
     <ClCompile Include="Memory\DescriptorModule.cpp" />
     <ClCompile Include="Memory\TextureManagerModule.cpp" />
     <ClCompile Include="Memory\UBO.cpp" />
+    <ClCompile Include="PhysicsModule.cpp" />
     <ClCompile Include="Presentation\AntiAliasingModule.cpp" />
     <ClCompile Include="Presentation\DepthBufferModule.cpp" />
     <ClCompile Include="Presentation\ImageViewModule.cpp" />
@@ -214,7 +215,6 @@
     <ClCompile Include="Utilities\Material\ShaderManager.cpp" />
     <ClCompile Include="Utilities\Material\TextureManager.cpp" />
     <ClCompile Include="Utilities\Physics\Collider.cpp" />
-    <ClCompile Include="Utilities\Physics\PhysicTest.cpp" />
     <ClCompile Include="Utilities\Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -274,7 +274,7 @@
     <ClInclude Include="Utilities\Material\TextureManager.h" />
     <ClInclude Include="Utilities\Material\TextureTypes.h" />
     <ClInclude Include="Utilities\Physics\Collider.h" />
-    <ClInclude Include="Utilities\Physics\PhysicTest.h" />
+    <ClInclude Include="Utilities\Physics\PhysicsModule.h" />
     <ClInclude Include="Utilities\Transform.h" />
   </ItemGroup>
   <ItemGroup>

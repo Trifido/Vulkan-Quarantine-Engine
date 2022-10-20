@@ -5,19 +5,17 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
 
-#include <PhysicTest.h>
 
 App::App()
 {
-    PhysicTest test;
-    test.Check();
-
     this->deltaTime = this->lastFrame = 0;
 
     this->keyboard_ptr = KeyboardController::getInstance();
     this->commandPoolModule = CommandPoolModule::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->deviceModule = DeviceModule::getInstance();
+
+    this->physicsModule = PhysicsModule::getInstance();
 }
 
 void App::run()
@@ -231,6 +229,10 @@ void App::mainLoop()
         glfwPollEvents();
         computeDeltaTime();
 
+        //PHYSIC SYSTEM
+        this->physicsModule->ComputePhysics((float)this->deltaTime);
+
+        // INPUT EVENTS
         this->keyboard_ptr->ReadKeyboardEvents();
         this->cameraEditor->CameraController((float)deltaTime);
 
@@ -355,6 +357,8 @@ void App::cleanUp()
     glfwDestroyWindow(mainWindow.getWindow());
 
     glfwTerminate();
+
+    delete physicsModule;
 }
 
 void App::cleanUpSwapchain()

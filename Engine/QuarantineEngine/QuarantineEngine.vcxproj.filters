@@ -283,10 +283,10 @@
     <ClCompile Include="Utilities\Light\SpotLight.cpp">
       <Filter>Kernel\Utilities\Light\sources</Filter>
     </ClCompile>
-    <ClCompile Include="Utilities\Physics\PhysicTest.cpp">
+    <ClCompile Include="Utilities\Physics\Collider.cpp">
       <Filter>Kernel\Utilities\Physics\sources</Filter>
     </ClCompile>
-    <ClCompile Include="Utilities\Physics\Collider.cpp">
+    <ClCompile Include="PhysicsModule.cpp">
       <Filter>Kernel\Utilities\Physics\sources</Filter>
     </ClCompile>
   </ItemGroup>
@@ -449,10 +449,10 @@
     <ClInclude Include="Utilities\Light\SpotLight.h">
       <Filter>Kernel\Utilities\Light\headers</Filter>
     </ClInclude>
-    <ClInclude Include="Utilities\Physics\PhysicTest.h">
+    <ClInclude Include="Utilities\Physics\Collider.h">
       <Filter>Kernel\Utilities\Physics\headers</Filter>
     </ClInclude>
-    <ClInclude Include="Utilities\Physics\Collider.h">
+    <ClInclude Include="Utilities\Physics\PhysicsModule.h">
       <Filter>Kernel\Utilities\Physics\headers</Filter>
     </ClInclude>
   </ItemGroup>
