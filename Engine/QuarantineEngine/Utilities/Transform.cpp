@@ -53,3 +53,8 @@ const glm::mat4& Transform::GetModel()
 {
     return model;
 }
+
+void Transform::SetModel(const glm::mat4& newModel)
+{
+    this->model = newModel;
+}

@@ -2,13 +2,13 @@
 #ifndef COLLIDER_H
 #define COLLIDER_H
 
+#include "GameComponent.h"
 #include "btBulletDynamicsCommon.h"
 
-class Collider 
+class Collider : public GameComponent
 {
-protected:
-    
 public:
+    btCollisionShape* colShape = nullptr;
 };
 
 #endif 

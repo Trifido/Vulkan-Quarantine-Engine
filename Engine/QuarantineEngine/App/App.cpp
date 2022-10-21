@@ -157,34 +157,49 @@ void App::initVulkan()
 
     MaterialManager* instanceMaterial = MaterialManager::getInstance();
     //Creamos la textura
-    //textureManager->AddTexture("diffuse_brick", CustomTexture(TEXTURE_WALL_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
-    //textureManager->AddTexture("normal_brick", CustomTexture(TEXTURE_WALL_NORMAL_PATH, TEXTURE_TYPE::NORMAL_TYPE));
+    textureManager->AddTexture("diffuse_brick", CustomTexture(TEXTURE_WALL_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
+    textureManager->AddTexture("normal_brick", CustomTexture(TEXTURE_WALL_NORMAL_PATH, TEXTURE_TYPE::NORMAL_TYPE));
 
 
-    //models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::QUAD_TYPE)));
-    //models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE)));
+    models.at(0)->transform->SetPosition(glm::vec3(0.0f, 8.0f, 0.0f));
+    models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE)));
+    models.at(1)->transform->SetPosition(glm::vec3(0.1f, 12.0f, 0.0f));
+    models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE)));
+    models.at(2)->transform->SetPosition(glm::vec3(0.0f, 5.0f, 0.1f));
+    models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE)));
+    models.at(3)->transform->SetPosition(glm::vec3(0.2f, 20.0f, 0.3f));
     //models.at(0)->transform->SetScale(glm::vec3(1.0f, 1.0f, 1.0f));
 
-    models.push_back(std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH)));
+    models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE)));
+    //models.at(1)->transform->SetOrientation(glm::vec3(-1.5708f, 0.0f, 0.0f));
+    //models.at(1)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    //models.at(1)->transform->SetScale(glm::vec3(5.0f, 1.0f, 5.0f));
+
+    //models.push_back(std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH)));
     //models.at(0)->transform->SetScale(glm::vec3(0.1f));
-    models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    //models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 
     //Creamos el shader module para el material
-    //std::shared_ptr<ShaderModule> shader_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
-    //shader_ptr->createShaderBindings();
-    //this->shaderManager->AddShader("shader", shader_ptr);
+    std::shared_ptr<ShaderModule> shader_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
+    shader_ptr->createShaderBindings();
+    this->shaderManager->AddShader("shader", shader_ptr);
 
     //Creamos el material
-    //std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(Material(this->shaderManager->GetShader("shader"), renderPassModule->renderPass));
-    //mat_ptr->AddNullTexture(textureManager->GetTexture("NULL"));
-    //mat_ptr->AddTexture(textureManager->GetTexture("diffuse_brick"));
-    //mat_ptr->AddTexture(textureManager->GetTexture("normal_brick"));
-    //mat_ptr->AddPipeline(graphicsPipelineModule);
-    //materialManager->AddMaterial("mat", mat_ptr);
+    std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(Material(this->shaderManager->GetShader("shader"), renderPassModule->renderPass));
+    mat_ptr->AddNullTexture(textureManager->GetTexture("NULL"));
+    mat_ptr->AddTexture(textureManager->GetTexture("diffuse_brick"));
+    mat_ptr->AddTexture(textureManager->GetTexture("normal_brick"));
+    mat_ptr->AddPipeline(graphicsPipelineModule);
+    materialManager->AddMaterial("mat", mat_ptr);
 
 
     //Linkamos el material al gameobject
-    //models.at(0)->addMaterial(materialManager->GetMaterial("mat"));
+    models.at(0)->addMaterial(materialManager->GetMaterial("mat"));
+    models.at(1)->addMaterial(materialManager->GetMaterial("mat"));
+    models.at(2)->addMaterial(materialManager->GetMaterial("mat"));
+    models.at(3)->addMaterial(materialManager->GetMaterial("mat"));
+    models.at(4)->addMaterial(materialManager->GetMaterial("mat"));
     // END -------------------------- Mesh & Material -------------------------------
 
     // INIT ------------------------- Lights ----------------------------------------
@@ -214,6 +229,48 @@ void App::initVulkan()
     this->lightManager->UpdateUniform();
     // END -------------------------- Lights ----------------------------------------
 
+    // Initialize Physics
+
+    std::shared_ptr<PhysicBody> rigidBody = std::make_shared<PhysicBody>(PhysicBody(PhysicBodyType::RIGID_BODY));
+    rigidBody->Mass = 0.001f;
+    this->models[0]->addPhysicBody(rigidBody);
+    std::shared_ptr<BoxCollider> boxCollider = std::make_shared<BoxCollider>();
+    this->models[0]->addCollider(boxCollider);
+
+
+    std::shared_ptr<PhysicBody> rigidBody1 = std::make_shared<PhysicBody>(PhysicBody(PhysicBodyType::RIGID_BODY));
+    rigidBody1->Mass = 0.001f;
+    this->models[1]->addPhysicBody(rigidBody1);
+    std::shared_ptr<BoxCollider> boxCollider1 = std::make_shared<BoxCollider>();
+    this->models[1]->addCollider(boxCollider1);
+
+
+    std::shared_ptr<PhysicBody> rigidBody2 = std::make_shared<PhysicBody>(PhysicBody(PhysicBodyType::RIGID_BODY));
+    rigidBody2->Mass = 0.001f;
+    this->models[2]->addPhysicBody(rigidBody2);
+    std::shared_ptr<BoxCollider> boxCollider2 = std::make_shared<BoxCollider>();
+    this->models[2]->addCollider(boxCollider2);
+
+
+    std::shared_ptr<PhysicBody> rigidBody3 = std::make_shared<PhysicBody>(PhysicBody(PhysicBodyType::RIGID_BODY));
+    rigidBody3->Mass = 0.001f;
+    this->models[3]->addPhysicBody(rigidBody3);
+    std::shared_ptr<BoxCollider> boxCollider3 = std::make_shared<BoxCollider>();
+    this->models[3]->addCollider(boxCollider3);
+
+    std::shared_ptr<PhysicBody> staticBody = std::make_shared<PhysicBody>();
+    this->models[4]->addPhysicBody(staticBody);
+    std::shared_ptr<PlaneCollider> planeCollider = std::make_shared<PlaneCollider>();
+    planeCollider->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
+    //std::shared_ptr<BoxCollider> planeCollider = std::make_shared<BoxCollider>();
+    //planeCollider->SetSize(glm::vec3(5.0, 0.001f, 5.0f));
+    this->models[4]->addCollider(planeCollider);
+
+    for (auto model : models)
+    {
+        model->InitializePhysics();
+    }
+
     materialManager->InitializeMaterials();
 
     commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass, models);
@@ -231,6 +288,12 @@ void App::mainLoop()
 
         //PHYSIC SYSTEM
         this->physicsModule->ComputePhysics((float)this->deltaTime);
+
+        // Update transforms
+        for (auto model : models)
+        {
+            model->UpdatePhysicTransform();
+        }
 
         // INPUT EVENTS
         this->keyboard_ptr->ReadKeyboardEvents();

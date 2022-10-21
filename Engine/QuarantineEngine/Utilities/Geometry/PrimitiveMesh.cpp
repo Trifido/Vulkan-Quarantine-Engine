@@ -30,6 +30,9 @@ void PrimitiveMesh::InitializeMesh()
     case PRIMITIVE_TYPE::QUAD_TYPE:
         this->InitializePlane();
         break;
+    case PRIMITIVE_TYPE::PLANE_TYPE:
+        this->InitializeFloorPlane();
+        break;
     case PRIMITIVE_TYPE::SPHERE_TYPE:
         this->InitializeSphere();
         break;
@@ -114,12 +117,44 @@ void PrimitiveMesh::InitializePlane()
     MeshImporter::RecreateTangents(this->vertices, this->indices);
 }
 
+void PrimitiveMesh::InitializeFloorPlane()
+{
+    this->vertices.resize(4);
+    PBRVertex vert;
+
+    vert.pos = glm::vec3(0.5f, 0.0f, 0.5f);
+    vert.texCoord = glm::vec2(1.0f, 1.0f);
+    this->vertices[0] = vert;
+
+    vert.pos = glm::vec3(-0.5f, 0.0f, -0.5f);
+    vert.texCoord = glm::vec2(0.0f, 0.0f);
+    this->vertices[1] = vert;
+
+    vert.pos = glm::vec3(-0.5f, 0.0f, 0.5f);
+    vert.texCoord = glm::vec2(1.0f, 0.0f);
+    this->vertices[2] = vert;
+
+    vert.pos = glm::vec3(0.5f, 0.0f, -0.5f);
+    vert.texCoord = glm::vec2(0.0f, 1.0f);
+    this->vertices[3] = vert;
+
+    this->indices.resize(6);
+    this->indices = { 0, 1, 2, 0, 3, 1 };
+
+    MeshImporter::RecreateNormals(this->vertices, this->indices);
+    MeshImporter::RecreateTangents(this->vertices, this->indices);
+}
+
 void PrimitiveMesh::InitializeCube()
 {
     MeshData data = MeshImporter::LoadRawMesh(cubevertices, 36, 8);
 
     this->vertices = data.vertices;
     this->indices = data.indices;
+
+
+    MeshImporter::RecreateNormals(this->vertices, this->indices);
+    MeshImporter::RecreateTangents(this->vertices, this->indices);
 }
 
 void PrimitiveMesh::InitializeSphere()

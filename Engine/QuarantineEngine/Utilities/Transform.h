@@ -31,6 +31,7 @@ public:
     void SetScale(const glm::vec3& newScale);
     void ResetTransform();
     const glm::mat4& GetModel();
+    void SetModel(const glm::mat4& newModel);
 };
 
 #endif

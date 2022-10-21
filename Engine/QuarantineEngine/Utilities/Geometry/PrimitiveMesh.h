@@ -22,6 +22,7 @@ private:
     void InitializePoint();
     void InitializeTriangle();
     void InitializePlane();
+    void InitializeFloorPlane();
     void InitializeCube();
     void InitializeSphere();
     void createVertexBuffer() override;
