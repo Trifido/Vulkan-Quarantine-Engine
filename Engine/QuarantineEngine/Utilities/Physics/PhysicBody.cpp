@@ -49,19 +49,21 @@ void PhysicBody::Initialize(std::shared_ptr<Transform> transform_ptr, std::share
 {
     this->transform = transform_ptr;
     this->collider = collider_ptr;
+
     btTransform startTransform;
-    /// Assign transform matrix & create motion state
-    //if (this->Type == PhysicBodyType::RIGID_BODY)
-    //{
-        startTransform = glmToBullet(transform_ptr->GetModel());
-    //    startTransform.setIdentity();
-    //    startTransform.setOrigin(btVector3(0, 8, 0));
-    //}
-    //else
-    //{
-    //    startTransform.setIdentity();
-    //    startTransform.setOrigin(btVector3(0, 0, 0));
-    //}
+    startTransform.setIdentity();
+
+    glm::vec3 scale = this->transform->Scale;
+    collider_ptr->colShape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
+
+    glm::vec3 position = this->transform->Position;
+    startTransform.setOrigin(btVector3(position.x, position.y, position.z));
+
+    float yaw = this->transform->RadiansRotation.x;
+    float pitch = this->transform->RadiansRotation.y;
+    float roll = this->transform->RadiansRotation.z;
+    btQuaternion rotation(yaw, pitch, roll);
+    startTransform.setRotation(rotation);
 
     btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
 

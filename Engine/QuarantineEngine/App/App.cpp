@@ -159,22 +159,24 @@ void App::initVulkan()
     //Creamos la textura
     textureManager->AddTexture("diffuse_brick", CustomTexture(TEXTURE_WALL_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
     textureManager->AddTexture("normal_brick", CustomTexture(TEXTURE_WALL_NORMAL_PATH, TEXTURE_TYPE::NORMAL_TYPE));
+    textureManager->AddTexture("test", CustomTexture(TEXTURE_TEST_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
 
 
     models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE)));
-    models.at(0)->transform->SetPosition(glm::vec3(0.0f, 8.0f, 0.0f));
-    models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE)));
-    models.at(1)->transform->SetPosition(glm::vec3(0.1f, 12.0f, 0.0f));
-    models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE)));
-    models.at(2)->transform->SetPosition(glm::vec3(0.0f, 5.0f, 0.1f));
-    models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE)));
-    models.at(3)->transform->SetPosition(glm::vec3(0.2f, 20.0f, 0.3f));
+    models.at(0)->transform->SetPosition(glm::vec3(0.0f, 20.0f, 0.0f));
+    models.at(0)->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 65.0f));
+
     //models.at(0)->transform->SetScale(glm::vec3(1.0f, 1.0f, 1.0f));
 
     models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE)));
-    //models.at(1)->transform->SetOrientation(glm::vec3(-1.5708f, 0.0f, 0.0f));
-    //models.at(1)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-    //models.at(1)->transform->SetScale(glm::vec3(5.0f, 1.0f, 5.0f));
+    models.at(1)->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 45.0f));
+    models.at(1)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    models.at(1)->transform->SetScale(glm::vec3(10.0f, 1.0f, 10.0f));
+
+
+    models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE)));
+    models.at(2)->transform->SetPosition(glm::vec3(0.0f, -5.0f, 0.0f));
+    models.at(2)->transform->SetScale(glm::vec3(50.0f, 1.0f, 50.0f));
 
     //models.push_back(std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH)));
     //models.at(0)->transform->SetScale(glm::vec3(0.1f));
@@ -193,13 +195,18 @@ void App::initVulkan()
     mat_ptr->AddPipeline(graphicsPipelineModule);
     materialManager->AddMaterial("mat", mat_ptr);
 
+    std::shared_ptr<Material> mat_ptr2 = std::make_shared<Material>(Material(this->shaderManager->GetShader("shader"), renderPassModule->renderPass));
+    mat_ptr2->AddNullTexture(textureManager->GetTexture("NULL"));
+    mat_ptr2->AddTexture(textureManager->GetTexture("test"));
+    mat_ptr2->AddPipeline(graphicsPipelineModule);
+    materialManager->AddMaterial("mat2", mat_ptr2);
+
 
     //Linkamos el material al gameobject
     models.at(0)->addMaterial(materialManager->GetMaterial("mat"));
     models.at(1)->addMaterial(materialManager->GetMaterial("mat"));
-    models.at(2)->addMaterial(materialManager->GetMaterial("mat"));
-    models.at(3)->addMaterial(materialManager->GetMaterial("mat"));
-    models.at(4)->addMaterial(materialManager->GetMaterial("mat"));
+    models.at(2)->addMaterial(materialManager->GetMaterial("mat2"));
+
     // END -------------------------- Mesh & Material -------------------------------
 
     // INIT ------------------------- Lights ----------------------------------------
@@ -219,7 +226,7 @@ void App::initVulkan()
 
     this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
     //this->lightManager->GetLight("DirectionalLight0")->transform->SetPosition(glm::vec3(0.0f, 0.S0f, 3.0f));
-    this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(0.0f, 0.0f, -1.0f));
+    this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(2.0f, 8.0f, -1.0f));
     this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(10.0f);
     this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.80f);
     this->lightManager->GetLight("DirectionalLight0")->constant = 1.0f;
@@ -238,33 +245,21 @@ void App::initVulkan()
     this->models[0]->addCollider(boxCollider);
 
 
-    std::shared_ptr<PhysicBody> rigidBody1 = std::make_shared<PhysicBody>(PhysicBody(PhysicBodyType::RIGID_BODY));
-    rigidBody1->Mass = 0.001f;
-    this->models[1]->addPhysicBody(rigidBody1);
-    std::shared_ptr<BoxCollider> boxCollider1 = std::make_shared<BoxCollider>();
-    this->models[1]->addCollider(boxCollider1);
-
-
-    std::shared_ptr<PhysicBody> rigidBody2 = std::make_shared<PhysicBody>(PhysicBody(PhysicBodyType::RIGID_BODY));
-    rigidBody2->Mass = 0.001f;
-    this->models[2]->addPhysicBody(rigidBody2);
-    std::shared_ptr<BoxCollider> boxCollider2 = std::make_shared<BoxCollider>();
-    this->models[2]->addCollider(boxCollider2);
-
-
-    std::shared_ptr<PhysicBody> rigidBody3 = std::make_shared<PhysicBody>(PhysicBody(PhysicBodyType::RIGID_BODY));
-    rigidBody3->Mass = 0.001f;
-    this->models[3]->addPhysicBody(rigidBody3);
-    std::shared_ptr<BoxCollider> boxCollider3 = std::make_shared<BoxCollider>();
-    this->models[3]->addCollider(boxCollider3);
-
     std::shared_ptr<PhysicBody> staticBody = std::make_shared<PhysicBody>();
-    this->models[4]->addPhysicBody(staticBody);
+    this->models[1]->addPhysicBody(staticBody);
     std::shared_ptr<PlaneCollider> planeCollider = std::make_shared<PlaneCollider>();
     planeCollider->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
     //std::shared_ptr<BoxCollider> planeCollider = std::make_shared<BoxCollider>();
-    //planeCollider->SetSize(glm::vec3(5.0, 0.001f, 5.0f));
-    this->models[4]->addCollider(planeCollider);
+    //planeCollider->SetSize(glm::vec3(1.0, 0.001f, 1.0f));
+    this->models[1]->addCollider(planeCollider);
+
+
+
+    std::shared_ptr<PhysicBody> staticBody2 = std::make_shared<PhysicBody>();
+    this->models[2]->addPhysicBody(staticBody2);
+    std::shared_ptr<PlaneCollider> planeCollider2 = std::make_shared<PlaneCollider>();
+    planeCollider2->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
+    this->models[2]->addCollider(planeCollider2);
 
     for (auto model : models)
     {
