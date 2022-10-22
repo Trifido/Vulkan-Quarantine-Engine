@@ -25,7 +25,8 @@
 #include "AntiAliasingModule.h"
 #include "RenderPassModule.h"
 
-//#include "MaterialModule.h"
+//  Physics System
+#include "PhysicsModule.h"
 
 //#include "RayTracingModule.h"
 
@@ -60,7 +61,11 @@ const std::string MODEL_PUMPKIN_PATH = "../../resources/models/pumpkin/pumpkin.o
 const std::string TEXTURE_PATH = "../../resources/models/head/lambertian.jpg";
 const std::string TEXTURE_BUMP_PATH = "../../resources/models/head/bump.png";
 const std::string TEXTURE_WALL_PATH = "../../resources/textures/wall/brickwall.jpg";
+const std::string TEXTURE_TEST_PATH = "../../resources/textures/test.png";
 const std::string TEXTURE_HOUSE_PATH = "../../resources/textures/viking_room.png";
+
+const std::string TEXTURE_CONTAINER_PATH = "../../resources/textures/container2.png";
+const std::string TEXTURE_CONTAINERSPEC_PATH = "../../resources/textures/container2_specular.png";
 
 enum class ERROR_RESIZE
 {
@@ -105,11 +110,14 @@ private:
     SynchronizationModule   synchronizationModule;
     VkDescriptorPool        imguiPool {};
 
-    DepthBufferModule*                  depthBufferModule;
-    AntiAliasingModule*                 antialiasingModule;
-    RenderPassModule*                   renderPassModule;
+    PhysicsModule*          physicsModule;
+
+    DepthBufferModule*      depthBufferModule;
+    AntiAliasingModule*     antialiasingModule;
+    RenderPassModule*       renderPassModule;
 
     std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule;
+
 
     bool show_demo_window = true;
     bool show_another_window = true;

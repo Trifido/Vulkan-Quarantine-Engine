@@ -5,6 +5,7 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
 
+
 App::App()
 {
     this->deltaTime = this->lastFrame = 0;
@@ -13,6 +14,8 @@ App::App()
     this->commandPoolModule = CommandPoolModule::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->deviceModule = DeviceModule::getInstance();
+
+    this->physicsModule = PhysicsModule::getInstance();
 }
 
 void App::run()
@@ -154,34 +157,56 @@ void App::initVulkan()
 
     MaterialManager* instanceMaterial = MaterialManager::getInstance();
     //Creamos la textura
-    //textureManager->AddTexture("diffuse_brick", CustomTexture(TEXTURE_WALL_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
-    //textureManager->AddTexture("normal_brick", CustomTexture(TEXTURE_WALL_NORMAL_PATH, TEXTURE_TYPE::NORMAL_TYPE));
-   
+    textureManager->AddTexture("diffuse_brick", CustomTexture(TEXTURE_WALL_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
+    textureManager->AddTexture("normal_brick", CustomTexture(TEXTURE_WALL_NORMAL_PATH, TEXTURE_TYPE::NORMAL_TYPE));
+    textureManager->AddTexture("test", CustomTexture(TEXTURE_TEST_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
 
-    //models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::QUAD_TYPE)));
-    //models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+
+    models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE)));
+    models.at(0)->transform->SetPosition(glm::vec3(0.0f, 20.0f, 0.0f));
+    models.at(0)->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 65.0f));
+
     //models.at(0)->transform->SetScale(glm::vec3(1.0f, 1.0f, 1.0f));
 
-    models.push_back(std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH)));
+    models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE)));
+    models.at(1)->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 45.0f));
+    models.at(1)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    models.at(1)->transform->SetScale(glm::vec3(10.0f, 1.0f, 10.0f));
+
+
+    models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE)));
+    models.at(2)->transform->SetPosition(glm::vec3(0.0f, -5.0f, 0.0f));
+    models.at(2)->transform->SetScale(glm::vec3(50.0f, 1.0f, 50.0f));
+
+    //models.push_back(std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH)));
     //models.at(0)->transform->SetScale(glm::vec3(0.1f));
-    models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    //models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 
     //Creamos el shader module para el material
-    //std::shared_ptr<ShaderModule> shader_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
-    //shader_ptr->createShaderBindings();
-    //this->shaderManager->AddShader("shader", shader_ptr);
+    std::shared_ptr<ShaderModule> shader_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
+    shader_ptr->createShaderBindings();
+    this->shaderManager->AddShader("shader", shader_ptr);
 
     //Creamos el material
-    //std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(Material(this->shaderManager->GetShader("shader"), renderPassModule->renderPass));
-    //mat_ptr->AddNullTexture(textureManager->GetTexture("NULL"));
-    //mat_ptr->AddTexture(textureManager->GetTexture("diffuse_brick"));
-    //mat_ptr->AddTexture(textureManager->GetTexture("normal_brick"));
-    //mat_ptr->AddPipeline(graphicsPipelineModule);
-    //materialManager->AddMaterial("mat", mat_ptr);
+    std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(Material(this->shaderManager->GetShader("shader"), renderPassModule->renderPass));
+    mat_ptr->AddNullTexture(textureManager->GetTexture("NULL"));
+    mat_ptr->AddTexture(textureManager->GetTexture("diffuse_brick"));
+    mat_ptr->AddTexture(textureManager->GetTexture("normal_brick"));
+    mat_ptr->AddPipeline(graphicsPipelineModule);
+    materialManager->AddMaterial("mat", mat_ptr);
+
+    std::shared_ptr<Material> mat_ptr2 = std::make_shared<Material>(Material(this->shaderManager->GetShader("shader"), renderPassModule->renderPass));
+    mat_ptr2->AddNullTexture(textureManager->GetTexture("NULL"));
+    mat_ptr2->AddTexture(textureManager->GetTexture("test"));
+    mat_ptr2->AddPipeline(graphicsPipelineModule);
+    materialManager->AddMaterial("mat2", mat_ptr2);
 
 
     //Linkamos el material al gameobject
-    //models.at(0)->addMaterial(materialManager->GetMaterial("mat"));
+    models.at(0)->addMaterial(materialManager->GetMaterial("mat"));
+    models.at(1)->addMaterial(materialManager->GetMaterial("mat"));
+    models.at(2)->addMaterial(materialManager->GetMaterial("mat2"));
+
     // END -------------------------- Mesh & Material -------------------------------
 
     // INIT ------------------------- Lights ----------------------------------------
@@ -201,7 +226,7 @@ void App::initVulkan()
 
     this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
     //this->lightManager->GetLight("DirectionalLight0")->transform->SetPosition(glm::vec3(0.0f, 0.S0f, 3.0f));
-    this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(0.0f, 0.0f, -1.0f));
+    this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(2.0f, 8.0f, -1.0f));
     this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(10.0f);
     this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.80f);
     this->lightManager->GetLight("DirectionalLight0")->constant = 1.0f;
@@ -210,6 +235,36 @@ void App::initVulkan()
 
     this->lightManager->UpdateUniform();
     // END -------------------------- Lights ----------------------------------------
+
+    // Initialize Physics
+
+    std::shared_ptr<PhysicBody> rigidBody = std::make_shared<PhysicBody>(PhysicBody(PhysicBodyType::RIGID_BODY));
+    rigidBody->Mass = 0.001f;
+    this->models[0]->addPhysicBody(rigidBody);
+    std::shared_ptr<BoxCollider> boxCollider = std::make_shared<BoxCollider>();
+    this->models[0]->addCollider(boxCollider);
+
+
+    std::shared_ptr<PhysicBody> staticBody = std::make_shared<PhysicBody>();
+    this->models[1]->addPhysicBody(staticBody);
+    std::shared_ptr<PlaneCollider> planeCollider = std::make_shared<PlaneCollider>();
+    planeCollider->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
+    //std::shared_ptr<BoxCollider> planeCollider = std::make_shared<BoxCollider>();
+    //planeCollider->SetSize(glm::vec3(1.0, 0.001f, 1.0f));
+    this->models[1]->addCollider(planeCollider);
+
+
+
+    std::shared_ptr<PhysicBody> staticBody2 = std::make_shared<PhysicBody>();
+    this->models[2]->addPhysicBody(staticBody2);
+    std::shared_ptr<PlaneCollider> planeCollider2 = std::make_shared<PlaneCollider>();
+    planeCollider2->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
+    this->models[2]->addCollider(planeCollider2);
+
+    for (auto model : models)
+    {
+        model->InitializePhysics();
+    }
 
     materialManager->InitializeMaterials();
 
@@ -226,6 +281,16 @@ void App::mainLoop()
         glfwPollEvents();
         computeDeltaTime();
 
+        //PHYSIC SYSTEM
+        this->physicsModule->ComputePhysics((float)this->deltaTime);
+
+        // Update transforms
+        for (auto model : models)
+        {
+            model->UpdatePhysicTransform();
+        }
+
+        // INPUT EVENTS
         this->keyboard_ptr->ReadKeyboardEvents();
         this->cameraEditor->CameraController((float)deltaTime);
 
@@ -350,6 +415,8 @@ void App::cleanUp()
     glfwDestroyWindow(mainWindow.getWindow());
 
     glfwTerminate();
+
+    delete physicsModule;
 }
 
 void App::cleanUpSwapchain()
@@ -406,7 +473,7 @@ void App::resizeSwapchain(VkResult result, ERROR_RESIZE errorResize)
     }
     else
     {
-        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ||  framebufferResized)
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized)
         {
             framebufferResized = false;
             recreateSwapchain();

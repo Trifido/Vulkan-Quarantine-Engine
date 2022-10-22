@@ -82,6 +82,16 @@ void GameObject::addEditorCamera(std::shared_ptr<Camera> camera_ptr)
     this->cameraEditor = camera_ptr;
 }
 
+void GameObject::addPhysicBody(std::shared_ptr<PhysicBody> physicBody_ptr)
+{
+    this->physicBody = physicBody_ptr;
+}
+
+void GameObject::addCollider(std::shared_ptr<Collider> collider_ptr)
+{
+    this->collider = collider_ptr;
+}
+
 void GameObject::InitializeComponents()
 {
     if (this->transform == nullptr)
@@ -100,6 +110,22 @@ void GameObject::InitializeComponents()
         {
             it->InitializeComponents();
         }
+    }
+}
+
+void GameObject::InitializePhysics()
+{
+    if (this->physicBody != nullptr && this->collider != nullptr)
+    {
+        this->physicBody->Initialize(this->transform, this->collider);
+    }   
+}
+
+void GameObject::UpdatePhysicTransform()
+{
+    if (this->physicBody != nullptr && this->collider != nullptr)
+    {
+        this->physicBody->UpdateTransform();
     }
 }
 

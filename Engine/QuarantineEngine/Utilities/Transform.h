@@ -14,13 +14,14 @@ private:
     glm::mat4 scale_mat;
     glm::mat4 rot_mat;
     glm::mat4 trans_mat;
-    glm::vec3 Scale;
 
 public:
     glm::vec3 Position;
     glm::vec3 Direction;
     glm::quat Orientation;
     glm::vec3 Rotation;
+    glm::vec3 RadiansRotation;
+    glm::vec3 Scale;
 
 public:
     Transform();
@@ -31,6 +32,7 @@ public:
     void SetScale(const glm::vec3& newScale);
     void ResetTransform();
     const glm::mat4& GetModel();
+    void SetModel(const glm::mat4& newModel);
 };
 
 #endif
