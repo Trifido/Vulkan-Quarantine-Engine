@@ -18,6 +18,9 @@ private:
     std::vector<VkCommandBuffer>    commandBuffers;
 
 public:
+    glm::vec3 ClearColor;
+
+public:
     CommandPoolModule();
     static CommandPoolModule* getInstance();
 

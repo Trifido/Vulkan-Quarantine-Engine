@@ -11,6 +11,8 @@ CommandPoolModule::CommandPoolModule()
 {
     deviceModule = DeviceModule::getInstance();
     swapchainModule = SwapChainModule::getInstance();
+
+    this->ClearColor = glm::vec3(0.1f);
 }
 
 CommandPoolModule* CommandPoolModule::getInstance()
@@ -73,7 +75,7 @@ void CommandPoolModule::Render(std::vector<VkFramebuffer>& swapChainFramebuffers
         renderPassInfo.renderArea.extent = swapchainModule->swapChainExtent;
 
         std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].color = { 0.1f, 0.1f, 0.1f, 1.0f };
+        clearValues[0].color = { this->ClearColor.x, this->ClearColor.y, this->ClearColor.z, 1.0f };
         clearValues[1].depthStencil = { 1.0f, 0 };
         renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
         renderPassInfo.pClearValues = clearValues.data();

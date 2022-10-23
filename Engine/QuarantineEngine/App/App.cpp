@@ -16,6 +16,8 @@ App::App()
     this->deviceModule = DeviceModule::getInstance();
 
     this->physicsModule = PhysicsModule::getInstance();
+
+    commandPoolModule->ClearColor = glm::vec3(0.1f);
 }
 
 void App::run()
@@ -156,32 +158,30 @@ void App::initVulkan()
 
 
     MaterialManager* instanceMaterial = MaterialManager::getInstance();
+
+/**/
     //Creamos la textura
     textureManager->AddTexture("diffuse_brick", CustomTexture(TEXTURE_WALL_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
     textureManager->AddTexture("normal_brick", CustomTexture(TEXTURE_WALL_NORMAL_PATH, TEXTURE_TYPE::NORMAL_TYPE));
     textureManager->AddTexture("test", CustomTexture(TEXTURE_TEST_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
 
-
     models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE)));
     models.at(0)->transform->SetPosition(glm::vec3(0.0f, 20.0f, 0.0f));
     models.at(0)->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 65.0f));
 
-    //models.at(0)->transform->SetScale(glm::vec3(1.0f, 1.0f, 1.0f));
-
     models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE)));
     models.at(1)->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 45.0f));
-    models.at(1)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-    models.at(1)->transform->SetScale(glm::vec3(10.0f, 1.0f, 10.0f));
-
+    models.at(1)->transform->SetPosition(glm::vec3(0.0f, 3.0f, 0.0f));
+    models.at(1)->transform->SetScale(glm::vec3(5.0f, 1.0f, 5.0f));
 
     models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE)));
-    models.at(2)->transform->SetPosition(glm::vec3(0.0f, -5.0f, 0.0f));
+    models.at(2)->transform->SetPosition(glm::vec3(0.0f, -0.10f, 0.0f));
     models.at(2)->transform->SetScale(glm::vec3(50.0f, 1.0f, 50.0f));
 
     //models.push_back(std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH)));
     //models.at(0)->transform->SetScale(glm::vec3(0.1f));
     //models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-
+   
     //Creamos el shader module para el material
     std::shared_ptr<ShaderModule> shader_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
     shader_ptr->createShaderBindings();
@@ -236,8 +236,10 @@ void App::initVulkan()
     this->lightManager->UpdateUniform();
     // END -------------------------- Lights ----------------------------------------
 
-    // Initialize Physics
+    /**/
 
+    // Initialize Physics
+    /**/
     std::shared_ptr<PhysicBody> rigidBody = std::make_shared<PhysicBody>(PhysicBody(PhysicBodyType::RIGID_BODY));
     rigidBody->Mass = 0.001f;
     this->models[0]->addPhysicBody(rigidBody);
@@ -249,10 +251,7 @@ void App::initVulkan()
     this->models[1]->addPhysicBody(staticBody);
     std::shared_ptr<PlaneCollider> planeCollider = std::make_shared<PlaneCollider>();
     planeCollider->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
-    //std::shared_ptr<BoxCollider> planeCollider = std::make_shared<BoxCollider>();
-    //planeCollider->SetSize(glm::vec3(1.0, 0.001f, 1.0f));
     this->models[1]->addCollider(planeCollider);
-
 
 
     std::shared_ptr<PhysicBody> staticBody2 = std::make_shared<PhysicBody>();
@@ -260,6 +259,24 @@ void App::initVulkan()
     std::shared_ptr<PlaneCollider> planeCollider2 = std::make_shared<PlaneCollider>();
     planeCollider2->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
     this->models[2]->addCollider(planeCollider2);
+    /**/
+
+
+    // GRID
+    models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::GRID_TYPE)));
+
+
+    std::shared_ptr<ShaderModule> shader_grid_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/Grid/grid_vert.spv", "../../resources/shaders/Grid/grid_frag.spv"));
+    shader_grid_ptr->createShaderBindings();
+    this->shaderManager->AddShader("shader_grid", shader_grid_ptr);
+
+    std::shared_ptr<Material> mat_grid_ptr = std::make_shared<Material>(Material(this->shaderManager->GetShader("shader_grid"), renderPassModule->renderPass));
+    mat_grid_ptr->AddNullTexture(textureManager->GetTexture("NULL"));
+    mat_grid_ptr->AddPipeline(graphicsPipelineModule);
+    materialManager->AddMaterial("mat_grid", mat_grid_ptr);
+
+    models.at(3)->addMaterial(materialManager->GetMaterial("mat_grid"));
+
 
     for (auto model : models)
     {
