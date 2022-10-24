@@ -175,6 +175,9 @@
     <ClCompile Include="Draw\FrameBufferModule.cpp" />
     <ClCompile Include="Draw\RenderPassModule.cpp" />
     <ClCompile Include="Draw\SynchronizationModule.cpp" />
+    <ClCompile Include="Editor\EditorObject.cpp" />
+    <ClCompile Include="Editor\EditorObjectManager.cpp" />
+    <ClCompile Include="Editor\Grid.cpp" />
     <ClCompile Include="GraphicsPipeline\GraphicsPipelineModule.cpp" />
     <ClCompile Include="GraphicsPipeline\ShaderModule.cpp" />
     <ClCompile Include="GUI\GUIWindow.cpp" />
@@ -199,6 +202,7 @@
     <ClCompile Include="Utilities\CameraEditor.cpp" />
     <ClCompile Include="Utilities\GameComponent.cpp" />
     <ClCompile Include="Utilities\GameObject.cpp" />
+    <ClCompile Include="Utilities\GameObjectManager.cpp" />
     <ClCompile Include="Utilities\Geometry\GeometryComponent.cpp" />
     <ClCompile Include="Utilities\Geometry\Mesh.cpp" />
     <ClCompile Include="Utilities\Geometry\MeshImporter.cpp" />
@@ -233,6 +237,9 @@
     <ClInclude Include="Draw\RenderPassModule.h" />
     <ClInclude Include="Draw\SynchronizationModule.h" />
     <ClInclude Include="Draw\SyncTool.h" />
+    <ClInclude Include="Editor\EditorObject.h" />
+    <ClInclude Include="Editor\EditorObjectManager.h" />
+    <ClInclude Include="Editor\Grid.h" />
     <ClInclude Include="GraphicsPipeline\GraphicsPipelineModule.h" />
     <ClInclude Include="GraphicsPipeline\ShaderModule.h" />
     <ClInclude Include="GUI\GUIWindow.h" />
@@ -259,6 +266,7 @@
     <ClInclude Include="Utilities\CameraEditor.h" />
     <ClInclude Include="Utilities\GameComponent.h" />
     <ClInclude Include="Utilities\GameObject.h" />
+    <ClInclude Include="Utilities\GameObjectManager.h" />
     <ClInclude Include="Utilities\Geometry\GeometryComponent.h" />
     <ClInclude Include="Utilities\Geometry\Mesh.h" />
     <ClInclude Include="Utilities\Geometry\MeshImporter.h" />

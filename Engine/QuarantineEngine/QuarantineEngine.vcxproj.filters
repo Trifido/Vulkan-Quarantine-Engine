@@ -128,6 +128,15 @@
     <Filter Include="Kernel\Utilities\Physics\sources">
       <UniqueIdentifier>{debbca75-bb43-4891-bf5c-fdcbcf9a6e7d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Kernel\Editor">
+      <UniqueIdentifier>{d22884af-b895-4338-a75a-09e65aee16a3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Editor\headers">
+      <UniqueIdentifier>{e935cab0-d59a-4d7f-b766-50377d13d0dc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Editor\sources">
+      <UniqueIdentifier>{b97a9af9-fa9c-4160-972c-e0a5e9c4226f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -300,6 +309,18 @@
     </ClCompile>
     <ClCompile Include="Utilities\Physics\PhysicsModule.cpp">
       <Filter>Kernel\Utilities\Physics\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Editor\EditorObjectManager.cpp">
+      <Filter>Kernel\Editor\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Editor\EditorObject.cpp">
+      <Filter>Kernel\Editor\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Editor\Grid.cpp">
+      <Filter>Kernel\Editor\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\GameObjectManager.cpp">
+      <Filter>Kernel\Utilities\sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -478,6 +499,18 @@
     </ClInclude>
     <ClInclude Include="Utilities\Physics\PhysicsModule.h">
       <Filter>Kernel\Utilities\Physics\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\EditorObjectManager.h">
+      <Filter>Kernel\Editor\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\EditorObject.h">
+      <Filter>Kernel\Editor\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor\Grid.h">
+      <Filter>Kernel\Editor\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\GameObjectManager.h">
+      <Filter>Kernel\Utilities\headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -12,6 +12,9 @@ CommandPoolModule::CommandPoolModule()
     deviceModule = DeviceModule::getInstance();
     swapchainModule = SwapChainModule::getInstance();
 
+    editorManager = EditorObjectManager::getInstance();
+    gameObjectManager = GameObjectManager::getInstance();
+
     this->ClearColor = glm::vec3(0.1f);
 }
 
@@ -54,7 +57,7 @@ void CommandPoolModule::createCommandBuffers()
     }
 }
 
-void CommandPoolModule::Render(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass, std::vector<std::shared_ptr<GameObject>>& gameObjects)
+void CommandPoolModule::Render(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass)
 {
     for (uint32_t i = 0; i < commandBuffers.size(); i++) {
         VkCommandBufferBeginInfo beginInfo{};
@@ -82,10 +85,8 @@ void CommandPoolModule::Render(std::vector<VkFramebuffer>& swapChainFramebuffers
 
         vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        for (uint32_t j = 0; j < gameObjects.size(); j++)
-        {
-            gameObjects.at(j)->drawCommand(commandBuffers[i], i);
-        }
+        this->gameObjectManager->DrawCommnad(commandBuffers[i], i);
+        this->editorManager->DrawCommnad(commandBuffers[i], i);
 
         if(ImGui::GetDrawData() != nullptr)
             ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[i]);

@@ -38,12 +38,16 @@
 #include "Camera.h"
 #include "LightManager.h"
 
+// Editor
+#include <../Editor/EditorObjectManager.h>
+#include <CameraEditor.h>
+
 // Keyboard controller
 #include "KeyboardController.h"
 #include <ShaderManager.h>
 #include <MaterialManager.h>
 #include <TextureManager.h>
-#include <CameraEditor.h>
+#include <GameObjectManager.h>
 
 const std::string MODEL_PATH = "../../resources/models/head/head.obj";
 const std::string TEXTURE_WALL_NORMAL_PATH = "../../resources/textures/wall/brickwall_normal.jpg";
@@ -125,13 +129,17 @@ private:
 
     //RayTracingModule        raytracingModule;
 
-    std::vector<std::shared_ptr<GameObject>> models;
+    //std::vector<std::shared_ptr<GameObject>> models;
     Camera*     cameraEditor;
 
     LightManager*       lightManager {};
     ShaderManager*      shaderManager{};
     MaterialManager*    materialManager {};
     TextureManager*     textureManager{};
+    GameObjectManager*  gameObjectManager{};
 
     KeyboardController* keyboard_ptr {};
+
+    // Editor
+    EditorObjectManager* editorManager {};
 };

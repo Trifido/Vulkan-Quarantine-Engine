@@ -52,20 +52,9 @@ float computeLinearDepth(vec3 pos) {
     float near = 0.1;
     float far = 100;
     vec4 clip_space_pos = view.proj * view.view * vec4(pos.xyz, 1.0);
-    float clip_space_depth = (clip_space_pos.z / clip_space_pos.w) * 2.0 - 1.0; // put back between -1 and 1
-    float linearDepth = (2.0 * near * far) / (far + near - clip_space_depth * (far - near)); // get linear value between 0.01 and 100
-    return linearDepth / far; // normalize
-}
-
-float getFogFactor(float d)
-{
-    const float FogMax = 20.0;
-    const float FogMin = 10.0;
-
-    if (d>=FogMax) return 1;
-    if (d<=FogMin) return 0;
-
-    return 1 - (FogMax - d) / (FogMax - FogMin);
+    float clip_space_depth = (clip_space_pos.z / clip_space_pos.w) * 2.0 - 1.0; 
+    float linearDepth = (2.0 * near * far) / (far + near - clip_space_depth * (far - near)); 
+    return linearDepth / far;
 }
 
 void main() {
@@ -78,9 +67,6 @@ void main() {
 
     float linearDepth = computeLinearDepth(fragPos3D);
     float fading = max(0, (0.5 - linearDepth));
-    //vec4 V = fragPos3D;
-    //float d = distance(CameraEye, V);
-    //float alpha = getFogFactor(d);
 
     outColor = grid(fragPos3D, 10, true) + grid(fragPos3D, 1, false);
     outColor.a = fading;
