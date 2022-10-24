@@ -36,6 +36,9 @@ void PrimitiveMesh::InitializeMesh()
     case PRIMITIVE_TYPE::SPHERE_TYPE:
         this->InitializeSphere();
         break;
+    case PRIMITIVE_TYPE::GRID_TYPE:
+        this->InitializeGrid();
+        break;
     default:
         break;
     }
@@ -122,24 +125,67 @@ void PrimitiveMesh::InitializeFloorPlane()
     this->vertices.resize(4);
     PBRVertex vert;
 
-    vert.pos = glm::vec3(0.5f, 0.0f, 0.5f);
+    vert.pos = glm::vec3(1.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(1.0f, 1.0f);
     this->vertices[0] = vert;
 
-    vert.pos = glm::vec3(-0.5f, 0.0f, -0.5f);
+    vert.pos = glm::vec3(-1.0f, 0.0f, -1.0f);
     vert.texCoord = glm::vec2(0.0f, 0.0f);
     this->vertices[1] = vert;
 
-    vert.pos = glm::vec3(-0.5f, 0.0f, 0.5f);
+    vert.pos = glm::vec3(-1.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(1.0f, 0.0f);
     this->vertices[2] = vert;
 
-    vert.pos = glm::vec3(0.5f, 0.0f, -0.5f);
+    vert.pos = glm::vec3(1.0f, 0.0f, -1.0f);
     vert.texCoord = glm::vec2(0.0f, 1.0f);
     this->vertices[3] = vert;
 
     this->indices.resize(6);
     this->indices = { 0, 1, 2, 0, 3, 1 };
+
+    MeshImporter::RecreateNormals(this->vertices, this->indices);
+    MeshImporter::RecreateTangents(this->vertices, this->indices);
+}
+
+/*
+vec3 gridPlane[6] = vec3[] (
+    vec3(1, 1, 0), vec3(-1, 1, 0), vec3(-1, -1, 0),
+    vec3(1, 1, 0), vec3(-1, -1, 0), vec3(1, -1, 0)
+);
+*/
+
+void PrimitiveMesh::InitializeGrid()
+{
+    this->vertices.resize(6);
+    PBRVertex vert;
+
+    vert.pos = glm::vec3(1.0f, 1.0f, 0.0f);
+    vert.texCoord = glm::vec2(1.0f, 1.0f);
+    this->vertices[0] = vert;
+
+    vert.pos = glm::vec3(-1.0f, 1.0f, 0.0f);
+    vert.texCoord = glm::vec2(0.0f, 1.0f);
+    this->vertices[1] = vert;
+
+    vert.pos = glm::vec3(-1.0f, -1.0f, 0.0f);
+    vert.texCoord = glm::vec2(0.0f, 0.0f);
+    this->vertices[2] = vert;
+
+    vert.pos = glm::vec3(1.0f, 1.0f, 0.0f);
+    vert.texCoord = glm::vec2(1.0f, 1.0f);
+    this->vertices[3] = vert;
+
+    vert.pos = glm::vec3(-1.0f, -1.0f, 0.0f);
+    vert.texCoord = glm::vec2(0.0f, 0.0f);
+    this->vertices[4] = vert;
+
+    vert.pos = glm::vec3(1.0f, -1.0f, 0.0f);
+    vert.texCoord = glm::vec2(1.0f, 0.0f);
+    this->vertices[5] = vert;
+
+    this->indices.resize(6);
+    this->indices = { 0, 1, 2, 3, 4, 5};
 
     MeshImporter::RecreateNormals(this->vertices, this->indices);
     MeshImporter::RecreateTangents(this->vertices, this->indices);

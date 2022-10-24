@@ -3,8 +3,8 @@
 
 Camera::Camera(float width, float height)
 {
-    cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-    cameraPos = glm::vec3(0.0f, 3.0f, 3.0f);
+    cameraFront = glm::vec3(0.815122545f, -0.579281569f, 0.0f);
+    cameraPos = glm::vec3(-32.5740700f, 28.0f, 0.0f);
     WIDTH = width;
     HEIGHT = height;
     lastX = WIDTH / 2.0f;
@@ -14,6 +14,16 @@ Camera::Camera(float width, float height)
     view = projection = VP = glm::mat4(1.0);
     this->cameraUniform = std::make_shared<CameraUniform>();
     this->UpdateUBO();
+
+    float value = asin(-cameraFront.y);
+    float degreeValue = glm::degrees(value);
+    if (degreeValue < 0) degreeValue += 180;
+    pitch = -degreeValue;
+
+    value = atan2(cameraFront.x, cameraFront.z);
+    degreeValue = glm::degrees(value);
+    if (degreeValue < 0) degreeValue += 180;
+    yaw = (270 + (int)degreeValue) % 360;
 }
 
 void Camera::CameraController(float deltaTime)
@@ -99,11 +109,13 @@ void Camera::EditorRotate()
         if (pitch < -89.0f)
             pitch = -89.0f;
 
+        float yawDegrees = glm::radians(yaw);
+        float pitchDegrees = glm::radians(pitch);
 
         glm::vec3 front;
-        front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-        front.y = sin(glm::radians(pitch));
-        front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+        front.x = cos(yawDegrees) * cos(pitchDegrees);
+        front.y = sin(pitchDegrees);
+        front.z = sin(yawDegrees) * cos(pitchDegrees);
 
         cameraFront = glm::normalize(front);
     }

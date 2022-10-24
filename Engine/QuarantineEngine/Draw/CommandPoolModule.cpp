@@ -11,6 +11,11 @@ CommandPoolModule::CommandPoolModule()
 {
     deviceModule = DeviceModule::getInstance();
     swapchainModule = SwapChainModule::getInstance();
+
+    editorManager = EditorObjectManager::getInstance();
+    gameObjectManager = GameObjectManager::getInstance();
+
+    this->ClearColor = glm::vec3(0.1f);
 }
 
 CommandPoolModule* CommandPoolModule::getInstance()
@@ -52,7 +57,7 @@ void CommandPoolModule::createCommandBuffers()
     }
 }
 
-void CommandPoolModule::Render(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass, std::vector<std::shared_ptr<GameObject>>& gameObjects)
+void CommandPoolModule::Render(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass)
 {
     for (uint32_t i = 0; i < commandBuffers.size(); i++) {
         VkCommandBufferBeginInfo beginInfo{};
@@ -73,17 +78,15 @@ void CommandPoolModule::Render(std::vector<VkFramebuffer>& swapChainFramebuffers
         renderPassInfo.renderArea.extent = swapchainModule->swapChainExtent;
 
         std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].color = { 0.1f, 0.1f, 0.1f, 1.0f };
+        clearValues[0].color = { this->ClearColor.x, this->ClearColor.y, this->ClearColor.z, 1.0f };
         clearValues[1].depthStencil = { 1.0f, 0 };
         renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
         renderPassInfo.pClearValues = clearValues.data();
 
         vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        for (uint32_t j = 0; j < gameObjects.size(); j++)
-        {
-            gameObjects.at(j)->drawCommand(commandBuffers[i], i);
-        }
+        this->gameObjectManager->DrawCommnad(commandBuffers[i], i);
+        this->editorManager->DrawCommnad(commandBuffers[i], i);
 
         if(ImGui::GetDrawData() != nullptr)
             ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[i]);

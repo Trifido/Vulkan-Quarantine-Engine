@@ -4,6 +4,7 @@
 
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
+#include "../Editor/Grid.h"
 
 
 App::App()
@@ -16,6 +17,9 @@ App::App()
     this->deviceModule = DeviceModule::getInstance();
 
     this->physicsModule = PhysicsModule::getInstance();
+    this->editorManager = EditorObjectManager::getInstance();
+
+    commandPoolModule->ClearColor = glm::vec3(0.1f);
 }
 
 void App::run()
@@ -156,32 +160,40 @@ void App::initVulkan()
 
 
     MaterialManager* instanceMaterial = MaterialManager::getInstance();
+
+    // Inicializamos los componentes del editor
+    std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>(Grid(graphicsPipelineModule, renderPassModule->renderPass));
+    this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
+
+    this->gameObjectManager = GameObjectManager::getInstance();
+
+/**/
     //Creamos la textura
     textureManager->AddTexture("diffuse_brick", CustomTexture(TEXTURE_WALL_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
     textureManager->AddTexture("normal_brick", CustomTexture(TEXTURE_WALL_NORMAL_PATH, TEXTURE_TYPE::NORMAL_TYPE));
     textureManager->AddTexture("test", CustomTexture(TEXTURE_TEST_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
 
+    std::shared_ptr<GameObject> cube = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
+    cube->transform->SetPosition(glm::vec3(0.0f, 20.0f, 0.0f));
+    cube->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 65.0f));
 
-    models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE)));
-    models.at(0)->transform->SetPosition(glm::vec3(0.0f, 20.0f, 0.0f));
-    models.at(0)->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 65.0f));
+    std::shared_ptr<GameObject> plano = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
+    plano->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 45.0f));
+    plano->transform->SetPosition(glm::vec3(0.0f, 3.0f, 0.0f));
+    plano->transform->SetScale(glm::vec3(5.0f, 1.0f, 5.0f));
 
-    //models.at(0)->transform->SetScale(glm::vec3(1.0f, 1.0f, 1.0f));
+    std::shared_ptr<GameObject> floor = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
+    floor->transform->SetPosition(glm::vec3(0.0f, -0.10f, 0.0f));
+    floor->transform->SetScale(glm::vec3(50.0f, 1.0f, 50.0f));
 
-    models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE)));
-    models.at(1)->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 45.0f));
-    models.at(1)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-    models.at(1)->transform->SetScale(glm::vec3(10.0f, 1.0f, 10.0f));
-
-
-    models.push_back(std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE)));
-    models.at(2)->transform->SetPosition(glm::vec3(0.0f, -5.0f, 0.0f));
-    models.at(2)->transform->SetScale(glm::vec3(50.0f, 1.0f, 50.0f));
+    this->gameObjectManager->AddGameObject(cube, "cube");
+    this->gameObjectManager->AddGameObject(plano, "planoInclinado");
+    this->gameObjectManager->AddGameObject(floor, "floor");
 
     //models.push_back(std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH)));
     //models.at(0)->transform->SetScale(glm::vec3(0.1f));
     //models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-
+   
     //Creamos el shader module para el material
     std::shared_ptr<ShaderModule> shader_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
     shader_ptr->createShaderBindings();
@@ -203,9 +215,9 @@ void App::initVulkan()
 
 
     //Linkamos el material al gameobject
-    models.at(0)->addMaterial(materialManager->GetMaterial("mat"));
-    models.at(1)->addMaterial(materialManager->GetMaterial("mat"));
-    models.at(2)->addMaterial(materialManager->GetMaterial("mat2"));
+    cube->addMaterial(materialManager->GetMaterial("mat"));
+    plano->addMaterial(materialManager->GetMaterial("mat"));
+    floor->addMaterial(materialManager->GetMaterial("mat2"));
 
     // END -------------------------- Mesh & Material -------------------------------
 
@@ -236,39 +248,34 @@ void App::initVulkan()
     this->lightManager->UpdateUniform();
     // END -------------------------- Lights ----------------------------------------
 
-    // Initialize Physics
+    /**/
 
+    // Initialize Physics
+    
     std::shared_ptr<PhysicBody> rigidBody = std::make_shared<PhysicBody>(PhysicBody(PhysicBodyType::RIGID_BODY));
     rigidBody->Mass = 0.001f;
-    this->models[0]->addPhysicBody(rigidBody);
+    cube->addPhysicBody(rigidBody);
     std::shared_ptr<BoxCollider> boxCollider = std::make_shared<BoxCollider>();
-    this->models[0]->addCollider(boxCollider);
-
+    cube->addCollider(boxCollider);
 
     std::shared_ptr<PhysicBody> staticBody = std::make_shared<PhysicBody>();
-    this->models[1]->addPhysicBody(staticBody);
+    plano->addPhysicBody(staticBody);
     std::shared_ptr<PlaneCollider> planeCollider = std::make_shared<PlaneCollider>();
     planeCollider->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
-    //std::shared_ptr<BoxCollider> planeCollider = std::make_shared<BoxCollider>();
-    //planeCollider->SetSize(glm::vec3(1.0, 0.001f, 1.0f));
-    this->models[1]->addCollider(planeCollider);
-
-
+    plano->addCollider(planeCollider);
 
     std::shared_ptr<PhysicBody> staticBody2 = std::make_shared<PhysicBody>();
-    this->models[2]->addPhysicBody(staticBody2);
+    floor->addPhysicBody(staticBody2);
     std::shared_ptr<PlaneCollider> planeCollider2 = std::make_shared<PlaneCollider>();
     planeCollider2->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
-    this->models[2]->addCollider(planeCollider2);
+    floor->addCollider(planeCollider2);
+    
 
-    for (auto model : models)
-    {
-        model->InitializePhysics();
-    }
+    this->gameObjectManager->InitializePhysics();
 
     materialManager->InitializeMaterials();
 
-    commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass, models);
+    commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass);
 
     synchronizationModule.createSyncObjects(swapchainModule->getNumSwapChainImages());
 
@@ -285,10 +292,7 @@ void App::mainLoop()
         this->physicsModule->ComputePhysics((float)this->deltaTime);
 
         // Update transforms
-        for (auto model : models)
-        {
-            model->UpdatePhysicTransform();
-        }
+        this->gameObjectManager->UpdatePhysicTransforms();
 
         // INPUT EVENTS
         this->keyboard_ptr->ReadKeyboardEvents();
@@ -299,7 +303,6 @@ void App::mainLoop()
             glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
             newPos.x += 0.01f;
             this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
-
             this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('l') || ImGui::IsKeyDown('L'))
@@ -307,7 +310,6 @@ void App::mainLoop()
             glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
             newPos.x -= 0.01f;
             this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
-
             this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('I'))
@@ -315,7 +317,6 @@ void App::mainLoop()
             glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
             newPos.y += 0.01f;
             this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
-
             this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('K'))
@@ -323,7 +324,6 @@ void App::mainLoop()
             glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
             newPos.y -= 0.01f;
             this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
-
             this->lightManager->UpdateUniform();
         }
 
@@ -391,13 +391,10 @@ void App::cleanUp()
 
     cleanUpSwapchain();
 
-    for (uint32_t i = 0; i < models.size(); i++)
-    {
-        models.at(i)->cleanup();
-    }
+    this->gameObjectManager->Cleanup();
+    this->editorManager->Cleanup();
 
     textureManager->Clean();
-
 
     materialManager->CleanDescriptors();
 
@@ -449,7 +446,7 @@ void App::drawFrame()
 
     vkDeviceWaitIdle(deviceModule->device);
 
-    commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass, models);
+    commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass);
 
     synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer(imageIndex));
 
@@ -513,5 +510,5 @@ void App::recreateSwapchain()
     framebufferModule.createFramebuffer(renderPassModule->renderPass);
 
     commandPoolModule->createCommandBuffers();
-    commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass, models);
+    commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass);
 }

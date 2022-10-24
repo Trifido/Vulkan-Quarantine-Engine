@@ -6,6 +6,8 @@
 #include <vector>
 #include "GraphicsPipelineModule.h"
 #include "GameObject.h"
+#include "../Editor/EditorObjectManager.h"
+#include <GameObjectManager.h>
 
 class CommandPoolModule
 {
@@ -13,9 +15,14 @@ private:
     static CommandPoolModule*       instance;
     DeviceModule*                   deviceModule;
     SwapChainModule*                swapchainModule;
+    EditorObjectManager*            editorManager;
+    GameObjectManager*              gameObjectManager;
 
     VkCommandPool                   commandPool;
     std::vector<VkCommandBuffer>    commandBuffers;
+
+public:
+    glm::vec3 ClearColor;
 
 public:
     CommandPoolModule();
@@ -28,7 +35,7 @@ public:
 
     void createCommandPool(VkSurfaceKHR& surface);
     void createCommandBuffers();
-    void Render(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass, std::vector<std::shared_ptr<GameObject>>& gameObjects);
+    void Render(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass);
     void cleanup();
 };
 
