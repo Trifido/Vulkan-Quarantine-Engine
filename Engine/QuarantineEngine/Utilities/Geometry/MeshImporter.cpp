@@ -93,7 +93,7 @@ std::vector<MeshData> MeshImporter::LoadMesh(std::string path)
     std::vector<MeshData> meshes;
     Assimp::Importer importer;
 
-    scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+    scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
@@ -103,7 +103,8 @@ std::vector<MeshData> MeshImporter::LoadMesh(std::string path)
 
     this->CheckPaths(path);
 
-    ProcessNode(scene->mRootNode, scene, glm::mat4(1.0f), meshes);
+    glm::mat4 parentTransform = this->GetGLMMatrix(scene->mRootNode->mTransformation);
+    ProcessNode(scene->mRootNode, scene, parentTransform, meshes);
 
     this->currentTextures.clear();
 
@@ -113,14 +114,14 @@ std::vector<MeshData> MeshImporter::LoadMesh(std::string path)
 void MeshImporter::ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, std::vector<MeshData>& meshes)
 {
     glm::mat4 localTransform = this->GetGLMMatrix(node->mTransformation);
-    parentTransform = parentTransform * localTransform;
+    glm::mat4 currentTransform = glm::identity<glm::mat4>();// localTransform* parentTransform;
 
     // process all the node's meshes (if any)
     for (unsigned int i = 0; i < node->mNumMeshes; i++)
     {
         MeshData result = this->ProcessMesh(scene->mMeshes[node->mMeshes[i]], scene);
         result.name = scene->mMeshes[node->mMeshes[i]]->mName.C_Str();
-        result.model = parentTransform;
+        result.model = currentTransform;
 
         this->ProcessMaterial(scene->mMeshes[node->mMeshes[i]], scene, result);
 
@@ -130,7 +131,7 @@ void MeshImporter::ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 par
     // then do the same for each of its children
     for (unsigned int i = 0; i < node->mNumChildren; i++)
     {
-        this->ProcessNode(node->mChildren[i], scene, parentTransform, meshes);
+        this->ProcessNode(node->mChildren[i], scene, currentTransform, meshes);
     }
 }
 
