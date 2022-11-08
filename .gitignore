@@ -362,3 +362,6 @@ MigrationBackup/
 .resources/models/
 *.bat
 *.spv
+*.gltf
+*.bin
+*.jpeg

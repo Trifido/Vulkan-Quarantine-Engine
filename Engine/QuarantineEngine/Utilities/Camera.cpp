@@ -4,7 +4,7 @@
 Camera::Camera(float width, float height)
 {
     cameraFront = glm::vec3(0.815122545f, -0.579281569f, 0.0f);
-    cameraPos = glm::vec3(-32.5740700f, 28.0f, 0.0f);
+    cameraPos = glm::vec3(-5.0f, 5.0f, 0.0f);
     WIDTH = width;
     HEIGHT = height;
     lastX = WIDTH / 2.0f;

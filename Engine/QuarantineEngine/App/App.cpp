@@ -157,17 +157,22 @@ void App::initVulkan()
     this->lightManager = LightManager::getInstance();
     this->materialManager = MaterialManager::getInstance();
     this->materialManager->InitializeMaterialManager(renderPassModule->renderPass, graphicsPipelineModule);
-
-
-    MaterialManager* instanceMaterial = MaterialManager::getInstance();
+    this->gameObjectManager = GameObjectManager::getInstance();
 
     // Inicializamos los componentes del editor
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>(Grid(graphicsPipelineModule, renderPassModule->renderPass));
     this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
-    this->gameObjectManager = GameObjectManager::getInstance();
 
-/**/
+    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/drone/scene.gltf"));
+    model->transform->SetPosition(glm::vec3(0.0f, 1.3f, 0.0f));
+    //model->transform->SetScale(glm::vec3(0.005f));
+    //floor->transform->SetPosition(glm::vec3(0.0f, -0.10f, 0.0f));
+    //floor->transform->SetScale(glm::vec3(50.0f, 1.0f, 50.0f));
+
+    this->gameObjectManager->AddGameObject(model, "model");
+
+/*
     //Creamos la textura
     textureManager->AddTexture("diffuse_brick", CustomTexture(TEXTURE_WALL_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
     textureManager->AddTexture("normal_brick", CustomTexture(TEXTURE_WALL_NORMAL_PATH, TEXTURE_TYPE::NORMAL_TYPE));
@@ -190,9 +195,9 @@ void App::initVulkan()
     this->gameObjectManager->AddGameObject(plano, "planoInclinado");
     this->gameObjectManager->AddGameObject(floor, "floor");
 
-    //models.push_back(std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH)));
-    //models.at(0)->transform->SetScale(glm::vec3(0.1f));
-    //models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    models.push_back(std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH)));
+    models.at(0)->transform->SetScale(glm::vec3(0.1f));
+    models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
    
     //Creamos el shader module para el material
     std::shared_ptr<ShaderModule> shader_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
@@ -218,7 +223,7 @@ void App::initVulkan()
     cube->addMaterial(materialManager->GetMaterial("mat"));
     plano->addMaterial(materialManager->GetMaterial("mat"));
     floor->addMaterial(materialManager->GetMaterial("mat2"));
-
+*/
     // END -------------------------- Mesh & Material -------------------------------
 
     // INIT ------------------------- Lights ----------------------------------------
@@ -239,8 +244,8 @@ void App::initVulkan()
     this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
     //this->lightManager->GetLight("DirectionalLight0")->transform->SetPosition(glm::vec3(0.0f, 0.S0f, 3.0f));
     this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(2.0f, 8.0f, -1.0f));
-    this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(10.0f);
-    this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.80f);
+    this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.1f);
+    this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.1f);
     this->lightManager->GetLight("DirectionalLight0")->constant = 1.0f;
     this->lightManager->GetLight("DirectionalLight0")->linear = 0.09f;
     this->lightManager->GetLight("DirectionalLight0")->quadratic = 0.032f;
@@ -251,7 +256,7 @@ void App::initVulkan()
     /**/
 
     // Initialize Physics
-    
+    /*
     std::shared_ptr<PhysicBody> rigidBody = std::make_shared<PhysicBody>(PhysicBody(PhysicBodyType::RIGID_BODY));
     rigidBody->Mass = 0.001f;
     cube->addPhysicBody(rigidBody);
@@ -269,15 +274,12 @@ void App::initVulkan()
     std::shared_ptr<PlaneCollider> planeCollider2 = std::make_shared<PlaneCollider>();
     planeCollider2->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
     floor->addCollider(planeCollider2);
-    
+    */
 
     this->gameObjectManager->InitializePhysics();
-
-    materialManager->InitializeMaterials();
-
-    commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass);
-
-    synchronizationModule.createSyncObjects(swapchainModule->getNumSwapChainImages());
+    this->materialManager->InitializeMaterials();
+    this->commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass);
+    this->synchronizationModule.createSyncObjects(swapchainModule->getNumSwapChainImages());
 
     init_imgui();
 }
