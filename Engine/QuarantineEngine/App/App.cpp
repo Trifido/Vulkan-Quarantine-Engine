@@ -164,8 +164,8 @@ void App::initVulkan()
     this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
 
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/hollow_knight/scene.gltf"));
-    //model->transform->SetPosition(glm::vec3(0.0f, 1.0f, 0.0f));
+    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/drone/scene.gltf"));
+    model->transform->SetPosition(glm::vec3(0.0f, 1.3f, 0.0f));
     //model->transform->SetScale(glm::vec3(0.005f));
     //floor->transform->SetPosition(glm::vec3(0.0f, -0.10f, 0.0f));
     //floor->transform->SetScale(glm::vec3(50.0f, 1.0f, 50.0f));
