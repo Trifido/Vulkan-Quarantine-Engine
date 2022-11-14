@@ -198,6 +198,7 @@
     <ClCompile Include="SetUp\QueueModule.cpp" />
     <ClCompile Include="SetUp\VulkanInstance.cpp" />
     <ClCompile Include="SetUp\VulkanLayerAndExtension.cpp" />
+    <ClCompile Include="Utilities\Animation\AnimationImporter.cpp" />
     <ClCompile Include="Utilities\Camera.cpp" />
     <ClCompile Include="Utilities\CameraEditor.cpp" />
     <ClCompile Include="Utilities\GameComponent.cpp" />
@@ -262,6 +263,7 @@
     <ClInclude Include="SetUp\QueueModule.h" />
     <ClInclude Include="SetUp\VulkanInstance.h" />
     <ClInclude Include="SetUp\VulkanLayerAndExtension.h" />
+    <ClInclude Include="Utilities\Animation\AnimationImporter.h" />
     <ClInclude Include="Utilities\Camera.h" />
     <ClInclude Include="Utilities\CameraEditor.h" />
     <ClInclude Include="Utilities\GameComponent.h" />

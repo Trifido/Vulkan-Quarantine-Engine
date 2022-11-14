@@ -1,0 +1,62 @@
+#pragma once
+#ifndef ANIMATION_IMPORTER_H
+#define ANIMATION_IMPORTER_H
+
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <vector>
+#include <map>
+#include <glm/glm.hpp>
+#include <Animation/Bone.h>
+
+struct BoneInfo
+{
+    int id;
+    glm::mat4 offset;
+};
+
+struct AnimationData
+{
+    std::map<std::string, BoneInfo> m_BoneInfoMap;
+};
+
+struct AssimpNodeData
+{
+    glm::mat4 transformation;
+    std::string name;
+    int childrenCount;
+    std::vector<AssimpNodeData> children;
+};
+
+class AnimationImporter
+{
+private:
+    const aiScene* scene;
+    std::map<std::string, BoneInfo> m_BoneInfoMap;
+    std::vector<Bone> m_Bones;
+    AssimpNodeData m_RootNode;
+    int m_BoneCounter = 0;
+    double m_Duration = 0.0;
+    double m_TicksPerSecond = 0.0;
+
+private:
+    auto& GetBoneInfoMap() { return m_BoneInfoMap; }
+    int& GetBoneCount() { return m_BoneCounter; }
+    void ProcessNode(AssimpNodeData& dest, const aiNode* src);
+    static inline glm::mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& from)
+    {
+        glm::mat4 to;
+        //the a,b,c,d in assimp is the row ; the 1,2,3,4 is the column
+        to[0][0] = from.a1; to[1][0] = from.a2; to[2][0] = from.a3; to[3][0] = from.a4;
+        to[0][1] = from.b1; to[1][1] = from.b2; to[2][1] = from.b3; to[3][1] = from.b4;
+        to[0][2] = from.c1; to[1][2] = from.c2; to[2][2] = from.c3; to[3][2] = from.c4;
+        to[0][3] = from.d1; to[1][3] = from.d2; to[2][3] = from.d3; to[3][3] = from.d4;
+        return to;
+    }
+public:
+    AnimationData LoadMeshAnimated(std::string path);
+    void ReadMissingBones(const aiAnimation* animation);
+};
+
+#endif
