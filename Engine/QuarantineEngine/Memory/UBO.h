@@ -44,6 +44,11 @@ struct MaterialUniform
     int idxHeight;
 };
 
+struct AnimationUniform
+{
+    glm::mat4 finalBonesMatrices[100];
+};
+
 struct TransformUniform
 {
     glm::mat4 model;

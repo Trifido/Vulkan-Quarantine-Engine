@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef GAEOMETRYCOMPONENT_H
-#define GAEOMETRYCOMPONENT_H
+#ifndef GAEOMETRY_COMPONENT_H
+#define GAEOMETRY_COMPONENT_H
 
 #include "GameComponent.h"
 #include <Geometry/Vertex.h>

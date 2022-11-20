@@ -32,11 +32,13 @@ public:
     std::shared_ptr<UniformBufferObject>    cameraUBO;
     std::shared_ptr<UniformBufferObject>    materialUBO;
     std::shared_ptr<UniformBufferObject>    lightUBO;
+    std::shared_ptr<UniformBufferObject>    animationUBO;
 
     //UNIFORM's
-    std::shared_ptr<CameraUniform>         cameraUniform;
+    std::shared_ptr<CameraUniform>          cameraUniform;
     std::shared_ptr<MaterialUniform>        materialUniform;
     std::shared_ptr<LightManagerUniform>    lightUniform;
+    std::shared_ptr<AnimationUniform>       animationUniform;
 
 public:
     DescriptorModule();

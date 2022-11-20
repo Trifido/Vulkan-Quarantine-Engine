@@ -2,24 +2,23 @@
 #ifndef ANIMATION_H
 #define ANIMATION_H
 
-#include <vector>
 #include <map>
 #include <Bone.h>
-#include <Animation/AnimationImporter.h>
+#include <AnimationResources.h>
 
 class Animation
 {
 private:
-    float m_Duration;
-    int m_TicksPerSecond;
-    std::vector<Bone> m_Bones;
-    AssimpNodeData m_RootNode;
-    std::map<std::string, BoneInfo> m_BoneInfoMap;
+    AnimationData animationData;
 
 public:
-    inline float GetTicksPerSecond() { return m_TicksPerSecond; }
-    inline float GetDuration() { return m_Duration; }
-    inline const AssimpNodeData& GetRootNode() { return m_RootNode; }
+    std::string name;
+
+public:
+    Animation(const AnimationData& animData);
+    inline float GetTicksPerSecond() { return animationData.m_TicksPerSecond; }
+    inline float GetDuration() { return animationData.m_Duration; }
+    inline const AnimationNode& GetRootNode() { return animationData.animationNodeData; }
     const std::map<std::string, BoneInfo>& GetBoneIDMap();
     Bone* FindBone(const std::string& name);
 };

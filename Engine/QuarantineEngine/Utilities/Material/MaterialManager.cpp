@@ -33,7 +33,7 @@ MaterialManager::MaterialManager()
     auto shaderManager = ShaderManager::getInstance();
     //std::shared_ptr<ShaderModule> shader_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
     //this->shaderManager->AddShader("shader", shader_ptr);
-    this->default_shader = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
+    this->default_shader = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/Animation/exampleAnimated_vert.spv", "../../resources/shaders/Animation/exampleAnimated_frag.spv"));
     this->default_shader->createShaderBindings();
     shaderManager->AddShader("default", this->default_shader);
 }

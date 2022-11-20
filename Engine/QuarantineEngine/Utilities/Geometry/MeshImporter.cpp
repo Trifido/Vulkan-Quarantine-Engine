@@ -51,6 +51,65 @@ void MeshImporter::RecreateNormals(std::vector<PBRVertex>& vertices, std::vector
     }
 }
 
+void MeshImporter::SetVertexBoneDataToDefault(PBRVertex& vertex)
+{
+    for (int i = 0; i < 4; i++)
+    {
+        vertex.boneIDs[i] = -1;
+        vertex.boneWeights[i] = 0.0f;
+    }
+}
+
+void MeshImporter::SetVertexBoneData(PBRVertex& vertex, int boneID, float weight)
+{
+    for (int i = 0; i < 4; ++i)
+    {
+        if (vertex.boneIDs[i] < 0)
+        {
+            vertex.boneWeights[i] = weight;
+            vertex.boneIDs[i] = boneID;
+            break;
+        }
+    }
+}
+
+void MeshImporter::ExtractBoneWeightForVertices(MeshData& data, aiMesh* mesh, const aiScene* scene)
+{
+    for (int boneIndex = 0; boneIndex < mesh->mNumBones; ++boneIndex)
+    {
+        int boneID = -1;
+        std::string boneName = mesh->mBones[boneIndex]->mName.C_Str();
+        if (this->m_BoneInfoMap.find(boneName) == this->m_BoneInfoMap.end())
+        {
+            BoneInfo newBoneInfo;
+            newBoneInfo.id = this->numBones;
+            newBoneInfo.offset = ConvertMatrixToGLMFormat(
+                mesh->mBones[boneIndex]->mOffsetMatrix);
+            this->m_BoneInfoMap[boneName] = newBoneInfo;
+            boneID = this->numBones;
+            this->numBones++;
+        }
+        else
+        {
+            boneID = this->m_BoneInfoMap[boneName].id;
+        }
+        assert(boneID != -1);
+        auto weights = mesh->mBones[boneIndex]->mWeights;
+        int numWeights = mesh->mBones[boneIndex]->mNumWeights;
+
+        if (weights != NULL)
+        {
+            for (int weightIndex = 0; weightIndex < numWeights; ++weightIndex)
+            {
+                int vertexId = weights[weightIndex].mVertexId;
+                float weight = weights[weightIndex].mWeight;
+                assert(vertexId <= data.vertices.size());
+                SetVertexBoneData(data.vertices[vertexId], boneID, weight);
+            }
+        }
+    }
+}
+
 void MeshImporter::RecreateTangents(std::vector<PBRVertex>& vertices, std::vector<unsigned int>& indices)
 {
     for (size_t idTr = 0; idTr < indices.size(); idTr += 3)
@@ -87,18 +146,24 @@ void MeshImporter::RecreateTangents(std::vector<PBRVertex>& vertices, std::vecto
     }
 }
 
-
 std::vector<MeshData> MeshImporter::LoadMesh(std::string path)
 {
     std::vector<MeshData> meshes;
     Assimp::Importer importer;
 
-    scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices);
+    scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
         fprintf(stderr, "ERROR::ASSIMP::%s", importer.GetErrorString());
         return meshes;
+    }
+
+    this->hasAnimation = scene->HasAnimations() && scene->hasSkeletons();
+
+    if (!this->hasAnimation)
+    {
+        scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices);
     }
 
     this->CheckPaths(path);
@@ -154,6 +219,9 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
     for (unsigned int i = 0; i < data.numPositions; i++)
     {
         PBRVertex vertex;
+
+        this->SetVertexBoneDataToDefault(vertex);
+
         // process vertex positions, normals and texture coordinates
         glm::vec3 vector;
         vector.x = mesh->mVertices[i].x;
@@ -220,6 +288,8 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
     {
         this->RecreateTangents(data.vertices, data.indices);
     }
+
+    //ExtractBoneWeightForVertices(data, mesh, scene);
 
     return data;
 }

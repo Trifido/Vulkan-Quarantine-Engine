@@ -3,9 +3,11 @@
 #include <MeshImporter.h>
 
 #include "PrimitiveTypes.h"
+#include <AnimationImporter.h>
 
 GameObject::GameObject()
 {
+    this->CreateGameObjectID(12);
     this->deviceModule = DeviceModule::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->materialManager = MaterialManager::getInstance();
@@ -14,6 +16,7 @@ GameObject::GameObject()
 
 GameObject::GameObject(PRIMITIVE_TYPE type)
 {
+    this->CreateGameObjectID(12);
     this->deviceModule = DeviceModule::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->materialManager = MaterialManager::getInstance();
@@ -25,6 +28,7 @@ GameObject::GameObject(PRIMITIVE_TYPE type)
 
 GameObject::GameObject(std::string meshPath)
 {
+    this->CreateGameObjectID(12);
     this->deviceModule = DeviceModule::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->materialManager = MaterialManager::getInstance();
@@ -32,6 +36,7 @@ GameObject::GameObject(std::string meshPath)
     this->parent = nullptr;
     this->CreateChildsGameObject(meshPath);
     this->InitializeComponents();
+    this->InitializeAnimationComponent();
 }
 
 void GameObject::cleanup()
@@ -92,6 +97,22 @@ void GameObject::addCollider(std::shared_ptr<Collider> collider_ptr)
     this->collider = collider_ptr;
 }
 
+void GameObject::addAnimation(std::shared_ptr<Animation> animation_ptr)
+{
+    if (this->animationComponent == nullptr)
+    {
+        this->animationComponent = std::make_shared<AnimationComponent>();
+    }
+
+    this->animationComponent->AddAnimation(animation_ptr);
+
+    if (this->animationManager == nullptr)
+    {
+        this->animationManager = AnimationManager::getInstance();
+        this->animationManager->AddAnimationComponent(this->id, this->animationComponent);
+    }
+}
+
 void GameObject::InitializeComponents()
 {
     if (this->transform == nullptr)
@@ -111,6 +132,42 @@ void GameObject::InitializeComponents()
             it->InitializeComponents();
         }
     }
+}
+
+void GameObject::InitializeAnimationComponent()
+{
+    if (this->animationComponent != nullptr)
+    {
+        if (this->material != nullptr)
+        {
+            this->animationComponent->animator->AddDescriptor(material->descriptor);
+        }
+
+        if (!this->childs.empty())
+        {
+            for (auto& it : this->childs)
+            {
+                this->animationComponent->animator->AddDescriptor(it->material->descriptor);
+            }
+        }
+    }
+}
+
+void GameObject::CreateGameObjectID(size_t length)
+{
+    auto randchar = []() -> char
+    {
+        const char charset[] =
+            "0123456789"
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            "abcdefghijklmnopqrstuvwxyz";
+        const size_t max_index = (sizeof(charset) - 1);
+        return charset[rand() % max_index];
+    };
+    std::string str(length, 0);
+    std::generate_n(str.begin(), length, randchar);
+
+    this->id = str;
 }
 
 void GameObject::InitializePhysics()
@@ -156,6 +213,20 @@ void GameObject::CreateChildsGameObject(std::string pathfile)
         this->transform = std::make_shared<Transform>(Transform(data[0].model));
         this->addMaterial(this->materialManager->GetMaterial(data[0].materialID));
     }
+
+    if (importer.HasAnimation())
+    {
+        skeletalComponent = std::make_shared<SkeletalComponent>();
+        skeletalComponent->numBones = importer.GetBoneCount();
+        skeletalComponent->m_BoneInfoMap = importer.GetBoneInfoMap();
+
+        auto animData = AnimationImporter::ImportAnimation(pathfile, skeletalComponent->m_BoneInfoMap, skeletalComponent->numBones);
+
+        if (animData.m_Duration > 0.0)
+        {
+            this->addAnimation(std::make_shared<Animation>(animData));
+        }
+    }
 }
 
 void GameObject::DrawChilds(VkCommandBuffer& commandBuffer, uint32_t idx)
@@ -187,7 +258,6 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
         if (this->parent != nullptr)
         {
             ubo.model = this->parent->transform->GetModel() * ubo.model;
-            //this->transform->ComputeParentTransform(this->parent->transform);
         }
 
         vkCmdPushConstants(commandBuffer, this->material->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &ubo.model);

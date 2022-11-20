@@ -22,7 +22,7 @@ Mesh::Mesh(const MeshData& data)
 
 void Mesh::InitializeMesh()
 {
-    this->numAttributes = 5;
+    this->numAttributes = 7;
     this->createVertexBuffer();
     this->createIndexBuffer();
 }

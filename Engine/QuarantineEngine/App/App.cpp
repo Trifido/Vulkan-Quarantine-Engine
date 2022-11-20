@@ -18,6 +18,7 @@ App::App()
 
     this->physicsModule = PhysicsModule::getInstance();
     this->editorManager = EditorObjectManager::getInstance();
+    this->animationManager = AnimationManager::getInstance();
 
     commandPoolModule->ClearColor = glm::vec3(0.1f);
 }
@@ -160,14 +161,14 @@ void App::initVulkan()
     this->gameObjectManager = GameObjectManager::getInstance();
 
     // Inicializamos los componentes del editor
-    std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>(Grid(graphicsPipelineModule, renderPassModule->renderPass));
-    this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
+    //std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>(Grid(graphicsPipelineModule, renderPassModule->renderPass));
+    //this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
 
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/drone/scene.gltf"));
+    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/lizardman/scene.gltf"));
     model->transform->SetPosition(glm::vec3(0.0f, 1.3f, 0.0f));
-    //model->transform->SetScale(glm::vec3(0.005f));
-    //floor->transform->SetPosition(glm::vec3(0.0f, -0.10f, 0.0f));
+    model->transform->SetScale(glm::vec3(0.005f));
+    model->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
     //floor->transform->SetScale(glm::vec3(50.0f, 1.0f, 50.0f));
 
     this->gameObjectManager->AddGameObject(model, "model");
@@ -276,8 +277,11 @@ void App::initVulkan()
     floor->addCollider(planeCollider2);
     */
 
+    // Initialize Managers
+    this->animationManager->InitializeAnimations();
     this->gameObjectManager->InitializePhysics();
     this->materialManager->InitializeMaterials();
+
     this->commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass);
     this->synchronizationModule.createSyncObjects(swapchainModule->getNumSwapChainImages());
 
@@ -295,6 +299,9 @@ void App::mainLoop()
 
         // Update transforms
         this->gameObjectManager->UpdatePhysicTransforms();
+
+        //ANIMATION SYSTEM
+        this->animationManager->UpdateAnimations((float)this->deltaTime);
 
         // INPUT EVENTS
         this->keyboard_ptr->ReadKeyboardEvents();

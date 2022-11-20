@@ -19,6 +19,8 @@ struct PBRVertex : Vertex
 {
     glm::vec3 Tangents;
     glm::vec3 Bitangents;
+    int boneIDs[4];
+    float boneWeights[4];
 };
 
 struct PrimitiveVertex : Vertex

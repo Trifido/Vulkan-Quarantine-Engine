@@ -343,6 +343,15 @@
     <ClCompile Include="Utilities\Animation\Animation.cpp">
       <Filter>Kernel\Utilities\Animation\sources</Filter>
     </ClCompile>
+    <ClCompile Include="Utilities\Animation\AnimationComponent.cpp">
+      <Filter>Kernel\Utilities\Animation\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Animation\AnimationManager.cpp">
+      <Filter>Kernel\Utilities\Animation\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Animation\SkeletalComponent.cpp">
+      <Filter>Kernel\Utilities\Animation\sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SetUp\DeviceModule.h">
@@ -543,6 +552,18 @@
       <Filter>Kernel\Utilities\Animation\headers</Filter>
     </ClInclude>
     <ClInclude Include="Utilities\Animation\Animation.h">
+      <Filter>Kernel\Utilities\Animation\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Animation\AnimationComponent.h">
+      <Filter>Kernel\Utilities\Animation\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Animation\AnimationResources.h">
+      <Filter>Kernel\Utilities\Animation\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Animation\AnimationManager.h">
+      <Filter>Kernel\Utilities\Animation\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Animation\SkeletalComponent.h">
       <Filter>Kernel\Utilities\Animation\headers</Filter>
     </ClInclude>
   </ItemGroup>

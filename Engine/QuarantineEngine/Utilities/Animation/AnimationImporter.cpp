@@ -1,28 +1,35 @@
 #include "AnimationImporter.h"
+#include <Animation/Bone.h>
+#include <assimp/postprocess.h>
+#include <assimp/Importer.hpp>
 
-AnimationData AnimationImporter::LoadMeshAnimated(std::string path)
+AnimationData AnimationImporter::ImportAnimation(std::string path, std::map<std::string, BoneInfo> m_BoneInfoMap, size_t numBones)
 {
+    AnimationData result = {};
     Assimp::Importer importer;
 
-    scene = importer.ReadFile(path, aiProcess_Triangulate);
+    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
         fprintf(stderr, "ERROR::ASSIMP::%s", importer.GetErrorString());
-        return AnimationData();
+        return result;
     }
 
     auto animation = scene->mAnimations[0];
-    m_Duration = animation->mDuration;
-    m_TicksPerSecond = animation->mTicksPerSecond;
+    result.m_Duration = animation->mDuration;
+    result.m_TicksPerSecond = animation->mTicksPerSecond;
+    result.m_BoneInfoMap = m_BoneInfoMap;
 
+    AnimationNode m_RootNode;
     ProcessNode(m_RootNode, scene->mRootNode);
-    ReadMissingBones(animation);
+    ReadMissingBones(animation, result, numBones);
 
-    return AnimationData();
+    result.animationNodeData = m_RootNode;
+    return result;
 }
 
-void AnimationImporter::ReadMissingBones(const aiAnimation* animation)
+void AnimationImporter::ReadMissingBones(const aiAnimation* animation, AnimationData& animationData, size_t numBones)
 {
     int size = animation->mNumChannels;
 
@@ -31,16 +38,16 @@ void AnimationImporter::ReadMissingBones(const aiAnimation* animation)
         auto channel = animation->mChannels[i];
         std::string boneName = channel->mNodeName.data;
 
-        if (m_BoneInfoMap.find(boneName) == m_BoneInfoMap.end())
+        if (animationData.m_BoneInfoMap.find(boneName) == animationData.m_BoneInfoMap.end())
         {
-            m_BoneInfoMap[boneName].id = m_BoneCounter;
-            m_BoneCounter++;
+            animationData.m_BoneInfoMap[boneName].id = numBones;
+            numBones++;
         }
-        m_Bones.push_back(Bone(channel->mNodeName.data, m_BoneInfoMap[channel->mNodeName.data].id, channel));
+        animationData.m_Bones.push_back(Bone(channel->mNodeName.data, animationData.m_BoneInfoMap[channel->mNodeName.data].id, channel));
     }
 }
 
-void AnimationImporter::ProcessNode(AssimpNodeData& dest, const aiNode* src)
+void AnimationImporter::ProcessNode(AnimationNode& dest, const aiNode* src)
 {
     assert(src);
 
@@ -50,7 +57,7 @@ void AnimationImporter::ProcessNode(AssimpNodeData& dest, const aiNode* src)
 
     for (int i = 0; i < src->mNumChildren; i++)
     {
-        AssimpNodeData newData;
+        AnimationNode newData;
         ProcessNode(newData, src->mChildren[i]);
         dest.children.push_back(newData);
     }

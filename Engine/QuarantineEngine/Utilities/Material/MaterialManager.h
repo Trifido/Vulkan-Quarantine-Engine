@@ -12,9 +12,9 @@ class MaterialManager
 private:
     std::unordered_map<std::string, std::shared_ptr<Material>> _materials;
 
-    Camera* cameraEditor;
-    LightManager* lightManager;
-    TextureManager* textureManager;
+    Camera*             cameraEditor;
+    LightManager*       lightManager;
+    TextureManager*     textureManager;
 
     std::shared_ptr<ShaderModule> default_shader;
     std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule;

@@ -45,7 +45,7 @@ VkVertexInputBindingDescription GeometryComponent::getBindingDescription()
 
 std::vector<VkVertexInputAttributeDescription> GeometryComponent::getAttributeDescriptions() {
     std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
-    attributeDescriptions.resize(5);
+    attributeDescriptions.resize(7);
 
     attributeDescriptions[0].binding = 0;
     attributeDescriptions[0].location = 0;
@@ -71,6 +71,16 @@ std::vector<VkVertexInputAttributeDescription> GeometryComponent::getAttributeDe
     attributeDescriptions[4].location = 4;
     attributeDescriptions[4].format = VK_FORMAT_R32G32B32_SFLOAT;
     attributeDescriptions[4].offset = offsetof(PBRVertex, Bitangents);
+
+    attributeDescriptions[5].binding = 0;
+    attributeDescriptions[5].location = 5;
+    attributeDescriptions[5].format = VK_FORMAT_A2B10G10R10_SINT_PACK32;//VK_FORMAT_R32G32B32A32_SFLOAT;
+    attributeDescriptions[5].offset = offsetof(PBRVertex, boneIDs);
+
+    attributeDescriptions[6].binding = 0;
+    attributeDescriptions[6].location = 6;
+    attributeDescriptions[6].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    attributeDescriptions[6].offset = offsetof(PBRVertex, boneWeights);
 
     return attributeDescriptions;
 }

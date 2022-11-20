@@ -37,6 +37,7 @@
 #include "Material.h"
 #include "Camera.h"
 #include "LightManager.h"
+#include "AnimationManager.h"
 
 // Editor
 #include <../Editor/EditorObjectManager.h>
@@ -137,6 +138,7 @@ private:
     MaterialManager*    materialManager {};
     TextureManager*     textureManager{};
     GameObjectManager*  gameObjectManager{};
+    AnimationManager*   animationManager{};
 
     KeyboardController* keyboard_ptr {};
 
