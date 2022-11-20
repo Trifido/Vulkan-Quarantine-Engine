@@ -15,6 +15,14 @@
 
 typedef class GameObject GameObject;
 
+enum MeshImportedType
+{
+    COMMON_GEO,
+    PRIMITIVE_GEO,
+    ANIMATED_GEO,
+    NONE_GEO
+};
+
 class GameObject
 {
 private:
@@ -23,6 +31,7 @@ private:
     QueueModule*        queueModule = nullptr;
     MaterialManager*    materialManager = nullptr;
     AnimationManager*   animationManager = nullptr;
+    MeshImportedType    meshImportedType;
 
     std::shared_ptr<Camera>             cameraEditor = nullptr;
 public:
@@ -54,11 +63,12 @@ public:
 
 private:
     void CreateGameObjectID(size_t length);
-    void InitializeComponents();
+    void InitializeComponents(size_t numMeshAttributes);
     void InitializeAnimationComponent();
     void CreateChildsGameObject(std::string pathfile);
     void DrawChilds(VkCommandBuffer& commandBuffer, uint32_t idx);
     void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
+    size_t CheckNumAttributes();
 };
 
 #endif

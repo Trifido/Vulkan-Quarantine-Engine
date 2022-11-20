@@ -11,7 +11,9 @@ GameObject::GameObject()
     this->deviceModule = DeviceModule::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->materialManager = MaterialManager::getInstance();
-    this->InitializeComponents();
+
+    size_t numMeshAttributes = this->CheckNumAttributes();
+    this->InitializeComponents(numMeshAttributes);
 }
 
 GameObject::GameObject(PRIMITIVE_TYPE type)
@@ -22,8 +24,11 @@ GameObject::GameObject(PRIMITIVE_TYPE type)
     this->materialManager = MaterialManager::getInstance();
 
     this->parent = nullptr;
-    mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh(type));
-    this->InitializeComponents();
+    this->mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh(type));
+    this->meshImportedType = MeshImportedType::PRIMITIVE_GEO;
+
+    size_t numMeshAttributes = this->CheckNumAttributes();
+    this->InitializeComponents(numMeshAttributes);
 }
 
 GameObject::GameObject(std::string meshPath)
@@ -35,7 +40,9 @@ GameObject::GameObject(std::string meshPath)
 
     this->parent = nullptr;
     this->CreateChildsGameObject(meshPath);
-    this->InitializeComponents();
+
+    size_t numMeshAttributes = this->CheckNumAttributes();
+    this->InitializeComponents(numMeshAttributes);
     this->InitializeAnimationComponent();
 }
 
@@ -113,7 +120,7 @@ void GameObject::addAnimation(std::shared_ptr<Animation> animation_ptr)
     }
 }
 
-void GameObject::InitializeComponents()
+void GameObject::InitializeComponents(size_t numMeshAttributes)
 {
     if (this->transform == nullptr)
     {
@@ -122,14 +129,14 @@ void GameObject::InitializeComponents()
 
     if (this->mesh != nullptr)
     {
-        this->mesh->InitializeMesh();
+        this->mesh->InitializeMesh(numMeshAttributes);
     }
 
     if (!this->childs.empty())
     {
         for (auto& it : this->childs)
         {
-            it->InitializeComponents();
+            it->InitializeComponents(numMeshAttributes);
         }
     }
 }
@@ -214,6 +221,8 @@ void GameObject::CreateChildsGameObject(std::string pathfile)
         this->addMaterial(this->materialManager->GetMaterial(data[0].materialID));
     }
 
+    this->meshImportedType = (importer.HasAnimation()) ? MeshImportedType::ANIMATED_GEO : MeshImportedType::COMMON_GEO;
+
     if (importer.HasAnimation())
     {
         skeletalComponent = std::make_shared<SkeletalComponent>();
@@ -266,4 +275,25 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
     }
 
     this->DrawChilds(commandBuffer, idx);
+}
+
+size_t GameObject::CheckNumAttributes()
+{
+    size_t numAttributes = 0;
+
+    switch (this->meshImportedType)
+    {
+    case MeshImportedType::ANIMATED_GEO:
+        numAttributes = 7;
+        break;
+    case MeshImportedType::PRIMITIVE_GEO:
+        numAttributes = 5;
+        break;
+    case MeshImportedType::COMMON_GEO:
+        numAttributes = 5;
+    default:
+        break;
+    }
+
+    return numAttributes;
 }

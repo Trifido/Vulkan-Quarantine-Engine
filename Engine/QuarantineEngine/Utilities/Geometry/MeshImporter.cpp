@@ -376,7 +376,7 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
 
     if (!materialManager->Exists(materialName))
     {
-        materialManager->CreateMaterial(materialName);
+        materialManager->CreateMaterial(materialName, this->hasAnimation);
         std::shared_ptr<Material> mat = materialManager->GetMaterial(materialName);
 
         std::string textureName = this->GetTexture(material, aiTextureType_DIFFUSE, TEXTURE_TYPE::DIFFUSE_TYPE);

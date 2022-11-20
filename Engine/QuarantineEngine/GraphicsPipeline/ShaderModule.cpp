@@ -35,29 +35,25 @@ void ShaderModule::createShaderModule(const std::string& filename_vertex, const 
 {
     vertShaderStageInfo = createShader(deviceModule->device, filename_vertex, SHADER_TYPE::VERTEX_SHADER);
     fragShaderStageInfo = createShader(deviceModule->device, filename_fragment, SHADER_TYPE::FRAGMENT_SHADER);
-
     shaderStages.push_back(vertShaderStageInfo);
     shaderStages.push_back(fragShaderStageInfo);
-
-    //this->createShaderBindings();
 }
 
-void ShaderModule::createShaderBindings()
+void ShaderModule::createShaderBindings(bool hasAnimation)
 {
-    bindingDescription = GeometryComponent::getBindingDescription();
-    attributeDescriptions = GeometryComponent::getAttributeDescriptions();
+    this->bindingDescription = GeometryComponent::getBindingDescription(hasAnimation);
+    this->attributeDescriptions = GeometryComponent::getAttributeDescriptions(hasAnimation);
 
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputInfo.vertexBindingDescriptionCount = 1;
-    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription; // Optional
-    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data(); // Optional
+    vertexInputInfo.pVertexBindingDescriptions = &this->bindingDescription; // Optional
+    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(this->attributeDescriptions.size());
+    vertexInputInfo.pVertexAttributeDescriptions = this->attributeDescriptions.data(); // Optional
 }
 
 void ShaderModule::cleanup()
 {
     shaderStages.clear();
-
     vkDestroyShaderModule(deviceModule->device, fragment_shader, nullptr);
     vkDestroyShaderModule(deviceModule->device, vertex_shader, nullptr);
 }

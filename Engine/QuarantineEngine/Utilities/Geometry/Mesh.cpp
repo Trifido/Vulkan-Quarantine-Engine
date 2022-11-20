@@ -20,16 +20,25 @@ Mesh::Mesh(const MeshData& data)
     this->indices = data.indices;
 }
 
-void Mesh::InitializeMesh()
+void Mesh::InitializeMesh(size_t numAttributes)
 {
-    this->numAttributes = 7;
+    this->numAttributes = numAttributes;
     this->createVertexBuffer();
     this->createIndexBuffer();
 }
 
 void Mesh::createVertexBuffer()
 {
-    VkDeviceSize bufferSize = sizeof(PBRVertex) * vertices.size();
+    VkDeviceSize bufferSize;
+
+    if (numAttributes == 5)
+    {
+        bufferSize = sizeof(PBRVertex) * vertices.size();
+    }
+    else
+    {
+        bufferSize = sizeof(PBRAnimationVertex) * vertices.size();
+    }
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;

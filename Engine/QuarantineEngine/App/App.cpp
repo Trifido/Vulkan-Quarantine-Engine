@@ -165,7 +165,7 @@ void App::initVulkan()
     //this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
 
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/lizardman/scene.gltf"));
+    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/adam/adamHead.gltf"));
     model->transform->SetPosition(glm::vec3(0.0f, 1.3f, 0.0f));
     model->transform->SetScale(glm::vec3(0.005f));
     model->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));

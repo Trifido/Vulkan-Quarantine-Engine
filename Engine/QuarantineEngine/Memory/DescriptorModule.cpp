@@ -156,24 +156,24 @@ void DescriptorModule::createDescriptorSets()
             idx++;
         }
 
-        if (this->animationUniform != nullptr)
-        {
-            VkDescriptorBufferInfo bufferAnimationInfo{};
-            bufferAnimationInfo.buffer = this->animationUBO->uniformBuffers[i];
-            bufferAnimationInfo.offset = 0;
-            bufferAnimationInfo.range = sizeof(AnimationUniform);
+        //if (this->animationUniform != nullptr)
+        //{
+        //    VkDescriptorBufferInfo bufferAnimationInfo{};
+        //    bufferAnimationInfo.buffer = this->animationUBO->uniformBuffers[i];
+        //    bufferAnimationInfo.offset = 0;
+        //    bufferAnimationInfo.range = sizeof(AnimationUniform);
 
-            descriptorWrites[idx].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrites[idx].dstSet = descriptorSets[i];
-            descriptorWrites[idx].dstBinding = idx;
-            descriptorWrites[idx].dstArrayElement = 0;
-            descriptorWrites[idx].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            descriptorWrites[idx].descriptorCount = 1;
-            descriptorWrites[idx].pImageInfo = VK_NULL_HANDLE;
-            descriptorWrites[idx].pBufferInfo = &bufferAnimationInfo;
+        //    descriptorWrites[idx].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        //    descriptorWrites[idx].dstSet = descriptorSets[i];
+        //    descriptorWrites[idx].dstBinding = idx;
+        //    descriptorWrites[idx].dstArrayElement = 0;
+        //    descriptorWrites[idx].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        //    descriptorWrites[idx].descriptorCount = 1;
+        //    descriptorWrites[idx].pImageInfo = VK_NULL_HANDLE;
+        //    descriptorWrites[idx].pBufferInfo = &bufferAnimationInfo;
 
-            idx++;
-        }
+        //    idx++;
+        //}
 
         // ----------------- INICIO BUCLE CON TODAS LAS TEXTURAS
         std::vector<VkDescriptorImageInfo> imageInfo;
@@ -236,12 +236,12 @@ void DescriptorModule::createUniformBuffers()
         this->numUBOs++;
     }
 
-    // Animation UBO
-    if (this->animationUBO != nullptr)
-    {
-        this->animationUBO->CreateUniformBuffer(sizeof(AnimationUniform), this->NumSwapchainImages, *deviceModule);
-        this->numUBOs++;
-    }
+    //// Animation UBO
+    //if (this->animationUBO != nullptr)
+    //{
+    //    this->animationUBO->CreateUniformBuffer(sizeof(AnimationUniform), this->NumSwapchainImages, *deviceModule);
+    //    this->numUBOs++;
+    //}
 }
 
 void DescriptorModule::updateUniforms(uint32_t currentImage)
@@ -268,10 +268,10 @@ void DescriptorModule::updateUniforms(uint32_t currentImage)
     memcpy(data, static_cast<const void*>(this->lightUniform.get()), sizeof(LightManagerUniform));
     vkUnmapMemory(deviceModule->device, this->lightUBO->uniformBuffersMemory[currentImage]);
 
-    //Animation
-    vkMapMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[currentImage], 0, sizeof(AnimationUniform), 0, &data);
-    memcpy(data, static_cast<const void*>(this->animationUBO.get()), sizeof(AnimationUniform));
-    vkUnmapMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[currentImage]);
+    ////Animation
+    //vkMapMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[currentImage], 0, sizeof(AnimationUniform), 0, &data);
+    //memcpy(data, static_cast<const void*>(this->animationUBO.get()), sizeof(AnimationUniform));
+    //vkUnmapMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[currentImage]);
 }
 
 void DescriptorModule::Initialize(std::shared_ptr <std::vector<std::shared_ptr<CustomTexture>>> textures, std::shared_ptr <MaterialUniform> uniformMaterial)
@@ -310,10 +310,10 @@ void DescriptorModule::recreateUniformBuffer()
         memcpy(data, static_cast<const void*>(this->lightUniform.get()), sizeof(LightManagerUniform));
         vkUnmapMemory(deviceModule->device, this->lightUBO->uniformBuffersMemory[i]);
 
-        //Animation
-        vkMapMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[i], 0, sizeof(AnimationUniform), 0, &data);
-        memcpy(data, static_cast<const void*>(this->animationUniform.get()), sizeof(AnimationUniform));
-        vkUnmapMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[i]);
+        ////Animation
+        //vkMapMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[i], 0, sizeof(AnimationUniform), 0, &data);
+        //memcpy(data, static_cast<const void*>(this->animationUniform.get()), sizeof(AnimationUniform));
+        //vkUnmapMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[i]);
     }
 }
 
@@ -342,12 +342,12 @@ void DescriptorModule::cleanupDescriptorBuffer()
             vkFreeMemory(deviceModule->device, this->lightUBO->uniformBuffersMemory[i], nullptr);
         }
 
-        // Animation UBO
-        if (this->animationUBO != nullptr)
-        {
-            vkDestroyBuffer(deviceModule->device, this->animationUBO->uniformBuffers[i], nullptr);
-            vkFreeMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[i], nullptr);
-        }
+        //// Animation UBO
+        //if (this->animationUBO != nullptr)
+        //{
+        //    vkDestroyBuffer(deviceModule->device, this->animationUBO->uniformBuffers[i], nullptr);
+        //    vkFreeMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[i], nullptr);
+        //}
     }
     this->numUBOs = 0;
 }

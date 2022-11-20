@@ -25,9 +25,8 @@ private:
     VkPipelineShaderStageCreateInfo                 vertShaderStageInfo{};
     VkShaderModule                                  fragment_shader;
     VkPipelineShaderStageCreateInfo                 fragShaderStageInfo{};
-
-    VkVertexInputBindingDescription                     bindingDescription;
-    std::vector<VkVertexInputAttributeDescription>      attributeDescriptions;
+    VkVertexInputBindingDescription                 bindingDescription;
+    std::vector<VkVertexInputAttributeDescription>  attributeDescriptions;
 public:
     std::vector<VkPipelineShaderStageCreateInfo>    shaderStages;
     VkPipelineVertexInputStateCreateInfo            vertexInputInfo{};
@@ -37,7 +36,7 @@ public:
     ShaderModule(std::string vertexShaderName, std::string fragmentShaderName);
     static std::vector<char> readFile(const std::string& filename);
     void createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment);
-    void createShaderBindings();
+    void createShaderBindings(bool hasAnimation = false);
     void cleanup();
 private:
     VkPipelineShaderStageCreateInfo createShader(VkDevice& device, const std::string& filename, SHADER_TYPE shaderType);

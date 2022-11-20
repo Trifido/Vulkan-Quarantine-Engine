@@ -23,7 +23,7 @@ private:
     void createVertexBuffer() override;
 public:
     Mesh(const MeshData& data);
-    void InitializeMesh() override;
+    void InitializeMesh(size_t numAttributes) override;
 };
 
 #endif // !MESH_H

@@ -31,11 +31,13 @@ MaterialManager::MaterialManager()
     this->textureManager = TextureManager::getInstance();
 
     auto shaderManager = ShaderManager::getInstance();
-    //std::shared_ptr<ShaderModule> shader_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
-    //this->shaderManager->AddShader("shader", shader_ptr);
-    this->default_shader = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/Animation/exampleAnimated_vert.spv", "../../resources/shaders/Animation/exampleAnimated_frag.spv"));
+    this->default_shader = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
     this->default_shader->createShaderBindings();
     shaderManager->AddShader("default", this->default_shader);
+
+    this->default_animation_shader = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/Animation/exampleAnimated_vert.spv", "../../resources/shaders/Animation/exampleAnimated_frag.spv"));
+    this->default_animation_shader->createShaderBindings(true);
+    shaderManager->AddShader("default_animation", this->default_animation_shader);
 }
 
 void MaterialManager::InitializeMaterialManager(VkRenderPass renderPass, std::shared_ptr<GraphicsPipelineModule> graphicsPipeline)
@@ -84,10 +86,12 @@ void MaterialManager::AddMaterial(std::string nameMaterial, Material mat)
     _materials[name]->AddNullTexture(this->textureManager->GetTexture("NULL_TEXTURE"));
 }
 
-void MaterialManager::CreateMaterial(std::string nameMaterial)                                                                          // --------------------- En desarrollo ------------------------
+void MaterialManager::CreateMaterial(std::string nameMaterial, bool hasAnimation)                                                                          // --------------------- En desarrollo ------------------------
 {
-    this->AddMaterial(nameMaterial, std::make_shared<Material>(Material(this->default_shader, this->default_renderPass)));
-    
+    if(!hasAnimation)
+        this->AddMaterial(nameMaterial, std::make_shared<Material>(Material(this->default_shader, this->default_renderPass)));
+    else
+        this->AddMaterial(nameMaterial, std::make_shared<Material>(Material(this->default_animation_shader, this->default_renderPass)));
 }
 
 bool MaterialManager::Exists(std::string materialName)

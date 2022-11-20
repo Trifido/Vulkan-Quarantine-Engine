@@ -23,6 +23,12 @@ struct PBRVertex : Vertex
     float boneWeights[4];
 };
 
+struct PBRAnimationVertex : PBRVertex
+{
+    int boneIDs[4];
+    float boneWeights[4];
+};
+
 struct PrimitiveVertex : Vertex
 {
     glm::vec3 color;
