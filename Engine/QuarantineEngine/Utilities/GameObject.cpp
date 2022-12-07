@@ -73,20 +73,29 @@ void GameObject::addMaterial(std::shared_ptr<Material> material_ptr)
         return;
 
     this->material = material_ptr;
+    this->material->InitializeDescriptor();
+
+    if (this->meshImportedType == MeshImportedType::ANIMATED_GEO)
+    {
+        this->material->descriptor->InitializeAnimationProperties();
+    }
 
     if (this->mesh != nullptr)
     {
         this->material->bindingMesh(this->mesh);
     }
 
-    if (!this->childs.empty())
-    {
-        for (auto& it : this->childs)
-        {
-            it->material = material_ptr;
-            this->material->bindingMesh(it->mesh);
-        }
-    }
+    //if (!this->childs.empty())
+    //{
+    //    for (auto& it : this->childs)
+    //    {
+    //        it->material = material_ptr;
+    //        it->material->InitializeDescriptor();// it->meshImportedType == MeshImportedType::ANIMATED_GEO);
+    //        if (it->meshImportedType == MeshImportedType::ANIMATED_GEO)
+    //            it->material->descriptor->InitializeAnimationProperties();
+    //        it->material->bindingMesh(it->mesh);
+    //    }
+    //}
 }
 
 void GameObject::addEditorCamera(std::shared_ptr<Camera> camera_ptr)
@@ -147,7 +156,7 @@ void GameObject::InitializeAnimationComponent()
     {
         if (this->material != nullptr)
         {
-            this->animationComponent->animator->AddDescriptor(material->descriptor);
+            this->animationComponent->animator->AddDescriptor(this->material->descriptor);
         }
 
         if (!this->childs.empty())
@@ -198,6 +207,8 @@ void GameObject::CreateChildsGameObject(std::string pathfile)
     MeshImporter importer = {};
     std::vector<MeshData> data = importer.LoadMesh(pathfile);
 
+    this->meshImportedType = (importer.HasAnimation()) ? MeshImportedType::ANIMATED_GEO : MeshImportedType::COMMON_GEO;
+
     if (data.size() > 1)
     {
         this->transform = std::make_shared<Transform>();
@@ -210,6 +221,7 @@ void GameObject::CreateChildsGameObject(std::string pathfile)
             this->childs[id] = std::make_shared<GameObject>();
             this->childs[id]->parent = std::make_shared<GameObject>(*this);
             this->childs[id]->mesh = std::make_shared<Mesh>(Mesh(data[id]));
+            this->childs[id]->meshImportedType = this->meshImportedType;
             this->childs[id]->transform = std::make_shared<Transform>(Transform(parentModel * data[id].model));
             this->childs[id]->addMaterial(this->materialManager->GetMaterial(data[id].materialID));
         }
@@ -220,8 +232,6 @@ void GameObject::CreateChildsGameObject(std::string pathfile)
         this->transform = std::make_shared<Transform>(Transform(data[0].model));
         this->addMaterial(this->materialManager->GetMaterial(data[0].materialID));
     }
-
-    this->meshImportedType = (importer.HasAnimation()) ? MeshImportedType::ANIMATED_GEO : MeshImportedType::COMMON_GEO;
 
     if (importer.HasAnimation())
     {
@@ -259,7 +269,7 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
         vkCmdBindIndexBuffer(commandBuffer, this->mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->material->pipelineLayout, 0, 1, this->material->descriptor->getDescriptorSet(idx), 0, nullptr);
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->material->pipelineLayout, 0, 1, this->material->GetDescrìptor()->getDescriptorSet(idx), 0, nullptr);
 
         TransformUniform ubo;
         ubo.model = this->transform->GetModel();

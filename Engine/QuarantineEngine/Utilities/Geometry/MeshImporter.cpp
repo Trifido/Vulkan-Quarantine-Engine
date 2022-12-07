@@ -150,8 +150,8 @@ std::vector<MeshData> MeshImporter::LoadMesh(std::string path)
 {
     std::vector<MeshData> meshes;
     Assimp::Importer importer;
-
-    scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+    (void)importer.SetPropertyInteger(AI_CONFIG_PP_LBW_MAX_WEIGHTS, 4);
+    scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_LimitBoneWeights);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
@@ -163,7 +163,7 @@ std::vector<MeshData> MeshImporter::LoadMesh(std::string path)
 
     if (!this->hasAnimation)
     {
-        scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices);
+        scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices | aiProcess_LimitBoneWeights);
     }
 
     this->CheckPaths(path);
@@ -374,8 +374,8 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
 
     std::string materialName = rawName.C_Str();
 
-    if (!materialManager->Exists(materialName))
-    {
+    //if (!materialManager->Exists(materialName))
+    //{
         materialManager->CreateMaterial(materialName, this->hasAnimation);
         std::shared_ptr<Material> mat = materialManager->GetMaterial(materialName);
 
@@ -432,7 +432,7 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
         //{
         //    mat->AddTexture(this->textureManager->GetTexture(textureName));
         //}
-    }
+    //}
 
     meshData.materialID = materialName;
 

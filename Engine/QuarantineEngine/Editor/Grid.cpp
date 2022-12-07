@@ -17,7 +17,8 @@ Grid::Grid(std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule, VkRen
     this->material_grid_ptr->AddPipeline(graphicsPipelineModule);
 
     MaterialManager* instanceMaterialManager = MaterialManager::getInstance();
-    instanceMaterialManager->AddMaterial("editor:grid", this->material_grid_ptr);
+    std::string nameGrid = "editor:grid";
+    instanceMaterialManager->AddMaterial(nameGrid, this->material_grid_ptr);
     this->gridMesh->addMaterial(this->material_grid_ptr);
 }
 

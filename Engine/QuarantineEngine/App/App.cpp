@@ -166,8 +166,8 @@ void App::initVulkan()
 
 
     std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/adam/adamHead.gltf"));
-    model->transform->SetPosition(glm::vec3(0.0f, 1.3f, 0.0f));
-    model->transform->SetScale(glm::vec3(0.005f));
+    //model->transform->SetPosition(glm::vec3(0.0f, 1.3f, 0.0f));
+    //model->transform->SetScale(glm::vec3(0.005f));
     model->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
     //floor->transform->SetScale(glm::vec3(50.0f, 1.0f, 50.0f));
 

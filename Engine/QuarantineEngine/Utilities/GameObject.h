@@ -34,6 +34,7 @@ private:
     MeshImportedType    meshImportedType;
 
     std::shared_ptr<Camera>             cameraEditor = nullptr;
+
 public:
     std::shared_ptr<GeometryComponent>  mesh = nullptr;
     std::shared_ptr<Transform>          transform = nullptr;
