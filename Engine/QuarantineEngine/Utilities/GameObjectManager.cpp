@@ -6,7 +6,8 @@ GameObjectManager* GameObjectManager::instance = nullptr;
 
 void GameObjectManager::AddGameObject(std::shared_ptr<GameObject> object_ptr, std::string name)
 {
-    this->_objects[name] = object_ptr;
+    if(object_ptr->IsValid())
+        this->_objects[name] = object_ptr;
 }
 
 GameObjectManager* GameObjectManager::getInstance()

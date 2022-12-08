@@ -83,8 +83,7 @@ void MeshImporter::ExtractBoneWeightForVertices(MeshData& data, aiMesh* mesh, co
         {
             BoneInfo newBoneInfo;
             newBoneInfo.id = this->numBones;
-            newBoneInfo.offset = ConvertMatrixToGLMFormat(
-                mesh->mBones[boneIndex]->mOffsetMatrix);
+            newBoneInfo.offset = ConvertMatrixToGLMFormat(mesh->mBones[boneIndex]->mOffsetMatrix);
             this->m_BoneInfoMap[boneName] = newBoneInfo;
             boneID = this->numBones;
             this->numBones++;
@@ -159,7 +158,7 @@ std::vector<MeshData> MeshImporter::LoadMesh(std::string path)
         return meshes;
     }
 
-    this->hasAnimation = scene->HasAnimations() && scene->hasSkeletons();
+    this->hasAnimation = scene->HasAnimations();//&& scene->hasSkeletons();
 
     if (!this->hasAnimation)
     {
@@ -289,10 +288,11 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
         this->RecreateTangents(data.vertices, data.indices);
     }
 
-    //ExtractBoneWeightForVertices(data, mesh, scene);
+    ExtractBoneWeightForVertices(data, mesh, scene);
 
     return data;
 }
+
 MeshData MeshImporter::LoadRawMesh(float rawData[], unsigned int numData, unsigned int offset)
 {
     MeshData data = {};
@@ -327,6 +327,7 @@ MeshData MeshImporter::LoadRawMesh(float rawData[], unsigned int numData, unsign
 
     return data;
 }
+
 glm::mat4 MeshImporter::GetGLMMatrix(aiMatrix4x4 transform)
 {
     glm::mat4 result;
@@ -374,8 +375,8 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
 
     std::string materialName = rawName.C_Str();
 
-    //if (!materialManager->Exists(materialName))
-    //{
+    if (!materialManager->Exists(materialName))
+    {
         materialManager->CreateMaterial(materialName, this->hasAnimation);
         std::shared_ptr<Material> mat = materialManager->GetMaterial(materialName);
 
@@ -427,12 +428,12 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
             mat->AddTexture(this->textureManager->GetTexture(textureName));
         }
 
-        //textureName = this->GetTexture(material, aiTextureType_HEIGHT, TEXTURE_TYPE::HEIGHT_TYPE);
-        //if (textureName != "")
-        //{
-        //    mat->AddTexture(this->textureManager->GetTexture(textureName));
-        //}
-    //}
+        textureName = this->GetTexture(material, aiTextureType_HEIGHT, TEXTURE_TYPE::HEIGHT_TYPE);
+        if (textureName != "")
+        {
+            mat->AddTexture(this->textureManager->GetTexture(textureName));
+        }
+    }
 
     meshData.materialID = materialName;
 

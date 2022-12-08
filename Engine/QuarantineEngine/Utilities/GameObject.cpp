@@ -39,11 +39,14 @@ GameObject::GameObject(std::string meshPath)
     this->materialManager = MaterialManager::getInstance();
 
     this->parent = nullptr;
-    this->CreateChildsGameObject(meshPath);
+    bool loadResult = this->CreateChildsGameObject(meshPath);
 
-    size_t numMeshAttributes = this->CheckNumAttributes();
-    this->InitializeComponents(numMeshAttributes);
-    this->InitializeAnimationComponent();
+    if (loadResult)
+    {
+        size_t numMeshAttributes = this->CheckNumAttributes();
+        this->InitializeComponents(numMeshAttributes);
+        this->InitializeAnimationComponent();
+    }
 }
 
 void GameObject::cleanup()
@@ -194,6 +197,23 @@ void GameObject::InitializePhysics()
     }   
 }
 
+bool GameObject::IsValid()
+{
+    if (this->transform == nullptr)
+        return false;
+
+    if (this->mesh != nullptr && this->material != nullptr)
+        return true;
+
+    for (auto child : childs)
+    {
+        if (child->mesh != nullptr && child->material != nullptr)
+            return true;
+    }
+
+    return false;
+}
+
 void GameObject::UpdatePhysicTransform()
 {
     if (this->physicBody != nullptr && this->collider != nullptr)
@@ -202,12 +222,15 @@ void GameObject::UpdatePhysicTransform()
     }
 }
 
-void GameObject::CreateChildsGameObject(std::string pathfile)
+bool GameObject::CreateChildsGameObject(std::string pathfile)
 {
     MeshImporter importer = {};
     std::vector<MeshData> data = importer.LoadMesh(pathfile);
 
-    this->meshImportedType = (importer.HasAnimation()) ? MeshImportedType::ANIMATED_GEO : MeshImportedType::COMMON_GEO;
+    if (data.empty())
+        return false;
+
+    this->meshImportedType = importer.HasAnimation() ? MeshImportedType::ANIMATED_GEO : MeshImportedType::COMMON_GEO;
 
     if (data.size() > 1)
     {
@@ -233,7 +256,7 @@ void GameObject::CreateChildsGameObject(std::string pathfile)
         this->addMaterial(this->materialManager->GetMaterial(data[0].materialID));
     }
 
-    if (importer.HasAnimation())
+    if (this->meshImportedType == MeshImportedType::ANIMATED_GEO)
     {
         skeletalComponent = std::make_shared<SkeletalComponent>();
         skeletalComponent->numBones = importer.GetBoneCount();
@@ -246,6 +269,8 @@ void GameObject::CreateChildsGameObject(std::string pathfile)
             this->addAnimation(std::make_shared<Animation>(animData));
         }
     }
+
+    return true;
 }
 
 void GameObject::DrawChilds(VkCommandBuffer& commandBuffer, uint32_t idx)

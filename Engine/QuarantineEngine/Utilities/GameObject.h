@@ -60,13 +60,14 @@ public:
     void addCollider(std::shared_ptr<Collider> collider_ptr);
     void addAnimation(std::shared_ptr<Animation> animation_ptr);
     void InitializePhysics();
+    bool IsValid();
     void UpdatePhysicTransform();
 
 private:
     void CreateGameObjectID(size_t length);
     void InitializeComponents(size_t numMeshAttributes);
     void InitializeAnimationComponent();
-    void CreateChildsGameObject(std::string pathfile);
+    bool CreateChildsGameObject(std::string pathfile);
     void DrawChilds(VkCommandBuffer& commandBuffer, uint32_t idx);
     void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
     size_t CheckNumAttributes();
