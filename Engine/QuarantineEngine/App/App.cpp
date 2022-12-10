@@ -161,20 +161,22 @@ void App::initVulkan()
     this->gameObjectManager = GameObjectManager::getInstance();
 
     // Inicializamos los componentes del editor
-    //std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>(Grid(graphicsPipelineModule, renderPassModule->renderPass));
-    //this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
+    std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>(Grid(graphicsPipelineModule, renderPassModule->renderPass));
+    this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
 
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
+    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Animation/scene.gltf"));
     //model->transform->SetPosition(glm::vec3(0.0f, 1.3f, 0.0f));
     //model->transform->SetScale(glm::vec3(0.005f));
     if (model->IsValid())
     {
+        //model->transform->SetScale(glm::vec3(0.05f));
         model->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
     }
     //floor->transform->SetScale(glm::vec3(50.0f, 1.0f, 50.0f));
 
     this->gameObjectManager->AddGameObject(model, "model");
+
 
 /*
     //Creamos la textura
@@ -246,7 +248,7 @@ void App::initVulkan()
     //this->lightManager->GetLight("PointLight1")->quadratic = 0.032f;
 
     this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
-    //this->lightManager->GetLight("DirectionalLight0")->transform->SetPosition(glm::vec3(0.0f, 0.S0f, 3.0f));
+    //this->lightManager->GetLight("DirectionalLight0")->transform->SetPosition(glm::vec3(0.0f, 0.0f, 3.0f));
     this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(2.0f, 8.0f, -1.0f));
     this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.1f);
     this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.1f);
@@ -282,6 +284,7 @@ void App::initVulkan()
 
     // Initialize Managers
     this->animationManager->InitializeAnimations();
+    this->animationManager->UpdateAnimations(0.0f);
     this->gameObjectManager->InitializePhysics();
     this->materialManager->InitializeMaterials();
 
@@ -304,7 +307,7 @@ void App::mainLoop()
         this->gameObjectManager->UpdatePhysicTransforms();
 
         //ANIMATION SYSTEM
-        this->animationManager->UpdateAnimations((float)this->deltaTime);
+        //this->animationManager->UpdateAnimations((float)this->deltaTime);
 
         // INPUT EVENTS
         this->keyboard_ptr->ReadKeyboardEvents();

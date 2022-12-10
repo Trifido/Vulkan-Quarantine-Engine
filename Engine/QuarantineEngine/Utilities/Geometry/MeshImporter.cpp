@@ -62,6 +62,11 @@ void MeshImporter::SetVertexBoneDataToDefault(PBRVertex& vertex)
 
 void MeshImporter::SetVertexBoneData(PBRVertex& vertex, int boneID, float weight)
 {
+    if (weight == 0.0f)
+    {
+        return;
+    }
+
     for (int i = 0; i < 4; ++i)
     {
         if (vertex.boneIDs[i] < 0)
@@ -162,7 +167,7 @@ std::vector<MeshData> MeshImporter::LoadMesh(std::string path)
 
     if (!this->hasAnimation)
     {
-        scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices | aiProcess_LimitBoneWeights);
+        scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices);
     }
 
     this->CheckPaths(path);

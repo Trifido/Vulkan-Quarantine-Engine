@@ -32,12 +32,12 @@ layout(set = 0, binding = 2) uniform UniformManagerLight
 	LightData lights[8];
 } uboLight;
 
-const int MAX_BONES = 100;
+const int MAX_BONES = 200;
 const int MAX_BONE_INFLUENCE = 4;
 
-layout(set = 0, binding = 3) uniform UniformAnimation
+layout(std140, set = 0, binding = 3) uniform UniformAnimation
 {
-	mat4 finalBonesMatrices[100];
+	mat4 finalBonesMatrices[200];
 } uboAnimation;
 
 layout(location = 0) in vec3 inPosition;
@@ -59,10 +59,19 @@ layout(location = 0) out VS_OUT {
 
 void main() 
 {
-    mat4 BoneTransform = uboAnimation.finalBonesMatrices[inBoneIds[0]] * inWeights[0];
-    BoneTransform += uboAnimation.finalBonesMatrices[inBoneIds[1]] * inWeights[1];
-    BoneTransform += uboAnimation.finalBonesMatrices[inBoneIds[2]] * inWeights[2];
-    BoneTransform += uboAnimation.finalBonesMatrices[inBoneIds[3]] * inWeights[3];
+    mat4 BoneTransform = mat4(0.0);
+    
+    for(int idBone = 0; idBone < MAX_BONE_INFLUENCE; idBone++)
+    {
+        BoneTransform += uboAnimation.finalBonesMatrices[inBoneIds[idBone]] * inWeights[idBone];
+    }
+
+    if(BoneTransform == mat4(0.0))
+        BoneTransform = mat4(1.0);
+
+    //BoneTransform += uboAnimation.finalBonesMatrices[inBoneIds[1]] * inWeights[1];
+    //BoneTransform += uboAnimation.finalBonesMatrices[inBoneIds[2]] * inWeights[2];
+    //BoneTransform += uboAnimation.finalBonesMatrices[inBoneIds[3]] * inWeights[3];    
 
     vec4 tBonePosition = BoneTransform * vec4(inPosition, 1.0);
 

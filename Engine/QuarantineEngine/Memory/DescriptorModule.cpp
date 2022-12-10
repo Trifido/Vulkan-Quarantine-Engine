@@ -272,7 +272,7 @@ void DescriptorModule::updateUniforms(uint32_t currentImage)
     if (this->hasAnimationProperties)
     {
         vkMapMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[currentImage], 0, sizeof(AnimationUniform), 0, &data);
-        memcpy(data, static_cast<const void*>(this->animationUBO.get()), sizeof(AnimationUniform));
+        memcpy(data, static_cast<const void*>(this->animationUniform.get()), sizeof(AnimationUniform));
         vkUnmapMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[currentImage]);
     }
 }

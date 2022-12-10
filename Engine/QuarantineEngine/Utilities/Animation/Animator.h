@@ -12,6 +12,7 @@
 class Animator
 {
 private:
+    const int NUM_BONES = 200;
     std::vector<std::shared_ptr<DescriptorModule>> descriptors;
     std::shared_ptr<std::vector<glm::mat4>> m_FinalBoneMatrices;
     std::shared_ptr<Animation> m_CurrentAnimation = nullptr;

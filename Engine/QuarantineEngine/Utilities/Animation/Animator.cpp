@@ -3,7 +3,7 @@
 Animator::Animator()
 {
 	m_CurrentTime = 0.0;
-    m_FinalBoneMatrices = std::make_shared<std::vector<glm::mat4>>(std::vector<glm::mat4>(100, glm::mat4(1.0f)));
+    m_FinalBoneMatrices = std::make_shared<std::vector<glm::mat4>>(std::vector<glm::mat4>(NUM_BONES, glm::mat4(1.0f)));
     this->animationUniform_ptr = std::make_shared<AnimationUniform>();
 }
 
@@ -22,11 +22,7 @@ void Animator::UpdateAnimation(float dt)
         m_CurrentTime = fmod(m_CurrentTime, m_CurrentAnimation->GetDuration());
         CalculateBoneTransform(&m_CurrentAnimation->GetRootNode(), glm::mat4(1.0f));
 
-        //for(int i = 0; i < 100; i++)
-        //    this->animationUniform_ptr->finalBonesMatrices[i] = m_FinalBoneMatrices->at(i);
-
-        //memcpy(this->animationUniform_ptr->finalBonesMatrices, m_FinalBoneMatrices.get(), 100);
-        //this->animationUniform_ptr->finalBonesMatrices[i] = m_FinalBoneMatrices->at(i);
+        memcpy(this->animationUniform_ptr->finalBonesMatrices, this->m_FinalBoneMatrices.get()->data(), sizeof(glm::mat4) * NUM_BONES);
     }
 }
 
@@ -55,7 +51,7 @@ void Animator::CalculateBoneTransform(const AnimationNode* node, glm::mat4 paren
     if (boneInfoMap.find(nodeName) != boneInfoMap.end())
     {
         int index = boneInfoMap[nodeName].id;
-        if (index < 100)
+        if (index < NUM_BONES)
         {
             glm::mat4 offset = boneInfoMap[nodeName].offset;
             m_FinalBoneMatrices->at(index) = globalTransformation * offset;

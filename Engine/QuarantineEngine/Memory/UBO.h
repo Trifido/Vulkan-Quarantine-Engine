@@ -46,7 +46,7 @@ struct MaterialUniform
 
 struct AnimationUniform
 {
-    glm::mat4 finalBonesMatrices[100];
+    alignas(16) glm::mat4 finalBonesMatrices[200];
 };
 
 struct TransformUniform
