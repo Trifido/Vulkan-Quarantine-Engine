@@ -67,6 +67,12 @@ void MeshImporter::SetVertexBoneData(PBRVertex& vertex, int boneID, float weight
         return;
     }
 
+    for (int i = 0; i < 4; i++)
+    {
+        if (vertex.boneIDs[i] == boneID)
+            return;
+    }
+
     for (int i = 0; i < 4; ++i)
     {
         if (vertex.boneIDs[i] < 0)
@@ -215,7 +221,7 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
     std::vector<CustomTexture> textures;
 
     data.numPositions = mesh->mNumVertices;
-    data.numVertices = mesh->mNumVertices * 3;
+    data.numVertices = mesh->mNumVertices;// *3;
     data.numFaces = mesh->mNumFaces;
     data.numIndices = mesh->mNumFaces * 3;
     data.vertices.resize(data.numVertices);

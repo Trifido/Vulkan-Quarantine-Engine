@@ -59,19 +59,10 @@ layout(location = 0) out VS_OUT {
 
 void main() 
 {
-    mat4 BoneTransform = mat4(0.0);
-    
-    for(int idBone = 0; idBone < MAX_BONE_INFLUENCE; idBone++)
-    {
-        BoneTransform += uboAnimation.finalBonesMatrices[inBoneIds[idBone]] * inWeights[idBone];
-    }
-
-    if(BoneTransform == mat4(0.0))
-        BoneTransform = mat4(1.0);
-
-    //BoneTransform += uboAnimation.finalBonesMatrices[inBoneIds[1]] * inWeights[1];
-    //BoneTransform += uboAnimation.finalBonesMatrices[inBoneIds[2]] * inWeights[2];
-    //BoneTransform += uboAnimation.finalBonesMatrices[inBoneIds[3]] * inWeights[3];    
+    mat4 BoneTransform = uboAnimation.finalBonesMatrices[inBoneIds[0]] * inWeights[0];
+    BoneTransform += uboAnimation.finalBonesMatrices[inBoneIds[1]] * inWeights[1];
+    BoneTransform += uboAnimation.finalBonesMatrices[inBoneIds[2]] * inWeights[2];
+    BoneTransform += uboAnimation.finalBonesMatrices[inBoneIds[3]] * inWeights[3];    
 
     vec4 tBonePosition = BoneTransform * vec4(inPosition, 1.0);
 

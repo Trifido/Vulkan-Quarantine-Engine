@@ -256,6 +256,14 @@ bool GameObject::CreateChildsGameObject(std::string pathfile)
         this->addMaterial(this->materialManager->GetMaterial(data[0].materialID));
     }
 
+    for (int i = 0; i < data.at(1).numVertices; i++)
+    {
+        if (data.at(1).vertices.at(i).boneWeights[0] == 0.0f)
+        {
+            return true;
+        }
+    }
+
     if (this->meshImportedType == MeshImportedType::ANIMATED_GEO)
     {
         skeletalComponent = std::make_shared<SkeletalComponent>();
