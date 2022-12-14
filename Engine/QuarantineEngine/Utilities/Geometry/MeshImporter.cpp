@@ -220,13 +220,12 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 
     std::vector<CustomTexture> textures;
 
-    data.numPositions = mesh->mNumVertices;
-    data.numVertices = mesh->mNumVertices;// *3;
+    data.numVertices = mesh->mNumVertices;
     data.numFaces = mesh->mNumFaces;
     data.numIndices = mesh->mNumFaces * 3;
-    data.vertices.resize(data.numVertices);
 
-    for (unsigned int i = 0; i < data.numPositions; i++)
+    data.vertices.resize(data.numVertices);
+    for (unsigned int i = 0; i < data.numVertices; i++)
     {
         PBRVertex vertex;
 

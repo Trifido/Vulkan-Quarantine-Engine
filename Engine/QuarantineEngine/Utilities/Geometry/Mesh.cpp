@@ -14,7 +14,6 @@ Mesh::Mesh(const MeshData& data)
 {
     this->PATH = data.name;
     this->numAttributes = 3;
-    this->numVertices = data.numPositions;
     this->numFaces = data.numFaces;
     this->vertices = data.vertices;
     this->indices = data.indices;

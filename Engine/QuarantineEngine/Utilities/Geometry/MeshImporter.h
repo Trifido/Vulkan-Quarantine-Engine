@@ -19,7 +19,6 @@ struct MeshData
     size_t numVertices = 0;
     size_t numFaces = 0;
     size_t numIndices = 0;
-    size_t numPositions = 0;
     std::vector<PBRVertex> vertices;
     std::vector<unsigned int> indices;
     std::string materialID = "default";
