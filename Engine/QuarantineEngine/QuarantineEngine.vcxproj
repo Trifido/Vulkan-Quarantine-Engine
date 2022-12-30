@@ -90,14 +90,14 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>%VULKAN_SDK%\include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%VULKAN_SDK%\include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\bullet3\lib;$(SolutionDir)\Linking\assimp\lib\assimp;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib32;..\libs\glfw\lib-vc2010-32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mt.lib;BulletCollision_Debug.lib;BulletDynamics_Debug.lib;LinearMath_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\bullet3\lib;$(SolutionDir)\Linking\assimp\lib;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib32;..\libs\glfw\lib-vc2010-32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mtd.lib;BulletCollision_Debug.lib;BulletDynamics_Debug.lib;LinearMath_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
@@ -106,14 +106,14 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>%VULKAN_SDK%\include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Utilities\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Input;.\Utilities\Light;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%VULKAN_SDK%\include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Utilities\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Input;.\Utilities\Light;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\bullet3\lib;$(SolutionDir)\Linking\assimp\lib\assimp;C:\Users\vicente.martinez\Documents\GitHub\Vulkan-Quarantine-Engine\Engine\lib\Debug;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib;..\libs\glfw\lib-vc2010-64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mt.lib;BulletCollision_Debug.lib;BulletDynamics_Debug.lib;LinearMath_Debug.lib;assimp-vc142-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\bullet3\lib;$(SolutionDir)\Linking\assimp\lib;C:\Users\vicente.martinez\Documents\GitHub\Vulkan-Quarantine-Engine\Engine\lib\Debug;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib;..\libs\glfw\lib-vc2010-64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mtd.lib;BulletCollision_Debug.lib;BulletDynamics_Debug.lib;LinearMath_Debug.lib;assimp-vc142-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
@@ -124,7 +124,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>%VULKAN_SDK%\include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%VULKAN_SDK%\include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -133,8 +133,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\bullet3\lib;$(SolutionDir)\Linking\assimp\lib\assimp;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib32;..\libs\glfw\lib-vc2010-32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mt.lib;BulletCollision_Debug.lib;BulletDynamics_Debug.lib;LinearMath_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\bullet3\lib;$(SolutionDir)\Linking\assimp\lib;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib32;..\libs\glfw\lib-vc2010-32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mtd.lib;BulletCollision_Debug.lib;BulletDynamics_Debug.lib;LinearMath_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
@@ -146,7 +146,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>%VULKAN_SDK%\include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Utilities\Geometry;.\Input;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%VULKAN_SDK%\include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Utilities\Geometry;.\Input;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -155,8 +155,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\bullet3\lib;$(SolutionDir)\Linking\assimp\lib\assimp;C:\Users\vicente.martinez\Documents\GitHub\Vulkan-Quarantine-Engine\Engine\lib\Debug;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib;..\libs\glfw\lib-vc2010-64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mt.lib;BulletCollision_Debug.lib;BulletDynamics_Debug.lib;LinearMath_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\bullet3\lib;$(SolutionDir)\Linking\assimp\lib;C:\Users\vicente.martinez\Documents\GitHub\Vulkan-Quarantine-Engine\Engine\lib\Debug;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib;..\libs\glfw\lib-vc2010-64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mtd.lib;BulletCollision_Debug.lib;BulletDynamics_Debug.lib;LinearMath_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
@@ -198,6 +198,13 @@
     <ClCompile Include="SetUp\QueueModule.cpp" />
     <ClCompile Include="SetUp\VulkanInstance.cpp" />
     <ClCompile Include="SetUp\VulkanLayerAndExtension.cpp" />
+    <ClCompile Include="Utilities\Animation\Animation.cpp" />
+    <ClCompile Include="Utilities\Animation\AnimationComponent.cpp" />
+    <ClCompile Include="Utilities\Animation\AnimationImporter.cpp" />
+    <ClCompile Include="Utilities\Animation\AnimationManager.cpp" />
+    <ClCompile Include="Utilities\Animation\Animator.cpp" />
+    <ClCompile Include="Utilities\Animation\Bone.cpp" />
+    <ClCompile Include="Utilities\Animation\SkeletalComponent.cpp" />
     <ClCompile Include="Utilities\Camera.cpp" />
     <ClCompile Include="Utilities\CameraEditor.cpp" />
     <ClCompile Include="Utilities\GameComponent.cpp" />
@@ -262,6 +269,14 @@
     <ClInclude Include="SetUp\QueueModule.h" />
     <ClInclude Include="SetUp\VulkanInstance.h" />
     <ClInclude Include="SetUp\VulkanLayerAndExtension.h" />
+    <ClInclude Include="Utilities\Animation\Animation.h" />
+    <ClInclude Include="Utilities\Animation\AnimationComponent.h" />
+    <ClInclude Include="Utilities\Animation\AnimationImporter.h" />
+    <ClInclude Include="Utilities\Animation\AnimationManager.h" />
+    <ClInclude Include="Utilities\Animation\AnimationResources.h" />
+    <ClInclude Include="Utilities\Animation\Animator.h" />
+    <ClInclude Include="Utilities\Animation\Bone.h" />
+    <ClInclude Include="Utilities\Animation\SkeletalComponent.h" />
     <ClInclude Include="Utilities\Camera.h" />
     <ClInclude Include="Utilities\CameraEditor.h" />
     <ClInclude Include="Utilities\GameComponent.h" />

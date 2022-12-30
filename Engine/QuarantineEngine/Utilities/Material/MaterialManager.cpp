@@ -31,11 +31,13 @@ MaterialManager::MaterialManager()
     this->textureManager = TextureManager::getInstance();
 
     auto shaderManager = ShaderManager::getInstance();
-    //std::shared_ptr<ShaderModule> shader_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
-    //this->shaderManager->AddShader("shader", shader_ptr);
     this->default_shader = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
     this->default_shader->createShaderBindings();
     shaderManager->AddShader("default", this->default_shader);
+
+    this->default_animation_shader = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/Animation/exampleAnimated_vert.spv", "../../resources/shaders/Animation/exampleAnimated_frag.spv"));
+    this->default_animation_shader->createShaderBindings(true);
+    shaderManager->AddShader("default_animation", this->default_animation_shader);
 }
 
 void MaterialManager::InitializeMaterialManager(VkRenderPass renderPass, std::shared_ptr<GraphicsPipelineModule> graphicsPipeline)
@@ -67,27 +69,29 @@ std::shared_ptr<Material> MaterialManager::GetMaterial(std::string nameMaterial)
     return _materials[nameMaterial];
 }
 
-void MaterialManager::AddMaterial(std::string nameMaterial, std::shared_ptr<Material> mat_ptr)
+void MaterialManager::AddMaterial(std::string& nameMaterial, std::shared_ptr<Material> mat_ptr)
 {
-    std::string name = CheckName(nameMaterial);
     mat_ptr->AddPipeline(this->graphicsPipelineModule);
-    _materials[name] = mat_ptr;
-    _materials[name]->AddNullTexture(this->textureManager->GetTexture("NULL_TEXTURE"));
+    _materials[nameMaterial] = mat_ptr;
+    _materials[nameMaterial]->AddNullTexture(this->textureManager->GetTexture("NULL_TEXTURE"));
 }
 
-void MaterialManager::AddMaterial(std::string nameMaterial, Material mat)
+void MaterialManager::AddMaterial(std::string& nameMaterial, Material mat)
 {
-    std::string name = CheckName(nameMaterial);
     std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(mat);
     mat_ptr->AddPipeline(this->graphicsPipelineModule);
-    _materials[name] = mat_ptr;
-    _materials[name]->AddNullTexture(this->textureManager->GetTexture("NULL_TEXTURE"));
+    _materials[nameMaterial] = mat_ptr;
+    _materials[nameMaterial]->AddNullTexture(this->textureManager->GetTexture("NULL_TEXTURE"));
 }
 
-void MaterialManager::CreateMaterial(std::string nameMaterial)                                                                          // --------------------- En desarrollo ------------------------
+void MaterialManager::CreateMaterial(std::string& nameMaterial, bool hasAnimation)                                                                          // --------------------- En desarrollo ------------------------
 {
-    this->AddMaterial(nameMaterial, std::make_shared<Material>(Material(this->default_shader, this->default_renderPass)));
-    
+    nameMaterial = CheckName(nameMaterial);
+
+    if(!hasAnimation)
+        return this->AddMaterial(nameMaterial, std::make_shared<Material>(Material(this->default_shader, this->default_renderPass)));
+    else
+        return this->AddMaterial(nameMaterial, std::make_shared<Material>(Material(this->default_animation_shader, this->default_renderPass)));
 }
 
 bool MaterialManager::Exists(std::string materialName)
@@ -129,7 +133,7 @@ void MaterialManager::UpdateUniforms(uint32_t imageIndex)
 {
     for (auto& it : _materials)
     {
-        it.second->descriptor->updateUniforms(imageIndex);
+        it.second->GetDescrìptor()->updateUniforms(imageIndex);
     }
 }
 

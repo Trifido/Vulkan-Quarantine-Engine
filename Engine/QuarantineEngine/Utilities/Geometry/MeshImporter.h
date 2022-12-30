@@ -10,18 +10,17 @@
 #include <MaterialManager.h>
 #include <TextureManager.h>
 #include <set>
+#include <AnimationResources.h>
 
 struct MeshData
 {
     std::string name;
-    size_t numVertices;
-    size_t numFaces;
-    size_t numIndices;
-    size_t numPositions;
+    size_t numVertices = 0;
+    size_t numFaces = 0;
+    size_t numIndices = 0;
     std::vector<PBRVertex> vertices;
     std::vector<unsigned int> indices;
     std::string materialID = "default";
-
     glm::mat4 model = glm::mat4(1.0);
 };
 
@@ -35,6 +34,11 @@ private:
     std::string texturePath;
     std::string fileExtension;
     std::set<std::string> currentTextures;
+    std::map<std::string, BoneInfo> m_BoneInfoMap;
+    size_t numBones = 0;
+    bool hasAnimation = false;
+
+    //std::map<std::string, glm::mat4> offsetsReserve;
 
 private:
     MeshData ProcessMesh(aiMesh* mesh, const aiScene* scene);
@@ -43,6 +47,9 @@ private:
     void ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData& meshData);
     std::string GetTexture(aiMaterial* mat, aiTextureType type, TEXTURE_TYPE textureType);
     void CheckPaths(std::string path);
+    void SetVertexBoneDataToDefault(PBRVertex& vertex);
+    void SetVertexBoneData(PBRVertex& vertex, int boneID, float weight);
+    void ExtractBoneWeightForVertices(MeshData& data, aiMesh* mesh);
 
 public:
     MeshImporter();
@@ -50,6 +57,9 @@ public:
     static MeshData LoadRawMesh(float rawData[], unsigned int numData, unsigned int offset);
     static void RecreateNormals(std::vector<PBRVertex>& vertices, std::vector<unsigned int>& indices);
     static void RecreateTangents(std::vector<PBRVertex>& vertices, std::vector<unsigned int>& indices);
+    auto& GetBoneInfoMap() { return m_BoneInfoMap; }
+    size_t& GetBoneCount() { return numBones; }
+    inline bool HasAnimation() { return hasAnimation; }
 };
 
 #endif // !MESH_H

@@ -22,6 +22,7 @@ private:
     std::shared_ptr <std::vector<std::shared_ptr<CustomTexture>>> textures;
     uint32_t    numUBOs = 0;
     uint32_t    numBinding = 0;
+    bool        hasAnimationProperties = false;
 
 public:
     static  DeviceModule*           deviceModule;
@@ -32,11 +33,13 @@ public:
     std::shared_ptr<UniformBufferObject>    cameraUBO;
     std::shared_ptr<UniformBufferObject>    materialUBO;
     std::shared_ptr<UniformBufferObject>    lightUBO;
+    std::shared_ptr<UniformBufferObject>    animationUBO;
 
     //UNIFORM's
-    std::shared_ptr<CameraUniform>         cameraUniform;
+    std::shared_ptr<CameraUniform>          cameraUniform;
     std::shared_ptr<MaterialUniform>        materialUniform;
     std::shared_ptr<LightManagerUniform>    lightUniform;
+    std::shared_ptr<AnimationUniform>       animationUniform;
 
 public:
     DescriptorModule();
@@ -50,6 +53,7 @@ public:
     void    cleanup();
     void    cleanupDescriptorPool();
     void    cleanupDescriptorBuffer();
+    void    InitializeAnimationProperties();
     void    Initialize(std::shared_ptr <std::vector<std::shared_ptr<CustomTexture>>> textures, std::shared_ptr <MaterialUniform> uniformMaterial);
 
     void    createUniformBuffers();

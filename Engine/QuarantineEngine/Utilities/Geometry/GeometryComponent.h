@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef GAEOMETRYCOMPONENT_H
-#define GAEOMETRYCOMPONENT_H
+#ifndef GAEOMETRY_COMPONENT_H
+#define GAEOMETRY_COMPONENT_H
 
 #include "GameComponent.h"
 #include <Geometry/Vertex.h>
@@ -27,9 +27,9 @@ public:
     uint32_t numVertices;
     uint32_t numFaces;
 
-    virtual void InitializeMesh() = 0;
-    static VkVertexInputBindingDescription  getBindingDescription();
-    static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
+    virtual void InitializeMesh(size_t numAttributes) = 0;
+    static VkVertexInputBindingDescription  getBindingDescription(bool hasAnimation);
+    static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions(bool hasAnimation);// = false
     void cleanup();
 };
 

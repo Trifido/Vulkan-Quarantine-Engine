@@ -18,6 +18,7 @@ App::App()
 
     this->physicsModule = PhysicsModule::getInstance();
     this->editorManager = EditorObjectManager::getInstance();
+    this->animationManager = AnimationManager::getInstance();
 
     commandPoolModule->ClearColor = glm::vec3(0.1f);
 }
@@ -164,13 +165,18 @@ void App::initVulkan()
     this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
 
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/drone/scene.gltf"));
-    model->transform->SetPosition(glm::vec3(0.0f, 1.3f, 0.0f));
-    //model->transform->SetScale(glm::vec3(0.005f));
-    //floor->transform->SetPosition(glm::vec3(0.0f, -0.10f, 0.0f));
-    //floor->transform->SetScale(glm::vec3(50.0f, 1.0f, 50.0f));
+    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
+    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/vampire/Capoeira.dae"));
+    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/CharacterRunning/CharacterRunning.gltf"));
+
+    if (model->IsValid())
+    {
+        model->transform->SetScale(glm::vec3(0.05f));
+        model->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    }
 
     this->gameObjectManager->AddGameObject(model, "model");
+
 
 /*
     //Creamos la textura
@@ -242,7 +248,7 @@ void App::initVulkan()
     //this->lightManager->GetLight("PointLight1")->quadratic = 0.032f;
 
     this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
-    //this->lightManager->GetLight("DirectionalLight0")->transform->SetPosition(glm::vec3(0.0f, 0.S0f, 3.0f));
+    //this->lightManager->GetLight("DirectionalLight0")->transform->SetPosition(glm::vec3(0.0f, 0.0f, 3.0f));
     this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(2.0f, 8.0f, -1.0f));
     this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.1f);
     this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.1f);
@@ -276,8 +282,12 @@ void App::initVulkan()
     floor->addCollider(planeCollider2);
     */
 
+    // Initialize Managers
+    this->animationManager->InitializeAnimations();
+    //this->animationManager->UpdateAnimations(0.0f);
     this->gameObjectManager->InitializePhysics();
     this->materialManager->InitializeMaterials();
+
     this->commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass);
     this->synchronizationModule.createSyncObjects(swapchainModule->getNumSwapChainImages());
 
@@ -286,6 +296,8 @@ void App::initVulkan()
 
 void App::mainLoop()
 {
+    bool changeAnimation = true;
+
     while (!glfwWindowShouldClose(mainWindow.getWindow())) {
         glfwPollEvents();
         computeDeltaTime();
@@ -295,6 +307,9 @@ void App::mainLoop()
 
         // Update transforms
         this->gameObjectManager->UpdatePhysicTransforms();
+
+        //ANIMATION SYSTEM
+        this->animationManager->UpdateAnimations((float)this->deltaTime);
 
         // INPUT EVENTS
         this->keyboard_ptr->ReadKeyboardEvents();
@@ -327,6 +342,19 @@ void App::mainLoop()
             newPos.y -= 0.01f;
             this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
             this->lightManager->UpdateUniform();
+        }
+
+        if (ImGui::IsKeyDown('1'))
+        {
+            if (changeAnimation)
+            {
+                this->animationManager->ChangeAnimation();
+                changeAnimation = false;
+            }
+        }
+        if (ImGui::IsKeyReleased('1'))
+        {
+            changeAnimation = true;
         }
 
         {

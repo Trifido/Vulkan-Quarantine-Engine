@@ -4,7 +4,6 @@ Material::Material()
 {
     ambient = diffuse = specular = emissive = glm::vec3(0.0f);
     this->shininess = 32.0f;
-    this->descriptor = std::make_shared<DescriptorModule>(DescriptorModule());
     this->uniform = std::make_shared<MaterialUniform>();
     this->uniform->idxDiffuse = this->uniform->idxNormal = this->uniform->idxSpecular = this->uniform->idxEmissive = this->uniform->idxHeight = -1; // this->uniform->idxBump
     this->uniform->shininess = this->shininess;
@@ -19,7 +18,6 @@ Material::Material(std::shared_ptr<ShaderModule> shader_ptr, VkRenderPass render
     this->shininess = 32.0f;
     this->shader = shader_ptr;
     this->renderPass = renderPass;
-    this->descriptor = std::make_shared<DescriptorModule>(DescriptorModule());
     this->uniform = std::make_shared<MaterialUniform>();
     this->uniform->idxDiffuse = this->uniform->idxNormal = this->uniform->idxSpecular = this->uniform->idxEmissive = this->uniform->idxHeight = -1; //this->uniform->idxBump 
     this->uniform->shininess = this->shininess;
@@ -145,6 +143,11 @@ void Material::InitializeMaterial()
         this->descriptor->Initialize(this->texture_vector, uniform);
         this->graphicsPipelineModule->CreateGraphicsPipeline(this->pipeline, this->pipelineLayout, this->shader, this->descriptor, renderPass);
     }
+}
+
+void Material::InitializeDescriptor()
+{
+    this->descriptor = std::make_shared<DescriptorModule>();//new DescriptorModule()
 }
 
 std::shared_ptr<CustomTexture> Material::findTextureByType(TEXTURE_TYPE newtype)

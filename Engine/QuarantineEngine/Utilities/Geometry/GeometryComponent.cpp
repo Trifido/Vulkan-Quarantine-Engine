@@ -34,18 +34,20 @@ void GeometryComponent::createIndexBuffer()
     vkFreeMemory(deviceModule_ptr->device, stagingBufferMemory, nullptr);
 }
 
-VkVertexInputBindingDescription GeometryComponent::getBindingDescription()
+VkVertexInputBindingDescription GeometryComponent::getBindingDescription(bool hasAnimation)
 {
     VkVertexInputBindingDescription bindingDescription{};
     bindingDescription.binding = 0;
-    bindingDescription.stride = sizeof(PBRVertex);
+    bindingDescription.stride = (hasAnimation) ? sizeof(PBRAnimationVertex) : sizeof(PBRVertex);
     bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
     return bindingDescription;
 }
 
-std::vector<VkVertexInputAttributeDescription> GeometryComponent::getAttributeDescriptions() {
+std::vector<VkVertexInputAttributeDescription> GeometryComponent::getAttributeDescriptions(bool hasAnimation) {
     std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
-    attributeDescriptions.resize(5);
+
+    size_t numAttributes = (hasAnimation) ? 7 : 5;
+    attributeDescriptions.resize(numAttributes);
 
     attributeDescriptions[0].binding = 0;
     attributeDescriptions[0].location = 0;
@@ -71,6 +73,19 @@ std::vector<VkVertexInputAttributeDescription> GeometryComponent::getAttributeDe
     attributeDescriptions[4].location = 4;
     attributeDescriptions[4].format = VK_FORMAT_R32G32B32_SFLOAT;
     attributeDescriptions[4].offset = offsetof(PBRVertex, Bitangents);
+
+    if (hasAnimation)
+    {
+        attributeDescriptions[5].binding = 0;
+        attributeDescriptions[5].location = 5;
+        attributeDescriptions[5].format = VK_FORMAT_R32G32B32A32_SINT;
+        attributeDescriptions[5].offset = offsetof(PBRVertex, boneIDs);
+
+        attributeDescriptions[6].binding = 0;
+        attributeDescriptions[6].location = 6;
+        attributeDescriptions[6].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+        attributeDescriptions[6].offset = offsetof(PBRVertex, boneWeights);
+    }
 
     return attributeDescriptions;
 }

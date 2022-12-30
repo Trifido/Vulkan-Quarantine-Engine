@@ -1,8 +1,8 @@
 #include "LightManager.h"
 #include <algorithm>
-#include <PointLight.h>
-#include <DirectionalLight.h>
-#include <SpotLight.h>
+#include "PointLight.h"
+#include "DirectionalLight.h"
+#include "SpotLight.h"
 
 LightManager* LightManager::instance = nullptr;
 

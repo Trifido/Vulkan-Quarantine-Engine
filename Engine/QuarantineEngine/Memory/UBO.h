@@ -44,6 +44,11 @@ struct MaterialUniform
     int idxHeight;
 };
 
+struct AnimationUniform
+{
+    alignas(16) glm::mat4 finalBonesMatrices[200];
+};
+
 struct TransformUniform
 {
     glm::mat4 model;

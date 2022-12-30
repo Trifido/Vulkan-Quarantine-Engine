@@ -51,6 +51,95 @@ void MeshImporter::RecreateNormals(std::vector<PBRVertex>& vertices, std::vector
     }
 }
 
+void MeshImporter::SetVertexBoneDataToDefault(PBRVertex& vertex)
+{
+    for (int i = 0; i < 4; i++)
+    {
+        vertex.boneIDs[i] = -1;
+        vertex.boneWeights[i] = 0.0f;
+    }
+}
+
+void MeshImporter::SetVertexBoneData(PBRVertex& vertex, int boneID, float weight)
+{
+    if (weight == 0.0f)
+    {
+        return;
+    }
+
+    //for (int i = 0; i < 4; i++)
+    //{
+    //    if (vertex.boneIDs[i] == boneID)
+    //        return;
+    //}
+
+    for (int i = 0; i < 4; ++i)
+    {
+        if (vertex.boneWeights[i] == 0.0f)
+        {
+            vertex.boneWeights[i] = weight;
+            vertex.boneIDs[i] = boneID;
+
+            if (i == 4)
+            {
+                float sum = vertex.boneWeights[0] + vertex.boneWeights[1] + vertex.boneWeights[2] + vertex.boneWeights[3];
+
+                if (sum < 1.0f)
+                {
+                    float rest = 1.0f - sum;
+                    rest = rest / 4.0f;
+
+                    if (rest > 0.0f)
+                    {
+                        vertex.boneWeights[0] += rest;
+                        vertex.boneWeights[1] += rest;
+                        vertex.boneWeights[2] += rest;
+                        vertex.boneWeights[3] += rest;
+                    }
+                }
+            }
+            return;
+        }
+    }
+}
+
+void MeshImporter::ExtractBoneWeightForVertices(MeshData& data, aiMesh* mesh)
+{
+    for (int boneIndex = 0; boneIndex < mesh->mNumBones; boneIndex++)
+    {
+        int boneID = -1;
+        std::string boneName = mesh->mBones[boneIndex]->mName.C_Str();
+
+        if (this->m_BoneInfoMap.find(boneName) == this->m_BoneInfoMap.end())
+        {
+            BoneInfo newBoneInfo;
+            newBoneInfo.id = this->numBones;
+            newBoneInfo.offset = ConvertMatrixToGLMFormat(mesh->mBones[boneIndex]->mOffsetMatrix);
+            this->m_BoneInfoMap[boneName] = newBoneInfo;
+            boneID = this->numBones;
+            this->numBones++;
+        }
+        else
+        {
+            boneID = this->m_BoneInfoMap[boneName].id;
+        }
+        assert(boneID != -1);
+        auto weights = mesh->mBones[boneIndex]->mWeights;
+        int numWeights = mesh->mBones[boneIndex]->mNumWeights;
+
+        if (weights != NULL)
+        {
+            for (int weightIndex = 0; weightIndex < numWeights; weightIndex++)
+            {
+                int vertexId = weights[weightIndex].mVertexId;
+                float weight = weights[weightIndex].mWeight;
+                assert(vertexId <= data.vertices.size());
+                SetVertexBoneData(data.vertices[vertexId], boneID, weight);
+            }
+        }
+    }
+}
+
 void MeshImporter::RecreateTangents(std::vector<PBRVertex>& vertices, std::vector<unsigned int>& indices)
 {
     for (size_t idTr = 0; idTr < indices.size(); idTr += 3)
@@ -87,13 +176,12 @@ void MeshImporter::RecreateTangents(std::vector<PBRVertex>& vertices, std::vecto
     }
 }
 
-
 std::vector<MeshData> MeshImporter::LoadMesh(std::string path)
 {
     std::vector<MeshData> meshes;
     Assimp::Importer importer;
-
-    scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices);
+    (void)importer.SetPropertyInteger(AI_CONFIG_PP_LBW_MAX_WEIGHTS, 4);
+    scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_LimitBoneWeights);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
@@ -101,9 +189,16 @@ std::vector<MeshData> MeshImporter::LoadMesh(std::string path)
         return meshes;
     }
 
+    this->hasAnimation = scene->HasAnimations();
+
+    if (!this->hasAnimation)
+    {
+        scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices | aiProcess_PopulateArmatureData);
+    }
+
     this->CheckPaths(path);
 
-    glm::mat4 parentTransform = this->GetGLMMatrix(scene->mRootNode->mTransformation);
+    glm::mat4 parentTransform = glm::mat4(1.0f);
     ProcessNode(scene->mRootNode, scene, parentTransform, meshes);
 
     this->currentTextures.clear();
@@ -145,15 +240,17 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 
     std::vector<CustomTexture> textures;
 
-    data.numPositions = mesh->mNumVertices;
-    data.numVertices = mesh->mNumVertices * 3;
+    data.numVertices = mesh->mNumVertices;
     data.numFaces = mesh->mNumFaces;
     data.numIndices = mesh->mNumFaces * 3;
-    data.vertices.resize(data.numVertices);
 
-    for (unsigned int i = 0; i < data.numPositions; i++)
+    data.vertices.resize(data.numVertices);
+    for (unsigned int i = 0; i < data.numVertices; i++)
     {
         PBRVertex vertex;
+
+        this->SetVertexBoneDataToDefault(vertex);
+
         // process vertex positions, normals and texture coordinates
         glm::vec3 vector;
         vector.x = mesh->mVertices[i].x;
@@ -221,8 +318,11 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
         this->RecreateTangents(data.vertices, data.indices);
     }
 
+    ExtractBoneWeightForVertices(data, mesh);
+
     return data;
 }
+
 MeshData MeshImporter::LoadRawMesh(float rawData[], unsigned int numData, unsigned int offset)
 {
     MeshData data = {};
@@ -257,6 +357,7 @@ MeshData MeshImporter::LoadRawMesh(float rawData[], unsigned int numData, unsign
 
     return data;
 }
+
 glm::mat4 MeshImporter::GetGLMMatrix(aiMatrix4x4 transform)
 {
     glm::mat4 result;
@@ -306,7 +407,7 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
 
     if (!materialManager->Exists(materialName))
     {
-        materialManager->CreateMaterial(materialName);
+        materialManager->CreateMaterial(materialName, this->hasAnimation);
         std::shared_ptr<Material> mat = materialManager->GetMaterial(materialName);
 
         std::string textureName = this->GetTexture(material, aiTextureType_DIFFUSE, TEXTURE_TYPE::DIFFUSE_TYPE);
@@ -357,11 +458,11 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
             mat->AddTexture(this->textureManager->GetTexture(textureName));
         }
 
-        //textureName = this->GetTexture(material, aiTextureType_HEIGHT, TEXTURE_TYPE::HEIGHT_TYPE);
-        //if (textureName != "")
-        //{
-        //    mat->AddTexture(this->textureManager->GetTexture(textureName));
-        //}
+        textureName = this->GetTexture(material, aiTextureType_HEIGHT, TEXTURE_TYPE::HEIGHT_TYPE);
+        if (textureName != "")
+        {
+            mat->AddTexture(this->textureManager->GetTexture(textureName));
+        }
     }
 
     meshData.materialID = materialName;

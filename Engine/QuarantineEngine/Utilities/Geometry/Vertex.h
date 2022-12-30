@@ -19,6 +19,24 @@ struct PBRVertex : Vertex
 {
     glm::vec3 Tangents;
     glm::vec3 Bitangents;
+    int boneIDs[4];
+    float boneWeights[4];
+};
+
+struct PBRAnimationVertex
+{
+    glm::vec3 pos;
+    glm::vec3 norm;
+    glm::vec2 texCoord;
+
+    glm::vec3 Tangents;
+    glm::vec3 Bitangents;
+    int boneIDs[4];
+    float boneWeights[4];
+
+    bool operator==(const Vertex& other) const {
+        return this->pos == other.pos && this->norm == other.norm;
+    }
 };
 
 struct PrimitiveVertex : Vertex

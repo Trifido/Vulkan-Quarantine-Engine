@@ -37,12 +37,13 @@ public:
     std::shared_ptr<CustomTexture> heightTexture;
     //std::shared_ptr<CustomTexture> bumpTexture;
 
+    std::shared_ptr<DescriptorModule> descriptor;
+
     VkRenderPass           renderPass;
     VkPipeline             pipeline;
     VkPipelineLayout       pipelineLayout;
 
     std::shared_ptr<ShaderModule>           shader;
-    std::shared_ptr<DescriptorModule>       descriptor;
     std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule;
 public:
     Material();
@@ -54,11 +55,13 @@ public:
 
     void cleanup();
     void cleanupDescriptor();
+    inline std::shared_ptr<DescriptorModule> GetDescrìptor() { return descriptor; }
     void recreatePipelineMaterial(VkRenderPass renderPass);
     void bindingMesh(std::shared_ptr<GeometryComponent> mesh);
     void bindingCamera(Camera* editorCamera);
     void bindingLights(LightManager* lightManager);
     void InitializeMaterial();
+    void InitializeDescriptor();
     void RecreateUniformsMaterial();
 
 private:

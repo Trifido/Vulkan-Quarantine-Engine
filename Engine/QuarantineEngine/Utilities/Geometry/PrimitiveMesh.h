@@ -16,7 +16,7 @@ public:
 
     PrimitiveMesh();
     PrimitiveMesh(PRIMITIVE_TYPE type);
-    void InitializeMesh() override;
+    void InitializeMesh(size_t numAttributes) override;
 
 private:
     void InitializePoint();
