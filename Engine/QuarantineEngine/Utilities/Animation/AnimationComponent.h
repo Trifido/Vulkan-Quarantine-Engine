@@ -21,6 +21,11 @@ public:
     void AddAnimation(std::shared_ptr<Animation> animation_ptr);
     void AddAnimation(Animation animation);
     std::shared_ptr<Animation> GetAnimation(std::string name);
+
+    //DEMO
+    std::vector<std::shared_ptr<Animation>> animationVector;
+    int idAnimation = 0;
+    void ChangeAnimation();
 };
 
 #endif

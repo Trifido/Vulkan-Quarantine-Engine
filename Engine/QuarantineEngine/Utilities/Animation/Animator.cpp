@@ -35,9 +35,9 @@ void Animator::PlayAnimation(std::shared_ptr<Animation> pAnimation)
 void Animator::CalculateBoneTransform(const AnimationNode* node, glm::mat4 parentTransform)
 {
     std::string nodeName = node->name;
-    glm::mat4 nodeTransform = node->transformation;
-
     Bone* Bone = m_CurrentAnimation->FindBone(nodeName);
+
+    glm::mat4 nodeTransform = node->transformation;
 
     if (Bone)
     {
@@ -57,7 +57,7 @@ void Animator::CalculateBoneTransform(const AnimationNode* node, glm::mat4 paren
             m_FinalBoneMatrices->at(index) = globalTransformation * offset;
         }
     }
-
+    
     for (int i = 0; i < node->childrenCount; i++)
         CalculateBoneTransform(&node->children[i], globalTransformation);
 }
@@ -65,4 +65,11 @@ void Animator::CalculateBoneTransform(const AnimationNode* node, glm::mat4 paren
 std::shared_ptr<std::vector<glm::mat4>> Animator::GetFinalBoneMatrices()
 {
     return m_FinalBoneMatrices;
+}
+
+void Animator::ChangeAnimation(std::shared_ptr<Animation> newAnimation)
+{
+    this->m_CurrentTime = 0.0f;
+    this->m_DeltaTime = 0.0f;
+    this->m_CurrentAnimation = newAnimation;
 }

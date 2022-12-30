@@ -3,6 +3,7 @@
 Animation::Animation(const AnimationData& animData)
 {
     this->animationData = animData;
+    this->name = animData.animationName;
 }
 
 const std::map<std::string, BoneInfo>& Animation::GetBoneIDMap()

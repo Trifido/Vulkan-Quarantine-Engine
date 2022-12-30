@@ -29,6 +29,9 @@ public:
     void PlayAnimation(std::shared_ptr<Animation> pAnimation);
     void CalculateBoneTransform(const AnimationNode* node, glm::mat4 parentTransform);
     std::shared_ptr<std::vector<glm::mat4>> GetFinalBoneMatrices();
+
+    // DEMO
+    void ChangeAnimation(std::shared_ptr<Animation> newAnimation);
 };
 
 #endif

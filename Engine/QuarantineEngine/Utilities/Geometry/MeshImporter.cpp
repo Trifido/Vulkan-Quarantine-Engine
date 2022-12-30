@@ -67,29 +67,49 @@ void MeshImporter::SetVertexBoneData(PBRVertex& vertex, int boneID, float weight
         return;
     }
 
-    for (int i = 0; i < 4; i++)
-    {
-        if (vertex.boneIDs[i] == boneID)
-            return;
-    }
+    //for (int i = 0; i < 4; i++)
+    //{
+    //    if (vertex.boneIDs[i] == boneID)
+    //        return;
+    //}
 
     for (int i = 0; i < 4; ++i)
     {
-        if (vertex.boneIDs[i] < 0)
+        if (vertex.boneWeights[i] == 0.0f)
         {
             vertex.boneWeights[i] = weight;
             vertex.boneIDs[i] = boneID;
-            break;
+
+            if (i == 4)
+            {
+                float sum = vertex.boneWeights[0] + vertex.boneWeights[1] + vertex.boneWeights[2] + vertex.boneWeights[3];
+
+                if (sum < 1.0f)
+                {
+                    float rest = 1.0f - sum;
+                    rest = rest / 4.0f;
+
+                    if (rest > 0.0f)
+                    {
+                        vertex.boneWeights[0] += rest;
+                        vertex.boneWeights[1] += rest;
+                        vertex.boneWeights[2] += rest;
+                        vertex.boneWeights[3] += rest;
+                    }
+                }
+            }
+            return;
         }
     }
 }
 
-void MeshImporter::ExtractBoneWeightForVertices(MeshData& data, aiMesh* mesh, const aiScene* scene)
+void MeshImporter::ExtractBoneWeightForVertices(MeshData& data, aiMesh* mesh)
 {
-    for (int boneIndex = 0; boneIndex < mesh->mNumBones; ++boneIndex)
+    for (int boneIndex = 0; boneIndex < mesh->mNumBones; boneIndex++)
     {
         int boneID = -1;
         std::string boneName = mesh->mBones[boneIndex]->mName.C_Str();
+
         if (this->m_BoneInfoMap.find(boneName) == this->m_BoneInfoMap.end())
         {
             BoneInfo newBoneInfo;
@@ -109,7 +129,7 @@ void MeshImporter::ExtractBoneWeightForVertices(MeshData& data, aiMesh* mesh, co
 
         if (weights != NULL)
         {
-            for (int weightIndex = 0; weightIndex < numWeights; ++weightIndex)
+            for (int weightIndex = 0; weightIndex < numWeights; weightIndex++)
             {
                 int vertexId = weights[weightIndex].mVertexId;
                 float weight = weights[weightIndex].mWeight;
@@ -169,16 +189,16 @@ std::vector<MeshData> MeshImporter::LoadMesh(std::string path)
         return meshes;
     }
 
-    this->hasAnimation = scene->HasAnimations();//&& scene->hasSkeletons();
+    this->hasAnimation = scene->HasAnimations();
 
     if (!this->hasAnimation)
     {
-        scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices);
+        scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices | aiProcess_PopulateArmatureData);
     }
 
     this->CheckPaths(path);
 
-    glm::mat4 parentTransform = this->GetGLMMatrix(scene->mRootNode->mTransformation);
+    glm::mat4 parentTransform = glm::mat4(1.0f);
     ProcessNode(scene->mRootNode, scene, parentTransform, meshes);
 
     this->currentTextures.clear();
@@ -298,7 +318,7 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
         this->RecreateTangents(data.vertices, data.indices);
     }
 
-    ExtractBoneWeightForVertices(data, mesh, scene);
+    ExtractBoneWeightForVertices(data, mesh);
 
     return data;
 }

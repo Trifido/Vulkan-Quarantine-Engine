@@ -17,6 +17,8 @@ void AnimationComponent::AddAnimation(std::shared_ptr<Animation> animation_ptr)
     }
 
     this->numAnimations++;
+
+    animationVector.push_back(animation_ptr);
 }
 
 void AnimationComponent::AddAnimation(Animation animation)
@@ -31,6 +33,8 @@ void AnimationComponent::AddAnimation(Animation animation)
     }
 
     this->numAnimations++;
+
+    animationVector.push_back(std::make_shared<Animation>(animation));
 }
 
 std::shared_ptr<Animation> AnimationComponent::GetAnimation(std::string name)
@@ -41,4 +45,12 @@ std::shared_ptr<Animation> AnimationComponent::GetAnimation(std::string name)
         return it->second;
 
     return nullptr;
+}
+
+void AnimationComponent::ChangeAnimation()
+{
+    idAnimation++;
+    idAnimation %= numAnimations;
+
+    this->animator->ChangeAnimation(animationVector.at(idAnimation));
 }

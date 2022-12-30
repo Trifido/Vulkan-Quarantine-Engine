@@ -21,6 +21,7 @@ struct AnimationNode
 
 struct AnimationData
 {
+    std::string animationName;
     std::map<std::string, BoneInfo> m_BoneInfoMap;
     std::vector<Bone> m_Bones;
     AnimationNode animationNodeData;

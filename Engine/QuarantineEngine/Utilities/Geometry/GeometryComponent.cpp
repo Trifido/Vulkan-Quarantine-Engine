@@ -78,13 +78,13 @@ std::vector<VkVertexInputAttributeDescription> GeometryComponent::getAttributeDe
     {
         attributeDescriptions[5].binding = 0;
         attributeDescriptions[5].location = 5;
-        attributeDescriptions[5].format = VK_FORMAT_A2B10G10R10_SINT_PACK32;//VK_FORMAT_R32G32B32A32_SFLOAT;
-        attributeDescriptions[5].offset = offsetof(PBRAnimationVertex, boneIDs);
+        attributeDescriptions[5].format = VK_FORMAT_R32G32B32A32_SINT;
+        attributeDescriptions[5].offset = offsetof(PBRVertex, boneIDs);
 
         attributeDescriptions[6].binding = 0;
         attributeDescriptions[6].location = 6;
         attributeDescriptions[6].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-        attributeDescriptions[6].offset = offsetof(PBRAnimationVertex, boneWeights);
+        attributeDescriptions[6].offset = offsetof(PBRVertex, boneWeights);
     }
 
     return attributeDescriptions;

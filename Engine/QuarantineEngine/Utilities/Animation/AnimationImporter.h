@@ -13,7 +13,7 @@ private:
     static void ReadMissingBones(const aiAnimation* animation, AnimationData& animationData, size_t numBones);
 
 public:
-    static AnimationData ImportAnimation(std::string path, std::map<std::string, BoneInfo> m_BoneInfoMap, size_t numBones);
+    static std::vector<AnimationData> ImportAnimation(std::string path, std::map<std::string, BoneInfo> m_BoneInfoMap, size_t numBones);
 };
 
 #endif

@@ -166,14 +166,14 @@ void App::initVulkan()
 
 
     std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
-    //model->transform->SetPosition(glm::vec3(0.0f, 1.3f, 0.0f));
-    //model->transform->SetScale(glm::vec3(0.005f));
+    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/vampire/Capoeira.dae"));
+    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/CharacterRunning/CharacterRunning.gltf"));
+
     if (model->IsValid())
     {
         model->transform->SetScale(glm::vec3(0.05f));
         model->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
     }
-    //floor->transform->SetScale(glm::vec3(50.0f, 1.0f, 50.0f));
 
     this->gameObjectManager->AddGameObject(model, "model");
 
@@ -284,7 +284,7 @@ void App::initVulkan()
 
     // Initialize Managers
     this->animationManager->InitializeAnimations();
-    this->animationManager->UpdateAnimations(0.0f);
+    //this->animationManager->UpdateAnimations(0.0f);
     this->gameObjectManager->InitializePhysics();
     this->materialManager->InitializeMaterials();
 
@@ -296,6 +296,8 @@ void App::initVulkan()
 
 void App::mainLoop()
 {
+    bool changeAnimation = true;
+
     while (!glfwWindowShouldClose(mainWindow.getWindow())) {
         glfwPollEvents();
         computeDeltaTime();
@@ -307,7 +309,7 @@ void App::mainLoop()
         this->gameObjectManager->UpdatePhysicTransforms();
 
         //ANIMATION SYSTEM
-        //this->animationManager->UpdateAnimations((float)this->deltaTime);
+        this->animationManager->UpdateAnimations((float)this->deltaTime);
 
         // INPUT EVENTS
         this->keyboard_ptr->ReadKeyboardEvents();
@@ -340,6 +342,19 @@ void App::mainLoop()
             newPos.y -= 0.01f;
             this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
             this->lightManager->UpdateUniform();
+        }
+
+        if (ImGui::IsKeyDown('1'))
+        {
+            if (changeAnimation)
+            {
+                this->animationManager->ChangeAnimation();
+                changeAnimation = false;
+            }
+        }
+        if (ImGui::IsKeyReleased('1'))
+        {
+            changeAnimation = true;
         }
 
         {

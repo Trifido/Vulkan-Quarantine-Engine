@@ -12,7 +12,6 @@
 #include <set>
 #include <AnimationResources.h>
 
-
 struct MeshData
 {
     std::string name;
@@ -39,6 +38,8 @@ private:
     size_t numBones = 0;
     bool hasAnimation = false;
 
+    //std::map<std::string, glm::mat4> offsetsReserve;
+
 private:
     MeshData ProcessMesh(aiMesh* mesh, const aiScene* scene);
     void ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, std::vector<MeshData> &meshes);
@@ -48,7 +49,7 @@ private:
     void CheckPaths(std::string path);
     void SetVertexBoneDataToDefault(PBRVertex& vertex);
     void SetVertexBoneData(PBRVertex& vertex, int boneID, float weight);
-    void ExtractBoneWeightForVertices(MeshData& data, aiMesh* mesh, const aiScene* scene);
+    void ExtractBoneWeightForVertices(MeshData& data, aiMesh* mesh);
 
 public:
     MeshImporter();

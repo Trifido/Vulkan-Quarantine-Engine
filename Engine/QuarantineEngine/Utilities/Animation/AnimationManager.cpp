@@ -71,3 +71,11 @@ void AnimationManager::UpdateAnimations(float dt)
         it.second->animator->UpdateAnimation(dt);
     }
 }
+
+void AnimationManager::ChangeAnimation()
+{
+	for (auto& it : _animationComponents)
+	{
+        it.second->ChangeAnimation();
+	}
+}
