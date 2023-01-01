@@ -51,27 +51,41 @@ layout(location = 6) in vec4 inWeights;
 layout(location = 0) out VS_OUT {
     vec3 FragPos;
     vec3 Normal;
+    vec3 TangentViewPos;
+    vec3 TangentFragPos;
+    vec3 TangentLightPos[8];
     vec2 TexCoords;
 } vs_out;
 
 void main() 
-{ 
-    vec4 totalLocalPos = vec4(0.0);
-    vec4 totalNormal = vec4(0.0);
+{
+    mat4 BoneTransform = uboAnimation.finalBonesMatrices[inBoneIds[0]] * inWeights[0];
+    BoneTransform += uboAnimation.finalBonesMatrices[inBoneIds[1]] * inWeights[1];
+    BoneTransform += uboAnimation.finalBonesMatrices[inBoneIds[2]] * inWeights[2];
+    BoneTransform += uboAnimation.finalBonesMatrices[inBoneIds[3]] * inWeights[3];    
 
-    for(int i = 0; i < MAX_BONE_INFLUENCE; i++)
+    vec4 tBonePosition = BoneTransform * vec4(inPosition, 1.0);
+
+    vs_out.FragPos = vec3(constants.model * tBonePosition);
+    vs_out.TexCoords = inTexCoord;
+    
+    mat3 normalMatrix = transpose(inverse(mat3(BoneTransform)));
+    vs_out.Normal = normalMatrix * inNormal;
+
+    vec3 T = normalize(normalMatrix * inTangent);
+    vec3 N = normalize(normalMatrix * inNormal);
+    T = normalize(T - dot(T, N) * N);
+    vec3 B = cross(N, T);
+    
+    mat3 TBN = transpose(mat3(T, B, N));   
+
+    vs_out.TangentViewPos = TBN * cameraData.position;
+    vs_out.TangentFragPos = TBN * vs_out.FragPos; 
+
+    for(int i = 0; i < uboLight.numLights; i++)
     {
-        vec4 localPosition = uboAnimation.finalBonesMatrices[inBoneIds[i]] * vec4(inPosition, 1.0);
-        totalLocalPos += localPosition * inWeights[i];
-
-        vec4 worldNormal = uboAnimation.finalBonesMatrices[inBoneIds[i]] * vec4(inNormal, 0.0);
-        totalNormal += worldNormal * inWeights[i]; 
+        vs_out.TangentLightPos[i] = TBN * vec3(uboLight.lights[i].position);
     }
 
-    vs_out.FragPos = vec3(totalLocalPos);
-    vs_out.TexCoords = inTexCoord;
-
-    gl_Position = cameraData.viewproj * totalLocalPos;
-
-    vs_out.Normal = totalNormal.xyz;
+    gl_Position = cameraData.viewproj * vec4(vs_out.FragPos, 1.0);
 }

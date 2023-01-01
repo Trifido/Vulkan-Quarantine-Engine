@@ -28,7 +28,7 @@ void DescriptorModule::createDescriptorSetLayout()
 
     // Inicializamos el descriptor layouts de las texturas que será un array texture
     VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
-    samplerLayoutBinding.binding = this->numBinding;
+    samplerLayoutBinding.binding =  this->numBinding;
     samplerLayoutBinding.descriptorCount = textures->size();
     samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -116,7 +116,7 @@ void DescriptorModule::createDescriptorSets()
 
             idx++;
         }
-
+        
         if (this->materialUniform != nullptr)
         {
             VkDescriptorBufferInfo bufferMaterialInfo{};
@@ -135,7 +135,7 @@ void DescriptorModule::createDescriptorSets()
 
             idx++;
         }
-
+        
         if (this->lightUniform != nullptr)
         {
             VkDescriptorBufferInfo lightMaterialInfo{};
@@ -154,7 +154,7 @@ void DescriptorModule::createDescriptorSets()
 
             idx++;
         }
-
+        
         if (this->animationUniform != nullptr && this->hasAnimationProperties)
         {
             VkDescriptorBufferInfo bufferAnimationInfo{};
@@ -173,7 +173,6 @@ void DescriptorModule::createDescriptorSets()
 
             idx++;
         }
-
 
         // ----------------- INICIO BUCLE CON TODAS LAS TEXTURAS
         std::vector<VkDescriptorImageInfo> imageInfo;
@@ -198,9 +197,10 @@ void DescriptorModule::createDescriptorSets()
             descriptorWrites[id].pImageInfo = imageInfo.data();
         }
         // ----------------- FINAL BUCLE CON TODAS LAS TEXTURAS
-
+        
         vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
+    
 }
 
 void DescriptorModule::cleanup()

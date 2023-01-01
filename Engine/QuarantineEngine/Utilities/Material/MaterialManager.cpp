@@ -139,7 +139,7 @@ void MaterialManager::UpdateUniforms(uint32_t imageIndex)
 
 void MaterialManager::InitializeMaterials()
 {
-    for (auto& it : _materials)
+    for (auto it : _materials)
     {
         it.second->bindingCamera(this->cameraEditor);
         it.second->bindingLights(this->lightManager);

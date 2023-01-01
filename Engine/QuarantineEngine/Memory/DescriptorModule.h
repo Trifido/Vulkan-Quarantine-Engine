@@ -30,16 +30,16 @@ public:
     VkDescriptorSetLayout           descriptorSetLayout;
 
     //UBO's
-    std::shared_ptr<UniformBufferObject>    cameraUBO;
-    std::shared_ptr<UniformBufferObject>    materialUBO;
-    std::shared_ptr<UniformBufferObject>    lightUBO;
-    std::shared_ptr<UniformBufferObject>    animationUBO;
+    std::shared_ptr<UniformBufferObject>    cameraUBO = nullptr;
+    std::shared_ptr<UniformBufferObject>    materialUBO = nullptr;
+    std::shared_ptr<UniformBufferObject>    lightUBO = nullptr;
+    std::shared_ptr<UniformBufferObject>    animationUBO = nullptr;
 
     //UNIFORM's
-    std::shared_ptr<CameraUniform>          cameraUniform;
-    std::shared_ptr<MaterialUniform>        materialUniform;
-    std::shared_ptr<LightManagerUniform>    lightUniform;
-    std::shared_ptr<AnimationUniform>       animationUniform;
+    std::shared_ptr<CameraUniform>          cameraUniform = nullptr;
+    std::shared_ptr<MaterialUniform>        materialUniform = nullptr;
+    std::shared_ptr<LightManagerUniform>    lightUniform = nullptr;
+    std::shared_ptr<AnimationUniform>       animationUniform = nullptr;
 
 public:
     DescriptorModule();

@@ -166,6 +166,7 @@ void App::initVulkan()
 
 
     std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
+    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/steampunk/scene.gltf"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/vampire/Capoeira.dae"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/CharacterRunning/CharacterRunning.gltf"));
 
@@ -178,17 +179,27 @@ void App::initVulkan()
     this->gameObjectManager->AddGameObject(model, "model");
 
 
-/*
-    //Creamos la textura
-    textureManager->AddTexture("diffuse_brick", CustomTexture(TEXTURE_WALL_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
-    textureManager->AddTexture("normal_brick", CustomTexture(TEXTURE_WALL_NORMAL_PATH, TEXTURE_TYPE::NORMAL_TYPE));
-    textureManager->AddTexture("test", CustomTexture(TEXTURE_TEST_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
+    ////Creamos la textura
+    //textureManager->AddTexture("diffuse_brick", CustomTexture(TEXTURE_WALL_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
+    //textureManager->AddTexture("normal_brick", CustomTexture(TEXTURE_WALL_NORMAL_PATH, TEXTURE_TYPE::NORMAL_TYPE));
+    //textureManager->AddTexture("test", CustomTexture(TEXTURE_TEST_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
+    //std::shared_ptr<GameObject> cube = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
+    //cube->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    //cube->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 65.0f));
+    //std::shared_ptr<ShaderModule> shader_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
+    //shader_ptr->createShaderBindings();
+    //this->shaderManager->AddShader("shader", shader_ptr);
+    //std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(Material(this->shaderManager->GetShader("shader"), renderPassModule->renderPass));
+    //mat_ptr->AddNullTexture(textureManager->GetTexture("NULL"));
+    //mat_ptr->AddTexture(textureManager->GetTexture("diffuse_brick"));
+    //mat_ptr->AddTexture(textureManager->GetTexture("normal_brick"));
+    //mat_ptr->AddPipeline(graphicsPipelineModule);
+    //std::string matName = "mat";
+    //materialManager->AddMaterial(matName, mat_ptr);
+    //cube->addMaterial(materialManager->GetMaterial("mat"));
+    //this->gameObjectManager->AddGameObject(cube, "cube");
 
-    std::shared_ptr<GameObject> cube = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
-    cube->transform->SetPosition(glm::vec3(0.0f, 20.0f, 0.0f));
-    cube->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 65.0f));
-
-    std::shared_ptr<GameObject> plano = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
+    /*    std::shared_ptr<GameObject> plano = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
     plano->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 45.0f));
     plano->transform->SetPosition(glm::vec3(0.0f, 3.0f, 0.0f));
     plano->transform->SetScale(glm::vec3(5.0f, 1.0f, 5.0f));
@@ -284,7 +295,6 @@ void App::initVulkan()
 
     // Initialize Managers
     this->animationManager->InitializeAnimations();
-    //this->animationManager->UpdateAnimations(0.0f);
     this->gameObjectManager->InitializePhysics();
     this->materialManager->InitializeMaterials();
 

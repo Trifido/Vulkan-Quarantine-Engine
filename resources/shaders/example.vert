@@ -14,7 +14,7 @@ layout(std430, push_constant) uniform PushConstants
     mat4 model;
 } constants;
 
-struct LightData {
+struct LightData { 
     vec4 position;
     vec3 diffuse;
     float constant;

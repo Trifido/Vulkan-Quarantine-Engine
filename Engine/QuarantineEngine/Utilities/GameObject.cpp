@@ -101,11 +101,6 @@ void GameObject::addMaterial(std::shared_ptr<Material> material_ptr)
     //}
 }
 
-void GameObject::addEditorCamera(std::shared_ptr<Camera> camera_ptr)
-{
-    this->cameraEditor = camera_ptr;
-}
-
 void GameObject::addPhysicBody(std::shared_ptr<PhysicBody> physicBody_ptr)
 {
     this->physicBody = physicBody_ptr;

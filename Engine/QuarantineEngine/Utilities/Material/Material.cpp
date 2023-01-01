@@ -140,7 +140,9 @@ void Material::InitializeMaterial()
     else
     {
         this->fillEmptyTextures();
-        this->descriptor->Initialize(this->texture_vector, uniform);
+        //std::shared_ptr <std::vector<std::shared_ptr<CustomTexture>>> texture_vector_aux = std::make_shared<std::vector<std::shared_ptr<CustomTexture>>>();
+        //texture_vector_aux->push_back(texture_vector->at(0));
+        this->descriptor->Initialize(texture_vector, uniform);
         this->graphicsPipelineModule->CreateGraphicsPipeline(this->pipeline, this->pipelineLayout, this->shader, this->descriptor, renderPass);
     }
 }
