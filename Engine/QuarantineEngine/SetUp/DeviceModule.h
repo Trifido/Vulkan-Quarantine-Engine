@@ -8,12 +8,14 @@
 #include "VulkanLayerAndExtension.h"
 #include "SwapChainTool.hpp"
 #include "QueueModule.h"
+#include "QueueFamiliesModule.h"
 
 class DeviceModule
 {
 public:
     VkDevice                            device;
     VkPhysicalDevice                    physicalDevice;
+    QueueFamilyIndices                  queueIndices;
 private:
     static DeviceModule*                instance;
     VkSampleCountFlagBits               msaaSamples = VK_SAMPLE_COUNT_1_BIT;
