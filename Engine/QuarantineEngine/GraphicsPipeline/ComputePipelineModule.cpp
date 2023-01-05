@@ -3,12 +3,10 @@
 ComputePipelineModule::ComputePipelineModule()
 {
     this->deviceModule = DeviceModule::getInstance();
-    this->swapChainModule = SwapChainModule::getInstance();
 }
 ComputePipelineModule::~ComputePipelineModule()
 {
     this->deviceModule = nullptr;
-    this->swapChainModule = nullptr;
 }
 
 void ComputePipelineModule::cleanup(VkPipeline pipeline, VkPipelineLayout pipelineLayout)
@@ -25,7 +23,7 @@ void ComputePipelineModule::CreateComputePipeline(VkPipeline& pipeline, VkPipeli
     computePipelineCreateInfo.pNext = nullptr;
     computePipelineCreateInfo.flags = 0;
     computePipelineCreateInfo.layout = pipelineLayout;
-    computePipelineCreateInfo.stage = shader->shaderStages.at(0);
+    computePipelineCreateInfo.stage = shader->shaderStages.front();
     computePipelineCreateInfo.basePipelineHandle = 0;
     computePipelineCreateInfo.basePipelineIndex = 0;
 

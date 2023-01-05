@@ -18,6 +18,7 @@
 #include "QueueModule.h"
 //#include "ImageViewModule.h"
 #include "GraphicsPipelineModule.h"
+#include "ComputePipelineModule.h"
 #include "FrameBufferModule.h"
 #include "CommandPoolModule.h"
 #include "SynchronizationModule.h"
@@ -106,7 +107,7 @@ private:
     double       lastFrame;
     VulkanInstance          vulkanInstance {};
     VulkanLayerAndExtension layerExtensionModule {};
-    DeviceModule* deviceModule {};
+    DeviceModule*           deviceModule {};
     QueueModule*            queueModule {};
     WindowSurface           windowSurface {};
     SwapChainModule*        swapchainModule {};
@@ -122,6 +123,7 @@ private:
     RenderPassModule*       renderPassModule;
 
     std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule;
+    std::shared_ptr<ComputePipelineModule> computePipelineModule;
 
 
     bool show_demo_window = true;

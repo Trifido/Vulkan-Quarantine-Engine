@@ -10,7 +10,6 @@ class ComputePipelineModule
 {
 private:
     DeviceModule*       deviceModule = nullptr;
-    SwapChainModule*    swapChainModule = nullptr;
 
 public:
     ComputePipelineModule();

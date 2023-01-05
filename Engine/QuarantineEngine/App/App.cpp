@@ -136,6 +136,9 @@ void App::initVulkan()
     //Creamos el graphics pipeline Module
     graphicsPipelineModule = std::make_shared<GraphicsPipelineModule>();
 
+    //Creamos el compute pipeline Module
+    computePipelineModule = std::make_shared<ComputePipelineModule>();
+
     //Creamos el Render Pass
     renderPassModule = new RenderPassModule();
     renderPassModule->createRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
@@ -145,7 +148,9 @@ void App::initVulkan()
 
     //Añadimos requisitos para los geometryComponent
     BufferManageModule::commandPool = this->commandPoolModule->getCommandPool();
+    BufferManageModule::computeCommandPool = this->commandPoolModule->getComputeCommandPool();
     BufferManageModule::graphicsQueue = this->queueModule->graphicsQueue;
+    BufferManageModule::computeQueue = this->queueModule->computeQueue;
     GeometryComponent::deviceModule_ptr = this->deviceModule;
     TextureManagerModule::queueModule = this->queueModule;
     CustomTexture::commandPool = commandPoolModule->getCommandPool();
