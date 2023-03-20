@@ -32,6 +32,7 @@ public:
     void InitializeMaterialManager(VkRenderPass renderPass, std::shared_ptr<GraphicsPipelineModule> graphicsPipeline);
     static MaterialManager* getInstance();
     std::shared_ptr<Material> GetMaterial(std::string nameMaterial);
+    void AddMaterial(const char* nameMaterial, std::shared_ptr<Material> mat_ptr);
     void AddMaterial(std::string& nameMaterial, std::shared_ptr<Material> mat_ptr);
     void AddMaterial(std::string& nameMaterial, Material mat);
     void CreateMaterial(std::string& nameMaterial, bool hasAnimation);
