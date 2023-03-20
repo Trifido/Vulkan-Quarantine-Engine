@@ -35,6 +35,10 @@ MaterialManager::MaterialManager()
     this->default_shader->createShaderBindings();
     shaderManager->AddShader("default", this->default_shader);
 
+    this->default_primitive_shader = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/Primitive/primitiveDefault_vert.spv", "../../resources/shaders/Primitive/primitiveDefault_frag.spv"));
+    this->default_primitive_shader->createShaderBindings();
+    shaderManager->AddShader("default_primitive", this->default_primitive_shader);
+
     this->default_animation_shader = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/Animation/exampleAnimated_vert.spv", "../../resources/shaders/Animation/exampleAnimated_frag.spv"));
     this->default_animation_shader->createShaderBindings(true);
     shaderManager->AddShader("default_animation", this->default_animation_shader);
@@ -47,6 +51,8 @@ void MaterialManager::InitializeMaterialManager(VkRenderPass renderPass, std::sh
 {
     this->default_renderPass = renderPass;
     this->graphicsPipelineModule = graphicsPipeline;
+
+    this->CreateDefaultPrimitiveMaterial();
 }
 
 MaterialManager* MaterialManager::getInstance()
@@ -92,6 +98,12 @@ void MaterialManager::AddMaterial(std::string& nameMaterial, Material mat)
     mat_ptr->AddPipeline(this->graphicsPipelineModule);
     _materials[nameMaterial] = mat_ptr;
     _materials[nameMaterial]->AddNullTexture(this->textureManager->GetTexture("NULL_TEXTURE"));
+}
+
+
+void MaterialManager::CreateDefaultPrimitiveMaterial()
+{
+    this->AddMaterial(std::string("defaultPrimitiveMat"), std::make_shared<Material>(Material(this->default_primitive_shader, this->default_renderPass)));
 }
 
 void MaterialManager::CreateMaterial(std::string& nameMaterial, bool hasAnimation)                                                                          // --------------------- En desarrollo ------------------------

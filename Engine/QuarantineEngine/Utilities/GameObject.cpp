@@ -27,6 +27,8 @@ GameObject::GameObject(PRIMITIVE_TYPE type)
     this->mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh(type));
     this->meshImportedType = MeshImportedType::PRIMITIVE_GEO;
 
+    this->addMaterial(this->materialManager->GetMaterial("defaultPrimitiveMat"));
+
     size_t numMeshAttributes = this->CheckNumAttributes();
     this->InitializeComponents(numMeshAttributes);
 }
