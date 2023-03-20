@@ -14,7 +14,7 @@ private:
 public:
     ComputePipelineModule();
     ~ComputePipelineModule();
-    void CreateComputePipeline(VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, std::shared_ptr<ShaderModule> shader, std::shared_ptr<DescriptorModule> descriptor_ptr, VkRenderPass renderPass);
+    void CreateComputePipeline(VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, std::shared_ptr<ShaderModule> shader, std::shared_ptr<DescriptorModule> descriptor_ptr);
     void cleanup(VkPipeline pipeline, VkPipelineLayout pipelineLayout);
 };
 

@@ -18,6 +18,7 @@ private:
 
     std::shared_ptr<ShaderModule> default_shader;
     std::shared_ptr<ShaderModule> default_animation_shader;
+    std::shared_ptr<ShaderModule> compute_animation_shader;
     std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule;
     VkRenderPass default_renderPass;
 public:

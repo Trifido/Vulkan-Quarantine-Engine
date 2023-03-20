@@ -8,6 +8,11 @@ ShaderModule::ShaderModule()
     deviceModule = DeviceModule::getInstance();
 }
 
+ShaderModule::ShaderModule(std::string computeShaderName) : ShaderModule()
+{
+    this->createShaderModule(computeShaderName);
+}
+
 ShaderModule::ShaderModule(std::string vertexShaderName, std::string fragmentShaderName) : ShaderModule()
 {
     this->createShaderModule(vertexShaderName, fragmentShaderName);

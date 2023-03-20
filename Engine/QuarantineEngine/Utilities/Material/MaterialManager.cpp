@@ -38,6 +38,9 @@ MaterialManager::MaterialManager()
     this->default_animation_shader = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/Animation/exampleAnimated_vert.spv", "../../resources/shaders/Animation/exampleAnimated_frag.spv"));
     this->default_animation_shader->createShaderBindings(true);
     shaderManager->AddShader("default_animation", this->default_animation_shader);
+
+    this->compute_animation_shader = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/Animation/exampleAnimated_vert.spv"));            //MODIFICAR ESTO!!!
+    shaderManager->AddShader("compute_animation", this->compute_animation_shader);
 }
 
 void MaterialManager::InitializeMaterialManager(VkRenderPass renderPass, std::shared_ptr<GraphicsPipelineModule> graphicsPipeline)
@@ -88,10 +91,14 @@ void MaterialManager::CreateMaterial(std::string& nameMaterial, bool hasAnimatio
 {
     nameMaterial = CheckName(nameMaterial);
 
-    if(!hasAnimation)
+    if (!hasAnimation)
+    {
         return this->AddMaterial(nameMaterial, std::make_shared<Material>(Material(this->default_shader, this->default_renderPass)));
+    }
     else
+    {
         return this->AddMaterial(nameMaterial, std::make_shared<Material>(Material(this->default_animation_shader, this->default_renderPass)));
+    }
 }
 
 bool MaterialManager::Exists(std::string materialName)
