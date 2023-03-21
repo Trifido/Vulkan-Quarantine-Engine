@@ -39,7 +39,7 @@ public:
 
     void createCommandPool(VkSurfaceKHR& surface);
     void createCommandBuffers();
-    void Render(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass);
+    void Render(VkFramebuffer& swapChainFramebuffer, VkRenderPass& renderPass);
     void cleanup();
 };
 

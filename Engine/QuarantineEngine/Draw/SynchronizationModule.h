@@ -15,11 +15,10 @@ public:
 private:
     DeviceModule*               deviceModule;
     QueueModule*                queueModule;
-    size_t                      currentFrame = 0;
+    static size_t               currentFrame;
     std::vector<VkSemaphore>    imageAvailableSemaphores;
     std::vector<VkSemaphore>    renderFinishedSemaphores;
     std::vector<VkFence>        inFlightFences;
-    std::vector<VkFence>        imagesInFlight;
     VkSemaphore*                waitSemaphores;
     VkSemaphore*                signalSemaphores;
 
@@ -31,7 +30,7 @@ public:
     void submitCommandBuffer(VkCommandBuffer& commandBuffer);
     VkResult presentSwapchain(VkSwapchainKHR& swapChain, const uint32_t& imageIdx);
     void synchronizeWaitFences();
-    void synchronizeCurrentFrame(const uint32_t& imageIdx);
+    static size_t GetCurrentFrame();
 };
 
 #endif

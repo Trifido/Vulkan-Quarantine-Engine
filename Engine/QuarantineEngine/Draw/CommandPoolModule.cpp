@@ -4,6 +4,7 @@
 #include <stdexcept>
 
 #include <backends/imgui_impl_vulkan.h>
+#include <SynchronizationModule.h>
 
 CommandPoolModule* CommandPoolModule::instance = nullptr;
 
@@ -53,8 +54,8 @@ void CommandPoolModule::createCommandPool(VkSurfaceKHR& surface)
 
 void CommandPoolModule::createCommandBuffers()
 {
-    commandBuffers.resize(swapchainModule->getNumSwapChainImages());
-    computeCommandBuffers.resize(swapchainModule->getNumSwapChainImages());
+    commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);// swapchainModule->getNumSwapChainImages());
+    computeCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);// swapchainModule->getNumSwapChainImages());
 
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -77,7 +78,7 @@ void CommandPoolModule::createCommandBuffers()
     }
 }
 
-void CommandPoolModule::Render(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass)
+void CommandPoolModule::Render(VkFramebuffer& swapChainFramebuffer, VkRenderPass& renderPass)
 {
     for (uint32_t i = 0; i < commandBuffers.size(); i++) {
         VkCommandBufferBeginInfo beginInfo{};
@@ -93,7 +94,7 @@ void CommandPoolModule::Render(std::vector<VkFramebuffer>& swapChainFramebuffers
         VkRenderPassBeginInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         renderPassInfo.renderPass = renderPass;
-        renderPassInfo.framebuffer = swapChainFramebuffers[i];
+        renderPassInfo.framebuffer = swapChainFramebuffer;
         renderPassInfo.renderArea.offset = { 0, 0 };
         renderPassInfo.renderArea.extent = swapchainModule->swapChainExtent;
 

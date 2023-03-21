@@ -103,6 +103,7 @@ public:
     GUIWindow               mainWindow;
     bool                    framebufferResized = false;
 private:
+    uint32_t     imageIndex;
     double       deltaTime;
     double       lastFrame;
     VulkanInstance          vulkanInstance {};

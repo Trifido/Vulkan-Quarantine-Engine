@@ -295,7 +295,7 @@ void App::initVulkan()
     this->gameObjectManager->InitializePhysics();
     this->materialManager->InitializeMaterials();
 
-    this->commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass);
+    this->commandPoolModule->Render(framebufferModule.swapChainFramebuffers[0], renderPassModule->renderPass);
     this->synchronizationModule.createSyncObjects(swapchainModule->getNumSwapChainImages());
 
     init_imgui();
@@ -473,19 +473,18 @@ void App::drawFrame()
 {
     synchronizationModule.synchronizeWaitFences();
 
-    uint32_t imageIndex;
     VkResult result = vkAcquireNextImageKHR(deviceModule->device, swapchainModule->getSwapchain(), UINT64_MAX, synchronizationModule.getImageAvailableSemaphore(), VK_NULL_HANDLE, &imageIndex);
     resizeSwapchain(result, ERROR_RESIZE::SWAPCHAIN_ERROR);
 
-    synchronizationModule.synchronizeCurrentFrame(imageIndex);
+    //synchronizationModule.synchronizeCurrentFrame(imageIndex);
 
-    materialManager->UpdateUniforms(imageIndex);
+    materialManager->UpdateUniforms(synchronizationModule.GetCurrentFrame());
 
     vkDeviceWaitIdle(deviceModule->device);
 
-    commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass);
+    commandPoolModule->Render(framebufferModule.swapChainFramebuffers[imageIndex], renderPassModule->renderPass);
 
-    synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer(imageIndex));
+    synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer(synchronizationModule.GetCurrentFrame()));
 
     result = synchronizationModule.presentSwapchain(swapchainModule->getSwapchain(), imageIndex);
     resizeSwapchain(result, ERROR_RESIZE::IMAGE_ERROR);
@@ -547,5 +546,5 @@ void App::recreateSwapchain()
     framebufferModule.createFramebuffer(renderPassModule->renderPass);
 
     commandPoolModule->createCommandBuffers();
-    commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass);
+    commandPoolModule->Render(framebufferModule.swapChainFramebuffers[imageIndex], renderPassModule->renderPass);
 }

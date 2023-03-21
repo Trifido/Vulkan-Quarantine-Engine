@@ -1,4 +1,5 @@
 #include "DescriptorModule.h"
+#include <SynchronizationModule.h>
 
 DeviceModule* DescriptorModule::deviceModule;
 uint32_t DescriptorModule::NumSwapchainImages;
@@ -58,18 +59,18 @@ void DescriptorModule::createDescriptorPool()
     while (idx < this->numUBOs)
     {
         poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        poolSizes[idx].descriptorCount = static_cast<uint32_t>(this->NumSwapchainImages);
+        poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
         idx++;
     }
 
     poolSizes[idx].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    poolSizes[idx].descriptorCount = static_cast<uint32_t>(this->NumSwapchainImages);
+    poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
     poolInfo.pPoolSizes = poolSizes.data();
-    poolInfo.maxSets = static_cast<uint32_t>(this->NumSwapchainImages);
+    poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
     if (vkCreateDescriptorPool(deviceModule->device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
     {
@@ -79,20 +80,20 @@ void DescriptorModule::createDescriptorPool()
 
 void DescriptorModule::createDescriptorSets()
 {
-    std::vector<VkDescriptorSetLayout> layouts(this->NumSwapchainImages, descriptorSetLayout);
+    std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
     VkDescriptorSetAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocInfo.descriptorPool = descriptorPool;
-    allocInfo.descriptorSetCount = static_cast<uint32_t>(this->NumSwapchainImages);
+    allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
     allocInfo.pSetLayouts = layouts.data();
 
-    descriptorSets.resize(this->NumSwapchainImages);
+    descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
     if (vkAllocateDescriptorSets(deviceModule->device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
         throw std::runtime_error("failed to allocate descriptor sets!");
     }
 
     size_t numDescriptors = this->numBinding;
-    for (size_t i = 0; i < this->NumSwapchainImages; i++)
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
         uint32_t idx = 0;
         std::vector<VkWriteDescriptorSet> descriptorWrites{};
@@ -218,28 +219,28 @@ void DescriptorModule::createUniformBuffers()
     // Camera UBO
     if (this->cameraUniform != nullptr)
     {
-        this->cameraUBO->CreateUniformBuffer(sizeof(CameraUniform), this->NumSwapchainImages, *deviceModule);
+        this->cameraUBO->CreateUniformBuffer(sizeof(CameraUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
         this->numUBOs++;
     }
 
     // Material UBO
     if (this->materialUniform != nullptr)
     {
-        this->materialUBO->CreateUniformBuffer(sizeof(MaterialUniform), this->NumSwapchainImages, *deviceModule);
+        this->materialUBO->CreateUniformBuffer(sizeof(MaterialUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
         this->numUBOs++;
     }
 
     // Light UBO
     if (this->lightUniform != nullptr)
     {
-        this->lightUBO->CreateUniformBuffer(sizeof(LightManagerUniform), this->NumSwapchainImages, *deviceModule);
+        this->lightUBO->CreateUniformBuffer(sizeof(LightManagerUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
         this->numUBOs++;
     }
 
     // Animation UBO
     if (this->animationUBO != nullptr && this->hasAnimationProperties)
     {
-        this->animationUBO->CreateUniformBuffer(sizeof(AnimationUniform), this->NumSwapchainImages, *deviceModule);
+        this->animationUBO->CreateUniformBuffer(sizeof(AnimationUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
         this->numUBOs++;
     }
 }
@@ -294,7 +295,7 @@ void DescriptorModule::recreateUniformBuffer()
     this->createDescriptorPool();
     this->createDescriptorSets();
 
-    for (size_t i = 0; i < this->NumSwapchainImages; i++)
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
         void* data;
 
@@ -325,7 +326,7 @@ void DescriptorModule::recreateUniformBuffer()
 
 void DescriptorModule::cleanupDescriptorBuffer()
 {
-    for (size_t i = 0; i < this->NumSwapchainImages; i++)
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
         // Camera UBO
         if (this->cameraUniform != nullptr)
