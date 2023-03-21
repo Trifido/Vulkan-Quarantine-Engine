@@ -52,8 +52,6 @@ void SynchronizationModule::submitCommandBuffer(VkCommandBuffer& commandBuffer)
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
-    vkResetFences(deviceModule->device, 1, &inFlightFences[currentFrame]);
-
     if (vkQueueSubmit(queueModule->graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
         throw std::runtime_error("failed to submit draw command buffer!");
     }
@@ -89,7 +87,7 @@ SynchronizationModule::SynchronizationModule()
 void SynchronizationModule::synchronizeWaitFences()
 {
     vkWaitForFences(deviceModule->device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
-   // vkResetFences(deviceModule->device, 1, &inFlightFences[currentFrame]);
+    vkResetFences(deviceModule->device, 1, &inFlightFences[currentFrame]);
 }
 
 void SynchronizationModule::synchronizeCurrentFrame(const uint32_t& imageIdx)
