@@ -39,18 +39,18 @@ public:
     //std::shared_ptr<CustomTexture> bumpTexture;
 
     std::shared_ptr<DescriptorModule> descriptor = nullptr;
-    std::shared_ptr<DescriptorModule> computeDescriptor = nullptr;
+    //std::shared_ptr<DescriptorModule> computeDescriptor = nullptr;
 
     VkRenderPass           renderPass;
     VkPipeline             pipeline;
     VkPipelineLayout       pipelineLayout;
-    VkPipeline             computePipeline;
-    VkPipelineLayout       computePipelineLayout;
+    //VkPipeline             computePipeline;
+    //VkPipelineLayout       computePipelineLayout;
 
     std::shared_ptr<ShaderModule>           shader = nullptr;
-    std::shared_ptr<ShaderModule>           computeShader = nullptr;
+    //std::shared_ptr<ShaderModule>           computeShader = nullptr;
     std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule = nullptr;
-    std::shared_ptr<ComputePipelineModule>  computePipelineModule = nullptr;
+    //std::shared_ptr<ComputePipelineModule>  computePipelineModule = nullptr;
 public:
     Material();
     Material(std::shared_ptr<ShaderModule> shader_ptr, VkRenderPass renderPass);
@@ -58,7 +58,7 @@ public:
     void AddTexture(std::shared_ptr<CustomTexture> texture);
     void AddNullTexture(std::shared_ptr<CustomTexture> texture);
     void AddPipeline(std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule_ptr);
-    void AddComputePipeline(std::shared_ptr<ComputePipelineModule> computePipelineModule_ptr);
+    //void AddComputePipeline(std::shared_ptr<ComputePipelineModule> computePipelineModule_ptr);
 
     void cleanup();
     void cleanupDescriptor();

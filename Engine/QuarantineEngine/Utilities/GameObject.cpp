@@ -11,6 +11,7 @@ GameObject::GameObject()
     this->deviceModule = DeviceModule::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->materialManager = MaterialManager::getInstance();
+    this->meshImportedType = MeshImportedType::NONE_GEO;
 
     size_t numMeshAttributes = this->CheckNumAttributes();
     this->InitializeComponents(numMeshAttributes);
@@ -326,6 +327,9 @@ size_t GameObject::CheckNumAttributes()
         break;
     case MeshImportedType::PRIMITIVE_GEO:
         numAttributes = 5;
+        break;
+    case MeshImportedType::NONE_GEO:
+        numAttributes = 0;
         break;
     case MeshImportedType::COMMON_GEO:
         numAttributes = 5;

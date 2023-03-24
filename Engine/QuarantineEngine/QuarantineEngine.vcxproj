@@ -188,6 +188,7 @@
     <ClCompile Include="Input\KeyboardController.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Memory\BufferManageModule.cpp" />
+    <ClCompile Include="Memory\ComputeDescriptorModule.cpp" />
     <ClCompile Include="Memory\DescriptorModule.cpp" />
     <ClCompile Include="Memory\TextureManagerModule.cpp" />
     <ClCompile Include="Memory\UBO.cpp" />
@@ -227,6 +228,7 @@
     <ClCompile Include="Utilities\Material\MaterialManager.cpp" />
     <ClCompile Include="Utilities\Material\ShaderManager.cpp" />
     <ClCompile Include="Utilities\Material\TextureManager.cpp" />
+    <ClCompile Include="Utilities\Particles\ParticleSystem.cpp" />
     <ClCompile Include="Utilities\Physics\BoxCollider.cpp" />
     <ClCompile Include="Utilities\Physics\Collider.cpp" />
     <ClCompile Include="Utilities\Physics\PhysicBody.cpp" />
@@ -257,6 +259,7 @@
     <ClInclude Include="GUI\SceneWindow.h" />
     <ClInclude Include="Input\KeyboardController.h" />
     <ClInclude Include="Memory\BufferManageModule.h" />
+    <ClInclude Include="Memory\ComputeDescriptorModule.h" />
     <ClInclude Include="Memory\DescriptorModule.h" />
     <ClInclude Include="Memory\ImageMemoryTools.h" />
     <ClInclude Include="Memory\TextureManagerModule.h" />
@@ -304,6 +307,7 @@
     <ClInclude Include="Utilities\Material\ShaderManager.h" />
     <ClInclude Include="Utilities\Material\TextureManager.h" />
     <ClInclude Include="Utilities\Material\TextureTypes.h" />
+    <ClInclude Include="Utilities\Particles\ParticleSystem.h" />
     <ClInclude Include="Utilities\Physics\BoxCollider.h" />
     <ClInclude Include="Utilities\Physics\Collider.h" />
     <ClInclude Include="Utilities\Physics\PhysicBody.h" />

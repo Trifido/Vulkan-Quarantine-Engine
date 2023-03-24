@@ -25,7 +25,7 @@ enum MeshImportedType
 
 class GameObject
 {
-private:
+protected:
     std::string         id;
     DeviceModule*       deviceModule = nullptr;
     QueueModule*        queueModule = nullptr;
@@ -61,7 +61,7 @@ public:
     bool IsValid();
     void UpdatePhysicTransform();
 
-private:
+protected:
     void CreateGameObjectID(size_t length);
     void InitializeComponents(size_t numMeshAttributes);
     void InitializeAnimationComponent();
