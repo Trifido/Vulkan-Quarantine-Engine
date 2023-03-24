@@ -49,7 +49,7 @@ layout(set = 0, binding = 2) uniform UniformManagerLight
 	LightData lights[8];
 } uboLight;
 
-layout(set = 0, binding = 4) uniform sampler2D texSampler[6];
+layout(set = 0, binding = 3) uniform sampler2D texSampler[6];
 
 vec3 getNormalFromMap(vec2 TexCoords);
 

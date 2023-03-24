@@ -81,6 +81,11 @@ void Material::AddPipeline(std::shared_ptr<GraphicsPipelineModule> graphicsPipel
     this->graphicsPipelineModule = graphicsPipelineModule_ptr;
 }
 
+void Material::AddComputePipeline(std::shared_ptr<ComputePipelineModule> computePipelineModule_ptr)
+{
+    this->computePipelineModule = computePipelineModule_ptr;
+}
+
 void Material::cleanup()
 {
     if (this->isMeshBinding)
@@ -140,8 +145,14 @@ void Material::InitializeMaterial()
     else
     {
         this->fillEmptyTextures();
-        this->descriptor->Initialize(this->texture_vector, uniform);
+        this->descriptor->Initialize(texture_vector, uniform);
         this->graphicsPipelineModule->CreateGraphicsPipeline(this->pipeline, this->pipelineLayout, this->shader, this->descriptor, renderPass);
+
+        if (this->computePipelineModule != nullptr)
+        {
+            this->computeDescriptor->Initialize(texture_vector, uniform);
+            this->computePipelineModule->CreateComputePipeline(this->computePipeline, this->computePipelineLayout, this->computeShader, this->computeDescriptor);
+        }
     }
 }
 

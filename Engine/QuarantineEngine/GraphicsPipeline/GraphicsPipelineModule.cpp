@@ -24,8 +24,6 @@ void GraphicsPipelineModule::cleanup(VkPipeline pipeline, VkPipelineLayout pipel
 void GraphicsPipelineModule::CreateGraphicsPipeline(VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, std::shared_ptr<ShaderModule> shader,
     std::shared_ptr<DescriptorModule> descriptor_ptr, VkRenderPass renderPass)
 {
-    //this->GraphicsPipeline_ptr->createGraphicsPipeline(swapChainModule->swapChainExtent, descriptor_ptr->getDescriptorSetLayout());
-
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     inputAssembly.topology = this->getInputTopology();

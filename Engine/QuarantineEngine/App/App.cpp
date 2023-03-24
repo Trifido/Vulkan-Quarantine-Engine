@@ -136,6 +136,9 @@ void App::initVulkan()
     //Creamos el graphics pipeline Module
     graphicsPipelineModule = std::make_shared<GraphicsPipelineModule>();
 
+    //Creamos el compute pipeline Module
+    computePipelineModule = std::make_shared<ComputePipelineModule>();
+
     //Creamos el Render Pass
     renderPassModule = new RenderPassModule();
     renderPassModule->createRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
@@ -145,7 +148,9 @@ void App::initVulkan()
 
     //Añadimos requisitos para los geometryComponent
     BufferManageModule::commandPool = this->commandPoolModule->getCommandPool();
+    BufferManageModule::computeCommandPool = this->commandPoolModule->getComputeCommandPool();
     BufferManageModule::graphicsQueue = this->queueModule->graphicsQueue;
+    BufferManageModule::computeQueue = this->queueModule->computeQueue;
     GeometryComponent::deviceModule_ptr = this->deviceModule;
     TextureManagerModule::queueModule = this->queueModule;
     CustomTexture::commandPool = commandPoolModule->getCommandPool();
@@ -164,8 +169,10 @@ void App::initVulkan()
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>(Grid(graphicsPipelineModule, renderPassModule->renderPass));
     this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
-
+    /*
+    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH));
     std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
+    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/steampunk/scene.gltf"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/vampire/Capoeira.dae"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/CharacterRunning/CharacterRunning.gltf"));
 
@@ -176,8 +183,15 @@ void App::initVulkan()
     }
 
     this->gameObjectManager->AddGameObject(model, "model");
+    */
 
+    std::shared_ptr<GameObject> cube = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
+    cube->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    cube->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 65.0f));
 
+    this->gameObjectManager->AddGameObject(cube, "cube");
+
+//DEMO
 /*
     //Creamos la textura
     textureManager->AddTexture("diffuse_brick", CustomTexture(TEXTURE_WALL_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
@@ -185,7 +199,7 @@ void App::initVulkan()
     textureManager->AddTexture("test", CustomTexture(TEXTURE_TEST_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
 
     std::shared_ptr<GameObject> cube = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
-    cube->transform->SetPosition(glm::vec3(0.0f, 20.0f, 0.0f));
+    cube->transform->SetPosition(glm::vec3(0.0f, 10.0f, 0.0f));
     cube->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 65.0f));
 
     std::shared_ptr<GameObject> plano = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
@@ -197,14 +211,6 @@ void App::initVulkan()
     floor->transform->SetPosition(glm::vec3(0.0f, -0.10f, 0.0f));
     floor->transform->SetScale(glm::vec3(50.0f, 1.0f, 50.0f));
 
-    this->gameObjectManager->AddGameObject(cube, "cube");
-    this->gameObjectManager->AddGameObject(plano, "planoInclinado");
-    this->gameObjectManager->AddGameObject(floor, "floor");
-
-    models.push_back(std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH)));
-    models.at(0)->transform->SetScale(glm::vec3(0.1f));
-    models.at(0)->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-   
     //Creamos el shader module para el material
     std::shared_ptr<ShaderModule> shader_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
     shader_ptr->createShaderBindings();
@@ -216,19 +222,23 @@ void App::initVulkan()
     mat_ptr->AddTexture(textureManager->GetTexture("diffuse_brick"));
     mat_ptr->AddTexture(textureManager->GetTexture("normal_brick"));
     mat_ptr->AddPipeline(graphicsPipelineModule);
-    materialManager->AddMaterial("mat", mat_ptr);
 
     std::shared_ptr<Material> mat_ptr2 = std::make_shared<Material>(Material(this->shaderManager->GetShader("shader"), renderPassModule->renderPass));
     mat_ptr2->AddNullTexture(textureManager->GetTexture("NULL"));
     mat_ptr2->AddTexture(textureManager->GetTexture("test"));
     mat_ptr2->AddPipeline(graphicsPipelineModule);
-    materialManager->AddMaterial("mat2", mat_ptr2);
 
+    materialManager->AddMaterial("mat", mat_ptr);
+    materialManager->AddMaterial("mat2", mat_ptr2);
 
     //Linkamos el material al gameobject
     cube->addMaterial(materialManager->GetMaterial("mat"));
     plano->addMaterial(materialManager->GetMaterial("mat"));
     floor->addMaterial(materialManager->GetMaterial("mat2"));
+
+    this->gameObjectManager->AddGameObject(cube, "cube");
+    this->gameObjectManager->AddGameObject(plano, "planoInclinado");
+    this->gameObjectManager->AddGameObject(floor, "floor");
 */
     // END -------------------------- Mesh & Material -------------------------------
 
@@ -259,8 +269,6 @@ void App::initVulkan()
     this->lightManager->UpdateUniform();
     // END -------------------------- Lights ----------------------------------------
 
-    /**/
-
     // Initialize Physics
     /*
     std::shared_ptr<PhysicBody> rigidBody = std::make_shared<PhysicBody>(PhysicBody(PhysicBodyType::RIGID_BODY));
@@ -284,11 +292,10 @@ void App::initVulkan()
 
     // Initialize Managers
     this->animationManager->InitializeAnimations();
-    //this->animationManager->UpdateAnimations(0.0f);
     this->gameObjectManager->InitializePhysics();
     this->materialManager->InitializeMaterials();
 
-    this->commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass);
+    this->commandPoolModule->Render(framebufferModule.swapChainFramebuffers[0], renderPassModule->renderPass);
     this->synchronizationModule.createSyncObjects(swapchainModule->getNumSwapChainImages());
 
     init_imgui();
@@ -466,19 +473,16 @@ void App::drawFrame()
 {
     synchronizationModule.synchronizeWaitFences();
 
-    uint32_t imageIndex;
     VkResult result = vkAcquireNextImageKHR(deviceModule->device, swapchainModule->getSwapchain(), UINT64_MAX, synchronizationModule.getImageAvailableSemaphore(), VK_NULL_HANDLE, &imageIndex);
     resizeSwapchain(result, ERROR_RESIZE::SWAPCHAIN_ERROR);
 
-    synchronizationModule.synchronizeCurrentFrame(imageIndex);
-
-    materialManager->UpdateUniforms(imageIndex);
+    materialManager->UpdateUniforms(synchronizationModule.GetCurrentFrame());
 
     vkDeviceWaitIdle(deviceModule->device);
 
-    commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass);
+    commandPoolModule->Render(framebufferModule.swapChainFramebuffers[imageIndex], renderPassModule->renderPass);
 
-    synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer(imageIndex));
+    synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer(synchronizationModule.GetCurrentFrame()));
 
     result = synchronizationModule.presentSwapchain(swapchainModule->getSwapchain(), imageIndex);
     resizeSwapchain(result, ERROR_RESIZE::IMAGE_ERROR);
@@ -540,5 +544,5 @@ void App::recreateSwapchain()
     framebufferModule.createFramebuffer(renderPassModule->renderPass);
 
     commandPoolModule->createCommandBuffers();
-    commandPoolModule->Render(framebufferModule.swapChainFramebuffers, renderPassModule->renderPass);
+    commandPoolModule->Render(framebufferModule.swapChainFramebuffers[imageIndex], renderPassModule->renderPass);
 }

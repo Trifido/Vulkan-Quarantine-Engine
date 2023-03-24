@@ -21,10 +21,12 @@ class ShaderModule
 {
 private:
     DeviceModule*                                   deviceModule;
-    VkShaderModule                                  vertex_shader;
+    VkShaderModule                                  vertex_shader = nullptr;
     VkPipelineShaderStageCreateInfo                 vertShaderStageInfo{};
-    VkShaderModule                                  fragment_shader;
+    VkShaderModule                                  fragment_shader = nullptr;
     VkPipelineShaderStageCreateInfo                 fragShaderStageInfo{};
+    VkShaderModule                                  compute_shader = nullptr;
+    VkPipelineShaderStageCreateInfo                 compShaderStageInfo{};
     VkVertexInputBindingDescription                 bindingDescription;
     std::vector<VkVertexInputAttributeDescription>  attributeDescriptions;
 public:
@@ -33,8 +35,10 @@ public:
 
 public:
     ShaderModule();
+    ShaderModule(std::string computeShaderName);
     ShaderModule(std::string vertexShaderName, std::string fragmentShaderName);
     static std::vector<char> readFile(const std::string& filename);
+    void createShaderModule(const std::string& filename_compute);
     void createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment);
     void createShaderBindings(bool hasAnimation = false);
     void cleanup();

@@ -33,7 +33,6 @@ private:
     AnimationManager*   animationManager = nullptr;
     MeshImportedType    meshImportedType;
 
-    std::shared_ptr<Camera>             cameraEditor = nullptr;
 
 public:
     std::shared_ptr<GeometryComponent>  mesh = nullptr;
@@ -55,7 +54,6 @@ public:
     void cleanup();
     void drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
     void addMaterial(std::shared_ptr<Material> material_ptr);
-    void addEditorCamera(std::shared_ptr<Camera> camera_ptr);
     void addPhysicBody(std::shared_ptr<PhysicBody> physicBody_ptr);
     void addCollider(std::shared_ptr<Collider> collider_ptr);
     void addAnimation(std::shared_ptr<Animation> animation_ptr);

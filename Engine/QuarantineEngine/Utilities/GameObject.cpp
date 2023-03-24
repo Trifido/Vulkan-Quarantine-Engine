@@ -27,6 +27,8 @@ GameObject::GameObject(PRIMITIVE_TYPE type)
     this->mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh(type));
     this->meshImportedType = MeshImportedType::PRIMITIVE_GEO;
 
+    this->addMaterial(this->materialManager->GetMaterial("defaultPrimitiveMat"));
+
     size_t numMeshAttributes = this->CheckNumAttributes();
     this->InitializeComponents(numMeshAttributes);
 }
@@ -99,11 +101,6 @@ void GameObject::addMaterial(std::shared_ptr<Material> material_ptr)
     //        it->material->bindingMesh(it->mesh);
     //    }
     //}
-}
-
-void GameObject::addEditorCamera(std::shared_ptr<Camera> camera_ptr)
-{
-    this->cameraEditor = camera_ptr;
 }
 
 void GameObject::addPhysicBody(std::shared_ptr<PhysicBody> physicBody_ptr)

@@ -352,6 +352,9 @@
     <ClCompile Include="Utilities\Animation\SkeletalComponent.cpp">
       <Filter>Kernel\Utilities\Animation\sources</Filter>
     </ClCompile>
+    <ClCompile Include="GraphicsPipeline\ComputePipelineModule.cpp">
+      <Filter>Kernel\GraphicsPipeline\sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SetUp\DeviceModule.h">
@@ -565,6 +568,9 @@
     </ClInclude>
     <ClInclude Include="Utilities\Animation\SkeletalComponent.h">
       <Filter>Kernel\Utilities\Animation\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsPipeline\ComputePipelineModule.h">
+      <Filter>Kernel\GraphicsPipeline\headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

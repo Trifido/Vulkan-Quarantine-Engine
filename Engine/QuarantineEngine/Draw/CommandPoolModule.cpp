@@ -4,6 +4,7 @@
 #include <stdexcept>
 
 #include <backends/imgui_impl_vulkan.h>
+#include <SynchronizationModule.h>
 
 CommandPoolModule* CommandPoolModule::instance = nullptr;
 
@@ -40,24 +41,44 @@ void CommandPoolModule::createCommandPool(VkSurfaceKHR& surface)
     if (vkCreateCommandPool(deviceModule->device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
         throw std::runtime_error("failed to create command pool!");
     }
+
+    VkCommandPoolCreateInfo computePoolInfo = {};
+    computePoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    computePoolInfo.queueFamilyIndex = queueFamilyIndices.computeFamily.value();
+    computePoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT; // Optional
+
+    if (vkCreateCommandPool(deviceModule->device, &computePoolInfo, nullptr, &computeCommandPool) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create compute command pool!");
+    }
 }
 
 void CommandPoolModule::createCommandBuffers()
 {
-    commandBuffers.resize(swapchainModule->getNumSwapChainImages());
+    commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);// swapchainModule->getNumSwapChainImages());
+    computeCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);// swapchainModule->getNumSwapChainImages());
 
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = commandPool;
+    allocInfo.commandPool = this->commandPool;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
 
     if (vkAllocateCommandBuffers(deviceModule->device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
         throw std::runtime_error("failed to allocate command buffers!");
     }
+
+    VkCommandBufferAllocateInfo computeAllocInfo{};
+    computeAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    computeAllocInfo.commandPool = this->computeCommandPool;
+    computeAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    computeAllocInfo.commandBufferCount = (uint32_t)computeCommandBuffers.size();
+
+    if (vkAllocateCommandBuffers(deviceModule->device, &computeAllocInfo, computeCommandBuffers.data()) != VK_SUCCESS) {
+        throw std::runtime_error("failed to allocate command buffers!");
+    }
 }
 
-void CommandPoolModule::Render(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass)
+void CommandPoolModule::Render(VkFramebuffer& swapChainFramebuffer, VkRenderPass& renderPass)
 {
     for (uint32_t i = 0; i < commandBuffers.size(); i++) {
         VkCommandBufferBeginInfo beginInfo{};
@@ -73,7 +94,7 @@ void CommandPoolModule::Render(std::vector<VkFramebuffer>& swapChainFramebuffers
         VkRenderPassBeginInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         renderPassInfo.renderPass = renderPass;
-        renderPassInfo.framebuffer = swapChainFramebuffers[i];
+        renderPassInfo.framebuffer = swapChainFramebuffer;
         renderPassInfo.renderArea.offset = { 0, 0 };
         renderPassInfo.renderArea.extent = swapchainModule->swapChainExtent;
 
@@ -101,5 +122,6 @@ void CommandPoolModule::Render(std::vector<VkFramebuffer>& swapChainFramebuffers
 
 void CommandPoolModule::cleanup()
 {
+    vkDestroyCommandPool(deviceModule->device, computeCommandPool, nullptr);
     vkDestroyCommandPool(deviceModule->device, commandPool, nullptr);
 }

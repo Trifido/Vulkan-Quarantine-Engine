@@ -36,7 +36,7 @@ struct QueueFamilyIndices {
                 indices.graphicsFamily = i;
             }
 
-            if (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT)
+            if ((queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) && (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT))
             {
                 indices.computeFamily = i;
             }

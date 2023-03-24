@@ -49,7 +49,7 @@ layout(set = 0, binding = 2) uniform UniformManagerLight
 	LightData lights[8];
 } uboLight;
 
-layout(set = 0, binding = 4) uniform sampler2D texSampler[6];
+layout(set = 0, binding = 3) uniform sampler2D texSampler[6];
 
 vec3 getNormalFromMap(vec2 TexCoords);
 
@@ -113,7 +113,7 @@ vec3 ComputePointLight(LightData light, int id, vec3 normal, vec2 texCoords)
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
     // - DIFFUSE
-    vec3 colorDiffuse = vec3 (1.0, 1.0, 1.0);
+    vec3 colorDiffuse = vec3 (0.8, 0.8, 0.8);
     if(uboMaterial.idxDiffuse > -1)
         colorDiffuse = vec3(texture(texSampler[uboMaterial.idxDiffuse], texCoords));
 
@@ -125,7 +125,7 @@ vec3 ComputePointLight(LightData light, int id, vec3 normal, vec2 texCoords)
     vec3 ambient = 0.1 * colorDiffuse;
 
     // - SPECULAR
-    vec3 colorSpecular = vec3 (1.0, 1.0, 1.0);
+    vec3 colorSpecular = vec3 (0.8, 0.8, 0.8);
     if(uboMaterial.idxSpecular > -1)
         colorSpecular = vec3(texture(texSampler[uboMaterial.idxSpecular], texCoords));
 
@@ -149,7 +149,7 @@ vec3 ComputeDirectionalLight(LightData light, int id, vec3 normal, vec2 texCoord
     vec3 lightDir = normalize(fs_in.TangentLightPos[id]);
 
     // - DIFFUSE
-    vec3 colorDiffuse = vec3 (1.0, 1.0, 1.0);
+    vec3 colorDiffuse = vec3 (0.8, 0.8, 0.8);
     if(uboMaterial.idxDiffuse > -1)
         colorDiffuse = vec3(texture(texSampler[uboMaterial.idxDiffuse], texCoords));
 
@@ -160,7 +160,7 @@ vec3 ComputeDirectionalLight(LightData light, int id, vec3 normal, vec2 texCoord
     vec3 ambient = 0.1 * colorDiffuse;
 
     // - SPECULAR
-    vec3 colorSpecular = vec3 (1.0, 1.0, 1.0);
+    vec3 colorSpecular = vec3 (0.8, 0.8, 0.8);
     if(uboMaterial.idxSpecular > -1)
         colorSpecular = vec3(texture(texSampler[uboMaterial.idxSpecular], texCoords));
 
@@ -192,7 +192,7 @@ vec3 ComputeSpotLight(LightData light, int id, vec3 normal, vec2 texCoords)
     float intensity = clamp((theta - light.spotExponent) / epsilon, 0.0, 1.0);
 
     // - DIFFUSE
-    vec3 colorDiffuse = vec3 (1.0, 1.0, 1.0);
+    vec3 colorDiffuse = vec3 (0.8, 0.8, 0.8);
     if(uboMaterial.idxDiffuse > -1)
         colorDiffuse = vec3(texture(texSampler[uboMaterial.idxDiffuse], texCoords));
 
@@ -203,7 +203,7 @@ vec3 ComputeSpotLight(LightData light, int id, vec3 normal, vec2 texCoords)
     vec3 ambient = 0.1 * colorDiffuse;
 
     // - SPECULAR
-    vec3 colorSpecular = vec3 (1.0, 1.0, 1.0);
+    vec3 colorSpecular = vec3 (0.8, 0.8, 0.8);
     if(uboMaterial.idxSpecular > -1)
         colorSpecular = vec3(texture(texSampler[uboMaterial.idxSpecular], texCoords));
 

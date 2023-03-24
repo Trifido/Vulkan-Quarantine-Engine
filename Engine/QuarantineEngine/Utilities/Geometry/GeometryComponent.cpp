@@ -5,10 +5,17 @@ DeviceModule* GeometryComponent::deviceModule_ptr;
 
 void GeometryComponent::cleanup()
 {
-    vkDestroyBuffer(deviceModule_ptr->device, indexBuffer, nullptr);
-    vkFreeMemory(deviceModule_ptr->device, indexBufferMemory, nullptr);
-    vkDestroyBuffer(deviceModule_ptr->device, vertexBuffer, nullptr);
-    vkFreeMemory(deviceModule_ptr->device, vertexBufferMemory, nullptr);
+    if (this->indexBufferMemory != VK_NULL_HANDLE)
+    {
+        vkDestroyBuffer(deviceModule_ptr->device, indexBuffer, nullptr);
+        vkFreeMemory(deviceModule_ptr->device, indexBufferMemory, nullptr);
+    }
+
+    if (this->vertexBufferMemory != VK_NULL_HANDLE)
+    {
+        vkDestroyBuffer(deviceModule_ptr->device, vertexBuffer, nullptr);
+        vkFreeMemory(deviceModule_ptr->device, vertexBufferMemory, nullptr);
+    }
 }
 
 void GeometryComponent::createIndexBuffer()
@@ -34,11 +41,16 @@ void GeometryComponent::createIndexBuffer()
     vkFreeMemory(deviceModule_ptr->device, stagingBufferMemory, nullptr);
 }
 
+void GeometryComponent::createComputeBuffer()
+{
+
+}
+
 VkVertexInputBindingDescription GeometryComponent::getBindingDescription(bool hasAnimation)
 {
     VkVertexInputBindingDescription bindingDescription{};
     bindingDescription.binding = 0;
-    bindingDescription.stride = (hasAnimation) ? sizeof(PBRAnimationVertex) : sizeof(PBRVertex);
+    bindingDescription.stride = (hasAnimation) ? sizeof(PBRAnimationVertex) :sizeof(PBRVertex); // sizeof(glm::vec3);//
     bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
     return bindingDescription;
 }

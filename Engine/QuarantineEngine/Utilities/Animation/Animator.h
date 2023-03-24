@@ -19,9 +19,16 @@ private:
     float m_CurrentTime;
     float m_DeltaTime;
 
+    VkDeviceMemory  computeBufferMemory1 = VK_NULL_HANDLE;
+    VkDeviceMemory  computeBufferMemory2 = VK_NULL_HANDLE;
+    VkBuffer computeBuffer1;
+    VkBuffer computeBuffer2;
+
 public:
     std::shared_ptr<AnimationUniform> animationUniform_ptr;
 
+private:
+    void CreateShaderStorageBuffers();
 public:
     Animator();
     void AddDescriptor(std::shared_ptr<DescriptorModule> descriptor);

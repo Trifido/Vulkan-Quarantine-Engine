@@ -1,12 +1,13 @@
 #include "SynchronizationModule.h"
 #include <stdexcept>
 
+size_t SynchronizationModule::currentFrame = 0;
+
 void SynchronizationModule::createSyncObjects(uint32_t swapChainImagesNum)
 {
     imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-    imagesInFlight.resize(swapChainImagesNum, VK_NULL_HANDLE);
 
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -52,8 +53,6 @@ void SynchronizationModule::submitCommandBuffer(VkCommandBuffer& commandBuffer)
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
-    vkResetFences(deviceModule->device, 1, &inFlightFences[currentFrame]);
-
     if (vkQueueSubmit(queueModule->graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
         throw std::runtime_error("failed to submit draw command buffer!");
     }
@@ -89,15 +88,10 @@ SynchronizationModule::SynchronizationModule()
 void SynchronizationModule::synchronizeWaitFences()
 {
     vkWaitForFences(deviceModule->device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
-   // vkResetFences(deviceModule->device, 1, &inFlightFences[currentFrame]);
+    vkResetFences(deviceModule->device, 1, &inFlightFences[currentFrame]);
 }
 
-void SynchronizationModule::synchronizeCurrentFrame(const uint32_t& imageIdx)
+size_t SynchronizationModule::GetCurrentFrame()
 {
-    // Check if a previous frame is using this image (i.e. there is its fence to wait on)
-    if (imagesInFlight[imageIdx] != VK_NULL_HANDLE) {
-        vkWaitForFences(deviceModule->device, 1, &imagesInFlight[imageIdx], VK_TRUE, UINT64_MAX);
-    }
-    // Mark the image as now being in use by this frame
-    imagesInFlight[imageIdx] = inFlightFences[currentFrame];
+    return currentFrame;
 }

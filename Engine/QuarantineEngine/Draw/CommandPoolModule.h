@@ -19,7 +19,9 @@ private:
     GameObjectManager*              gameObjectManager;
 
     VkCommandPool                   commandPool;
+    VkCommandPool                   computeCommandPool;
     std::vector<VkCommandBuffer>    commandBuffers;
+    std::vector<VkCommandBuffer>    computeCommandBuffers;
 
 public:
     glm::vec3 ClearColor;
@@ -28,14 +30,16 @@ public:
     CommandPoolModule();
     static CommandPoolModule* getInstance();
 
-    VkCommandPool&                  getCommandPool() { return commandPool; }
-    std::vector<VkCommandBuffer>&   getCommandBuffers() { return commandBuffers; }
-    uint32_t                        getNumCommandBuffers() { return static_cast<uint32_t>(commandBuffers.size()); }
-    VkCommandBuffer&                getCommandBuffer(uint32_t idx) { return commandBuffers.at(idx); }
+    VkCommandPool&                  getCommandPool() { return this->commandPool; }
+    VkCommandPool&                  getComputeCommandPool() { return this->computeCommandPool; }
+    std::vector<VkCommandBuffer>&   getCommandBuffers() { return this->commandBuffers; }
+    std::vector<VkCommandBuffer>&   getComputeCommandBuffers() { return this->computeCommandBuffers; }
+    uint32_t                        getNumCommandBuffers() { return static_cast<uint32_t>(this->commandBuffers.size()); }
+    VkCommandBuffer&                getCommandBuffer(uint32_t idx) { return this->commandBuffers.at(idx); }
 
     void createCommandPool(VkSurfaceKHR& surface);
     void createCommandBuffers();
-    void Render(std::vector<VkFramebuffer>& swapChainFramebuffers, VkRenderPass& renderPass);
+    void Render(VkFramebuffer& swapChainFramebuffer, VkRenderPass& renderPass);
     void cleanup();
 };
 

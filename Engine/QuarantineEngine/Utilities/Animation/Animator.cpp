@@ -35,7 +35,7 @@ void Animator::PlayAnimation(std::shared_ptr<Animation> pAnimation)
 void Animator::CalculateBoneTransform(const AnimationNode* node, glm::mat4 parentTransform)
 {
     std::string nodeName = node->name;
-    Bone* Bone = m_CurrentAnimation->FindBone(nodeName);
+    Bone* Bone = m_CurrentAnimation->FindBone(nodeName);                                    // Cuidado con este puntero, no se libera
 
     glm::mat4 nodeTransform = node->transformation;
 

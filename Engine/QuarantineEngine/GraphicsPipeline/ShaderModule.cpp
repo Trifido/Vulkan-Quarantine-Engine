@@ -8,6 +8,11 @@ ShaderModule::ShaderModule()
     deviceModule = DeviceModule::getInstance();
 }
 
+ShaderModule::ShaderModule(std::string computeShaderName) : ShaderModule()
+{
+    this->createShaderModule(computeShaderName);
+}
+
 ShaderModule::ShaderModule(std::string vertexShaderName, std::string fragmentShaderName) : ShaderModule()
 {
     this->createShaderModule(vertexShaderName, fragmentShaderName);
@@ -29,6 +34,12 @@ std::vector<char> ShaderModule::readFile(const std::string& filename)
     file.close();
 
     return buffer;
+}
+
+void ShaderModule::createShaderModule(const std::string& filename_compute)
+{
+    compShaderStageInfo = createShader(deviceModule->device, filename_compute, SHADER_TYPE::COMPUTE_SHADER);
+    shaderStages.push_back(compShaderStageInfo);
 }
 
 void ShaderModule::createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment)
@@ -54,8 +65,12 @@ void ShaderModule::createShaderBindings(bool hasAnimation)
 void ShaderModule::cleanup()
 {
     shaderStages.clear();
-    vkDestroyShaderModule(deviceModule->device, fragment_shader, nullptr);
-    vkDestroyShaderModule(deviceModule->device, vertex_shader, nullptr);
+    if (vertex_shader != nullptr)
+        vkDestroyShaderModule(deviceModule->device, vertex_shader, nullptr);
+    if(fragment_shader != nullptr)
+        vkDestroyShaderModule(deviceModule->device, fragment_shader, nullptr);
+    if (compute_shader != nullptr)
+        vkDestroyShaderModule(deviceModule->device, compute_shader, nullptr);
 }
 
 VkPipelineShaderStageCreateInfo ShaderModule::createShader(VkDevice& device, const std::string& filename, SHADER_TYPE shaderType)
@@ -97,6 +112,12 @@ VkPipelineShaderStageCreateInfo ShaderModule::createShader(VkDevice& device, con
         case SHADER_TYPE::TESELLATION_SHADER:
             break;
         case SHADER_TYPE::COMPUTE_SHADER:
+            if (vkCreateShaderModule(device, &createInfo, nullptr, &compute_shader) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create compute shader module!");
+            }
+
+            shaderStageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+            shaderStageInfo.module = compute_shader;
             break;
         default:
             break;
