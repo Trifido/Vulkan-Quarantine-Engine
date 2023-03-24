@@ -11,21 +11,22 @@
 class GeometryComponent : GameComponent
 {
 protected:
-    VkDeviceMemory  vertexBufferMemory;
-    VkDeviceMemory  indexBufferMemory;
+    VkDeviceMemory  vertexBufferMemory = VK_NULL_HANDLE;
+    VkDeviceMemory  indexBufferMemory = VK_NULL_HANDLE;
 
     uint32_t    numAttributes;
 
     void createIndexBuffer();
+    void createComputeBuffer();
     virtual void createVertexBuffer() = 0;
 
 public:
     static DeviceModule* deviceModule_ptr;
     VkBuffer vertexBuffer;
     VkBuffer indexBuffer;
-    std::vector<uint32_t> indices;
     uint32_t numVertices;
     uint32_t numFaces;
+    std::vector<uint32_t> indices;
 
     virtual void InitializeMesh(size_t numAttributes) = 0;
     static VkVertexInputBindingDescription  getBindingDescription(bool hasAnimation);

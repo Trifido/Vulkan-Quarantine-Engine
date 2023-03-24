@@ -476,8 +476,6 @@ void App::drawFrame()
     VkResult result = vkAcquireNextImageKHR(deviceModule->device, swapchainModule->getSwapchain(), UINT64_MAX, synchronizationModule.getImageAvailableSemaphore(), VK_NULL_HANDLE, &imageIndex);
     resizeSwapchain(result, ERROR_RESIZE::SWAPCHAIN_ERROR);
 
-    //synchronizationModule.synchronizeCurrentFrame(imageIndex);
-
     materialManager->UpdateUniforms(synchronizationModule.GetCurrentFrame());
 
     vkDeviceWaitIdle(deviceModule->device);

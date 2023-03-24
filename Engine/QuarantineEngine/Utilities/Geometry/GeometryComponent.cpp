@@ -5,10 +5,17 @@ DeviceModule* GeometryComponent::deviceModule_ptr;
 
 void GeometryComponent::cleanup()
 {
-    vkDestroyBuffer(deviceModule_ptr->device, indexBuffer, nullptr);
-    vkFreeMemory(deviceModule_ptr->device, indexBufferMemory, nullptr);
-    vkDestroyBuffer(deviceModule_ptr->device, vertexBuffer, nullptr);
-    vkFreeMemory(deviceModule_ptr->device, vertexBufferMemory, nullptr);
+    if (this->indexBufferMemory != VK_NULL_HANDLE)
+    {
+        vkDestroyBuffer(deviceModule_ptr->device, indexBuffer, nullptr);
+        vkFreeMemory(deviceModule_ptr->device, indexBufferMemory, nullptr);
+    }
+
+    if (this->vertexBufferMemory != VK_NULL_HANDLE)
+    {
+        vkDestroyBuffer(deviceModule_ptr->device, vertexBuffer, nullptr);
+        vkFreeMemory(deviceModule_ptr->device, vertexBufferMemory, nullptr);
+    }
 }
 
 void GeometryComponent::createIndexBuffer()
@@ -32,6 +39,11 @@ void GeometryComponent::createIndexBuffer()
 
     vkDestroyBuffer(deviceModule_ptr->device, stagingBuffer, nullptr);
     vkFreeMemory(deviceModule_ptr->device, stagingBufferMemory, nullptr);
+}
+
+void GeometryComponent::createComputeBuffer()
+{
+
 }
 
 VkVertexInputBindingDescription GeometryComponent::getBindingDescription(bool hasAnimation)
