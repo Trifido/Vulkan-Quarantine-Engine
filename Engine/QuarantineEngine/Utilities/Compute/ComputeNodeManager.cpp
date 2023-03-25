@@ -92,3 +92,11 @@ std::shared_ptr<ComputeNode> ComputeNodeManager::GetComputeNode(std::string name
 
     return _computeNodes[nameComputeNode];
 }
+
+void ComputeNodeManager::RecordComputeNodes(VkCommandBuffer commandBuffer, uint32_t currentFrame)
+{
+    for (auto it : _computeNodes)
+    {
+        it.second->BindCommandBuffer(commandBuffer, currentFrame);
+    }
+}

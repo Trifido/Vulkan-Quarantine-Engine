@@ -2,6 +2,26 @@
 #include "SynchronizationModule.h"
 #include <random>
 
+ParticleSystem::ParticleSystem()
+{
+    GameObject::GameObject();
+    this->computeNodeManager = ComputeNodeManager::getInstance();
+    swapchainModule = SwapChainModule::getInstance();
+
+    std::string name = "default_compute";
+    this->computeNodeManager->CreateComputeNode(name, false);
+    this->computeNode = this->computeNodeManager->GetComputeNode(name);
+    this->numParticles = 200;
+
+    this->createShaderStorageBuffers();
+}
+
+void ParticleSystem::cleanup()
+{
+    GameObject::cleanup();
+    this->computeNode->cleanup();
+}
+
 void ParticleSystem::createShaderStorageBuffers()
 {
     // Initialize particles
@@ -23,21 +43,36 @@ void ParticleSystem::createShaderStorageBuffers()
     this->computeNode->FillComputeBuffer(this->numParticles, sizeof(Particle), particles.data());
 }
 
-ParticleSystem::ParticleSystem()
+void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
-    GameObject::GameObject();
-    this->computeNodeManager = ComputeNodeManager::getInstance();
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->material->pipeline);
 
-    std::string name = "default_compute";
-    this->computeNodeManager->CreateComputeNode(name, false);
-    this->computeNode = this->computeNodeManager->GetComputeNode(name);
-    this->numParticles = 200;
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = (float)swapchainModule->swapChainExtent.width;
+    viewport.height = (float)swapchainModule->swapChainExtent.height;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
-    this->createShaderStorageBuffers();
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent = swapchainModule->swapChainExtent;
+    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+    VkDeviceSize offsets[] = { 0 };
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &computeNode->shaderStorageBuffers->at(idx), offsets);
+
+    vkCmdDraw(commandBuffer, this->numParticles, 1, 0, 0);
 }
 
-void ParticleSystem::cleanup()
+void ParticleSystem::drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
-    GameObject::cleanup();
-    this->computeNode->cleanup();
+    this->CreateDrawCommand(commandBuffer, idx);
+}
+
+bool ParticleSystem::IsValid()
+{
+    return true;
 }

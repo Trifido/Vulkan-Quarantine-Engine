@@ -29,6 +29,11 @@ CommandPoolModule* CommandPoolModule::getInstance()
     return instance;
 }
 
+void CommandPoolModule::bindComputeNodeManager()
+{
+    computeNodeManager = ComputeNodeManager::getInstance();
+}
+
 void CommandPoolModule::createCommandPool(VkSurfaceKHR& surface)
 {
     QueueFamilyIndices queueFamilyIndices = QueueFamilyIndices::findQueueFamilies(deviceModule->physicalDevice, surface);
@@ -120,25 +125,24 @@ void CommandPoolModule::Render(VkFramebuffer& swapChainFramebuffer, VkRenderPass
     }
 }
 
-//void CommandPoolModule::recordComputeCommandBuffer(VkCommandBuffer commandBuffer)
-//{
-//    VkCommandBufferBeginInfo beginInfo{};
-//    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-//
-//    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
-//        throw std::runtime_error("failed to begin recording compute command buffer!");
-//    }
-//
-//    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline);
-//
-//    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 0, 1, &computeDescriptorSets[currentFrame], 0, nullptr);
-//
-//    vkCmdDispatch(commandBuffer, PARTICLE_COUNT / 256, 1, 1);
-//
-//    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-//        throw std::runtime_error("failed to record compute command buffer!");
-//    }
-//}
+void CommandPoolModule::recordComputeCommandBuffer(VkCommandBuffer commandBuffer)
+{
+    auto currentFrame = SynchronizationModule::GetCurrentFrame();
+    vkResetCommandBuffer(computeCommandBuffers[currentFrame], /*VkCommandBufferResetFlagBits*/ 0);
+
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
+        throw std::runtime_error("failed to begin recording compute command buffer!");
+    }
+
+    computeNodeManager->RecordComputeNodes(commandBuffer, currentFrame);
+
+    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+        throw std::runtime_error("failed to record compute command buffer!");
+    }
+}
 
 void CommandPoolModule::cleanup()
 {

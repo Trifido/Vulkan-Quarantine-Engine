@@ -19,8 +19,11 @@ private:
     std::vector<VkSemaphore>    imageAvailableSemaphores;
     std::vector<VkSemaphore>    renderFinishedSemaphores;
     std::vector<VkFence>        inFlightFences;
-    VkSemaphore*                waitSemaphores;
+    //VkSemaphore*                waitSemaphores;
     VkSemaphore*                signalSemaphores;
+
+    std::vector<VkFence>        computeInFlightFences;
+    std::vector<VkSemaphore>    computeFinishedSemaphores;
 
 public:
     SynchronizationModule();
@@ -28,8 +31,10 @@ public:
     void createSyncObjects(uint32_t swapChainImagesNum);
     void cleanup();
     void submitCommandBuffer(VkCommandBuffer& commandBuffer);
+    void submitComputeCommandBuffer(VkCommandBuffer& commandBuffer);
     VkResult presentSwapchain(VkSwapchainKHR& swapChain, const uint32_t& imageIdx);
     void synchronizeWaitFences();
+    void synchronizeWaitComputeFences();
     static size_t GetCurrentFrame();
 };
 

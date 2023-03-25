@@ -28,6 +28,7 @@ public:
     void AddComputeNode(const char* nameComputeNode, std::shared_ptr<ComputeNode> mat_ptr);
     void AddComputeNode(std::string& nameComputeNode, std::shared_ptr<ComputeNode> mat_ptr);
     std::shared_ptr<ComputeNode> GetComputeNode(std::string nameComputeNode);
+    void RecordComputeNodes(VkCommandBuffer commandBuffer, uint32_t currentFrame);
 };
 
 #endif // !COMPUTE_NODE_MANAGER_H

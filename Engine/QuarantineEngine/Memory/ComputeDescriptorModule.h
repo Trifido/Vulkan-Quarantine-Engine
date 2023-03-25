@@ -17,7 +17,6 @@ private:
     static  uint32_t NumSwapchainImages;
 
     VkDescriptorPool descriptorPool;
-    std::vector<VkDescriptorSet> computeDescriptorSets;
 
     //std::vector<VkBuffer> uniformBuffers;
     //std::vector<VkDeviceMemory> uniformBuffersMemory;
@@ -26,6 +25,7 @@ private:
     long long unsigned storageSize;
 
 public:
+    std::vector<VkDescriptorSet> computeDescriptorSets;
     VkDescriptorSetLayout computeDescriptorSetLayout;
 
 public:

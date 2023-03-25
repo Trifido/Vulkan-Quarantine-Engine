@@ -18,9 +18,11 @@ private:
     std::shared_ptr<ComputePipelineModule>      computePipelineModule = nullptr;
     std::shared_ptr<ComputeDescriptorModule>    computeDescriptor = nullptr;
 
+    uint32_t numElements;
     VkDeviceSize bufferSize;
-    std::shared_ptr<std::vector<VkBuffer>>        shaderStorageBuffers;
     std::shared_ptr<std::vector<VkDeviceMemory>>  shaderStorageBuffersMemory;
+public:
+    std::shared_ptr<std::vector<VkBuffer>>        shaderStorageBuffers;
 
 public:
     ComputeNode();
@@ -30,6 +32,7 @@ public:
     void FillComputeBuffer(size_t numElements, unsigned long long elementType, void* data);
     void InitializeComputeNode();
     void InitializeDescriptor();
+    void BindCommandBuffer(VkCommandBuffer commandBuffer, uint32_t currentFrame);
 };
 
 #endif // !COMPUTE_NODE_H

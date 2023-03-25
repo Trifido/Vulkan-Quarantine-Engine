@@ -93,7 +93,8 @@ public:
 private:
     void computeDeltaTime();
     void initVulkan();
-    void mainLoop();  
+    void mainLoop();
+    void computeFrame();
     void drawFrame();  
     void cleanUp();
     void cleanUpSwapchain();

@@ -49,7 +49,7 @@ void DeviceModule::pickPhysicalDevice(const VkInstance &newInstance, VkSurfaceKH
 
 DeviceModule* DeviceModule::getInstance()
 {
-    if (instance == NULL)
+    if (instance == nullptr)
         instance = new DeviceModule();
     else
         std::cout << "Getting existing instance" << std::endl;

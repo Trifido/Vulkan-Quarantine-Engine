@@ -43,13 +43,16 @@ class ParticleSystem : public GameObject
 private:
     size_t numParticles;
     ComputeNodeManager* computeNodeManager;
+    SwapChainModule* swapchainModule;
     std::shared_ptr<ComputeNode> computeNode;
 private:
     void createShaderStorageBuffers();
-
+    void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx) override;
 public:
     ParticleSystem();
     void cleanup();
+    void drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx) override;
+    bool IsValid() override;
 };
 
 #endif // !PARTICLE_SYSTEM_H

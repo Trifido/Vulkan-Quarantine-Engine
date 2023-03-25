@@ -12,9 +12,9 @@ App::App()
     this->deltaTime = this->lastFrame = 0;
 
     this->keyboard_ptr = KeyboardController::getInstance();
-    this->commandPoolModule = CommandPoolModule::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->deviceModule = DeviceModule::getInstance();
+    this->commandPoolModule = CommandPoolModule::getInstance();
 
     this->physicsModule = PhysicsModule::getInstance();
     this->editorManager = EditorObjectManager::getInstance();
@@ -124,6 +124,7 @@ void App::initVulkan()
     //Creamos el Command pool module y los Command buffers
     commandPoolModule->createCommandPool(windowSurface.getSurface());
     commandPoolModule->createCommandBuffers();
+    commandPoolModule->bindComputeNodeManager();
 
     //Creamos el antialiasing module
     antialiasingModule = AntiAliasingModule::getInstance();
@@ -194,8 +195,8 @@ void App::initVulkan()
     this->gameObjectManager->AddGameObject(cube, "cube");
 
 
-    std::shared_ptr<GameObject> particleSystem = std::make_shared<GameObject>(ParticleSystem());
-
+    std::shared_ptr<ParticleSystem> particleSystem = std::make_shared<ParticleSystem>(ParticleSystem());
+    this->gameObjectManager->AddGameObject(particleSystem, "particleSystem");
 //DEMO
 /*
     //Creamos la textura
@@ -356,7 +357,6 @@ void App::mainLoop()
             this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
             this->lightManager->UpdateUniform();
         }
-
         if (ImGui::IsKeyDown('1'))
         {
             if (changeAnimation)
@@ -381,8 +381,11 @@ void App::mainLoop()
                 ImGui::UpdatePlatformWindows();
                 ImGui::RenderPlatformWindowsDefault();
             }
-            drawFrame();
+
+            this->computeFrame();
+            this->drawFrame();
         }
+
         /*
         {
             //imgui new frame
@@ -473,6 +476,14 @@ void App::cleanUpSwapchain()
     materialManager->CleanPipelines();
 
     swapchainModule->cleanup();
+}
+
+void App::computeFrame()
+{
+    synchronizationModule.synchronizeWaitComputeFences();
+    //Update uniformBuffer here -----> <-----
+    commandPoolModule->recordComputeCommandBuffer(commandPoolModule->getCommandBuffer(synchronizationModule.GetCurrentFrame()));
+    synchronizationModule.submitComputeCommandBuffer(commandPoolModule->getCommandBuffer(synchronizationModule.GetCurrentFrame()));
 }
 
 void App::drawFrame()
