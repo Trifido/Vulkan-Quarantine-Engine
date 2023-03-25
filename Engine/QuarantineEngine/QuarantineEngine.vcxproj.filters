@@ -146,6 +146,24 @@
     <Filter Include="Kernel\Utilities\Animation\sources">
       <UniqueIdentifier>{1643d7c8-a702-4e74-8d8c-98815181dde1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Kernel\Utilities\Compute">
+      <UniqueIdentifier>{9cdff703-6ad8-4849-9315-534ef0f043be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Utilities\Compute\headers">
+      <UniqueIdentifier>{da4ca1e8-6b22-4ada-99fa-66ddd31dd9de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Utilities\Compute\sources">
+      <UniqueIdentifier>{99724e17-9579-4932-baf2-d0486fb8556c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Utilities\Particles">
+      <UniqueIdentifier>{12cdd81d-362e-464a-9ca6-e3a800fd8a93}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Utilities\Particles\headers">
+      <UniqueIdentifier>{1aa1c761-14bb-4e67-a279-2e4b1fa48ac9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Utilities\Particles\sources">
+      <UniqueIdentifier>{d3d38f78-ea29-4509-a50b-178b1326321f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -354,6 +372,18 @@
     </ClCompile>
     <ClCompile Include="GraphicsPipeline\ComputePipelineModule.cpp">
       <Filter>Kernel\GraphicsPipeline\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Compute\ComputeNode.cpp">
+      <Filter>Kernel\Utilities\Compute\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Memory\ComputeDescriptorModule.cpp">
+      <Filter>Kernel\Utilities\Compute\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Particles\ParticleSystem.cpp">
+      <Filter>Kernel\Utilities\Particles\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Compute\ComputeNodeManager.cpp">
+      <Filter>sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -572,6 +602,16 @@
     <ClInclude Include="GraphicsPipeline\ComputePipelineModule.h">
       <Filter>Kernel\GraphicsPipeline\headers</Filter>
     </ClInclude>
+    <ClInclude Include="Utilities\Compute\ComputeNode.h">
+      <Filter>Kernel\Utilities\Compute\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\ComputeDescriptorModule.h">
+      <Filter>Kernel\Utilities\Compute\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Particles\ParticleSystem.h">
+      <Filter>Kernel\Utilities\Particles\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Compute\ComputeNodeManager.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.txt" />

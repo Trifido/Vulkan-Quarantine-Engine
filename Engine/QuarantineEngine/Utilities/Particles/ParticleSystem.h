@@ -4,6 +4,8 @@
 #define PARTICLE_SYSTEM_H
 
 #include "GameObject.h"
+#include "Compute/ComputeNode.h"
+#include <Compute/ComputeNodeManager.h>
 
 struct Particle {
     glm::vec2 position;
@@ -36,13 +38,12 @@ struct Particle {
     }
 };
 
-class ParticleSystem : GameObject
+class ParticleSystem : public GameObject
 {
 private:
-    std::vector<VkBuffer> shaderStorageBuffers;
-    std::vector<VkDeviceMemory> shaderStorageBuffersMemory;
     size_t numParticles;
-
+    ComputeNodeManager* computeNodeManager;
+    std::shared_ptr<ComputeNode> computeNode;
 private:
     void createShaderStorageBuffers();
 

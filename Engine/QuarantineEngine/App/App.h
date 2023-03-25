@@ -39,6 +39,7 @@
 #include "Camera.h"
 #include "LightManager.h"
 #include "AnimationManager.h"
+#include "Particles/ParticleSystem.h"
 
 // Editor
 #include <../Editor/EditorObjectManager.h>
@@ -50,6 +51,7 @@
 #include <MaterialManager.h>
 #include <TextureManager.h>
 #include <GameObjectManager.h>
+#include <Compute/ComputeNodeManager.h>
 
 const std::string MODEL_PATH = "../../resources/models/head/head.obj";
 const std::string TEXTURE_WALL_NORMAL_PATH = "../../resources/textures/wall/brickwall_normal.jpg";
@@ -139,6 +141,7 @@ private:
     LightManager*       lightManager {};
     ShaderManager*      shaderManager{};
     MaterialManager*    materialManager {};
+    ComputeNodeManager* computeNodeManager{};
     TextureManager*     textureManager{};
     GameObjectManager*  gameObjectManager{};
     AnimationManager*   animationManager{};

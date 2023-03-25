@@ -15,12 +15,12 @@ void ComputePipelineModule::cleanup(VkPipeline pipeline, VkPipelineLayout pipeli
     vkDestroyPipelineLayout(deviceModule->device, pipelineLayout, nullptr);
 }
 
-void ComputePipelineModule::CreateComputePipeline(VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, std::shared_ptr<ShaderModule> shader, std::shared_ptr<DescriptorModule> descriptor_ptr)
+void ComputePipelineModule::CreateComputePipeline(VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, std::shared_ptr<ShaderModule> shader, std::shared_ptr<ComputeDescriptorModule> descriptor_ptr)
 {
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 1; // Number of descriptor sets
-    pipelineLayoutInfo.pSetLayouts = &descriptor_ptr->descriptorSetLayout; // Ptr to descriptor set layout
+    pipelineLayoutInfo.pSetLayouts = &descriptor_ptr->computeDescriptorSetLayout; // Ptr to descriptor set layout
 
     if (vkCreatePipelineLayout(deviceModule->device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
         throw std::runtime_error("failed to create compute pipeline layout!");

@@ -147,12 +147,6 @@ void Material::InitializeMaterial()
         this->fillEmptyTextures();
         this->descriptor->Initialize(texture_vector, uniform);
         this->graphicsPipelineModule->CreateGraphicsPipeline(this->pipeline, this->pipelineLayout, this->shader, this->descriptor, renderPass);
-
-        //if (this->computePipelineModule != nullptr)
-        //{
-        //    this->computeDescriptor->Initialize(texture_vector, uniform);
-        //    this->computePipelineModule->CreateComputePipeline(this->computePipeline, this->computePipelineLayout, this->computeShader, this->computeDescriptor);
-        //}
     }
 }
 

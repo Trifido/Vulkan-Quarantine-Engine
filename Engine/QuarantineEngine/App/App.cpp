@@ -164,6 +164,8 @@ void App::initVulkan()
     this->materialManager = MaterialManager::getInstance();
     this->materialManager->InitializeMaterialManager(renderPassModule->renderPass, graphicsPipelineModule);
     this->gameObjectManager = GameObjectManager::getInstance();
+    this->computeNodeManager = ComputeNodeManager::getInstance();
+    this->computeNodeManager->InitializeComputeNodeManager(computePipelineModule);
 
     // Inicializamos los componentes del editor
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>(Grid(graphicsPipelineModule, renderPassModule->renderPass));
@@ -190,6 +192,9 @@ void App::initVulkan()
     cube->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 65.0f));
 
     this->gameObjectManager->AddGameObject(cube, "cube");
+
+
+    std::shared_ptr<GameObject> particleSystem = std::make_shared<GameObject>(ParticleSystem());
 
 //DEMO
 /*
@@ -294,6 +299,7 @@ void App::initVulkan()
     this->animationManager->InitializeAnimations();
     this->gameObjectManager->InitializePhysics();
     this->materialManager->InitializeMaterials();
+    this->computeNodeManager->InitializeComputeNodes();
 
     this->commandPoolModule->Render(framebufferModule.swapChainFramebuffers[0], renderPassModule->renderPass);
     this->synchronizationModule.createSyncObjects(swapchainModule->getNumSwapChainImages());
