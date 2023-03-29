@@ -73,12 +73,14 @@ void Material::AddTexture(std::shared_ptr<CustomTexture> texture)
 
 void Material::AddNullTexture(std::shared_ptr<CustomTexture> texture)
 {
-    this->emptyTexture = texture;
+    if(this->emptyTexture == nullptr)
+        this->emptyTexture = texture;
 }
 
 void Material::AddPipeline(std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule_ptr)
 {
-    this->graphicsPipelineModule = graphicsPipelineModule_ptr;
+    if(this->graphicsPipelineModule == nullptr)
+        this->graphicsPipelineModule = graphicsPipelineModule_ptr;
 }
 
 //void Material::AddComputePipeline(std::shared_ptr<ComputePipelineModule> computePipelineModule_ptr)
