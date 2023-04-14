@@ -182,6 +182,7 @@
     <ClCompile Include="Editor\Grid.cpp" />
     <ClCompile Include="GraphicsPipeline\ComputePipelineModule.cpp" />
     <ClCompile Include="GraphicsPipeline\GraphicsPipelineModule.cpp" />
+    <ClCompile Include="GraphicsPipeline\RenderLayerModule.cpp" />
     <ClCompile Include="GraphicsPipeline\ShaderModule.cpp" />
     <ClCompile Include="GUI\GUIWindow.cpp" />
     <ClCompile Include="GUI\SceneWindow.cpp" />
@@ -256,6 +257,8 @@
     <ClInclude Include="Editor\Grid.h" />
     <ClInclude Include="GraphicsPipeline\ComputePipelineModule.h" />
     <ClInclude Include="GraphicsPipeline\GraphicsPipelineModule.h" />
+    <ClInclude Include="GraphicsPipeline\RenderLayer.h" />
+    <ClInclude Include="GraphicsPipeline\RenderLayerModule.h" />
     <ClInclude Include="GraphicsPipeline\ShaderModule.h" />
     <ClInclude Include="GUI\GUIWindow.h" />
     <ClInclude Include="GUI\SceneWindow.h" />

@@ -383,7 +383,10 @@
       <Filter>Kernel\Utilities\Particles\sources</Filter>
     </ClCompile>
     <ClCompile Include="Utilities\Compute\ComputeNodeManager.cpp">
-      <Filter>sources</Filter>
+      <Filter>Kernel\Utilities\Compute\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsPipeline\RenderLayerModule.cpp">
+      <Filter>Kernel\GraphicsPipeline\sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -611,7 +614,15 @@
     <ClInclude Include="Utilities\Particles\ParticleSystem.h">
       <Filter>Kernel\Utilities\Particles\headers</Filter>
     </ClInclude>
-    <ClInclude Include="Utilities\Compute\ComputeNodeManager.h" />
+    <ClInclude Include="GraphicsPipeline\RenderLayer.h">
+      <Filter>Kernel\GraphicsPipeline\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Compute\ComputeNodeManager.h">
+      <Filter>Kernel\Utilities\Compute\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsPipeline\RenderLayerModule.h">
+      <Filter>Kernel\GraphicsPipeline\headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.txt" />

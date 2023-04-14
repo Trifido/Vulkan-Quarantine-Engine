@@ -12,7 +12,7 @@
 #include <UBO.h>
 #include "Camera.h"
 #include <LightManager.h>
-#include <ComputePipelineModule.h>
+#include <RenderLayer.h>
 
 class Material : public GameComponent
 {
@@ -40,9 +40,10 @@ public:
 
     std::shared_ptr<DescriptorModule> descriptor = nullptr;
 
-    VkRenderPass           renderPass;
-    VkPipeline             pipeline;
-    VkPipelineLayout       pipelineLayout;
+    VkRenderPass            renderPass;
+    VkPipeline              pipeline;
+    VkPipelineLayout        pipelineLayout;
+    unsigned int            layer;
 
     std::shared_ptr<ShaderModule>           shader = nullptr;
     std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule = nullptr;

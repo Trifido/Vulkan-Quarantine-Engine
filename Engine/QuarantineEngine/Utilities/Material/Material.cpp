@@ -10,6 +10,7 @@ Material::Material()
     this->texture_vector = std::make_shared<std::vector<std::shared_ptr<CustomTexture>>>();
     this->texture_vector->resize(this->TOTAL_NUM_TEXTURES, nullptr);
     this->numTextures = 0;
+    this->layer = (unsigned int) RenderLayer::SOLID;
 }
 
 Material::Material(std::shared_ptr<ShaderModule> shader_ptr, VkRenderPass renderPass)
@@ -24,6 +25,7 @@ Material::Material(std::shared_ptr<ShaderModule> shader_ptr, VkRenderPass render
     this->texture_vector = std::make_shared<std::vector<std::shared_ptr<CustomTexture>>>();
     this->texture_vector->resize(this->TOTAL_NUM_TEXTURES, nullptr);
     this->numTextures = 0;
+    this->layer = (unsigned int) RenderLayer::SOLID;
 }
 
 void Material::AddTexture(std::shared_ptr<CustomTexture> texture)
