@@ -195,8 +195,8 @@ void App::initVulkan()
     this->gameObjectManager->AddGameObject(cube, "cube");
 
 
-    std::shared_ptr<ParticleSystem> particleSystem = std::make_shared<ParticleSystem>(ParticleSystem());
-    this->gameObjectManager->AddGameObject(particleSystem, "particleSystem");
+//    std::shared_ptr<ParticleSystem> particleSystem = std::make_shared<ParticleSystem>(ParticleSystem());
+//    this->gameObjectManager->AddGameObject(particleSystem, "particleSystem");
 //DEMO
 /*
     //Creamos la textura

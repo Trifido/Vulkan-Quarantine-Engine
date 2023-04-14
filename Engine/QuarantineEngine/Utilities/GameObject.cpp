@@ -293,6 +293,9 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
     if (this->material != nullptr && this->mesh != nullptr)
     {
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->material->pipeline);
+
+        vkCmdSetDepthTestEnable(commandBuffer, true);
+
         VkBuffer vertexBuffers[] = { this->mesh->vertexBuffer };
         VkDeviceSize offsets[] = { 0 };
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
