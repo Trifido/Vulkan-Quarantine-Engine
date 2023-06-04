@@ -21,8 +21,10 @@ private:
     VkSampleCountFlagBits               msaaSamples = VK_SAMPLE_COUNT_1_BIT;
     VkPhysicalDeviceProperties          physicalDeviceProps;
     VkPhysicalDeviceFeatures            physicalDeviceFeatures{};
+    VkPhysicalDeviceDescriptorIndexingFeatures indexing_features{};
     VkPhysicalDeviceMemoryProperties    memoryProperties;
     QueueModule                         queueModule;
+    bool                                bindless_supported;
 
 public:
     static DeviceModule* getInstance();

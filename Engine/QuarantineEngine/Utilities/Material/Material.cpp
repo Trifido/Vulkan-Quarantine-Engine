@@ -161,7 +161,7 @@ void Material::InitializeDescriptor()
 
 std::shared_ptr<CustomTexture> Material::findTextureByType(TEXTURE_TYPE newtype)
 {
-    for (size_t id = 0; id < texture_vector->size(); id++)
+    for (size_t id = 0; id < this->TOTAL_NUM_TEXTURES; id++)
     {
         if (texture_vector->at(id) != nullptr)
         {
@@ -186,7 +186,7 @@ void Material::RecreateUniformsMaterial()
 
 void Material::fillEmptyTextures()
 {
-    for (size_t i = 0; i < this->texture_vector->size(); i++)
+    for (size_t i = 0; i < this->TOTAL_NUM_TEXTURES; i++)
     {
         if (this->texture_vector->at(i) == nullptr)
         {

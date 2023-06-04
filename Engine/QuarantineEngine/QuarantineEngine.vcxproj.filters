@@ -388,6 +388,12 @@
     <ClCompile Include="GraphicsPipeline\RenderLayerModule.cpp">
       <Filter>Kernel\GraphicsPipeline\sources</Filter>
     </ClCompile>
+    <ClCompile Include="Memory\DescriptorLayout.cpp">
+      <Filter>Kernel\Memory\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Memory\DescriptorBuffer.cpp">
+      <Filter>Kernel\Memory\sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SetUp\DeviceModule.h">
@@ -622,6 +628,12 @@
     </ClInclude>
     <ClInclude Include="GraphicsPipeline\RenderLayerModule.h">
       <Filter>Kernel\GraphicsPipeline\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\DescriptorLayout.h">
+      <Filter>Kernel\Memory\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\DescriptorBuffer.h">
+      <Filter>Kernel\Memory\headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

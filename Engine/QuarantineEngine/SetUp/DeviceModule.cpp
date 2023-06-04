@@ -78,10 +78,21 @@ void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& nQueu
     physicalDeviceFeatures.sampleRateShading = VK_TRUE;
     physicalDeviceFeatures.fillModeNonSolid = VK_TRUE;
 
+    //Bindless features
+    VkPhysicalDeviceFeatures2 physical_features2 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
+    vkGetPhysicalDeviceFeatures2(physicalDevice, &physical_features2);
+
+    if (this->bindless_supported) {
+        this->indexing_features.descriptorBindingPartiallyBound = VK_TRUE;
+        this->indexing_features.runtimeDescriptorArray = VK_TRUE;
+
+        physical_features2.pNext = &indexing_features;
+    }
+
     //Raytracing features
     VkPhysicalDeviceBufferDeviceAddressFeaturesEXT bufferDeviceAddressFeatures = {};
     bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_EXT;
-    bufferDeviceAddressFeatures.pNext = NULL;
+    bufferDeviceAddressFeatures.pNext = &physical_features2;
     bufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
     bufferDeviceAddressFeatures.bufferDeviceAddressCaptureReplay = VK_FALSE;
     bufferDeviceAddressFeatures.bufferDeviceAddressMultiDevice = VK_FALSE;
@@ -177,5 +188,11 @@ bool DeviceModule::isDeviceSuitable(VkPhysicalDevice newDevice, VkSurfaceKHR& su
     VkPhysicalDeviceFeatures supportedFeatures;
     vkGetPhysicalDeviceFeatures(newDevice, &supportedFeatures);
 
-    return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
+    this->indexing_features = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES, nullptr };
+    VkPhysicalDeviceFeatures2 device_features{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2, &indexing_features };
+
+    vkGetPhysicalDeviceFeatures2(newDevice, &device_features);
+    this->bindless_supported = this->indexing_features.descriptorBindingPartiallyBound && indexing_features.runtimeDescriptorArray;
+
+    return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy && this->bindless_supported;
 }

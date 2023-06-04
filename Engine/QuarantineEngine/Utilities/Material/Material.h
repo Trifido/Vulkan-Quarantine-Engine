@@ -22,7 +22,6 @@ private:
     std::shared_ptr <std::vector<std::shared_ptr<CustomTexture>>> texture_vector = nullptr;
     std::shared_ptr<MaterialUniform> uniform = nullptr;
 
-    const int TOTAL_NUM_TEXTURES = 6;
     int numTextures;
 public:
     glm::vec3 ambient;
@@ -31,6 +30,7 @@ public:
     glm::vec3 emissive;
     float shininess;
 
+    static const int TOTAL_NUM_TEXTURES = 5;
     std::shared_ptr<CustomTexture> diffuseTexture = nullptr;
     std::shared_ptr<CustomTexture> normalTexture = nullptr;
     std::shared_ptr<CustomTexture> specularTexture = nullptr;
