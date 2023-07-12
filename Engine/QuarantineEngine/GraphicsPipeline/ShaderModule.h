@@ -7,6 +7,7 @@
 #include <vulkan/vulkan.hpp>
 #include "DeviceModule.h"
 #include "GeometryComponent.h"
+#include <ReflectShader.h>
 
 enum class SHADER_TYPE
 {
@@ -29,9 +30,11 @@ private:
     VkPipelineShaderStageCreateInfo                 compShaderStageInfo{};
     VkVertexInputBindingDescription                 bindingDescription;
     std::vector<VkVertexInputAttributeDescription>  attributeDescriptions;
+    ReflectShader                                   reflectShader;
 public:
     std::vector<VkPipelineShaderStageCreateInfo>    shaderStages;
     VkPipelineVertexInputStateCreateInfo            vertexInputInfo{};
+    VkDescriptorSetLayout   descriptorSetLayout;
 
 public:
     ShaderModule();
@@ -44,6 +47,7 @@ public:
     void cleanup();
 private:
     VkPipelineShaderStageCreateInfo createShader(VkDevice& device, const std::string& filename, SHADER_TYPE shaderType);
+    void CreateDescriptorSetLayout();
 };
 
 #endif

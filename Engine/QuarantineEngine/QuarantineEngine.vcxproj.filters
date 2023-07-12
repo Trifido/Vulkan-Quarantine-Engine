@@ -394,6 +394,15 @@
     <ClCompile Include="Memory\DescriptorBuffer.cpp">
       <Filter>Kernel\Memory\sources</Filter>
     </ClCompile>
+    <ClCompile Include="GraphicsPipeline\GraphicsPipelineManager.cpp">
+      <Filter>Kernel\GraphicsPipeline\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsPipeline\ReflectShader.cpp">
+      <Filter>Kernel\GraphicsPipeline\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsPipeline\spirv_reflect.c">
+      <Filter>Kernel\GraphicsPipeline\sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SetUp\DeviceModule.h">
@@ -634,6 +643,15 @@
     </ClInclude>
     <ClInclude Include="Memory\DescriptorBuffer.h">
       <Filter>Kernel\Memory\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsPipeline\GraphicsPipelineManager.h">
+      <Filter>Kernel\GraphicsPipeline\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsPipeline\ReflectShader.h">
+      <Filter>Kernel\GraphicsPipeline\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsPipeline\spirv_reflect.h">
+      <Filter>Kernel\GraphicsPipeline\headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

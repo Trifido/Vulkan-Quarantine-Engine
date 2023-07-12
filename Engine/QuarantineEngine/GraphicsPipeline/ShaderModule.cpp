@@ -6,6 +6,7 @@
 ShaderModule::ShaderModule()
 {
     deviceModule = DeviceModule::getInstance();
+    this->reflectShader = ReflectShader();
 }
 
 ShaderModule::ShaderModule(std::string computeShaderName) : ShaderModule()
@@ -40,6 +41,8 @@ void ShaderModule::createShaderModule(const std::string& filename_compute)
 {
     compShaderStageInfo = createShader(deviceModule->device, filename_compute, SHADER_TYPE::COMPUTE_SHADER);
     shaderStages.push_back(compShaderStageInfo);
+
+    this->CreateDescriptorSetLayout();
 }
 
 void ShaderModule::createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment)
@@ -48,6 +51,8 @@ void ShaderModule::createShaderModule(const std::string& filename_vertex, const 
     fragShaderStageInfo = createShader(deviceModule->device, filename_fragment, SHADER_TYPE::FRAGMENT_SHADER);
     shaderStages.push_back(vertShaderStageInfo);
     shaderStages.push_back(fragShaderStageInfo);
+
+    this->CreateDescriptorSetLayout();
 }
 
 void ShaderModule::createShaderBindings(bool hasAnimation)
@@ -81,6 +86,9 @@ VkPipelineShaderStageCreateInfo ShaderModule::createShader(VkDevice& device, con
     createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     createInfo.codeSize = code.size();
     createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+
+    this->reflectShader.Output(createInfo);
+    this->reflectShader.PerformReflect(createInfo);
 
     VkPipelineShaderStageCreateInfo shaderStageInfo{};
     shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -125,4 +133,48 @@ VkPipelineShaderStageCreateInfo ShaderModule::createShader(VkDevice& device, con
     shaderStageInfo.pName = "main";
 
     return shaderStageInfo;
+}
+
+void ShaderModule::CreateDescriptorSetLayout()
+{
+    this->reflectShader.CheckMixStageBindings();
+
+    std::vector<VkDescriptorSetLayoutBinding> bindings{};
+
+    for each (auto reflectLayotBinding in this->reflectShader.mixBindings)
+    {
+        VkDescriptorSetLayoutBinding layoutBinding = {};
+        layoutBinding.binding = reflectLayotBinding.second.binding;
+        layoutBinding.descriptorType = reflectLayotBinding.second.type;
+        layoutBinding.descriptorCount = reflectLayotBinding.second.arraySize;
+        layoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+        layoutBinding.pImmutableSamplers = nullptr;
+        bindings.push_back(layoutBinding);
+    }
+
+    for each (auto reflectLayotBinding in this->reflectShader.descriptorSetReflect)
+    {
+        for (int id = 0; id < reflectLayotBinding.bindingCount; id++)
+        {
+            if (!reflectShader.IsMixBinding(reflectLayotBinding.bindings[id].name))
+            {
+                VkDescriptorSetLayoutBinding layoutBinding = {};
+                layoutBinding.binding = reflectLayotBinding.bindings[id].binding;
+                layoutBinding.descriptorType = reflectLayotBinding.bindings[id].type;
+                layoutBinding.descriptorCount = reflectLayotBinding.bindings[id].arraySize;
+                layoutBinding.stageFlags = reflectLayotBinding.stage;
+                layoutBinding.pImmutableSamplers = nullptr;
+                bindings.push_back(layoutBinding);
+            }
+        }
+    }
+
+    VkDescriptorSetLayoutCreateInfo layoutInfo{};
+    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+    layoutInfo.pBindings = bindings.data();
+
+    if (vkCreateDescriptorSetLayout(deviceModule->device, &layoutInfo, nullptr, &this->descriptorSetLayout) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create descriptor set layout!");
+    }
 }
