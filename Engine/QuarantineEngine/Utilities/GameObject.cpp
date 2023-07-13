@@ -7,7 +7,6 @@
 
 GameObject::GameObject()
 {
-    this->CreateGameObjectID(12);
     this->deviceModule = DeviceModule::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->materialManager = MaterialManager::getInstance();
@@ -19,7 +18,6 @@ GameObject::GameObject()
 
 GameObject::GameObject(PRIMITIVE_TYPE type)
 {
-    this->CreateGameObjectID(12);
     this->deviceModule = DeviceModule::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->materialManager = MaterialManager::getInstance();
@@ -36,7 +34,6 @@ GameObject::GameObject(PRIMITIVE_TYPE type)
 
 GameObject::GameObject(std::string meshPath)
 {
-    this->CreateGameObjectID(12);
     this->deviceModule = DeviceModule::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->materialManager = MaterialManager::getInstance();
@@ -170,23 +167,6 @@ void GameObject::InitializeAnimationComponent()
     }
 }
 
-void GameObject::CreateGameObjectID(size_t length)
-{
-    auto randchar = []() -> char
-    {
-        const char charset[] =
-            "0123456789"
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-            "abcdefghijklmnopqrstuvwxyz";
-        const size_t max_index = (sizeof(charset) - 1);
-        return charset[rand() % max_index];
-    };
-    std::string str(length, 0);
-    std::generate_n(str.begin(), length, randchar);
-
-    this->id = str;
-}
-
 void GameObject::InitializePhysics()
 {
     if (this->physicBody != nullptr && this->collider != nullptr)
@@ -292,7 +272,7 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
     if (this->material != nullptr && this->mesh != nullptr)
     {
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->material->pipeline);
+        //vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->material->pipeline);
 
         vkCmdSetDepthTestEnable(commandBuffer, true);
 
@@ -301,7 +281,7 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
         vkCmdBindIndexBuffer(commandBuffer, this->mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->material->pipelineLayout, 0, 1, this->material->GetDescrìptor()->getDescriptorSet(idx), 0, nullptr);
+        //vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->material->pipelineLayout, 0, 1, this->material->GetDescrìptor()->getDescriptorSet(idx), 0, nullptr);
 
         TransformUniform ubo;
         ubo.model = this->transform->GetModel();
@@ -311,7 +291,7 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
             ubo.model = this->parent->transform->GetModel() * ubo.model;
         }
 
-        vkCmdPushConstants(commandBuffer, this->material->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &ubo.model);
+        //vkCmdPushConstants(commandBuffer, this->material->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &ubo.model);
 
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->mesh->indices.size()), 1, 0, 0, 0);
     }

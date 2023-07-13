@@ -6,6 +6,7 @@
 ShaderModule::ShaderModule()
 {
     deviceModule = DeviceModule::getInstance();
+    graphicsPipelineManager = GraphicsPipelineManager::getInstance();
     this->reflectShader = ReflectShader();
 }
 
@@ -53,6 +54,8 @@ void ShaderModule::createShaderModule(const std::string& filename_vertex, const 
     shaderStages.push_back(fragShaderStageInfo);
 
     this->CreateDescriptorSetLayout();
+    this->createShaderBindings();
+    this->PipelineModule = this->graphicsPipelineManager->RegisterNewGraphicsPipeline(*this, descriptorSetLayout);
 }
 
 void ShaderModule::createShaderBindings(bool hasAnimation)

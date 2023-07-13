@@ -6,6 +6,7 @@
 #include <Material/Material.h>
 #include <CameraEditor.h>
 #include <Material/TextureManager.h>
+#include <GraphicsPipelineModule.h>
 
 class MaterialManager
 {
@@ -19,8 +20,10 @@ private:
     std::shared_ptr<ShaderModule> default_shader;
     std::shared_ptr<ShaderModule> default_primitive_shader;
     std::shared_ptr<ShaderModule> default_animation_shader;
-    std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule;
-    VkRenderPass default_renderPass;
+
+    //std::shared_ptr<GraphicsPipeline> default_graphics_pipeline;
+    //std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule;
+    //VkRenderPass default_renderPass;
 public:
     static MaterialManager* instance;
 
@@ -29,7 +32,7 @@ private:
     void CreateDefaultPrimitiveMaterial();
 public:
     MaterialManager();
-    void InitializeMaterialManager(VkRenderPass renderPass, std::shared_ptr<GraphicsPipelineModule> graphicsPipeline);
+    void InitializeMaterialManager(VkRenderPass renderPass);
     static MaterialManager* getInstance();
     std::shared_ptr<Material> GetMaterial(std::string nameMaterial);
     void AddMaterial(const char* nameMaterial, std::shared_ptr<Material> mat_ptr);

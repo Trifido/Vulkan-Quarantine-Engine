@@ -1,8 +1,7 @@
 #include "GraphicsPipelineModule.h"
 
-GraphicsPipelineModule::GraphicsPipelineModule()
+GraphicsPipelineModule::GraphicsPipelineModule() : PipelineModule()
 {
-    this->deviceModule = DeviceModule::getInstance();
     this->swapChainModule = SwapChainModule::getInstance();
     this->antialiasingModule = AntiAliasingModule::getInstance();
     this->PoligonMode = VkPolygonMode::VK_POLYGON_MODE_FILL;
@@ -10,19 +9,11 @@ GraphicsPipelineModule::GraphicsPipelineModule()
 }
 GraphicsPipelineModule::~GraphicsPipelineModule()
 {
-    this->deviceModule = nullptr;
     this->swapChainModule = nullptr;
     this->antialiasingModule = nullptr;
 }
 
-void GraphicsPipelineModule::cleanup(VkPipeline pipeline, VkPipelineLayout pipelineLayout)
-{
-    vkDestroyPipeline(deviceModule->device, pipeline, nullptr);
-    vkDestroyPipelineLayout(deviceModule->device, pipelineLayout, nullptr);
-}
-
-void GraphicsPipelineModule::CreateGraphicsPipeline(VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, std::shared_ptr<ShaderModule> shader,
-    std::shared_ptr<DescriptorModule> descriptor_ptr, VkRenderPass renderPass)
+void GraphicsPipelineModule::CompileGraphicsPipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, VkPipelineVertexInputStateCreateInfo vertexInfo, VkDescriptorSetLayout descriptorLayout)
 {
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -129,19 +120,19 @@ void GraphicsPipelineModule::CreateGraphicsPipeline(VkPipeline& pipeline, VkPipe
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 1; // Number of descriptor sets
-    pipelineLayoutInfo.pSetLayouts = &descriptor_ptr->descriptorSetLayout; // Ptr to descriptor set layout
+    pipelineLayoutInfo.pSetLayouts = &descriptorLayout; // Ptr to descriptor set layout
     pipelineLayoutInfo.pushConstantRangeCount = 1; // Optional
     pipelineLayoutInfo.pPushConstantRanges = &pushConstantInfo; // Optional
 
-    if (vkCreatePipelineLayout(deviceModule->device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+    if (vkCreatePipelineLayout(deviceModule->device, &pipelineLayoutInfo, nullptr, &this->pipelineLayout) != VK_SUCCESS) {
         throw std::runtime_error("failed to create pipeline layout!");
     }
 
     VkGraphicsPipelineCreateInfo pipelineInfo{};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.stageCount = static_cast<uint32_t>(shader->shaderStages.size());
-    pipelineInfo.pStages = shader->shaderStages.data();
-    pipelineInfo.pVertexInputState = &shader->vertexInputInfo;
+    pipelineInfo.stageCount = static_cast<uint32_t>(shaderInfo.size());
+    pipelineInfo.pStages = shaderInfo.data();
+    pipelineInfo.pVertexInputState = &vertexInfo;
     pipelineInfo.pInputAssemblyState = &inputAssembly;
     pipelineInfo.pViewportState = &viewportState;
     pipelineInfo.pRasterizationState = &rasterizer;
@@ -149,15 +140,21 @@ void GraphicsPipelineModule::CreateGraphicsPipeline(VkPipeline& pipeline, VkPipe
     pipelineInfo.pDepthStencilState = &depthStencil;
     pipelineInfo.pColorBlendState = &colorBlending;
     pipelineInfo.pDynamicState = &dynamicState;//nullptr; // Optional Dynamic state
-    pipelineInfo.layout = pipelineLayout;
-    pipelineInfo.renderPass = renderPass;
+    pipelineInfo.layout = this->pipelineLayout;
+    pipelineInfo.renderPass = *this->renderPass;
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
     pipelineInfo.basePipelineIndex = -1; // Optional
 
-    if (vkCreateGraphicsPipelines(deviceModule->device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) != VK_SUCCESS) {
+    if (vkCreateGraphicsPipelines(deviceModule->device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &this->pipeline) != VK_SUCCESS) {
         throw std::runtime_error("failed to create graphics pipeline!");
     }
+}
+
+void GraphicsPipelineModule::cleanup(VkPipeline pipeline, VkPipelineLayout pipelineLayout)
+{
+    vkDestroyPipeline(deviceModule->device, pipeline, nullptr);
+    vkDestroyPipelineLayout(deviceModule->device, pipelineLayout, nullptr);
 }
 
 void GraphicsPipelineModule::updatePolygonMode(PolygonRenderType polygonType)

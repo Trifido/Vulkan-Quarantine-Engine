@@ -13,12 +13,11 @@ Material::Material()
     this->layer = (unsigned int) RenderLayer::SOLID;
 }
 
-Material::Material(std::shared_ptr<ShaderModule> shader_ptr, VkRenderPass renderPass)
+Material::Material(std::shared_ptr<ShaderModule> shader_ptr)
 {
     ambient = diffuse = specular = emissive = glm::vec3(0.0f);
     this->shininess = 32.0f;
     this->shader = shader_ptr;
-    this->renderPass = renderPass;
     this->uniform = std::make_shared<MaterialUniform>();
     this->uniform->idxDiffuse = this->uniform->idxNormal = this->uniform->idxSpecular = this->uniform->idxEmissive = this->uniform->idxHeight = -1; //this->uniform->idxBump 
     this->uniform->shininess = this->shininess;
@@ -79,22 +78,17 @@ void Material::AddNullTexture(std::shared_ptr<CustomTexture> texture)
         this->emptyTexture = texture;
 }
 
-void Material::AddPipeline(std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule_ptr)
-{
-    if(this->graphicsPipelineModule == nullptr)
-        this->graphicsPipelineModule = graphicsPipelineModule_ptr;
-}
-
-//void Material::AddComputePipeline(std::shared_ptr<ComputePipelineModule> computePipelineModule_ptr)
+//void Material::AddPipeline(std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule_ptr)
 //{
-//    this->computePipelineModule = computePipelineModule_ptr;
+//    if(this->graphicsPipelineModule == nullptr)
+//        this->graphicsPipelineModule = graphicsPipelineModule_ptr;
 //}
 
 void Material::cleanup()
 {
     if (this->isMeshBinding)
     {
-        this->graphicsPipelineModule->cleanup(this->pipeline, this->pipelineLayout);
+        //this->graphicsPipelineModule->cleanup(this->pipeline, this->pipelineLayout);
         this->descriptor->cleanupDescriptorBuffer();
         this->descriptor->cleanupDescriptorPool();
     }
@@ -109,7 +103,7 @@ void Material::recreatePipelineMaterial(VkRenderPass renderPass)
 {
     if (this->isMeshBinding)
     {
-        this->graphicsPipelineModule->CreateGraphicsPipeline(this->pipeline, this->pipelineLayout, this->shader, this->descriptor, renderPass);
+        //this->graphicsPipelineModule->CreateGraphicsPipeline(this->pipeline, this->pipelineLayout, this->shader, this->descriptor, renderPass);
     }
 }
 
@@ -138,19 +132,19 @@ void Material::InitializeMaterial()
     {
         std::cout << "Falta shader en el material.\n";
     }
-    else if (this->renderPass == nullptr)
-    {
-        std::cout << "Falta renderpass en el material.\n";
-    }
-    else if (this->graphicsPipelineModule == nullptr)
-    {
-        std::cout << "Falta graphicsPipelineModule en el material.\n";
-    }
+    //else if (this->renderPass == nullptr)
+    //{
+    //    std::cout << "Falta renderpass en el material.\n";
+    //}
+    //else if (this->graphicsPipelineModule == nullptr)
+    //{
+    //    std::cout << "Falta graphicsPipelineModule en el material.\n";
+    //}
     else
     {
         this->fillEmptyTextures();
         this->descriptor->Initialize(texture_vector, uniform);
-        this->graphicsPipelineModule->CreateGraphicsPipeline(this->pipeline, this->pipelineLayout, this->shader, this->descriptor, renderPass);
+        //this->graphicsPipelineModule->CreateGraphicsPipeline(this->pipeline, this->pipelineLayout, this->shader, this->descriptor, renderPass);
     }
 }
 

@@ -6,6 +6,370 @@ ReflectShader::ReflectShader()
 {
 }
 
+std::string ReflectShader::ToStringFormat(SpvReflectFormat fmt) {
+    switch (fmt) {
+    case SPV_REFLECT_FORMAT_UNDEFINED:
+        return "VK_FORMAT_UNDEFINED";
+    case SPV_REFLECT_FORMAT_R16_UINT:
+        return "VK_FORMAT_R16_UINT";
+    case SPV_REFLECT_FORMAT_R16_SINT:
+        return "VK_FORMAT_R16_SINT";
+    case SPV_REFLECT_FORMAT_R16_SFLOAT:
+        return "VK_FORMAT_R16_SFLOAT";
+    case SPV_REFLECT_FORMAT_R16G16_UINT:
+        return "VK_FORMAT_R16G16_UINT";
+    case SPV_REFLECT_FORMAT_R16G16_SINT:
+        return "VK_FORMAT_R16G16_SINT";
+    case SPV_REFLECT_FORMAT_R16G16_SFLOAT:
+        return "VK_FORMAT_R16G16_SFLOAT";
+    case SPV_REFLECT_FORMAT_R16G16B16_UINT:
+        return "VK_FORMAT_R16G16B16_UINT";
+    case SPV_REFLECT_FORMAT_R16G16B16_SINT:
+        return "VK_FORMAT_R16G16B16_SINT";
+    case SPV_REFLECT_FORMAT_R16G16B16_SFLOAT:
+        return "VK_FORMAT_R16G16B16_SFLOAT";
+    case SPV_REFLECT_FORMAT_R16G16B16A16_UINT:
+        return "VK_FORMAT_R16G16B16A16_UINT";
+    case SPV_REFLECT_FORMAT_R16G16B16A16_SINT:
+        return "VK_FORMAT_R16G16B16A16_SINT";
+    case SPV_REFLECT_FORMAT_R16G16B16A16_SFLOAT:
+        return "VK_FORMAT_R16G16B16A16_SFLOAT";
+    case SPV_REFLECT_FORMAT_R32_UINT:
+        return "VK_FORMAT_R32_UINT";
+    case SPV_REFLECT_FORMAT_R32_SINT:
+        return "VK_FORMAT_R32_SINT";
+    case SPV_REFLECT_FORMAT_R32_SFLOAT:
+        return "VK_FORMAT_R32_SFLOAT";
+    case SPV_REFLECT_FORMAT_R32G32_UINT:
+        return "VK_FORMAT_R32G32_UINT";
+    case SPV_REFLECT_FORMAT_R32G32_SINT:
+        return "VK_FORMAT_R32G32_SINT";
+    case SPV_REFLECT_FORMAT_R32G32_SFLOAT:
+        return "VK_FORMAT_R32G32_SFLOAT";
+    case SPV_REFLECT_FORMAT_R32G32B32_UINT:
+        return "VK_FORMAT_R32G32B32_UINT";
+    case SPV_REFLECT_FORMAT_R32G32B32_SINT:
+        return "VK_FORMAT_R32G32B32_SINT";
+    case SPV_REFLECT_FORMAT_R32G32B32_SFLOAT:
+        return "VK_FORMAT_R32G32B32_SFLOAT";
+    case SPV_REFLECT_FORMAT_R32G32B32A32_UINT:
+        return "VK_FORMAT_R32G32B32A32_UINT";
+    case SPV_REFLECT_FORMAT_R32G32B32A32_SINT:
+        return "VK_FORMAT_R32G32B32A32_SINT";
+    case SPV_REFLECT_FORMAT_R32G32B32A32_SFLOAT:
+        return "VK_FORMAT_R32G32B32A32_SFLOAT";
+    case SPV_REFLECT_FORMAT_R64_UINT:
+        return "VK_FORMAT_R64_UINT";
+    case SPV_REFLECT_FORMAT_R64_SINT:
+        return "VK_FORMAT_R64_SINT";
+    case SPV_REFLECT_FORMAT_R64_SFLOAT:
+        return "VK_FORMAT_R64_SFLOAT";
+    case SPV_REFLECT_FORMAT_R64G64_UINT:
+        return "VK_FORMAT_R64G64_UINT";
+    case SPV_REFLECT_FORMAT_R64G64_SINT:
+        return "VK_FORMAT_R64G64_SINT";
+    case SPV_REFLECT_FORMAT_R64G64_SFLOAT:
+        return "VK_FORMAT_R64G64_SFLOAT";
+    case SPV_REFLECT_FORMAT_R64G64B64_UINT:
+        return "VK_FORMAT_R64G64B64_UINT";
+    case SPV_REFLECT_FORMAT_R64G64B64_SINT:
+        return "VK_FORMAT_R64G64B64_SINT";
+    case SPV_REFLECT_FORMAT_R64G64B64_SFLOAT:
+        return "VK_FORMAT_R64G64B64_SFLOAT";
+    case SPV_REFLECT_FORMAT_R64G64B64A64_UINT:
+        return "VK_FORMAT_R64G64B64A64_UINT";
+    case SPV_REFLECT_FORMAT_R64G64B64A64_SINT:
+        return "VK_FORMAT_R64G64B64A64_SINT";
+    case SPV_REFLECT_FORMAT_R64G64B64A64_SFLOAT:
+        return "VK_FORMAT_R64G64B64A64_SFLOAT";
+    }
+    // unhandled SpvReflectFormat enum value
+    return "VK_FORMAT_???";
+}
+
+std::string ReflectShader::ToStringScalarType(const SpvReflectTypeDescription& type) {
+    switch (type.op) {
+    case SpvOpTypeVoid: {
+        return "void";
+        break;
+    }
+    case SpvOpTypeBool: {
+        return "bool";
+        break;
+    }
+    case SpvOpTypeInt: {
+        if (type.traits.numeric.scalar.signedness)
+            return "int";
+        else
+            return "uint";
+    }
+    case SpvOpTypeFloat: {
+        switch (type.traits.numeric.scalar.width) {
+        case 32:
+            return "float";
+        case 64:
+            return "double";
+        default:
+            break;
+        }
+        break;
+    }
+    case SpvOpTypeStruct: {
+        return "struct";
+    }
+    case SpvOpTypePointer: {
+        return "ptr";
+    }
+    default: {
+        break;
+    }
+    }
+    return "";
+}
+
+std::string ReflectShader::ToStringGlslType(const SpvReflectTypeDescription& type) {
+    switch (type.op) {
+    case SpvOpTypeVector: {
+        switch (type.traits.numeric.scalar.width) {
+        case 32: {
+            switch (type.traits.numeric.vector.component_count) {
+            case 2:
+                return "vec2";
+            case 3:
+                return "vec3";
+            case 4:
+                return "vec4";
+            }
+        } break;
+
+        case 64: {
+            switch (type.traits.numeric.vector.component_count) {
+            case 2:
+                return "dvec2";
+            case 3:
+                return "dvec3";
+            case 4:
+                return "dvec4";
+            }
+        } break;
+        }
+    } break;
+    default:
+        break;
+    }
+    return ToStringScalarType(type);
+}
+
+std::string ReflectShader::ToStringHlslType(const SpvReflectTypeDescription& type) {
+    switch (type.op) {
+    case SpvOpTypeVector: {
+        switch (type.traits.numeric.scalar.width) {
+        case 32: {
+            switch (type.traits.numeric.vector.component_count) {
+            case 2:
+                return "float2";
+            case 3:
+                return "float3";
+            case 4:
+                return "float4";
+            }
+        } break;
+
+        case 64: {
+            switch (type.traits.numeric.vector.component_count) {
+            case 2:
+                return "double2";
+            case 3:
+                return "double3";
+            case 4:
+                return "double4";
+            }
+        } break;
+        }
+    } break;
+
+    default:
+        break;
+    }
+    return ToStringScalarType(type);
+}
+
+std::string ReflectShader::ToStringType(SpvSourceLanguage src_lang,
+    const SpvReflectTypeDescription& type) {
+    if (src_lang == SpvSourceLanguageHLSL) {
+        return ToStringHlslType(type);
+    }
+
+    return ToStringGlslType(type);
+}
+
+std::string ReflectShader::ToStringSpvBuiltIn(SpvBuiltIn built_in) {
+    switch (built_in) {
+    case SpvBuiltInPosition:
+        return "Position";
+    case SpvBuiltInPointSize:
+        return "PointSize";
+    case SpvBuiltInClipDistance:
+        return "ClipDistance";
+    case SpvBuiltInCullDistance:
+        return "CullDistance";
+    case SpvBuiltInVertexId:
+        return "VertexId";
+    case SpvBuiltInInstanceId:
+        return "InstanceId";
+    case SpvBuiltInPrimitiveId:
+        return "PrimitiveId";
+    case SpvBuiltInInvocationId:
+        return "InvocationId";
+    case SpvBuiltInLayer:
+        return "Layer";
+    case SpvBuiltInViewportIndex:
+        return "ViewportIndex";
+    case SpvBuiltInTessLevelOuter:
+        return "TessLevelOuter";
+    case SpvBuiltInTessLevelInner:
+        return "TessLevelInner";
+    case SpvBuiltInTessCoord:
+        return "TessCoord";
+    case SpvBuiltInPatchVertices:
+        return "PatchVertices";
+    case SpvBuiltInFragCoord:
+        return "FragCoord";
+    case SpvBuiltInPointCoord:
+        return "PointCoord";
+    case SpvBuiltInFrontFacing:
+        return "FrontFacing";
+    case SpvBuiltInSampleId:
+        return "SampleId";
+    case SpvBuiltInSamplePosition:
+        return "SamplePosition";
+    case SpvBuiltInSampleMask:
+        return "SampleMask";
+    case SpvBuiltInFragDepth:
+        return "FragDepth";
+    case SpvBuiltInHelperInvocation:
+        return "HelperInvocation";
+    case SpvBuiltInNumWorkgroups:
+        return "NumWorkgroups";
+    case SpvBuiltInWorkgroupSize:
+        return "WorkgroupSize";
+    case SpvBuiltInWorkgroupId:
+        return "WorkgroupId";
+    case SpvBuiltInLocalInvocationId:
+        return "LocalInvocationId";
+    case SpvBuiltInGlobalInvocationId:
+        return "GlobalInvocationId";
+    case SpvBuiltInLocalInvocationIndex:
+        return "LocalInvocationIndex";
+    case SpvBuiltInWorkDim:
+        return "WorkDim";
+    case SpvBuiltInGlobalSize:
+        return "GlobalSize";
+    case SpvBuiltInEnqueuedWorkgroupSize:
+        return "EnqueuedWorkgroupSize";
+    case SpvBuiltInGlobalOffset:
+        return "GlobalOffset";
+    case SpvBuiltInGlobalLinearId:
+        return "GlobalLinearId";
+    case SpvBuiltInSubgroupSize:
+        return "SubgroupSize";
+    case SpvBuiltInSubgroupMaxSize:
+        return "SubgroupMaxSize";
+    case SpvBuiltInNumSubgroups:
+        return "NumSubgroups";
+    case SpvBuiltInNumEnqueuedSubgroups:
+        return "NumEnqueuedSubgroups";
+    case SpvBuiltInSubgroupId:
+        return "SubgroupId";
+    case SpvBuiltInSubgroupLocalInvocationId:
+        return "SubgroupLocalInvocationId";
+    case SpvBuiltInVertexIndex:
+        return "VertexIndex";
+    case SpvBuiltInInstanceIndex:
+        return "InstanceIndex";
+    case SpvBuiltInSubgroupEqMaskKHR:
+        return "SubgroupEqMaskKHR";
+    case SpvBuiltInSubgroupGeMaskKHR:
+        return "SubgroupGeMaskKHR";
+    case SpvBuiltInSubgroupGtMaskKHR:
+        return "SubgroupGtMaskKHR";
+    case SpvBuiltInSubgroupLeMaskKHR:
+        return "SubgroupLeMaskKHR";
+    case SpvBuiltInSubgroupLtMaskKHR:
+        return "SubgroupLtMaskKHR";
+    case SpvBuiltInBaseVertex:
+        return "BaseVertex";
+    case SpvBuiltInBaseInstance:
+        return "BaseInstance";
+    case SpvBuiltInDrawIndex:
+        return "DrawIndex";
+    case SpvBuiltInDeviceIndex:
+        return "DeviceIndex";
+    case SpvBuiltInViewIndex:
+        return "ViewIndex";
+    case SpvBuiltInBaryCoordNoPerspAMD:
+        return "BaryCoordNoPerspAMD";
+    case SpvBuiltInBaryCoordNoPerspCentroidAMD:
+        return "BaryCoordNoPerspCentroidAMD";
+    case SpvBuiltInBaryCoordNoPerspSampleAMD:
+        return "BaryCoordNoPerspSampleAMD";
+    case SpvBuiltInBaryCoordSmoothAMD:
+        return "BaryCoordSmoothAMD";
+    case SpvBuiltInBaryCoordSmoothCentroidAMD:
+        return "BaryCoordSmoothCentroidAMD";
+    case SpvBuiltInBaryCoordSmoothSampleAMD:
+        return "BaryCoordSmoothSampleAMD";
+    case SpvBuiltInBaryCoordPullModelAMD:
+        return "BaryCoordPullModelAMD";
+    case SpvBuiltInFragStencilRefEXT:
+        return "FragStencilRefEXT";
+    case SpvBuiltInViewportMaskNV:
+        return "ViewportMaskNV";
+    case SpvBuiltInSecondaryPositionNV:
+        return "SecondaryPositionNV";
+    case SpvBuiltInSecondaryViewportMaskNV:
+        return "SecondaryViewportMaskNV";
+    case SpvBuiltInPositionPerViewNV:
+        return "PositionPerViewNV";
+    case SpvBuiltInViewportMaskPerViewNV:
+        return "ViewportMaskPerViewNV";
+    case SpvBuiltInLaunchIdKHR:
+        return "InLaunchIdKHR";
+    case SpvBuiltInLaunchSizeKHR:
+        return "InLaunchSizeKHR";
+    case SpvBuiltInWorldRayOriginKHR:
+        return "InWorldRayOriginKHR";
+    case SpvBuiltInWorldRayDirectionKHR:
+        return "InWorldRayDirectionKHR";
+    case SpvBuiltInObjectRayOriginKHR:
+        return "InObjectRayOriginKHR";
+    case SpvBuiltInObjectRayDirectionKHR:
+        return "InObjectRayDirectionKHR";
+    case SpvBuiltInRayTminKHR:
+        return "InRayTminKHR";
+    case SpvBuiltInRayTmaxKHR:
+        return "InRayTmaxKHR";
+    case SpvBuiltInInstanceCustomIndexKHR:
+        return "InInstanceCustomIndexKHR";
+    case SpvBuiltInObjectToWorldKHR:
+        return "InObjectToWorldKHR";
+    case SpvBuiltInWorldToObjectKHR:
+        return "InWorldToObjectKHR";
+    case SpvBuiltInHitTNV:
+        return "InHitTNV";
+    case SpvBuiltInHitKindKHR:
+        return "InHitKindKHR";
+    case SpvBuiltInIncomingRayFlagsKHR:
+        return "InIncomingRayFlagsKHR";
+    case SpvBuiltInRayGeometryIndexKHR:
+        return "InRayGeometryIndexKHR";
+
+    case SpvBuiltInMax:
+    default:
+        break;
+    }
+}
+
 std::string ReflectShader::ToStringDescriptorType(SpvReflectDescriptorType value) {
     switch (value) {
     case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
@@ -129,6 +493,41 @@ void ReflectShader::PrintDescriptorBinding(std::ostream& os,
     }
 }
 
+void ReflectShader::PrintInterfaceVariable(std::ostream& os, SpvSourceLanguage src_lang, const SpvReflectInterfaceVariable& obj, const char* indent)
+{
+    const char* t = indent;
+    os << t << "location  : ";
+    if (obj.decoration_flags & SPV_REFLECT_DECORATION_BUILT_IN) {
+        os << ToStringSpvBuiltIn(obj.built_in) << " "
+            << "(built-in)";
+    }
+    else {
+        os << obj.location;
+    }
+    os << "\n";
+    if (obj.semantic != nullptr) {
+        os << t << "semantic  : " << obj.semantic << "\n";
+    }
+    os << t << "type      : " << ToStringType(src_lang, *obj.type_description)
+        << "\n";
+    os << t << "format    : " << ToStringFormat(obj.format) << "\n";
+    os << t << "qualifier : ";
+    if (obj.decoration_flags & SPV_REFLECT_DECORATION_FLAT) {
+        os << "flat";
+    }
+    else if (obj.decoration_flags & SPV_REFLECT_DECORATION_NOPERSPECTIVE) {
+        os << "noperspective";
+    }
+    os << "\n";
+
+    os << t << "name      : " << obj.name;
+    if ((obj.type_description->type_name != nullptr) &&
+        (strlen(obj.type_description->type_name) > 0)) {
+        os << " "
+            << "(" << obj.type_description->type_name << ")";
+    }
+}
+
 void ReflectShader::CheckStage(DescriptorSetReflect& descripReflect, const SpvReflectShaderModule& obj)
 {
     switch (obj.shader_stage) {
@@ -205,41 +604,6 @@ void ReflectShader::Output(VkShaderModuleCreateInfo createInfo)
     result = spvReflectEnumerateDescriptorSets(&module, &count, sets.data());
     assert(result == SPV_REFLECT_RESULT_SUCCESS);
 
-#if defined(SPIRV_REFLECT_HAS_VULKAN_H)
-    // Demonstrates how to generate all necessary data structures to create a
-    // VkDescriptorSetLayout for each descriptor set in this shader.
-    std::vector<DescriptorSetLayoutData> set_layouts(sets.size(),
-        DescriptorSetLayoutData{});
-    for (size_t i_set = 0; i_set < sets.size(); ++i_set) {
-        const SpvReflectDescriptorSet& refl_set = *(sets[i_set]);
-        DescriptorSetLayoutData& layout = set_layouts[i_set];
-        layout.bindings.resize(refl_set.binding_count);
-        for (uint32_t i_binding = 0; i_binding < refl_set.binding_count;
-            ++i_binding) {
-            const SpvReflectDescriptorBinding& refl_binding =
-                *(refl_set.bindings[i_binding]);
-            VkDescriptorSetLayoutBinding& layout_binding = layout.bindings[i_binding];
-            layout_binding.binding = refl_binding.binding;
-            layout_binding.descriptorType =
-                static_cast<VkDescriptorType>(refl_binding.descriptor_type);
-            layout_binding.descriptorCount = 1;
-            for (uint32_t i_dim = 0; i_dim < refl_binding.array.dims_count; ++i_dim) {
-                layout_binding.descriptorCount *= refl_binding.array.dims[i_dim];
-            }
-            layout_binding.stageFlags =
-                static_cast<VkShaderStageFlagBits>(module.shader_stage);
-        }
-        layout.set_number = refl_set.set;
-        layout.create_info.sType =
-            VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        layout.create_info.bindingCount = refl_set.binding_count;
-        layout.create_info.pBindings = layout.bindings.data();
-    }
-    // Nothing further is done with set_layouts in this sample; in a real
-    // application they would be merged with similar structures from other shader
-    // stages and/or pipelines to create a VkPipelineLayout.
-#endif
-
   // Log the descriptor set contents to stdout
     const char* t = "  ";
     const char* tt = "    ";
@@ -265,6 +629,62 @@ void ReflectShader::Output(VkShaderModuleCreateInfo createInfo)
         std::cout << "\n\n";
     }
 
+
+    uint32_t count2 = 0;
+    result = spvReflectEnumerateInputVariables(&module, &count2, NULL);
+    //assert(result == SPV_REFLECT_RESULT_SUCCESS);
+
+    std::vector<SpvReflectInterfaceVariable*> input_vars(count2);
+    result =
+        spvReflectEnumerateInputVariables(&module, &count2, input_vars.data());
+    //assert(result == SPV_REFLECT_RESULT_SUCCESS);
+
+    if (result == SPV_REFLECT_RESULT_SUCCESS)
+    {
+        std::cout << "Input variables:"
+            << "\n";
+        for (size_t index = 0; index < input_vars.size(); ++index) {
+            auto p_var = input_vars[index];
+
+            // input variables can also be retrieved directly from the module, by
+            // location (unless the location is (uint32_t)-1, as is the case with
+            // built-in inputs)
+            auto p_var2 =
+                spvReflectGetInputVariableByLocation(&module, p_var->location, &result);
+            if (p_var->location == UINT32_MAX) {
+                assert(result == SPV_REFLECT_RESULT_ERROR_ELEMENT_NOT_FOUND);
+                assert(p_var2 == nullptr);
+            }
+            else {
+                assert(result == SPV_REFLECT_RESULT_SUCCESS);
+                assert(p_var == p_var2);
+            }
+            (void)p_var2;
+
+            // input variables can also be retrieved directly from the module, by
+            // semantic (if present)
+            p_var2 =
+                spvReflectGetInputVariableBySemantic(&module, p_var->semantic, &result);
+            if (!p_var->semantic) {
+                assert(result == SPV_REFLECT_RESULT_ERROR_NULL_POINTER);
+                assert(p_var2 == nullptr);
+            }
+            else if (p_var->semantic[0] != '\0') {
+                assert(result == SPV_REFLECT_RESULT_ERROR_ELEMENT_NOT_FOUND);
+                assert(p_var2 == nullptr);
+            }
+            else {
+                assert(result == SPV_REFLECT_RESULT_SUCCESS);
+                assert(p_var == p_var2);
+            }
+            (void)p_var2;
+
+            std::cout << t << index << ":"
+                << "\n";
+            PrintInterfaceVariable(std::cout, module.source_language, *p_var, tt);
+            std::cout << "\n\n";
+        }
+    }
     spvReflectDestroyShaderModule(&module);
 }
 

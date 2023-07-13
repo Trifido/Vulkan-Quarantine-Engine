@@ -12,6 +12,7 @@
 #include <Collider.h>
 #include <AnimationManager.h>
 #include <SkeletalComponent.h>
+#include <Numbered.h>
 
 typedef class GameObject GameObject;
 
@@ -23,16 +24,14 @@ enum MeshImportedType
     NONE_GEO
 };
 
-class GameObject
+class GameObject : Numbered
 {
 protected:
-    std::string         id;
     DeviceModule*       deviceModule = nullptr;
     QueueModule*        queueModule = nullptr;
     MaterialManager*    materialManager = nullptr;
     AnimationManager*   animationManager = nullptr;
     MeshImportedType    meshImportedType;
-
 
 public:
     std::shared_ptr<GeometryComponent>  mesh = nullptr;
@@ -62,7 +61,6 @@ public:
     void UpdatePhysicTransform();
 
 protected:
-    void CreateGameObjectID(size_t length);
     void InitializeComponents(size_t numMeshAttributes);
     void InitializeAnimationComponent();
     bool CreateChildsGameObject(std::string pathfile);

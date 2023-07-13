@@ -403,6 +403,12 @@
     <ClCompile Include="GraphicsPipeline\spirv_reflect.c">
       <Filter>Kernel\GraphicsPipeline\sources</Filter>
     </ClCompile>
+    <ClCompile Include="Utilities\Numbered.cpp">
+      <Filter>Kernel\Utilities\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsPipeline\PipelineModule.cpp">
+      <Filter>Kernel\GraphicsPipeline\sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SetUp\DeviceModule.h">
@@ -651,6 +657,12 @@
       <Filter>Kernel\GraphicsPipeline\headers</Filter>
     </ClInclude>
     <ClInclude Include="GraphicsPipeline\spirv_reflect.h">
+      <Filter>Kernel\GraphicsPipeline\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Numbered.h">
+      <Filter>Kernel\Utilities\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsPipeline\PipelineModule.h">
       <Filter>Kernel\GraphicsPipeline\headers</Filter>
     </ClInclude>
   </ItemGroup>

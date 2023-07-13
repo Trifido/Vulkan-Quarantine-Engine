@@ -19,6 +19,7 @@ App::App()
     this->physicsModule = PhysicsModule::getInstance();
     this->editorManager = EditorObjectManager::getInstance();
     this->animationManager = AnimationManager::getInstance();
+    this->graphicsPipelineManager = GraphicsPipelineManager::getInstance();
 
     commandPoolModule->ClearColor = glm::vec3(0.1f);
 }
@@ -135,7 +136,7 @@ void App::initVulkan()
     depthBufferModule->createDepthResources(swapchainModule->swapChainExtent, commandPoolModule->getCommandPool());
 
     //Creamos el graphics pipeline Module
-    graphicsPipelineModule = std::make_shared<GraphicsPipelineModule>();
+    //graphicsPipelineModule = std::make_shared<GraphicsPipelineModule>();
 
     //Creamos el compute pipeline Module
     computePipelineModule = std::make_shared<ComputePipelineModule>();
@@ -143,6 +144,9 @@ void App::initVulkan()
     //Creamos el Render Pass
     renderPassModule = new RenderPassModule();
     renderPassModule->createRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
+
+    //Registramos el default render pass
+    this->graphicsPipelineManager->RegisterDefaultRenderPass(renderPassModule->renderPass);
 
     //Creamos el frame buffer
     framebufferModule.createFramebuffer(renderPassModule->renderPass);
@@ -163,13 +167,13 @@ void App::initVulkan()
     this->textureManager = TextureManager::getInstance();
     this->lightManager = LightManager::getInstance();
     this->materialManager = MaterialManager::getInstance();
-    this->materialManager->InitializeMaterialManager(renderPassModule->renderPass, graphicsPipelineModule);
+    this->materialManager->InitializeMaterialManager(renderPassModule->renderPass);
     this->gameObjectManager = GameObjectManager::getInstance();
     this->computeNodeManager = ComputeNodeManager::getInstance();
     this->computeNodeManager->InitializeComputeNodeManager(computePipelineModule);
 
     // Inicializamos los componentes del editor
-    std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>(Grid(graphicsPipelineModule, renderPassModule->renderPass));
+    std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
     this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
     /*

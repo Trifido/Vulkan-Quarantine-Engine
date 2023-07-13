@@ -45,7 +45,7 @@ void ParticleSystem::createShaderStorageBuffers()
 
 void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->material->pipeline);
+    //vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->material->pipeline);
 
     VkViewport viewport{};
     viewport.x = 0.0f;

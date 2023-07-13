@@ -5,11 +5,11 @@
 #include "ShaderModule.h"
 #include "DescriptorModule.h"
 #include <AntiAliasingModule.h>
+#include <PipelineModule.h>
 
-class GraphicsPipelineModule
+class GraphicsPipelineModule : public PipelineModule
 {
 private:
-    DeviceModule*       deviceModule = nullptr;
     SwapChainModule*    swapChainModule = nullptr;
     AntiAliasingModule* antialiasingModule = nullptr;
     VkPolygonMode       PoligonMode;
@@ -34,11 +34,14 @@ public:
     {
         ENABLED,
         DISABLED
-    }; 
+    };
+
+    std::shared_ptr<VkRenderPass> renderPass = nullptr;
+
 public:
     GraphicsPipelineModule();
     ~GraphicsPipelineModule();
-    void CreateGraphicsPipeline(VkPipeline& pipeline, VkPipelineLayout& pipelineLayout, std::shared_ptr<ShaderModule> shader, std::shared_ptr<DescriptorModule> descriptor_ptr, VkRenderPass renderPass);
+    void CompileGraphicsPipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, VkPipelineVertexInputStateCreateInfo vertexInfo, VkDescriptorSetLayout descriptorLayout);
     void cleanup(VkPipeline pipeline, VkPipelineLayout pipelineLayout);
 
 private:

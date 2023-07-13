@@ -8,6 +8,8 @@
 #include "DeviceModule.h"
 #include "GeometryComponent.h"
 #include <ReflectShader.h>
+#include <Numbered.h>
+#include <GraphicsPipelineManager.h>
 
 enum class SHADER_TYPE
 {
@@ -18,7 +20,11 @@ enum class SHADER_TYPE
     COMPUTE_SHADER = 4
 };
 
-class ShaderModule
+class GraphicsPipelineManager;
+class PipelineModule;
+class GraphicsPipelineModule;
+
+class ShaderModule : public Numbered
 {
 private:
     DeviceModule*                                   deviceModule;
@@ -31,10 +37,13 @@ private:
     VkVertexInputBindingDescription                 bindingDescription;
     std::vector<VkVertexInputAttributeDescription>  attributeDescriptions;
     ReflectShader                                   reflectShader;
+    GraphicsPipelineManager*                        graphicsPipelineManager;
+
 public:
     std::vector<VkPipelineShaderStageCreateInfo>    shaderStages;
     VkPipelineVertexInputStateCreateInfo            vertexInputInfo{};
-    VkDescriptorSetLayout   descriptorSetLayout;
+    VkDescriptorSetLayout                           descriptorSetLayout;
+    std::shared_ptr<GraphicsPipelineModule>         PipelineModule;
 
 public:
     ShaderModule();
@@ -43,11 +52,11 @@ public:
     static std::vector<char> readFile(const std::string& filename);
     void createShaderModule(const std::string& filename_compute);
     void createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment);
-    void createShaderBindings(bool hasAnimation = false);
     void cleanup();
 private:
     VkPipelineShaderStageCreateInfo createShader(VkDevice& device, const std::string& filename, SHADER_TYPE shaderType);
     void CreateDescriptorSetLayout();
+    void createShaderBindings(bool hasAnimation = false);
 };
 
 #endif

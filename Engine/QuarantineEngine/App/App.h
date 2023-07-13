@@ -126,7 +126,7 @@ private:
     AntiAliasingModule*     antialiasingModule;
     RenderPassModule*       renderPassModule;
 
-    std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule;
+    //std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule;
     std::shared_ptr<ComputePipelineModule> computePipelineModule;
 
 
@@ -146,6 +146,7 @@ private:
     TextureManager*     textureManager{};
     GameObjectManager*  gameObjectManager{};
     AnimationManager*   animationManager{};
+    GraphicsPipelineManager* graphicsPipelineManager{};
 
     KeyboardController* keyboard_ptr {};
 
