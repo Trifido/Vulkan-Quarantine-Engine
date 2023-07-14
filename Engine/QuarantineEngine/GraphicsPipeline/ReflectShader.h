@@ -47,7 +47,7 @@ class ReflectShader
 public:
     std::unordered_map<std::string, DescriptorBindingReflect> mixBindings;
     std::vector<DescriptorSetReflect> descriptorSetReflect;
-
+    bool isAnimationShader = false;
 private:
     std::string ToStringFormat(SpvReflectFormat fmt);
     static std::string ToStringScalarType(const SpvReflectTypeDescription& type);

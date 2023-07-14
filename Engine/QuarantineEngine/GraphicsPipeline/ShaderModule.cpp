@@ -58,10 +58,10 @@ void ShaderModule::createShaderModule(const std::string& filename_vertex, const 
     this->PipelineModule = this->graphicsPipelineManager->RegisterNewGraphicsPipeline(*this, descriptorSetLayout);
 }
 
-void ShaderModule::createShaderBindings(bool hasAnimation)
+void ShaderModule::createShaderBindings()
 {
-    this->bindingDescription = GeometryComponent::getBindingDescription(hasAnimation);
-    this->attributeDescriptions = GeometryComponent::getAttributeDescriptions(hasAnimation);
+    this->bindingDescription = GeometryComponent::getBindingDescription(this->reflectShader.isAnimationShader);
+    this->attributeDescriptions = GeometryComponent::getAttributeDescriptions(this->reflectShader.isAnimationShader);
 
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputInfo.vertexBindingDescriptionCount = 1;

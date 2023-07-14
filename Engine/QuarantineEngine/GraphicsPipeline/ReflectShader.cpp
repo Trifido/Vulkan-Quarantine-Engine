@@ -722,6 +722,35 @@ void ReflectShader::PerformReflect(VkShaderModuleCreateInfo createInfo)
 
     this->descriptorSetReflect.push_back(descripReflect);
 
+    if (module.shader_stage == SPV_REFLECT_SHADER_STAGE_VERTEX_BIT)
+    {
+        uint32_t count2 = 0;
+        result = spvReflectEnumerateInputVariables(&module, &count2, NULL);
+        assert(result == SPV_REFLECT_RESULT_SUCCESS);
+
+        std::vector<SpvReflectInterfaceVariable*> input_vars(count2);
+        result =
+            spvReflectEnumerateInputVariables(&module, &count2, input_vars.data());
+        assert(result == SPV_REFLECT_RESULT_SUCCESS);
+
+        bool isBoneInput = false;
+        bool isWeightInput = false;
+        for (size_t index = 0; index < input_vars.size(); ++index)
+        {
+            std::string name = input_vars[index]->name;
+            if (name == "inBoneIds")
+            {
+                isBoneInput = true;
+            }
+            if (name == "inWeights")
+            {
+                isWeightInput = true;
+            }
+        }
+
+        this->isAnimationShader = isBoneInput && isWeightInput;
+    }
+
     spvReflectDestroyShaderModule(&module);
 }
 

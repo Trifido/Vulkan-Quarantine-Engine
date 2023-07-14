@@ -56,7 +56,7 @@ public:
 private:
     VkPipelineShaderStageCreateInfo createShader(VkDevice& device, const std::string& filename, SHADER_TYPE shaderType);
     void CreateDescriptorSetLayout();
-    void createShaderBindings(bool hasAnimation = false);
+    void createShaderBindings();
 };
 
 #endif

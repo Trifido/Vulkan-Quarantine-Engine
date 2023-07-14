@@ -44,9 +44,6 @@ MaterialManager::MaterialManager()
 
 void MaterialManager::InitializeMaterialManager(VkRenderPass renderPass)
 {
-    //this->default_renderPass = renderPass;
-    //this->graphicsPipelineModule = graphicsPipeline;
-
     this->CreateDefaultPrimitiveMaterial();
 }
 
@@ -75,14 +72,12 @@ std::shared_ptr<Material> MaterialManager::GetMaterial(std::string nameMaterial)
 
 void MaterialManager::AddMaterial(std::string& nameMaterial, std::shared_ptr<Material> mat_ptr)
 {
-    //mat_ptr->AddPipeline(this->graphicsPipelineModule);
     _materials[nameMaterial] = mat_ptr;
     _materials[nameMaterial]->AddNullTexture(this->textureManager->GetTexture("NULL_TEXTURE"));
 }
 
 void MaterialManager::AddMaterial(const char* nameMaterial, std::shared_ptr<Material> mat_ptr)
 {
-    //mat_ptr->AddPipeline(this->graphicsPipelineModule);
     _materials[nameMaterial] = mat_ptr;
     _materials[nameMaterial]->AddNullTexture(this->textureManager->GetTexture("NULL_TEXTURE"));
 }
@@ -90,7 +85,6 @@ void MaterialManager::AddMaterial(const char* nameMaterial, std::shared_ptr<Mate
 void MaterialManager::AddMaterial(std::string& nameMaterial, Material mat)
 {
     std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(mat);
-    //mat_ptr->AddPipeline(this->graphicsPipelineModule);
     _materials[nameMaterial] = mat_ptr;
     _materials[nameMaterial]->AddNullTexture(this->textureManager->GetTexture("NULL_TEXTURE"));
 }
