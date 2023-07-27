@@ -272,7 +272,8 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
     if (this->material != nullptr && this->mesh != nullptr)
     {
-        //vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->material->pipeline);
+        auto pipelineModule = this->material->shader->PipelineModule;
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
         vkCmdSetDepthTestEnable(commandBuffer, true);
 
@@ -281,7 +282,7 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
         vkCmdBindIndexBuffer(commandBuffer, this->mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-        //vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->material->pipelineLayout, 0, 1, this->material->GetDescrìptor()->getDescriptorSet(idx), 0, nullptr);
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, this->material->GetDescrìptor()->getDescriptorSet(idx), 0, nullptr);
 
         TransformUniform ubo;
         ubo.model = this->transform->GetModel();
@@ -291,7 +292,7 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
             ubo.model = this->parent->transform->GetModel() * ubo.model;
         }
 
-        //vkCmdPushConstants(commandBuffer, this->material->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &ubo.model);
+        vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &ubo.model);
 
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->mesh->indices.size()), 1, 0, 0, 0);
     }

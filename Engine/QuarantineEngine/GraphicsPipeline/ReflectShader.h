@@ -11,6 +11,8 @@
 
 struct DescriptorBindingReflect
 {
+    VkShaderStageFlagBits stage;
+    uint32_t set;
     uint32_t binding;
     VkDescriptorType type;
     std::string name;
@@ -45,7 +47,8 @@ struct DescriptorSetReflect
 class ReflectShader
 {
 public:
-    std::unordered_map<std::string, DescriptorBindingReflect> mixBindings;
+    std::unordered_map<std::string, DescriptorBindingReflect> bindings;
+    //std::unordered_map<std::string, DescriptorBindingReflect> mixBindings;
     std::vector<DescriptorSetReflect> descriptorSetReflect;
     bool isAnimationShader = false;
 private:
@@ -68,8 +71,8 @@ public:
     ReflectShader();
     void Output(VkShaderModuleCreateInfo createInfo);
     void PerformReflect(VkShaderModuleCreateInfo createInfo);
-    void CheckMixStageBindings();
-    bool IsMixBinding(std::string name);
+    //void CheckMixStageBindings();
+    //bool IsMixBinding(std::string name);
 };
 
 #endif // !REFLECT_SHADER_H

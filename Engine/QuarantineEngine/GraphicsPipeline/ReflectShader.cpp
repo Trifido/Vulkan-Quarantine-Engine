@@ -567,6 +567,19 @@ void ReflectShader::CheckDescriptorSet(DescriptorSetReflect& descripReflect, con
     for (uint32_t i = 0; i < obj.binding_count; ++i) {
         const SpvReflectDescriptorBinding& binding = *obj.bindings[i];
         descripReflect.bindings[i] = GetDescriptorBinding(binding, false, ttttt.c_str());
+        descripReflect.bindings[i].set = obj.set;
+        descripReflect.bindings[i].stage = descripReflect.stage;
+
+        auto bindingIdx = this->bindings.find(descripReflect.bindings[i].name);
+
+        if (bindingIdx == this->bindings.end())
+        {
+            this->bindings[descripReflect.bindings[i].name] = descripReflect.bindings[i];
+        }
+        else
+        {
+            this->bindings[descripReflect.bindings[i].name].stage = (VkShaderStageFlagBits)(descripReflect.bindings[i].stage | this->bindings[descripReflect.bindings[i].name].stage);
+        }
     }
 }
 
@@ -583,7 +596,7 @@ DescriptorBindingReflect ReflectShader::GetDescriptorBinding(const SpvReflectDes
     if (obj.type_description->type_name != NULL)
         descriptor.name = obj.type_description->type_name;
     else
-        descriptor.name = "sampler2D";
+        descriptor.name = "Texture2DArray";
 
     return descriptor;
 }
@@ -754,37 +767,37 @@ void ReflectShader::PerformReflect(VkShaderModuleCreateInfo createInfo)
     spvReflectDestroyShaderModule(&module);
 }
 
-void ReflectShader::CheckMixStageBindings()
-{
-    int idStage = 0;
-
-    for (int i = 0; i < this->descriptorSetReflect.size(); i++)
-    {
-        for (int j = 0; j < this->descriptorSetReflect.size(); j++)
-        {
-            if (i == j)
-                continue;
-
-            for (int bi = 0; bi < this->descriptorSetReflect[i].bindingCount; bi++)
-            {
-                if (this->descriptorSetReflect[j].Exist(this->descriptorSetReflect[i].bindings[bi]))
-                {
-                    if (!this->IsMixBinding(this->descriptorSetReflect[i].bindings[bi].name))
-                    {
-                        mixBindings[this->descriptorSetReflect[i].bindings[bi].name] = this->descriptorSetReflect[i].bindings[bi];
-                    }
-                }
-            }
-        }
-    }
-}
-
-bool ReflectShader::IsMixBinding(std::string name)
-{
-    if (mixBindings.empty())
-        return false;
-
-    auto finder = mixBindings.find(name);
-
-    return finder != mixBindings.end();
-}
+//void ReflectShader::CheckMixStageBindings()
+//{
+//    int idStage = 0;
+//
+//    for (int i = 0; i < this->descriptorSetReflect.size(); i++)
+//    {
+//        for (int j = 0; j < this->descriptorSetReflect.size(); j++)
+//        {
+//            if (i == j)
+//                continue;
+//
+//            for (int bi = 0; bi < this->descriptorSetReflect[i].bindingCount; bi++)
+//            {
+//                if (this->descriptorSetReflect[j].Exist(this->descriptorSetReflect[i].bindings[bi]))
+//                {
+//                    if (!this->IsMixBinding(this->descriptorSetReflect[i].bindings[bi].name))
+//                    {
+//                        mixBindings[this->descriptorSetReflect[i].bindings[bi].name] = this->descriptorSetReflect[i].bindings[bi];
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
+//
+//bool ReflectShader::IsMixBinding(std::string name)
+//{
+//    if (mixBindings.empty())
+//        return false;
+//
+//    auto finder = mixBindings.find(name);
+//
+//    return finder != mixBindings.end();
+//}

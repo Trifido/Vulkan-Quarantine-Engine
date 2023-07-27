@@ -140,37 +140,48 @@ VkPipelineShaderStageCreateInfo ShaderModule::createShader(VkDevice& device, con
 
 void ShaderModule::CreateDescriptorSetLayout()
 {
-    this->reflectShader.CheckMixStageBindings();
+    //this->reflectShader.CheckMixStageBindings();
 
     std::vector<VkDescriptorSetLayoutBinding> bindings{};
 
-    for each (auto reflectLayotBinding in this->reflectShader.mixBindings)
+    for each (auto reflectLayotBinding in this->reflectShader.bindings)
     {
         VkDescriptorSetLayoutBinding layoutBinding = {};
         layoutBinding.binding = reflectLayotBinding.second.binding;
         layoutBinding.descriptorType = reflectLayotBinding.second.type;
         layoutBinding.descriptorCount = reflectLayotBinding.second.arraySize;
-        layoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+        layoutBinding.stageFlags = reflectLayotBinding.second.stage;
         layoutBinding.pImmutableSamplers = nullptr;
         bindings.push_back(layoutBinding);
     }
 
-    for each (auto reflectLayotBinding in this->reflectShader.descriptorSetReflect)
-    {
-        for (int id = 0; id < reflectLayotBinding.bindingCount; id++)
-        {
-            if (!reflectShader.IsMixBinding(reflectLayotBinding.bindings[id].name))
-            {
-                VkDescriptorSetLayoutBinding layoutBinding = {};
-                layoutBinding.binding = reflectLayotBinding.bindings[id].binding;
-                layoutBinding.descriptorType = reflectLayotBinding.bindings[id].type;
-                layoutBinding.descriptorCount = reflectLayotBinding.bindings[id].arraySize;
-                layoutBinding.stageFlags = reflectLayotBinding.stage;
-                layoutBinding.pImmutableSamplers = nullptr;
-                bindings.push_back(layoutBinding);
-            }
-        }
-    }
+    //for each (auto reflectLayotBinding in this->reflectShader.mixBindings)
+    //{
+    //    VkDescriptorSetLayoutBinding layoutBinding = {};
+    //    layoutBinding.binding = reflectLayotBinding.second.binding;
+    //    layoutBinding.descriptorType = reflectLayotBinding.second.type;
+    //    layoutBinding.descriptorCount = reflectLayotBinding.second.arraySize;
+    //    layoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    //    layoutBinding.pImmutableSamplers = nullptr;
+    //    bindings.push_back(layoutBinding);
+    //}
+
+    //for each (auto reflectLayotBinding in this->reflectShader.descriptorSetReflect)
+    //{
+    //    for (int id = 0; id < reflectLayotBinding.bindingCount; id++)
+    //    {
+    //        if (!reflectShader.IsMixBinding(reflectLayotBinding.bindings[id].name))
+    //        {
+    //            VkDescriptorSetLayoutBinding layoutBinding = {};
+    //            layoutBinding.binding = reflectLayotBinding.bindings[id].binding;
+    //            layoutBinding.descriptorType = reflectLayotBinding.bindings[id].type;
+    //            layoutBinding.descriptorCount = reflectLayotBinding.bindings[id].arraySize;
+    //            layoutBinding.stageFlags = reflectLayotBinding.stage;
+    //            layoutBinding.pImmutableSamplers = nullptr;
+    //            bindings.push_back(layoutBinding);
+    //        }
+    //    }
+    //}
 
     VkDescriptorSetLayoutCreateInfo layoutInfo{};
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;

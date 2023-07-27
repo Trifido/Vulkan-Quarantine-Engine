@@ -36,10 +36,10 @@ private:
     VkPipelineShaderStageCreateInfo                 compShaderStageInfo{};
     VkVertexInputBindingDescription                 bindingDescription;
     std::vector<VkVertexInputAttributeDescription>  attributeDescriptions;
-    ReflectShader                                   reflectShader;
     GraphicsPipelineManager*                        graphicsPipelineManager;
 
 public:
+    ReflectShader                                   reflectShader;
     std::vector<VkPipelineShaderStageCreateInfo>    shaderStages;
     VkPipelineVertexInputStateCreateInfo            vertexInputInfo{};
     VkDescriptorSetLayout                           descriptorSetLayout;

@@ -41,9 +41,9 @@ public:
 
     std::shared_ptr<DescriptorModule> descriptor = nullptr;
 
-    unsigned int            layer;
+    unsigned int layer;
 
-    std::shared_ptr<ShaderModule>           shader = nullptr;
+    std::shared_ptr<ShaderModule> shader = nullptr;
 public:
     Material();
     Material(std::shared_ptr<ShaderModule> shader_ptr);

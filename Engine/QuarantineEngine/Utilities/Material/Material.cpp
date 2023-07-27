@@ -5,7 +5,7 @@ Material::Material()
     ambient = diffuse = specular = emissive = glm::vec3(0.0f);
     this->shininess = 32.0f;
     this->uniform = std::make_shared<MaterialUniform>();
-    this->uniform->idxDiffuse = this->uniform->idxNormal = this->uniform->idxSpecular = this->uniform->idxEmissive = this->uniform->idxHeight = -1; // this->uniform->idxBump
+    this->uniform->idxDiffuse = this->uniform->idxNormal = this->uniform->idxSpecular = this->uniform->idxEmissive = this->uniform->idxHeight = -1;
     this->uniform->shininess = this->shininess;
     this->texture_vector = std::make_shared<std::vector<std::shared_ptr<CustomTexture>>>();
     this->texture_vector->resize(this->TOTAL_NUM_TEXTURES, nullptr);
@@ -19,7 +19,7 @@ Material::Material(std::shared_ptr<ShaderModule> shader_ptr)
     this->shininess = 32.0f;
     this->shader = shader_ptr;
     this->uniform = std::make_shared<MaterialUniform>();
-    this->uniform->idxDiffuse = this->uniform->idxNormal = this->uniform->idxSpecular = this->uniform->idxEmissive = this->uniform->idxHeight = -1; //this->uniform->idxBump 
+    this->uniform->idxDiffuse = this->uniform->idxNormal = this->uniform->idxSpecular = this->uniform->idxEmissive = this->uniform->idxHeight = -1;
     this->uniform->shininess = this->shininess;
     this->texture_vector = std::make_shared<std::vector<std::shared_ptr<CustomTexture>>>();
     this->texture_vector->resize(this->TOTAL_NUM_TEXTURES, nullptr);
@@ -65,10 +65,6 @@ void Material::AddTexture(std::shared_ptr<CustomTexture> texture)
             emissiveTexture = texture;
             if (isInserted) this->uniform->idxEmissive = this->numTextures++;
             break;
-        //case TEXTURE_TYPE::BUMP_TYPE:
-        //    bumpTexture = texture;
-        //    if (isInserted) this->uniform->idxBump = this->numTextures++;
-        //    break;
     }
 }
 
@@ -77,12 +73,6 @@ void Material::AddNullTexture(std::shared_ptr<CustomTexture> texture)
     if(this->emptyTexture == nullptr)
         this->emptyTexture = texture;
 }
-
-//void Material::AddPipeline(std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule_ptr)
-//{
-//    if(this->graphicsPipelineModule == nullptr)
-//        this->graphicsPipelineModule = graphicsPipelineModule_ptr;
-//}
 
 void Material::cleanup()
 {
@@ -132,25 +122,16 @@ void Material::InitializeMaterial()
     {
         std::cout << "Falta shader en el material.\n";
     }
-    //else if (this->renderPass == nullptr)
-    //{
-    //    std::cout << "Falta renderpass en el material.\n";
-    //}
-    //else if (this->graphicsPipelineModule == nullptr)
-    //{
-    //    std::cout << "Falta graphicsPipelineModule en el material.\n";
-    //}
     else
     {
         this->fillEmptyTextures();
         this->descriptor->Initialize(texture_vector, uniform);
-        //this->graphicsPipelineModule->CreateGraphicsPipeline(this->pipeline, this->pipelineLayout, this->shader, this->descriptor, renderPass);
     }
 }
 
 void Material::InitializeDescriptor()
 {
-    this->descriptor = std::make_shared<DescriptorModule>();//new DescriptorModule()
+    this->descriptor = std::make_shared<DescriptorModule>();
 }
 
 std::shared_ptr<CustomTexture> Material::findTextureByType(TEXTURE_TYPE newtype)

@@ -1,21 +1,91 @@
 #include "DescriptorBuffer.h"
 #include "SynchronizationModule.h"
+#include <CameraEditor.h>
 
 DescriptorBuffer::DescriptorBuffer()
 {
     this->deviceModule = DeviceModule::getInstance();
+}
+
+DescriptorBuffer::DescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr) : DescriptorBuffer()
+{
+    this->shader = shader_ptr;
+
+    //Check buffer layouts
+
+    this->numBinding = this->shader->reflectShader.bindings.size();
 
     this->cameraUBO = std::make_shared<UniformBufferObject>();
     this->materialUBO = std::make_shared<UniformBufferObject>();
     this->lightUBO = std::make_shared<UniformBufferObject>();
+
+    this->CheckResources();
+
+    this->CreateDescriptorPool();
 }
 
-void DescriptorBuffer::createDescriptorSets(DescriptorLayout& descriptorLayout)
+void DescriptorBuffer::CreateDescriptorPool()
 {
-    std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorLayout.descriptorSetLayout);
+    std::vector<VkDescriptorPoolSize> poolSizes;
+    poolSizes.resize(this->numBinding);
+
+    size_t idx = 0;
+    while (idx < this->numUBOs)
+    {
+        poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+        idx++;
+    }
+
+    poolSizes[idx].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+    VkDescriptorPoolCreateInfo poolInfo{};
+    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+    poolInfo.pPoolSizes = poolSizes.data();
+    poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+    if (vkCreateDescriptorPool(deviceModule->device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to create descriptor pool!");
+    }
+}
+
+void DescriptorBuffer::CheckResources()
+{
+    for each (auto binding in this->shader->reflectShader.bindings)
+    {
+        if (binding.first == "CameraUniform")
+        {
+            this->camera = CameraEditor::getInstance();
+        }
+        else if (binding.first == "UniformManagerLight")
+        {
+            this->lightManager = LightManager::getInstance();
+        }
+        else if (binding.first == "UniformMaterial")
+        {
+            
+        }
+        else if (binding.first == "UniformAnimation")
+        {
+
+        }
+        else if (binding.first == "Texture2DArray")
+        {
+
+        }
+        
+    }
+}
+
+void DescriptorBuffer::CreateDescriptorSets(const ShaderModule& shader)
+{
+    std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, shader.descriptorSetLayout);
     VkDescriptorSetAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocInfo.descriptorPool = descriptorLayout.descriptorPool;
+    //allocInfo.descriptorPool = descriptorLayout.descriptorPool;
     allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
     allocInfo.pSetLayouts = layouts.data();
 

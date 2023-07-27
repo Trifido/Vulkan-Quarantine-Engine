@@ -3,14 +3,22 @@
 #ifndef DESCRIPTOR_BUFFER_H
 #define DESCRIPTOR_BUFFER_H
 
-#include "DescriptorLayout.h"
 #include "CustomTexture.h"
+#include "ShaderModule.h"
+#include "Camera.h"
+#include "LightManager.h"
 #include "UBO.h"
 
 class DescriptorBuffer
 {
 private:
-    DeviceModule*                   deviceModule;
+    DeviceModule*   deviceModule = nullptr;
+    LightManager*   lightManager = nullptr;
+    Camera*         camera = nullptr;
+
+    std::shared_ptr<ShaderModule> shader = nullptr;
+
+    VkDescriptorPool                descriptorPool;
     std::vector<VkDescriptorSet>    descriptorSets;
 
     std::shared_ptr<std::vector<std::shared_ptr<CustomTexture>>> textures;
@@ -31,9 +39,14 @@ public:
     std::shared_ptr<LightManagerUniform>    lightUniform = nullptr;
     std::shared_ptr<AnimationUniform>       animationUniform = nullptr;
 
+private:
+    void CreateDescriptorPool();
+    void CheckResources();
+
 public:
     DescriptorBuffer();
-    void    createDescriptorSets(DescriptorLayout& descriptorLayout);
+    DescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr);
+    void    CreateDescriptorSets(const ShaderModule& shader);
 };
 
 #endif // !DESCRIPTOR_BUFFER_H

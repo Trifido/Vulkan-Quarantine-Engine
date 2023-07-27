@@ -21,9 +21,6 @@ private:
     std::shared_ptr<ShaderModule> default_primitive_shader;
     std::shared_ptr<ShaderModule> default_animation_shader;
 
-    //std::shared_ptr<GraphicsPipeline> default_graphics_pipeline;
-    //std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule;
-    //VkRenderPass default_renderPass;
 public:
     static MaterialManager* instance;
 

@@ -14,7 +14,6 @@ Grid::Grid()
 
     TextureManager* textureManager = TextureManager::getInstance();
     this->material_grid_ptr->AddNullTexture(textureManager->GetTexture("NULL"));
-    //this->material_grid_ptr->AddPipeline(graphicsPipelineModule);
 
     MaterialManager* instanceMaterialManager = MaterialManager::getInstance();
     std::string nameGrid = "editor:grid";

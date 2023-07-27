@@ -407,6 +407,10 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
 
     if (!materialManager->Exists(materialName))
     {
+        float opacity;
+        ret = material->Get(AI_MATKEY_OPACITY, opacity);
+        if (ret != AI_SUCCESS) opacity = 1.0;
+
         materialManager->CreateMaterial(materialName, this->hasAnimation);
         std::shared_ptr<Material> mat = materialManager->GetMaterial(materialName);
 
