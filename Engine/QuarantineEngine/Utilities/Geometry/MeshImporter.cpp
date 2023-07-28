@@ -3,7 +3,6 @@
 MeshImporter::MeshImporter()
 {
     this->materialManager = MaterialManager::getInstance();
-    this->textureManager = TextureManager::getInstance();
 }
 
 void MeshImporter::CheckPaths(std::string path)
@@ -200,8 +199,6 @@ std::vector<MeshData> MeshImporter::LoadMesh(std::string path)
 
     glm::mat4 parentTransform = glm::mat4(1.0f);
     ProcessNode(scene->mRootNode, scene, parentTransform, meshes);
-
-    this->currentTextures.clear();
 
     return meshes;
 }
@@ -407,116 +404,17 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
 
     if (!materialManager->Exists(materialName))
     {
-        float opacity;
-        ret = material->Get(AI_MATKEY_OPACITY, opacity);
-        if (ret != AI_SUCCESS) opacity = 1.0;
-
         materialManager->CreateMaterial(materialName, this->hasAnimation);
         std::shared_ptr<Material> mat = materialManager->GetMaterial(materialName);
 
-        std::string textureName = this->GetTexture(material, aiTextureType_DIFFUSE, TEXTURE_TYPE::DIFFUSE_TYPE);
-        if (textureName != "")
-        {
-            mat->AddTexture(this->textureManager->GetTexture(textureName));
-        }
-        else
-        {
-            textureName = this->GetTexture(material, aiTextureType_BASE_COLOR, TEXTURE_TYPE::DIFFUSE_TYPE);
-            if (textureName != "")
-            {
-                mat->AddTexture(this->textureManager->GetTexture(textureName));
-            }
-            else
-            {
-                textureName = this->GetTexture(material, aiTextureType_DIFFUSE_ROUGHNESS, TEXTURE_TYPE::DIFFUSE_TYPE);
-                if (textureName != "")
-                {
-                    mat->AddTexture(this->textureManager->GetTexture(textureName));
-                }
-            }
-        }
+        //Import material atributes
+        mat->materialData.ImportAssimpMaterial(material);
 
-        textureName = this->GetTexture(material, aiTextureType_SPECULAR, TEXTURE_TYPE::SPECULAR_TYPE);
-        if (textureName != "")
-        {
-            mat->AddTexture(this->textureManager->GetTexture(textureName));
-        }
-
-        textureName = this->GetTexture(material, aiTextureType_NORMALS, TEXTURE_TYPE::NORMAL_TYPE);
-        if (textureName != "")
-        {
-            mat->AddTexture(this->textureManager->GetTexture(textureName));
-        }
-        else
-        {
-            textureName = this->GetTexture(material, aiTextureType_HEIGHT, TEXTURE_TYPE::NORMAL_TYPE);
-            if (textureName != "")
-            {
-                mat->AddTexture(this->textureManager->GetTexture(textureName));
-            }
-        }
-
-        textureName = this->GetTexture(material, aiTextureType_EMISSIVE, TEXTURE_TYPE::EMISSIVE_TYPE);
-        if (textureName != "")
-        {
-            mat->AddTexture(this->textureManager->GetTexture(textureName));
-        }
-
-        textureName = this->GetTexture(material, aiTextureType_HEIGHT, TEXTURE_TYPE::HEIGHT_TYPE);
-        if (textureName != "")
-        {
-            mat->AddTexture(this->textureManager->GetTexture(textureName));
-        }
+        //Import textures
+        mat->materialData.ImportAssimpTexture(scene, material, this->fileExtension, this->texturePath);
     }
 
     meshData.materialID = materialName;
 
     material = nullptr;
-}
-
-std::string MeshImporter::GetTexture(aiMaterial* mat, aiTextureType type, TEXTURE_TYPE textureType)
-{
-    aiString str;
-    mat->Get(AI_MATKEY_TEXTURE(type, 0), str);
-
-    if (auto texture = scene->GetEmbeddedTexture(str.C_Str())) {
-    //    //returned pointer is not null, read texture from memory
-
-        std::string finalName = this->textureManager->AddTexture(texture->mFilename.C_Str(), CustomTexture(texture->pcData, texture->mWidth, texture->mHeight, textureType));
-        this->currentTextures.insert(texture->mFilename.C_Str());
-
-        return finalName;
-    }
-    else {
-        aiReturn texFound = AI_SUCCESS;
-        texFound = mat->GetTexture(type, 0, &str);
-
-        if (texFound == AI_SUCCESS)
-        {
-            std::string filePath = std::string(str.C_Str());
-            std::string finalName;
-            std::size_t pos = 0;
-            if (this->fileExtension == "fbx")
-            {
-                pos = filePath.find("\\");
-                finalName = filePath.substr(pos + 1, filePath.size());
-            }
-            else
-            {
-                finalName = filePath;
-            }
-
-            filePath = this->texturePath + finalName;
-
-
-            if (this->currentTextures.find(str.C_Str()) == this->currentTextures.end())
-            {
-                finalName = this->textureManager->AddTexture(finalName, CustomTexture(filePath, textureType));
-                this->currentTextures.insert(str.C_Str());
-            }
-
-            return finalName;
-        }
-    }
-    return "";
 }

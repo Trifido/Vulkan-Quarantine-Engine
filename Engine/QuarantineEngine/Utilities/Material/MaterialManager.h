@@ -15,7 +15,6 @@ private:
 
     Camera*             cameraEditor;
     LightManager*       lightManager;
-    TextureManager*     textureManager;
 
     std::shared_ptr<ShaderModule> default_shader;
     std::shared_ptr<ShaderModule> default_primitive_shader;

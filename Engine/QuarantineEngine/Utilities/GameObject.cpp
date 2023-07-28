@@ -80,7 +80,7 @@ void GameObject::addMaterial(std::shared_ptr<Material> material_ptr)
 
     if (this->meshImportedType == MeshImportedType::ANIMATED_GEO)
     {
-        this->material->descriptor->InitializeAnimationProperties();
+        //this->material->descriptor->InitializeAnimationProperties();
     }
 
     if (this->mesh != nullptr)
@@ -154,14 +154,14 @@ void GameObject::InitializeAnimationComponent()
     {
         if (this->material != nullptr)
         {
-            this->animationComponent->animator->AddDescriptor(this->material->descriptor);
+            //this->animationComponent->animator->AddDescriptor(this->material->descriptor);
         }
 
         if (!this->childs.empty())
         {
             for (auto& it : this->childs)
             {
-                this->animationComponent->animator->AddDescriptor(it->material->descriptor);
+                //this->animationComponent->animator->AddDescriptor(it->material->descriptor);
             }
         }
     }
@@ -282,7 +282,7 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
         vkCmdBindIndexBuffer(commandBuffer, this->mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, this->material->GetDescrìptor()->getDescriptorSet(idx), 0, nullptr);
+        //vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, this->material->GetDescrìptor()->getDescriptorSet(idx), 0, nullptr);
 
         TransformUniform ubo;
         ubo.model = this->transform->GetModel();

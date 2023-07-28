@@ -406,6 +406,9 @@
     <ClCompile Include="GraphicsPipeline\PipelineModule.cpp">
       <Filter>Kernel\GraphicsPipeline\sources</Filter>
     </ClCompile>
+    <ClCompile Include="Utilities\Material\MaterialData.cpp">
+      <Filter>Kernel\Utilities\Material\sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SetUp\DeviceModule.h">
@@ -658,6 +661,9 @@
     </ClInclude>
     <ClInclude Include="GraphicsPipeline\PipelineModule.h">
       <Filter>Kernel\GraphicsPipeline\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Material\MaterialData.h">
+      <Filter>Kernel\Utilities\Material\headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

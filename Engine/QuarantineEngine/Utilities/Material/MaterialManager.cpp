@@ -29,7 +29,6 @@ MaterialManager::MaterialManager()
 {
     this->lightManager = LightManager::getInstance();
     this->cameraEditor = CameraEditor::getInstance();
-    this->textureManager = TextureManager::getInstance();
 
     auto shaderManager = ShaderManager::getInstance();
     this->default_shader = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
@@ -73,20 +72,17 @@ std::shared_ptr<Material> MaterialManager::GetMaterial(std::string nameMaterial)
 void MaterialManager::AddMaterial(std::string& nameMaterial, std::shared_ptr<Material> mat_ptr)
 {
     _materials[nameMaterial] = mat_ptr;
-    _materials[nameMaterial]->AddNullTexture(this->textureManager->GetTexture("NULL_TEXTURE"));
 }
 
 void MaterialManager::AddMaterial(const char* nameMaterial, std::shared_ptr<Material> mat_ptr)
 {
     _materials[nameMaterial] = mat_ptr;
-    _materials[nameMaterial]->AddNullTexture(this->textureManager->GetTexture("NULL_TEXTURE"));
 }
 
 void MaterialManager::AddMaterial(std::string& nameMaterial, Material mat)
 {
     std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(mat);
     _materials[nameMaterial] = mat_ptr;
-    _materials[nameMaterial]->AddNullTexture(this->textureManager->GetTexture("NULL_TEXTURE"));
 }
 
 
@@ -148,7 +144,7 @@ void MaterialManager::UpdateUniforms(uint32_t imageIndex)
 {
     for (auto& it : _materials)
     {
-        it.second->GetDescrìptor()->updateUniforms(imageIndex);
+        //it.second->GetDescrìptor()->updateUniforms(imageIndex);
     }
 }
 

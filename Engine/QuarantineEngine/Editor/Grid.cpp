@@ -12,8 +12,8 @@ Grid::Grid()
 
     this->material_grid_ptr = std::make_shared<Material>(Material(this->shader_grid_ptr));
 
-    TextureManager* textureManager = TextureManager::getInstance();
-    this->material_grid_ptr->AddNullTexture(textureManager->GetTexture("NULL"));
+    //TextureManager* textureManager = TextureManager::getInstance();
+    //this->material_grid_ptr->AddNullTexture(textureManager->GetTexture("NULL"));
 
     MaterialManager* instanceMaterialManager = MaterialManager::getInstance();
     std::string nameGrid = "editor:grid";
