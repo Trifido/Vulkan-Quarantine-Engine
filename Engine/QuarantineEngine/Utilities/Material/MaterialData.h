@@ -9,10 +9,12 @@
 #include <TextureManager.h>
 #include <assimp/scene.h>
 #include <set>
+#include <ShaderModule.h>
 
 class MaterialData
 {
 private:
+    DeviceModule* deviceModule;
     std::set<std::string> currentTextures;
     std::shared_ptr<CustomTexture> emptyTexture = nullptr;
     std::shared_ptr <std::vector<std::shared_ptr<CustomTexture>>> texture_vector = nullptr;
@@ -20,6 +22,9 @@ private:
     std::string fileExtension;
     std::string texturePath;
     int numTextures;
+    char* materialbuffer;
+    char* animationbuffer;
+    size_t rawSize = 0;
 
 public:
     float Opacity;
@@ -49,16 +54,21 @@ public:
     int idxHeight;
     int idxEmissive;
 
+    std::shared_ptr<UniformBufferObject> materialUBO = nullptr;
+    std::shared_ptr<UniformBufferObject> animationUBO = nullptr;
+
 private:
     void AddTexture(std::shared_ptr<CustomTexture> texture);
     std::shared_ptr<CustomTexture> findTextureByType(TEXTURE_TYPE newtype);
     std::string GetTexture(const aiScene* scene, aiMaterial* mat, aiTextureType type, TEXTURE_TYPE textureType);
     void fillEmptyTextures();
-
+    void WriteToMaterialBuffer(char* data, size_t &position, const size_t& sizeToCopy);
 public:
     MaterialData();
     void ImportAssimpMaterial(aiMaterial* material);
     void ImportAssimpTexture(const aiScene* scene, aiMaterial* material, std::string fileExtension, std::string texturePath);
+    void InitializeUBOMaterial(std::shared_ptr<ShaderModule> shader_ptr);
+    void UpdateUBOMaterial();
 };
 
 #endif // !MATERIAL_DATA_H

@@ -583,6 +583,47 @@ void ReflectShader::CheckDescriptorSet(DescriptorSetReflect& descripReflect, con
     }
 }
 
+void ReflectShader::CheckUBOMaterial(SpvReflectDescriptorSet* set)
+{
+    if (!this->isUBOMaterial)
+    {
+        for (int b = 0; b < set->binding_count && !this->isUBOMaterial; b++)
+        {
+            if (strcmp(set->bindings[b]->block.name, "uboMaterial") == 0)
+            {
+                this->isUBOMaterial = true;
+                this->materialBufferSize = set->bindings[b]->block.size;
+                for (int m = 0; m < set->bindings[b]->block.member_count; m++)
+                {
+                    materialUBOComponents.push_back(set->bindings[b]->block.members[m].name);
+                }
+            }
+        }
+    }
+}
+
+void ReflectShader::CheckUBOAnimation(SpvReflectDescriptorSet* set)
+{
+    if (!this->isUboAnimation)
+    {
+        for (int b = 0; b < set->binding_count && !this->isUboAnimation; b++)
+        {
+            if (set->bindings[b]->block.name != NULL)
+            {
+                if (strcmp(set->bindings[b]->block.name, "uboAnimation") == 0)
+                {
+                    this->isUboAnimation = true;
+                    this->animationBufferSize = set->bindings[b]->block.size;
+                    for (int m = 0; m < set->bindings[b]->block.member_count; m++)
+                    {
+                        animationUBOComponents.push_back(set->bindings[b]->block.members[m].name);
+                    }
+                }
+            }
+        }
+    }
+}
+
 DescriptorBindingReflect ReflectShader::GetDescriptorBinding(const SpvReflectDescriptorBinding& obj, bool write_set, const char* indent)
 {
     DescriptorBindingReflect descriptor = DescriptorBindingReflect();
@@ -628,7 +669,6 @@ void ReflectShader::Output(VkShaderModuleCreateInfo createInfo)
         << "\n";
     for (size_t index = 0; index < sets.size(); ++index) {
         auto p_set = sets[index];
-
         // descriptor sets can also be retrieved directly from the module, by set
         // index
         auto p_set2 = spvReflectGetDescriptorSet(&module, p_set->set, &result);
@@ -725,6 +765,8 @@ void ReflectShader::PerformReflect(VkShaderModuleCreateInfo createInfo)
 
     for (size_t index = 0; index < sets.size(); ++index) {
         auto p_set = sets[index];
+        this->CheckUBOMaterial(p_set);
+        this->CheckUBOAnimation(p_set);
         auto p_set2 = spvReflectGetDescriptorSet(&module, p_set->set, &result);
         assert(result == SPV_REFLECT_RESULT_SUCCESS);
         assert(p_set == p_set2);
@@ -766,38 +808,3 @@ void ReflectShader::PerformReflect(VkShaderModuleCreateInfo createInfo)
 
     spvReflectDestroyShaderModule(&module);
 }
-
-//void ReflectShader::CheckMixStageBindings()
-//{
-//    int idStage = 0;
-//
-//    for (int i = 0; i < this->descriptorSetReflect.size(); i++)
-//    {
-//        for (int j = 0; j < this->descriptorSetReflect.size(); j++)
-//        {
-//            if (i == j)
-//                continue;
-//
-//            for (int bi = 0; bi < this->descriptorSetReflect[i].bindingCount; bi++)
-//            {
-//                if (this->descriptorSetReflect[j].Exist(this->descriptorSetReflect[i].bindings[bi]))
-//                {
-//                    if (!this->IsMixBinding(this->descriptorSetReflect[i].bindings[bi].name))
-//                    {
-//                        mixBindings[this->descriptorSetReflect[i].bindings[bi].name] = this->descriptorSetReflect[i].bindings[bi];
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
-//
-//bool ReflectShader::IsMixBinding(std::string name)
-//{
-//    if (mixBindings.empty())
-//        return false;
-//
-//    auto finder = mixBindings.find(name);
-//
-//    return finder != mixBindings.end();
-//}

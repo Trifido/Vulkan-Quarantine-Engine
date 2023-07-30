@@ -8,6 +8,7 @@
 #include "Camera.h"
 #include "LightManager.h"
 #include "UBO.h"
+#include <MaterialData.h>
 
 class DescriptorBuffer
 {
@@ -15,8 +16,6 @@ private:
     DeviceModule*   deviceModule = nullptr;
     LightManager*   lightManager = nullptr;
     Camera*         camera = nullptr;
-
-    std::shared_ptr<ShaderModule> shader = nullptr;
 
     VkDescriptorPool                descriptorPool;
     std::vector<VkDescriptorSet>    descriptorSets;
@@ -28,25 +27,23 @@ private:
 
 public:
     //UBO's
-    std::shared_ptr<UniformBufferObject>    cameraUBO = nullptr;
     std::shared_ptr<UniformBufferObject>    materialUBO = nullptr;
-    std::shared_ptr<UniformBufferObject>    lightUBO = nullptr;
     std::shared_ptr<UniformBufferObject>    animationUBO = nullptr;
 
     //UNIFORM's
-    std::shared_ptr<CameraUniform>          cameraUniform = nullptr;
     std::shared_ptr<MaterialUniform>        materialUniform = nullptr;
-    std::shared_ptr<LightManagerUniform>    lightUniform = nullptr;
     std::shared_ptr<AnimationUniform>       animationUniform = nullptr;
 
 private:
-    void CreateDescriptorPool();
-    void CheckResources();
+    void StartResources(std::shared_ptr<ShaderModule> shader_ptr);
+    std::vector<VkWriteDescriptorSet> GetDescriptorWrites(std::shared_ptr<ShaderModule> shader_ptr, uint32_t frameIdx, const MaterialData& materialData);
+    VkDescriptorBufferInfo GetBufferInfo(VkBuffer buffer, VkDeviceSize bufferSize);
+    void SetDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize, uint32_t frameIdx);
 
 public:
     DescriptorBuffer();
     DescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr);
-    void    CreateDescriptorSets(const ShaderModule& shader);
+    void CreateDescriptorSets(std::shared_ptr<ShaderModule> shader_ptr, const MaterialData& materialData);
 };
 
 #endif // !DESCRIPTOR_BUFFER_H

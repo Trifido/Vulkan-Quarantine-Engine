@@ -1,7 +1,9 @@
 #include "MaterialData.h"
+#include <SynchronizationModule.h>
 
 MaterialData::MaterialData()
 {
+    this->deviceModule = DeviceModule::getInstance();
     this->textureManager = TextureManager::getInstance();
 
     this->emptyTexture = this->textureManager->GetTexture("NULL_TEXTURE");
@@ -10,6 +12,8 @@ MaterialData::MaterialData()
     this->fillEmptyTextures();
     this->numTextures = 0;
     this->idxDiffuse = this->idxEmissive = this->idxHeight = this->idxNormal = this->idxSpecular = -1;
+
+    this->materialUBO = std::make_shared<UniformBufferObject>();
 }
 
 void MaterialData::ImportAssimpMaterial(aiMaterial* material)
@@ -224,4 +228,153 @@ void MaterialData::fillEmptyTextures()
             this->texture_vector->at(i) = this->emptyTexture;
         }
     }
+}
+
+void MaterialData::InitializeUBOMaterial(std::shared_ptr<ShaderModule> shader_ptr)
+{
+    auto reflect = shader_ptr->reflectShader;
+
+    if (!reflect.materialUBOComponents.empty())
+    {
+        size_t position = 0;
+        this->materialbuffer = new char[reflect.materialBufferSize];
+
+        uint16_t count = 0;
+        for each (auto name in reflect.materialUBOComponents)
+        {
+            if (name == "Opacity")
+            {
+                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->Opacity), position, sizeof(this->Opacity));
+                continue;
+            }
+            if (name == "BumpScaling")
+            {
+                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->BumpScaling), position, sizeof(this->BumpScaling));
+                continue;
+            }
+            if (name == "Shininess")
+            {
+                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->Shininess), position, sizeof(this->Shininess));
+                continue;
+            }
+            if (name == "Reflectivity")
+            {
+                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->Reflectivity), position, sizeof(this->Reflectivity));
+                continue;
+            }
+            if (name == "Shininess_Strength")
+            {
+                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->Shininess_Strength), position, sizeof(this->Shininess_Strength));
+                continue;
+            }
+            if (name == "Refractivity")
+            {
+                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->Refractivity), position, sizeof(this->Refractivity));
+                continue;
+            }
+
+            if (name == "idxDiffuse")
+            {
+                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->idxDiffuse), position, sizeof(this->idxDiffuse));
+                continue;
+            }
+            if (name == "idxNormal")
+            {
+                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->idxNormal), position, sizeof(this->idxNormal));
+                continue;
+            }
+            if (name == "idxSpecular")
+            {
+                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->idxSpecular), position, sizeof(this->idxSpecular));
+                continue;
+            }
+            if (name == "idxHeight")
+            {
+                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->idxHeight), position, sizeof(this->idxHeight));
+                continue;
+            }
+            if (name == "idxEmissive")
+            {
+                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->idxEmissive), position, sizeof(this->idxEmissive));
+                continue;
+            }
+
+            if (name == "Diffuse")
+            {
+                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->Diffuse), position, sizeof(this->Diffuse));
+                continue;
+            }
+            if (name == "Ambient")
+            {
+                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->Ambient), position, sizeof(this->Ambient));
+                continue;
+            }
+            if (name == "Specular")
+            {
+                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->Specular), position, sizeof(this->Specular));
+                continue;
+            }
+            if (name == "Emissive")
+            {
+                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->Emissive), position, sizeof(this->Emissive));
+                continue;
+            }
+            if (name == "Transparent")
+            {
+                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->Transparent), position, sizeof(this->Transparent));
+                continue;
+            }
+            if (name == "Reflective")
+            {
+                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->Reflective), position, sizeof(this->Reflective));
+                continue;
+            }
+        }
+
+        //Check result
+        //MaterialUniform result;
+        //size_t resultSize = sizeof(result);
+        //memcpy(&result, this->materialbuffer, this->rawSize);
+
+        this->materialUBO->CreateUniformBuffer(this->rawSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+        this->UpdateUBOMaterial();
+    }
+
+    if (reflect.isUboAnimation)
+    {
+        size_t position = 0;
+        this->animationbuffer = new char[reflect.animationBufferSize];
+        this->animationUBO = std::make_shared<UniformBufferObject>();
+        this->animationUBO->CreateUniformBuffer(reflect.animationBufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+
+        uint16_t count = 0;
+        for each (auto name in reflect.animationUBOComponents)
+        {
+            if (name == "finalBonesMatrices")
+            {
+                auto currentFrame = SynchronizationModule::GetCurrentFrame();
+                void* data;
+                vkMapMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[currentFrame], 0, reflect.animationBufferSize, 0, &data);
+                memcpy(data, this->animationbuffer, reflect.animationBufferSize);
+                vkUnmapMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[currentFrame]);
+                continue;
+            }
+        }
+    }
+}
+
+void MaterialData::UpdateUBOMaterial()
+{
+    auto currentFrame = SynchronizationModule::GetCurrentFrame();
+    void* data;
+    vkMapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame], 0, this->rawSize, 0, &data);
+    memcpy(data, this->materialbuffer, this->rawSize);
+    vkUnmapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame]);
+}
+
+void MaterialData::WriteToMaterialBuffer(char* data, size_t& position, const size_t& sizeToCopy)
+{
+    memcpy(&materialbuffer[position], data, sizeToCopy);
+    position += sizeToCopy;
+    this->rawSize += sizeToCopy;
 }

@@ -48,9 +48,15 @@ class ReflectShader
 {
 public:
     std::unordered_map<std::string, DescriptorBindingReflect> bindings;
-    //std::unordered_map<std::string, DescriptorBindingReflect> mixBindings;
     std::vector<DescriptorSetReflect> descriptorSetReflect;
     bool isAnimationShader = false;
+    bool isUBOMaterial = false;
+    bool isUboAnimation = false;
+    std::vector<std::string> materialUBOComponents;
+    std::vector<std::string> animationUBOComponents;
+    VkDeviceSize materialBufferSize = 0;
+    VkDeviceSize animationBufferSize = 0;
+
 private:
     std::string ToStringFormat(SpvReflectFormat fmt);
     static std::string ToStringScalarType(const SpvReflectTypeDescription& type);
@@ -67,12 +73,13 @@ private:
     void CheckStage(DescriptorSetReflect& descripReflect, const SpvReflectShaderModule& obj);
     void CheckDescriptorSet(DescriptorSetReflect& descripReflect, const SpvReflectDescriptorSet& obj, const char* indent);
     DescriptorBindingReflect GetDescriptorBinding(const SpvReflectDescriptorBinding& obj, bool write_set, const char* indent);
+    void CheckUBOMaterial(SpvReflectDescriptorSet* set);
+    void CheckUBOAnimation(SpvReflectDescriptorSet* set);
+
 public:
     ReflectShader();
     void Output(VkShaderModuleCreateInfo createInfo);
     void PerformReflect(VkShaderModuleCreateInfo createInfo);
-    //void CheckMixStageBindings();
-    //bool IsMixBinding(std::string name);
 };
 
 #endif // !REFLECT_SHADER_H

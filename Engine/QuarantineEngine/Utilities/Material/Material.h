@@ -5,23 +5,17 @@
 
 #include <glm/glm.hpp>
 #include "GameComponent.h"
-#include "CustomTexture.h"
-#include <RenderPassModule.h>
-#include <map>
-#include <UBO.h>
-#include "Camera.h"
-#include <LightManager.h>
 #include <RenderLayer.h>
-#include <GraphicsPipelineManager.h>
 #include <ShaderModule.h>
-#include <DescriptorModule.h>
 #include <MaterialData.h>
+#include <DescriptorBuffer.h>
 
 class Material : public GameComponent
 {
 private:
     bool isMeshBinding = false;
-    std::shared_ptr<MaterialUniform> uniform = nullptr;
+    //std::shared_ptr<MaterialUniform> uniform = nullptr;
+    DescriptorBuffer descriptor;
 
 public:
     MaterialData materialData;

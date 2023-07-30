@@ -42,7 +42,6 @@ void App::computeDeltaTime()
 void App::initWindow()
 {
     this->mainWindow.init();
-    this->cameraEditor = CameraEditor::getInstance();
 }
 
 void App::init_imgui()
@@ -148,6 +147,9 @@ void App::initVulkan()
     //Creamos el frame buffer
     framebufferModule.createFramebuffer(renderPassModule->renderPass);
 
+    //Añadimos el camera editor
+    this->cameraEditor = CameraEditor::getInstance();
+
     //Añadimos requisitos para los geometryComponent
     BufferManageModule::commandPool = this->commandPoolModule->getCommandPool();
     BufferManageModule::computeCommandPool = this->commandPoolModule->getComputeCommandPool();
@@ -164,7 +166,7 @@ void App::initVulkan()
     this->textureManager = TextureManager::getInstance();
     this->lightManager = LightManager::getInstance();
     this->materialManager = MaterialManager::getInstance();
-    this->materialManager->InitializeMaterialManager(renderPassModule->renderPass);
+    this->materialManager->InitializeMaterialManager();
     this->gameObjectManager = GameObjectManager::getInstance();
     this->computeNodeManager = ComputeNodeManager::getInstance();
     this->computeNodeManager->InitializeComputeNodeManager(computePipelineModule);
@@ -174,8 +176,8 @@ void App::initVulkan()
     this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
     /**/
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH));
-    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
+    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH));
+    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/steampunk/scene.gltf"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/vampire/Capoeira.dae"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/CharacterRunning/CharacterRunning.gltf"));
@@ -492,7 +494,9 @@ void App::drawFrame()
     VkResult result = vkAcquireNextImageKHR(deviceModule->device, swapchainModule->getSwapchain(), UINT64_MAX, synchronizationModule.getImageAvailableSemaphore(), VK_NULL_HANDLE, &imageIndex);
     resizeSwapchain(result, ERROR_RESIZE::SWAPCHAIN_ERROR);
 
-    materialManager->UpdateUniforms(synchronizationModule.GetCurrentFrame());
+    this->cameraEditor->UpdateUBOCamera();
+    this->lightManager->UpdateUBOLight();
+    this->materialManager->UpdateUniforms();
 
     vkDeviceWaitIdle(deviceModule->device);
 

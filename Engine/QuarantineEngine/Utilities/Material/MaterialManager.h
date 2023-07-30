@@ -7,6 +7,7 @@
 #include <CameraEditor.h>
 #include <Material/TextureManager.h>
 #include <GraphicsPipelineModule.h>
+#include <RenderPassModule.h>
 
 class MaterialManager
 {
@@ -28,7 +29,7 @@ private:
     void CreateDefaultPrimitiveMaterial();
 public:
     MaterialManager();
-    void InitializeMaterialManager(VkRenderPass renderPass);
+    void InitializeMaterialManager();
     static MaterialManager* getInstance();
     std::shared_ptr<Material> GetMaterial(std::string nameMaterial);
     void AddMaterial(const char* nameMaterial, std::shared_ptr<Material> mat_ptr);
@@ -39,7 +40,7 @@ public:
     void CleanDescriptors();
     void CleanPipelines();
     void RecreateMaterials(RenderPassModule* renderPassModule);
-    void UpdateUniforms(uint32_t imageIndex);
+    void UpdateUniforms();
     void InitializeMaterials();
 };
 

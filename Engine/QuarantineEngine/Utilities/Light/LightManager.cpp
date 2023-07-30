@@ -3,12 +3,15 @@
 #include "PointLight.h"
 #include "DirectionalLight.h"
 #include "SpotLight.h"
+#include <SynchronizationModule.h>
 
 LightManager* LightManager::instance = nullptr;
 
 LightManager::LightManager()
 {
+    this->deviceModule = DeviceModule::getInstance();
     this->lightManagerUniform = std::make_shared<LightManagerUniform>();
+    this->lightUBO = std::make_shared<UniformBufferObject>();
 }
 
 
@@ -71,6 +74,17 @@ void LightManager::UpdateUniform()
             this->lightManagerUniform->lights[i] = *this->_lights.begin()->second->uniform;
         }
     }
+
+    this->UpdateUBOLight();
+}
+
+void LightManager::UpdateUBOLight()
+{
+    auto currentFrame = SynchronizationModule::GetCurrentFrame();
+    void* data;
+    vkMapMemory(this->deviceModule->device, this->lightUBO->uniformBuffersMemory[currentFrame], 0, sizeof(LightManagerUniform), 0, &data);
+    memcpy(data, static_cast<const void*>(this->lightManagerUniform.get()), sizeof(LightManagerUniform));
+    vkUnmapMemory(this->deviceModule->device, this->lightUBO->uniformBuffersMemory[currentFrame]);
 }
 
 void LightManager::AddLight(std::shared_ptr<Light> light_ptr, std::string name)

@@ -90,7 +90,7 @@ VkPipelineShaderStageCreateInfo ShaderModule::createShader(VkDevice& device, con
     createInfo.codeSize = code.size();
     createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
-    this->reflectShader.Output(createInfo);
+    //this->reflectShader.Output(createInfo);
     this->reflectShader.PerformReflect(createInfo);
 
     VkPipelineShaderStageCreateInfo shaderStageInfo{};

@@ -3,37 +3,19 @@
 Material::Material()
 {
     this->materialData = {};
-    //ambient = diffuse = specular = emissive = glm::vec3(0.0f);
-    //this->shininess = 32.0f;
-    this->uniform = std::make_shared<MaterialUniform>();
-    this->uniform->idxDiffuse = this->uniform->idxNormal = this->uniform->idxSpecular = this->uniform->idxEmissive = this->uniform->idxHeight = -1;
+
+    //this->uniform = std::make_shared<MaterialUniform>();
+    //this->uniform->idxDiffuse = this->uniform->idxNormal = this->uniform->idxSpecular = this->uniform->idxEmissive = this->uniform->idxHeight = -1;
     //this->uniform->shininess = this->shininess;
-    //this->texture_vector = std::make_shared<std::vector<std::shared_ptr<CustomTexture>>>();
-    //this->texture_vector->resize(this->TOTAL_NUM_TEXTURES, nullptr);
-    //this->numTextures = 0;
+
     this->layer = (unsigned int) RenderLayer::SOLID;
 }
 
-Material::Material(std::shared_ptr<ShaderModule> shader_ptr)
+Material::Material(std::shared_ptr<ShaderModule> shader_ptr) : Material()
 {
-    this->materialData = {};
-    //ambient = diffuse = specular = emissive = glm::vec3(0.0f);
-    //this->shininess = 32.0f;
     this->shader = shader_ptr;
-    this->uniform = std::make_shared<MaterialUniform>();
-    this->uniform->idxDiffuse = this->uniform->idxNormal = this->uniform->idxSpecular = this->uniform->idxEmissive = this->uniform->idxHeight = -1;
-    //this->uniform->shininess = this->shininess;
-    //this->texture_vector = std::make_shared<std::vector<std::shared_ptr<CustomTexture>>>();
-    //this->texture_vector->resize(this->TOTAL_NUM_TEXTURES, nullptr);
-    //this->numTextures = 0;
-    this->layer = (unsigned int) RenderLayer::SOLID;
+    this->descriptor = DescriptorBuffer(this->shader);
 }
-
-//void Material::AddNullTexture(std::shared_ptr<CustomTexture> texture)
-//{
-//    if(this->emptyTexture == nullptr)
-//        this->emptyTexture = texture;
-//}
 
 void Material::cleanup()
 {
@@ -77,7 +59,7 @@ void Material::InitializeMaterial()
 {
     if (!this->isMeshBinding)
     {
-        std::cout << "Falta enlazaar el material con un gameobject.\n";
+        std::cout << "Falta enlazar el material con un gameobject.\n";
     }
     else if (this->shader == nullptr)
     {
@@ -102,17 +84,6 @@ void Material::RecreateUniformsMaterial()
         //this->descriptor->recreateUniformBuffer();
     }
 }
-
-//void Material::fillEmptyTextures()
-//{
-//    for (size_t i = 0; i < this->TOTAL_NUM_TEXTURES; i++)
-//    {
-//        if (this->texture_vector->at(i) == nullptr)
-//        {
-//            this->texture_vector->at(i) = emptyTexture;
-//        }
-//    }
-//}
 
 void Material::updateUniformData()
 {

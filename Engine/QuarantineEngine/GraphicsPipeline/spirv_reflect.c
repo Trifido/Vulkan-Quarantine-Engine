@@ -3920,7 +3920,10 @@ static SpvReflectResult CreateShaderModule(
 
   // Initialize everything to zero
   SpvReflectPrvParser parser;
-  memset(&parser, 0, sizeof(SpvReflectPrvParser));
+
+  size_t sizeParser = sizeof(SpvReflectPrvParser);
+
+  memset(&parser, 0, sizeParser);
 
   // Create parser
   SpvReflectResult result = CreateParser(p_module->_internal->spirv_size,

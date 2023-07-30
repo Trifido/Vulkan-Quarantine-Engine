@@ -9,8 +9,8 @@ Animator::Animator()
 
 void Animator::AddDescriptor(std::shared_ptr<DescriptorModule> descriptor)
 {
-    this->descriptors.push_back(descriptor);
-    descriptors.back()->animationUniform = this->animationUniform_ptr;
+    //this->descriptors.push_back(descriptor);
+    //descriptors.back()->animationUniform = this->animationUniform_ptr;
 }
 
 void Animator::UpdateAnimation(float dt)

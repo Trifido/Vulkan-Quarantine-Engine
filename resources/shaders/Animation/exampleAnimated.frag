@@ -23,7 +23,7 @@ layout(set = 0, binding = 0) uniform CameraUniform
 } cameraData;
 
 layout(set = 0, binding = 1) uniform UniformMaterial {
-    float shininess;
+    float Shininess;
     int idxDiffuse;
     int idxNormal;
     int idxSpecular;
@@ -132,7 +132,7 @@ vec3 ComputePointLight(LightData light, int id, vec3 normal, vec2 texCoords)
     vec3 view_dir = normalize(fs_in.TangentViewPos - fs_in.TangentFragPos);
     vec3 reflectDir = reflect(-lightDir, normal);
     vec3 halfwayDir = normalize(lightDir + view_dir);  
-    float spec = pow(max(dot(normal, halfwayDir), 0.0), uboMaterial.shininess);
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), uboMaterial.Shininess);
     vec3 specular = spec * light.specular * colorSpecular * attenuation;
 
     // - EMISSIVE
@@ -167,7 +167,7 @@ vec3 ComputeDirectionalLight(LightData light, int id, vec3 normal, vec2 texCoord
     vec3 view_dir = normalize(fs_in.TangentViewPos - fs_in.TangentFragPos);
     vec3 reflectDir = reflect(-lightDir, normal);
     vec3 halfwayDir = normalize(lightDir + view_dir);  
-    float spec = pow(max(dot(normal, halfwayDir), 0.0), uboMaterial.shininess);
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), uboMaterial.Shininess);
     vec3 specular = spec * light.specular * colorSpecular;
 
     // - EMISSIVE
@@ -210,7 +210,7 @@ vec3 ComputeSpotLight(LightData light, int id, vec3 normal, vec2 texCoords)
     vec3 view_dir = normalize(fs_in.TangentViewPos - fs_in.TangentFragPos);
     vec3 reflectDir = reflect(-lightDir, normal);
     vec3 halfwayDir = normalize(lightDir + view_dir);  
-    float spec = pow(max(dot(normal, halfwayDir), 0.0), uboMaterial.shininess);
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), uboMaterial.Shininess);
     vec3 specular = spec * light.specular * colorSpecular * intensity * attenuation;
 
     // - EMISSIVE

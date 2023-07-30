@@ -41,7 +41,7 @@ MaterialManager::MaterialManager()
     shaderManager->AddShader("default_animation", this->default_animation_shader);
 }
 
-void MaterialManager::InitializeMaterialManager(VkRenderPass renderPass)
+void MaterialManager::InitializeMaterialManager()
 {
     this->CreateDefaultPrimitiveMaterial();
 }
@@ -140,20 +140,21 @@ void MaterialManager::RecreateMaterials(RenderPassModule* renderPassModule)
     }
 }
 
-void MaterialManager::UpdateUniforms(uint32_t imageIndex)
+void MaterialManager::UpdateUniforms()
 {
     for (auto& it : _materials)
     {
+        it.second->materialData.UpdateUBOMaterial();
         //it.second->GetDescrìptor()->updateUniforms(imageIndex);
     }
 }
 
 void MaterialManager::InitializeMaterials()
 {
-    for (auto it : _materials)
-    {
-        it.second->bindingCamera(this->cameraEditor);
-        it.second->bindingLights(this->lightManager);
-        it.second->InitializeMaterial();
-    }
+    //for (auto it : _materials)
+    //{
+    //    it.second->bindingCamera(this->cameraEditor);
+    //    it.second->bindingLights(this->lightManager);
+    //    it.second->InitializeMaterial();
+    //}
 }
