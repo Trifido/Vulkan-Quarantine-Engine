@@ -17,7 +17,6 @@ private:
     DeviceModule* deviceModule;
     std::set<std::string> currentTextures;
     std::shared_ptr<CustomTexture> emptyTexture = nullptr;
-    std::shared_ptr <std::vector<std::shared_ptr<CustomTexture>>> texture_vector = nullptr;
     TextureManager* textureManager;
     std::string fileExtension;
     std::string texturePath;
@@ -54,6 +53,7 @@ public:
 
     std::shared_ptr<UniformBufferObject> materialUBO = nullptr;
     VkDeviceSize materialUniformSize = 0;
+    std::shared_ptr <std::vector<std::shared_ptr<CustomTexture>>> texture_vector = nullptr;
 
 private:
     void AddTexture(std::shared_ptr<CustomTexture> texture);

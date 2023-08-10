@@ -22,6 +22,7 @@ void Material::InitializeMaterialDataUBO()
     this->materialData.InitializeUBOMaterial(this->shader);
     this->descriptor->materialUBO = this->materialData.materialUBO;
     this->descriptor->materialUniformSize = this->materialData.materialUniformSize;
+    this->descriptor->textures = this->materialData.texture_vector;
 }
 
 void Material::cleanup()

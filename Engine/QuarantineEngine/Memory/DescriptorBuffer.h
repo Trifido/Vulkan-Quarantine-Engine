@@ -19,7 +19,6 @@ private:
 
     VkDescriptorPool                descriptorPool;
 
-    std::shared_ptr<std::vector<std::shared_ptr<CustomTexture>>> textures;
     uint32_t    numUBOs = 0;
     uint32_t    numBinding = 0;
     bool        hasAnimationProperties = false;
@@ -34,6 +33,7 @@ public:
     VkDeviceSize    materialUniformSize = 0;
     std::shared_ptr<UniformBufferObject>    animationUBO = nullptr;
     VkDeviceSize    animationUniformSize = 0;
+    std::shared_ptr<std::vector<std::shared_ptr<CustomTexture>>> textures;
 
 private:
     void StartResources(std::shared_ptr<ShaderModule> shader_ptr);

@@ -178,15 +178,15 @@ void App::initVulkan()
     /**/
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
-    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/steampunk/scene.gltf"));
+    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/microphone/scene.gltf"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/vampire/Capoeira.dae"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/CharacterRunning/CharacterRunning.gltf"));
 
-    //if (model->IsValid())
-    //{
-    //    model->transform->SetScale(glm::vec3(0.05f));
-    //    model->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-    //}
+    if (model->IsValid())
+    {
+        model->transform->SetScale(glm::vec3(0.05f));
+        model->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    }
 
     //this->gameObjectManager->AddGameObject(model, "model");
     
