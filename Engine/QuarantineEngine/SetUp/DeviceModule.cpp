@@ -80,6 +80,10 @@ void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& nQueu
 
     //Bindless features
     VkPhysicalDeviceFeatures2 physical_features2 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
+    physical_features2.features.samplerAnisotropy = VK_TRUE;
+    physical_features2.features.sampleRateShading = VK_TRUE;
+    physical_features2.features.fillModeNonSolid = VK_TRUE;
+
     vkGetPhysicalDeviceFeatures2(physicalDevice, &physical_features2);
 
     if (this->bindless_supported) {
@@ -118,7 +122,7 @@ void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& nQueu
     createInfo.pQueueCreateInfos = queueCreateInfos.data();
     createInfo.pNext = &accelerationStructureFeatures;
 
-    createInfo.pEnabledFeatures = &physicalDeviceFeatures;
+    createInfo.pEnabledFeatures = NULL;// &physicalDeviceFeatures;
     createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
     createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 

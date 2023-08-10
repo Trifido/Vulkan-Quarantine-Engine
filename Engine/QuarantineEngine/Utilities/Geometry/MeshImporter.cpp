@@ -414,7 +414,7 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
         mat->materialData.ImportAssimpTexture(scene, material, this->fileExtension, this->texturePath);
 
         //Initialize uniform buffer objects
-        mat->materialData.InitializeUBOMaterial(mat->shader);
+        mat->InitializeMaterialDataUBO();
     }
 
     meshData.materialID = materialName;

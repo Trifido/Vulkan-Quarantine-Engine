@@ -334,47 +334,28 @@ void MaterialData::InitializeUBOMaterial(std::shared_ptr<ShaderModule> shader_pt
         //Check result
         //MaterialUniform result;
         //size_t resultSize = sizeof(result);
-        //memcpy(&result, this->materialbuffer, this->rawSize);
+        //memcpy(&result, this->materialbuffer, this->materialUniformSize);
 
-        this->materialUBO->CreateUniformBuffer(this->rawSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+        this->materialUBO->CreateUniformBuffer(this->materialUniformSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
         this->UpdateUBOMaterial();
-    }
-
-    if (reflect.isUboAnimation)
-    {
-        size_t position = 0;
-        this->animationbuffer = new char[reflect.animationBufferSize];
-        this->animationUBO = std::make_shared<UniformBufferObject>();
-        this->animationUBO->CreateUniformBuffer(reflect.animationBufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
-
-        uint16_t count = 0;
-        for each (auto name in reflect.animationUBOComponents)
-        {
-            if (name == "finalBonesMatrices")
-            {
-                auto currentFrame = SynchronizationModule::GetCurrentFrame();
-                void* data;
-                vkMapMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[currentFrame], 0, reflect.animationBufferSize, 0, &data);
-                memcpy(data, this->animationbuffer, reflect.animationBufferSize);
-                vkUnmapMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[currentFrame]);
-                continue;
-            }
-        }
     }
 }
 
 void MaterialData::UpdateUBOMaterial()
 {
-    auto currentFrame = SynchronizationModule::GetCurrentFrame();
-    void* data;
-    vkMapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame], 0, this->rawSize, 0, &data);
-    memcpy(data, this->materialbuffer, this->rawSize);
-    vkUnmapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame]);
+    if (!this->materialUBO->uniformBuffers.empty())
+    {
+        auto currentFrame = SynchronizationModule::GetCurrentFrame();
+        void* data;
+        vkMapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame], 0, this->materialUniformSize, 0, &data);
+        memcpy(data, this->materialbuffer, this->materialUniformSize);
+        vkUnmapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame]);
+    }
 }
 
 void MaterialData::WriteToMaterialBuffer(char* data, size_t& position, const size_t& sizeToCopy)
 {
     memcpy(&materialbuffer[position], data, sizeToCopy);
     position += sizeToCopy;
-    this->rawSize += sizeToCopy;
+    this->materialUniformSize += sizeToCopy;
 }

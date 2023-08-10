@@ -144,17 +144,17 @@ void MaterialManager::UpdateUniforms()
 {
     for (auto& it : _materials)
     {
-        it.second->materialData.UpdateUBOMaterial();
+        it.second->UpdateUniformData();
         //it.second->GetDescrìptor()->updateUniforms(imageIndex);
     }
 }
 
 void MaterialManager::InitializeMaterials()
 {
-    //for (auto it : _materials)
-    //{
+    for (auto it : _materials)
+    {
     //    it.second->bindingCamera(this->cameraEditor);
     //    it.second->bindingLights(this->lightManager);
-    //    it.second->InitializeMaterial();
-    //}
+        it.second->InitializeMaterial();
+    }
 }

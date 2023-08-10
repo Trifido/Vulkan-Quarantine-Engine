@@ -23,8 +23,6 @@ private:
     std::string texturePath;
     int numTextures;
     char* materialbuffer;
-    char* animationbuffer;
-    size_t rawSize = 0;
 
 public:
     float Opacity;
@@ -55,7 +53,7 @@ public:
     int idxEmissive;
 
     std::shared_ptr<UniformBufferObject> materialUBO = nullptr;
-    std::shared_ptr<UniformBufferObject> animationUBO = nullptr;
+    VkDeviceSize materialUniformSize = 0;
 
 private:
     void AddTexture(std::shared_ptr<CustomTexture> texture);

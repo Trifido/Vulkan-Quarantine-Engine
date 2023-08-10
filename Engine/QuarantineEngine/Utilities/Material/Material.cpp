@@ -14,7 +14,14 @@ Material::Material()
 Material::Material(std::shared_ptr<ShaderModule> shader_ptr) : Material()
 {
     this->shader = shader_ptr;
-    this->descriptor = DescriptorBuffer(this->shader);
+    this->descriptor = std::make_shared<DescriptorBuffer>(this->shader);
+}
+
+void Material::InitializeMaterialDataUBO()
+{
+    this->materialData.InitializeUBOMaterial(this->shader);
+    this->descriptor->materialUBO = this->materialData.materialUBO;
+    this->descriptor->materialUniformSize = this->materialData.materialUniformSize;
 }
 
 void Material::cleanup()
@@ -67,6 +74,7 @@ void Material::InitializeMaterial()
     }
     else
     {
+        this->descriptor->InitializeDescriptorSets(this->shader);
         //this->fillEmptyTextures();
         //this->descriptor->Initialize(texture_vector, uniform);
     }
@@ -85,7 +93,11 @@ void Material::RecreateUniformsMaterial()
     }
 }
 
-void Material::updateUniformData()
+void Material::UpdateUniformData()
 {
+    if (this->isMeshBinding && this->shader != nullptr)
+    {
+        this->materialData.UpdateUBOMaterial();
+    }
     //this->uniform->shininess = this->shininess;
 }

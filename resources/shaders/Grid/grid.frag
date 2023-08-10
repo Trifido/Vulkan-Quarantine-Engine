@@ -6,10 +6,13 @@ layout(location = 1) in vec3 nearPoint;
 layout(location = 2) in vec3 farPoint;
 layout(location = 0) out vec4 outColor;
 
-layout(set = 0, binding = 0) uniform ViewUniforms {
-    mat4 view;
-    mat4 proj;
-} view;
+layout(set = 0, binding = 0) uniform CameraUniform
+{
+	mat4 view;
+	mat4 proj;
+	mat4 viewproj;
+    vec3 position;
+} cameraData;
 
 vec4 grid(vec3 fragPos3D, float scale, bool drawAxis)
 {
@@ -44,14 +47,14 @@ vec4 grid(vec3 fragPos3D, float scale, bool drawAxis)
 }
 
 float computeDepth(vec3 pos) {
-    vec4 clip_space_pos = view.proj * view.view * vec4(pos.xyz, 1.0);
+    vec4 clip_space_pos = cameraData.proj * cameraData.view * vec4(pos.xyz, 1.0);
     return (clip_space_pos.z / clip_space_pos.w);
 }
 
 float computeLinearDepth(vec3 pos) {
     float near = 0.1;
     float far = 100;
-    vec4 clip_space_pos = view.proj * view.view * vec4(pos.xyz, 1.0);
+    vec4 clip_space_pos = cameraData.proj * cameraData.view * vec4(pos.xyz, 1.0);
     float clip_space_depth = (clip_space_pos.z / clip_space_pos.w) * 2.0 - 1.0; 
     float linearDepth = (2.0 * near * far) / (far + near - clip_space_depth * (far - near)); 
     return linearDepth / far;

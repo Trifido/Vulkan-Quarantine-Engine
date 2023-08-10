@@ -1,6 +1,8 @@
 #include "ReflectShader.h"
 #include <iostream>
 #include <cassert>
+#include <thread>
+#include <chrono>
 
 ReflectShader::ReflectShader()
 {
@@ -745,6 +747,9 @@ void ReflectShader::PerformReflect(VkShaderModuleCreateInfo createInfo)
 {
     auto k_sample_spv = createInfo.pCode;
     SpvReflectShaderModule module = {};
+
+    //std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
     SpvReflectResult result =
         spvReflectCreateShaderModule(sizeof(uint32_t) * createInfo.codeSize, k_sample_spv, &module);
     assert(result == SPV_REFLECT_RESULT_SUCCESS);

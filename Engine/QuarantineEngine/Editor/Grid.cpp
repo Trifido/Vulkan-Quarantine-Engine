@@ -11,6 +11,8 @@ Grid::Grid()
     shaderManager->AddShader("shader_grid", shader_grid_ptr);
 
     this->material_grid_ptr = std::make_shared<Material>(Material(this->shader_grid_ptr));
+    this->material_grid_ptr->InitializeMaterialDataUBO();
+                                                                        //CAMBIAR RENDER LAYER!!!
 
     //TextureManager* textureManager = TextureManager::getInstance();
     //this->material_grid_ptr->AddNullTexture(textureManager->GetTexture("NULL"));

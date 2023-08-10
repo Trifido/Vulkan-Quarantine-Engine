@@ -41,7 +41,6 @@ void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
         }
         else if (binding.first == "UniformMaterial")
         {
-
             poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
             poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
             idx++;
@@ -74,7 +73,7 @@ void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
 
 VkDescriptorBufferInfo DescriptorBuffer::GetBufferInfo(VkBuffer buffer, VkDeviceSize bufferSize)
 {
-    VkDescriptorBufferInfo bufferInfo{};
+    VkDescriptorBufferInfo bufferInfo = {};
     bufferInfo.buffer = buffer;
     bufferInfo.offset = 0;
     bufferInfo.range = bufferSize;
@@ -83,7 +82,7 @@ VkDescriptorBufferInfo DescriptorBuffer::GetBufferInfo(VkBuffer buffer, VkDevice
 
 void DescriptorBuffer::SetDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize, uint32_t frameIdx)
 {
-    VkDescriptorBufferInfo bufferInfo = GetBufferInfo(buffer, bufferSize);
+    this->buffersInfo[binding] = GetBufferInfo(buffer, bufferSize);
 
     descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     descriptorWrite.dstSet = descriptorSets[frameIdx];
@@ -92,13 +91,14 @@ void DescriptorBuffer::SetDescriptorWrite(VkWriteDescriptorSet& descriptorWrite,
     descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     descriptorWrite.descriptorCount = 1;
     descriptorWrite.pImageInfo = VK_NULL_HANDLE;
-    descriptorWrite.pBufferInfo = &bufferInfo;
+    descriptorWrite.pBufferInfo = &this->buffersInfo[binding];
 }
 
-std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::shared_ptr<ShaderModule> shader_ptr, uint32_t frameIdx, const MaterialData& materialData)
+std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::shared_ptr<ShaderModule> shader_ptr, uint32_t frameIdx)
 {
     std::vector<VkWriteDescriptorSet> descriptorWrites{};
     descriptorWrites.resize(this->numBinding);
+    this->buffersInfo.resize(this->numBinding);
     uint32_t idx = 0;
 
     for each (auto binding in shader_ptr->reflectShader.bindings)
@@ -115,12 +115,12 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
         }
         else if (binding.first == "UniformMaterial")
         {
-            this->SetDescriptorWrite(descriptorWrites[idx], binding.second.binding, this->materialUBO->uniformBuffers[frameIdx], sizeof(MaterialUniform), frameIdx);
+            this->SetDescriptorWrite(descriptorWrites[idx], binding.second.binding, this->materialUBO->uniformBuffers[frameIdx], this->materialUniformSize, frameIdx);
             idx++;
         }
         else if (binding.first == "UniformAnimation")
         {
-            this->SetDescriptorWrite(descriptorWrites[idx], binding.second.binding, this->animationUBO->uniformBuffers[frameIdx], sizeof(AnimationUniform), frameIdx);
+            this->SetDescriptorWrite(descriptorWrites[idx], binding.second.binding, this->animationUBO->uniformBuffers[frameIdx], this->animationUniformSize, frameIdx);
             idx++;
         }
         else if (binding.first == "Texture2DArray")
@@ -151,7 +151,7 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
     return descriptorWrites;
 }
 
-void DescriptorBuffer::CreateDescriptorSets(std::shared_ptr<ShaderModule> shader_ptr, const MaterialData& materialData)
+void DescriptorBuffer::InitializeDescriptorSets(std::shared_ptr<ShaderModule> shader_ptr)
 {
     std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, shader_ptr->descriptorSetLayout);
     VkDescriptorSetAllocateInfo allocInfo{};
@@ -169,7 +169,7 @@ void DescriptorBuffer::CreateDescriptorSets(std::shared_ptr<ShaderModule> shader
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
         std::vector<VkWriteDescriptorSet> descriptorWrites{};
-        descriptorWrites = this->GetDescriptorWrites(shader_ptr, i, materialData);
+        descriptorWrites = this->GetDescriptorWrites(shader_ptr, i);
         vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
 }

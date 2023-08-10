@@ -7,13 +7,14 @@
 #include <glm/glm.hpp>
 #include <Animation/Animation.h>
 #include <AnimationResources.h>
-#include <DescriptorModule.h>
+#include <DescriptorBuffer.h>
 
 class Animator
 {
 private:
+    DeviceModule* deviceModule;
     const int NUM_BONES = 200;
-    //std::vector<std::shared_ptr<DescriptorModule>> descriptors;
+    std::shared_ptr<DescriptorBuffer> descriptor;
     std::shared_ptr<std::vector<glm::mat4>> m_FinalBoneMatrices;
     std::shared_ptr<Animation> m_CurrentAnimation = nullptr;
     float m_CurrentTime;
@@ -24,11 +25,18 @@ private:
     VkBuffer computeBuffer1;
     VkBuffer computeBuffer2;
 
+    char* animationbuffer;
+
 public:
     std::shared_ptr<AnimationUniform> animationUniform_ptr;
+    VkDeviceSize animationUniformSize = 0;
+    std::shared_ptr<UniformBufferObject> animationUBO = nullptr;
 
 public:
     Animator();
+    void InitializeUBOAnimation(std::shared_ptr<ShaderModule> shader_ptr);
+    void UpdateUBOAnimation();
+    void WriteToAnimationBuffer(char* data, size_t& position, const size_t& sizeToCopy);
     void AddDescriptor(std::shared_ptr<DescriptorModule> descriptor);
     void UpdateAnimation(float dt);
     void PlayAnimation(std::shared_ptr<Animation> pAnimation);

@@ -14,13 +14,12 @@ class Material : public GameComponent
 {
 private:
     bool isMeshBinding = false;
-    //std::shared_ptr<MaterialUniform> uniform = nullptr;
-    DescriptorBuffer descriptor;
 
 public:
     MaterialData materialData;
     unsigned int layer;
     std::shared_ptr<ShaderModule> shader = nullptr;
+    std::shared_ptr<DescriptorBuffer> descriptor;
 
 public:
     Material();
@@ -34,10 +33,9 @@ public:
     void bindingLights(LightManager* lightManager);
     void InitializeMaterial();
     void InitializeDescriptor();
+    void InitializeMaterialDataUBO();
     void RecreateUniformsMaterial();
-
-private:
-    void updateUniformData();
+    void UpdateUniformData();
 };
 
 #endif // !MATERIAL_H

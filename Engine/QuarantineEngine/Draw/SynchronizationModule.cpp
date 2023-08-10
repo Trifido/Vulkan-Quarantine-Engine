@@ -10,7 +10,7 @@ void SynchronizationModule::createSyncObjects(uint32_t swapChainImagesNum)
     inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
 
     computeInFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-    computeFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    //computeFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
 
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -28,11 +28,11 @@ void SynchronizationModule::createSyncObjects(uint32_t swapChainImagesNum)
             throw std::runtime_error("failed to create semaphores!");
         }
 
-        if (vkCreateSemaphore(deviceModule->device, &semaphoreInfo, nullptr, &computeFinishedSemaphores[i]) != VK_SUCCESS ||
-            vkCreateFence(deviceModule->device, &fenceInfo, nullptr, &computeInFlightFences[i]) != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to create compute synchronization objects for a frame!");
-        }
+        //if (vkCreateSemaphore(deviceModule->device, &semaphoreInfo, nullptr, &computeFinishedSemaphores[i]) != VK_SUCCESS ||
+        //    vkCreateFence(deviceModule->device, &fenceInfo, nullptr, &computeInFlightFences[i]) != VK_SUCCESS)
+        //{
+        //    throw std::runtime_error("failed to create compute synchronization objects for a frame!");
+        //}
     }
 }
 
@@ -52,7 +52,7 @@ void SynchronizationModule::submitCommandBuffer(VkCommandBuffer& commandBuffer)
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
     //waitSemaphores = &imageAvailableSemaphores[currentFrame];
-    VkSemaphore waitSemaphores[] = {computeFinishedSemaphores[currentFrame], imageAvailableSemaphores[currentFrame]};
+    VkSemaphore waitSemaphores[] = {/*computeFinishedSemaphores[currentFrame],*/ imageAvailableSemaphores[currentFrame]};
     VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
     submitInfo.waitSemaphoreCount = 2;
     submitInfo.pWaitSemaphores = waitSemaphores;

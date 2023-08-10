@@ -7,10 +7,13 @@ layout(location = 2) in vec2 inTexCoord;
 layout(location = 3) in vec3 inTangent;
 layout(location = 4) in vec3 inBitangent;
 
-layout(set = 0, binding = 0) uniform ViewUniforms {
-    mat4 view;
-    mat4 proj;
-} view;
+layout(set = 0, binding = 0) uniform CameraUniform
+{
+	mat4 view;
+	mat4 proj;
+	mat4 viewproj;
+    vec3 position;
+} cameraData;
 
 layout(location = 1) out vec3 nearPoint;
 layout(location = 2) out vec3 farPoint;
@@ -30,7 +33,7 @@ vec3 UnprojectPoint(float x, float y, float z, mat4 view, mat4 projection) {
 void main()
 {
     vec3 p = gridPlane[gl_VertexIndex].xyz;
-    nearPoint = UnprojectPoint(p.x, p.y, 0.0, view.view, view.proj).xyz;
-    farPoint = UnprojectPoint(p.x, p.y, 1.0, view.view, view.proj).xyz;
+    nearPoint = UnprojectPoint(p.x, p.y, 0.0, cameraData.view, cameraData.proj).xyz;
+    farPoint = UnprojectPoint(p.x, p.y, 1.0, cameraData.view, cameraData.proj).xyz;
     gl_Position = vec4(p, 1.0);
 }

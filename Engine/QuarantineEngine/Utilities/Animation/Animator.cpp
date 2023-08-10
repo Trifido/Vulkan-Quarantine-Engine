@@ -1,10 +1,52 @@
 #include "Animator.h"
+#include <SynchronizationModule.h>
 
 Animator::Animator()
 {
+    this->deviceModule = DeviceModule::getInstance();
 	m_CurrentTime = 0.0;
     m_FinalBoneMatrices = std::make_shared<std::vector<glm::mat4>>(std::vector<glm::mat4>(NUM_BONES, glm::mat4(1.0f)));
     this->animationUniform_ptr = std::make_shared<AnimationUniform>();
+}
+
+void Animator::InitializeUBOAnimation(std::shared_ptr<ShaderModule> shader_ptr)
+{
+    auto reflect = shader_ptr->reflectShader;
+
+    if (reflect.isUboAnimation)
+    {
+        this->animationUBO = std::make_shared<UniformBufferObject>();
+
+        size_t position = 0;
+        this->animationbuffer = new char[reflect.animationBufferSize];
+
+        for each (auto name in reflect.animationUBOComponents)
+        {
+            if (name == "finalBonesMatrices")
+            {
+                this->WriteToAnimationBuffer(this->animationbuffer, position, reflect.animationBufferSize);
+            }
+        }
+
+        this->animationUBO->CreateUniformBuffer(reflect.animationBufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+        this->UpdateUBOAnimation();
+    }
+}
+
+void Animator::UpdateUBOAnimation()
+{
+    auto currentFrame = SynchronizationModule::GetCurrentFrame();
+    void* data;
+    vkMapMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[currentFrame], 0, this->animationUniformSize, 0, &data);
+    memcpy(data, this->animationbuffer, this->animationUniformSize);
+    vkUnmapMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[currentFrame]);
+}
+
+void Animator::WriteToAnimationBuffer(char* data, size_t& position, const size_t& sizeToCopy)
+{
+    memcpy(&animationbuffer[position], data, sizeToCopy);
+    position += sizeToCopy;
+    this->animationUniformSize += sizeToCopy;
 }
 
 void Animator::AddDescriptor(std::shared_ptr<DescriptorModule> descriptor)

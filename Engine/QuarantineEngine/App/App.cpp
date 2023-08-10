@@ -124,7 +124,7 @@ void App::initVulkan()
     //Creamos el Command pool module y los Command buffers
     commandPoolModule->createCommandPool(windowSurface.getSurface());
     commandPoolModule->createCommandBuffers();
-    commandPoolModule->bindComputeNodeManager();
+    //commandPoolModule->bindComputeNodeManager();
 
     //Creamos el antialiasing module
     antialiasingModule = AntiAliasingModule::getInstance();
@@ -135,7 +135,7 @@ void App::initVulkan()
     depthBufferModule->createDepthResources(swapchainModule->swapChainExtent, commandPoolModule->getCommandPool());
 
     //Creamos el compute pipeline Module
-    computePipelineModule = std::make_shared<ComputePipelineModule>();
+    //computePipelineModule = std::make_shared<ComputePipelineModule>();
 
     //Creamos el Render Pass
     renderPassModule = new RenderPassModule();
@@ -152,9 +152,9 @@ void App::initVulkan()
 
     //Añadimos requisitos para los geometryComponent
     BufferManageModule::commandPool = this->commandPoolModule->getCommandPool();
-    BufferManageModule::computeCommandPool = this->commandPoolModule->getComputeCommandPool();
+    //BufferManageModule::computeCommandPool = this->commandPoolModule->getComputeCommandPool();
     BufferManageModule::graphicsQueue = this->queueModule->graphicsQueue;
-    BufferManageModule::computeQueue = this->queueModule->computeQueue;
+    //BufferManageModule::computeQueue = this->queueModule->computeQueue;
     GeometryComponent::deviceModule_ptr = this->deviceModule;
     TextureManagerModule::queueModule = this->queueModule;
     CustomTexture::commandPool = commandPoolModule->getCommandPool();
@@ -168,8 +168,8 @@ void App::initVulkan()
     this->materialManager = MaterialManager::getInstance();
     this->materialManager->InitializeMaterialManager();
     this->gameObjectManager = GameObjectManager::getInstance();
-    this->computeNodeManager = ComputeNodeManager::getInstance();
-    this->computeNodeManager->InitializeComputeNodeManager(computePipelineModule);
+    //this->computeNodeManager = ComputeNodeManager::getInstance();
+    //this->computeNodeManager->InitializeComputeNodeManager(computePipelineModule);
 
     // Inicializamos los componentes del editor
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
@@ -177,25 +177,25 @@ void App::initVulkan()
 
     /**/
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH));
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
+    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/steampunk/scene.gltf"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/vampire/Capoeira.dae"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/CharacterRunning/CharacterRunning.gltf"));
 
-    if (model->IsValid())
-    {
-        model->transform->SetScale(glm::vec3(0.05f));
-        model->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-    }
+    //if (model->IsValid())
+    //{
+    //    model->transform->SetScale(glm::vec3(0.05f));
+    //    model->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    //}
 
-    this->gameObjectManager->AddGameObject(model, "model");
+    //this->gameObjectManager->AddGameObject(model, "model");
     
 
-    std::shared_ptr<GameObject> cube = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
-    cube->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-    cube->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 65.0f));
+    //std::shared_ptr<GameObject> cube = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
+    //cube->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    //cube->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 65.0f));
 
-    this->gameObjectManager->AddGameObject(cube, "cube");
+    //this->gameObjectManager->AddGameObject(cube, "cube");
 
 
 //    std::shared_ptr<ParticleSystem> particleSystem = std::make_shared<ParticleSystem>(ParticleSystem());
@@ -301,7 +301,7 @@ void App::initVulkan()
     this->animationManager->InitializeAnimations();
     this->gameObjectManager->InitializePhysics();
     this->materialManager->InitializeMaterials();
-    this->computeNodeManager->InitializeComputeNodes();
+    //this->computeNodeManager->InitializeComputeNodes();
 
     this->commandPoolModule->Render(framebufferModule.swapChainFramebuffers[0], renderPassModule->renderPass);
     this->synchronizationModule.createSyncObjects(swapchainModule->getNumSwapChainImages());
@@ -383,7 +383,7 @@ void App::mainLoop()
                 ImGui::RenderPlatformWindowsDefault();
             }
 
-            this->computeFrame();
+            //this->computeFrame();
             this->drawFrame();
         }
 
@@ -481,10 +481,10 @@ void App::cleanUpSwapchain()
 
 void App::computeFrame()
 {
-    synchronizationModule.synchronizeWaitComputeFences();
+    //synchronizationModule.synchronizeWaitComputeFences();
     //Update uniformBuffer here -----> <-----
-    commandPoolModule->recordComputeCommandBuffer(commandPoolModule->getCommandBuffer(synchronizationModule.GetCurrentFrame()));
-    synchronizationModule.submitComputeCommandBuffer(commandPoolModule->getCommandBuffer(synchronizationModule.GetCurrentFrame()));
+    //commandPoolModule->recordComputeCommandBuffer(commandPoolModule->getCommandBuffer(synchronizationModule.GetCurrentFrame()));
+    //synchronizationModule.submitComputeCommandBuffer(commandPoolModule->getCommandBuffer(synchronizationModule.GetCurrentFrame()));
 }
 
 void App::drawFrame()

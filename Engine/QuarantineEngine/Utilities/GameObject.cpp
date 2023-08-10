@@ -26,7 +26,10 @@ GameObject::GameObject(PRIMITIVE_TYPE type)
     this->mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh(type));
     this->meshImportedType = MeshImportedType::PRIMITIVE_GEO;
 
-    this->addMaterial(this->materialManager->GetMaterial("defaultPrimitiveMat"));
+    if (type != PRIMITIVE_TYPE::GRID_TYPE)
+    {
+        this->addMaterial(this->materialManager->GetMaterial("defaultPrimitiveMat"));
+    }
 
     size_t numMeshAttributes = this->CheckNumAttributes();
     this->InitializeComponents(numMeshAttributes);
@@ -76,7 +79,7 @@ void GameObject::addMaterial(std::shared_ptr<Material> material_ptr)
         return;
 
     this->material = material_ptr;
-    this->material->InitializeDescriptor();
+    //this->material->InitializeDescriptor();
 
     if (this->meshImportedType == MeshImportedType::ANIMATED_GEO)
     {
@@ -154,6 +157,10 @@ void GameObject::InitializeAnimationComponent()
     {
         if (this->material != nullptr)
         {
+            this->animationComponent->animator->InitializeUBOAnimation(this->material->shader);
+            this->material->descriptor->animationUBO = this->animationComponent->animator->animationUBO;
+            this->material->descriptor->animationUniformSize = this->animationComponent->animator->animationUniformSize;
+
             //this->animationComponent->animator->AddDescriptor(this->material->descriptor);
         }
 
@@ -161,6 +168,10 @@ void GameObject::InitializeAnimationComponent()
         {
             for (auto& it : this->childs)
             {
+                it->animationComponent->animator->InitializeUBOAnimation(it->material->shader);
+                it->material->descriptor->animationUBO = it->animationComponent->animator->animationUBO;
+                it->material->descriptor->animationUniformSize = it->animationComponent->animator->animationUniformSize;
+
                 //this->animationComponent->animator->AddDescriptor(it->material->descriptor);
             }
         }
@@ -282,7 +293,7 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
         vkCmdBindIndexBuffer(commandBuffer, this->mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-        //vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, this->material->GetDescrìptor()->getDescriptorSet(idx), 0, nullptr);
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, this->material->descriptor->getDescriptorSet(idx), 0, nullptr);
 
         TransformUniform ubo;
         ubo.model = this->transform->GetModel();

@@ -18,32 +18,34 @@ private:
     Camera*         camera = nullptr;
 
     VkDescriptorPool                descriptorPool;
-    std::vector<VkDescriptorSet>    descriptorSets;
 
     std::shared_ptr<std::vector<std::shared_ptr<CustomTexture>>> textures;
     uint32_t    numUBOs = 0;
     uint32_t    numBinding = 0;
     bool        hasAnimationProperties = false;
 
+    std::vector<VkDescriptorBufferInfo> buffersInfo;
+
 public:
+    std::vector<VkDescriptorSet>    descriptorSets;
+
     //UBO's
     std::shared_ptr<UniformBufferObject>    materialUBO = nullptr;
+    VkDeviceSize    materialUniformSize = 0;
     std::shared_ptr<UniformBufferObject>    animationUBO = nullptr;
-
-    //UNIFORM's
-    std::shared_ptr<MaterialUniform>        materialUniform = nullptr;
-    std::shared_ptr<AnimationUniform>       animationUniform = nullptr;
+    VkDeviceSize    animationUniformSize = 0;
 
 private:
     void StartResources(std::shared_ptr<ShaderModule> shader_ptr);
-    std::vector<VkWriteDescriptorSet> GetDescriptorWrites(std::shared_ptr<ShaderModule> shader_ptr, uint32_t frameIdx, const MaterialData& materialData);
+    std::vector<VkWriteDescriptorSet> GetDescriptorWrites(std::shared_ptr<ShaderModule> shader_ptr, uint32_t frameIdx);
     VkDescriptorBufferInfo GetBufferInfo(VkBuffer buffer, VkDeviceSize bufferSize);
     void SetDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize, uint32_t frameIdx);
 
 public:
     DescriptorBuffer();
     DescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr);
-    void CreateDescriptorSets(std::shared_ptr<ShaderModule> shader_ptr, const MaterialData& materialData);
+    void InitializeDescriptorSets(std::shared_ptr<ShaderModule> shader_ptr);
+    VkDescriptorSet* getDescriptorSet(size_t id) { return &descriptorSets.at(id); }
 };
 
 #endif // !DESCRIPTOR_BUFFER_H

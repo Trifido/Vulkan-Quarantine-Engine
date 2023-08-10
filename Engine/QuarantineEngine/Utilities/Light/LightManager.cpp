@@ -12,8 +12,8 @@ LightManager::LightManager()
     this->deviceModule = DeviceModule::getInstance();
     this->lightManagerUniform = std::make_shared<LightManagerUniform>();
     this->lightUBO = std::make_shared<UniformBufferObject>();
+    this->lightUBO->CreateUniformBuffer(sizeof(LightManagerUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 }
-
 
 LightManager* LightManager::getInstance()
 {
