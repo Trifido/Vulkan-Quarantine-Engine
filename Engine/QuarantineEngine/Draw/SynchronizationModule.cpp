@@ -54,7 +54,7 @@ void SynchronizationModule::submitCommandBuffer(VkCommandBuffer& commandBuffer)
     //waitSemaphores = &imageAvailableSemaphores[currentFrame];
     VkSemaphore waitSemaphores[] = {/*computeFinishedSemaphores[currentFrame],*/ imageAvailableSemaphores[currentFrame]};
     VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-    submitInfo.waitSemaphoreCount = 2;
+    submitInfo.waitSemaphoreCount = 1;// 2;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
 

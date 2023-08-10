@@ -168,8 +168,8 @@ void App::initVulkan()
     this->materialManager = MaterialManager::getInstance();
     this->materialManager->InitializeMaterialManager();
     this->gameObjectManager = GameObjectManager::getInstance();
-    //this->computeNodeManager = ComputeNodeManager::getInstance();
-    //this->computeNodeManager->InitializeComputeNodeManager(computePipelineModule);
+   //this->computeNodeManager = ComputeNodeManager::getInstance();
+   // this->computeNodeManager->InitializeComputeNodeManager(computePipelineModule);
 
     // Inicializamos los componentes del editor
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
@@ -481,10 +481,10 @@ void App::cleanUpSwapchain()
 
 void App::computeFrame()
 {
-    //synchronizationModule.synchronizeWaitComputeFences();
+    synchronizationModule.synchronizeWaitComputeFences();
     //Update uniformBuffer here -----> <-----
-    //commandPoolModule->recordComputeCommandBuffer(commandPoolModule->getCommandBuffer(synchronizationModule.GetCurrentFrame()));
-    //synchronizationModule.submitComputeCommandBuffer(commandPoolModule->getCommandBuffer(synchronizationModule.GetCurrentFrame()));
+    commandPoolModule->recordComputeCommandBuffer(commandPoolModule->getCommandBuffer(synchronizationModule.GetCurrentFrame()));
+    synchronizationModule.submitComputeCommandBuffer(commandPoolModule->getCommandBuffer(synchronizationModule.GetCurrentFrame()));
 }
 
 void App::drawFrame()
@@ -494,9 +494,9 @@ void App::drawFrame()
     VkResult result = vkAcquireNextImageKHR(deviceModule->device, swapchainModule->getSwapchain(), UINT64_MAX, synchronizationModule.getImageAvailableSemaphore(), VK_NULL_HANDLE, &imageIndex);
     resizeSwapchain(result, ERROR_RESIZE::SWAPCHAIN_ERROR);
 
-    this->cameraEditor->UpdateUBOCamera();
-    this->lightManager->UpdateUBOLight();
-    this->materialManager->UpdateUniforms();
+    //this->cameraEditor->UpdateUBOCamera();
+    //this->lightManager->UpdateUBOLight();
+    //this->materialManager->UpdateUniforms();
 
     vkDeviceWaitIdle(deviceModule->device);
 
