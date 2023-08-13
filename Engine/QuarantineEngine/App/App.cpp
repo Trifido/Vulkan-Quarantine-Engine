@@ -177,18 +177,18 @@ void App::initVulkan()
 
     /**/
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH));
-    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/microphone/scene.gltf"));
+    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
+    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/microphone/scene.gltf"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/vampire/Capoeira.dae"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/CharacterRunning/CharacterRunning.gltf"));
 
     if (model->IsValid())
     {
-        model->transform->SetScale(glm::vec3(0.05f));
+        //model->transform->SetScale(glm::vec3(0.05f));
         model->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
     }
 
-    //this->gameObjectManager->AddGameObject(model, "model");
+    this->gameObjectManager->AddGameObject(model, "model");
     
 
     //std::shared_ptr<GameObject> cube = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
@@ -494,9 +494,9 @@ void App::drawFrame()
     VkResult result = vkAcquireNextImageKHR(deviceModule->device, swapchainModule->getSwapchain(), UINT64_MAX, synchronizationModule.getImageAvailableSemaphore(), VK_NULL_HANDLE, &imageIndex);
     resizeSwapchain(result, ERROR_RESIZE::SWAPCHAIN_ERROR);
 
-    //this->cameraEditor->UpdateUBOCamera();
-    //this->lightManager->UpdateUBOLight();
-    //this->materialManager->UpdateUniforms();
+    this->cameraEditor->UpdateUBOCamera();
+    this->lightManager->UpdateUBOLight();
+    this->materialManager->UpdateUniforms();
 
     vkDeviceWaitIdle(deviceModule->device);
 

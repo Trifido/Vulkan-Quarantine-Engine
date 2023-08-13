@@ -24,6 +24,7 @@ private:
     bool        hasAnimationProperties = false;
 
     std::vector<VkDescriptorBufferInfo> buffersInfo;
+    std::vector<VkDescriptorImageInfo> imageInfo;
 
 public:
     std::vector<VkDescriptorSet>    descriptorSets;

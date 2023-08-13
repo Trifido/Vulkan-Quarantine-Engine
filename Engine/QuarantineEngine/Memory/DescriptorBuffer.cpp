@@ -125,13 +125,12 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
         }
         else if (binding.first == "Texture2DArray")
         {
-            std::vector<VkDescriptorImageInfo> imageInfo;
-            imageInfo.resize(textures->size());
+            this->imageInfo.resize(textures->size());
             for (uint32_t id = 0; id < textures->size(); ++id)
             {
-                imageInfo[id].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                imageInfo[id].imageView = textures->at(id)->imageView;
-                imageInfo[id].sampler = textures->at(id)->textureSampler;
+                this->imageInfo[id].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                this->imageInfo[id].imageView = textures->at(id)->imageView;
+                this->imageInfo[id].sampler = textures->at(id)->textureSampler;
             }
 
             descriptorWrites[idx] = {};
@@ -142,7 +141,7 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
             descriptorWrites[idx].descriptorCount = textures->size();
             descriptorWrites[idx].pBufferInfo = VK_NULL_HANDLE;
             descriptorWrites[idx].dstSet = descriptorSets[frameIdx];
-            descriptorWrites[idx].pImageInfo = imageInfo.data();
+            descriptorWrites[idx].pImageInfo = this->imageInfo.data();
 
             idx++;
         }
