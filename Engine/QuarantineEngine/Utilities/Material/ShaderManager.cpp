@@ -72,3 +72,11 @@ void ShaderManager::Clean()
         it.second->cleanup();
     }
 }
+
+void ShaderManager::CleanDescriptorSetLayouts()
+{
+    for each (auto shader in this->_shaders)
+    {
+        shader.second->CleanDescriptorSetLayout();
+    }
+}

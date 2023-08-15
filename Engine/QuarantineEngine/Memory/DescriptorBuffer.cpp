@@ -14,7 +14,6 @@ DescriptorBuffer::DescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr) : D
     this->materialUBO = std::make_shared<UniformBufferObject>();
 
     this->StartResources(shader_ptr);
-    //this->CreateDescriptorSets(shader_ptr);
 }
 
 void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
@@ -172,4 +171,9 @@ void DescriptorBuffer::InitializeDescriptorSets(std::shared_ptr<ShaderModule> sh
         descriptorWrites = this->GetDescriptorWrites(shader_ptr, i);
         vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
+}
+
+void DescriptorBuffer::CleanDescriptorSetPool()
+{
+    vkDestroyDescriptorPool(deviceModule->device, this->descriptorPool, nullptr);
 }

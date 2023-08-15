@@ -84,6 +84,14 @@ void GraphicsPipelineManager::RegisterDefaultRenderPass(VkRenderPass renderPass)
     this->defaultRenderPass = std::make_shared<VkRenderPass>(renderPass);
 }
 
+void GraphicsPipelineManager::CleanGraphicsPipeline()
+{
+    for each (auto gPipeline in this->_graphicsPipelines)
+    {
+        gPipeline.second->CleanPipelineData();
+    }
+}
+
 std::shared_ptr<GraphicsPipelineModule> GraphicsPipelineManager::RegisterNewGraphicsPipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout)
 {
     this->_graphicsPipelines[shader.id] = std::make_shared<GraphicsPipelineModule>();

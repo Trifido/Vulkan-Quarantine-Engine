@@ -353,6 +353,19 @@ void MaterialData::UpdateUBOMaterial()
     }
 }
 
+void MaterialData::CleanMaterialUBO()
+{
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        // Material UBO
+        if (!this->materialUBO->uniformBuffers.empty())
+        {
+            vkDestroyBuffer(deviceModule->device, this->materialUBO->uniformBuffers[i], nullptr);
+            vkFreeMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[i], nullptr);
+        }
+    }
+}
+
 void MaterialData::WriteToMaterialBuffer(char* data, size_t& position, const size_t& sizeToCopy)
 {
     memcpy(&materialbuffer[position], data, sizeToCopy);

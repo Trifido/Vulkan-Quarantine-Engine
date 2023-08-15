@@ -52,7 +52,7 @@ public:
     void InvertPitch(float heightPos);
     void UpdateSize(VkExtent2D size);
     void UpdateUBOCamera();
-
+    void CleanCameraUBO();
 protected:
     void UpdateUniform();
 };

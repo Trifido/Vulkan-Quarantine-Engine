@@ -87,6 +87,19 @@ void LightManager::UpdateUBOLight()
     vkUnmapMemory(this->deviceModule->device, this->lightUBO->uniformBuffersMemory[currentFrame]);
 }
 
+void LightManager::CleanLightUBO()
+{
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        // Light UBO
+        if (this->lightManagerUniform != nullptr)
+        {
+            vkDestroyBuffer(deviceModule->device, this->lightUBO->uniformBuffers[i], nullptr);
+            vkFreeMemory(deviceModule->device, this->lightUBO->uniformBuffersMemory[i], nullptr);
+        }
+    }
+}
+
 void LightManager::AddLight(std::shared_ptr<Light> light_ptr, std::string name)
 {
     if (this->_lights.find(name) == _lights.end())

@@ -67,6 +67,7 @@ public:
     void ImportAssimpTexture(const aiScene* scene, aiMaterial* material, std::string fileExtension, std::string texturePath);
     void InitializeUBOMaterial(std::shared_ptr<ShaderModule> shader_ptr);
     void UpdateUBOMaterial();
+    void CleanMaterialUBO();
 };
 
 #endif // !MATERIAL_DATA_H

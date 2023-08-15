@@ -17,3 +17,9 @@ void PipelineModule::CompileComputePipeline(std::vector<VkPipelineShaderStageCre
 void PipelineModule::CompileGraphicsPipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, VkPipelineVertexInputStateCreateInfo vertexInfo, VkDescriptorSetLayout descriptorLayout)
 {
 }
+
+void PipelineModule::CleanPipelineData()
+{
+    vkDestroyPipeline(deviceModule->device, this->pipeline, nullptr);
+    vkDestroyPipelineLayout(deviceModule->device, this->pipelineLayout, nullptr);
+}

@@ -442,7 +442,7 @@ void App::cleanUp()
 
     textureManager->Clean();
 
-    materialManager->CleanDescriptors();
+    shaderManager->CleanDescriptorSetLayouts();
 
     synchronizationModule.cleanup();
     commandPoolModule->cleanup();
@@ -473,6 +473,7 @@ void App::cleanUpSwapchain()
     renderPassModule->cleanup();
 
     //Limpiamos los VKPipelines, VkPipelineLayouts y shader del material
+    graphicsPipelineManager->CleanGraphicsPipeline();
     materialManager->CleanPipelines();
 
     swapchainModule->cleanup();

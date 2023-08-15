@@ -28,6 +28,7 @@ public:
     std::shared_ptr<Light> GetLight(std::string name);
     void UpdateUniform();
     void UpdateUBOLight();
+    void CleanLightUBO();
 };
 
 #endif

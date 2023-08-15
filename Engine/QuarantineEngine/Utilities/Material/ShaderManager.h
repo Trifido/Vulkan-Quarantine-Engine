@@ -23,6 +23,7 @@ public:
     void AddShader(std::string shaderName, ShaderModule shader);
     bool Exists(std::string shaderName);
     void Clean();
+    void CleanDescriptorSetLayouts();
 };
 
 #endif

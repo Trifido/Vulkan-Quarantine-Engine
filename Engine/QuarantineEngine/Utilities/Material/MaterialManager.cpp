@@ -129,6 +129,9 @@ void MaterialManager::CleanPipelines()
     {
         it.second->cleanup();
     }
+    // Clean Camera & Lights UBO's
+    this->cameraEditor->CleanCameraUBO();
+    this->lightManager->CleanLightUBO();
 }
 
 void MaterialManager::RecreateMaterials(RenderPassModule* renderPassModule)

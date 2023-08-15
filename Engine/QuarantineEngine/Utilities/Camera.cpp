@@ -203,3 +203,15 @@ void Camera::UpdateUBOCamera()
     vkUnmapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame]);
 }
 
+void Camera::CleanCameraUBO()
+{
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        if (this->cameraUniform != nullptr)
+        {
+            vkDestroyBuffer(deviceModule->device, this->cameraUBO->uniformBuffers[i], nullptr);
+            vkFreeMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[i], nullptr);
+        }
+    }
+}
+

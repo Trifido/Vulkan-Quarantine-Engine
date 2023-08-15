@@ -58,6 +58,11 @@ void ShaderModule::createShaderModule(const std::string& filename_vertex, const 
     this->PipelineModule = this->graphicsPipelineManager->RegisterNewGraphicsPipeline(*this, descriptorSetLayout);
 }
 
+void ShaderModule::CleanDescriptorSetLayout()
+{
+    vkDestroyDescriptorSetLayout(deviceModule->device, this->descriptorSetLayout, nullptr);
+}
+
 void ShaderModule::createShaderBindings()
 {
     this->bindingDescription = GeometryComponent::getBindingDescription(this->reflectShader.isAnimationShader);

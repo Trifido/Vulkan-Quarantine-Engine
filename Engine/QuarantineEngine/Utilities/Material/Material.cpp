@@ -27,12 +27,14 @@ void Material::InitializeMaterialDataUBO()
 
 void Material::cleanup()
 {
-    if (this->isMeshBinding)
-    {
+    //if (this->isMeshBinding)
+    //{
         //this->graphicsPipelineModule->cleanup(this->pipeline, this->pipelineLayout);
         //this->descriptor->cleanupDescriptorBuffer();
         //this->descriptor->cleanupDescriptorPool();
-    }
+    //}
+    this->descriptor->CleanDescriptorSetPool();
+    this->materialData.CleanMaterialUBO();
 }
 
 void Material::cleanupDescriptor()
