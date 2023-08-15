@@ -81,6 +81,8 @@ bool GraphicsPipelineManager::Exists(std::string pipelineName)
 
 void GraphicsPipelineManager::RegisterDefaultRenderPass(VkRenderPass renderPass)
 {
+    if (this->defaultRenderPass != nullptr)
+        this->defaultRenderPass.reset();
     this->defaultRenderPass = std::make_shared<VkRenderPass>(renderPass);
 }
 
@@ -90,6 +92,12 @@ void GraphicsPipelineManager::CleanGraphicsPipeline()
     {
         gPipeline.second->CleanPipelineData();
     }
+}
+
+void GraphicsPipelineManager::RecreateGraphicsPipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout)
+{
+    this->_graphicsPipelines[shader.id]->renderPass = this->defaultRenderPass;
+    this->_graphicsPipelines[shader.id]->CompileGraphicsPipeline(shader.shaderStages, shader.vertexInputInfo, descriptorLayout);
 }
 
 std::shared_ptr<GraphicsPipelineModule> GraphicsPipelineManager::RegisterNewGraphicsPipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout)

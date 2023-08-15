@@ -34,7 +34,7 @@ private:
     VkPipelineShaderStageCreateInfo                 fragShaderStageInfo{};
     VkShaderModule                                  compute_shader = nullptr;
     VkPipelineShaderStageCreateInfo                 compShaderStageInfo{};
-    VkVertexInputBindingDescription                 bindingDescription;
+    std::shared_ptr<VkVertexInputBindingDescription>   bindingDescription;
     std::vector<VkVertexInputAttributeDescription>  attributeDescriptions;
     GraphicsPipelineManager*                        graphicsPipelineManager;
 
@@ -54,10 +54,13 @@ public:
     void createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment);
     void CleanDescriptorSetLayout();
     void cleanup();
+    void RecreatePipeline();
 private:
     VkPipelineShaderStageCreateInfo createShader(VkDevice& device, const std::string& filename, SHADER_TYPE shaderType);
     void CreateDescriptorSetLayout();
     void createShaderBindings();
+    void SetBindingDescription();
+    void SetAttributeDescriptions(std::vector<VkVertexInputAttributeDescription>& attributeDescriptions);
 };
 
 #endif

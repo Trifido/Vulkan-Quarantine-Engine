@@ -812,4 +812,5 @@ void ReflectShader::PerformReflect(VkShaderModuleCreateInfo createInfo)
     }
 
     spvReflectDestroyShaderModule(&module);
+    this->isShaderReflected = true;
 }

@@ -80,3 +80,11 @@ void ShaderManager::CleanDescriptorSetLayouts()
         shader.second->CleanDescriptorSetLayout();
     }
 }
+
+void ShaderManager::RecreateShaderGraphicsPipelines()
+{
+    for each (auto shader in this->_shaders)
+    {
+        shader.second->RecreatePipeline();
+    }
+}

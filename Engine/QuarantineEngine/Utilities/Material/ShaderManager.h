@@ -24,6 +24,7 @@ public:
     bool Exists(std::string shaderName);
     void Clean();
     void CleanDescriptorSetLayouts();
+    void RecreateShaderGraphicsPipelines();
 };
 
 #endif

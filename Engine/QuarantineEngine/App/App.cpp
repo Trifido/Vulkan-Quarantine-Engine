@@ -436,7 +436,7 @@ void App::cleanUp()
     shaderManager->Clean();
 
     cleanUpSwapchain();
-
+    materialManager->CleanPipelines();
     this->gameObjectManager->Cleanup();
     this->editorManager->Cleanup();
 
@@ -474,7 +474,7 @@ void App::cleanUpSwapchain()
 
     //Limpiamos los VKPipelines, VkPipelineLayouts y shader del material
     graphicsPipelineManager->CleanGraphicsPipeline();
-    materialManager->CleanPipelines();
+    
 
     swapchainModule->cleanup();
 }
@@ -558,7 +558,9 @@ void App::recreateSwapchain()
     renderPassModule->createRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
 
     //Recreamos los graphics pipeline de los materiales
-    materialManager->RecreateMaterials(renderPassModule);
+    graphicsPipelineManager->RegisterDefaultRenderPass(renderPassModule->renderPass);
+    shaderManager->RecreateShaderGraphicsPipelines();
+    //materialManager->RecreateMaterials(renderPassModule);
 
     //Recreamos el frame buffer
     framebufferModule.createFramebuffer(renderPassModule->renderPass);

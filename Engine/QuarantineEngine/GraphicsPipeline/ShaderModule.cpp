@@ -65,12 +65,15 @@ void ShaderModule::CleanDescriptorSetLayout()
 
 void ShaderModule::createShaderBindings()
 {
-    this->bindingDescription = GeometryComponent::getBindingDescription(this->reflectShader.isAnimationShader);
-    this->attributeDescriptions = GeometryComponent::getAttributeDescriptions(this->reflectShader.isAnimationShader);
+    this->bindingDescription = std::make_shared<VkVertexInputBindingDescription>();
+    this->SetBindingDescription();
+    //this->bindingDescription = GeometryComponent::getBindingDescription(this->reflectShader.isAnimationShader);
+    this->SetAttributeDescriptions(this->attributeDescriptions);
+    //this->attributeDescriptions = GeometryComponent::getAttributeDescriptions(this->reflectShader.isAnimationShader);
 
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputInfo.vertexBindingDescriptionCount = 1;
-    vertexInputInfo.pVertexBindingDescriptions = &this->bindingDescription; // Optional
+    vertexInputInfo.pVertexBindingDescriptions = this->bindingDescription.get(); // Optional
     vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(this->attributeDescriptions.size());
     vertexInputInfo.pVertexAttributeDescriptions = this->attributeDescriptions.data(); // Optional
 }
@@ -86,6 +89,11 @@ void ShaderModule::cleanup()
         vkDestroyShaderModule(deviceModule->device, compute_shader, nullptr);
 }
 
+void ShaderModule::RecreatePipeline()
+{
+    this->graphicsPipelineManager->RecreateGraphicsPipeline(*this, this->descriptorSetLayout);
+}
+
 VkPipelineShaderStageCreateInfo ShaderModule::createShader(VkDevice& device, const std::string& filename, SHADER_TYPE shaderType)
 {
     std::vector<char> code = readFile(filename);
@@ -95,8 +103,11 @@ VkPipelineShaderStageCreateInfo ShaderModule::createShader(VkDevice& device, con
     createInfo.codeSize = code.size();
     createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
-    //this->reflectShader.Output(createInfo);
-    this->reflectShader.PerformReflect(createInfo);
+    //if (!this->reflectShader.isShaderReflected)
+    //{
+        //this->reflectShader.Output(createInfo);
+        this->reflectShader.PerformReflect(createInfo);
+    //}
 
     VkPipelineShaderStageCreateInfo shaderStageInfo{};
     shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -145,8 +156,6 @@ VkPipelineShaderStageCreateInfo ShaderModule::createShader(VkDevice& device, con
 
 void ShaderModule::CreateDescriptorSetLayout()
 {
-    //this->reflectShader.CheckMixStageBindings();
-
     std::vector<VkDescriptorSetLayoutBinding> bindings{};
 
     for each (auto reflectLayotBinding in this->reflectShader.bindings)
@@ -160,34 +169,6 @@ void ShaderModule::CreateDescriptorSetLayout()
         bindings.push_back(layoutBinding);
     }
 
-    //for each (auto reflectLayotBinding in this->reflectShader.mixBindings)
-    //{
-    //    VkDescriptorSetLayoutBinding layoutBinding = {};
-    //    layoutBinding.binding = reflectLayotBinding.second.binding;
-    //    layoutBinding.descriptorType = reflectLayotBinding.second.type;
-    //    layoutBinding.descriptorCount = reflectLayotBinding.second.arraySize;
-    //    layoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-    //    layoutBinding.pImmutableSamplers = nullptr;
-    //    bindings.push_back(layoutBinding);
-    //}
-
-    //for each (auto reflectLayotBinding in this->reflectShader.descriptorSetReflect)
-    //{
-    //    for (int id = 0; id < reflectLayotBinding.bindingCount; id++)
-    //    {
-    //        if (!reflectShader.IsMixBinding(reflectLayotBinding.bindings[id].name))
-    //        {
-    //            VkDescriptorSetLayoutBinding layoutBinding = {};
-    //            layoutBinding.binding = reflectLayotBinding.bindings[id].binding;
-    //            layoutBinding.descriptorType = reflectLayotBinding.bindings[id].type;
-    //            layoutBinding.descriptorCount = reflectLayotBinding.bindings[id].arraySize;
-    //            layoutBinding.stageFlags = reflectLayotBinding.stage;
-    //            layoutBinding.pImmutableSamplers = nullptr;
-    //            bindings.push_back(layoutBinding);
-    //        }
-    //    }
-    //}
-
     VkDescriptorSetLayoutCreateInfo layoutInfo{};
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
@@ -195,5 +176,56 @@ void ShaderModule::CreateDescriptorSetLayout()
 
     if (vkCreateDescriptorSetLayout(deviceModule->device, &layoutInfo, nullptr, &this->descriptorSetLayout) != VK_SUCCESS) {
         throw std::runtime_error("failed to create descriptor set layout!");
+    }
+}
+
+void ShaderModule::SetBindingDescription()
+{
+    bindingDescription->binding = 0;
+    bindingDescription->stride = (this->reflectShader.isAnimationShader) ? sizeof(PBRAnimationVertex) : sizeof(PBRVertex);
+    bindingDescription->inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+}
+
+void ShaderModule::SetAttributeDescriptions(std::vector<VkVertexInputAttributeDescription>& attributeDescriptions)
+{
+    size_t numAttributes = (this->reflectShader.isAnimationShader) ? 7 : 5;
+    attributeDescriptions.resize(numAttributes);
+
+    attributeDescriptions[0].binding = 0;
+    attributeDescriptions[0].location = 0;
+    attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributeDescriptions[0].offset = offsetof(PBRVertex, pos);
+
+    attributeDescriptions[1].binding = 0;
+    attributeDescriptions[1].location = 1;
+    attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributeDescriptions[1].offset = offsetof(PBRVertex, norm);
+
+    attributeDescriptions[2].binding = 0;
+    attributeDescriptions[2].location = 2;
+    attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+    attributeDescriptions[2].offset = offsetof(PBRVertex, texCoord);
+
+    attributeDescriptions[3].binding = 0;
+    attributeDescriptions[3].location = 3;
+    attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributeDescriptions[3].offset = offsetof(PBRVertex, Tangents);
+
+    attributeDescriptions[4].binding = 0;
+    attributeDescriptions[4].location = 4;
+    attributeDescriptions[4].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributeDescriptions[4].offset = offsetof(PBRVertex, Bitangents);
+
+    if (this->reflectShader.isAnimationShader)
+    {
+        attributeDescriptions[5].binding = 0;
+        attributeDescriptions[5].location = 5;
+        attributeDescriptions[5].format = VK_FORMAT_R32G32B32A32_SINT;
+        attributeDescriptions[5].offset = offsetof(PBRVertex, boneIDs);
+
+        attributeDescriptions[6].binding = 0;
+        attributeDescriptions[6].location = 6;
+        attributeDescriptions[6].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+        attributeDescriptions[6].offset = offsetof(PBRVertex, boneWeights);
     }
 }

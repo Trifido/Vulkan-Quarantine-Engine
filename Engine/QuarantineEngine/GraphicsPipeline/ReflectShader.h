@@ -52,6 +52,7 @@ public:
     bool isAnimationShader = false;
     bool isUBOMaterial = false;
     bool isUboAnimation = false;
+    bool isShaderReflected = false;
     std::vector<std::string> materialUBOComponents;
     std::vector<std::string> animationUBOComponents;
     VkDeviceSize materialBufferSize = 0;

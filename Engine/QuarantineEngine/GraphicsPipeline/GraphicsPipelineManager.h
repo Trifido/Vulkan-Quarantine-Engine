@@ -35,6 +35,7 @@ public:
     bool Exists(std::string pipelineName);
     void RegisterDefaultRenderPass(VkRenderPass renderPass);
     void CleanGraphicsPipeline();
+    void RecreateGraphicsPipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout);
 };
 
 #endif
