@@ -27,7 +27,7 @@ void MaterialData::ImportAssimpMaterial(aiMaterial* material)
     if (ret != AI_SUCCESS) this->BumpScaling = 0.0f;
 
     ret = material->Get(AI_MATKEY_SHININESS, this->Shininess);
-    if (ret != AI_SUCCESS) this->Shininess = 0.0f;
+    if (ret != AI_SUCCESS) this->Shininess = 32.0f;
 
     ret = material->Get(AI_MATKEY_REFLECTIVITY, this->Reflectivity);
     if (ret != AI_SUCCESS) this->Reflectivity = 0.0f;

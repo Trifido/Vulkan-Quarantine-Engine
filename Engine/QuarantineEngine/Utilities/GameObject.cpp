@@ -29,6 +29,7 @@ GameObject::GameObject(PRIMITIVE_TYPE type)
     if (type != PRIMITIVE_TYPE::GRID_TYPE)
     {
         this->addMaterial(this->materialManager->GetMaterial("defaultPrimitiveMat"));
+        this->material->InitializeMaterialDataUBO();
     }
 
     size_t numMeshAttributes = this->CheckNumAttributes();
