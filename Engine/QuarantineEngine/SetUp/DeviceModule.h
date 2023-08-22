@@ -28,6 +28,8 @@ private:
 
 public:
     static DeviceModule* getInstance();
+    static void ResetInstance();
+
     void pickPhysicalDevice(const VkInstance &instance, VkSurfaceKHR& surface);
     void createLogicalDevice(VkSurfaceKHR& surface, QueueModule& queueModule);
     VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);

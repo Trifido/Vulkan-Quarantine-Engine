@@ -230,6 +230,14 @@ void MaterialData::fillEmptyTextures()
     }
 }
 
+void MaterialData::CleanLastResources()
+{
+    this->deviceModule = nullptr;
+    this->textureManager = nullptr;
+    this->currentTextures.clear();
+    this->materialbuffer = nullptr;
+}
+
 void MaterialData::InitializeUBOMaterial(std::shared_ptr<ShaderModule> shader_ptr)
 {
     auto reflect = shader_ptr->reflectShader;
@@ -350,6 +358,8 @@ void MaterialData::UpdateUBOMaterial()
         vkMapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame], 0, this->materialUniformSize, 0, &data);
         memcpy(data, this->materialbuffer, this->materialUniformSize);
         vkUnmapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame]);
+
+        delete data;
     }
 }
 

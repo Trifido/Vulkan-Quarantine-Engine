@@ -13,6 +13,12 @@ PhysicsModule* PhysicsModule::getInstance()
     return instance;
 }
 
+void PhysicsModule::ResetInstance()
+{
+    delete instance;
+    instance = nullptr;
+}
+
 PhysicsModule::PhysicsModule()
 {
     this->collisionConfiguration = new btDefaultCollisionConfiguration();

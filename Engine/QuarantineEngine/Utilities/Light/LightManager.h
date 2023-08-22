@@ -23,12 +23,14 @@ private:
     void AddLight(std::shared_ptr<Light> light_ptr, std::string name);
 public:
     static LightManager* getInstance();
+    static void ResetInstance();
     LightManager();
     void CreateLight(LightType type, std::string name);
     std::shared_ptr<Light> GetLight(std::string name);
     void UpdateUniform();
     void UpdateUBOLight();
     void CleanLightUBO();
+    void CleanLastResources();
 };
 
 #endif

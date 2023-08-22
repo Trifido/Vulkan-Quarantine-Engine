@@ -50,12 +50,12 @@ void ShaderModule::createShaderModule(const std::string& filename_vertex, const 
 {
     vertShaderStageInfo = createShader(deviceModule->device, filename_vertex, SHADER_TYPE::VERTEX_SHADER);
     fragShaderStageInfo = createShader(deviceModule->device, filename_fragment, SHADER_TYPE::FRAGMENT_SHADER);
-    shaderStages.push_back(vertShaderStageInfo);
-    shaderStages.push_back(fragShaderStageInfo);
+    //shaderStages.push_back(vertShaderStageInfo);
+    //shaderStages.push_back(fragShaderStageInfo);
 
-    this->CreateDescriptorSetLayout();
-    this->createShaderBindings();
-    this->PipelineModule = this->graphicsPipelineManager->RegisterNewGraphicsPipeline(*this, descriptorSetLayout);
+    //this->CreateDescriptorSetLayout();
+    //this->createShaderBindings();
+    //this->PipelineModule = this->graphicsPipelineManager->RegisterNewGraphicsPipeline(*this, descriptorSetLayout);
 }
 
 void ShaderModule::CleanDescriptorSetLayout()
@@ -94,6 +94,15 @@ void ShaderModule::RecreatePipeline()
     this->graphicsPipelineManager->RecreateGraphicsPipeline(*this, this->descriptorSetLayout);
 }
 
+void ShaderModule::CleanLastResources()
+{
+    this->graphicsPipelineManager = nullptr;
+    this->bindingDescription.reset();
+    this->bindingDescription = nullptr;
+    this->PipelineModule.reset();
+    this->PipelineModule = nullptr;
+}
+
 VkPipelineShaderStageCreateInfo ShaderModule::createShader(VkDevice& device, const std::string& filename, SHADER_TYPE shaderType)
 {
     std::vector<char> code = readFile(filename);
@@ -103,11 +112,7 @@ VkPipelineShaderStageCreateInfo ShaderModule::createShader(VkDevice& device, con
     createInfo.codeSize = code.size();
     createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
-    //if (!this->reflectShader.isShaderReflected)
-    //{
-        //this->reflectShader.Output(createInfo);
-        this->reflectShader.PerformReflect(createInfo);
-    //}
+    this->reflectShader.PerformReflect(createInfo);
 
     VkPipelineShaderStageCreateInfo shaderStageInfo{};
     shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;

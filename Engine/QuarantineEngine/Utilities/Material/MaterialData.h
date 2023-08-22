@@ -68,6 +68,7 @@ public:
     void InitializeUBOMaterial(std::shared_ptr<ShaderModule> shader_ptr);
     void UpdateUBOMaterial();
     void CleanMaterialUBO();
+    void CleanLastResources();
 };
 
 #endif // !MATERIAL_DATA_H

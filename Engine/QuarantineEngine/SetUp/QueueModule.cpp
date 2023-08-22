@@ -12,3 +12,9 @@ QueueModule* QueueModule::getInstance()
 
     return instance;
 }
+
+void QueueModule::ResetInstance()
+{
+	delete instance;
+	instance = nullptr;
+}

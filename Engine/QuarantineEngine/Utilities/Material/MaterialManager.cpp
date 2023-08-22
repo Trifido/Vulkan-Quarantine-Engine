@@ -32,13 +32,13 @@ MaterialManager::MaterialManager()
 
     auto shaderManager = ShaderManager::getInstance();
     this->default_shader = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
-    shaderManager->AddShader("default", this->default_shader);
+    //shaderManager->AddShader("default", this->default_shader);
 
     this->default_primitive_shader = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/Primitive/primitiveDefault_vert.spv", "../../resources/shaders/Primitive/primitiveDefault_frag.spv"));
-    shaderManager->AddShader("default_primitive", this->default_primitive_shader);
+    //shaderManager->AddShader("default_primitive", this->default_primitive_shader);
 
     this->default_animation_shader = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/Animation/exampleAnimated_vert.spv", "../../resources/shaders/Animation/exampleAnimated_frag.spv"));
-    shaderManager->AddShader("default_animation", this->default_animation_shader);
+    //shaderManager->AddShader("default_animation", this->default_animation_shader);
 }
 
 void MaterialManager::InitializeMaterialManager()
@@ -54,6 +54,12 @@ MaterialManager* MaterialManager::getInstance()
         std::cout << "Getting existing instance of Material Manager" << std::endl;
 
     return instance;
+}
+
+void MaterialManager::ResetInstance()
+{
+    delete instance;
+    instance = nullptr;
 }
 
 std::shared_ptr<Material> MaterialManager::GetMaterial(std::string nameMaterial)
@@ -135,6 +141,24 @@ void MaterialManager::CleanPipelines()
     // Clean Camera & Lights UBO's
     this->cameraEditor->CleanCameraUBO();
     this->lightManager->CleanLightUBO();
+}
+
+void MaterialManager::CleanLastResources()
+{
+    for each (auto mat in this->_materials)
+    {
+        mat.second->CleanLastResources();
+        mat.second.reset();
+    }
+    this->_materials.clear();
+    this->cameraEditor = nullptr;
+    this->lightManager = nullptr;
+    this->default_shader.reset();
+    this->default_primitive_shader.reset();
+    this->default_animation_shader.reset();
+    this->default_shader = nullptr;
+    this->default_primitive_shader = nullptr;
+    this->default_animation_shader = nullptr;
 }
 
 void MaterialManager::RecreateMaterials(RenderPassModule* renderPassModule)

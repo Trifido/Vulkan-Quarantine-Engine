@@ -31,6 +31,7 @@ public:
     MaterialManager();
     void InitializeMaterialManager();
     static MaterialManager* getInstance();
+    static void ResetInstance();
     std::shared_ptr<Material> GetMaterial(std::string nameMaterial);
     void AddMaterial(const char* nameMaterial, std::shared_ptr<Material> mat_ptr);
     void AddMaterial(std::string& nameMaterial, std::shared_ptr<Material> mat_ptr);
@@ -39,6 +40,7 @@ public:
     bool Exists(std::string materialName);
     void CleanDescriptors();
     void CleanPipelines();
+    void CleanLastResources();
     void RecreateMaterials(RenderPassModule* renderPassModule);
     void UpdateUniforms();
     void InitializeMaterials();

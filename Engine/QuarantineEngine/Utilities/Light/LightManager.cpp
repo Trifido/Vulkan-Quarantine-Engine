@@ -25,6 +25,12 @@ LightManager* LightManager::getInstance()
     return instance;
 }
 
+void LightManager::ResetInstance()
+{
+	delete instance;
+	instance = nullptr;
+}
+
 void LightManager::CreateLight(LightType type, std::string name)
 {
     switch (type)
@@ -98,6 +104,13 @@ void LightManager::CleanLightUBO()
             vkFreeMemory(deviceModule->device, this->lightUBO->uniformBuffersMemory[i], nullptr);
         }
     }
+}
+
+void LightManager::CleanLastResources()
+{
+    this->_lights.clear();
+    this->lightUBO.reset();
+    this->lightManagerUniform.reset();
 }
 
 void LightManager::AddLight(std::shared_ptr<Light> light_ptr, std::string name)

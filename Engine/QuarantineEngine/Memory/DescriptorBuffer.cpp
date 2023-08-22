@@ -16,6 +16,19 @@ DescriptorBuffer::DescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr) : D
     this->StartResources(shader_ptr);
 }
 
+void DescriptorBuffer::CleanLastResources()
+{
+    this->deviceModule = nullptr;
+    this->lightManager = nullptr;
+    this->camera = nullptr;
+    this->textures.reset();
+    this->textures = nullptr;
+    this->materialUBO.reset();
+    this->materialUBO = nullptr;
+    this->animationUBO.reset();
+    this->animationUBO = nullptr;
+}
+
 void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
 {
     std::vector<VkDescriptorPoolSize> poolSizes;

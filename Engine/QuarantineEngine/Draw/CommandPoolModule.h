@@ -31,6 +31,7 @@ public:
 public:
     CommandPoolModule();
     static CommandPoolModule* getInstance();
+    static void ResetInstance();
 
     VkCommandPool&                  getCommandPool() { return this->commandPool; }
     VkCommandPool&                  getComputeCommandPool() { return this->computeCommandPool; }
@@ -45,6 +46,7 @@ public:
     void Render(VkFramebuffer& swapChainFramebuffer, VkRenderPass& renderPass);
     void recordComputeCommandBuffer(VkCommandBuffer commandBuffer);
     void cleanup();
+    void CleanLastResources();
 };
 
 #endif

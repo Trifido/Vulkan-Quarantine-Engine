@@ -24,6 +24,11 @@ App::App()
     commandPoolModule->ClearColor = glm::vec3(0.1f);
 }
 
+App::~App()
+{
+
+}
+
 void App::run()
 {
     initWindow();
@@ -172,8 +177,8 @@ void App::initVulkan()
    // this->computeNodeManager->InitializeComputeNodeManager(computePipelineModule);
 
     // Inicializamos los componentes del editor
-    std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
-    this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
+    //std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
+    //this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
     /**/
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH));
@@ -459,7 +464,7 @@ void App::cleanUp()
 
     glfwTerminate();
 
-    delete physicsModule;
+    this->cleanManagers();
 }
 
 void App::cleanUpSwapchain()
@@ -477,6 +482,77 @@ void App::cleanUpSwapchain()
     
 
     swapchainModule->cleanup();
+}
+
+void App::cleanManagers()
+{
+    delete this->renderPassModule;
+    this->renderPassModule = nullptr;
+
+    this->graphicsPipelineManager->ResetInstance();
+    this->graphicsPipelineManager = nullptr;
+
+    this->animationManager->ResetInstance();
+    this->animationManager = nullptr;
+
+    this->gameObjectManager->CleanLastResources();
+    this->gameObjectManager->ResetInstance();
+    this->gameObjectManager = nullptr;
+
+    this->textureManager->CleanLastResources();
+    this->textureManager->ResetInstance();
+    this->textureManager = nullptr;
+
+    this->editorManager->CleanLastResources();
+    this->editorManager->ResetInstance();
+    this->editorManager = nullptr;
+
+    this->keyboard_ptr->CleanLastResources();
+    this->keyboard_ptr->ResetInstance();
+    this->keyboard_ptr = nullptr;
+
+    this->materialManager->CleanLastResources();
+    this->materialManager->ResetInstance();
+    this->materialManager = nullptr;
+
+    this->shaderManager->CleanLastResources();
+    this->shaderManager->ResetInstance();
+    this->shaderManager = nullptr;
+
+    this->lightManager->CleanLastResources();
+    this->lightManager->ResetInstance();
+    this->lightManager = nullptr;
+
+    delete this->cameraEditor;
+    this->cameraEditor = nullptr;
+
+    this->antialiasingModule->CleanLastResources();
+    this->antialiasingModule->ResetInstance();
+    this->antialiasingModule = nullptr;
+
+    this->depthBufferModule->CleanLastResources();
+    this->depthBufferModule->ResetInstance();
+    this->depthBufferModule = nullptr;
+
+    this->physicsModule->ResetInstance();
+    this->physicsModule = nullptr;
+
+    //this->computeNodeManager->CleanLastResources();
+    //this->computeNodeManager->ResetInstance();
+    //this->computeNodeManager = nullptr;
+
+    this->commandPoolModule->CleanLastResources();
+    this->commandPoolModule->ResetInstance();
+    this->commandPoolModule = nullptr;
+
+    this->swapchainModule->ResetInstance();
+    this->swapchainModule = nullptr;
+
+    this->queueModule->ResetInstance();
+    this->queueModule = nullptr;
+
+    this->deviceModule->ResetInstance();
+    this->deviceModule = nullptr;
 }
 
 void App::computeFrame()

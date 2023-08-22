@@ -32,6 +32,12 @@ GameObjectManager* GameObjectManager::getInstance()
     return instance;
 }
 
+void GameObjectManager::ResetInstance()
+{
+	delete instance;
+	instance = nullptr;
+}
+
 void GameObjectManager::DrawCommnad(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
     for (unsigned int idl = 0; idl < this->renderLayers->GetCount(); idl++)
@@ -68,6 +74,14 @@ void GameObjectManager::Cleanup()
             model.second->cleanup();
         }
     }
+}
+
+void GameObjectManager::CleanLastResources()
+{
+    this->_objects.clear();
+    this->_physicObjects.clear();
+    delete this->renderLayers;
+    this->renderLayers = nullptr;
 }
 
 std::shared_ptr<GameObject> GameObjectManager::GetGameObject(std::string name)

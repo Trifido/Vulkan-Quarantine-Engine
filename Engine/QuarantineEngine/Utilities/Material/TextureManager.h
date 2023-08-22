@@ -18,11 +18,13 @@ private:
 public:
     TextureManager();
     static TextureManager* getInstance();
+    static void ResetInstance();
     std::shared_ptr<CustomTexture> GetTexture(std::string nameTexture);
     std::string AddTexture(std::string textureName, std::shared_ptr<CustomTexture> texture_ptr);
     std::string AddTexture(std::string textureName, CustomTexture texture);
     bool Exists(std::string textureName);
     void Clean();
+    void CleanLastResources();
 };
 
 #endif

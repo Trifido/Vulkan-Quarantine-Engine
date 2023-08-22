@@ -20,6 +20,7 @@ private:
 
 public:
     static AnimationManager* getInstance();
+    static void ResetInstance();
     std::shared_ptr<AnimationComponent> GetAnimationComponent(std::string nameGameObject);
     void AddAnimationComponent(std::string nameGameObject, std::shared_ptr<AnimationComponent> animationComponent);
     void AddAnimationComponent(std::string nameGameObject, AnimationComponent animationComponent);

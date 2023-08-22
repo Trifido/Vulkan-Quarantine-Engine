@@ -85,6 +85,7 @@ class App
 {
 public:
     App();
+    ~App();
     void run();
 
     void addWindow(GLFWwindow& window);
@@ -98,6 +99,7 @@ private:
     void drawFrame();  
     void cleanUp();
     void cleanUpSwapchain();
+    void cleanManagers();
     void resizeSwapchain(VkResult result, ERROR_RESIZE errorResize);
     void recreateSwapchain();
     //bool createFontsTexture(VkCommandBuffer& commandBuffer);

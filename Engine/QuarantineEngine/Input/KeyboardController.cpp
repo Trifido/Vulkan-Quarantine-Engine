@@ -15,6 +15,12 @@ KeyboardController* KeyboardController::getInstance()
 	return instance;
 }
 
+void KeyboardController::ResetInstance()
+{
+    delete instance;
+    instance = nullptr;
+}
+
 void KeyboardController::ReadKeyboardEvents()
 {
     if (isEditorProfile)
@@ -30,6 +36,17 @@ void KeyboardController::cleanup()
         delete instance;
         instance = NULL;
     }
+}
+
+void KeyboardController::CleanLastResources()
+{
+    for each (auto var in list_observer_)
+    {
+        delete var;
+        var = nullptr;
+    }
+
+    list_observer_.clear();
 }
 
 void KeyboardController::ReadPolygonModeKeys()

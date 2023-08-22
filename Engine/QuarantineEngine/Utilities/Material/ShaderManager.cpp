@@ -33,6 +33,12 @@ ShaderManager* ShaderManager::getInstance()
     return instance;
 }
 
+void ShaderManager::ResetInstance()
+{
+    delete instance;
+    instance = nullptr;
+}
+
 std::shared_ptr<ShaderModule> ShaderManager::GetShader(std::string shaderName)
 {
     std::unordered_map<std::string, std::shared_ptr<ShaderModule>>::const_iterator got = _shaders.find(shaderName);
@@ -79,6 +85,11 @@ void ShaderManager::CleanDescriptorSetLayouts()
     {
         shader.second->CleanDescriptorSetLayout();
     }
+}
+
+void ShaderManager::CleanLastResources()
+{
+    this->_shaders.clear();
 }
 
 void ShaderManager::RecreateShaderGraphicsPipelines()

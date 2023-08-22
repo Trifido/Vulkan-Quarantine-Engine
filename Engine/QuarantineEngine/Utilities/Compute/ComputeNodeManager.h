@@ -21,6 +21,7 @@ private:
 public:
     ComputeNodeManager();
     static ComputeNodeManager* getInstance();
+    void ComputeNodeManager::ResetInstance();
     void CreateComputeNode(std::string& nameComputeNode, bool hasAnimation);
     void InitializeComputeNodeManager(std::shared_ptr<ComputePipelineModule> computePipeline);
     void InitializeComputeNodes();
@@ -29,6 +30,7 @@ public:
     void AddComputeNode(std::string& nameComputeNode, std::shared_ptr<ComputeNode> mat_ptr);
     std::shared_ptr<ComputeNode> GetComputeNode(std::string nameComputeNode);
     void RecordComputeNodes(VkCommandBuffer commandBuffer, uint32_t currentFrame);
+    void CleanLastResources();
 };
 
 #endif // !COMPUTE_NODE_MANAGER_H

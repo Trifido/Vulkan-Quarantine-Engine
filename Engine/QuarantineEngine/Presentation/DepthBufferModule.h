@@ -20,9 +20,11 @@ private:
 
 public:
     static DepthBufferModule* getInstance();
+    static void ResetInstance();
     DepthBufferModule();
     void createDepthResources(VkExtent2D& swapChainExtent, VkCommandPool& commandPool);
     VkFormat findDepthFormat();
+    void CleanLastResources();
 private:
     bool hasStencilComponent(VkFormat format);
 };

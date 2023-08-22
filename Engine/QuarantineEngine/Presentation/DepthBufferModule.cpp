@@ -12,6 +12,12 @@ DepthBufferModule* DepthBufferModule::getInstance()
 	return instance;
 }
 
+void DepthBufferModule::ResetInstance()
+{
+    delete instance;
+    instance = nullptr;
+}
+
 DepthBufferModule::DepthBufferModule()
 {
     deviceModule = DeviceModule::getInstance();
@@ -40,6 +46,11 @@ VkFormat DepthBufferModule::findDepthFormat()
         VK_IMAGE_TILING_OPTIMAL,
         VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
     );
+}
+
+void DepthBufferModule::CleanLastResources()
+{
+    this->antialiasingModule = nullptr;
 }
 
 bool DepthBufferModule::hasStencilComponent(VkFormat format)

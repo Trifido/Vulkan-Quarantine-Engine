@@ -27,6 +27,7 @@ private:
 
 public:
     static GraphicsPipelineManager* getInstance();
+    static void ResetInstance();
     std::shared_ptr<GraphicsPipelineModule> GetPipeline(std::string pipelineName);
     void AddGraphicsPipeline(const char* pipelineName, std::shared_ptr<GraphicsPipelineModule> gp_ptr);
     void AddGraphicsPipeline(std::string& pipelineName, std::shared_ptr<GraphicsPipelineModule> gp_ptr);

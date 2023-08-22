@@ -34,6 +34,12 @@ GraphicsPipelineManager* GraphicsPipelineManager::getInstance()
     return instance;
 }
 
+void GraphicsPipelineManager::ResetInstance()
+{
+	delete instance;
+	instance = nullptr;
+}
+
 std::shared_ptr<GraphicsPipelineModule> GraphicsPipelineManager::GetPipeline(std::string namePipeline)
 {
     if (_graphicsPipelines.empty())

@@ -42,6 +42,12 @@ ComputeNodeManager* ComputeNodeManager::getInstance()
     return instance;
 }
 
+void ComputeNodeManager::ResetInstance()
+{
+    delete instance;
+    instance = nullptr;
+}
+
 void ComputeNodeManager::CreateComputeNode(std::string& nameComputeNode, bool hasAnimation)
 {
     nameComputeNode = CheckName(nameComputeNode);
@@ -99,4 +105,13 @@ void ComputeNodeManager::RecordComputeNodes(VkCommandBuffer commandBuffer, uint3
     {
         it.second->BindCommandBuffer(commandBuffer, currentFrame);
     }
+}
+
+void ComputeNodeManager::CleanLastResources()
+{
+    this->_computeNodes.clear();
+    this->compute_default_shader.reset();
+    this->compute_default_shader = nullptr;
+    this->computePipelineModule.reset();
+    this->computePipelineModule = nullptr;
 }

@@ -17,6 +17,12 @@ SwapChainModule* SwapChainModule::getInstance()
     return instance;
 }
 
+void SwapChainModule::ResetInstance()
+{
+	delete instance;
+	instance = nullptr;
+}
+
 SwapChainModule::SwapChainModule()
 {
     deviceModule = DeviceModule::getInstance();

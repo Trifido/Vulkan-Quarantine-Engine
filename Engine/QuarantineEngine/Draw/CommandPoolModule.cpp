@@ -29,6 +29,12 @@ CommandPoolModule* CommandPoolModule::getInstance()
     return instance;
 }
 
+void CommandPoolModule::ResetInstance()
+{
+    delete instance;
+    instance = nullptr;
+}
+
 void CommandPoolModule::bindComputeNodeManager()
 {
     computeNodeManager = ComputeNodeManager::getInstance();
@@ -148,4 +154,13 @@ void CommandPoolModule::cleanup()
 {
     vkDestroyCommandPool(deviceModule->device, computeCommandPool, nullptr);
     vkDestroyCommandPool(deviceModule->device, commandPool, nullptr);
+}
+
+void CommandPoolModule::CleanLastResources()
+{
+    this->deviceModule = nullptr;
+    this->swapchainModule = nullptr;
+    this->editorManager = nullptr;
+    this->gameObjectManager = nullptr;
+    this->computeNodeManager = nullptr;
 }

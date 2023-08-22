@@ -38,6 +38,12 @@ TextureManager* TextureManager::getInstance()
     return instance;
 }
 
+void TextureManager::ResetInstance()
+{
+	delete instance;
+	instance = nullptr;
+}
+
 std::shared_ptr<CustomTexture> TextureManager::GetTexture(std::string nameTexture)
 {
     std::unordered_map<std::string, std::shared_ptr<CustomTexture>>::const_iterator got = _textures.find(nameTexture);
@@ -78,4 +84,9 @@ void TextureManager::Clean()
     {
         it.second->cleanup();
     }
+}
+
+void TextureManager::CleanLastResources()
+{
+    this->_textures.clear();
 }

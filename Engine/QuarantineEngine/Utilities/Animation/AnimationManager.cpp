@@ -32,6 +32,12 @@ AnimationManager* AnimationManager::getInstance()
     return instance;
 }
 
+void AnimationManager::ResetInstance()
+{
+	delete instance;
+	instance = nullptr;
+}
+
 std::shared_ptr<AnimationComponent> AnimationManager::GetAnimationComponent(std::string nameGameObject)
 {
     auto it = _animationComponents.find(nameGameObject);

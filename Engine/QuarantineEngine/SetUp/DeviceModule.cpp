@@ -57,6 +57,12 @@ DeviceModule* DeviceModule::getInstance()
     return instance;
 }
 
+void DeviceModule::ResetInstance()
+{
+    delete instance;
+    instance = nullptr;
+}
+
 void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& nQueueModule)
 {
     QueueFamilyIndices indices = QueueFamilyIndices::findQueueFamilies(physicalDevice, surface);

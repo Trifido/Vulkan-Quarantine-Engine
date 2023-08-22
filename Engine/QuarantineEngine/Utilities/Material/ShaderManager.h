@@ -18,12 +18,14 @@ private:
 
 public:
     static ShaderManager* getInstance();
+    static void ResetInstance();
     std::shared_ptr<ShaderModule> GetShader(std::string nameMaterial);
     void AddShader(std::string shaderName, std::shared_ptr<ShaderModule> shader_ptr);
     void AddShader(std::string shaderName, ShaderModule shader);
     bool Exists(std::string shaderName);
     void Clean();
     void CleanDescriptorSetLayouts();
+    void CleanLastResources();
     void RecreateShaderGraphicsPipelines();
 };
 

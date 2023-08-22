@@ -24,6 +24,7 @@ public:
 public:
     Material();
     Material(std::shared_ptr<ShaderModule> shader_ptr);
+    void CleanLastResources();
 
     void cleanup();
     void cleanupDescriptor();

@@ -18,6 +18,12 @@ EditorObjectManager* EditorObjectManager::getInstance()
     return instance;
 }
 
+void EditorObjectManager::ResetInstance()
+{
+    delete instance;
+    instance = nullptr;
+}
+
 void EditorObjectManager::DrawCommnad(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
     for (auto model : this->_objects)
@@ -32,6 +38,11 @@ void EditorObjectManager::Cleanup()
     {
         model.second->Clean();
     }
+}
+
+void EditorObjectManager::CleanLastResources()
+{
+    this->_objects.clear();
 }
 
 std::shared_ptr<EditorObject> EditorObjectManager::GetObject(std::string name)

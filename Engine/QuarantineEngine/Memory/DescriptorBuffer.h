@@ -48,6 +48,7 @@ public:
     void InitializeDescriptorSets(std::shared_ptr<ShaderModule> shader_ptr);
     VkDescriptorSet* getDescriptorSet(size_t id) { return &descriptorSets.at(id); }
     void CleanDescriptorSetPool();
+    void CleanLastResources();
 };
 
 #endif // !DESCRIPTOR_BUFFER_H

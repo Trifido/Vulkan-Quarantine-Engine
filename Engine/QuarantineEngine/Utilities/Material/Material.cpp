@@ -17,6 +17,17 @@ Material::Material(std::shared_ptr<ShaderModule> shader_ptr) : Material()
     this->descriptor = std::make_shared<DescriptorBuffer>(this->shader);
 }
 
+void Material::CleanLastResources()
+{
+    this->materialData.CleanLastResources();
+    this->descriptor->CleanLastResources();
+    this->descriptor.reset();
+    this->descriptor = nullptr;
+    this->shader->CleanLastResources();
+    this->shader.reset();
+    this->shader = nullptr;
+}
+
 void Material::InitializeMaterialDataUBO()
 {
     this->materialData.InitializeUBOMaterial(this->shader);
