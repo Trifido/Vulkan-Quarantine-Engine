@@ -744,11 +744,9 @@ void ReflectShader::Output(VkShaderModuleCreateInfo createInfo)
 
 void ReflectShader::PerformReflect(VkShaderModuleCreateInfo createInfo)
 {
-    auto k_sample_spv = createInfo.pCode;
     SpvReflectShaderModule module = {};
-
     SpvReflectResult result = {};
-    result = spvReflectCreateShaderModule(sizeof(uint32_t) * createInfo.codeSize, k_sample_spv, &module);
+    result = spvReflectCreateShaderModule(createInfo.codeSize, createInfo.pCode, &module);
 
     assert(result == SPV_REFLECT_RESULT_SUCCESS);
 
@@ -808,7 +806,7 @@ void ReflectShader::PerformReflect(VkShaderModuleCreateInfo createInfo)
 
         this->isAnimationShader = isBoneInput && isWeightInput;
     }
-
+    
     spvReflectDestroyShaderModule(&module);
     this->isShaderReflected = true;
 }
