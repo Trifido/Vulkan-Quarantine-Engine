@@ -32,13 +32,13 @@ MaterialManager::MaterialManager()
 
     auto shaderManager = ShaderManager::getInstance();
     this->default_shader = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
-    //shaderManager->AddShader("default", this->default_shader);
+    shaderManager->AddShader("default", this->default_shader);
 
     this->default_primitive_shader = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/Primitive/primitiveDefault_vert.spv", "../../resources/shaders/Primitive/primitiveDefault_frag.spv"));
-    //shaderManager->AddShader("default_primitive", this->default_primitive_shader);
+    shaderManager->AddShader("default_primitive", this->default_primitive_shader);
 
     this->default_animation_shader = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/Animation/exampleAnimated_vert.spv", "../../resources/shaders/Animation/exampleAnimated_frag.spv"));
-    //shaderManager->AddShader("default_animation", this->default_animation_shader);
+    shaderManager->AddShader("default_animation", this->default_animation_shader);
 }
 
 void MaterialManager::InitializeMaterialManager()
@@ -50,8 +50,6 @@ MaterialManager* MaterialManager::getInstance()
 {
     if (instance == NULL)
         instance = new MaterialManager();
-    else
-        std::cout << "Getting existing instance of Material Manager" << std::endl;
 
     return instance;
 }
@@ -175,7 +173,6 @@ void MaterialManager::UpdateUniforms()
     for (auto& it : _materials)
     {
         it.second->UpdateUniformData();
-        //it.second->GetDescrìptor()->updateUniforms(imageIndex);
     }
 }
 
@@ -183,8 +180,6 @@ void MaterialManager::InitializeMaterials()
 {
     for (auto it : _materials)
     {
-    //    it.second->bindingCamera(this->cameraEditor);
-    //    it.second->bindingLights(this->lightManager);
         it.second->InitializeMaterial();
     }
 }

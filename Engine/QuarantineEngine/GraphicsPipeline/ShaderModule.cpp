@@ -50,12 +50,12 @@ void ShaderModule::createShaderModule(const std::string& filename_vertex, const 
 {
     vertShaderStageInfo = createShader(deviceModule->device, filename_vertex, SHADER_TYPE::VERTEX_SHADER);
     fragShaderStageInfo = createShader(deviceModule->device, filename_fragment, SHADER_TYPE::FRAGMENT_SHADER);
-    //shaderStages.push_back(vertShaderStageInfo);
-    //shaderStages.push_back(fragShaderStageInfo);
+    shaderStages.push_back(vertShaderStageInfo);
+    shaderStages.push_back(fragShaderStageInfo);
 
-    //this->CreateDescriptorSetLayout();
-    //this->createShaderBindings();
-    //this->PipelineModule = this->graphicsPipelineManager->RegisterNewGraphicsPipeline(*this, descriptorSetLayout);
+    this->CreateDescriptorSetLayout();
+    this->createShaderBindings();
+    this->PipelineModule = this->graphicsPipelineManager->RegisterNewGraphicsPipeline(*this, descriptorSetLayout);
 }
 
 void ShaderModule::CleanDescriptorSetLayout()
@@ -67,9 +67,7 @@ void ShaderModule::createShaderBindings()
 {
     this->bindingDescription = std::make_shared<VkVertexInputBindingDescription>();
     this->SetBindingDescription();
-    //this->bindingDescription = GeometryComponent::getBindingDescription(this->reflectShader.isAnimationShader);
     this->SetAttributeDescriptions(this->attributeDescriptions);
-    //this->attributeDescriptions = GeometryComponent::getAttributeDescriptions(this->reflectShader.isAnimationShader);
 
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputInfo.vertexBindingDescriptionCount = 1;

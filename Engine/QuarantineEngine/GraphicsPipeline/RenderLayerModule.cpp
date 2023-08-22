@@ -40,8 +40,6 @@ RenderLayerModule* RenderLayerModule::getInstance()
 {
     if (instance == NULL)
         instance = new RenderLayerModule();
-    else
-        std::cout << "Getting existing instance of RenderLayerModule" << std::endl;
 
     return instance;
 }

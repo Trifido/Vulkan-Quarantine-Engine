@@ -358,8 +358,6 @@ void MaterialData::UpdateUBOMaterial()
         vkMapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame], 0, this->materialUniformSize, 0, &data);
         memcpy(data, this->materialbuffer, this->materialUniformSize);
         vkUnmapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame]);
-
-        delete data;
     }
 }
 

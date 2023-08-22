@@ -12,8 +12,6 @@ EditorObjectManager* EditorObjectManager::getInstance()
 {
     if (instance == NULL)
         instance = new EditorObjectManager();
-    else
-        std::cout << "Getting existing instance of EditorObjectManager" << std::endl;
 
     return instance;
 }

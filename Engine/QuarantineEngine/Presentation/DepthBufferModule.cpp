@@ -6,8 +6,6 @@ DepthBufferModule* DepthBufferModule::getInstance()
 {
 	if (instance == NULL)
 		instance = new DepthBufferModule();
-	else
-		std::cout << "Getting existing depth buffer module instance" << std::endl;
 
 	return instance;
 }

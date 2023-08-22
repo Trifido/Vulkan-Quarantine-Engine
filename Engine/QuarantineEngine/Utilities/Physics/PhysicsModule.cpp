@@ -7,8 +7,6 @@ PhysicsModule* PhysicsModule::getInstance()
 {
     if (instance == NULL)
         instance = new PhysicsModule();
-    else
-        std::cout << "Getting existing Physics module instance" << std::endl;
 
     return instance;
 }

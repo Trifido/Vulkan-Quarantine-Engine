@@ -33,7 +33,7 @@ VERSION HISTORY
 #if defined(SPIRV_REFLECT_USE_SYSTEM_SPIRV_H)
 #include <spirv/unified1/spirv.h>
 #else
-#include "SPIRV-Reflect/include/spirv/unified1/spirv.h"
+#include "./include/spirv/unified1/spirv.h"
 #endif
 
 
@@ -79,6 +79,7 @@ typedef enum SpvReflectResult {
   SPV_REFLECT_RESULT_ERROR_SPIRV_INVALID_BLOCK_MEMBER_REFERENCE,
   SPV_REFLECT_RESULT_ERROR_SPIRV_INVALID_ENTRY_POINT,
   SPV_REFLECT_RESULT_ERROR_SPIRV_INVALID_EXECUTION_MODE,
+  SPV_REFLECT_RESULT_ERROR_SPIRV_MAX_RECURSIVE_EXCEEDED,
 } SpvReflectResult;
 
 /*! @enum SpvReflectModuleFlagBits
@@ -307,10 +308,17 @@ typedef struct SpvReflectImageTraits {
   SpvImageFormat                    image_format;
 } SpvReflectImageTraits;
 
+typedef enum SpvReflectArrayDimType {
+  SPV_REFLECT_ARRAY_DIM_RUNTIME       = 0,         // OpTypeRuntimeArray
+  SPV_REFLECT_ARRAY_DIM_SPEC_CONSTANT = 0xFFFFFFFF // specialization constant
+} SpvReflectArrayDimType;
+
 typedef struct SpvReflectArrayTraits {
   uint32_t                          dims_count;
-  // Each entry is: 0xFFFFFFFF for a specialization constant dimension,
-  // 0 for a runtime array dimension, and the array length otherwise.
+  // Each entry is either:
+  // - specialization constant dimension
+  // - OpTypeRuntimeArray
+  // - the array length otherwise
   uint32_t                          dims[SPV_REFLECT_MAX_ARRAY_DIMS];
   // Stores Ids for dimensions that are specialization constants
   uint32_t                          spec_constant_op_ids[SPV_REFLECT_MAX_ARRAY_DIMS];
@@ -323,12 +331,13 @@ typedef struct SpvReflectBindingArrayTraits {
 } SpvReflectBindingArrayTraits;
 
 /*! @struct SpvReflectTypeDescription
-
+    @brief Information about an OpType* instruction
 */
 typedef struct SpvReflectTypeDescription {
   uint32_t                          id;
   SpvOp                             op;
   const char*                       type_name;
+  // Non-NULL if type is member of a struct
   const char*                       struct_member_name;
   SpvStorageClass                   storage_class;
   SpvReflectTypeFlags               type_flags;
@@ -340,13 +349,19 @@ typedef struct SpvReflectTypeDescription {
     SpvReflectArrayTraits           array;
   } traits;
 
+  // If underlying type is a struct (ex. array of structs)
+  // this gives access to the OpTypeStruct
+  struct SpvReflectTypeDescription* struct_type_description;
+
+  // @deprecated use struct_type_description instead
   uint32_t                          member_count;
+  // @deprecated use struct_type_description instead
   struct SpvReflectTypeDescription* members;
 } SpvReflectTypeDescription;
 
 
 /*! @struct SpvReflectInterfaceVariable
-
+    @brief The OpVariable that is either an Input or Output to the module
 */
 typedef struct SpvReflectInterfaceVariable {
   uint32_t                            spirv_id;
@@ -440,6 +455,10 @@ typedef struct SpvReflectDescriptorSet {
   uint32_t                          binding_count;
   SpvReflectDescriptorBinding**     bindings;
 } SpvReflectDescriptorSet;
+
+typedef enum SpvReflectExecutionModeValue {
+  SPV_REFLECT_EXECUTION_MODE_SPEC_CONSTANT = 0xFFFFFFFF // specialization constant
+} SpvReflectExecutionModeValue;
 
 /*! @struct SpvReflectEntryPoint
 

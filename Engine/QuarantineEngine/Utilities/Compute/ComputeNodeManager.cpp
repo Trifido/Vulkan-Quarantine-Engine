@@ -36,8 +36,6 @@ ComputeNodeManager* ComputeNodeManager::getInstance()
 {
     if (instance == NULL)
         instance = new ComputeNodeManager();
-    else
-        std::cout << "Getting existing instance of Compute Node Manager" << std::endl;
 
     return instance;
 }

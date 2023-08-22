@@ -32,8 +32,6 @@ TextureManager* TextureManager::getInstance()
 {
     if (instance == NULL)
         instance = new TextureManager();
-    else
-        std::cout << "Getting existing instance of Texture Manager" << std::endl;
 
     return instance;
 }

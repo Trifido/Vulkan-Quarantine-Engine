@@ -26,8 +26,6 @@ GameObjectManager* GameObjectManager::getInstance()
 {
     if (instance == NULL)
         instance = new GameObjectManager();
-    else
-        std::cout << "Getting existing instance of EditorObjectManager" << std::endl;
 
     return instance;
 }

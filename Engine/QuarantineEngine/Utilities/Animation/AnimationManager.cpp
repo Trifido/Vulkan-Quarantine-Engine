@@ -26,8 +26,6 @@ AnimationManager* AnimationManager::getInstance()
 {
     if (instance == NULL)
         instance = new AnimationManager();
-    else
-        std::cout << "Getting existing instance of Animation Manager" << std::endl;
 
     return instance;
 }

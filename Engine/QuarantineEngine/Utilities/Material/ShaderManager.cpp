@@ -27,8 +27,6 @@ ShaderManager* ShaderManager::getInstance()
 {
     if (instance == NULL)
         instance = new ShaderManager();
-    else
-        std::cout << "Getting existing instance of Shader Manager" << std::endl;
 
     return instance;
 }

@@ -11,8 +11,6 @@ SwapChainModule* SwapChainModule::getInstance()
 {
     if (instance == NULL)
         instance = new SwapChainModule();
-    else
-        std::cout << "Getting existing swapchain module instance" << std::endl;
 
     return instance;
 }

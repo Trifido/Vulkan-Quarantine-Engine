@@ -51,8 +51,6 @@ DeviceModule* DeviceModule::getInstance()
 {
     if (instance == nullptr)
         instance = new DeviceModule();
-    else
-        std::cout << "Getting existing instance" << std::endl;
 
     return instance;
 }

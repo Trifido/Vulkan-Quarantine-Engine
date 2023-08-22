@@ -19,8 +19,6 @@ LightManager* LightManager::getInstance()
 {
     if (instance == NULL)
         instance = new LightManager();
-    else
-        std::cout << "Getting existing instance of Light Manager" << std::endl;
 
     return instance;
 }

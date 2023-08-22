@@ -19,8 +19,6 @@ AntiAliasingModule* AntiAliasingModule::getInstance()
 {
 	if (instance == NULL)
 		instance = new AntiAliasingModule();
-	else
-		std::cout << "Getting existing AntiAliasing module instance" << std::endl;
 
 	return instance;
 }

@@ -9,8 +9,6 @@ KeyboardController* KeyboardController::getInstance()
 {
 	if (instance == NULL)
 		instance = new KeyboardController();
-	else
-		std::cout << "Getting existing KeyboardController instance" << std::endl;
 
 	return instance;
 }
@@ -66,7 +64,7 @@ void KeyboardController::ReadPolygonModeKeys()
 }
 
 KeyboardController::~KeyboardController() {
-    std::cout << "Goodbye, I was the Subject.\n";
+
 }
 
 void KeyboardController::Attach(IObserver* observer)

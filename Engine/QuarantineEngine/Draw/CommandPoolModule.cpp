@@ -23,8 +23,6 @@ CommandPoolModule* CommandPoolModule::getInstance()
 {
     if (instance == NULL)
         instance = new CommandPoolModule();
-    else
-        std::cout << "Getting existing instance Command Pool Module" << std::endl;
 
     return instance;
 }

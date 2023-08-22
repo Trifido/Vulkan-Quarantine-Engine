@@ -28,8 +28,6 @@ GraphicsPipelineManager* GraphicsPipelineManager::getInstance()
 {
     if (instance == NULL)
         instance = new GraphicsPipelineManager();
-    else
-        std::cout << "Getting existing instance of Material Manager" << std::endl;
 
     return instance;
 }
