@@ -88,7 +88,10 @@ void MaterialManager::AddMaterial(std::string& nameMaterial, Material mat)
 
 void MaterialManager::CreateDefaultPrimitiveMaterial()
 {
-    this->AddMaterial(std::string("defaultPrimitiveMat"), std::make_shared<Material>(Material(this->default_primitive_shader)));
+    if (this->default_primitive_shader != nullptr)
+    {
+        this->AddMaterial(std::string("defaultPrimitiveMat"), std::make_shared<Material>(Material(this->default_primitive_shader)));
+    }
 }
 
 void MaterialManager::CreateMaterial(std::string& nameMaterial, bool hasAnimation)                                                                          // --------------------- En desarrollo ------------------------
