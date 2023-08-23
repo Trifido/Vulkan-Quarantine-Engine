@@ -23,13 +23,13 @@ layout(set = 0, binding = 0) uniform CameraUniform
 } cameraData;
 
 layout(set = 0, binding = 1) uniform UniformMaterial {
+    vec3 Diffuse;
     float Shininess;
     int idxDiffuse;
     int idxNormal;
     int idxSpecular;
     int idxEmissive;
     int idxHeight;
-    vec3 Diffuse;
 } uboMaterial;
 
 struct LightData {
@@ -77,7 +77,7 @@ void main()
     }
 
     //COMPUTE LIGHT
-    vec3 result = uboMaterial.Diffuse;//vec3(0.5, 0.5, 0.5);
+    vec3 result = vec3(0.5, 0.5, 0.5); //uboMaterial.Diffuse;//
 
     if(uboMaterial.idxDiffuse > -1)
     {
@@ -106,6 +106,8 @@ void main()
 
     // result = resultPoint + resultDir + resultSpot;
     outColor = vec4(result, 1.0);
+    
+    outColor =  vec4(uboMaterial.Diffuse, 1.0);
 }
 
 vec3 ComputePointLight(LightData light, int id, vec3 normal, vec2 texCoords)

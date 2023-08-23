@@ -197,6 +197,7 @@ void App::initVulkan()
 
 
     std::shared_ptr<GameObject> cube = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
+    cube->material->materialData.SetMaterialField("Diffuse", glm::vec3(1.0f, 0.0f, 0.0f));
     cube->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
     cube->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 65.0f));
 
@@ -269,7 +270,6 @@ void App::initVulkan()
     //this->lightManager->GetLight("PointLight1")->quadratic = 0.032f;
 
     this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
-    //this->lightManager->GetLight("DirectionalLight0")->transform->SetPosition(glm::vec3(0.0f, 0.0f, 3.0f));
     this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(2.0f, 8.0f, -1.0f));
     this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.1f);
     this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.1f);

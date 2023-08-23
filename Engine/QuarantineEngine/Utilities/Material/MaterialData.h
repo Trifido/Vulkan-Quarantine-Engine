@@ -22,6 +22,8 @@ private:
     std::string texturePath;
     int numTextures;
     char* materialbuffer;
+    std::unordered_map < std::string, std::pair<size_t, size_t> > materialFields;
+    bool isModified;
 
 public:
     float Opacity;
@@ -61,6 +63,7 @@ private:
     std::string GetTexture(const aiScene* scene, aiMaterial* mat, aiTextureType type, TEXTURE_TYPE textureType);
     void fillEmptyTextures();
     void WriteToMaterialBuffer(char* data, size_t &position, const size_t& sizeToCopy);
+    void UpdateMaterialData(std::string materialField, char* value);
 public:
     MaterialData();
     void ImportAssimpMaterial(aiMaterial* material);
@@ -69,6 +72,11 @@ public:
     void UpdateUBOMaterial();
     void CleanMaterialUBO();
     void CleanLastResources();
+    void SetMaterialField(std::string nameField, float value);
+    void SetMaterialField(std::string nameField, glm::vec3 value);
+    void SetMaterialField(std::string nameField, int value);
+
+
 };
 
 #endif // !MATERIAL_DATA_H

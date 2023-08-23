@@ -12,9 +12,10 @@ MaterialData::MaterialData()
     this->fillEmptyTextures();
     this->numTextures = 0;
     this->idxDiffuse = this->idxEmissive = this->idxHeight = this->idxNormal = this->idxSpecular = -1;
-    this->Diffuse = glm::vec3(1.0f, 0.0f, 0.0f);
+    this->Shininess = 32.0f;
 
     this->materialUBO = std::make_shared<UniformBufferObject>();
+    this->isModified = true;
 }
 
 void MaterialData::ImportAssimpMaterial(aiMaterial* material)
@@ -253,88 +254,105 @@ void MaterialData::InitializeUBOMaterial(std::shared_ptr<ShaderModule> shader_pt
         {
             if (name == "Opacity")
             {
+                this->materialFields["Opacity"] = std::pair<size_t, size_t>(position, sizeof(this->Opacity));
                 this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->Opacity), position, sizeof(this->Opacity));
                 continue;
             }
             if (name == "BumpScaling")
             {
+                this->materialFields["BumpScaling"] = std::pair<size_t, size_t>(position, sizeof(this->BumpScaling));
                 this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->BumpScaling), position, sizeof(this->BumpScaling));
                 continue;
             }
             if (name == "Shininess")
             {
+                this->materialFields["Shininess"] = std::pair<size_t, size_t>(position, sizeof(this->Shininess));
                 this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->Shininess), position, sizeof(this->Shininess));
                 continue;
             }
             if (name == "Reflectivity")
             {
+                this->materialFields["Reflectivity"] = std::pair<size_t, size_t>(position, sizeof(this->Reflectivity));
                 this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->Reflectivity), position, sizeof(this->Reflectivity));
                 continue;
             }
             if (name == "Shininess_Strength")
             {
+                this->materialFields["Shininess_Strength"] = std::pair<size_t, size_t>(position, sizeof(this->Shininess_Strength));
                 this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->Shininess_Strength), position, sizeof(this->Shininess_Strength));
                 continue;
             }
             if (name == "Refractivity")
             {
+                this->materialFields["Refractivity"] = std::pair<size_t, size_t>(position, sizeof(this->Refractivity));
                 this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->Refractivity), position, sizeof(this->Refractivity));
                 continue;
             }
 
             if (name == "idxDiffuse")
             {
+                this->materialFields["idxDiffuse"] = std::pair<size_t, size_t>(position, sizeof(this->idxDiffuse));
                 this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->idxDiffuse), position, sizeof(this->idxDiffuse));
                 continue;
             }
             if (name == "idxNormal")
             {
+                this->materialFields["idxNormal"] = std::pair<size_t, size_t>(position, sizeof(this->idxNormal));
                 this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->idxNormal), position, sizeof(this->idxNormal));
                 continue;
             }
             if (name == "idxSpecular")
             {
+                this->materialFields["idxSpecular"] = std::pair<size_t, size_t>(position, sizeof(this->idxSpecular));
                 this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->idxSpecular), position, sizeof(this->idxSpecular));
                 continue;
             }
             if (name == "idxHeight")
             {
+                this->materialFields["idxHeight"] = std::pair<size_t, size_t>(position, sizeof(this->idxHeight));
                 this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->idxHeight), position, sizeof(this->idxHeight));
                 continue;
             }
             if (name == "idxEmissive")
             {
+                this->materialFields["idxEmissive"] = std::pair<size_t, size_t>(position, sizeof(this->idxEmissive));
                 this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->idxEmissive), position, sizeof(this->idxEmissive));
                 continue;
             }
 
             if (name == "Diffuse")
             {
+                this->materialFields["Diffuse"] = std::pair<size_t, size_t>(position, sizeof(this->Diffuse));
                 this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->Diffuse), position, sizeof(this->Diffuse));
                 continue;
             }
             if (name == "Ambient")
             {
+                this->materialFields["Ambient"] = std::pair<size_t, size_t>(position, sizeof(this->Ambient));
                 this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->Ambient), position, sizeof(this->Ambient));
                 continue;
             }
             if (name == "Specular")
             {
+                this->materialFields["Specular"] = std::pair<size_t, size_t>(position, sizeof(this->Specular));
                 this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->Specular), position, sizeof(this->Specular));
                 continue;
             }
             if (name == "Emissive")
             {
+                this->materialFields["Emissive"] = std::pair<size_t, size_t>(position, sizeof(this->Emissive));
                 this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->Emissive), position, sizeof(this->Emissive));
                 continue;
             }
             if (name == "Transparent")
             {
+                this->materialFields["Transparent"] = std::pair<size_t, size_t>(position, sizeof(this->Transparent));
                 this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->Transparent), position, sizeof(this->Transparent));
                 continue;
             }
             if (name == "Reflective")
             {
+                this->materialFields["Reflective"] = std::pair<size_t, size_t>(position, sizeof(this->Reflective));
                 this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->Reflective), position, sizeof(this->Reflective));
                 continue;
             }
@@ -350,15 +368,28 @@ void MaterialData::InitializeUBOMaterial(std::shared_ptr<ShaderModule> shader_pt
     }
 }
 
+
+void MaterialData::UpdateMaterialData(std::string materialField, char* value)
+{
+    auto ptr = materialFields.find(materialField);
+    if (ptr != materialFields.end())
+    {
+        this->WriteToMaterialBuffer(value, materialFields[materialField].first, materialFields[materialField].second);
+        this->isModified = true;
+    }
+}
+
 void MaterialData::UpdateUBOMaterial()
 {
-    if (!this->materialUBO->uniformBuffers.empty())
+    if (!this->materialUBO->uniformBuffers.empty()/* && this->isModified*/)
     {
         auto currentFrame = SynchronizationModule::GetCurrentFrame();
         void* data;
         vkMapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame], 0, this->materialUniformSize, 0, &data);
         memcpy(data, this->materialbuffer, this->materialUniformSize);
         vkUnmapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame]);
+
+        this->isModified = false;
     }
 }
 
@@ -380,4 +411,101 @@ void MaterialData::WriteToMaterialBuffer(char* data, size_t& position, const siz
     memcpy(&materialbuffer[position], data, sizeToCopy);
     position += sizeToCopy;
     this->materialUniformSize += sizeToCopy;
+}
+
+void MaterialData::SetMaterialField(std::string nameField, float value)
+{
+    if (nameField == "Opacity")
+    {
+        this->Opacity = value;
+        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->Opacity));
+    }
+    if (nameField == "BumpScaling")
+    {
+        this->BumpScaling = value;
+        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->BumpScaling));
+    }
+    if (nameField == "Shininess")
+    {
+        this->Shininess = value;
+        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->Shininess));
+    }
+    if (nameField == "Reflectivity")
+    {
+        this->Reflectivity = value;
+        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->Reflectivity));
+    }
+    if (nameField == "Shininess_Strength")
+    {
+        this->Shininess_Strength = value;
+        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->Shininess_Strength));
+    }
+    if (nameField == "Refractivity")
+    {
+        this->Refractivity = value;
+        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->Refractivity));
+    }
+}
+
+void MaterialData::SetMaterialField(std::string nameField, glm::vec3 value)
+{
+    if (nameField == "Diffuse")
+    {
+        this->Diffuse = value;
+        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->Diffuse));
+    }
+    if(nameField == "Ambient")
+    {
+        this->Ambient = value;
+        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->Ambient));
+    }
+    if(nameField == "Specular")
+    {
+        this->Specular = value;
+        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->Specular));
+    }
+    if(nameField == "Emissive")
+    {
+        this->Emissive = value;
+        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->Emissive));
+    }
+    if(nameField == "Transparent")
+    {
+        this->Transparent = value;
+        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->Transparent));
+    }
+    if(nameField == "Reflective")
+    {
+        this->Reflective = value;
+        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->Reflective));
+    }
+}
+
+void MaterialData::SetMaterialField(std::string nameField, int value)
+{
+    if(nameField == "idxDiffuse")
+    {
+        this->idxDiffuse = value;
+        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->idxDiffuse));
+    }
+    if(nameField == "idxNormal")
+    {
+        this->idxNormal = value;
+        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->idxNormal));
+    }
+    if(nameField == "idxSpecular")
+    {
+        this->idxSpecular = value;
+        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->idxSpecular));
+    }
+    if(nameField == "idxHeight")
+    {
+        this->idxHeight = value;
+        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->idxHeight));
+    }
+    if(nameField == "idxEmissive")
+    {
+        this->idxEmissive = value;
+        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->idxEmissive));
+    }
 }
