@@ -383,9 +383,8 @@ void MaterialData::UpdateUBOMaterial()
 
     if (!this->materialUBO->uniformBuffers.empty() && this->isModified[currentFrame])
     {
-        void* data;
-        vkMapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame], 0, this->materialUniformSize, 0, &data);
-        memcpy(data, this->materialbuffer, this->materialUniformSize);
+        vkMapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame], 0, this->materialUniformSize, 0, &this->auxiliarBuffer[currentFrame]);
+        memcpy(this->auxiliarBuffer[currentFrame], this->materialbuffer, this->materialUniformSize);
         vkUnmapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame]);
 
         this->isModified[currentFrame] = false;
@@ -405,9 +404,9 @@ void MaterialData::CleanMaterialUBO()
     }
 }
 
-void MaterialData::WriteToMaterialBuffer(char* data, size_t& position, const size_t& sizeToCopy)
+void MaterialData::WriteToMaterialBuffer(char* bufferdata, size_t& position, const size_t& sizeToCopy)
 {
-    memcpy(&materialbuffer[position], data, sizeToCopy);
+    memcpy(&materialbuffer[position], bufferdata, sizeToCopy);
     position += sizeToCopy;
     this->materialUniformSize += sizeToCopy;
 }
