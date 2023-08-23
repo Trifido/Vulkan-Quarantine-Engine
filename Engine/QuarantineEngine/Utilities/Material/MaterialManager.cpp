@@ -44,9 +44,6 @@ MaterialManager::MaterialManager()
     const std::string absolute_animation_vertex_shader_path = absPath + "/Animation/exampleAnimated_vert.spv";
     const std::string absolute_animation_frag_shader_path = absPath + "/Animation/exampleAnimated_frag.spv";
 
-    std::cout << absolute_default_vertex_shader_path << std::endl;
-    std::cout << absolute_default_frag_shader_path << std::endl;
-
     this->lightManager = LightManager::getInstance();
     this->cameraEditor = CameraEditor::getInstance();
 

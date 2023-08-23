@@ -13,7 +13,18 @@ void GameObjectManager::AddGameObject(std::shared_ptr<GameObject> object_ptr, st
 {
     if (object_ptr->IsValid())
     {
-        this->_objects[object_ptr->material->layer][name] = object_ptr;
+        if (object_ptr->material == nullptr)
+        {
+            if (!object_ptr->childs.empty())
+            {
+                unsigned int childLayer = object_ptr->childs[0]->material->layer;
+                this->_objects[childLayer][name] = object_ptr;
+            }
+        }
+        else
+        {
+            this->_objects[object_ptr->material->layer][name] = object_ptr;
+        }
 
         if (object_ptr->physicBody != nullptr)
         {
