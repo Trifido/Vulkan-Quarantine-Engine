@@ -15,7 +15,6 @@ MaterialData::MaterialData()
     this->Shininess = 32.0f;
 
     this->materialUBO = std::make_shared<UniformBufferObject>();
-    this->isModified = true;
 }
 
 void MaterialData::ImportAssimpMaterial(aiMaterial* material)
@@ -358,11 +357,6 @@ void MaterialData::InitializeUBOMaterial(std::shared_ptr<ShaderModule> shader_pt
             }
         }
 
-        //Check result
-        //MaterialUniform result;
-        //size_t resultSize = sizeof(result);
-        //memcpy(&result, this->materialbuffer, this->materialUniformSize);
-
         this->materialUBO->CreateUniformBuffer(this->materialUniformSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
         this->UpdateUBOMaterial();
     }
@@ -375,21 +369,26 @@ void MaterialData::UpdateMaterialData(std::string materialField, char* value)
     if (ptr != materialFields.end())
     {
         this->WriteToMaterialBuffer(value, materialFields[materialField].first, materialFields[materialField].second);
-        this->isModified = true;
+
+        for (uint32_t id = 0; id < MAX_FRAMES_IN_FLIGHT; id++)
+        {
+            this->isModified[id] = true;
+        }
     }
 }
 
 void MaterialData::UpdateUBOMaterial()
 {
-    if (!this->materialUBO->uniformBuffers.empty()/* && this->isModified*/)
+    auto currentFrame = SynchronizationModule::GetCurrentFrame();
+
+    if (!this->materialUBO->uniformBuffers.empty() && this->isModified[currentFrame])
     {
-        auto currentFrame = SynchronizationModule::GetCurrentFrame();
         void* data;
         vkMapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame], 0, this->materialUniformSize, 0, &data);
         memcpy(data, this->materialbuffer, this->materialUniformSize);
         vkUnmapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame]);
 
-        this->isModified = false;
+        this->isModified[currentFrame] = false;
     }
 }
 

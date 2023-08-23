@@ -23,7 +23,7 @@ private:
     int numTextures;
     char* materialbuffer;
     std::unordered_map < std::string, std::pair<size_t, size_t> > materialFields;
-    bool isModified;
+    bool isModified[2] = { true, true };
 
 public:
     float Opacity;
