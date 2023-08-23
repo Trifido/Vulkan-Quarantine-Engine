@@ -28,6 +28,7 @@ void DeviceModule::pickPhysicalDevice(const VkInstance &newInstance, VkSurfaceKH
     vkEnumeratePhysicalDevices(newInstance, &deviceCount, nullptr);
 
     if (deviceCount == 0) {
+        std::cout << "failed to find GPUs with Vulkan support!\n";
         throw std::runtime_error("failed to find GPUs with Vulkan support!");
     }
 
@@ -43,6 +44,7 @@ void DeviceModule::pickPhysicalDevice(const VkInstance &newInstance, VkSurfaceKH
     }
 
     if (physicalDevice == VK_NULL_HANDLE) {
+        std::cout << "failed to find a suitable GPU!\n";
         throw std::runtime_error("failed to find a suitable GPU!");
     }
 }

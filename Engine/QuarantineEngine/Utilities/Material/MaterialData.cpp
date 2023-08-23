@@ -12,6 +12,7 @@ MaterialData::MaterialData()
     this->fillEmptyTextures();
     this->numTextures = 0;
     this->idxDiffuse = this->idxEmissive = this->idxHeight = this->idxNormal = this->idxSpecular = -1;
+    this->Diffuse = glm::vec3(1.0f, 0.0f, 0.0f);
 
     this->materialUBO = std::make_shared<UniformBufferObject>();
 }

@@ -1,6 +1,7 @@
 #include "MaterialManager.h"
 #include "ShaderManager.h"
 #include <GraphicsPipelineModule.h>
+#include <filesystem>
 
 MaterialManager* MaterialManager::instance = nullptr;
 
@@ -27,17 +28,36 @@ std::string MaterialManager::CheckName(std::string nameMaterial)
 
 MaterialManager::MaterialManager()
 {
+    auto absPath = std::filesystem::absolute("../../resources/shaders").generic_string();
+
+    std::string substring = "/Engine";
+    std::size_t ind = absPath.find(substring);
+
+    if (ind != std::string::npos) {
+        absPath.erase(ind, substring.length());
+    }
+
+    const std::string absolute_default_vertex_shader_path = absPath + "/vert.spv";
+    const std::string absolute_default_frag_shader_path = absPath + "/frag.spv";
+    const std::string absolute_primitive_vertex_shader_path = absPath + "/Primitive/primitiveDefault_vert.spv";
+    const std::string absolute_primitive_frag_shader_path = absPath + "/Primitive/primitiveDefault_frag.spv";
+    const std::string absolute_animation_vertex_shader_path = absPath + "/Animation/exampleAnimated_vert.spv";
+    const std::string absolute_animation_frag_shader_path = absPath + "/Animation/exampleAnimated_frag.spv";
+
+    std::cout << absolute_default_vertex_shader_path << std::endl;
+    std::cout << absolute_default_frag_shader_path << std::endl;
+
     this->lightManager = LightManager::getInstance();
     this->cameraEditor = CameraEditor::getInstance();
 
     auto shaderManager = ShaderManager::getInstance();
-    this->default_shader = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
+    this->default_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_default_vertex_shader_path, absolute_default_frag_shader_path));
     shaderManager->AddShader("default", this->default_shader);
 
-    this->default_primitive_shader = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/Primitive/primitiveDefault_vert.spv", "../../resources/shaders/Primitive/primitiveDefault_frag.spv"));
+    this->default_primitive_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_primitive_vertex_shader_path, absolute_primitive_frag_shader_path));
     shaderManager->AddShader("default_primitive", this->default_primitive_shader);
 
-    this->default_animation_shader = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/Animation/exampleAnimated_vert.spv", "../../resources/shaders/Animation/exampleAnimated_frag.spv"));
+    this->default_animation_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_animation_vertex_shader_path, absolute_animation_frag_shader_path));
     shaderManager->AddShader("default_animation", this->default_animation_shader);
 }
 

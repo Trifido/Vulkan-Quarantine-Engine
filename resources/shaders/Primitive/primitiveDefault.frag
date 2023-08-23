@@ -29,6 +29,7 @@ layout(set = 0, binding = 1) uniform UniformMaterial {
     int idxSpecular;
     int idxEmissive;
     int idxHeight;
+    vec3 Diffuse;
 } uboMaterial;
 
 struct LightData {
@@ -76,34 +77,34 @@ void main()
     }
 
     //COMPUTE LIGHT
-    vec3 result = vec3(1.0, 0.0, 0.5);
+    vec3 result = uboMaterial.Diffuse;//vec3(0.5, 0.5, 0.5);
 
     if(uboMaterial.idxDiffuse > -1)
     {
         result = texture(texSampler[uboMaterial.idxDiffuse], fs_in.TexCoords).rgb;
     }
 
-    vec3 resultPoint = vec3(0.0);
-    vec3 resultDir = vec3(0.0);
-    vec3 resultSpot = vec3(0.0);
+    // vec3 resultPoint = vec3(0.0);
+    // vec3 resultDir = vec3(0.0);
+    // vec3 resultSpot = vec3(0.0);
 
-    for(int i = 0; i < uboLight.numLights; i++)
-    {
-        if(uboLight.lights[i].position.w == 1.0)
-        {
-            resultPoint += ComputePointLight(uboLight.lights[i], i, normal, texCoords);
-        }
-        else if(uboLight.lights[i].spotCutoff == 0.0)
-        {
-            resultDir += ComputeDirectionalLight(uboLight.lights[i], i, normal, texCoords);
-        }
-        else
-        {
-            resultSpot += ComputeSpotLight(uboLight.lights[i], i, normal, texCoords);
-        }
-    }
+    // for(int i = 0; i < uboLight.numLights; i++)
+    // {
+    //     if(uboLight.lights[i].position.w == 1.0)
+    //     {
+    //         resultPoint += ComputePointLight(uboLight.lights[i], i, normal, texCoords);
+    //     }
+    //     else if(uboLight.lights[i].spotCutoff == 0.0)
+    //     {
+    //         resultDir += ComputeDirectionalLight(uboLight.lights[i], i, normal, texCoords);
+    //     }
+    //     else
+    //     {
+    //         resultSpot += ComputeSpotLight(uboLight.lights[i], i, normal, texCoords);
+    //     }
+    // }
 
-    result = resultPoint + resultDir + resultSpot;
+    // result = resultPoint + resultDir + resultSpot;
     outColor = vec4(result, 1.0);
 }
 
