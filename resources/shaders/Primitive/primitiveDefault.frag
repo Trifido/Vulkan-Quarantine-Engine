@@ -62,12 +62,12 @@ vec3 ComputeSpotLight(LightData light, int id, vec3 normal, vec2 texCoords);
 void main()
 {
     //GET VIEW DIRECTION  
-    //vec3 viewDir = normalize(cameraData.position.xyz - fs_in.FragPos);
+    vec3 viewDir = normalize(cameraData.position.xyz - fs_in.FragPos);
 
     //GET TEXTURE COORDS
     vec2 texCoords = fs_in.TexCoords;
-    //if(texture(texSampler[uboMaterial.idxDiffuse], texCoords).a < 0.1)
-    //    discard;
+    if(texture(texSampler[uboMaterial.idxDiffuse], texCoords).a < 0.1 && uboMaterial.idxDiffuse > -1)
+        discard;
 
     vec3 normal = fs_in.Normal;
 
@@ -77,37 +77,35 @@ void main()
     }
 
     //COMPUTE LIGHT
-    vec3 result = vec3(0.5, 0.5, 0.5); //uboMaterial.Diffuse;//
+    vec3 result = uboMaterial.Diffuse; 
 
     if(uboMaterial.idxDiffuse > -1)
     {
         result = texture(texSampler[uboMaterial.idxDiffuse], fs_in.TexCoords).rgb;
     }
 
-    // vec3 resultPoint = vec3(0.0);
-    // vec3 resultDir = vec3(0.0);
-    // vec3 resultSpot = vec3(0.0);
+    vec3 resultPoint = vec3(0.0);
+    vec3 resultDir = vec3(0.0);
+    vec3 resultSpot = vec3(0.0);
 
-    // for(int i = 0; i < uboLight.numLights; i++)
-    // {
-    //     if(uboLight.lights[i].position.w == 1.0)
-    //     {
-    //         resultPoint += ComputePointLight(uboLight.lights[i], i, normal, texCoords);
-    //     }
-    //     else if(uboLight.lights[i].spotCutoff == 0.0)
-    //     {
-    //         resultDir += ComputeDirectionalLight(uboLight.lights[i], i, normal, texCoords);
-    //     }
-    //     else
-    //     {
-    //         resultSpot += ComputeSpotLight(uboLight.lights[i], i, normal, texCoords);
-    //     }
-    // }
+    for(int i = 0; i < uboLight.numLights; i++)
+    {
+        if(uboLight.lights[i].position.w == 1.0)
+        {
+            resultPoint += ComputePointLight(uboLight.lights[i], i, normal, texCoords);
+        }
+        else if(uboLight.lights[i].spotCutoff == 0.0)
+        {
+            resultDir += ComputeDirectionalLight(uboLight.lights[i], i, normal, texCoords);
+        }
+        else
+        {
+            resultSpot += ComputeSpotLight(uboLight.lights[i], i, normal, texCoords);
+        }
+    }
 
-    // result = resultPoint + resultDir + resultSpot;
+    result = resultPoint + resultDir + resultSpot;
     outColor = vec4(result, 1.0);
-    
-    outColor =  vec4(uboMaterial.Diffuse, 1.0);
 }
 
 vec3 ComputePointLight(LightData light, int id, vec3 normal, vec2 texCoords)
