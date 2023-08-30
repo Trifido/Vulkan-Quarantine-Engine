@@ -195,12 +195,12 @@ void App::initVulkan()
     this->gameObjectManager->AddGameObject(model, "model");
 
 
-    //std::shared_ptr<GameObject> cube = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
-    //cube->material->materialData.SetMaterialField("Diffuse", glm::vec3(1.0f, 0.0f, 0.0f));
-    //cube->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    std::shared_ptr<GameObject> cube = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
+    cube->material->materialData.SetMaterialField("Diffuse", glm::vec3(1.0f, 0.0f, 0.0f));
+    cube->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
     //cube->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 65.0f));
 
-    //this->gameObjectManager->AddGameObject(cube, "cube");
+    this->gameObjectManager->AddGameObject(cube, "cube");
 
 //    std::shared_ptr<ParticleSystem> particleSystem = std::make_shared<ParticleSystem>(ParticleSystem());
 //    this->gameObjectManager->AddGameObject(particleSystem, "particleSystem");
@@ -328,7 +328,7 @@ void App::mainLoop()
         this->gameObjectManager->UpdatePhysicTransforms();
 
         //ANIMATION SYSTEM
-        this->animationManager->UpdateAnimations(0.0f);//(float)this->deltaTime);
+        this->animationManager->UpdateAnimations((float)this->deltaTime);
 
         // INPUT EVENTS
         this->keyboard_ptr->ReadKeyboardEvents();
@@ -337,28 +337,28 @@ void App::mainLoop()
         if (ImGui::IsKeyDown('j') || ImGui::IsKeyDown('J'))
         {
             glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            newPos.x += 0.01f;
+            newPos.x += 0.1f;
             this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
             this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('l') || ImGui::IsKeyDown('L'))
         {
             glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            newPos.x -= 0.01f;
+            newPos.x -= 0.1f;
             this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
             this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('I'))
         {
             glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            newPos.y += 0.01f;
+            newPos.y += 0.1f;
             this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
             this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('K'))
         {
             glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            newPos.y -= 0.01f;
+            newPos.y -= 0.1f;
             this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
             this->lightManager->UpdateUniform();
         }
