@@ -60,11 +60,21 @@ void GameObject::cleanup()
         mesh->cleanup();
     }
 
+    if (this->animationComponent != nullptr)
+    {
+        this->animationComponent->CleanLastResources();
+    }
+
     if (!this->childs.empty())
     {
         for (auto& it : this->childs)
         {
             it->mesh->cleanup();
+
+            if (it->animationComponent != nullptr)
+            {
+                it->animationComponent->CleanLastResources();
+            }
         }
     }    
 }
@@ -159,23 +169,43 @@ void GameObject::InitializeAnimationComponent()
         if (this->material != nullptr)
         {
             this->animationComponent->animator->InitializeUBOAnimation(this->material->shader);
-            this->material->descriptor->animationUBO = this->animationComponent->animator->animationUBO;
-            this->material->descriptor->animationUniformSize = this->animationComponent->animator->animationUniformSize;
+            this->animationComponent->animator->AssignAnimationBuffer(this->material->descriptor);
+            //this->material->descriptor->animationUBO = this->animationComponent->animator->animationUBO;
+            //this->material->descriptor->animationUniformSize = this->animationComponent->animator->animationUniformSize;
 
             //this->animationComponent->animator->AddDescriptor(this->material->descriptor);
         }
-
-        if (!this->childs.empty())
+        else if (!this->childs.empty())
         {
-            for (auto& it : this->childs)
+            bool findShader = false;
+            for(int i = 0; i < this->childs.size(); i++)
             {
-                it->animationComponent->animator->InitializeUBOAnimation(it->material->shader);
-                it->material->descriptor->animationUBO = it->animationComponent->animator->animationUBO;
-                it->material->descriptor->animationUniformSize = it->animationComponent->animator->animationUniformSize;
-
-                //this->animationComponent->animator->AddDescriptor(it->material->descriptor);
+                if (this->childs.at(i)->material != nullptr)
+                {
+                    if (!findShader)
+                    {
+                        findShader = true;
+                        this->animationComponent->animator->InitializeUBOAnimation(this->childs.at(i)->material->shader);
+                    }
+                    this->animationComponent->animator->AssignAnimationBuffer(this->childs.at(i)->material->descriptor);
+                }
             }
         }
+
+        //if (!this->childs.empty())
+        //{
+        //    for (auto& it : this->childs)
+        //    {
+        //        if (it->animationComponent != nullptr)
+        //        {
+        //            it->animationComponent->animator->InitializeUBOAnimation(it->material->shader);
+        //            it->material->descriptor->animationUBO = it->animationComponent->animator->animationUBO;
+        //            it->material->descriptor->animationUniformSize = it->animationComponent->animator->animationUniformSize;
+
+        //            //this->animationComponent->animator->AddDescriptor(it->material->descriptor);
+        //        }
+        //    }
+        //}
     }
 }
 

@@ -76,6 +76,14 @@ void AnimationManager::UpdateAnimations(float dt)
     }
 }
 
+void AnimationManager::Cleanup()
+{
+    for (auto& it : _animationComponents)
+    {
+        it.second->CleanLastResources();
+    }
+}
+
 void AnimationManager::ChangeAnimation()
 {
 	for (auto& it : _animationComponents)

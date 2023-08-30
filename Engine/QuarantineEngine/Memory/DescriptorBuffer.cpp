@@ -10,9 +10,7 @@ DescriptorBuffer::DescriptorBuffer()
 DescriptorBuffer::DescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr) : DescriptorBuffer()
 {
     this->numBinding = shader_ptr->reflectShader.bindings.size();
-
     this->materialUBO = std::make_shared<UniformBufferObject>();
-
     this->StartResources(shader_ptr);
 }
 
@@ -127,7 +125,6 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
         }
         else if (binding.first == "UniformMaterial")
         {
-            //FALLO CON LOS PRIMITIVE OBJECTS
             this->SetDescriptorWrite(descriptorWrites[idx], binding.second.binding, this->materialUBO->uniformBuffers[frameIdx], this->materialUniformSize, frameIdx);
             idx++;
         }

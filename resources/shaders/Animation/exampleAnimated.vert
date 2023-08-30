@@ -35,7 +35,7 @@ layout(set = 0, binding = 2) uniform UniformManagerLight
 const int MAX_BONES = 200;
 const int MAX_BONE_INFLUENCE = 4;
 
-layout(std140, set = 0, binding = 3) uniform UniformAnimation
+layout(std140, set = 0, binding = 4) uniform UniformAnimation
 {
 	mat4 finalBonesMatrices[200];
 } uboAnimation;
@@ -62,7 +62,7 @@ void main()
     mat4 BoneTransform = uboAnimation.finalBonesMatrices[inBoneIds[0]] * inWeights[0];
     BoneTransform += uboAnimation.finalBonesMatrices[inBoneIds[1]] * inWeights[1];
     BoneTransform += uboAnimation.finalBonesMatrices[inBoneIds[2]] * inWeights[2];
-    BoneTransform += uboAnimation.finalBonesMatrices[inBoneIds[3]] * inWeights[3];    
+    BoneTransform += uboAnimation.finalBonesMatrices[inBoneIds[3]] * inWeights[3];
 
     vec4 tBonePosition = BoneTransform * vec4(inPosition, 1.0);
 

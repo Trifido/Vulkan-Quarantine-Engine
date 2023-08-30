@@ -26,6 +26,7 @@ public:
     void AddAnimationComponent(std::string nameGameObject, AnimationComponent animationComponent);
     void InitializeAnimations();
     void UpdateAnimations(float dt);
+    void Cleanup();
 
     //DEMO
     void ChangeAnimation();

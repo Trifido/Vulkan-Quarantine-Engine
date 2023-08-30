@@ -9,6 +9,12 @@ Animator::Animator()
     this->animationUniform_ptr = std::make_shared<AnimationUniform>();
 }
 
+void Animator::AssignAnimationBuffer(std::shared_ptr<DescriptorBuffer> descriptorBuffer)
+{
+    descriptorBuffer->animationUBO = this->animationUBO;
+    descriptorBuffer->animationUniformSize = this->animationUniformSize;
+}
+
 void Animator::InitializeUBOAnimation(std::shared_ptr<ShaderModule> shader_ptr)
 {
     auto reflect = shader_ptr->reflectShader;
@@ -24,7 +30,7 @@ void Animator::InitializeUBOAnimation(std::shared_ptr<ShaderModule> shader_ptr)
         {
             if (name == "finalBonesMatrices")
             {
-                this->WriteToAnimationBuffer(this->animationbuffer, position, reflect.animationBufferSize);
+                this->WriteToAnimationBuffer(reinterpret_cast<char*>(&this->animationUniform_ptr->finalBonesMatrices), position, reflect.animationBufferSize);
             }
         }
 
@@ -38,7 +44,7 @@ void Animator::UpdateUBOAnimation()
     auto currentFrame = SynchronizationModule::GetCurrentFrame();
     void* data;
     vkMapMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[currentFrame], 0, this->animationUniformSize, 0, &data);
-    memcpy(data, this->animationbuffer, this->animationUniformSize);
+    memcpy(data, static_cast<const void*>(this->m_FinalBoneMatrices.get()->data()), this->animationUniformSize);
     vkUnmapMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[currentFrame]);
 }
 
@@ -49,12 +55,6 @@ void Animator::WriteToAnimationBuffer(char* data, size_t& position, const size_t
     this->animationUniformSize += sizeToCopy;
 }
 
-void Animator::AddDescriptor(std::shared_ptr<DescriptorModule> descriptor)
-{
-    //this->descriptors.push_back(descriptor);
-    //descriptors.back()->animationUniform = this->animationUniform_ptr;
-}
-
 void Animator::UpdateAnimation(float dt)
 {
     m_DeltaTime = dt;
@@ -63,8 +63,7 @@ void Animator::UpdateAnimation(float dt)
         m_CurrentTime += m_CurrentAnimation->GetTicksPerSecond() * dt;
         m_CurrentTime = fmod(m_CurrentTime, m_CurrentAnimation->GetDuration());
         CalculateBoneTransform(&m_CurrentAnimation->GetRootNode(), glm::mat4(1.0f));
-
-        memcpy(this->animationUniform_ptr->finalBonesMatrices, this->m_FinalBoneMatrices.get()->data(), sizeof(glm::mat4) * NUM_BONES);
+        this->UpdateUBOAnimation();
     }
 }
 
@@ -77,14 +76,14 @@ void Animator::PlayAnimation(std::shared_ptr<Animation> pAnimation)
 void Animator::CalculateBoneTransform(const AnimationNode* node, glm::mat4 parentTransform)
 {
     std::string nodeName = node->name;
-    Bone* Bone = m_CurrentAnimation->FindBone(nodeName);                                    // Cuidado con este puntero, no se libera
+    auxiliarBone = m_CurrentAnimation->FindBone(nodeName);                                    // Cuidado con este puntero, no se libera
 
     glm::mat4 nodeTransform = node->transformation;
 
-    if (Bone)
+    if (auxiliarBone)
     {
-        Bone->Update(m_CurrentTime);
-        nodeTransform = Bone->GetLocalTransform();
+        auxiliarBone->Update(m_CurrentTime);
+        nodeTransform = auxiliarBone->GetLocalTransform();
     }
 
     glm::mat4 globalTransformation = parentTransform * nodeTransform;
@@ -114,4 +113,31 @@ void Animator::ChangeAnimation(std::shared_ptr<Animation> newAnimation)
     this->m_CurrentTime = 0.0f;
     this->m_DeltaTime = 0.0f;
     this->m_CurrentAnimation = newAnimation;
+}
+
+void Animator::CleanAnimatorUBO()
+{
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        // Material UBO
+        if (this->animationUBO != nullptr)
+        {
+            vkDestroyBuffer(deviceModule->device, this->animationUBO->uniformBuffers[i], nullptr);
+            vkFreeMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[i], nullptr);
+        }
+    }
+
+    this->auxiliarBone = nullptr;
+
+    this->animationUBO.reset();
+    this->animationUBO = nullptr;
+
+    delete [] this->animationbuffer;
+    this->animationbuffer = nullptr;
+
+    m_FinalBoneMatrices.reset();
+    m_FinalBoneMatrices = nullptr;
+
+    m_CurrentAnimation.reset();
+    m_CurrentAnimation = nullptr;
 }

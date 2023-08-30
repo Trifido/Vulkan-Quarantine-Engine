@@ -181,17 +181,17 @@ void App::initVulkan()
     this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
     /**/
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH));
+    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/microphone/scene.gltf"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/vampire/Capoeira.dae"));
-    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/CharacterRunning/CharacterRunning.gltf"));
+    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/CharacterRunning/CharacterRunning.gltf"));
 
-    //if (model->IsValid())
-    //{
+    if (model->IsValid())
+    {
         model->transform->SetScale(glm::vec3(0.05f));
         model->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-    //}
+    }
 
     this->gameObjectManager->AddGameObject(model, "model");
 
@@ -283,11 +283,11 @@ void App::initVulkan()
     // Initialize Physics
     /*
     std::shared_ptr<PhysicBody> rigidBody = std::make_shared<PhysicBody>(PhysicBody(PhysicBodyType::RIGID_BODY));
-    rigidBody->Mass = 0.001f;
+    rigidBody->Mass = 10.0f;// 0.001f;
     cube->addPhysicBody(rigidBody);
     std::shared_ptr<BoxCollider> boxCollider = std::make_shared<BoxCollider>();
     cube->addCollider(boxCollider);
-
+    
     std::shared_ptr<PhysicBody> staticBody = std::make_shared<PhysicBody>();
     plano->addPhysicBody(staticBody);
     std::shared_ptr<PlaneCollider> planeCollider = std::make_shared<PlaneCollider>();
@@ -303,6 +303,7 @@ void App::initVulkan()
 
     // Initialize Managers
     this->animationManager->InitializeAnimations();
+    this->animationManager->UpdateAnimations(0.0f);
     this->gameObjectManager->InitializePhysics();
     this->materialManager->InitializeMaterials();
     //this->computeNodeManager->InitializeComputeNodes();
@@ -438,27 +439,28 @@ void App::mainLoop()
 
 void App::cleanUp()
 {
-    shaderManager->Clean();
+    this->shaderManager->Clean();
 
-    cleanUpSwapchain();
-    materialManager->CleanPipelines();
+    this->cleanUpSwapchain();
+    this->materialManager->CleanPipelines();
+    this->animationManager->Cleanup();
     this->gameObjectManager->Cleanup();
     this->editorManager->Cleanup();
 
-    textureManager->Clean();
+    this->textureManager->Clean();
 
-    shaderManager->CleanDescriptorSetLayouts();
+    this->shaderManager->CleanDescriptorSetLayouts();
 
-    synchronizationModule.cleanup();
-    commandPoolModule->cleanup();
+    this->synchronizationModule.cleanup();
+    this->commandPoolModule->cleanup();
 
-    deviceModule->cleanup();
+    this->deviceModule->cleanup();
 
     if (enableValidationLayers) {
-        layerExtensionModule.DestroyDebugUtilsMessengerEXT(vulkanInstance.getInstance(), nullptr);
+        this->layerExtensionModule.DestroyDebugUtilsMessengerEXT(vulkanInstance.getInstance(), nullptr);
     }
-    windowSurface.cleanUp(vulkanInstance.getInstance());
-    vulkanInstance.destroyInstance();
+    this->windowSurface.cleanUp(vulkanInstance.getInstance());
+    this->vulkanInstance.destroyInstance();
 
     glfwDestroyWindow(mainWindow.getWindow());
 
