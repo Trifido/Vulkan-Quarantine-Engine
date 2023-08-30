@@ -4,6 +4,7 @@
 
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
+#include <BufferManageModule.h>
 #include "../Editor/Grid.h"
 
 
@@ -163,8 +164,6 @@ void App::initVulkan()
     GeometryComponent::deviceModule_ptr = this->deviceModule;
     TextureManagerModule::queueModule = this->queueModule;
     CustomTexture::commandPool = commandPoolModule->getCommandPool();
-    DescriptorModule::deviceModule = this->deviceModule;
-    DescriptorModule::NumSwapchainImages = this->swapchainModule->getNumSwapChainImages();
 
     // INIT ------------------------- Mesh & Material -------------------------------
     this->shaderManager = ShaderManager::getInstance();

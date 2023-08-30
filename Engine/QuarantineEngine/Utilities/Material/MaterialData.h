@@ -10,6 +10,7 @@
 #include <assimp/scene.h>
 #include <set>
 #include <ShaderModule.h>
+#include <UBO.h>
 
 class MaterialData
 {

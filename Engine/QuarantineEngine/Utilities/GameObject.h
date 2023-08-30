@@ -5,7 +5,6 @@
 #include "Mesh.h"
 #include "Transform.h"
 #include "Material.h"
-#include "DescriptorModule.h"
 #include <PrimitiveTypes.h>
 #include "Camera.h"
 #include <PhysicBody.h>

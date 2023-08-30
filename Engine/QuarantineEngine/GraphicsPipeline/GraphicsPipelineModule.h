@@ -3,7 +3,6 @@
 #define GRAPHICS_PIPELINE_MODULE_H
 
 #include "ShaderModule.h"
-#include "DescriptorModule.h"
 #include <AntiAliasingModule.h>
 #include <PipelineModule.h>
 

@@ -6,6 +6,8 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <vector>
+#include <map>
+#include <string>
 #include <Geometry/Mesh.h>
 #include <MaterialManager.h>
 #include <TextureManager.h>

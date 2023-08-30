@@ -194,7 +194,6 @@
     <ClCompile Include="Memory\BufferManageModule.cpp" />
     <ClCompile Include="Memory\ComputeDescriptorModule.cpp" />
     <ClCompile Include="Memory\DescriptorBuffer.cpp" />
-    <ClCompile Include="Memory\DescriptorModule.cpp" />
     <ClCompile Include="Memory\TextureManagerModule.cpp" />
     <ClCompile Include="Memory\UBO.cpp" />
     <ClCompile Include="Presentation\AntiAliasingModule.cpp" />
@@ -275,7 +274,6 @@
     <ClInclude Include="Memory\BufferManageModule.h" />
     <ClInclude Include="Memory\ComputeDescriptorModule.h" />
     <ClInclude Include="Memory\DescriptorBuffer.h" />
-    <ClInclude Include="Memory\DescriptorModule.h" />
     <ClInclude Include="Memory\ImageMemoryTools.h" />
     <ClInclude Include="Memory\TextureManagerModule.h" />
     <ClInclude Include="Memory\UBO.h" />

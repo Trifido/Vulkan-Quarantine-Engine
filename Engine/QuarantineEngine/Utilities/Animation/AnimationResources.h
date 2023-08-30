@@ -5,6 +5,7 @@
 
 #include <glm/glm.hpp>
 #include <Bone.h>
+#include <map>
 
 struct BoneInfo
 {
