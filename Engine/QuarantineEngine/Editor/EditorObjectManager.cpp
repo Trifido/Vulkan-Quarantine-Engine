@@ -12,10 +12,14 @@ EditorObjectManager* EditorObjectManager::getInstance()
 {
     if (instance == NULL)
         instance = new EditorObjectManager();
-    else
-        std::cout << "Getting existing instance of EditorObjectManager" << std::endl;
 
     return instance;
+}
+
+void EditorObjectManager::ResetInstance()
+{
+    delete instance;
+    instance = nullptr;
 }
 
 void EditorObjectManager::DrawCommnad(VkCommandBuffer& commandBuffer, uint32_t idx)
@@ -32,6 +36,11 @@ void EditorObjectManager::Cleanup()
     {
         model.second->Clean();
     }
+}
+
+void EditorObjectManager::CleanLastResources()
+{
+    this->_objects.clear();
 }
 
 std::shared_ptr<EditorObject> EditorObjectManager::GetObject(std::string name)

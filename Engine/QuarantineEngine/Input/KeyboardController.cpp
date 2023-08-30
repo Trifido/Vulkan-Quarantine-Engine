@@ -9,10 +9,14 @@ KeyboardController* KeyboardController::getInstance()
 {
 	if (instance == NULL)
 		instance = new KeyboardController();
-	else
-		std::cout << "Getting existing KeyboardController instance" << std::endl;
 
 	return instance;
+}
+
+void KeyboardController::ResetInstance()
+{
+    delete instance;
+    instance = nullptr;
 }
 
 void KeyboardController::ReadKeyboardEvents()
@@ -32,6 +36,17 @@ void KeyboardController::cleanup()
     }
 }
 
+void KeyboardController::CleanLastResources()
+{
+    for each (auto var in list_observer_)
+    {
+        delete var;
+        var = nullptr;
+    }
+
+    list_observer_.clear();
+}
+
 void KeyboardController::ReadPolygonModeKeys()
 {
     if (ImGui::IsKeyDown('1'))
@@ -49,7 +64,7 @@ void KeyboardController::ReadPolygonModeKeys()
 }
 
 KeyboardController::~KeyboardController() {
-    std::cout << "Goodbye, I was the Subject.\n";
+
 }
 
 void KeyboardController::Attach(IObserver* observer)

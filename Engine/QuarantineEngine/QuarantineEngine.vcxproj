@@ -90,14 +90,14 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>%VULKAN_SDK%\include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%VULKAN_SDK%\include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\bullet3\lib;$(SolutionDir)\Linking\assimp\lib;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib32;..\libs\glfw\lib-vc2010-32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mtd.lib;BulletCollision_Debug.lib;BulletDynamics_Debug.lib;LinearMath_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\Linking\bullet3\lib;$(SolutionDir)\Linking\assimp\lib;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib32;..\libs\glfw\lib-vc2010-32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mtd.lib;BulletCollision_Debug.lib;BulletDynamics_Debug.lib;LinearMath_Debug.lib;spirv-reflect-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
@@ -106,14 +106,14 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>%VULKAN_SDK%\include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Utilities\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Input;.\Utilities\Light;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%VULKAN_SDK%\include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Utilities\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Input;.\Utilities\Light;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\bullet3\lib;$(SolutionDir)\Linking\assimp\lib;C:\Users\vicente.martinez\Documents\GitHub\Vulkan-Quarantine-Engine\Engine\lib\Debug;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib;..\libs\glfw\lib-vc2010-64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mtd.lib;BulletCollision_Debug.lib;BulletDynamics_Debug.lib;LinearMath_Debug.lib;assimp-vc142-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\Linking\bullet3\lib;$(SolutionDir)\Linking\assimp\lib;C:\Users\vicente.martinez\Documents\GitHub\Vulkan-Quarantine-Engine\Engine\lib\Debug;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib;..\libs\glfw\lib-vc2010-64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mtd.lib;BulletCollision_Debug.lib;BulletDynamics_Debug.lib;LinearMath_Debug.lib;spirv-reflect-static.lib;assimp-vc142-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
@@ -124,7 +124,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>%VULKAN_SDK%\include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%VULKAN_SDK%\include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Compute;$(SolutionDir)\QuarantineEngine\Utilities\Particles;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -133,8 +133,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>false</EnableCOMDATFolding>
       <OptimizeReferences>false</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\bullet3\lib;$(SolutionDir)\Linking\assimp\lib;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib32;..\libs\glfw\lib-vc2010-32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mtd.lib;BulletCollision_Debug.lib;BulletDynamics_Debug.lib;LinearMath_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\Linking\bullet3\lib;$(SolutionDir)\Linking\assimp\lib;$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib32;..\libs\glfw\lib-vc2010-32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mtd.lib;BulletCollision_Debug.lib;BulletDynamics_Debug.lib;LinearMath_Debug.lib;spirv-reflect-static.lib;spirv-reflect-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
@@ -147,7 +147,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>%VULKAN_SDK%\include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Utilities\Geometry;.\Input;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%VULKAN_SDK%\include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Compute;$(SolutionDir)\QuarantineEngine\Utilities\Particles;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\Linking;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Utilities\Geometry;.\Input;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -156,8 +156,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>false</EnableCOMDATFolding>
       <OptimizeReferences>false</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\bullet3\lib;$(SolutionDir)\Linking\assimp\lib;C:\Users\vicente.martinez\Documents\GitHub\Vulkan-Quarantine-Engine\Engine\lib\Debug;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib;..\libs\glfw\lib-vc2010-64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mtd.lib;BulletCollision_Debug.lib;BulletDynamics_Debug.lib;LinearMath_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\Linking\bullet3\lib;$(SolutionDir)\Linking\assimp\lib;$(SolutionDir)\Linking\SPIRV-Reflect;C:\Users\vicente.martinez\Documents\GitHub\Vulkan-Quarantine-Engine\Engine\lib\Debug;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib;..\libs\glfw\lib-vc2010-64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mtd.lib;BulletCollision_Debug.lib;BulletDynamics_Debug.lib;LinearMath_Debug.lib;spirv-reflect-static.lib;spirv-reflect-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
@@ -181,13 +181,19 @@
     <ClCompile Include="Editor\EditorObjectManager.cpp" />
     <ClCompile Include="Editor\Grid.cpp" />
     <ClCompile Include="GraphicsPipeline\ComputePipelineModule.cpp" />
+    <ClCompile Include="GraphicsPipeline\GraphicsPipelineManager.cpp" />
     <ClCompile Include="GraphicsPipeline\GraphicsPipelineModule.cpp" />
+    <ClCompile Include="GraphicsPipeline\PipelineModule.cpp" />
+    <ClCompile Include="GraphicsPipeline\ReflectShader.cpp" />
+    <ClCompile Include="GraphicsPipeline\RenderLayerModule.cpp" />
     <ClCompile Include="GraphicsPipeline\ShaderModule.cpp" />
     <ClCompile Include="GUI\GUIWindow.cpp" />
     <ClCompile Include="GUI\SceneWindow.cpp" />
     <ClCompile Include="Input\KeyboardController.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Memory\BufferManageModule.cpp" />
+    <ClCompile Include="Memory\ComputeDescriptorModule.cpp" />
+    <ClCompile Include="Memory\DescriptorBuffer.cpp" />
     <ClCompile Include="Memory\DescriptorModule.cpp" />
     <ClCompile Include="Memory\TextureManagerModule.cpp" />
     <ClCompile Include="Memory\UBO.cpp" />
@@ -210,6 +216,8 @@
     <ClCompile Include="Utilities\Animation\SkeletalComponent.cpp" />
     <ClCompile Include="Utilities\Camera.cpp" />
     <ClCompile Include="Utilities\CameraEditor.cpp" />
+    <ClCompile Include="Utilities\Compute\ComputeNode.cpp" />
+    <ClCompile Include="Utilities\Compute\ComputeNodeManager.cpp" />
     <ClCompile Include="Utilities\GameComponent.cpp" />
     <ClCompile Include="Utilities\GameObject.cpp" />
     <ClCompile Include="Utilities\GameObjectManager.cpp" />
@@ -224,9 +232,12 @@
     <ClCompile Include="Utilities\Light\SpotLight.cpp" />
     <ClCompile Include="Utilities\Material\CustomTexture.cpp" />
     <ClCompile Include="Utilities\Material\Material.cpp" />
+    <ClCompile Include="Utilities\Material\MaterialData.cpp" />
     <ClCompile Include="Utilities\Material\MaterialManager.cpp" />
     <ClCompile Include="Utilities\Material\ShaderManager.cpp" />
     <ClCompile Include="Utilities\Material\TextureManager.cpp" />
+    <ClCompile Include="Utilities\Numbered.cpp" />
+    <ClCompile Include="Utilities\Particles\ParticleSystem.cpp" />
     <ClCompile Include="Utilities\Physics\BoxCollider.cpp" />
     <ClCompile Include="Utilities\Physics\Collider.cpp" />
     <ClCompile Include="Utilities\Physics\PhysicBody.cpp" />
@@ -251,12 +262,19 @@
     <ClInclude Include="Editor\EditorObjectManager.h" />
     <ClInclude Include="Editor\Grid.h" />
     <ClInclude Include="GraphicsPipeline\ComputePipelineModule.h" />
+    <ClInclude Include="GraphicsPipeline\GraphicsPipelineManager.h" />
     <ClInclude Include="GraphicsPipeline\GraphicsPipelineModule.h" />
+    <ClInclude Include="GraphicsPipeline\PipelineModule.h" />
+    <ClInclude Include="GraphicsPipeline\ReflectShader.h" />
+    <ClInclude Include="GraphicsPipeline\RenderLayer.h" />
+    <ClInclude Include="GraphicsPipeline\RenderLayerModule.h" />
     <ClInclude Include="GraphicsPipeline\ShaderModule.h" />
     <ClInclude Include="GUI\GUIWindow.h" />
     <ClInclude Include="GUI\SceneWindow.h" />
     <ClInclude Include="Input\KeyboardController.h" />
     <ClInclude Include="Memory\BufferManageModule.h" />
+    <ClInclude Include="Memory\ComputeDescriptorModule.h" />
+    <ClInclude Include="Memory\DescriptorBuffer.h" />
     <ClInclude Include="Memory\DescriptorModule.h" />
     <ClInclude Include="Memory\ImageMemoryTools.h" />
     <ClInclude Include="Memory\TextureManagerModule.h" />
@@ -283,6 +301,8 @@
     <ClInclude Include="Utilities\Animation\SkeletalComponent.h" />
     <ClInclude Include="Utilities\Camera.h" />
     <ClInclude Include="Utilities\CameraEditor.h" />
+    <ClInclude Include="Utilities\Compute\ComputeNode.h" />
+    <ClInclude Include="Utilities\Compute\ComputeNodeManager.h" />
     <ClInclude Include="Utilities\GameComponent.h" />
     <ClInclude Include="Utilities\GameObject.h" />
     <ClInclude Include="Utilities\GameObjectManager.h" />
@@ -300,10 +320,13 @@
     <ClInclude Include="Utilities\Light\SpotLight.h" />
     <ClInclude Include="Utilities\Material\CustomTexture.h" />
     <ClInclude Include="Utilities\Material\Material.h" />
+    <ClInclude Include="Utilities\Material\MaterialData.h" />
     <ClInclude Include="Utilities\Material\MaterialManager.h" />
     <ClInclude Include="Utilities\Material\ShaderManager.h" />
     <ClInclude Include="Utilities\Material\TextureManager.h" />
     <ClInclude Include="Utilities\Material\TextureTypes.h" />
+    <ClInclude Include="Utilities\Numbered.h" />
+    <ClInclude Include="Utilities\Particles\ParticleSystem.h" />
     <ClInclude Include="Utilities\Physics\BoxCollider.h" />
     <ClInclude Include="Utilities\Physics\Collider.h" />
     <ClInclude Include="Utilities\Physics\PhysicBody.h" />

@@ -24,6 +24,7 @@ public:
 
 public:
     static PhysicsModule* getInstance();
+    static void ResetInstance();
     PhysicsModule();
 
     void AddRigidBody(btRigidBody* body);

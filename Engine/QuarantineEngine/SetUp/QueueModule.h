@@ -13,6 +13,7 @@ public:
     VkQueue             computeQueue;
 public:
     static QueueModule* getInstance();
+    static void ResetInstance();
 };
 
 #endif

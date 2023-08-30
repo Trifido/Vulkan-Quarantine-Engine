@@ -28,6 +28,7 @@ void DeviceModule::pickPhysicalDevice(const VkInstance &newInstance, VkSurfaceKH
     vkEnumeratePhysicalDevices(newInstance, &deviceCount, nullptr);
 
     if (deviceCount == 0) {
+        std::cout << "failed to find GPUs with Vulkan support!\n";
         throw std::runtime_error("failed to find GPUs with Vulkan support!");
     }
 
@@ -43,18 +44,23 @@ void DeviceModule::pickPhysicalDevice(const VkInstance &newInstance, VkSurfaceKH
     }
 
     if (physicalDevice == VK_NULL_HANDLE) {
+        std::cout << "failed to find a suitable GPU!\n";
         throw std::runtime_error("failed to find a suitable GPU!");
     }
 }
 
 DeviceModule* DeviceModule::getInstance()
 {
-    if (instance == NULL)
+    if (instance == nullptr)
         instance = new DeviceModule();
-    else
-        std::cout << "Getting existing instance" << std::endl;
 
     return instance;
+}
+
+void DeviceModule::ResetInstance()
+{
+    delete instance;
+    instance = nullptr;
 }
 
 void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& nQueueModule)
@@ -78,10 +84,25 @@ void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& nQueu
     physicalDeviceFeatures.sampleRateShading = VK_TRUE;
     physicalDeviceFeatures.fillModeNonSolid = VK_TRUE;
 
+    //Bindless features
+    VkPhysicalDeviceFeatures2 physical_features2 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
+    physical_features2.features.samplerAnisotropy = VK_TRUE;
+    physical_features2.features.sampleRateShading = VK_TRUE;
+    physical_features2.features.fillModeNonSolid = VK_TRUE;
+
+    vkGetPhysicalDeviceFeatures2(physicalDevice, &physical_features2);
+
+    if (this->bindless_supported) {
+        this->indexing_features.descriptorBindingPartiallyBound = VK_TRUE;
+        this->indexing_features.runtimeDescriptorArray = VK_TRUE;
+
+        physical_features2.pNext = &indexing_features;
+    }
+
     //Raytracing features
     VkPhysicalDeviceBufferDeviceAddressFeaturesEXT bufferDeviceAddressFeatures = {};
     bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_EXT;
-    bufferDeviceAddressFeatures.pNext = NULL;
+    bufferDeviceAddressFeatures.pNext = &physical_features2;
     bufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
     bufferDeviceAddressFeatures.bufferDeviceAddressCaptureReplay = VK_FALSE;
     bufferDeviceAddressFeatures.bufferDeviceAddressMultiDevice = VK_FALSE;
@@ -107,7 +128,7 @@ void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& nQueu
     createInfo.pQueueCreateInfos = queueCreateInfos.data();
     createInfo.pNext = &accelerationStructureFeatures;
 
-    createInfo.pEnabledFeatures = &physicalDeviceFeatures;
+    createInfo.pEnabledFeatures = NULL;// &physicalDeviceFeatures;
     createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
     createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
@@ -177,5 +198,11 @@ bool DeviceModule::isDeviceSuitable(VkPhysicalDevice newDevice, VkSurfaceKHR& su
     VkPhysicalDeviceFeatures supportedFeatures;
     vkGetPhysicalDeviceFeatures(newDevice, &supportedFeatures);
 
-    return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
+    this->indexing_features = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES, nullptr };
+    VkPhysicalDeviceFeatures2 device_features{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2, &indexing_features };
+
+    vkGetPhysicalDeviceFeatures2(newDevice, &device_features);
+    this->bindless_supported = this->indexing_features.descriptorBindingPartiallyBound && indexing_features.runtimeDescriptorArray;
+
+    return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy && this->bindless_supported;
 }

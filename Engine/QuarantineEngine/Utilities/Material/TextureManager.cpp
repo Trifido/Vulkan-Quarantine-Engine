@@ -32,10 +32,14 @@ TextureManager* TextureManager::getInstance()
 {
     if (instance == NULL)
         instance = new TextureManager();
-    else
-        std::cout << "Getting existing instance of Texture Manager" << std::endl;
 
     return instance;
+}
+
+void TextureManager::ResetInstance()
+{
+	delete instance;
+	instance = nullptr;
 }
 
 std::shared_ptr<CustomTexture> TextureManager::GetTexture(std::string nameTexture)
@@ -78,4 +82,9 @@ void TextureManager::Clean()
     {
         it.second->cleanup();
     }
+}
+
+void TextureManager::CleanLastResources()
+{
+    this->_textures.clear();
 }

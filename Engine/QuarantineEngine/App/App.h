@@ -39,6 +39,7 @@
 #include "Camera.h"
 #include "LightManager.h"
 #include "AnimationManager.h"
+#include "Particles/ParticleSystem.h"
 
 // Editor
 #include <../Editor/EditorObjectManager.h>
@@ -50,6 +51,7 @@
 #include <MaterialManager.h>
 #include <TextureManager.h>
 #include <GameObjectManager.h>
+#include <Compute/ComputeNodeManager.h>
 
 const std::string MODEL_PATH = "../../resources/models/head/head.obj";
 const std::string TEXTURE_WALL_NORMAL_PATH = "../../resources/textures/wall/brickwall_normal.jpg";
@@ -83,6 +85,7 @@ class App
 {
 public:
     App();
+    ~App();
     void run();
 
     void addWindow(GLFWwindow& window);
@@ -91,10 +94,12 @@ public:
 private:
     void computeDeltaTime();
     void initVulkan();
-    void mainLoop();  
+    void mainLoop();
+    void computeFrame();
     void drawFrame();  
     void cleanUp();
     void cleanUpSwapchain();
+    void cleanManagers();
     void resizeSwapchain(VkResult result, ERROR_RESIZE errorResize);
     void recreateSwapchain();
     //bool createFontsTexture(VkCommandBuffer& commandBuffer);
@@ -123,7 +128,7 @@ private:
     AntiAliasingModule*     antialiasingModule;
     RenderPassModule*       renderPassModule;
 
-    std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule;
+    //std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule;
     std::shared_ptr<ComputePipelineModule> computePipelineModule;
 
 
@@ -139,9 +144,11 @@ private:
     LightManager*       lightManager {};
     ShaderManager*      shaderManager{};
     MaterialManager*    materialManager {};
+    ComputeNodeManager* computeNodeManager{};
     TextureManager*     textureManager{};
     GameObjectManager*  gameObjectManager{};
     AnimationManager*   animationManager{};
+    GraphicsPipelineManager* graphicsPipelineManager{};
 
     KeyboardController* keyboard_ptr {};
 

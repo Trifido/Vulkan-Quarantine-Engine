@@ -27,6 +27,7 @@ private:
 
 public:
     static SwapChainModule* getInstance();
+    static void ResetInstance();
     SwapChainModule();
     void createSwapChain(VkSurfaceKHR& surface, GLFWwindow* window);
     void cleanup();

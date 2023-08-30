@@ -54,3 +54,16 @@ void AnimationComponent::ChangeAnimation()
 
     this->animator->ChangeAnimation(animationVector.at(idAnimation));
 }
+
+void AnimationComponent::CleanLastResources()
+{
+    if (this->animator != nullptr)
+    {
+        this->animator->CleanAnimatorUBO();
+        this->animator.reset();
+        this->animator = nullptr;
+
+        this->_animations.clear();
+        this->numAnimations = 0;
+    }
+}

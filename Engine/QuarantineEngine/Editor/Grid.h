@@ -14,7 +14,7 @@ private:
 
 public:
     std::unique_ptr<GameObject> gridMesh = nullptr;
-    Grid(std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule, VkRenderPass renderPass);
+    Grid();
     void Draw(VkCommandBuffer& commandBuffer, uint32_t idx);
     void Clean();
 };

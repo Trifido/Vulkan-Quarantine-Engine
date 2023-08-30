@@ -10,14 +10,23 @@ void AntiAliasingModule::createColorResources()
     imageView = IMT::createImageView(deviceModule->device, image, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
+void AntiAliasingModule::CleanLastResources()
+{
+    this->msaaSamples = nullptr;
+}
+
 AntiAliasingModule* AntiAliasingModule::getInstance()
 {
 	if (instance == NULL)
 		instance = new AntiAliasingModule();
-	else
-		std::cout << "Getting existing AntiAliasing module instance" << std::endl;
 
 	return instance;
+}
+
+void AntiAliasingModule::ResetInstance()
+{
+    delete instance;
+    instance = nullptr;
 }
 
 AntiAliasingModule::AntiAliasingModule()

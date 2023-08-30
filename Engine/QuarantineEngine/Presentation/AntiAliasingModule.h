@@ -13,8 +13,10 @@ public:
     VkSampleCountFlagBits*  msaaSamples = nullptr;
 public:
     static AntiAliasingModule* getInstance();
+    static void ResetInstance();
     AntiAliasingModule();
     void createColorResources();
+    void CleanLastResources();
 };
 
 #endif // !ANTIALIASING_MODULE

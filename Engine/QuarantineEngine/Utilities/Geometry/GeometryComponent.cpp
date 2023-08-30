@@ -50,7 +50,7 @@ VkVertexInputBindingDescription GeometryComponent::getBindingDescription(bool ha
 {
     VkVertexInputBindingDescription bindingDescription{};
     bindingDescription.binding = 0;
-    bindingDescription.stride = (hasAnimation) ? sizeof(PBRAnimationVertex) :sizeof(PBRVertex); // sizeof(glm::vec3);//
+    bindingDescription.stride = (hasAnimation) ? sizeof(PBRAnimationVertex) : sizeof(PBRVertex);
     bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
     return bindingDescription;
 }

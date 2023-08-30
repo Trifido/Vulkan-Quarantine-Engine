@@ -8,6 +8,7 @@
 #include "GameObject.h"
 #include "../Editor/EditorObjectManager.h"
 #include <GameObjectManager.h>
+#include <Compute/ComputeNodeManager.h>
 
 class CommandPoolModule
 {
@@ -17,6 +18,7 @@ private:
     SwapChainModule*                swapchainModule;
     EditorObjectManager*            editorManager;
     GameObjectManager*              gameObjectManager;
+    ComputeNodeManager*             computeNodeManager;
 
     VkCommandPool                   commandPool;
     VkCommandPool                   computeCommandPool;
@@ -29,6 +31,7 @@ public:
 public:
     CommandPoolModule();
     static CommandPoolModule* getInstance();
+    static void ResetInstance();
 
     VkCommandPool&                  getCommandPool() { return this->commandPool; }
     VkCommandPool&                  getComputeCommandPool() { return this->computeCommandPool; }
@@ -37,10 +40,13 @@ public:
     uint32_t                        getNumCommandBuffers() { return static_cast<uint32_t>(this->commandBuffers.size()); }
     VkCommandBuffer&                getCommandBuffer(uint32_t idx) { return this->commandBuffers.at(idx); }
 
+    void bindComputeNodeManager();
     void createCommandPool(VkSurfaceKHR& surface);
     void createCommandBuffers();
     void Render(VkFramebuffer& swapChainFramebuffer, VkRenderPass& renderPass);
+    void recordComputeCommandBuffer(VkCommandBuffer commandBuffer);
     void cleanup();
+    void CleanLastResources();
 };
 
 #endif

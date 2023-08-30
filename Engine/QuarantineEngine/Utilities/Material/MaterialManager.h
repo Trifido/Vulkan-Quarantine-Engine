@@ -6,6 +6,8 @@
 #include <Material/Material.h>
 #include <CameraEditor.h>
 #include <Material/TextureManager.h>
+#include <GraphicsPipelineModule.h>
+#include <RenderPassModule.h>
 
 class MaterialManager
 {
@@ -14,14 +16,11 @@ private:
 
     Camera*             cameraEditor;
     LightManager*       lightManager;
-    TextureManager*     textureManager;
 
     std::shared_ptr<ShaderModule> default_shader;
     std::shared_ptr<ShaderModule> default_primitive_shader;
     std::shared_ptr<ShaderModule> default_animation_shader;
-    std::shared_ptr<ShaderModule> compute_animation_shader;
-    std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule;
-    VkRenderPass default_renderPass;
+
 public:
     static MaterialManager* instance;
 
@@ -30,8 +29,9 @@ private:
     void CreateDefaultPrimitiveMaterial();
 public:
     MaterialManager();
-    void InitializeMaterialManager(VkRenderPass renderPass, std::shared_ptr<GraphicsPipelineModule> graphicsPipeline);
+    void InitializeMaterialManager();
     static MaterialManager* getInstance();
+    static void ResetInstance();
     std::shared_ptr<Material> GetMaterial(std::string nameMaterial);
     void AddMaterial(const char* nameMaterial, std::shared_ptr<Material> mat_ptr);
     void AddMaterial(std::string& nameMaterial, std::shared_ptr<Material> mat_ptr);
@@ -40,8 +40,9 @@ public:
     bool Exists(std::string materialName);
     void CleanDescriptors();
     void CleanPipelines();
+    void CleanLastResources();
     void RecreateMaterials(RenderPassModule* renderPassModule);
-    void UpdateUniforms(uint32_t imageIndex);
+    void UpdateUniforms();
     void InitializeMaterials();
 };
 

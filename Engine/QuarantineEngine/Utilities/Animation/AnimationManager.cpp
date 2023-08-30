@@ -26,10 +26,14 @@ AnimationManager* AnimationManager::getInstance()
 {
     if (instance == NULL)
         instance = new AnimationManager();
-    else
-        std::cout << "Getting existing instance of Animation Manager" << std::endl;
 
     return instance;
+}
+
+void AnimationManager::ResetInstance()
+{
+	delete instance;
+	instance = nullptr;
 }
 
 std::shared_ptr<AnimationComponent> AnimationManager::GetAnimationComponent(std::string nameGameObject)
@@ -69,6 +73,14 @@ void AnimationManager::UpdateAnimations(float dt)
     for (auto& it : _animationComponents)
     {
         it.second->animator->UpdateAnimation(dt);
+    }
+}
+
+void AnimationManager::Cleanup()
+{
+    for (auto& it : _animationComponents)
+    {
+        it.second->CleanLastResources();
     }
 }
 

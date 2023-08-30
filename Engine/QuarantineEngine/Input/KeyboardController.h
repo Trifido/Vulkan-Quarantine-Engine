@@ -30,8 +30,10 @@ private:
 
 public:
     static KeyboardController* getInstance();
+    static void ResetInstance();
     void ReadKeyboardEvents();
     void cleanup();
+    void CleanLastResources();
 
     virtual ~KeyboardController();
     void Attach(IObserver* observer) override;

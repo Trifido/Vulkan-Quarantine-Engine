@@ -7,6 +7,9 @@
 #include <vulkan/vulkan.hpp>
 #include "DeviceModule.h"
 #include "GeometryComponent.h"
+#include <ReflectShader.h>
+#include <Numbered.h>
+#include <GraphicsPipelineManager.h>
 
 enum class SHADER_TYPE
 {
@@ -17,7 +20,11 @@ enum class SHADER_TYPE
     COMPUTE_SHADER = 4
 };
 
-class ShaderModule
+class GraphicsPipelineManager;
+class PipelineModule;
+class GraphicsPipelineModule;
+
+class ShaderModule : public Numbered
 {
 private:
     DeviceModule*                                   deviceModule;
@@ -27,23 +34,35 @@ private:
     VkPipelineShaderStageCreateInfo                 fragShaderStageInfo{};
     VkShaderModule                                  compute_shader = nullptr;
     VkPipelineShaderStageCreateInfo                 compShaderStageInfo{};
-    VkVertexInputBindingDescription                 bindingDescription;
+    std::shared_ptr<VkVertexInputBindingDescription>   bindingDescription;
     std::vector<VkVertexInputAttributeDescription>  attributeDescriptions;
+    GraphicsPipelineManager*                        graphicsPipelineManager;
+
 public:
+    ReflectShader                                   reflectShader;
     std::vector<VkPipelineShaderStageCreateInfo>    shaderStages;
     VkPipelineVertexInputStateCreateInfo            vertexInputInfo{};
+    VkDescriptorSetLayout                           descriptorSetLayout;
+    std::shared_ptr<GraphicsPipelineModule>         PipelineModule;
 
 public:
     ShaderModule();
     ShaderModule(std::string computeShaderName);
     ShaderModule(std::string vertexShaderName, std::string fragmentShaderName);
+
     static std::vector<char> readFile(const std::string& filename);
     void createShaderModule(const std::string& filename_compute);
     void createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment);
-    void createShaderBindings(bool hasAnimation = false);
+    void CleanDescriptorSetLayout();
     void cleanup();
+    void CleanLastResources();
+    void RecreatePipeline();
 private:
     VkPipelineShaderStageCreateInfo createShader(VkDevice& device, const std::string& filename, SHADER_TYPE shaderType);
+    void CreateDescriptorSetLayout();
+    void createShaderBindings();
+    void SetBindingDescription();
+    void SetAttributeDescriptions(std::vector<VkVertexInputAttributeDescription>& attributeDescriptions);
 };
 
 #endif

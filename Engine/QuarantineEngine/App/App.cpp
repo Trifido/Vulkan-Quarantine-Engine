@@ -12,15 +12,21 @@ App::App()
     this->deltaTime = this->lastFrame = 0;
 
     this->keyboard_ptr = KeyboardController::getInstance();
-    this->commandPoolModule = CommandPoolModule::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->deviceModule = DeviceModule::getInstance();
+    this->commandPoolModule = CommandPoolModule::getInstance();
 
     this->physicsModule = PhysicsModule::getInstance();
     this->editorManager = EditorObjectManager::getInstance();
     this->animationManager = AnimationManager::getInstance();
+    this->graphicsPipelineManager = GraphicsPipelineManager::getInstance();
 
     commandPoolModule->ClearColor = glm::vec3(0.1f);
+}
+
+App::~App()
+{
+
 }
 
 void App::run()
@@ -41,7 +47,6 @@ void App::computeDeltaTime()
 void App::initWindow()
 {
     this->mainWindow.init();
-    this->cameraEditor = CameraEditor::getInstance();
 }
 
 void App::init_imgui()
@@ -124,6 +129,7 @@ void App::initVulkan()
     //Creamos el Command pool module y los Command buffers
     commandPoolModule->createCommandPool(windowSurface.getSurface());
     commandPoolModule->createCommandBuffers();
+    //commandPoolModule->bindComputeNodeManager();
 
     //Creamos el antialiasing module
     antialiasingModule = AntiAliasingModule::getInstance();
@@ -133,24 +139,27 @@ void App::initVulkan()
     depthBufferModule = DepthBufferModule::getInstance();
     depthBufferModule->createDepthResources(swapchainModule->swapChainExtent, commandPoolModule->getCommandPool());
 
-    //Creamos el graphics pipeline Module
-    graphicsPipelineModule = std::make_shared<GraphicsPipelineModule>();
-
     //Creamos el compute pipeline Module
-    computePipelineModule = std::make_shared<ComputePipelineModule>();
+    //computePipelineModule = std::make_shared<ComputePipelineModule>();
 
     //Creamos el Render Pass
     renderPassModule = new RenderPassModule();
     renderPassModule->createRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
 
+    //Registramos el default render pass
+    this->graphicsPipelineManager->RegisterDefaultRenderPass(renderPassModule->renderPass);
+
     //Creamos el frame buffer
     framebufferModule.createFramebuffer(renderPassModule->renderPass);
 
+    //Añadimos el camera editor
+    this->cameraEditor = CameraEditor::getInstance();
+
     //Añadimos requisitos para los geometryComponent
     BufferManageModule::commandPool = this->commandPoolModule->getCommandPool();
-    BufferManageModule::computeCommandPool = this->commandPoolModule->getComputeCommandPool();
+    //BufferManageModule::computeCommandPool = this->commandPoolModule->getComputeCommandPool();
     BufferManageModule::graphicsQueue = this->queueModule->graphicsQueue;
-    BufferManageModule::computeQueue = this->queueModule->computeQueue;
+    //BufferManageModule::computeQueue = this->queueModule->computeQueue;
     GeometryComponent::deviceModule_ptr = this->deviceModule;
     TextureManagerModule::queueModule = this->queueModule;
     CustomTexture::commandPool = commandPoolModule->getCommandPool();
@@ -162,17 +171,18 @@ void App::initVulkan()
     this->textureManager = TextureManager::getInstance();
     this->lightManager = LightManager::getInstance();
     this->materialManager = MaterialManager::getInstance();
-    this->materialManager->InitializeMaterialManager(renderPassModule->renderPass, graphicsPipelineModule);
+    this->materialManager->InitializeMaterialManager();
     this->gameObjectManager = GameObjectManager::getInstance();
+   //this->computeNodeManager = ComputeNodeManager::getInstance();
+   // this->computeNodeManager->InitializeComputeNodeManager(computePipelineModule);
 
     // Inicializamos los componentes del editor
-    std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>(Grid(graphicsPipelineModule, renderPassModule->renderPass));
+    std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
     this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
-    /*
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH));
     std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
-    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/steampunk/scene.gltf"));
+    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/microphone/scene.gltf"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/vampire/Capoeira.dae"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/CharacterRunning/CharacterRunning.gltf"));
 
@@ -183,14 +193,17 @@ void App::initVulkan()
     }
 
     this->gameObjectManager->AddGameObject(model, "model");
-    */
+
 
     std::shared_ptr<GameObject> cube = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
+    cube->material->materialData.SetMaterialField("Diffuse", glm::vec3(1.0f, 0.0f, 0.0f));
     cube->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-    cube->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 65.0f));
+    //cube->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 65.0f));
 
     this->gameObjectManager->AddGameObject(cube, "cube");
 
+//    std::shared_ptr<ParticleSystem> particleSystem = std::make_shared<ParticleSystem>(ParticleSystem());
+//    this->gameObjectManager->AddGameObject(particleSystem, "particleSystem");
 //DEMO
 /*
     //Creamos la textura
@@ -221,12 +234,10 @@ void App::initVulkan()
     mat_ptr->AddNullTexture(textureManager->GetTexture("NULL"));
     mat_ptr->AddTexture(textureManager->GetTexture("diffuse_brick"));
     mat_ptr->AddTexture(textureManager->GetTexture("normal_brick"));
-    mat_ptr->AddPipeline(graphicsPipelineModule);
 
     std::shared_ptr<Material> mat_ptr2 = std::make_shared<Material>(Material(this->shaderManager->GetShader("shader"), renderPassModule->renderPass));
     mat_ptr2->AddNullTexture(textureManager->GetTexture("NULL"));
     mat_ptr2->AddTexture(textureManager->GetTexture("test"));
-    mat_ptr2->AddPipeline(graphicsPipelineModule);
 
     materialManager->AddMaterial("mat", mat_ptr);
     materialManager->AddMaterial("mat2", mat_ptr2);
@@ -258,9 +269,8 @@ void App::initVulkan()
     //this->lightManager->GetLight("PointLight1")->quadratic = 0.032f;
 
     this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
-    //this->lightManager->GetLight("DirectionalLight0")->transform->SetPosition(glm::vec3(0.0f, 0.0f, 3.0f));
     this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(2.0f, 8.0f, -1.0f));
-    this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.1f);
+    this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.6f);
     this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.1f);
     this->lightManager->GetLight("DirectionalLight0")->constant = 1.0f;
     this->lightManager->GetLight("DirectionalLight0")->linear = 0.09f;
@@ -272,11 +282,11 @@ void App::initVulkan()
     // Initialize Physics
     /*
     std::shared_ptr<PhysicBody> rigidBody = std::make_shared<PhysicBody>(PhysicBody(PhysicBodyType::RIGID_BODY));
-    rigidBody->Mass = 0.001f;
+    rigidBody->Mass = 10.0f;// 0.001f;
     cube->addPhysicBody(rigidBody);
     std::shared_ptr<BoxCollider> boxCollider = std::make_shared<BoxCollider>();
     cube->addCollider(boxCollider);
-
+    
     std::shared_ptr<PhysicBody> staticBody = std::make_shared<PhysicBody>();
     plano->addPhysicBody(staticBody);
     std::shared_ptr<PlaneCollider> planeCollider = std::make_shared<PlaneCollider>();
@@ -292,8 +302,10 @@ void App::initVulkan()
 
     // Initialize Managers
     this->animationManager->InitializeAnimations();
+    this->animationManager->UpdateAnimations(0.0f);
     this->gameObjectManager->InitializePhysics();
     this->materialManager->InitializeMaterials();
+    //this->computeNodeManager->InitializeComputeNodes();
 
     this->commandPoolModule->Render(framebufferModule.swapChainFramebuffers[0], renderPassModule->renderPass);
     this->synchronizationModule.createSyncObjects(swapchainModule->getNumSwapChainImages());
@@ -325,32 +337,31 @@ void App::mainLoop()
         if (ImGui::IsKeyDown('j') || ImGui::IsKeyDown('J'))
         {
             glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            newPos.x += 0.01f;
+            newPos.x += 0.1f;
             this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
             this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('l') || ImGui::IsKeyDown('L'))
         {
             glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            newPos.x -= 0.01f;
+            newPos.x -= 0.1f;
             this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
             this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('I'))
         {
             glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            newPos.y += 0.01f;
+            newPos.y += 0.1f;
             this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
             this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('K'))
         {
             glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            newPos.y -= 0.01f;
+            newPos.y -= 0.1f;
             this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
             this->lightManager->UpdateUniform();
         }
-
         if (ImGui::IsKeyDown('1'))
         {
             if (changeAnimation)
@@ -375,8 +386,11 @@ void App::mainLoop()
                 ImGui::UpdatePlatformWindows();
                 ImGui::RenderPlatformWindowsDefault();
             }
-            drawFrame();
+
+            //this->computeFrame();
+            this->drawFrame();
         }
+
         /*
         {
             //imgui new frame
@@ -424,33 +438,34 @@ void App::mainLoop()
 
 void App::cleanUp()
 {
-    shaderManager->Clean();
+    this->shaderManager->Clean();
 
-    cleanUpSwapchain();
-
+    this->cleanUpSwapchain();
+    this->materialManager->CleanPipelines();
+    this->animationManager->Cleanup();
     this->gameObjectManager->Cleanup();
     this->editorManager->Cleanup();
 
-    textureManager->Clean();
+    this->textureManager->Clean();
 
-    materialManager->CleanDescriptors();
+    this->shaderManager->CleanDescriptorSetLayouts();
 
-    synchronizationModule.cleanup();
-    commandPoolModule->cleanup();
+    this->synchronizationModule.cleanup();
+    this->commandPoolModule->cleanup();
 
-    deviceModule->cleanup();
+    this->deviceModule->cleanup();
 
     if (enableValidationLayers) {
-        layerExtensionModule.DestroyDebugUtilsMessengerEXT(vulkanInstance.getInstance(), nullptr);
+        this->layerExtensionModule.DestroyDebugUtilsMessengerEXT(vulkanInstance.getInstance(), nullptr);
     }
-    windowSurface.cleanUp(vulkanInstance.getInstance());
-    vulkanInstance.destroyInstance();
+    this->windowSurface.cleanUp(vulkanInstance.getInstance());
+    this->vulkanInstance.destroyInstance();
 
     glfwDestroyWindow(mainWindow.getWindow());
 
     glfwTerminate();
 
-    delete physicsModule;
+    this->cleanManagers();
 }
 
 void App::cleanUpSwapchain()
@@ -464,9 +479,89 @@ void App::cleanUpSwapchain()
     renderPassModule->cleanup();
 
     //Limpiamos los VKPipelines, VkPipelineLayouts y shader del material
-    materialManager->CleanPipelines();
+    graphicsPipelineManager->CleanGraphicsPipeline();
+    
 
     swapchainModule->cleanup();
+}
+
+void App::cleanManagers()
+{
+    delete this->renderPassModule;
+    this->renderPassModule = nullptr;
+
+    this->graphicsPipelineManager->ResetInstance();
+    this->graphicsPipelineManager = nullptr;
+
+    this->animationManager->ResetInstance();
+    this->animationManager = nullptr;
+
+    this->gameObjectManager->CleanLastResources();
+    this->gameObjectManager->ResetInstance();
+    this->gameObjectManager = nullptr;
+
+    this->textureManager->CleanLastResources();
+    this->textureManager->ResetInstance();
+    this->textureManager = nullptr;
+
+    this->editorManager->CleanLastResources();
+    this->editorManager->ResetInstance();
+    this->editorManager = nullptr;
+
+    this->keyboard_ptr->CleanLastResources();
+    this->keyboard_ptr->ResetInstance();
+    this->keyboard_ptr = nullptr;
+
+    this->materialManager->CleanLastResources();
+    this->materialManager->ResetInstance();
+    this->materialManager = nullptr;
+
+    this->shaderManager->CleanLastResources();
+    this->shaderManager->ResetInstance();
+    this->shaderManager = nullptr;
+
+    this->lightManager->CleanLastResources();
+    this->lightManager->ResetInstance();
+    this->lightManager = nullptr;
+
+    delete this->cameraEditor;
+    this->cameraEditor = nullptr;
+
+    this->antialiasingModule->CleanLastResources();
+    this->antialiasingModule->ResetInstance();
+    this->antialiasingModule = nullptr;
+
+    this->depthBufferModule->CleanLastResources();
+    this->depthBufferModule->ResetInstance();
+    this->depthBufferModule = nullptr;
+
+    this->physicsModule->ResetInstance();
+    this->physicsModule = nullptr;
+
+    //this->computeNodeManager->CleanLastResources();
+    //this->computeNodeManager->ResetInstance();
+    //this->computeNodeManager = nullptr;
+
+    this->commandPoolModule->CleanLastResources();
+    this->commandPoolModule->ResetInstance();
+    this->commandPoolModule = nullptr;
+
+    this->swapchainModule->ResetInstance();
+    this->swapchainModule = nullptr;
+
+    this->queueModule->ResetInstance();
+    this->queueModule = nullptr;
+
+    this->deviceModule->ResetInstance();
+    this->deviceModule = nullptr;
+}
+
+void App::computeFrame()
+{
+    synchronizationModule.synchronizeWaitComputeFences();
+    //Update uniformBuffer here -----> <-----
+    commandPoolModule->recordComputeCommandBuffer(commandPoolModule->getCommandBuffer(synchronizationModule.GetCurrentFrame()));
+    synchronizationModule.submitComputeCommandBuffer(commandPoolModule->getCommandBuffer(synchronizationModule.GetCurrentFrame()));
 }
 
 void App::drawFrame()
@@ -476,7 +571,9 @@ void App::drawFrame()
     VkResult result = vkAcquireNextImageKHR(deviceModule->device, swapchainModule->getSwapchain(), UINT64_MAX, synchronizationModule.getImageAvailableSemaphore(), VK_NULL_HANDLE, &imageIndex);
     resizeSwapchain(result, ERROR_RESIZE::SWAPCHAIN_ERROR);
 
-    materialManager->UpdateUniforms(synchronizationModule.GetCurrentFrame());
+    this->cameraEditor->UpdateUBOCamera();
+    this->lightManager->UpdateUBOLight();
+    this->materialManager->UpdateUniforms();
 
     vkDeviceWaitIdle(deviceModule->device);
 
@@ -538,7 +635,9 @@ void App::recreateSwapchain()
     renderPassModule->createRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
 
     //Recreamos los graphics pipeline de los materiales
-    materialManager->RecreateMaterials(renderPassModule);
+    graphicsPipelineManager->RegisterDefaultRenderPass(renderPassModule->renderPass);
+    shaderManager->RecreateShaderGraphicsPipelines();
+    //materialManager->RecreateMaterials(renderPassModule);
 
     //Recreamos el frame buffer
     framebufferModule.createFramebuffer(renderPassModule->renderPass);

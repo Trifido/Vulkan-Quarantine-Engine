@@ -54,6 +54,11 @@ bool checkDeviceExtensionSupport(VkPhysicalDevice device)
         requiredExtensions.erase(extension.extensionName);
     }
 
+    for each (auto var in requiredExtensions)
+    {
+        std::cout << var.c_str() << std::endl;
+    }
+
     return requiredExtensions.empty();
 }
 

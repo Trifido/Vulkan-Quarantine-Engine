@@ -26,6 +26,7 @@ public:
     std::vector<std::shared_ptr<Animation>> animationVector;
     int idAnimation = 0;
     void ChangeAnimation();
+    void CleanLastResources();
 };
 
 #endif

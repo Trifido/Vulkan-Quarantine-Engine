@@ -6,10 +6,14 @@ DepthBufferModule* DepthBufferModule::getInstance()
 {
 	if (instance == NULL)
 		instance = new DepthBufferModule();
-	else
-		std::cout << "Getting existing depth buffer module instance" << std::endl;
 
 	return instance;
+}
+
+void DepthBufferModule::ResetInstance()
+{
+    delete instance;
+    instance = nullptr;
 }
 
 DepthBufferModule::DepthBufferModule()
@@ -40,6 +44,11 @@ VkFormat DepthBufferModule::findDepthFormat()
         VK_IMAGE_TILING_OPTIMAL,
         VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
     );
+}
+
+void DepthBufferModule::CleanLastResources()
+{
+    this->antialiasingModule = nullptr;
 }
 
 bool DepthBufferModule::hasStencilComponent(VkFormat format)

@@ -2,121 +2,73 @@
 
 Material::Material()
 {
-    ambient = diffuse = specular = emissive = glm::vec3(0.0f);
-    this->shininess = 32.0f;
-    this->uniform = std::make_shared<MaterialUniform>();
-    this->uniform->idxDiffuse = this->uniform->idxNormal = this->uniform->idxSpecular = this->uniform->idxEmissive = this->uniform->idxHeight = -1; // this->uniform->idxBump
-    this->uniform->shininess = this->shininess;
-    this->texture_vector = std::make_shared<std::vector<std::shared_ptr<CustomTexture>>>();
-    this->texture_vector->resize(this->TOTAL_NUM_TEXTURES, nullptr);
-    this->numTextures = 0;
+    this->materialData = {};
+
+    //this->uniform = std::make_shared<MaterialUniform>();
+    //this->uniform->idxDiffuse = this->uniform->idxNormal = this->uniform->idxSpecular = this->uniform->idxEmissive = this->uniform->idxHeight = -1;
+    //this->uniform->shininess = this->shininess;
+
+    this->layer = (unsigned int) RenderLayer::SOLID;
 }
 
-Material::Material(std::shared_ptr<ShaderModule> shader_ptr, VkRenderPass renderPass)
+Material::Material(std::shared_ptr<ShaderModule> shader_ptr) : Material()
 {
-    ambient = diffuse = specular = emissive = glm::vec3(0.0f);
-    this->shininess = 32.0f;
     this->shader = shader_ptr;
-    this->renderPass = renderPass;
-    this->uniform = std::make_shared<MaterialUniform>();
-    this->uniform->idxDiffuse = this->uniform->idxNormal = this->uniform->idxSpecular = this->uniform->idxEmissive = this->uniform->idxHeight = -1; //this->uniform->idxBump 
-    this->uniform->shininess = this->shininess;
-    this->texture_vector = std::make_shared<std::vector<std::shared_ptr<CustomTexture>>>();
-    this->texture_vector->resize(this->TOTAL_NUM_TEXTURES, nullptr);
-    this->numTextures = 0;
+    this->descriptor = std::make_shared<DescriptorBuffer>(this->shader);
 }
 
-void Material::AddTexture(std::shared_ptr<CustomTexture> texture)
+void Material::CleanLastResources()
 {
-    bool isInserted = false;
-
-    std::shared_ptr<CustomTexture> ptrTexture = this->findTextureByType(texture->type);
-    if (ptrTexture == nullptr)
-    {
-        texture_vector->at(this->numTextures) = texture;
-        isInserted = true;
-    }
-    else
-    {
-        ptrTexture = texture;
-    }
-
-    switch (texture->type)
-    {
-        case TEXTURE_TYPE::DIFFUSE_TYPE:
-        default:
-            diffuseTexture = texture;
-            if (isInserted) this->uniform->idxDiffuse = this->numTextures++;
-            break;
-        case TEXTURE_TYPE::NORMAL_TYPE:
-            normalTexture = texture;
-            if (isInserted) this->uniform->idxNormal = this->numTextures++;
-            break;
-        case TEXTURE_TYPE::SPECULAR_TYPE:
-            specularTexture = texture;
-            if (isInserted) this->uniform->idxSpecular = this->numTextures++;
-            break;
-        case TEXTURE_TYPE::HEIGHT_TYPE:
-            heightTexture = texture;
-            if (isInserted) this->uniform->idxHeight = this->numTextures++;
-            break;
-        case TEXTURE_TYPE::EMISSIVE_TYPE:
-            emissiveTexture = texture;
-            if (isInserted) this->uniform->idxEmissive = this->numTextures++;
-            break;
-        //case TEXTURE_TYPE::BUMP_TYPE:
-        //    bumpTexture = texture;
-        //    if (isInserted) this->uniform->idxBump = this->numTextures++;
-        //    break;
-    }
+    this->materialData.CleanLastResources();
+    this->descriptor->CleanLastResources();
+    this->descriptor.reset();
+    this->descriptor = nullptr;
+    this->shader->CleanLastResources();
+    this->shader.reset();
+    this->shader = nullptr;
 }
 
-void Material::AddNullTexture(std::shared_ptr<CustomTexture> texture)
+void Material::InitializeMaterialDataUBO()
 {
-    this->emptyTexture = texture;
-}
-
-void Material::AddPipeline(std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule_ptr)
-{
-    this->graphicsPipelineModule = graphicsPipelineModule_ptr;
-}
-
-void Material::AddComputePipeline(std::shared_ptr<ComputePipelineModule> computePipelineModule_ptr)
-{
-    this->computePipelineModule = computePipelineModule_ptr;
+    this->materialData.InitializeUBOMaterial(this->shader);
+    this->descriptor->materialUBO = this->materialData.materialUBO;
+    this->descriptor->materialUniformSize = this->materialData.materialUniformSize;
+    this->descriptor->textures = this->materialData.texture_vector;
 }
 
 void Material::cleanup()
 {
-    if (this->isMeshBinding)
-    {
-        this->graphicsPipelineModule->cleanup(this->pipeline, this->pipelineLayout);
-        this->descriptor->cleanupDescriptorBuffer();
-        this->descriptor->cleanupDescriptorPool();
-    }
+    //if (this->isMeshBinding)
+    //{
+        //this->graphicsPipelineModule->cleanup(this->pipeline, this->pipelineLayout);
+        //this->descriptor->cleanupDescriptorBuffer();
+        //this->descriptor->cleanupDescriptorPool();
+    //}
+    this->descriptor->CleanDescriptorSetPool();
+    this->materialData.CleanMaterialUBO();
 }
 
 void Material::cleanupDescriptor()
 {
-    this->descriptor->cleanup();
+    //this->descriptor->cleanup();
 }
 
 void Material::recreatePipelineMaterial(VkRenderPass renderPass)
 {
     if (this->isMeshBinding)
     {
-        this->graphicsPipelineModule->CreateGraphicsPipeline(this->pipeline, this->pipelineLayout, this->shader, this->descriptor, renderPass);
+        //this->graphicsPipelineModule->CreateGraphicsPipeline(this->pipeline, this->pipelineLayout, this->shader, this->descriptor, renderPass);
     }
 }
 
 void Material::bindingCamera(Camera* editorCamera)
 {
-    this->descriptor->cameraUniform = editorCamera->cameraUniform;
+    //this->descriptor->cameraUniform = editorCamera->cameraUniform;
 }
 
 void Material::bindingLights(LightManager* lightManager)
 {
-    this->descriptor->lightUniform = lightManager->lightManagerUniform;
+    //this->descriptor->lightUniform = lightManager->lightManagerUniform;
 }
 
 void Material::bindingMesh(std::shared_ptr<GeometryComponent> mesh)
@@ -128,76 +80,38 @@ void Material::InitializeMaterial()
 {
     if (!this->isMeshBinding)
     {
-        std::cout << "Falta enlazaar el material con un gameobject.\n";
+        std::cout << "Falta enlazar el material con un gameobject.\n";
     }
     else if (this->shader == nullptr)
     {
         std::cout << "Falta shader en el material.\n";
     }
-    else if (this->renderPass == nullptr)
-    {
-        std::cout << "Falta renderpass en el material.\n";
-    }
-    else if (this->graphicsPipelineModule == nullptr)
-    {
-        std::cout << "Falta graphicsPipelineModule en el material.\n";
-    }
     else
     {
-        this->fillEmptyTextures();
-        this->descriptor->Initialize(texture_vector, uniform);
-        this->graphicsPipelineModule->CreateGraphicsPipeline(this->pipeline, this->pipelineLayout, this->shader, this->descriptor, renderPass);
-
-        if (this->computePipelineModule != nullptr)
-        {
-            this->computeDescriptor->Initialize(texture_vector, uniform);
-            this->computePipelineModule->CreateComputePipeline(this->computePipeline, this->computePipelineLayout, this->computeShader, this->computeDescriptor);
-        }
+        this->descriptor->InitializeDescriptorSets(this->shader);
+        //this->fillEmptyTextures();
+        //this->descriptor->Initialize(texture_vector, uniform);
     }
 }
 
 void Material::InitializeDescriptor()
 {
-    this->descriptor = std::make_shared<DescriptorModule>();//new DescriptorModule()
-}
-
-std::shared_ptr<CustomTexture> Material::findTextureByType(TEXTURE_TYPE newtype)
-{
-    for (size_t id = 0; id < texture_vector->size(); id++)
-    {
-        if (texture_vector->at(id) != nullptr)
-        {
-            if (texture_vector->at(id)->type == newtype)
-                return texture_vector->at(id);
-        }
-        else
-        {
-            return nullptr;
-        }
-    }
-    return nullptr;
+    //this->descriptor = std::make_shared<DescriptorModule>();
 }
 
 void Material::RecreateUniformsMaterial()
 {
     if (this->isMeshBinding)
     {
-        this->descriptor->recreateUniformBuffer();
+        //this->descriptor->recreateUniformBuffer();
     }
 }
 
-void Material::fillEmptyTextures()
+void Material::UpdateUniformData()
 {
-    for (size_t i = 0; i < this->texture_vector->size(); i++)
+    if (this->isMeshBinding && this->shader != nullptr)
     {
-        if (this->texture_vector->at(i) == nullptr)
-        {
-            this->texture_vector->at(i) = emptyTexture;
-        }
+        this->materialData.UpdateUBOMaterial();
     }
-}
-
-void Material::updateUniformData()
-{
-    this->uniform->shininess = this->shininess;
+    //this->uniform->shininess = this->shininess;
 }

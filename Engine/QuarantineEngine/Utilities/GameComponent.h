@@ -7,8 +7,9 @@
 #include <glm/gtx/hash.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <Numbered.h>
 
-class GameComponent
+class GameComponent : Numbered
 {
 public:
     GameComponent() {}

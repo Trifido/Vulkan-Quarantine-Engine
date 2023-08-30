@@ -1,19 +1,24 @@
 #include "Camera.h"
 #include <glm/gtc/matrix_transform.hpp>
+#include <SynchronizationModule.h>
 
 Camera::Camera(float width, float height)
 {
+    deviceModule = DeviceModule::getInstance();
     cameraFront = glm::vec3(0.815122545f, -0.579281569f, 0.0f);
     cameraPos = glm::vec3(-5.0f, 5.0f, 0.0f);
     WIDTH = width;
     HEIGHT = height;
     lastX = WIDTH / 2.0f;
     lastY = HEIGHT / 2.0f;
-    nearPlane = 0.1f;
-    farPlane = 500.0f;
+    nearPlane = 0.01f;
+    farPlane = 1000.0f;
     view = projection = VP = glm::mat4(1.0);
     this->cameraUniform = std::make_shared<CameraUniform>();
-    this->UpdateUBO();
+    this->cameraUBO = std::make_shared<UniformBufferObject>();
+    this->cameraUBO->CreateUniformBuffer(sizeof(CameraUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->UpdateUniform();
+    this->UpdateUBOCamera();
 
     float value = asin(-cameraFront.y);
     float degreeValue = glm::degrees(value);
@@ -24,6 +29,7 @@ Camera::Camera(float width, float height)
     degreeValue = glm::degrees(value);
     if (degreeValue < 0) degreeValue += 180;
     yaw = (270 + (int)degreeValue) % 360;
+
 }
 
 void Camera::CameraController(float deltaTime)
@@ -64,7 +70,8 @@ void Camera::CameraController(float deltaTime)
     projection[1][1] *= -1;
     VP = projection * view;
 
-    this->UpdateUBO();
+    this->UpdateUniform();
+    this->UpdateUBOCamera();
 }
 
 void Camera::EditorScroll()
@@ -150,7 +157,8 @@ void Camera::CheckCameraAttributes(float* positionCamera, float* frontCamera, fl
         projection[1][1] *= -1;
         VP = projection * view;
 
-        this->UpdateUBO();
+        this->UpdateUniform();
+        this->UpdateUBOCamera();
     }
 }
 
@@ -168,7 +176,8 @@ void Camera::InvertPitch(float heightPos)
     //cameraUp = -cameraUp;
     view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
-    this->UpdateUBO();
+    this->UpdateUniform();
+    this->UpdateUBOCamera();
 }
 
 void Camera::UpdateSize(VkExtent2D size)
@@ -177,11 +186,32 @@ void Camera::UpdateSize(VkExtent2D size)
     this->HEIGHT = size.height;
 }
 
-void Camera::UpdateUBO()
+void Camera::UpdateUniform()
 {
     this->cameraUniform->projection = this->projection;
     this->cameraUniform->view = this->view;
     this->cameraUniform->viewproj = this->projection * this->view;
     this->cameraUniform->position = this->cameraPos;
+}
+
+void Camera::UpdateUBOCamera()
+{
+    auto currentFrame = SynchronizationModule::GetCurrentFrame();
+    void* data;
+    vkMapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame], 0, sizeof(CameraUniform), 0, &data);
+    memcpy(data, static_cast<const void*>(this->cameraUniform.get()), sizeof(CameraUniform));
+    vkUnmapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame]);
+}
+
+void Camera::CleanCameraUBO()
+{
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        if (this->cameraUniform != nullptr)
+        {
+            vkDestroyBuffer(deviceModule->device, this->cameraUBO->uniformBuffers[i], nullptr);
+            vkFreeMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[i], nullptr);
+        }
+    }
 }
 

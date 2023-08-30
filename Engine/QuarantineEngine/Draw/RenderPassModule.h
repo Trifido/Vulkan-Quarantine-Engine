@@ -11,7 +11,6 @@ private:
     DeviceModule* device_ptr;
 public:
     VkRenderPass    renderPass;
-
 public:
     RenderPassModule();
     ~RenderPassModule();

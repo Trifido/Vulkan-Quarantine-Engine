@@ -7,30 +7,41 @@ layout(location = 2) in vec2 inTexCoord;
 layout(location = 3) in vec3 inTangent;
 layout(location = 4) in vec3 inBitangent;
 
-layout(set = 0, binding = 0) uniform ViewUniforms {
-    mat4 view;
-    mat4 proj;
-} view;
+layout(set = 0, binding = 0) uniform CameraUniform
+{
+	mat4 view;
+	mat4 proj;
+	mat4 viewproj;
+    vec3 position;
+} cameraData;
 
-layout(location = 1) out vec3 nearPoint;
-layout(location = 2) out vec3 farPoint;
+layout (location = 0) out vec2 uv;
+layout (location = 1) out vec2 out_camPos;
 
-vec3 gridPlane[6] = vec3[] (
-    vec3(1, 1, 0), vec3(-1, -1, 0), vec3(-1, 1, 0),
-    vec3(-1, -1, 0), vec3(1, 1, 0), vec3(1, -1, 0)
+const vec3 pos[4] = vec3[4](
+	vec3(-1.0, 0.0, -1.0),
+	vec3( 1.0, 0.0, -1.0),
+	vec3( 1.0, 0.0,  1.0),
+	vec3(-1.0, 0.0,  1.0)
 );
 
-vec3 UnprojectPoint(float x, float y, float z, mat4 view, mat4 projection) {
-    mat4 viewInv = inverse(view);
-    mat4 projInv = inverse(projection);
-    vec4 unprojectedPoint =  viewInv * projInv * vec4(x, y, z, 1.0);
-    return unprojectedPoint.xyz / unprojectedPoint.w;
-}
+const int indices[6] = int[6](
+	0, 3, 2, 0, 2, 1
+);
+
+float gridSize = 100.0;
 
 void main()
 {
-    vec3 p = gridPlane[gl_VertexIndex].xyz;
-    nearPoint = UnprojectPoint(p.x, p.y, 0.0, view.view, view.proj).xyz;
-    farPoint = UnprojectPoint(p.x, p.y, 1.0, view.view, view.proj).xyz;
-    gl_Position = vec4(p, 1.0);
+    mat4 MVP = cameraData.viewproj;
+	int idx = indices[gl_VertexIndex];
+	vec3 position = pos[idx] * gridSize;
+	
+	position.x += cameraData.position.x;
+	position.z += cameraData.position.z;
+
+	out_camPos = cameraData.position.xz;
+
+	gl_Position = MVP * vec4(position, 1.0);
+	uv = position.xz;
 }

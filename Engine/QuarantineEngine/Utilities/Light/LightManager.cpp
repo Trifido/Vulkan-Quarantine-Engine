@@ -3,23 +3,30 @@
 #include "PointLight.h"
 #include "DirectionalLight.h"
 #include "SpotLight.h"
+#include <SynchronizationModule.h>
 
 LightManager* LightManager::instance = nullptr;
 
 LightManager::LightManager()
 {
+    this->deviceModule = DeviceModule::getInstance();
     this->lightManagerUniform = std::make_shared<LightManagerUniform>();
+    this->lightUBO = std::make_shared<UniformBufferObject>();
+    this->lightUBO->CreateUniformBuffer(sizeof(LightManagerUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 }
-
 
 LightManager* LightManager::getInstance()
 {
     if (instance == NULL)
         instance = new LightManager();
-    else
-        std::cout << "Getting existing instance of Light Manager" << std::endl;
 
     return instance;
+}
+
+void LightManager::ResetInstance()
+{
+	delete instance;
+	instance = nullptr;
 }
 
 void LightManager::CreateLight(LightType type, std::string name)
@@ -71,6 +78,37 @@ void LightManager::UpdateUniform()
             this->lightManagerUniform->lights[i] = *this->_lights.begin()->second->uniform;
         }
     }
+
+    this->UpdateUBOLight();
+}
+
+void LightManager::UpdateUBOLight()
+{
+    auto currentFrame = SynchronizationModule::GetCurrentFrame();
+    void* data;
+    vkMapMemory(this->deviceModule->device, this->lightUBO->uniformBuffersMemory[currentFrame], 0, sizeof(LightManagerUniform), 0, &data);
+    memcpy(data, static_cast<const void*>(this->lightManagerUniform.get()), sizeof(LightManagerUniform));
+    vkUnmapMemory(this->deviceModule->device, this->lightUBO->uniformBuffersMemory[currentFrame]);
+}
+
+void LightManager::CleanLightUBO()
+{
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        // Light UBO
+        if (this->lightManagerUniform != nullptr)
+        {
+            vkDestroyBuffer(deviceModule->device, this->lightUBO->uniformBuffers[i], nullptr);
+            vkFreeMemory(deviceModule->device, this->lightUBO->uniformBuffersMemory[i], nullptr);
+        }
+    }
+}
+
+void LightManager::CleanLastResources()
+{
+    this->_lights.clear();
+    this->lightUBO.reset();
+    this->lightManagerUniform.reset();
 }
 
 void LightManager::AddLight(std::shared_ptr<Light> light_ptr, std::string name)

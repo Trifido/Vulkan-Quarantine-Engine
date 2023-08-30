@@ -12,6 +12,7 @@
 #include <Collider.h>
 #include <AnimationManager.h>
 #include <SkeletalComponent.h>
+#include <Numbered.h>
 
 typedef class GameObject GameObject;
 
@@ -23,16 +24,14 @@ enum MeshImportedType
     NONE_GEO
 };
 
-class GameObject
+class GameObject : Numbered
 {
-private:
-    std::string         id;
+protected:
     DeviceModule*       deviceModule = nullptr;
     QueueModule*        queueModule = nullptr;
     MaterialManager*    materialManager = nullptr;
     AnimationManager*   animationManager = nullptr;
     MeshImportedType    meshImportedType;
-
 
 public:
     std::shared_ptr<GeometryComponent>  mesh = nullptr;
@@ -52,22 +51,21 @@ public:
     GameObject(std::string meshPath);
     inline std::string ID() const { return id; }
     void cleanup();
-    void drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
+    virtual void drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
     void addMaterial(std::shared_ptr<Material> material_ptr);
     void addPhysicBody(std::shared_ptr<PhysicBody> physicBody_ptr);
     void addCollider(std::shared_ptr<Collider> collider_ptr);
     void addAnimation(std::shared_ptr<Animation> animation_ptr);
     void InitializePhysics();
-    bool IsValid();
+    virtual bool IsValid();
     void UpdatePhysicTransform();
 
-private:
-    void CreateGameObjectID(size_t length);
+protected:
     void InitializeComponents(size_t numMeshAttributes);
     void InitializeAnimationComponent();
     bool CreateChildsGameObject(std::string pathfile);
     void DrawChilds(VkCommandBuffer& commandBuffer, uint32_t idx);
-    void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
+    virtual void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
     size_t CheckNumAttributes();
 };
 

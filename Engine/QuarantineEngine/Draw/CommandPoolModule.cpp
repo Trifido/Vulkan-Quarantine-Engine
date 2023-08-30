@@ -23,10 +23,19 @@ CommandPoolModule* CommandPoolModule::getInstance()
 {
     if (instance == NULL)
         instance = new CommandPoolModule();
-    else
-        std::cout << "Getting existing instance Command Pool Module" << std::endl;
 
     return instance;
+}
+
+void CommandPoolModule::ResetInstance()
+{
+    delete instance;
+    instance = nullptr;
+}
+
+void CommandPoolModule::bindComputeNodeManager()
+{
+    computeNodeManager = ComputeNodeManager::getInstance();
 }
 
 void CommandPoolModule::createCommandPool(VkSurfaceKHR& surface)
@@ -120,8 +129,36 @@ void CommandPoolModule::Render(VkFramebuffer& swapChainFramebuffer, VkRenderPass
     }
 }
 
+void CommandPoolModule::recordComputeCommandBuffer(VkCommandBuffer commandBuffer)
+{
+    auto currentFrame = SynchronizationModule::GetCurrentFrame();
+    vkResetCommandBuffer(computeCommandBuffers[currentFrame], /*VkCommandBufferResetFlagBits*/ 0);
+
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
+        throw std::runtime_error("failed to begin recording compute command buffer!");
+    }
+
+    computeNodeManager->RecordComputeNodes(commandBuffer, currentFrame);
+
+    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+        throw std::runtime_error("failed to record compute command buffer!");
+    }
+}
+
 void CommandPoolModule::cleanup()
 {
     vkDestroyCommandPool(deviceModule->device, computeCommandPool, nullptr);
     vkDestroyCommandPool(deviceModule->device, commandPool, nullptr);
+}
+
+void CommandPoolModule::CleanLastResources()
+{
+    this->deviceModule = nullptr;
+    this->swapchainModule = nullptr;
+    this->editorManager = nullptr;
+    this->gameObjectManager = nullptr;
+    this->computeNodeManager = nullptr;
 }

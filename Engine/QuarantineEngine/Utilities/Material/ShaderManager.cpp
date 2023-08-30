@@ -27,10 +27,14 @@ ShaderManager* ShaderManager::getInstance()
 {
     if (instance == NULL)
         instance = new ShaderManager();
-    else
-        std::cout << "Getting existing instance of Shader Manager" << std::endl;
 
     return instance;
+}
+
+void ShaderManager::ResetInstance()
+{
+    delete instance;
+    instance = nullptr;
 }
 
 std::shared_ptr<ShaderModule> ShaderManager::GetShader(std::string shaderName)
@@ -70,5 +74,26 @@ void ShaderManager::Clean()
     for (auto& it : _shaders)
     {
         it.second->cleanup();
+    }
+}
+
+void ShaderManager::CleanDescriptorSetLayouts()
+{
+    for each (auto shader in this->_shaders)
+    {
+        shader.second->CleanDescriptorSetLayout();
+    }
+}
+
+void ShaderManager::CleanLastResources()
+{
+    this->_shaders.clear();
+}
+
+void ShaderManager::RecreateShaderGraphicsPipelines()
+{
+    for each (auto shader in this->_shaders)
+    {
+        shader.second->RecreatePipeline();
     }
 }

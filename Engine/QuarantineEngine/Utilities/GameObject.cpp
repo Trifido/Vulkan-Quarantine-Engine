@@ -7,10 +7,10 @@
 
 GameObject::GameObject()
 {
-    this->CreateGameObjectID(12);
     this->deviceModule = DeviceModule::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->materialManager = MaterialManager::getInstance();
+    this->meshImportedType = MeshImportedType::NONE_GEO;
 
     size_t numMeshAttributes = this->CheckNumAttributes();
     this->InitializeComponents(numMeshAttributes);
@@ -18,7 +18,6 @@ GameObject::GameObject()
 
 GameObject::GameObject(PRIMITIVE_TYPE type)
 {
-    this->CreateGameObjectID(12);
     this->deviceModule = DeviceModule::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->materialManager = MaterialManager::getInstance();
@@ -27,7 +26,11 @@ GameObject::GameObject(PRIMITIVE_TYPE type)
     this->mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh(type));
     this->meshImportedType = MeshImportedType::PRIMITIVE_GEO;
 
-    this->addMaterial(this->materialManager->GetMaterial("defaultPrimitiveMat"));
+    if (type != PRIMITIVE_TYPE::GRID_TYPE)
+    {
+        this->addMaterial(this->materialManager->GetMaterial("defaultPrimitiveMat"));
+        this->material->InitializeMaterialDataUBO();
+    }
 
     size_t numMeshAttributes = this->CheckNumAttributes();
     this->InitializeComponents(numMeshAttributes);
@@ -35,7 +38,6 @@ GameObject::GameObject(PRIMITIVE_TYPE type)
 
 GameObject::GameObject(std::string meshPath)
 {
-    this->CreateGameObjectID(12);
     this->deviceModule = DeviceModule::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->materialManager = MaterialManager::getInstance();
@@ -58,11 +60,21 @@ void GameObject::cleanup()
         mesh->cleanup();
     }
 
+    if (this->animationComponent != nullptr)
+    {
+        this->animationComponent->CleanLastResources();
+    }
+
     if (!this->childs.empty())
     {
         for (auto& it : this->childs)
         {
             it->mesh->cleanup();
+
+            if (it->animationComponent != nullptr)
+            {
+                it->animationComponent->CleanLastResources();
+            }
         }
     }    
 }
@@ -78,11 +90,11 @@ void GameObject::addMaterial(std::shared_ptr<Material> material_ptr)
         return;
 
     this->material = material_ptr;
-    this->material->InitializeDescriptor();
+    //this->material->InitializeDescriptor();
 
     if (this->meshImportedType == MeshImportedType::ANIMATED_GEO)
     {
-        this->material->descriptor->InitializeAnimationProperties();
+        //this->material->descriptor->InitializeAnimationProperties();
     }
 
     if (this->mesh != nullptr)
@@ -156,34 +168,45 @@ void GameObject::InitializeAnimationComponent()
     {
         if (this->material != nullptr)
         {
-            this->animationComponent->animator->AddDescriptor(this->material->descriptor);
-        }
+            this->animationComponent->animator->InitializeUBOAnimation(this->material->shader);
+            this->animationComponent->animator->AssignAnimationBuffer(this->material->descriptor);
+            //this->material->descriptor->animationUBO = this->animationComponent->animator->animationUBO;
+            //this->material->descriptor->animationUniformSize = this->animationComponent->animator->animationUniformSize;
 
-        if (!this->childs.empty())
+            //this->animationComponent->animator->AddDescriptor(this->material->descriptor);
+        }
+        else if (!this->childs.empty())
         {
-            for (auto& it : this->childs)
+            bool findShader = false;
+            for(int i = 0; i < this->childs.size(); i++)
             {
-                this->animationComponent->animator->AddDescriptor(it->material->descriptor);
+                if (this->childs.at(i)->material != nullptr)
+                {
+                    if (!findShader)
+                    {
+                        findShader = true;
+                        this->animationComponent->animator->InitializeUBOAnimation(this->childs.at(i)->material->shader);
+                    }
+                    this->animationComponent->animator->AssignAnimationBuffer(this->childs.at(i)->material->descriptor);
+                }
             }
         }
+
+        //if (!this->childs.empty())
+        //{
+        //    for (auto& it : this->childs)
+        //    {
+        //        if (it->animationComponent != nullptr)
+        //        {
+        //            it->animationComponent->animator->InitializeUBOAnimation(it->material->shader);
+        //            it->material->descriptor->animationUBO = it->animationComponent->animator->animationUBO;
+        //            it->material->descriptor->animationUniformSize = it->animationComponent->animator->animationUniformSize;
+
+        //            //this->animationComponent->animator->AddDescriptor(it->material->descriptor);
+        //        }
+        //    }
+        //}
     }
-}
-
-void GameObject::CreateGameObjectID(size_t length)
-{
-    auto randchar = []() -> char
-    {
-        const char charset[] =
-            "0123456789"
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-            "abcdefghijklmnopqrstuvwxyz";
-        const size_t max_index = (sizeof(charset) - 1);
-        return charset[rand() % max_index];
-    };
-    std::string str(length, 0);
-    std::generate_n(str.begin(), length, randchar);
-
-    this->id = str;
 }
 
 void GameObject::InitializePhysics()
@@ -291,13 +314,17 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
     if (this->material != nullptr && this->mesh != nullptr)
     {
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->material->pipeline);
+        auto pipelineModule = this->material->shader->PipelineModule;
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
+
+        vkCmdSetDepthTestEnable(commandBuffer, true);
+
         VkBuffer vertexBuffers[] = { this->mesh->vertexBuffer };
         VkDeviceSize offsets[] = { 0 };
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
         vkCmdBindIndexBuffer(commandBuffer, this->mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->material->pipelineLayout, 0, 1, this->material->GetDescrìptor()->getDescriptorSet(idx), 0, nullptr);
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, this->material->descriptor->getDescriptorSet(idx), 0, nullptr);
 
         TransformUniform ubo;
         ubo.model = this->transform->GetModel();
@@ -307,7 +334,7 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
             ubo.model = this->parent->transform->GetModel() * ubo.model;
         }
 
-        vkCmdPushConstants(commandBuffer, this->material->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &ubo.model);
+        vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &ubo.model);
 
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->mesh->indices.size()), 1, 0, 0, 0);
     }
@@ -326,6 +353,9 @@ size_t GameObject::CheckNumAttributes()
         break;
     case MeshImportedType::PRIMITIVE_GEO:
         numAttributes = 5;
+        break;
+    case MeshImportedType::NONE_GEO:
+        numAttributes = 0;
         break;
     case MeshImportedType::COMMON_GEO:
         numAttributes = 5;
