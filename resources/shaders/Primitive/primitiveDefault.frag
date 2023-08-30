@@ -114,7 +114,7 @@ vec3 ComputePointLight(LightData light, int id, vec3 normal, vec2 texCoords)
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
     // - DIFFUSE
-    vec3 colorDiffuse = vec3 (0.8, 0.1, 0.1);
+    vec3 colorDiffuse = uboMaterial.Diffuse;
     if(uboMaterial.idxDiffuse > -1)
         colorDiffuse = vec3(texture(texSampler[uboMaterial.idxDiffuse], texCoords));
 
@@ -150,7 +150,7 @@ vec3 ComputeDirectionalLight(LightData light, int id, vec3 normal, vec2 texCoord
     vec3 lightDir = normalize(fs_in.TangentLightPos[id]);
 
     // - DIFFUSE
-    vec3 colorDiffuse = vec3 (0.8, 0.1, 0.1);
+    vec3 colorDiffuse = uboMaterial.Diffuse;
     if(uboMaterial.idxDiffuse > -1)
         colorDiffuse = vec3(texture(texSampler[uboMaterial.idxDiffuse], texCoords));
 
@@ -193,7 +193,7 @@ vec3 ComputeSpotLight(LightData light, int id, vec3 normal, vec2 texCoords)
     float intensity = clamp((theta - light.spotExponent) / epsilon, 0.0, 1.0);
 
     // - DIFFUSE
-    vec3 colorDiffuse = vec3 (0.8, 0.8, 0.8);
+    vec3 colorDiffuse = uboMaterial.Diffuse;
     if(uboMaterial.idxDiffuse > -1)
         colorDiffuse = vec3(texture(texSampler[uboMaterial.idxDiffuse], texCoords));
 

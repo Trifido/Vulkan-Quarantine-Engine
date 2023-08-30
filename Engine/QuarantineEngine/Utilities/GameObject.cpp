@@ -28,7 +28,11 @@ GameObject::GameObject(PRIMITIVE_TYPE type)
 
     if (type != PRIMITIVE_TYPE::GRID_TYPE)
     {
-        this->addMaterial(this->materialManager->GetMaterial("defaultPrimitiveMat"));
+        auto mat = this->materialManager->GetMaterial("defaultPrimitiveMat");
+        auto newMatInstance = mat->CreateMaterialInstance();
+        this->materialManager->AddMaterial("defaultPrimitiveMat", newMatInstance);
+
+        this->addMaterial(newMatInstance);
         this->material->InitializeMaterialDataUBO();
     }
 

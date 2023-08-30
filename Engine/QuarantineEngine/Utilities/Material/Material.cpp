@@ -17,6 +17,13 @@ Material::Material(std::shared_ptr<ShaderModule> shader_ptr) : Material()
     this->descriptor = std::make_shared<DescriptorBuffer>(this->shader);
 }
 
+std::shared_ptr<Material> Material::CreateMaterialInstance()
+{
+    std::shared_ptr<Material> mat_instance = std::make_shared<Material>(this->shader);
+    mat_instance->layer = this->layer;
+    return mat_instance;
+}
+
 void Material::CleanLastResources()
 {
     this->materialData.CleanLastResources();

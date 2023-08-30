@@ -28,6 +28,7 @@ public:
 
     void cleanup();
     void cleanupDescriptor();
+    std::shared_ptr<Material> CreateMaterialInstance();
     void recreatePipelineMaterial(VkRenderPass renderPass);
     void bindingMesh(std::shared_ptr<GeometryComponent> mesh);
     void bindingCamera(Camera* editorCamera);

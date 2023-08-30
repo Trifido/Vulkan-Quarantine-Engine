@@ -180,24 +180,22 @@ void App::initVulkan()
     this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH));
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
+    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/microphone/scene.gltf"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/vampire/Capoeira.dae"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/CharacterRunning/CharacterRunning.gltf"));
 
-    if (model->IsValid())
-    {
-        model->transform->SetScale(glm::vec3(0.05f));
-        model->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-    }
+    //if (model->IsValid())
+    //{
+    //    model->transform->SetScale(glm::vec3(0.05f));
+    //    model->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    //}
 
-    this->gameObjectManager->AddGameObject(model, "model");
-
+    //this->gameObjectManager->AddGameObject(model, "model");
 
     std::shared_ptr<GameObject> cube = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
-    cube->material->materialData.SetMaterialField("Diffuse", glm::vec3(1.0f, 0.0f, 0.0f));
+    cube->material->materialData.SetMaterialField("Diffuse", glm::vec3(1.0f, 0.3f, 0.3f));
     cube->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-    //cube->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 65.0f));
 
     this->gameObjectManager->AddGameObject(cube, "cube");
 
@@ -285,7 +283,7 @@ void App::initVulkan()
     cube->addPhysicBody(rigidBody);
     std::shared_ptr<BoxCollider> boxCollider = std::make_shared<BoxCollider>();
     cube->addCollider(boxCollider);
-    
+
     std::shared_ptr<PhysicBody> staticBody = std::make_shared<PhysicBody>();
     plano->addPhysicBody(staticBody);
     std::shared_ptr<PlaneCollider> planeCollider = std::make_shared<PlaneCollider>();

@@ -92,17 +92,29 @@ std::shared_ptr<Material> MaterialManager::GetMaterial(std::string nameMaterial)
 
 void MaterialManager::AddMaterial(std::string& nameMaterial, std::shared_ptr<Material> mat_ptr)
 {
+    nameMaterial = CheckName(nameMaterial);
     _materials[nameMaterial] = mat_ptr;
 }
 
 void MaterialManager::AddMaterial(const char* nameMaterial, std::shared_ptr<Material> mat_ptr)
 {
-    _materials[nameMaterial] = mat_ptr;
+    std::string name = nameMaterial;
+    name = CheckName(name);
+    _materials[name] = mat_ptr;
 }
 
 void MaterialManager::AddMaterial(std::string& nameMaterial, Material mat)
 {
     std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(mat);
+    nameMaterial = CheckName(nameMaterial);
+    _materials[nameMaterial] = mat_ptr;
+}
+
+void MaterialManager::AddMaterial(const char* nameMaterial, Material mat)
+{
+    std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(mat);
+    std::string name = nameMaterial;
+    name = CheckName(name);
     _materials[nameMaterial] = mat_ptr;
 }
 

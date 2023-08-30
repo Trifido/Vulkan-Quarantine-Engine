@@ -36,6 +36,7 @@ public:
     void AddMaterial(const char* nameMaterial, std::shared_ptr<Material> mat_ptr);
     void AddMaterial(std::string& nameMaterial, std::shared_ptr<Material> mat_ptr);
     void AddMaterial(std::string& nameMaterial, Material mat);
+    void AddMaterial(const char* nameMaterial, Material mat);
     void CreateMaterial(std::string& nameMaterial, bool hasAnimation);
     bool Exists(std::string materialName);
     void CleanDescriptors();
