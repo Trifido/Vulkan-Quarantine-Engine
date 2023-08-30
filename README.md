@@ -1,4 +1,4 @@
 # Vulkan-Quarantine-Engine
 Game engine written with Vulkan API.
 
-![Animation System](https://github.com/Trifido/Vulkan-Quarantine-Engine/assets/6890573/b97fb37a-6eb8-4e90-859f-54488093a299)
+![AnimationSystem](https://github.com/Trifido/Vulkan-Quarantine-Engine/assets/6890573/1f5b6a3f-2644-4143-9472-16a72840d27f)
