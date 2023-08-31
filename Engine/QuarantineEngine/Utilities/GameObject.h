@@ -18,6 +18,7 @@ typedef class GameObject GameObject;
 enum MeshImportedType
 {
     COMMON_GEO,
+    EDITOR_GEO,
     PRIMITIVE_GEO,
     ANIMATED_GEO,
     NONE_GEO
