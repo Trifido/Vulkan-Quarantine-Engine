@@ -86,18 +86,18 @@ void GraphicsPipelineModule::CompileGraphicsPipeline(std::vector<VkPipelineShade
     colorBlending.blendConstants[2] = 0.0f; // Optional
     colorBlending.blendConstants[3] = 0.0f; // Optional
 
-    /**/
     std::vector<VkDynamicState> dynamicStates = {
         //VK_DYNAMIC_STATE_VIEWPORT,
         //VK_DYNAMIC_STATE_SCISSOR,
-        VK_DYNAMIC_STATE_DEPTH_TEST_ENABLE
+        VK_DYNAMIC_STATE_DEPTH_TEST_ENABLE,
+        VK_DYNAMIC_STATE_CULL_MODE,
+        VK_DYNAMIC_STATE_FRONT_FACE
     };
 
     VkPipelineDynamicStateCreateInfo dynamicState{};
     dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
     dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
     dynamicState.pDynamicStates = dynamicStates.data();
-    /**/
 
     VkPipelineDepthStencilStateCreateInfo depthStencil{};
     depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;

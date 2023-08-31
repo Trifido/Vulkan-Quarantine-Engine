@@ -35,6 +35,10 @@ GameObject::GameObject(PRIMITIVE_TYPE type)
         this->addMaterial(newMatInstance);
         this->material->InitializeMaterialDataUBO();
     }
+    else if (type == PRIMITIVE_TYPE::GRID_TYPE)
+    {
+        this->meshImportedType = MeshImportedType::EDITOR_GEO;
+    }
 
     size_t numMeshAttributes = this->CheckNumAttributes();
     this->InitializeComponents(numMeshAttributes);
@@ -322,6 +326,16 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
         vkCmdSetDepthTestEnable(commandBuffer, true);
+
+        if (this->meshImportedType == EDITOR_GEO)
+        {
+            vkCmdSetCullMode(commandBuffer, false);
+        }
+        else
+        {
+            vkCmdSetCullMode(commandBuffer, true);
+            vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
+        }
 
         VkBuffer vertexBuffers[] = { this->mesh->vertexBuffer };
         VkDeviceSize offsets[] = { 0 };
