@@ -5,8 +5,9 @@
 
 ShaderModule::ShaderModule()
 {
-    deviceModule = DeviceModule::getInstance();
-    graphicsPipelineManager = GraphicsPipelineManager::getInstance();
+    this->deviceModule = DeviceModule::getInstance();
+    this->graphicsPipelineManager = GraphicsPipelineManager::getInstance();
+    this->computePipelineManager = ComputePipelineManager::getInstance();
     this->reflectShader = ReflectShader();
 }
 

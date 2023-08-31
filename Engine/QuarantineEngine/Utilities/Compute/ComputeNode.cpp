@@ -63,7 +63,7 @@ void ComputeNode::InitializeComputeNode()
     {
         this->InitializeDescriptor();
         this->computeDescriptor->initializeDescriptor(this->shaderStorageBuffers, this->bufferSize);
-        this->computePipelineModule->CreateComputePipeline(this->computePipeline, this->computePipelineLayout, this->computeShader, this->computeDescriptor);
+        //this->computePipelineModule->CreateComputePipeline(this->computePipeline, this->computePipelineLayout, this->computeShader, this->computeDescriptor);
     }
 }
 

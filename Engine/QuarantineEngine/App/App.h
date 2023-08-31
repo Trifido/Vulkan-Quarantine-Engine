@@ -51,7 +51,7 @@
 #include <MaterialManager.h>
 #include <TextureManager.h>
 #include <GameObjectManager.h>
-#include <Compute/ComputeNodeManager.h>
+//#include <Compute/ComputeNodeManager.h>
 #include <ComputePipelineManager.h>
 
 const std::string MODEL_PATH = "../../resources/models/head/head.obj";
