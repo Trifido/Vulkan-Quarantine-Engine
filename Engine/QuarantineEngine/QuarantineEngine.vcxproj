@@ -180,6 +180,7 @@
     <ClCompile Include="Editor\EditorObject.cpp" />
     <ClCompile Include="Editor\EditorObjectManager.cpp" />
     <ClCompile Include="Editor\Grid.cpp" />
+    <ClCompile Include="GraphicsPipeline\ComputePipelineManager.cpp" />
     <ClCompile Include="GraphicsPipeline\ComputePipelineModule.cpp" />
     <ClCompile Include="GraphicsPipeline\GraphicsPipelineManager.cpp" />
     <ClCompile Include="GraphicsPipeline\GraphicsPipelineModule.cpp" />
@@ -260,6 +261,7 @@
     <ClInclude Include="Editor\EditorObject.h" />
     <ClInclude Include="Editor\EditorObjectManager.h" />
     <ClInclude Include="Editor\Grid.h" />
+    <ClInclude Include="GraphicsPipeline\ComputePipelineManager.h" />
     <ClInclude Include="GraphicsPipeline\ComputePipelineModule.h" />
     <ClInclude Include="GraphicsPipeline\GraphicsPipelineManager.h" />
     <ClInclude Include="GraphicsPipeline\GraphicsPipelineModule.h" />

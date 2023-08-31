@@ -52,6 +52,7 @@
 #include <TextureManager.h>
 #include <GameObjectManager.h>
 #include <Compute/ComputeNodeManager.h>
+#include <ComputePipelineManager.h>
 
 const std::string MODEL_PATH = "../../resources/models/head/head.obj";
 const std::string TEXTURE_WALL_NORMAL_PATH = "../../resources/textures/wall/brickwall_normal.jpg";
@@ -149,6 +150,7 @@ private:
     GameObjectManager*  gameObjectManager{};
     AnimationManager*   animationManager{};
     GraphicsPipelineManager* graphicsPipelineManager{};
+    ComputePipelineManager* computePipelineManager{};
 
     KeyboardController* keyboard_ptr {};
 

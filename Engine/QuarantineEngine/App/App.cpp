@@ -21,6 +21,7 @@ App::App()
     this->editorManager = EditorObjectManager::getInstance();
     this->animationManager = AnimationManager::getInstance();
     this->graphicsPipelineManager = GraphicsPipelineManager::getInstance();
+    this->computePipelineManager = ComputePipelineManager::getInstance();
 
     commandPoolModule->ClearColor = glm::vec3(0.1f);
 }
@@ -477,7 +478,7 @@ void App::cleanUpSwapchain()
 
     //Limpiamos los VKPipelines, VkPipelineLayouts y shader del material
     graphicsPipelineManager->CleanGraphicsPipeline();
-    
+    computePipelineManager->CleanComputePipeline();
 
     swapchainModule->cleanup();
 }
@@ -489,6 +490,9 @@ void App::cleanManagers()
 
     this->graphicsPipelineManager->ResetInstance();
     this->graphicsPipelineManager = nullptr;
+
+    this->computePipelineManager->ResetInstance();
+    this->computePipelineManager = nullptr;
 
     this->animationManager->ResetInstance();
     this->animationManager = nullptr;

@@ -7,7 +7,7 @@
 #include <AntiAliasingModule.h>
 #include <PipelineModule.h>
 
-class ComputePipelineModule : PipelineModule
+class ComputePipelineModule : public PipelineModule
 {
 public:
     void CompileComputePipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, VkDescriptorSetLayout descriptorLayout);
