@@ -48,6 +48,7 @@ public:
     VkPipelineVertexInputStateCreateInfo            vertexInputInfo{};
     VkDescriptorSetLayout                           descriptorSetLayout;
     std::shared_ptr<GraphicsPipelineModule>         PipelineModule;
+    std::shared_ptr<ComputePipelineModule>          ComputePipelineModule;
 
 public:
     ShaderModule();

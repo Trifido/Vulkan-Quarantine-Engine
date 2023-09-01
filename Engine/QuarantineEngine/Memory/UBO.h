@@ -61,6 +61,8 @@ public:
     std::vector<VkDeviceMemory>     uniformBuffersMemory;
 
     void CreateUniformBuffer(VkDeviceSize bufferSize, uint32_t numImages, DeviceModule& device);
+    void CreateSSBO(VkDeviceSize bufferSize, uint32_t numImages, DeviceModule& device);
+    void FillSSBO(VkBuffer stagingBuffer, VkDeviceSize bufferSize, uint32_t numImages, DeviceModule& device);
 };
 
 #endif

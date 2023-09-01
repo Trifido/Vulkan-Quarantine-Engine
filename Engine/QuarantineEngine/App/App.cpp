@@ -173,8 +173,7 @@ void App::initVulkan()
     this->materialManager = MaterialManager::getInstance();
     this->materialManager->InitializeMaterialManager();
     this->gameObjectManager = GameObjectManager::getInstance();
-   //this->computeNodeManager = ComputeNodeManager::getInstance();
-   // this->computeNodeManager->InitializeComputeNodeManager(computePipelineModule);
+    this->computeNodeManager = ComputeNodeManager::getInstance();
 
     // Inicializamos los componentes del editor
     //std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
@@ -301,7 +300,7 @@ void App::initVulkan()
     this->animationManager->UpdateAnimations(0.0f);
     this->gameObjectManager->InitializePhysics();
     this->materialManager->InitializeMaterials();
-    //this->computeNodeManager->InitializeComputeNodes();
+    this->computeNodeManager->InitializeComputeNodes();
 
     this->commandPoolModule->Render(framebufferModule.swapChainFramebuffers[0], renderPassModule->renderPass);
     this->synchronizationModule.createSyncObjects(swapchainModule->getNumSwapChainImages());

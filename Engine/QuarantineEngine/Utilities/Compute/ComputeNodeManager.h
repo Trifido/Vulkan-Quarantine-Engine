@@ -11,19 +11,17 @@ class ComputeNodeManager
 {
 private:
     std::unordered_map<std::string, std::shared_ptr<ComputeNode>> _computeNodes;
-    std::shared_ptr<ShaderModule> compute_default_shader;
-    std::shared_ptr<ComputePipelineModule> computePipelineModule;
+
 public:
     static ComputeNodeManager* instance;
 
 private:
     std::string CheckName(std::string nameComputeNode);
+
 public:
     ComputeNodeManager();
     static ComputeNodeManager* getInstance();
     void ComputeNodeManager::ResetInstance();
-    void CreateComputeNode(std::string& nameComputeNode, bool hasAnimation);
-    void InitializeComputeNodeManager(std::shared_ptr<ComputePipelineModule> computePipeline);
     void InitializeComputeNodes();
     void AddComputeNode(std::string& nameComputeNode, ComputeNode mat);
     void AddComputeNode(const char* nameComputeNode, std::shared_ptr<ComputeNode> mat_ptr);

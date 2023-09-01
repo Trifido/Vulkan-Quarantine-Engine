@@ -406,6 +406,9 @@
     <ClCompile Include="GraphicsPipeline\ComputePipelineManager.cpp">
       <Filter>Kernel\GraphicsPipeline\sources</Filter>
     </ClCompile>
+    <ClCompile Include="Memory\ComputeDescriptorBuffer.cpp">
+      <Filter>Kernel\Memory\sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SetUp\DeviceModule.h">
@@ -658,6 +661,9 @@
     </ClInclude>
     <ClInclude Include="GraphicsPipeline\ComputePipelineManager.h">
       <Filter>Kernel\GraphicsPipeline\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\ComputeDescriptorBuffer.h">
+      <Filter>Kernel\Memory\headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
