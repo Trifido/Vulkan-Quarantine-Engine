@@ -10,6 +10,7 @@
 #include <ReflectShader.h>
 #include <Numbered.h>
 #include <GraphicsPipelineManager.h>
+#include <ComputePipelineManager.h>
 
 enum class SHADER_TYPE
 {
@@ -21,8 +22,10 @@ enum class SHADER_TYPE
 };
 
 class GraphicsPipelineManager;
+class ComputePipelineManager;
 class PipelineModule;
 class GraphicsPipelineModule;
+class ComputePipelineModule;
 
 class ShaderModule : public Numbered
 {
@@ -37,6 +40,7 @@ private:
     std::shared_ptr<VkVertexInputBindingDescription>   bindingDescription;
     std::vector<VkVertexInputAttributeDescription>  attributeDescriptions;
     GraphicsPipelineManager*                        graphicsPipelineManager;
+    ComputePipelineManager*                         computePipelineManager;
 
 public:
     ReflectShader                                   reflectShader;
@@ -44,6 +48,7 @@ public:
     VkPipelineVertexInputStateCreateInfo            vertexInputInfo{};
     VkDescriptorSetLayout                           descriptorSetLayout;
     std::shared_ptr<GraphicsPipelineModule>         PipelineModule;
+    std::shared_ptr<ComputePipelineModule>          ComputePipelineModule;
 
 public:
     ShaderModule();

@@ -43,6 +43,8 @@ MaterialManager::MaterialManager()
     const std::string absolute_primitive_frag_shader_path = absPath + "/Primitive/primitiveDefault_frag.spv";
     const std::string absolute_animation_vertex_shader_path = absPath + "/Animation/exampleAnimated_vert.spv";
     const std::string absolute_animation_frag_shader_path = absPath + "/Animation/exampleAnimated_frag.spv";
+    const std::string absolute_particles_vert_shader_path = absPath + "/particles_vert.spv";
+    const std::string absolute_particles_frag_shader_path = absPath + "/particles_frag.spv";
 
     this->lightManager = LightManager::getInstance();
     this->cameraEditor = CameraEditor::getInstance();
@@ -56,6 +58,9 @@ MaterialManager::MaterialManager()
 
     this->default_animation_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_animation_vertex_shader_path, absolute_animation_frag_shader_path));
     shaderManager->AddShader("default_animation", this->default_animation_shader);
+
+    this->default_particles_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_particles_vert_shader_path, absolute_particles_frag_shader_path));
+    shaderManager->AddShader("default_particles", this->default_particles_shader);
 }
 
 void MaterialManager::InitializeMaterialManager()

@@ -180,6 +180,7 @@
     <ClCompile Include="Editor\EditorObject.cpp" />
     <ClCompile Include="Editor\EditorObjectManager.cpp" />
     <ClCompile Include="Editor\Grid.cpp" />
+    <ClCompile Include="GraphicsPipeline\ComputePipelineManager.cpp" />
     <ClCompile Include="GraphicsPipeline\ComputePipelineModule.cpp" />
     <ClCompile Include="GraphicsPipeline\GraphicsPipelineManager.cpp" />
     <ClCompile Include="GraphicsPipeline\GraphicsPipelineModule.cpp" />
@@ -192,6 +193,7 @@
     <ClCompile Include="Input\KeyboardController.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Memory\BufferManageModule.cpp" />
+    <ClCompile Include="Memory\ComputeDescriptorBuffer.cpp" />
     <ClCompile Include="Memory\ComputeDescriptorModule.cpp" />
     <ClCompile Include="Memory\DescriptorBuffer.cpp" />
     <ClCompile Include="Memory\TextureManagerModule.cpp" />
@@ -260,6 +262,7 @@
     <ClInclude Include="Editor\EditorObject.h" />
     <ClInclude Include="Editor\EditorObjectManager.h" />
     <ClInclude Include="Editor\Grid.h" />
+    <ClInclude Include="GraphicsPipeline\ComputePipelineManager.h" />
     <ClInclude Include="GraphicsPipeline\ComputePipelineModule.h" />
     <ClInclude Include="GraphicsPipeline\GraphicsPipelineManager.h" />
     <ClInclude Include="GraphicsPipeline\GraphicsPipelineModule.h" />
@@ -272,6 +275,7 @@
     <ClInclude Include="GUI\SceneWindow.h" />
     <ClInclude Include="Input\KeyboardController.h" />
     <ClInclude Include="Memory\BufferManageModule.h" />
+    <ClInclude Include="Memory\ComputeDescriptorBuffer.h" />
     <ClInclude Include="Memory\ComputeDescriptorModule.h" />
     <ClInclude Include="Memory\DescriptorBuffer.h" />
     <ClInclude Include="Memory\ImageMemoryTools.h" />

@@ -5,8 +5,9 @@
 
 ShaderModule::ShaderModule()
 {
-    deviceModule = DeviceModule::getInstance();
-    graphicsPipelineManager = GraphicsPipelineManager::getInstance();
+    this->deviceModule = DeviceModule::getInstance();
+    this->graphicsPipelineManager = GraphicsPipelineManager::getInstance();
+    this->computePipelineManager = ComputePipelineManager::getInstance();
     this->reflectShader = ReflectShader();
 }
 
@@ -44,6 +45,7 @@ void ShaderModule::createShaderModule(const std::string& filename_compute)
     shaderStages.push_back(compShaderStageInfo);
 
     this->CreateDescriptorSetLayout();
+    this->ComputePipelineModule = this->computePipelineManager->RegisterNewComputePipeline(*this, this->descriptorSetLayout);
 }
 
 void ShaderModule::createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment)
@@ -55,7 +57,7 @@ void ShaderModule::createShaderModule(const std::string& filename_vertex, const 
 
     this->CreateDescriptorSetLayout();
     this->createShaderBindings();
-    this->PipelineModule = this->graphicsPipelineManager->RegisterNewGraphicsPipeline(*this, descriptorSetLayout);
+    this->PipelineModule = this->graphicsPipelineManager->RegisterNewGraphicsPipeline(*this, this->descriptorSetLayout);
 }
 
 void ShaderModule::CleanDescriptorSetLayout()

@@ -205,9 +205,6 @@
     <ClCompile Include="Memory\BufferManageModule.cpp">
       <Filter>Kernel\Memory\sources</Filter>
     </ClCompile>
-    <ClCompile Include="Memory\DescriptorModule.cpp">
-      <Filter>Kernel\Memory\sources</Filter>
-    </ClCompile>
     <ClCompile Include="Presentation\DepthBufferModule.cpp">
       <Filter>Kernel\Presentation\sources</Filter>
     </ClCompile>
@@ -406,6 +403,12 @@
     <ClCompile Include="Utilities\Material\MaterialData.cpp">
       <Filter>Kernel\Utilities\Material\sources</Filter>
     </ClCompile>
+    <ClCompile Include="GraphicsPipeline\ComputePipelineManager.cpp">
+      <Filter>Kernel\GraphicsPipeline\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Memory\ComputeDescriptorBuffer.cpp">
+      <Filter>Kernel\Memory\sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SetUp\DeviceModule.h">
@@ -452,9 +455,6 @@
     </ClInclude>
     <ClInclude Include="Presentation\SwapChainTool.hpp">
       <Filter>Kernel\Presentation\headers</Filter>
-    </ClInclude>
-    <ClInclude Include="Memory\DescriptorModule.h">
-      <Filter>Kernel\Memory\headers</Filter>
     </ClInclude>
     <ClInclude Include="Presentation\DepthBufferModule.h">
       <Filter>Kernel\Presentation\headers</Filter>
@@ -658,6 +658,12 @@
     </ClInclude>
     <ClInclude Include="Utilities\Material\MaterialData.h">
       <Filter>Kernel\Utilities\Material\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsPipeline\ComputePipelineManager.h">
+      <Filter>Kernel\GraphicsPipeline\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\ComputeDescriptorBuffer.h">
+      <Filter>Kernel\Memory\headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -20,6 +20,7 @@ private:
     std::shared_ptr<ShaderModule> default_shader;
     std::shared_ptr<ShaderModule> default_primitive_shader;
     std::shared_ptr<ShaderModule> default_animation_shader;
+    std::shared_ptr<ShaderModule> default_particles_shader;
 
 public:
     static MaterialManager* instance;

@@ -19,7 +19,7 @@ private:
     std::vector<VkSemaphore>    imageAvailableSemaphores;
     std::vector<VkSemaphore>    renderFinishedSemaphores;
     std::vector<VkFence>        inFlightFences;
-    //VkSemaphore*                waitSemaphores;
+    VkSemaphore*                waitSemaphores;
     VkSemaphore*                signalSemaphores;
 
     std::vector<VkFence>        computeInFlightFences;

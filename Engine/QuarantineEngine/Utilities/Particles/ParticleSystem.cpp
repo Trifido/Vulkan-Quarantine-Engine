@@ -1,19 +1,34 @@
 #include "ParticleSystem.h"
 #include "SynchronizationModule.h"
 #include <random>
+#include <filesystem>
 
-ParticleSystem::ParticleSystem()
+ParticleSystem::ParticleSystem() : GameObject()
 {
-    GameObject::GameObject();
     this->computeNodeManager = ComputeNodeManager::getInstance();
     swapchainModule = SwapChainModule::getInstance();
 
-    std::string name = "default_compute";
-    this->computeNodeManager->CreateComputeNode(name, false);
-    this->computeNode = this->computeNodeManager->GetComputeNode(name);
+    auto absPath = std::filesystem::absolute("../../resources/shaders/Compute/").generic_string();
+    std::string substring = "/Engine";
+    std::size_t ind = absPath.find(substring);
+    if (ind != std::string::npos) {
+        absPath.erase(ind, substring.length());
+    }
+
+    const std::string absolute_default_compute_shader_path = absPath + "default_compute.spv";
+    this->computeNode = std::make_shared<ComputeNode>(absolute_default_compute_shader_path);
+    this->computeNodeManager->AddComputeNode("default_compute", this->computeNode);
     this->numParticles = 200;
 
     this->createShaderStorageBuffers();
+
+    auto mat = this->materialManager->GetMaterial("default_particles");
+
+    auto newMatInstance = mat->CreateMaterialInstance();
+    this->materialManager->AddMaterial("default_particlesMat", newMatInstance);
+
+    this->addMaterial(newMatInstance);
+    this->material->InitializeMaterialDataUBO();
 }
 
 void ParticleSystem::cleanup()
@@ -62,7 +77,7 @@ void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t 
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
     VkDeviceSize offsets[] = { 0 };
-    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &computeNode->shaderStorageBuffers->at(idx), offsets);
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &computeNode->computeDescriptor->ssbo->uniformBuffers.at(idx), offsets);
 
     vkCmdDraw(commandBuffer, this->numParticles, 1, 0, 0);
 }

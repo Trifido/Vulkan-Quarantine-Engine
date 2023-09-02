@@ -27,9 +27,6 @@ std::string ComputeNodeManager::CheckName(std::string nameComputeNode)
 ComputeNodeManager::ComputeNodeManager()
 {
     auto shaderManager = ShaderManager::getInstance();
-
-    this->compute_default_shader = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/Compute/default_compute.spv"));
-    shaderManager->AddShader("default_compute", this->compute_default_shader);
 }
 
 ComputeNodeManager* ComputeNodeManager::getInstance()
@@ -46,17 +43,6 @@ void ComputeNodeManager::ResetInstance()
     instance = nullptr;
 }
 
-void ComputeNodeManager::CreateComputeNode(std::string& nameComputeNode, bool hasAnimation)
-{
-    nameComputeNode = CheckName(nameComputeNode);
-    this->AddComputeNode(nameComputeNode, std::make_shared<ComputeNode>(ComputeNode(this->compute_default_shader)));
-}
-
-void ComputeNodeManager::InitializeComputeNodeManager(std::shared_ptr<ComputePipelineModule> computePipeline)
-{
-    this->computePipelineModule = computePipeline;
-}
-
 void ComputeNodeManager::InitializeComputeNodes()
 {
     for (auto it : _computeNodes)
@@ -68,19 +54,16 @@ void ComputeNodeManager::InitializeComputeNodes()
 void ComputeNodeManager::AddComputeNode(std::string& nameComputeNode, ComputeNode mat)
 {
     std::shared_ptr<ComputeNode> mat_ptr = std::make_shared<ComputeNode>(mat);
-    mat_ptr->AddComputePipeline(this->computePipelineModule);
     _computeNodes[nameComputeNode] = mat_ptr;
 }
 
 void ComputeNodeManager::AddComputeNode(const char* nameComputeNode, std::shared_ptr<ComputeNode> mat_ptr)
 {
-    mat_ptr->AddComputePipeline(this->computePipelineModule);
     _computeNodes[nameComputeNode] = mat_ptr;
 }
 
 void ComputeNodeManager::AddComputeNode(std::string& nameComputeNode, std::shared_ptr<ComputeNode> mat_ptr)
 {
-    mat_ptr->AddComputePipeline(this->computePipelineModule);
     _computeNodes[nameComputeNode] = mat_ptr;
 }
 
@@ -101,15 +84,11 @@ void ComputeNodeManager::RecordComputeNodes(VkCommandBuffer commandBuffer, uint3
 {
     for (auto it : _computeNodes)
     {
-        it.second->BindCommandBuffer(commandBuffer, currentFrame);
+        it.second->DispatchCommandBuffer(commandBuffer, currentFrame);
     }
 }
 
 void ComputeNodeManager::CleanLastResources()
 {
     this->_computeNodes.clear();
-    this->compute_default_shader.reset();
-    this->compute_default_shader = nullptr;
-    this->computePipelineModule.reset();
-    this->computePipelineModule = nullptr;
 }
