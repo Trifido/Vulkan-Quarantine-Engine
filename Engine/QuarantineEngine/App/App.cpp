@@ -382,7 +382,7 @@ void App::mainLoop()
                 ImGui::RenderPlatformWindowsDefault();
             }
 
-            //this->computeFrame();
+            this->computeFrame();
             this->drawFrame();
         }
 

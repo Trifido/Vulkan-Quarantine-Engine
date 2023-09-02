@@ -15,6 +15,7 @@ CommandPoolModule::CommandPoolModule()
 
     editorManager = EditorObjectManager::getInstance();
     gameObjectManager = GameObjectManager::getInstance();
+    computeNodeManager = ComputeNodeManager::getInstance();
 
     this->ClearColor = glm::vec3(0.1f);
 }
@@ -31,11 +32,6 @@ void CommandPoolModule::ResetInstance()
 {
     delete instance;
     instance = nullptr;
-}
-
-void CommandPoolModule::bindComputeNodeManager()
-{
-    computeNodeManager = ComputeNodeManager::getInstance();
 }
 
 void CommandPoolModule::createCommandPool(VkSurfaceKHR& surface)

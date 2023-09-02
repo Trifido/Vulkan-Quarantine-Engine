@@ -21,6 +21,14 @@ ParticleSystem::ParticleSystem() : GameObject()
     this->numParticles = 200;
 
     this->createShaderStorageBuffers();
+
+    auto mat = this->materialManager->GetMaterial("default_particles");
+
+    auto newMatInstance = mat->CreateMaterialInstance();
+    this->materialManager->AddMaterial("default_particlesMat", newMatInstance);
+
+    this->addMaterial(newMatInstance);
+    this->material->InitializeMaterialDataUBO();
 }
 
 void ParticleSystem::cleanup()

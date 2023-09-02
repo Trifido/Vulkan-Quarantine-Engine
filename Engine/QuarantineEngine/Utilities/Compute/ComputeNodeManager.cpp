@@ -84,7 +84,7 @@ void ComputeNodeManager::RecordComputeNodes(VkCommandBuffer commandBuffer, uint3
 {
     for (auto it : _computeNodes)
     {
-        //it.second->BindCommandBuffer(commandBuffer, currentFrame);
+        it.second->DispatchCommandBuffer(commandBuffer, currentFrame);
     }
 }
 
