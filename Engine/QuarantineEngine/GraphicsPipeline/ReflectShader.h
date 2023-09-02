@@ -44,9 +44,25 @@ struct DescriptorSetReflect
     }
 };
 
+struct InputVars
+{
+    uint32_t location;
+    std::string name;
+    std::string type;
+
+    InputVars() {}
+    InputVars(uint32_t location, std::string name, std::string type)
+    {
+        this->location = location;
+        this->name = name;
+        this->type = type;
+    }
+};
+
 class ReflectShader
 {
 public:
+    std::vector<InputVars> inputVariables;
     std::unordered_map<std::string, DescriptorBindingReflect> bindings;
     std::vector<DescriptorSetReflect> descriptorSetReflect;
     bool isAnimationShader = false;

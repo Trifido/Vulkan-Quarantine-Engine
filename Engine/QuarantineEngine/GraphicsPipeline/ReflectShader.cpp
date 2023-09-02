@@ -747,9 +747,9 @@ void ReflectShader::PerformReflect(VkShaderModuleCreateInfo createInfo)
     SpvReflectShaderModule module = {};
     SpvReflectResult result = {};
     result = spvReflectCreateShaderModule(createInfo.codeSize, createInfo.pCode, &module);
-
     assert(result == SPV_REFLECT_RESULT_SUCCESS);
 
+    // Descriptors
     uint32_t count = 0;
     result = spvReflectEnumerateDescriptorSets(&module, &count, NULL);
     assert(result == SPV_REFLECT_RESULT_SUCCESS);
@@ -791,8 +791,14 @@ void ReflectShader::PerformReflect(VkShaderModuleCreateInfo createInfo)
 
         bool isBoneInput = false;
         bool isWeightInput = false;
+
+        this->inputVariables.resize(input_vars.size());
+
         for (size_t index = 0; index < input_vars.size(); ++index)
         {
+            std::string type = ToStringType(module.source_language, *(input_vars[index]->type_description));
+            inputVariables.at(index) = InputVars(input_vars[index]->location, input_vars[index]->name, type);
+
             std::string name = input_vars[index]->name;
             if (name == "inBoneIds")
             {

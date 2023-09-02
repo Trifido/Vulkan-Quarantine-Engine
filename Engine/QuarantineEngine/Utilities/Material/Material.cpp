@@ -14,7 +14,12 @@ Material::Material()
 Material::Material(std::shared_ptr<ShaderModule> shader_ptr) : Material()
 {
     this->shader = shader_ptr;
-    this->descriptor = std::make_shared<DescriptorBuffer>(this->shader);
+    this->hasDescriptorBuffer = shader_ptr->reflectShader.bindings.size() > 0;
+
+    if (this->hasDescriptorBuffer)
+    {
+        this->descriptor = std::make_shared<DescriptorBuffer>(this->shader);
+    }
 }
 
 std::shared_ptr<Material> Material::CreateMaterialInstance()
@@ -27,20 +32,28 @@ std::shared_ptr<Material> Material::CreateMaterialInstance()
 void Material::CleanLastResources()
 {
     this->materialData.CleanLastResources();
-    this->descriptor->CleanLastResources();
-    this->descriptor.reset();
-    this->descriptor = nullptr;
+
+    if (this->hasDescriptorBuffer)
+    {
+        this->descriptor->CleanLastResources();
+        this->descriptor.reset();
+        this->descriptor = nullptr;
+    }
     this->shader->CleanLastResources();
     this->shader.reset();
     this->shader = nullptr;
+    this->hasDescriptorBuffer = false;
 }
 
 void Material::InitializeMaterialDataUBO()
 {
-    this->materialData.InitializeUBOMaterial(this->shader);
-    this->descriptor->materialUBO = this->materialData.materialUBO;
-    this->descriptor->materialUniformSize = this->materialData.materialUniformSize;
-    this->descriptor->textures = this->materialData.texture_vector;
+    if (this->hasDescriptorBuffer)
+    {
+        this->materialData.InitializeUBOMaterial(this->shader);
+        this->descriptor->materialUBO = this->materialData.materialUBO;
+        this->descriptor->materialUniformSize = this->materialData.materialUniformSize;
+        this->descriptor->textures = this->materialData.texture_vector;
+    }
 }
 
 void Material::cleanup()
@@ -51,7 +64,10 @@ void Material::cleanup()
         //this->descriptor->cleanupDescriptorBuffer();
         //this->descriptor->cleanupDescriptorPool();
     //}
-    this->descriptor->CleanDescriptorSetPool();
+    if (this->hasDescriptorBuffer)
+    {
+        this->descriptor->CleanDescriptorSetPool();
+    }
     this->materialData.CleanMaterialUBO();
 }
 
@@ -93,8 +109,8 @@ void Material::InitializeMaterial()
     {
         std::cout << "Falta shader en el material.\n";
     }
-    else
-    {
+    else if(this->hasDescriptorBuffer)
+    {        
         this->descriptor->InitializeDescriptorSets(this->shader);
         //this->fillEmptyTextures();
         //this->descriptor->Initialize(texture_vector, uniform);
@@ -116,7 +132,7 @@ void Material::RecreateUniformsMaterial()
 
 void Material::UpdateUniformData()
 {
-    if (this->isMeshBinding && this->shader != nullptr)
+    if (this->isMeshBinding && this->shader != nullptr && this->hasDescriptorBuffer)
     {
         this->materialData.UpdateUBOMaterial();
     }

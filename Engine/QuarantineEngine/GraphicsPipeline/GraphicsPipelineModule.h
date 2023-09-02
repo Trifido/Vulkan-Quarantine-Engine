@@ -11,7 +11,6 @@ class GraphicsPipelineModule : public PipelineModule
 private:
     SwapChainModule*    swapChainModule = nullptr;
     AntiAliasingModule* antialiasingModule = nullptr;
-    VkPolygonMode       PoligonMode;
     VkBool32            depthBufferMode;
 
 public:
@@ -35,6 +34,7 @@ public:
         DISABLED
     };
 
+    VkPolygonMode PoligonMode = VkPolygonMode::VK_POLYGON_MODE_FILL;
     std::shared_ptr<VkRenderPass> renderPass = nullptr;
 
 public:

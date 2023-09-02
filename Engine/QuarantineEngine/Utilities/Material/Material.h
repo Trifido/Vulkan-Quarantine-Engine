@@ -14,6 +14,7 @@ class Material : public GameComponent
 {
 private:
     bool isMeshBinding = false;
+    bool hasDescriptorBuffer = false;
 
 public:
     MaterialData materialData;
@@ -38,6 +39,7 @@ public:
     void InitializeMaterialDataUBO();
     void RecreateUniformsMaterial();
     void UpdateUniformData();
+    bool HasDescriptorBuffer() { return this->hasDescriptorBuffer; }
 };
 
 #endif // !MATERIAL_H

@@ -131,7 +131,6 @@ void App::initVulkan()
     //Creamos el Command pool module y los Command buffers
     commandPoolModule->createCommandPool(windowSurface.getSurface());
     commandPoolModule->createCommandBuffers();
-    //commandPoolModule->bindComputeNodeManager();
 
     //Creamos el antialiasing module
     antialiasingModule = AntiAliasingModule::getInstance();
@@ -140,9 +139,6 @@ void App::initVulkan()
     //Creamos el depth buffer module
     depthBufferModule = DepthBufferModule::getInstance();
     depthBufferModule->createDepthResources(swapchainModule->swapChainExtent, commandPoolModule->getCommandPool());
-
-    //Creamos el compute pipeline Module
-    //computePipelineModule = std::make_shared<ComputePipelineModule>();
 
     //Creamos el Render Pass
     renderPassModule = new RenderPassModule();
@@ -159,9 +155,9 @@ void App::initVulkan()
 
     //Añadimos requisitos para los geometryComponent
     BufferManageModule::commandPool = this->commandPoolModule->getCommandPool();
-    //BufferManageModule::computeCommandPool = this->commandPoolModule->getComputeCommandPool();
+    BufferManageModule::computeCommandPool = this->commandPoolModule->getComputeCommandPool();
     BufferManageModule::graphicsQueue = this->queueModule->graphicsQueue;
-    //BufferManageModule::computeQueue = this->queueModule->computeQueue;
+    BufferManageModule::computeQueue = this->queueModule->computeQueue;
     GeometryComponent::deviceModule_ptr = this->deviceModule;
     TextureManagerModule::queueModule = this->queueModule;
     CustomTexture::commandPool = commandPoolModule->getCommandPool();

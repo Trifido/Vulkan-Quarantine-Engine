@@ -22,10 +22,10 @@ ParticleSystem::ParticleSystem() : GameObject()
 
     this->createShaderStorageBuffers();
 
-    auto mat = this->materialManager->GetMaterial("default_particles");
+    auto mat = this->materialManager->GetMaterial("defaultParticlesMat");
 
     auto newMatInstance = mat->CreateMaterialInstance();
-    this->materialManager->AddMaterial("default_particlesMat", newMatInstance);
+    this->materialManager->AddMaterial("defaultParticlesMat", newMatInstance);
 
     this->addMaterial(newMatInstance);
     this->material->InitializeMaterialDataUBO();
@@ -60,7 +60,8 @@ void ParticleSystem::createShaderStorageBuffers()
 
 void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
-    //vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->material->pipeline);
+    auto pipelineModule = this->material->shader->PipelineModule;
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
     VkViewport viewport{};
     viewport.x = 0.0f;

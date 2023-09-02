@@ -53,11 +53,11 @@ public:
 public:
     ShaderModule();
     ShaderModule(std::string computeShaderName);
-    ShaderModule(std::string vertexShaderName, std::string fragmentShaderName);
+    ShaderModule(std::string vertexShaderName, std::string fragmentShaderName, VkPolygonMode polygonMode = VkPolygonMode::VK_POLYGON_MODE_FILL);
 
     static std::vector<char> readFile(const std::string& filename);
     void createShaderModule(const std::string& filename_compute);
-    void createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment);
+    void createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment, VkPolygonMode polygonMode = VkPolygonMode::VK_POLYGON_MODE_FILL);
     void CleanDescriptorSetLayout();
     void cleanup();
     void CleanLastResources();

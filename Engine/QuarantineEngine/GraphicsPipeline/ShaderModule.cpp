@@ -16,9 +16,9 @@ ShaderModule::ShaderModule(std::string computeShaderName) : ShaderModule()
     this->createShaderModule(computeShaderName);
 }
 
-ShaderModule::ShaderModule(std::string vertexShaderName, std::string fragmentShaderName) : ShaderModule()
+ShaderModule::ShaderModule(std::string vertexShaderName, std::string fragmentShaderName, VkPolygonMode polygonMode) : ShaderModule()
 {
-    this->createShaderModule(vertexShaderName, fragmentShaderName);
+    this->createShaderModule(vertexShaderName, fragmentShaderName, polygonMode);
 }
 
 std::vector<char> ShaderModule::readFile(const std::string& filename)
@@ -48,7 +48,7 @@ void ShaderModule::createShaderModule(const std::string& filename_compute)
     this->ComputePipelineModule = this->computePipelineManager->RegisterNewComputePipeline(*this, this->descriptorSetLayout);
 }
 
-void ShaderModule::createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment)
+void ShaderModule::createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment, VkPolygonMode polygonMode)
 {
     vertShaderStageInfo = createShader(deviceModule->device, filename_vertex, SHADER_TYPE::VERTEX_SHADER);
     fragShaderStageInfo = createShader(deviceModule->device, filename_fragment, SHADER_TYPE::FRAGMENT_SHADER);
@@ -57,7 +57,7 @@ void ShaderModule::createShaderModule(const std::string& filename_vertex, const 
 
     this->CreateDescriptorSetLayout();
     this->createShaderBindings();
-    this->PipelineModule = this->graphicsPipelineManager->RegisterNewGraphicsPipeline(*this, this->descriptorSetLayout);
+    this->PipelineModule = this->graphicsPipelineManager->RegisterNewGraphicsPipeline(*this, this->descriptorSetLayout, polygonMode);
 }
 
 void ShaderModule::CleanDescriptorSetLayout()

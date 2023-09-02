@@ -32,7 +32,7 @@ public:
     void AddGraphicsPipeline(const char* pipelineName, std::shared_ptr<GraphicsPipelineModule> gp_ptr);
     void AddGraphicsPipeline(std::string& pipelineName, std::shared_ptr<GraphicsPipelineModule> gp_ptr);
     void AddGraphicsPipeline(std::string& pipelineName, GraphicsPipelineModule gp);
-    std::shared_ptr<GraphicsPipelineModule> RegisterNewGraphicsPipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout);
+    std::shared_ptr<GraphicsPipelineModule> RegisterNewGraphicsPipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout, VkPolygonMode polygonMode = VkPolygonMode::VK_POLYGON_MODE_FILL);
     bool Exists(std::string pipelineName);
     void RegisterDefaultRenderPass(VkRenderPass renderPass);
     void CleanGraphicsPipeline();
