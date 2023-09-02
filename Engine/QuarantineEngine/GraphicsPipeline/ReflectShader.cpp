@@ -2,6 +2,12 @@
 #include <iostream>
 #include <cassert>
 #include <thread>
+#include <algorithm>
+
+bool compareByLocation(const InputVars& a, const InputVars& b)
+{
+    return a.location < b.location;
+}
 
 ReflectShader::ReflectShader()
 {
@@ -86,6 +92,87 @@ std::string ReflectShader::ToStringFormat(SpvReflectFormat fmt) {
     }
     // unhandled SpvReflectFormat enum value
     return "VK_FORMAT_???";
+}
+
+uint32_t ReflectShader::ToSizeFormat(SpvReflectFormat fmt) {
+    switch (fmt) {
+    case SPV_REFLECT_FORMAT_UNDEFINED:
+        return 0;
+    case SPV_REFLECT_FORMAT_R16_UINT:
+        return 2;
+    case SPV_REFLECT_FORMAT_R16_SINT:
+        return 2;
+    case SPV_REFLECT_FORMAT_R16_SFLOAT:
+        return 2;
+    case SPV_REFLECT_FORMAT_R16G16_UINT:
+        return 4;
+    case SPV_REFLECT_FORMAT_R16G16_SINT:
+        return 4;
+    case SPV_REFLECT_FORMAT_R16G16_SFLOAT:
+        return 4;
+    case SPV_REFLECT_FORMAT_R16G16B16_UINT:
+        return 6;
+    case SPV_REFLECT_FORMAT_R16G16B16_SINT:
+        return 6;
+    case SPV_REFLECT_FORMAT_R16G16B16_SFLOAT:
+        return 6;
+    case SPV_REFLECT_FORMAT_R16G16B16A16_UINT:
+        return 8;
+    case SPV_REFLECT_FORMAT_R16G16B16A16_SINT:
+        return 8;
+    case SPV_REFLECT_FORMAT_R16G16B16A16_SFLOAT:
+        return 8;
+    case SPV_REFLECT_FORMAT_R32_UINT:
+        return 4;
+    case SPV_REFLECT_FORMAT_R32_SINT:
+        return 4;
+    case SPV_REFLECT_FORMAT_R32_SFLOAT:
+        return 4;
+    case SPV_REFLECT_FORMAT_R32G32_UINT:
+        return 8;
+    case SPV_REFLECT_FORMAT_R32G32_SINT:
+        return 8;
+    case SPV_REFLECT_FORMAT_R32G32_SFLOAT:
+        return 8;
+    case SPV_REFLECT_FORMAT_R32G32B32_UINT:
+        return 12;
+    case SPV_REFLECT_FORMAT_R32G32B32_SINT:
+        return 12;
+    case SPV_REFLECT_FORMAT_R32G32B32_SFLOAT:
+        return 12;
+    case SPV_REFLECT_FORMAT_R32G32B32A32_UINT:
+        return 16;
+    case SPV_REFLECT_FORMAT_R32G32B32A32_SINT:
+        return 16;
+    case SPV_REFLECT_FORMAT_R32G32B32A32_SFLOAT:
+        return 16;
+    case SPV_REFLECT_FORMAT_R64_UINT:
+        return 8;
+    case SPV_REFLECT_FORMAT_R64_SINT:
+        return 8;
+    case SPV_REFLECT_FORMAT_R64_SFLOAT:
+        return 8;
+    case SPV_REFLECT_FORMAT_R64G64_UINT:
+        return 16;
+    case SPV_REFLECT_FORMAT_R64G64_SINT:
+        return 16;
+    case SPV_REFLECT_FORMAT_R64G64_SFLOAT:
+        return 16;
+    case SPV_REFLECT_FORMAT_R64G64B64_UINT:
+        return 24;
+    case SPV_REFLECT_FORMAT_R64G64B64_SINT:
+        return 24;
+    case SPV_REFLECT_FORMAT_R64G64B64_SFLOAT:
+        return 24;
+    case SPV_REFLECT_FORMAT_R64G64B64A64_UINT:
+        return 32;
+    case SPV_REFLECT_FORMAT_R64G64B64A64_SINT:
+        return 32;
+    case SPV_REFLECT_FORMAT_R64G64B64A64_SFLOAT:
+        return 32;
+    }
+    // unhandled SpvReflectFormat enum value
+    return 0;
 }
 
 std::string ReflectShader::ToStringScalarType(const SpvReflectTypeDescription& type) {
@@ -796,8 +883,9 @@ void ReflectShader::PerformReflect(VkShaderModuleCreateInfo createInfo)
 
         for (size_t index = 0; index < input_vars.size(); ++index)
         {
+            uint32_t varSize = ToSizeFormat(input_vars[index]->format);
             std::string type = ToStringType(module.source_language, *(input_vars[index]->type_description));
-            inputVariables.at(index) = InputVars(input_vars[index]->location, input_vars[index]->name, type);
+            inputVariables.at(index) = InputVars(input_vars[index]->location, input_vars[index]->name, type, (VkFormat) input_vars[index]->format, varSize);
 
             std::string name = input_vars[index]->name;
             if (name == "inBoneIds")
@@ -808,8 +896,11 @@ void ReflectShader::PerformReflect(VkShaderModuleCreateInfo createInfo)
             {
                 isWeightInput = true;
             }
+
+            this->inputStrideSize += varSize;
         }
 
+        std::sort(this->inputVariables.begin(), this->inputVariables.end(), compareByLocation);
         this->isAnimationShader = isBoneInput && isWeightInput;
     }
     

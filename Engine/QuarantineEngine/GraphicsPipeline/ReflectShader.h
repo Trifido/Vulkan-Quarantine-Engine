@@ -47,17 +47,23 @@ struct DescriptorSetReflect
 struct InputVars
 {
     uint32_t location;
+    uint32_t size;
     std::string name;
+    VkFormat format;
     std::string type;
 
     InputVars() {}
-    InputVars(uint32_t location, std::string name, std::string type)
+    InputVars(uint32_t location, std::string name, std::string type, VkFormat format, uint32_t size)
     {
         this->location = location;
         this->name = name;
         this->type = type;
+        this->size = size;
+        this->format = format;
     }
 };
+
+bool compareByLocation(const InputVars& a, const InputVars& b);
 
 class ReflectShader
 {
@@ -73,9 +79,11 @@ public:
     std::vector<std::string> animationUBOComponents;
     VkDeviceSize materialBufferSize = 0;
     VkDeviceSize animationBufferSize = 0;
+    uint32_t inputStrideSize = 0;
 
 private:
     std::string ToStringFormat(SpvReflectFormat fmt);
+    uint32_t ToSizeFormat(SpvReflectFormat fmt);
     static std::string ToStringScalarType(const SpvReflectTypeDescription& type);
     static std::string ToStringGlslType(const SpvReflectTypeDescription& type);
     static std::string ToStringHlslType(const SpvReflectTypeDescription& type);

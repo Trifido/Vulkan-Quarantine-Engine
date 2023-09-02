@@ -187,12 +187,29 @@ void ShaderModule::CreateDescriptorSetLayout()
 void ShaderModule::SetBindingDescription()
 {
     bindingDescription->binding = 0;
+    uint32_t tam = sizeof(AuxiliarVertex); //reflectShader.inputStrideSize;
     bindingDescription->stride = (this->reflectShader.isAnimationShader) ? sizeof(PBRAnimationVertex) : sizeof(PBRVertex);
     bindingDescription->inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 }
 
 void ShaderModule::SetAttributeDescriptions(std::vector<VkVertexInputAttributeDescription>& attributeDescriptions)
 {
+
+    //size_t numAttributes = this->reflectShader.inputVariables.size();
+    //attributeDescriptions.resize(numAttributes);
+
+    //uint32_t offset = 0;
+
+    //for (uint16_t id = 0; id < numAttributes; id++)
+    //{
+    //    attributeDescriptions[id].binding = 0;
+    //    attributeDescriptions[id].location = this->reflectShader.inputVariables[id].location;
+    //    attributeDescriptions[id].format = this->reflectShader.inputVariables[id].format;
+    //    attributeDescriptions[id].offset = offset;
+    //    offset += this->reflectShader.inputVariables[id].size;
+    //}
+
+    /**/
     size_t numAttributes = (this->reflectShader.isAnimationShader) ? 7 : 5;
     attributeDescriptions.resize(numAttributes);
 
@@ -233,4 +250,5 @@ void ShaderModule::SetAttributeDescriptions(std::vector<VkVertexInputAttributeDe
         attributeDescriptions[6].format = VK_FORMAT_R32G32B32A32_SFLOAT;
         attributeDescriptions[6].offset = offsetof(PBRVertex, boneWeights);
     }
+    /**/
 }

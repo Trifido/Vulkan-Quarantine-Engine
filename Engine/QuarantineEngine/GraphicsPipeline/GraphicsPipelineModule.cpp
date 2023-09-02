@@ -86,8 +86,8 @@ void GraphicsPipelineModule::CompileGraphicsPipeline(std::vector<VkPipelineShade
     colorBlending.blendConstants[3] = 0.0f; // Optional
 
     std::vector<VkDynamicState> dynamicStates = {
-        VK_DYNAMIC_STATE_VIEWPORT,
-        VK_DYNAMIC_STATE_SCISSOR,
+        //VK_DYNAMIC_STATE_VIEWPORT,
+        //VK_DYNAMIC_STATE_SCISSOR,
         VK_DYNAMIC_STATE_DEPTH_TEST_ENABLE,
         VK_DYNAMIC_STATE_CULL_MODE,
         VK_DYNAMIC_STATE_FRONT_FACE
