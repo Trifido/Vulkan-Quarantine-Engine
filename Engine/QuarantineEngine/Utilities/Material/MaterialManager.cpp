@@ -2,6 +2,7 @@
 #include "ShaderManager.h"
 #include <GraphicsPipelineModule.h>
 #include <filesystem>
+#include <Particles/ParticleSystem.h>
 
 MaterialManager* MaterialManager::instance = nullptr;
 
@@ -59,7 +60,11 @@ MaterialManager::MaterialManager()
     this->default_animation_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_animation_vertex_shader_path, absolute_animation_frag_shader_path));
     shaderManager->AddShader("default_animation", this->default_animation_shader);
 
-    this->default_particles_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_particles_vert_shader_path, absolute_particles_frag_shader_path, VkPolygonMode::VK_POLYGON_MODE_POINT));
+    GraphicsPipelineData pipelineParticleShader = {};
+    pipelineParticleShader.polygonMode = VkPolygonMode::VK_POLYGON_MODE_POINT;
+    pipelineParticleShader.vertexBufferStride = sizeof(Particle);
+
+    this->default_particles_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_particles_vert_shader_path, absolute_particles_frag_shader_path, pipelineParticleShader));
     shaderManager->AddShader("default_particles", this->default_particles_shader);
 }
 

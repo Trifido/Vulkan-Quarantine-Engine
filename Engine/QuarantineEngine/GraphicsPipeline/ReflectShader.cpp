@@ -11,6 +11,7 @@ bool compareByLocation(const InputVars& a, const InputVars& b)
 
 ReflectShader::ReflectShader()
 {
+    this->nativesVariables.push_back("gl_VertexIndex");
 }
 
 std::string ReflectShader::ToStringFormat(SpvReflectFormat fmt) {
@@ -92,6 +93,23 @@ std::string ReflectShader::ToStringFormat(SpvReflectFormat fmt) {
     }
     // unhandled SpvReflectFormat enum value
     return "VK_FORMAT_???";
+}
+
+void ReflectShader::RemoveInputNativeVariables()
+{
+    for (int i = 0; i < this->nativesVariables.size(); i++)
+    {
+        int j = 0;
+        while (j < this->inputVariables.size())
+        {
+            if (this->inputVariables.at(j).name == this->nativesVariables.at(i))
+            {
+                this->inputVariables.erase(this->inputVariables.begin() + j);
+                break;
+            }
+            j++;
+        }
+    }
 }
 
 uint32_t ReflectShader::ToSizeFormat(SpvReflectFormat fmt) {
@@ -900,6 +918,7 @@ void ReflectShader::PerformReflect(VkShaderModuleCreateInfo createInfo)
             this->inputStrideSize += varSize;
         }
 
+        this->RemoveInputNativeVariables();
         std::sort(this->inputVariables.begin(), this->inputVariables.end(), compareByLocation);
         this->isAnimationShader = isBoneInput && isWeightInput;
     }

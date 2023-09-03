@@ -15,12 +15,6 @@ struct Vertex
     }
 };
 
-struct AuxiliarVertex : Vertex
-{
-    glm::vec3 Tangents;
-    glm::vec3 Bitangents;
-};
-
 struct PBRVertex : Vertex
 {
     glm::vec3 Tangents;

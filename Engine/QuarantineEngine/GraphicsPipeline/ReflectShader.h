@@ -67,6 +67,8 @@ bool compareByLocation(const InputVars& a, const InputVars& b);
 
 class ReflectShader
 {
+private:
+    std::vector<std::string> nativesVariables;
 public:
     std::vector<InputVars> inputVariables;
     std::unordered_map<std::string, DescriptorBindingReflect> bindings;
@@ -100,7 +102,7 @@ private:
     DescriptorBindingReflect GetDescriptorBinding(const SpvReflectDescriptorBinding& obj, bool write_set, const char* indent);
     void CheckUBOMaterial(SpvReflectDescriptorSet* set);
     void CheckUBOAnimation(SpvReflectDescriptorSet* set);
-
+    void RemoveInputNativeVariables();
 public:
     ReflectShader();
     void Output(VkShaderModuleCreateInfo createInfo);
