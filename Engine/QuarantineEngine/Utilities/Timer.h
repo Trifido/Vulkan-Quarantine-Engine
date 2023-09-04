@@ -1,4 +1,5 @@
 #pragma once
+#include <UBO.h>
 
 #ifndef TIMER_H
 #define TIMER_H
@@ -6,7 +7,7 @@
 class Timer
 {
 public:
-    double  deltaTime;
+    static double  DeltaTime;
     double  lastFrame;
     double  currentFrame;
 

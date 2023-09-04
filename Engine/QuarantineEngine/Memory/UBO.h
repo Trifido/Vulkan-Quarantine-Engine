@@ -54,6 +54,11 @@ struct PushConstantStruct
     glm::mat4 model;
 };
 
+struct DeltaTimeUniform
+{
+    float deltaTime;
+};
+
 class UniformBufferObject
 {
 public:

@@ -16,9 +16,6 @@
 #include "WindowSurface.h"
 #include "SwapChainModule.h"
 #include "QueueModule.h"
-//#include "ImageViewModule.h"
-#include "GraphicsPipelineModule.h"
-#include "ComputePipelineModule.h"
 #include "FrameBufferModule.h"
 #include "CommandPoolModule.h"
 #include "SynchronizationModule.h"
@@ -128,19 +125,13 @@ private:
     RenderPassModule*       renderPassModule;
     Timer*                  timer;
 
-    //std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule;
-    std::shared_ptr<ComputePipelineModule> computePipelineModule;
-
-
     bool show_demo_window = true;
     bool show_another_window = true;
     //FontResourcesModule     fontModule;
 
     //RayTracingModule        raytracingModule;
 
-    //std::vector<std::shared_ptr<GameObject>> models;
     Camera*     cameraEditor;
-
     LightManager*       lightManager {};
     ShaderManager*      shaderManager{};
     MaterialManager*    materialManager {};

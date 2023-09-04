@@ -347,8 +347,7 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, this->material->descriptor->getDescriptorSet(idx), 0, nullptr);
         }
 
-        PushConstantStruct pushConstant;
-        pushConstant.model = this->transform->GetModel();
+        this->pushConstant.model = this->transform->GetModel();
 
         if (this->parent != nullptr)
         {

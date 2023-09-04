@@ -164,8 +164,8 @@ void App::initVulkan()
     this->computeNodeManager = ComputeNodeManager::getInstance();
 
     // Inicializamos los componentes del editor
-    std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
-    this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
+    //std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
+    //this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
@@ -305,17 +305,20 @@ void App::mainLoop()
         this->timer->UpdateDeltaTime();
 
         //PHYSIC SYSTEM
-        this->physicsModule->ComputePhysics((float)this->timer->deltaTime);
+        this->physicsModule->ComputePhysics((float)Timer::DeltaTime);
 
         // Update transforms
         this->gameObjectManager->UpdatePhysicTransforms();
 
         //ANIMATION SYSTEM
-        this->animationManager->UpdateAnimations((float)this->timer->deltaTime);
+        this->animationManager->UpdateAnimations((float)Timer::DeltaTime);
+
+        //COMPUTE NODES
+        this->computeNodeManager->UpdateComputeNodes();
 
         // INPUT EVENTS
         this->keyboard_ptr->ReadKeyboardEvents();
-        this->cameraEditor->CameraController((float)this->timer->deltaTime);
+        this->cameraEditor->CameraController((float)Timer::DeltaTime);
 
         if (ImGui::IsKeyDown('j') || ImGui::IsKeyDown('J'))
         {

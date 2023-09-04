@@ -32,7 +32,7 @@ protected:
     MaterialManager*    materialManager = nullptr;
     AnimationManager*   animationManager = nullptr;
     MeshImportedType    meshImportedType;
-
+    PushConstantStruct  pushConstant;
 public:
     std::shared_ptr<GeometryComponent>  mesh = nullptr;
     std::shared_ptr<Transform>          transform = nullptr;

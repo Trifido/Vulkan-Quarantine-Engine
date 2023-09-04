@@ -63,6 +63,11 @@ void ComputeNode::cleanup()
 void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t currentFrame)
 {
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, this->computeShader->ComputePipelineModule->pipeline);
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, this->computeShader->ComputePipelineModule->pipelineLayout, 0, 1, &computeDescriptor->descriptorSets[currentFrame], 0, nullptr);
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, this->computeShader->ComputePipelineModule->pipelineLayout, 0, 1, &computeDescriptor->descriptorSets[currentFrame], 0, 0);
     vkCmdDispatch(commandBuffer, this->nElements / 256, 1, 1);
+}
+
+void ComputeNode::UpdateComputeDescriptor()
+{
+    this->computeDescriptor->UpdateUBODeltaTime();
 }

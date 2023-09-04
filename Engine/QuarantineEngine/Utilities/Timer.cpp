@@ -2,10 +2,11 @@
 #include <GLFW/glfw3.h>
 
 Timer* Timer::instance = nullptr;
+double Timer::DeltaTime = 0;
 
 Timer::Timer()
 {
-    this->deltaTime = this->lastFrame = 0;
+    this->DeltaTime = this->lastFrame = 0;
 }
 
 Timer* Timer::getInstance()
@@ -26,6 +27,6 @@ void Timer::ResetInstance()
 void Timer::UpdateDeltaTime()
 {
     currentFrame = glfwGetTime();
-    deltaTime = currentFrame - lastFrame;
+    DeltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
 }

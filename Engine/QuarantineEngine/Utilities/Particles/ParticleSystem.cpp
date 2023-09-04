@@ -51,7 +51,7 @@ void ParticleSystem::createShaderStorageBuffers()
         float theta = rndDist(rndEngine) * 2.0f * 3.14159265358979323846f;
         float x = r * cos(theta) * 800 / 600;
         float y = r * sin(theta);
-        particle.position = glm::vec2(x, y);
+        particle.position = glm::vec2(0.5f, 0.5f);//glm::vec2(x, y);
         particle.velocity = glm::normalize(glm::vec2(x, y)) * 0.00025f;
         particle.color = glm::vec4(rndDist(rndEngine), rndDist(rndEngine), rndDist(rndEngine), 1.0f);
     }
