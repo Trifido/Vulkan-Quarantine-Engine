@@ -5,6 +5,7 @@
 
 ParticleSystem::ParticleSystem() : GameObject()
 {
+    this->timer = Timer::getInstance();
     this->computeNodeManager = ComputeNodeManager::getInstance();
     swapchainModule = SwapChainModule::getInstance();
 

@@ -10,8 +10,7 @@
 
 App::App()
 {
-    this->deltaTime = this->lastFrame = 0;
-
+    this->timer = Timer::getInstance();
     this->keyboard_ptr = KeyboardController::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->deviceModule = DeviceModule::getInstance();
@@ -37,13 +36,6 @@ void App::run()
     initVulkan();
     mainLoop();
     cleanUp();
-}
-
-void App::computeDeltaTime()
-{
-    double currentFrame = glfwGetTime();
-    this->deltaTime = currentFrame - lastFrame;
-    this->lastFrame = currentFrame;
 }
 
 void App::initWindow()
@@ -310,20 +302,20 @@ void App::mainLoop()
 
     while (!glfwWindowShouldClose(mainWindow.getWindow())) {
         glfwPollEvents();
-        computeDeltaTime();
+        this->timer->UpdateDeltaTime();
 
         //PHYSIC SYSTEM
-        this->physicsModule->ComputePhysics((float)this->deltaTime);
+        this->physicsModule->ComputePhysics((float)this->timer->deltaTime);
 
         // Update transforms
         this->gameObjectManager->UpdatePhysicTransforms();
 
         //ANIMATION SYSTEM
-        this->animationManager->UpdateAnimations((float)this->deltaTime);
+        this->animationManager->UpdateAnimations((float)this->timer->deltaTime);
 
         // INPUT EVENTS
         this->keyboard_ptr->ReadKeyboardEvents();
-        this->cameraEditor->CameraController((float)deltaTime);
+        this->cameraEditor->CameraController((float)this->timer->deltaTime);
 
         if (ImGui::IsKeyDown('j') || ImGui::IsKeyDown('J'))
         {

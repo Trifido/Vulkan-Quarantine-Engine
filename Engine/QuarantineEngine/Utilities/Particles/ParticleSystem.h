@@ -6,6 +6,7 @@
 #include "GameObject.h"
 #include "Compute/ComputeNode.h"
 #include <Compute/ComputeNodeManager.h>
+#include <Timer.h>
 
 struct Particle {
     glm::vec2 position;
@@ -45,6 +46,8 @@ private:
     ComputeNodeManager* computeNodeManager;
     SwapChainModule* swapchainModule;
     std::shared_ptr<ComputeNode> computeNode;
+    Timer* timer;
+
 private:
     void createShaderStorageBuffers();
     void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx) override;

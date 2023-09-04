@@ -245,6 +245,7 @@
     <ClCompile Include="Utilities\Physics\PhysicsModule.cpp" />
     <ClCompile Include="Utilities\Physics\PlaneCollider.cpp" />
     <ClCompile Include="Utilities\Physics\SphereCollider.cpp" />
+    <ClCompile Include="Utilities\Timer.cpp" />
     <ClCompile Include="Utilities\Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -335,6 +336,7 @@
     <ClInclude Include="Utilities\Physics\PhysicsModule.h" />
     <ClInclude Include="Utilities\Physics\PlaneCollider.h" />
     <ClInclude Include="Utilities\Physics\SphereCollider.h" />
+    <ClInclude Include="Utilities\Timer.h" />
     <ClInclude Include="Utilities\Transform.h" />
   </ItemGroup>
   <ItemGroup>

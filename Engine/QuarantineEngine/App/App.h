@@ -25,6 +25,7 @@
 #include "DepthBufferModule.h"
 #include "AntiAliasingModule.h"
 #include "RenderPassModule.h"
+#include "Timer.h"
 
 //  Physics System
 #include "PhysicsModule.h"
@@ -93,7 +94,6 @@ public:
     void initWindow();
     void init_imgui();
 private:
-    void computeDeltaTime();
     void initVulkan();
     void mainLoop();
     void computeFrame();
@@ -110,8 +110,6 @@ public:
     bool                    framebufferResized = false;
 private:
     uint32_t     imageIndex;
-    double       deltaTime;
-    double       lastFrame;
     VulkanInstance          vulkanInstance {};
     VulkanLayerAndExtension layerExtensionModule {};
     DeviceModule*           deviceModule {};
@@ -128,6 +126,7 @@ private:
     DepthBufferModule*      depthBufferModule;
     AntiAliasingModule*     antialiasingModule;
     RenderPassModule*       renderPassModule;
+    Timer*                  timer;
 
     //std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule;
     std::shared_ptr<ComputePipelineModule> computePipelineModule;
