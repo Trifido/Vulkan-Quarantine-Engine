@@ -27,6 +27,7 @@ public:
     void FillComputeBuffer(size_t numElements, unsigned long long elementType, void* data);
     void InitializeComputeNode();
     void DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t currentFrame);
+    void UpdateComputeDescriptor();
 };
 
 #endif // !COMPUTE_NODE_H

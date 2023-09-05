@@ -104,9 +104,10 @@ void GraphicsPipelineManager::RecreateGraphicsPipeline(ShaderModule shader, VkDe
     this->_graphicsPipelines[shader.id]->CompileGraphicsPipeline(shader.shaderStages, shader.vertexInputInfo, descriptorLayout);
 }
 
-std::shared_ptr<GraphicsPipelineModule> GraphicsPipelineManager::RegisterNewGraphicsPipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout)
+std::shared_ptr<GraphicsPipelineModule> GraphicsPipelineManager::RegisterNewGraphicsPipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout, VkPolygonMode polygonMode)
 {
     this->_graphicsPipelines[shader.id] = std::make_shared<GraphicsPipelineModule>();
+    this->_graphicsPipelines[shader.id]->PoligonMode = polygonMode;
     this->_graphicsPipelines[shader.id]->renderPass = this->defaultRenderPass;
     this->_graphicsPipelines[shader.id]->CompileGraphicsPipeline(shader.shaderStages, shader.vertexInputInfo, descriptorLayout);
     return this->_graphicsPipelines[shader.id];

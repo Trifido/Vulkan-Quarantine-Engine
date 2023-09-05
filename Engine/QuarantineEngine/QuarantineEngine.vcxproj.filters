@@ -409,6 +409,9 @@
     <ClCompile Include="Memory\ComputeDescriptorBuffer.cpp">
       <Filter>Kernel\Memory\sources</Filter>
     </ClCompile>
+    <ClCompile Include="Utilities\Timer.cpp">
+      <Filter>Kernel\Utilities\sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SetUp\DeviceModule.h">
@@ -664,6 +667,9 @@
     </ClInclude>
     <ClInclude Include="Memory\ComputeDescriptorBuffer.h">
       <Filter>Kernel\Memory\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Timer.h">
+      <Filter>Kernel\Utilities\headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

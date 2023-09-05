@@ -1,10 +1,15 @@
 #include "ComputeDescriptorBuffer.h"
 #include "SynchronizationModule.h"
+#include "Timer.h"
 
 ComputeDescriptorBuffer::ComputeDescriptorBuffer()
 {
 	this->deviceModule = DeviceModule::getInstance();
     this->ssbo = std::make_shared<UniformBufferObject>();
+    this->uboDeltaTime = std::make_shared<UniformBufferObject>();
+    this->uboDeltaTimeSize = sizeof(DeltaTimeUniform);
+    this->uboDeltaTime->CreateUniformBuffer(this->uboDeltaTimeSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->deltaTimeUniform = std::make_shared<DeltaTimeUniform>();
 }
 
 ComputeDescriptorBuffer::ComputeDescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr) : ComputeDescriptorBuffer()
@@ -30,6 +35,12 @@ void ComputeDescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shade
         else if (binding.first == "OutputSSBO")
         {
             poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+            idx++;
+        }
+        else if (binding.first == "UniformDeltaTime")
+        {
+            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
             poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
             idx++;
         }
@@ -68,7 +79,7 @@ VkDescriptorBufferInfo ComputeDescriptorBuffer::GetBufferInfo(VkBuffer buffer, V
     return bufferInfo;
 }
 
-void ComputeDescriptorBuffer::SetDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize, uint32_t frameIdx)
+void ComputeDescriptorBuffer::SetDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize, uint32_t frameIdx)
 {
     this->buffersInfo[binding] = this->GetBufferInfo(buffer, bufferSize);
 
@@ -76,7 +87,7 @@ void ComputeDescriptorBuffer::SetDescriptorWrite(VkWriteDescriptorSet& descripto
     descriptorWrite.dstSet = descriptorSets[frameIdx];
     descriptorWrite.dstBinding = binding;
     descriptorWrite.dstArrayElement = 0;
-    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    descriptorWrite.descriptorType = descriptorType;
     descriptorWrite.descriptorCount = 1;
     descriptorWrite.pImageInfo = VK_NULL_HANDLE;
     descriptorWrite.pBufferInfo = &this->buffersInfo[binding];
@@ -94,16 +105,20 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
         // Alteramos los ssbo para calcula en progresión las coordenadas de las partículas del ejemplo
         if (binding.first == "InputSSBO")
         {
-            this->SetDescriptorWrite(descriptorWrites[idx], binding.second.binding, this->ssbo->uniformBuffers[(frameIdx - 1) % MAX_FRAMES_IN_FLIGHT], this->ssboSize, frameIdx);
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssbo->uniformBuffers[(frameIdx - 1) % MAX_FRAMES_IN_FLIGHT], this->ssboSize, frameIdx);
             idx++;
         }
         else if (binding.first == "OutputSSBO")
         {
-            this->SetDescriptorWrite(descriptorWrites[idx], binding.second.binding, this->ssbo->uniformBuffers[frameIdx], this->ssboSize, frameIdx);
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssbo->uniformBuffers[frameIdx], this->ssboSize, frameIdx);
             idx++;
         }
-
-         if (binding.first == "InputImage")
+        else if (binding.first == "UniformDeltaTime")
+        {
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->uboDeltaTime->uniformBuffers[frameIdx], this->uboDeltaTimeSize, frameIdx);
+            idx++;
+        }
+        else if (binding.first == "InputImage")
          {
              this->inputImageInfo = {};
 
@@ -123,7 +138,7 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
 
              idx++;
             }
-         else if (binding.first == "OutputImage")
+        else if (binding.first == "OutputImage")
          {
              this->outputImageInfo = {};
 
@@ -168,5 +183,18 @@ void ComputeDescriptorBuffer::InitializeDescriptorSets(std::shared_ptr<ShaderMod
         std::vector<VkWriteDescriptorSet> descriptorWrites{};
         descriptorWrites = this->GetDescriptorWrites(shader_ptr, i);
         vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+    }
+}
+
+void ComputeDescriptorBuffer::UpdateUBODeltaTime()
+{
+    if (this->deltaTimeUniform != nullptr)
+    {
+        auto currentFrame = SynchronizationModule::GetCurrentFrame();
+        this->deltaTimeUniform->deltaTime = Timer::DeltaTime * 2000.0f;
+        void* data;
+        vkMapMemory(deviceModule->device, this->uboDeltaTime->uniformBuffersMemory[currentFrame], 0, sizeof(DeltaTimeUniform), 0, &data);
+        memcpy(data, static_cast<const void*>(this->deltaTimeUniform.get()), sizeof(DeltaTimeUniform));
+        vkUnmapMemory(deviceModule->device, this->uboDeltaTime->uniformBuffersMemory[currentFrame]);
     }
 }

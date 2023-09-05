@@ -16,8 +16,9 @@ ShaderModule::ShaderModule(std::string computeShaderName) : ShaderModule()
     this->createShaderModule(computeShaderName);
 }
 
-ShaderModule::ShaderModule(std::string vertexShaderName, std::string fragmentShaderName) : ShaderModule()
+ShaderModule::ShaderModule(std::string vertexShaderName, std::string fragmentShaderName, GraphicsPipelineData pipelineData) : ShaderModule()
 {
+    this->graphicsPipelineData = pipelineData;
     this->createShaderModule(vertexShaderName, fragmentShaderName);
 }
 
@@ -57,7 +58,7 @@ void ShaderModule::createShaderModule(const std::string& filename_vertex, const 
 
     this->CreateDescriptorSetLayout();
     this->createShaderBindings();
-    this->PipelineModule = this->graphicsPipelineManager->RegisterNewGraphicsPipeline(*this, this->descriptorSetLayout);
+    this->PipelineModule = this->graphicsPipelineManager->RegisterNewGraphicsPipeline(*this, this->descriptorSetLayout, this->graphicsPipelineData.polygonMode);
 }
 
 void ShaderModule::CleanDescriptorSetLayout()
@@ -187,50 +188,23 @@ void ShaderModule::CreateDescriptorSetLayout()
 void ShaderModule::SetBindingDescription()
 {
     bindingDescription->binding = 0;
-    bindingDescription->stride = (this->reflectShader.isAnimationShader) ? sizeof(PBRAnimationVertex) : sizeof(PBRVertex);
+    bindingDescription->stride = this->graphicsPipelineData.vertexBufferStride;
     bindingDescription->inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 }
 
 void ShaderModule::SetAttributeDescriptions(std::vector<VkVertexInputAttributeDescription>& attributeDescriptions)
 {
-    size_t numAttributes = (this->reflectShader.isAnimationShader) ? 7 : 5;
+    size_t numAttributes = this->reflectShader.inputVariables.size();
     attributeDescriptions.resize(numAttributes);
 
-    attributeDescriptions[0].binding = 0;
-    attributeDescriptions[0].location = 0;
-    attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[0].offset = offsetof(PBRVertex, pos);
+    uint32_t offset = 0;
 
-    attributeDescriptions[1].binding = 0;
-    attributeDescriptions[1].location = 1;
-    attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[1].offset = offsetof(PBRVertex, norm);
-
-    attributeDescriptions[2].binding = 0;
-    attributeDescriptions[2].location = 2;
-    attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-    attributeDescriptions[2].offset = offsetof(PBRVertex, texCoord);
-
-    attributeDescriptions[3].binding = 0;
-    attributeDescriptions[3].location = 3;
-    attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[3].offset = offsetof(PBRVertex, Tangents);
-
-    attributeDescriptions[4].binding = 0;
-    attributeDescriptions[4].location = 4;
-    attributeDescriptions[4].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[4].offset = offsetof(PBRVertex, Bitangents);
-
-    if (this->reflectShader.isAnimationShader)
+    for (uint16_t id = 0; id < numAttributes; id++)
     {
-        attributeDescriptions[5].binding = 0;
-        attributeDescriptions[5].location = 5;
-        attributeDescriptions[5].format = VK_FORMAT_R32G32B32A32_SINT;
-        attributeDescriptions[5].offset = offsetof(PBRVertex, boneIDs);
-
-        attributeDescriptions[6].binding = 0;
-        attributeDescriptions[6].location = 6;
-        attributeDescriptions[6].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-        attributeDescriptions[6].offset = offsetof(PBRVertex, boneWeights);
+        attributeDescriptions[id].binding = 0;
+        attributeDescriptions[id].location = this->reflectShader.inputVariables[id].location;
+        attributeDescriptions[id].format = this->reflectShader.inputVariables[id].format;
+        attributeDescriptions[id].offset = offset;
+        offset += this->reflectShader.inputVariables[id].size;
     }
 }

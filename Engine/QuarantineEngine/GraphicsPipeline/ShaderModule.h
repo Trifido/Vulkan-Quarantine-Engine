@@ -27,6 +27,14 @@ class PipelineModule;
 class GraphicsPipelineModule;
 class ComputePipelineModule;
 
+struct GraphicsPipelineData
+{
+    VkPolygonMode polygonMode = VkPolygonMode::VK_POLYGON_MODE_FILL;
+    uint32_t vertexBufferStride = sizeof(PBRVertex);
+
+    GraphicsPipelineData() {}
+};
+
 class ShaderModule : public Numbered
 {
 private:
@@ -41,6 +49,7 @@ private:
     std::vector<VkVertexInputAttributeDescription>  attributeDescriptions;
     GraphicsPipelineManager*                        graphicsPipelineManager;
     ComputePipelineManager*                         computePipelineManager;
+    GraphicsPipelineData                            graphicsPipelineData;
 
 public:
     ReflectShader                                   reflectShader;
@@ -53,7 +62,7 @@ public:
 public:
     ShaderModule();
     ShaderModule(std::string computeShaderName);
-    ShaderModule(std::string vertexShaderName, std::string fragmentShaderName);
+    ShaderModule(std::string vertexShaderName, std::string fragmentShaderName, GraphicsPipelineData pipelineData = GraphicsPipelineData());
 
     static std::vector<char> readFile(const std::string& filename);
     void createShaderModule(const std::string& filename_compute);

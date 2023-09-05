@@ -44,9 +44,33 @@ struct DescriptorSetReflect
     }
 };
 
+struct InputVars
+{
+    uint32_t location;
+    uint32_t size;
+    std::string name;
+    VkFormat format;
+    std::string type;
+
+    InputVars() {}
+    InputVars(uint32_t location, std::string name, std::string type, VkFormat format, uint32_t size)
+    {
+        this->location = location;
+        this->name = name;
+        this->type = type;
+        this->size = size;
+        this->format = format;
+    }
+};
+
+bool compareByLocation(const InputVars& a, const InputVars& b);
+
 class ReflectShader
 {
+private:
+    std::vector<std::string> nativesVariables;
 public:
+    std::vector<InputVars> inputVariables;
     std::unordered_map<std::string, DescriptorBindingReflect> bindings;
     std::vector<DescriptorSetReflect> descriptorSetReflect;
     bool isAnimationShader = false;
@@ -57,9 +81,11 @@ public:
     std::vector<std::string> animationUBOComponents;
     VkDeviceSize materialBufferSize = 0;
     VkDeviceSize animationBufferSize = 0;
+    uint32_t inputStrideSize = 0;
 
 private:
     std::string ToStringFormat(SpvReflectFormat fmt);
+    uint32_t ToSizeFormat(SpvReflectFormat fmt);
     static std::string ToStringScalarType(const SpvReflectTypeDescription& type);
     static std::string ToStringGlslType(const SpvReflectTypeDescription& type);
     static std::string ToStringHlslType(const SpvReflectTypeDescription& type);
@@ -76,7 +102,7 @@ private:
     DescriptorBindingReflect GetDescriptorBinding(const SpvReflectDescriptorBinding& obj, bool write_set, const char* indent);
     void CheckUBOMaterial(SpvReflectDescriptorSet* set);
     void CheckUBOAnimation(SpvReflectDescriptorSet* set);
-
+    void RemoveInputNativeVariables();
 public:
     ReflectShader();
     void Output(VkShaderModuleCreateInfo createInfo);

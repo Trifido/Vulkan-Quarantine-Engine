@@ -26,6 +26,7 @@ public:
     void AddComputeNode(std::string& nameComputeNode, ComputeNode mat);
     void AddComputeNode(const char* nameComputeNode, std::shared_ptr<ComputeNode> mat_ptr);
     void AddComputeNode(std::string& nameComputeNode, std::shared_ptr<ComputeNode> mat_ptr);
+    void UpdateComputeNodes();
     std::shared_ptr<ComputeNode> GetComputeNode(std::string nameComputeNode);
     void RecordComputeNodes(VkCommandBuffer commandBuffer, uint32_t currentFrame);
     void CleanLastResources();

@@ -49,9 +49,14 @@ struct AnimationUniform
     alignas(16) glm::mat4 finalBonesMatrices[200];
 };
 
-struct TransformUniform
+struct PushConstantStruct
 {
     glm::mat4 model;
+};
+
+struct DeltaTimeUniform
+{
+    float deltaTime;
 };
 
 class UniformBufferObject

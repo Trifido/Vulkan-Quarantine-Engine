@@ -198,7 +198,6 @@ void PrimitiveMesh::InitializeCube()
     this->vertices = data.vertices;
     this->indices = data.indices;
 
-
     MeshImporter::RecreateNormals(this->vertices, this->indices);
     MeshImporter::RecreateTangents(this->vertices, this->indices);
 }

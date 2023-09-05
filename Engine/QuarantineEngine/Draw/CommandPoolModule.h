@@ -39,8 +39,8 @@ public:
     std::vector<VkCommandBuffer>&   getComputeCommandBuffers() { return this->computeCommandBuffers; }
     uint32_t                        getNumCommandBuffers() { return static_cast<uint32_t>(this->commandBuffers.size()); }
     VkCommandBuffer&                getCommandBuffer(uint32_t idx) { return this->commandBuffers.at(idx); }
+    VkCommandBuffer&                getComputeCommandBuffer(uint32_t idx) { return this->computeCommandBuffers.at(idx); }
 
-    void bindComputeNodeManager();
     void createCommandPool(VkSurfaceKHR& surface);
     void createCommandBuffers();
     void Render(VkFramebuffer& swapChainFramebuffer, VkRenderPass& renderPass);

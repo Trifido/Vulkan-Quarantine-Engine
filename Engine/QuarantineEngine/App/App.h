@@ -16,15 +16,13 @@
 #include "WindowSurface.h"
 #include "SwapChainModule.h"
 #include "QueueModule.h"
-//#include "ImageViewModule.h"
-#include "GraphicsPipelineModule.h"
-#include "ComputePipelineModule.h"
 #include "FrameBufferModule.h"
 #include "CommandPoolModule.h"
 #include "SynchronizationModule.h"
 #include "DepthBufferModule.h"
 #include "AntiAliasingModule.h"
 #include "RenderPassModule.h"
+#include "Timer.h"
 
 //  Physics System
 #include "PhysicsModule.h"
@@ -93,7 +91,6 @@ public:
     void initWindow();
     void init_imgui();
 private:
-    void computeDeltaTime();
     void initVulkan();
     void mainLoop();
     void computeFrame();
@@ -110,8 +107,6 @@ public:
     bool                    framebufferResized = false;
 private:
     uint32_t     imageIndex;
-    double       deltaTime;
-    double       lastFrame;
     VulkanInstance          vulkanInstance {};
     VulkanLayerAndExtension layerExtensionModule {};
     DeviceModule*           deviceModule {};
@@ -128,10 +123,7 @@ private:
     DepthBufferModule*      depthBufferModule;
     AntiAliasingModule*     antialiasingModule;
     RenderPassModule*       renderPassModule;
-
-    //std::shared_ptr<GraphicsPipelineModule> graphicsPipelineModule;
-    std::shared_ptr<ComputePipelineModule> computePipelineModule;
-
+    Timer*                  timer;
 
     bool show_demo_window = true;
     bool show_another_window = true;
@@ -139,9 +131,7 @@ private:
 
     //RayTracingModule        raytracingModule;
 
-    //std::vector<std::shared_ptr<GameObject>> models;
     Camera*     cameraEditor;
-
     LightManager*       lightManager {};
     ShaderManager*      shaderManager{};
     MaterialManager*    materialManager {};

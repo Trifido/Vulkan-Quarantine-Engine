@@ -67,6 +67,14 @@ void ComputeNodeManager::AddComputeNode(std::string& nameComputeNode, std::share
     _computeNodes[nameComputeNode] = mat_ptr;
 }
 
+void ComputeNodeManager::UpdateComputeNodes()
+{
+    for each (auto node in _computeNodes)
+    {
+        node.second->UpdateComputeDescriptor();
+    }
+}
+
 std::shared_ptr<ComputeNode> ComputeNodeManager::GetComputeNode(std::string nameComputeNode)
 {
     if (_computeNodes.empty())

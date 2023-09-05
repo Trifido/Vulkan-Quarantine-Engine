@@ -6,13 +6,18 @@ struct Particle {
     vec4 color;
 };
 
-layout(std140, binding = 0) readonly buffer InputSSBO {
+layout(std140, binding = 0) buffer InputSSBO {
    Particle particlesIn[ ];
 };
 
 layout(std140, binding = 1) buffer OutputSSBO {
    Particle particlesOut[ ];
 };
+
+layout(set = 0, binding = 2) uniform UniformDeltaTime
+{
+    float deltaTime;
+} uboTimer;
 
 layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
@@ -22,7 +27,7 @@ void main()
 
     Particle particleIn = particlesIn[index];
 
-    particlesOut[index].position = particleIn.position + particleIn.velocity.xy;
+    particlesOut[index].position = particleIn.position + particleIn.velocity.xy * uboTimer.deltaTime;
     particlesOut[index].velocity = particleIn.velocity;
 
     // Flip movement at window border

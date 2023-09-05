@@ -16,6 +16,7 @@ private:
     std::vector<VkDescriptorBufferInfo> buffersInfo;
     VkDescriptorImageInfo inputImageInfo;
     VkDescriptorImageInfo outputImageInfo;
+    std::shared_ptr<DeltaTimeUniform> deltaTimeUniform;
 
 public:
     std::vector<VkDescriptorSet>    descriptorSets;
@@ -24,16 +25,21 @@ public:
 
     std::shared_ptr<UniformBufferObject>    ssbo = nullptr;
     VkDeviceSize                            ssboSize = 0;
+
+    std::shared_ptr<UniformBufferObject>    uboDeltaTime = nullptr;
+    VkDeviceSize                            uboDeltaTimeSize = 0;
+
 private:
     void StartResources(std::shared_ptr<ShaderModule> shader_ptr);
     VkDescriptorBufferInfo GetBufferInfo(VkBuffer buffer, VkDeviceSize bufferSize);
     std::vector<VkWriteDescriptorSet> GetDescriptorWrites(std::shared_ptr<ShaderModule> shader_ptr, uint32_t frameIdx);
-    void SetDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize, uint32_t frameIdx);
+    void SetDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize, uint32_t frameIdx);
 
 public:
     ComputeDescriptorBuffer();
     ComputeDescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr);
     void InitializeDescriptorSets(std::shared_ptr<ShaderModule> shader_ptr);
+    void UpdateUBODeltaTime();
 };
 
 #endif // !COMPUTE_DESCRIPTOR_BUFFER_H
