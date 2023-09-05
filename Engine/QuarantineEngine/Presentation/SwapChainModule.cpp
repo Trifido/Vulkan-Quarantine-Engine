@@ -50,11 +50,11 @@ void SwapChainModule::createSwapChain(VkSurfaceKHR& surface, GLFWwindow* window)
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
     QueueFamilyIndices indices = QueueFamilyIndices::findQueueFamilies(deviceModule->physicalDevice, surface);
-    uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
+    uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.computeFamily.value(), indices.presentFamily.value() };
 
     if (indices.graphicsFamily != indices.presentFamily) {
         createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-        createInfo.queueFamilyIndexCount = 2;
+        createInfo.queueFamilyIndexCount = 3;
         createInfo.pQueueFamilyIndices = queueFamilyIndices;
     }
     else {

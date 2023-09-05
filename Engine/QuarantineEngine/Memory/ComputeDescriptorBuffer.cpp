@@ -191,7 +191,7 @@ void ComputeDescriptorBuffer::UpdateUBODeltaTime()
     if (this->deltaTimeUniform != nullptr)
     {
         auto currentFrame = SynchronizationModule::GetCurrentFrame();
-        this->deltaTimeUniform->deltaTime = Timer::DeltaTime * 2.0f;
+        this->deltaTimeUniform->deltaTime = Timer::DeltaTime * 2000.0f;
         void* data;
         vkMapMemory(deviceModule->device, this->uboDeltaTime->uniformBuffersMemory[currentFrame], 0, sizeof(DeltaTimeUniform), 0, &data);
         memcpy(data, static_cast<const void*>(this->deltaTimeUniform.get()), sizeof(DeltaTimeUniform));

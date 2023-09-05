@@ -6,7 +6,7 @@ struct Particle {
     vec4 color;
 };
 
-layout(std140, binding = 0) readonly buffer InputSSBO {
+layout(std140, binding = 0) buffer InputSSBO {
    Particle particlesIn[ ];
 };
 
@@ -27,7 +27,7 @@ void main()
 
     Particle particleIn = particlesIn[index];
 
-    particlesOut[index].position = particleIn.position + 0.1;//particleIn.velocity.xy * uboTimer.deltaTime;
+    particlesOut[index].position = particleIn.position + particleIn.velocity.xy * uboTimer.deltaTime;
     particlesOut[index].velocity = particleIn.velocity;
 
     // Flip movement at window border

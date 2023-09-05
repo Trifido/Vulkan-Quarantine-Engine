@@ -59,8 +59,8 @@ void CommandPoolModule::createCommandPool(VkSurfaceKHR& surface)
 
 void CommandPoolModule::createCommandBuffers()
 {
-    commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);// swapchainModule->getNumSwapChainImages());
-    computeCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);// swapchainModule->getNumSwapChainImages());
+    commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+    computeCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -128,7 +128,7 @@ void CommandPoolModule::Render(VkFramebuffer& swapChainFramebuffer, VkRenderPass
 void CommandPoolModule::recordComputeCommandBuffer(VkCommandBuffer commandBuffer)
 {
     auto currentFrame = SynchronizationModule::GetCurrentFrame();
-    vkResetCommandBuffer(computeCommandBuffers[currentFrame], /*VkCommandBufferResetFlagBits*/ 0);
+    vkResetCommandBuffer(computeCommandBuffers[currentFrame], 0);
 
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
