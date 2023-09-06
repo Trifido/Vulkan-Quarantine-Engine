@@ -3,11 +3,6 @@
 Material::Material()
 {
     this->materialData = {};
-
-    //this->uniform = std::make_shared<MaterialUniform>();
-    //this->uniform->idxDiffuse = this->uniform->idxNormal = this->uniform->idxSpecular = this->uniform->idxEmissive = this->uniform->idxHeight = -1;
-    //this->uniform->shininess = this->shininess;
-
     this->layer = (unsigned int) RenderLayer::SOLID;
 }
 
@@ -58,40 +53,11 @@ void Material::InitializeMaterialDataUBO()
 
 void Material::cleanup()
 {
-    //if (this->isMeshBinding)
-    //{
-        //this->graphicsPipelineModule->cleanup(this->pipeline, this->pipelineLayout);
-        //this->descriptor->cleanupDescriptorBuffer();
-        //this->descriptor->cleanupDescriptorPool();
-    //}
     if (this->hasDescriptorBuffer)
     {
         this->descriptor->CleanDescriptorSetPool();
     }
     this->materialData.CleanMaterialUBO();
-}
-
-void Material::cleanupDescriptor()
-{
-    //this->descriptor->cleanup();
-}
-
-void Material::recreatePipelineMaterial(VkRenderPass renderPass)
-{
-    if (this->isMeshBinding)
-    {
-        //this->graphicsPipelineModule->CreateGraphicsPipeline(this->pipeline, this->pipelineLayout, this->shader, this->descriptor, renderPass);
-    }
-}
-
-void Material::bindingCamera(Camera* editorCamera)
-{
-    //this->descriptor->cameraUniform = editorCamera->cameraUniform;
-}
-
-void Material::bindingLights(LightManager* lightManager)
-{
-    //this->descriptor->lightUniform = lightManager->lightManagerUniform;
 }
 
 void Material::bindingMesh(std::shared_ptr<GeometryComponent> mesh)
@@ -112,23 +78,9 @@ void Material::InitializeMaterial()
     else if(this->hasDescriptorBuffer)
     {        
         this->descriptor->InitializeDescriptorSets(this->shader);
-        //this->fillEmptyTextures();
-        //this->descriptor->Initialize(texture_vector, uniform);
     }
 }
 
-void Material::InitializeDescriptor()
-{
-    //this->descriptor = std::make_shared<DescriptorModule>();
-}
-
-void Material::RecreateUniformsMaterial()
-{
-    if (this->isMeshBinding)
-    {
-        //this->descriptor->recreateUniformBuffer();
-    }
-}
 
 void Material::UpdateUniformData()
 {
@@ -136,5 +88,4 @@ void Material::UpdateUniformData()
     {
         this->materialData.UpdateUBOMaterial();
     }
-    //this->uniform->shininess = this->shininess;
 }

@@ -40,6 +40,7 @@ public:
     ComputeDescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr);
     void InitializeDescriptorSets(std::shared_ptr<ShaderModule> shader_ptr);
     void UpdateUBODeltaTime();
+    void Cleanup();
 };
 
 #endif // !COMPUTE_DESCRIPTOR_BUFFER_H

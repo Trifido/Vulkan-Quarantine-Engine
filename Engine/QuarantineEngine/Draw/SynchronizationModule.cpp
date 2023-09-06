@@ -42,7 +42,9 @@ void SynchronizationModule::cleanup()
     {
         vkDestroySemaphore(deviceModule->device, renderFinishedSemaphores[i], nullptr);
         vkDestroySemaphore(deviceModule->device, imageAvailableSemaphores[i], nullptr);
+        vkDestroySemaphore(deviceModule->device, computeFinishedSemaphores[i], nullptr);
         vkDestroyFence(deviceModule->device, inFlightFences[i], nullptr);
+        vkDestroyFence(deviceModule->device, computeInFlightFences[i], nullptr);
     }
 }
 

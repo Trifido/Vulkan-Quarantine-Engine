@@ -186,4 +186,5 @@ void DescriptorBuffer::InitializeDescriptorSets(std::shared_ptr<ShaderModule> sh
 void DescriptorBuffer::CleanDescriptorSetPool()
 {
     vkDestroyDescriptorPool(deviceModule->device, this->descriptorPool, nullptr);
+    this->descriptorSets.clear();
 }

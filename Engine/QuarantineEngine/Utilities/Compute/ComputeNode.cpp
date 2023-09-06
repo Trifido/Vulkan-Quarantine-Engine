@@ -5,8 +5,6 @@
 ComputeNode::ComputeNode()
 {
     this->deviceModule = DeviceModule::getInstance();
-    //this->shaderStorageBuffers = std::make_shared<std::vector<VkBuffer>>();
-    //this->shaderStorageBuffersMemory = std::make_shared<std::vector<VkDeviceMemory>>();
 }
 
 ComputeNode::ComputeNode(std::string computeShaderPath) : ComputeNode(std::make_shared<ShaderModule>(computeShaderPath))
@@ -53,11 +51,15 @@ void ComputeNode::InitializeComputeNode()
 
 void ComputeNode::cleanup()
 {
-    //for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-    //{
-    //    vkDestroyBuffer(deviceModule->device, shaderStorageBuffers->at(i), nullptr);
-    //    vkFreeMemory(deviceModule->device, shaderStorageBuffersMemory->at(i), nullptr);
-    //}
+    this->computeDescriptor->Cleanup();
+
+    this->computeShader->CleanDescriptorSetLayout();
+    this->computeShader->cleanup();
+    this->computeShader->CleanLastResources();
+
+    this->computeShader.reset();
+    this->computeShader = nullptr;
+    this->nElements = 0;
 }
 
 void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t currentFrame)
