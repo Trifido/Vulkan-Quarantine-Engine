@@ -40,10 +40,8 @@ public:
     void AddMaterial(const char* nameMaterial, Material mat);
     void CreateMaterial(std::string& nameMaterial, bool hasAnimation);
     bool Exists(std::string materialName);
-    void CleanDescriptors();
     void CleanPipelines();
     void CleanLastResources();
-    void RecreateMaterials(RenderPassModule* renderPassModule);
     void UpdateUniforms();
     void InitializeMaterials();
 };

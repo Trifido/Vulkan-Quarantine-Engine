@@ -43,6 +43,7 @@ public:
 
     void createCommandPool(VkSurfaceKHR& surface);
     void createCommandBuffers();
+    void recreateCommandBuffers();
     void Render(VkFramebuffer& swapChainFramebuffer, VkRenderPass& renderPass);
     void recordComputeCommandBuffer(VkCommandBuffer commandBuffer);
     void cleanup();

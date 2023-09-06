@@ -28,16 +28,10 @@ public:
     void CleanLastResources();
 
     void cleanup();
-    void cleanupDescriptor();
     std::shared_ptr<Material> CreateMaterialInstance();
-    void recreatePipelineMaterial(VkRenderPass renderPass);
     void bindingMesh(std::shared_ptr<GeometryComponent> mesh);
-    void bindingCamera(Camera* editorCamera);
-    void bindingLights(LightManager* lightManager);
     void InitializeMaterial();
-    void InitializeDescriptor();
     void InitializeMaterialDataUBO();
-    void RecreateUniformsMaterial();
     void UpdateUniformData();
     bool HasDescriptorBuffer() { return this->hasDescriptorBuffer; }
 };

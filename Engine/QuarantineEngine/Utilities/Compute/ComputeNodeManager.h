@@ -29,6 +29,7 @@ public:
     void UpdateComputeNodes();
     std::shared_ptr<ComputeNode> GetComputeNode(std::string nameComputeNode);
     void RecordComputeNodes(VkCommandBuffer commandBuffer, uint32_t currentFrame);
+    void Cleanup();
     void CleanLastResources();
 };
 

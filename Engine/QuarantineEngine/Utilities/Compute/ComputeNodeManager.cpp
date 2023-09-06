@@ -96,6 +96,14 @@ void ComputeNodeManager::RecordComputeNodes(VkCommandBuffer commandBuffer, uint3
     }
 }
 
+void ComputeNodeManager::Cleanup()
+{
+    for each (auto node in _computeNodes)
+    {
+        node.second->cleanup();
+    }
+}
+
 void ComputeNodeManager::CleanLastResources()
 {
     this->_computeNodes.clear();

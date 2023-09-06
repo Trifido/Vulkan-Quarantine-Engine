@@ -166,13 +166,6 @@ bool MaterialManager::Exists(std::string materialName)
     return true;
 }
 
-void MaterialManager::CleanDescriptors()
-{
-    for (auto& it : _materials)
-    {
-        it.second->cleanupDescriptor();
-    }
-}
 
 void MaterialManager::CleanPipelines()
 {
@@ -201,15 +194,6 @@ void MaterialManager::CleanLastResources()
     this->default_shader = nullptr;
     this->default_primitive_shader = nullptr;
     this->default_animation_shader = nullptr;
-}
-
-void MaterialManager::RecreateMaterials(RenderPassModule* renderPassModule)
-{
-    for (auto& it : _materials)
-    {
-        it.second->recreatePipelineMaterial(renderPassModule->renderPass);
-        it.second->RecreateUniformsMaterial();
-    }
 }
 
 void MaterialManager::UpdateUniforms()

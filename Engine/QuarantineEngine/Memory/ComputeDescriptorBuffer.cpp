@@ -198,3 +198,43 @@ void ComputeDescriptorBuffer::UpdateUBODeltaTime()
         vkUnmapMemory(deviceModule->device, this->uboDeltaTime->uniformBuffersMemory[currentFrame]);
     }
 }
+
+void ComputeDescriptorBuffer::Cleanup()
+{
+    vkDestroyDescriptorPool(deviceModule->device, this->descriptorPool, nullptr);
+    this->descriptorSets.clear();
+
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        if (this->ssbo != nullptr)
+        {
+            vkDestroyBuffer(deviceModule->device, this->ssbo->uniformBuffers[i], nullptr);
+            vkFreeMemory(deviceModule->device, this->ssbo->uniformBuffersMemory[i], nullptr);
+        }
+
+        if (this->uboDeltaTime != nullptr)
+        {
+            vkDestroyBuffer(deviceModule->device, this->uboDeltaTime->uniformBuffers[i], nullptr);
+            vkFreeMemory(deviceModule->device, this->uboDeltaTime->uniformBuffersMemory[i], nullptr);
+        }
+    }
+
+    if (this->inputTexture != nullptr)
+    {
+        this->inputTexture->cleanup();
+        this->inputTexture.reset();
+        this->inputTexture = nullptr;
+    }
+
+    if (this->outputTexture != nullptr)
+    {
+        this->outputTexture->cleanup();
+        this->outputTexture.reset();
+        this->outputTexture = nullptr;
+    }
+
+    this->deltaTimeUniform.reset();
+    this->deltaTimeUniform = nullptr;
+
+    this->buffersInfo.clear();
+}
