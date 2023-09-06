@@ -1,0 +1,64 @@
+#version 450
+
+struct VertexIN {
+	vec3 inPosition;
+    vec3 inNormal;
+    vec2 inTexCoord;
+    vec3 inTangent;
+    vec3 inBitangent;
+    ivec4 inBoneIds; 
+    vec4 inWeights;
+};
+
+struct VertexOUT{
+	vec3 inPosition;
+    vec3 inNormal;
+    vec2 inTexCoord;
+    vec3 inTangent;
+};
+
+const int MAX_BONES = 200;
+const int MAX_BONE_INFLUENCE = 4;
+
+layout(std140, binding = 0) buffer InputSSBO {
+   VertexIN verticesIn[ ];
+};
+
+layout(std140, binding = 1) buffer OutputSSBO {
+   VertexOUT verticesOut[ ];
+};
+
+layout(std140, set = 0, binding = 2) uniform UniformAnimation
+{
+	mat4 finalBonesMatrices[200];
+} uboAnimation;
+
+layout(std140, set = 0, binding = 3) uniform UniformVertexParam
+{
+	uint numVertices;
+} uboVertexParam;
+
+layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+void main() 
+{
+    uint index = gl_GlobalInvocationID.x;
+
+    if(index < uboVertexParam.numVertices)
+    {
+        ivec4 boneIds = verticesIn[index].inBoneIds;
+        vec4 weights = verticesIn[index].inWeights;
+
+        mat4 BoneTransform = uboAnimation.finalBonesMatrices[boneIds[0]] * weights[0] +
+                            uboAnimation.finalBonesMatrices[boneIds[1]] * weights[1] +
+                            uboAnimation.finalBonesMatrices[boneIds[2]] * weights[2] +
+                            uboAnimation.finalBonesMatrices[boneIds[3]] * weights[3];
+
+        mat3 normalMatrix = transpose(inverse(mat3(BoneTransform)));
+
+        verticesOut[index].inPosition = (BoneTransform * vec4(verticesIn[index].inPosition, 1.0)).xyz;
+        verticesOut[index].inTexCoord = verticesIn[index].inTexCoord;
+        verticesOut[index].inNormal = normalMatrix * verticesIn[index].inNormal;
+        verticesOut[index].inTangent = (BoneTransform * vec4(verticesIn[index].inTangent, 1.0)).xyz;
+    }
+}
