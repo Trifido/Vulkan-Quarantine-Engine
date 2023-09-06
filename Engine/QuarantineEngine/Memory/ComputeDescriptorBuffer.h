@@ -28,6 +28,7 @@ public:
 
     std::shared_ptr<UniformBufferObject>    uboDeltaTime = nullptr;
     VkDeviceSize                            uboDeltaTimeSize = 0;
+    bool    IsProgressiveComputation = false;
 
 private:
     void StartResources(std::shared_ptr<ShaderModule> shader_ptr);

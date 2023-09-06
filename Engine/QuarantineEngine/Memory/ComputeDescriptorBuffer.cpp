@@ -102,10 +102,11 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
 
     for each (auto binding in shader_ptr->reflectShader.bindings)
     {
-        // Alteramos los ssbo para calcula en progresión las coordenadas de las partículas del ejemplo
         if (binding.first == "InputSSBO")
         {
-            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssbo->uniformBuffers[(frameIdx - 1) % MAX_FRAMES_IN_FLIGHT], this->ssboSize, frameIdx);
+            // Alteramos los ssbo para calcular en progresión las coordenadas de las partículas del ejemplo
+            uint32_t computeIdx = (this->IsProgressiveComputation) ? (frameIdx - 1) % MAX_FRAMES_IN_FLIGHT : frameIdx;
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssbo->uniformBuffers[computeIdx], this->ssboSize, frameIdx);
             idx++;
         }
         else if (binding.first == "OutputSSBO")

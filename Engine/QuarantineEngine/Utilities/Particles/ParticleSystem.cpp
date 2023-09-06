@@ -18,6 +18,7 @@ ParticleSystem::ParticleSystem() : GameObject()
 
     const std::string absolute_default_compute_shader_path = absPath + "default_compute.spv";
     this->computeNode = std::make_shared<ComputeNode>(absolute_default_compute_shader_path);
+    this->computeNode->IsProgressiveComputation = true;
     this->computeNodeManager->AddComputeNode("default_compute", this->computeNode);
     this->numParticles = 8192;
 

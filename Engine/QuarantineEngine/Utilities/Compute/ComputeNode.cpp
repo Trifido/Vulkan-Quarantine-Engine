@@ -5,6 +5,7 @@
 ComputeNode::ComputeNode()
 {
     this->deviceModule = DeviceModule::getInstance();
+    this->IsProgressiveComputation = false;
 }
 
 ComputeNode::ComputeNode(std::string computeShaderPath) : ComputeNode(std::make_shared<ShaderModule>(computeShaderPath))
@@ -46,6 +47,7 @@ void ComputeNode::FillComputeBuffer(size_t numElements, unsigned long long eleme
 
 void ComputeNode::InitializeComputeNode()
 {
+    this->computeDescriptor->IsProgressiveComputation = this->IsProgressiveComputation;
     this->computeDescriptor->InitializeDescriptorSets(this->computeShader);
 }
 
