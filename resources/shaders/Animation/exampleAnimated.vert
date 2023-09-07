@@ -26,7 +26,7 @@ struct LightData {
     float spotExponent;
 };
 
-layout(set = 0, binding = 1) uniform UniformManagerLight
+layout(set = 0, binding = 2) uniform UniformManagerLight
 {
     int numLights;
 	LightData lights[8];
