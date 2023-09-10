@@ -162,10 +162,11 @@ void App::initVulkan()
     this->materialManager->InitializeMaterialManager();
     this->gameObjectManager = GameObjectManager::getInstance();
     this->computeNodeManager = ComputeNodeManager::getInstance();
+    this->computeNodeManager->InitializeComputeResources();
 
     // Inicializamos los componentes del editor
-    std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
-    this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
+    //std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
+    //this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));

@@ -18,7 +18,6 @@ private:
 
 public:
     std::shared_ptr<ComputeDescriptorBuffer>    computeDescriptor = nullptr;
-    bool IsProgressiveComputation;
 
 public:
     ComputeNode();

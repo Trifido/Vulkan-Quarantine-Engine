@@ -8,11 +8,13 @@
 #include <Animation/Animation.h>
 #include <AnimationResources.h>
 #include <DescriptorBuffer.h>
+#include <Compute/ComputeNodeManager.h>
 
 class Animator
 {
 private:
     DeviceModule* deviceModule;
+    ComputeNodeManager* computeNodeManager;
     const int NUM_BONES = 200;
     std::shared_ptr<std::vector<glm::mat4>> m_FinalBoneMatrices;
     std::shared_ptr<Animation> m_CurrentAnimation = nullptr;
@@ -26,12 +28,13 @@ private:
 
     char* animationbuffer;
     Bone* auxiliarBone = nullptr;
+    std::shared_ptr<ComputeNode> computeNode = nullptr;
 
 public:
     std::shared_ptr<AnimationUniform> animationUniform_ptr;
     VkDeviceSize animationUniformSize = 0;
     std::shared_ptr<UniformBufferObject> animationUBO = nullptr;
-
+    
 public:
     Animator();
     void AssignAnimationBuffer(std::shared_ptr<DescriptorBuffer> descriptorBuffer);

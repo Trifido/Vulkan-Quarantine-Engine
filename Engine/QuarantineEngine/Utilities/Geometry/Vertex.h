@@ -44,6 +44,17 @@ struct PrimitiveVertex : Vertex
     glm::vec3 color;
 };
 
+struct Particle {
+    glm::vec2 position;
+    glm::vec2 velocity;
+    glm::vec4 color;
+};
+
+struct AnimationVertex : Vertex
+{
+    glm::vec3 tangent;
+};
+
 namespace std {
     template<> struct hash<Vertex> {
         size_t operator()(Vertex const& vertex) const {

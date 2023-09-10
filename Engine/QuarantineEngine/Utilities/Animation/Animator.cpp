@@ -1,12 +1,21 @@
 #include "Animator.h"
 #include <SynchronizationModule.h>
+#include <ShaderManager.h>
 
 Animator::Animator()
 {
     this->deviceModule = DeviceModule::getInstance();
+    auto shaderManager = ShaderManager::getInstance();
+    this->computeNodeManager = ComputeNodeManager::getInstance();
+
 	m_CurrentTime = 0.0;
     m_FinalBoneMatrices = std::make_shared<std::vector<glm::mat4>>(std::vector<glm::mat4>(NUM_BONES, glm::mat4(1.0f)));
     this->animationUniform_ptr = std::make_shared<AnimationUniform>();
+
+    this->computeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("default_skinning"));
+    this->computeNodeManager->AddComputeNode("default_skinning", this->computeNode);
+
+    //this->computeNode->FillComputeBuffer(this->numParticles, sizeof(PBRVertex), particles.data());
 }
 
 void Animator::AssignAnimationBuffer(std::shared_ptr<DescriptorBuffer> descriptorBuffer)

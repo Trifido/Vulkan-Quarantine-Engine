@@ -1,5 +1,6 @@
 #include "ComputeNodeManager.h"
 #include <ShaderManager.h>
+#include <filesystem>
 
 ComputeNodeManager* ComputeNodeManager::instance = nullptr;
 
@@ -26,7 +27,6 @@ std::string ComputeNodeManager::CheckName(std::string nameComputeNode)
 
 ComputeNodeManager::ComputeNodeManager()
 {
-    auto shaderManager = ShaderManager::getInstance();
 }
 
 ComputeNodeManager* ComputeNodeManager::getInstance()
@@ -41,6 +41,26 @@ void ComputeNodeManager::ResetInstance()
 {
     delete instance;
     instance = nullptr;
+}
+
+void ComputeNodeManager::InitializeComputeResources()
+{
+    auto shaderManager = ShaderManager::getInstance();
+
+    auto absPath = std::filesystem::absolute("../../resources/shaders/").generic_string();
+
+    std::string substring = "/Engine";
+    std::size_t ind = absPath.find(substring);
+
+    if (ind != std::string::npos) {
+        absPath.erase(ind, substring.length());
+    }
+
+    const std::string absolute_default_compute_shader_path = absPath + "Compute/default_compute.spv";
+    const std::string absolute_animation_compute_shader_path = absPath + "Animation/computeSkinning.spv";
+
+    shaderManager->AddShader("default_compute_particles", std::make_shared<ShaderModule>(ShaderModule(absolute_default_compute_shader_path)));
+    shaderManager->AddShader("default_skinning", std::make_shared<ShaderModule>(ShaderModule(absolute_animation_compute_shader_path)));
 }
 
 void ComputeNodeManager::InitializeComputeNodes()

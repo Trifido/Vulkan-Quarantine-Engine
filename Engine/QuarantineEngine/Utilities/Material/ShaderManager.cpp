@@ -94,6 +94,9 @@ void ShaderManager::RecreateShaderGraphicsPipelines()
 {
     for each (auto shader in this->_shaders)
     {
-        shader.second->RecreatePipeline();
+        if (shader.second->shaderStages.size() > 1)
+        {
+            shader.second->RecreatePipeline();
+        }
     }
 }

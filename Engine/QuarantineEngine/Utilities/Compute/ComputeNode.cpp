@@ -5,7 +5,6 @@
 ComputeNode::ComputeNode()
 {
     this->deviceModule = DeviceModule::getInstance();
-    this->IsProgressiveComputation = false;
 }
 
 ComputeNode::ComputeNode(std::string computeShaderPath) : ComputeNode(std::make_shared<ShaderModule>(computeShaderPath))
@@ -36,10 +35,10 @@ void ComputeNode::FillComputeBuffer(size_t numElements, unsigned long long eleme
     vkUnmapMemory(deviceModule->device, stagingBufferMemory);
 
     // Initialize ssbo
-    this->computeDescriptor->ssbo->CreateSSBO(bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
-    this->computeDescriptor->ssboSize = bufferSize;
+    this->computeDescriptor->ssboData[0]->CreateSSBO(bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->computeDescriptor->ssboSize[0] = bufferSize;
     // Fill ssbo
-    this->computeDescriptor->ssbo->FillSSBO(stagingBuffer, bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->computeDescriptor->ssboData[0]->FillSSBO(stagingBuffer, bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
 
     vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
     vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
@@ -47,18 +46,12 @@ void ComputeNode::FillComputeBuffer(size_t numElements, unsigned long long eleme
 
 void ComputeNode::InitializeComputeNode()
 {
-    this->computeDescriptor->IsProgressiveComputation = this->IsProgressiveComputation;
     this->computeDescriptor->InitializeDescriptorSets(this->computeShader);
 }
 
 void ComputeNode::cleanup()
 {
     this->computeDescriptor->Cleanup();
-
-    this->computeShader->CleanDescriptorSetLayout();
-    this->computeShader->cleanup();
-    this->computeShader->CleanLastResources();
-
     this->computeShader.reset();
     this->computeShader = nullptr;
     this->nElements = 0;

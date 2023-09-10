@@ -1,24 +1,19 @@
 #include "ParticleSystem.h"
 #include "SynchronizationModule.h"
+#include "Vertex.h"
 #include <random>
 #include <filesystem>
+#include <ShaderManager.h>
 
 ParticleSystem::ParticleSystem() : GameObject()
 {
     this->timer = Timer::getInstance();
     this->computeNodeManager = ComputeNodeManager::getInstance();
     swapchainModule = SwapChainModule::getInstance();
+    auto shaderManager = ShaderManager::getInstance();
 
-    auto absPath = std::filesystem::absolute("../../resources/shaders/Compute/").generic_string();
-    std::string substring = "/Engine";
-    std::size_t ind = absPath.find(substring);
-    if (ind != std::string::npos) {
-        absPath.erase(ind, substring.length());
-    }
-
-    const std::string absolute_default_compute_shader_path = absPath + "default_compute.spv";
-    this->computeNode = std::make_shared<ComputeNode>(absolute_default_compute_shader_path);
-    this->computeNode->IsProgressiveComputation = true;
+    this->computeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("default_compute_particles"));
+    this->computeNode->computeDescriptor->IsProgressiveComputation = true;
     this->computeNodeManager->AddComputeNode("default_compute", this->computeNode);
     this->numParticles = 8192;
 
@@ -57,6 +52,7 @@ void ParticleSystem::createShaderStorageBuffers()
         particle.color = glm::vec4(rndDist(rndEngine), rndDist(rndEngine), rndDist(rndEngine), 1.0f);
     }
 
+    this->computeNode->computeDescriptor->InitializeSSBOData();
     this->computeNode->FillComputeBuffer(this->numParticles, sizeof(Particle), particles.data());
 }
 
@@ -69,7 +65,7 @@ void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t 
     vkCmdSetCullMode(commandBuffer, false);
 
     VkDeviceSize offsets[] = { 0 };
-    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &computeNode->computeDescriptor->ssbo->uniformBuffers.at(idx), offsets);
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &computeNode->computeDescriptor->ssboData[0]->uniformBuffers.at(idx), offsets);
 
     vkCmdDraw(commandBuffer, this->numParticles, 1, 0, 0);
 }

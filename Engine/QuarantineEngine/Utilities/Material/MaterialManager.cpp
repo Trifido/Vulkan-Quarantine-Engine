@@ -2,7 +2,7 @@
 #include "ShaderManager.h"
 #include <GraphicsPipelineModule.h>
 #include <filesystem>
-#include <Particles/ParticleSystem.h>
+#include <Vertex.h>
 
 MaterialManager* MaterialManager::instance = nullptr;
 
@@ -51,19 +51,21 @@ MaterialManager::MaterialManager()
     this->cameraEditor = CameraEditor::getInstance();
 
     auto shaderManager = ShaderManager::getInstance();
-    this->default_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_default_vertex_shader_path, absolute_default_frag_shader_path));
-    shaderManager->AddShader("default", this->default_shader);
+    //this->default_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_default_vertex_shader_path, absolute_default_frag_shader_path));
+    //shaderManager->AddShader("default", this->default_shader);
 
-    this->default_primitive_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_primitive_vertex_shader_path, absolute_primitive_frag_shader_path));
-    shaderManager->AddShader("default_primitive", this->default_primitive_shader);
+    //this->default_primitive_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_primitive_vertex_shader_path, absolute_primitive_frag_shader_path));
+    //shaderManager->AddShader("default_primitive", this->default_primitive_shader);
 
-    this->default_animation_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_animation_vertex_shader_path, absolute_animation_frag_shader_path));
+    GraphicsPipelineData pipelineData = {};
+    pipelineData.polygonMode = VkPolygonMode::VK_POLYGON_MODE_FILL;
+    pipelineData.vertexBufferStride = sizeof(AnimationVertex);
+    this->default_animation_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_animation_vertex_shader_path, absolute_animation_frag_shader_path, pipelineData));
     shaderManager->AddShader("default_animation", this->default_animation_shader);
 
     GraphicsPipelineData pipelineParticleShader = {};
     pipelineParticleShader.polygonMode = VkPolygonMode::VK_POLYGON_MODE_POINT;
     pipelineParticleShader.vertexBufferStride = sizeof(Particle);
-
     this->default_particles_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_particles_vert_shader_path, absolute_particles_frag_shader_path, pipelineParticleShader));
     shaderManager->AddShader("default_particles", this->default_particles_shader);
 }
