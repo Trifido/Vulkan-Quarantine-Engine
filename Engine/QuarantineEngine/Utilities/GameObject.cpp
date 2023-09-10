@@ -200,20 +200,23 @@ void GameObject::InitializeAnimationComponent()
             }
         }
 
-        //if (!this->childs.empty())
-        //{
-        //    for (auto& it : this->childs)
-        //    {
-        //        if (it->animationComponent != nullptr)
-        //        {
-        //            it->animationComponent->animator->InitializeUBOAnimation(it->material->shader);
-        //            it->material->descriptor->animationUBO = it->animationComponent->animator->animationUBO;
-        //            it->material->descriptor->animationUniformSize = it->animationComponent->animator->animationUniformSize;
+        uint32_t numComputeNodes = (this->childs.empty()) ? 1 : this->childs.size();
+        this->animationComponent->animator->InitializeComputeNodes(numComputeNodes);
 
-        //            //this->animationComponent->animator->AddDescriptor(it->material->descriptor);
-        //        }
-        //    }
-        //}
+        if (numComputeNodes > 1)
+        {
+            for (int idChild = 0; idChild < this->childs.size(); idChild++)
+            {
+                uint32_t numVertices = this->childs[idChild]->mesh->numVertices;
+                uint32_t bufferSize = sizeof(PBRAnimationVertex) * numVertices;
+                this->animationComponent->animator->SetVertexBufferInComputeNode(idChild, this->childs[idChild]->mesh->vertexBuffer, bufferSize, numVertices);
+            }
+        }
+        else
+        {
+            uint32_t bufferSize = sizeof(PBRAnimationVertex) * this->mesh->numVertices;
+            this->animationComponent->animator->SetVertexBufferInComputeNode(0, this->mesh->vertexBuffer, bufferSize, this->mesh->numVertices);
+        }
     }
 }
 

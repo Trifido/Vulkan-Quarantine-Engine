@@ -132,7 +132,7 @@ void MaterialManager::AddMaterial(const char* nameMaterial, Material mat)
     std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(mat);
     std::string name = nameMaterial;
     name = CheckName(name);
-    _materials[nameMaterial] = mat_ptr;
+    _materials[name] = mat_ptr;
 }
 
 

@@ -19,9 +19,9 @@ ComputeNode::ComputeNode(std::shared_ptr<ShaderModule> shader_ptr) : ComputeNode
 
 void ComputeNode::FillComputeBuffer(size_t numElements, unsigned long long elementType, void* data)
 {
-    this->nElements = numElements;
+    this->NElements = numElements;
 
-    VkDeviceSize bufferSize = elementType * this->nElements;
+    VkDeviceSize bufferSize = elementType * this->NElements;
 
     // Create a staging buffer used to upload data to the gpu
     VkBuffer stagingBuffer;
@@ -44,6 +44,11 @@ void ComputeNode::FillComputeBuffer(size_t numElements, unsigned long long eleme
     vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
 }
 
+void ComputeNode::FillComputeBuffer(VkBuffer buffer, uint32_t bufferSize)
+{
+    this->computeDescriptor->ssboData[0]->FillSSBO(buffer, bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+}
+
 void ComputeNode::InitializeComputeNode()
 {
     this->computeDescriptor->InitializeDescriptorSets(this->computeShader);
@@ -54,7 +59,7 @@ void ComputeNode::cleanup()
     this->computeDescriptor->Cleanup();
     this->computeShader.reset();
     this->computeShader = nullptr;
-    this->nElements = 0;
+    this->NElements = 0;
 }
 
 void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t currentFrame)
@@ -62,7 +67,7 @@ void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, this->computeShader->ComputePipelineModule->pipeline);
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, this->computeShader->ComputePipelineModule->pipelineLayout, 0, 1, &computeDescriptor->descriptorSets[currentFrame], 0, 0);
 
-    uint32_t groupX = (this->nElements < 256) ? this->nElements : this->nElements / 256;
+    uint32_t groupX = (this->NElements < 256) ? this->NElements : this->NElements / 256;
     vkCmdDispatch(commandBuffer, groupX, 1, 1);
 }
 

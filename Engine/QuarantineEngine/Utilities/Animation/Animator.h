@@ -28,7 +28,7 @@ private:
 
     char* animationbuffer;
     Bone* auxiliarBone = nullptr;
-    std::shared_ptr<ComputeNode> computeNode = nullptr;
+    std::vector<std::shared_ptr<ComputeNode>> computeNodes;
 
 public:
     std::shared_ptr<AnimationUniform> animationUniform_ptr;
@@ -38,6 +38,9 @@ public:
 public:
     Animator();
     void AssignAnimationBuffer(std::shared_ptr<DescriptorBuffer> descriptorBuffer);
+    void InitializeComputeNodes(uint32_t numComputeNodes);
+    void SetVertexBufferInComputeNode(uint32_t idx, VkBuffer vertexBuffer, uint32_t bufferSize, uint32_t numElements);
+    std::shared_ptr<ComputeNode> GetComputeNode(uint32_t id);
     void InitializeUBOAnimation(std::shared_ptr<ShaderModule> shader_ptr);
     void UpdateUBOAnimation();
     void WriteToAnimationBuffer(char* data, size_t& position, const size_t& sizeToCopy);

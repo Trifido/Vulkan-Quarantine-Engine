@@ -5,15 +5,11 @@
 Animator::Animator()
 {
     this->deviceModule = DeviceModule::getInstance();
-    auto shaderManager = ShaderManager::getInstance();
     this->computeNodeManager = ComputeNodeManager::getInstance();
 
 	m_CurrentTime = 0.0;
     m_FinalBoneMatrices = std::make_shared<std::vector<glm::mat4>>(std::vector<glm::mat4>(NUM_BONES, glm::mat4(1.0f)));
     this->animationUniform_ptr = std::make_shared<AnimationUniform>();
-
-    this->computeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("default_skinning"));
-    this->computeNodeManager->AddComputeNode("default_skinning", this->computeNode);
 
     //this->computeNode->FillComputeBuffer(this->numParticles, sizeof(PBRVertex), particles.data());
 }
@@ -48,6 +44,16 @@ void Animator::InitializeUBOAnimation(std::shared_ptr<ShaderModule> shader_ptr)
     }
 }
 
+void Animator::InitializeComputeNodes(uint32_t numComputeNodes)
+{
+    auto shaderManager = ShaderManager::getInstance();
+    for (uint32_t i = 0; i < numComputeNodes; i++)
+    {
+        this->computeNodes.push_back(std::make_shared<ComputeNode>(shaderManager->GetShader("default_skinning")));
+        this->computeNodeManager->AddComputeNode("default_skinning", this->computeNodes.back());
+    }
+}
+
 void Animator::UpdateUBOAnimation()
 {
     auto currentFrame = SynchronizationModule::GetCurrentFrame();
@@ -57,11 +63,34 @@ void Animator::UpdateUBOAnimation()
     vkUnmapMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[currentFrame]);
 }
 
+void Animator::SetVertexBufferInComputeNode(uint32_t idx, VkBuffer vertexBuffer, uint32_t bufferSize, uint32_t numElements)
+{
+    if (idx < this->computeNodes.size())
+    {
+        this->computeNodes.at(idx)->NElements = numElements;
+        this->computeNodes.at(idx)->computeDescriptor->InitializeSSBOData();
+
+        uint32_t numSSBOs = this->computeNodes.at(idx)->computeDescriptor->ssboData.size();
+        for (uint32_t i = 0; i < numSSBOs; i++)
+        {
+            this->computeNodes.at(idx)->computeDescriptor->ssboData[i]->CreateSSBO(bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+            this->computeNodes.at(idx)->computeDescriptor->ssboSize[i] = bufferSize;
+        }
+
+        this->computeNodes.at(idx)->FillComputeBuffer(vertexBuffer, bufferSize);
+    }
+}
+
 void Animator::WriteToAnimationBuffer(char* data, size_t& position, const size_t& sizeToCopy)
 {
     memcpy(&animationbuffer[position], data, sizeToCopy);
     position += sizeToCopy;
     this->animationUniformSize += sizeToCopy;
+}
+
+std::shared_ptr<ComputeNode> Animator::GetComputeNode(uint32_t id)
+{
+    return this->computeNodes.at(id);
 }
 
 void Animator::UpdateAnimation(float dt)

@@ -16,6 +16,7 @@ Mesh::Mesh(const MeshData& data)
     this->numAttributes = 3;
     this->numFaces = data.numFaces;
     this->vertices = data.vertices;
+    this->numVertices = data.numVertices;
     this->indices = data.indices;
 }
 
@@ -50,7 +51,7 @@ void Mesh::createVertexBuffer()
 
     //Rasterization -> VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
     //RayTracing -> VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
-    BufferManageModule::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory, *deviceModule_ptr);
+    BufferManageModule::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory, *deviceModule_ptr);
 
     BufferManageModule::copyBuffer(stagingBuffer, vertexBuffer, bufferSize, *deviceModule_ptr);
 

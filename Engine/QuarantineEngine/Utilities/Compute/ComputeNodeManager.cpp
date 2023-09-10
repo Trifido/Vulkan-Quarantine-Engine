@@ -73,17 +73,21 @@ void ComputeNodeManager::InitializeComputeNodes()
 
 void ComputeNodeManager::AddComputeNode(std::string& nameComputeNode, ComputeNode mat)
 {
+    nameComputeNode = CheckName(nameComputeNode);
     std::shared_ptr<ComputeNode> mat_ptr = std::make_shared<ComputeNode>(mat);
     _computeNodes[nameComputeNode] = mat_ptr;
 }
 
 void ComputeNodeManager::AddComputeNode(const char* nameComputeNode, std::shared_ptr<ComputeNode> mat_ptr)
 {
-    _computeNodes[nameComputeNode] = mat_ptr;
+    std::string name = nameComputeNode;
+    name = CheckName(name);
+    _computeNodes[name] = mat_ptr;
 }
 
 void ComputeNodeManager::AddComputeNode(std::string& nameComputeNode, std::shared_ptr<ComputeNode> mat_ptr)
 {
+    nameComputeNode = CheckName(nameComputeNode);
     _computeNodes[nameComputeNode] = mat_ptr;
 }
 
