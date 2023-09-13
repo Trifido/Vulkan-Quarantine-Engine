@@ -31,6 +31,7 @@ struct GraphicsPipelineData
 {
     VkPolygonMode polygonMode = VkPolygonMode::VK_POLYGON_MODE_FILL;
     uint32_t vertexBufferStride = sizeof(PBRVertex);
+    bool HasVertexData = true;
 
     GraphicsPipelineData() {}
 };

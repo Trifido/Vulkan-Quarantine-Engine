@@ -21,7 +21,10 @@ Grid::Grid()
     const std::string absolute_grid_vertex_shader_path = absPath + "/Grid/grid_vert.spv";
     const std::string absolute_grid_frag_shader_path = absPath + "/Grid/grid_frag.spv";
 
-    this->shader_grid_ptr = std::make_shared<ShaderModule>(ShaderModule(absolute_grid_vertex_shader_path, absolute_grid_frag_shader_path));
+    GraphicsPipelineData gpData = {};
+    gpData.HasVertexData = false;
+
+    this->shader_grid_ptr = std::make_shared<ShaderModule>(ShaderModule(absolute_grid_vertex_shader_path, absolute_grid_frag_shader_path, gpData));
     shaderManager->AddShader("shader_grid", shader_grid_ptr);
 
     this->material_grid_ptr = std::make_shared<Material>(Material(this->shader_grid_ptr));

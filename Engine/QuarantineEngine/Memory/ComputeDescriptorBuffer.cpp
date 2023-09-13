@@ -65,7 +65,7 @@ void ComputeDescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shade
             idx++;
 
             this->ubos["UniformAnimation"] = std::make_shared<UniformBufferObject>();
-            this->uboSizes["UniformAnimation"] = sizeof(AnimationUniform);
+            this->uboSizes["UniformAnimation"] = sizeof(glm::mat4) * 200;
             this->ubos["UniformAnimation"]->CreateUniformBuffer(this->uboSizes["UniformAnimation"], MAX_FRAMES_IN_FLIGHT, *deviceModule);
         }
         else if (binding.first == "UniformVertexParam")

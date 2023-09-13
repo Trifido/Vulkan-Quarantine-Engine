@@ -122,14 +122,14 @@ std::shared_ptr<ComputeNode> Animator::GetComputeNode(std::string id)
 
 void Animator::UpdateAnimation(float dt)
 {
-    m_DeltaTime = dt;
-    if (m_CurrentAnimation != nullptr)
-    {
-        m_CurrentTime += m_CurrentAnimation->GetTicksPerSecond() * dt;
-        m_CurrentTime = fmod(m_CurrentTime, m_CurrentAnimation->GetDuration());
-        CalculateBoneTransform(&m_CurrentAnimation->GetRootNode(), glm::mat4(1.0f));
-        this->UpdateUBOAnimation();
-    }
+    //m_DeltaTime = dt;
+    //if (m_CurrentAnimation != nullptr)
+    //{
+    //    m_CurrentTime += m_CurrentAnimation->GetTicksPerSecond() * dt;
+    //    m_CurrentTime = fmod(m_CurrentTime, m_CurrentAnimation->GetDuration());
+    //    CalculateBoneTransform(&m_CurrentAnimation->GetRootNode(), glm::mat4(1.0f));
+    //    this->UpdateUBOAnimation();
+    //}
 }
 
 void Animator::PlayAnimation(std::shared_ptr<Animation> pAnimation)
