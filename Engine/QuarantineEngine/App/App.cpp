@@ -169,7 +169,7 @@ void App::initVulkan()
     //this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH));
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
+    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../../resources/models/Raptoid/scene.gltf"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/microphone/scene.gltf"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/vampire/Capoeira.dae"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/CharacterRunning/CharacterRunning.gltf"));
@@ -312,7 +312,7 @@ void App::mainLoop()
         this->gameObjectManager->UpdatePhysicTransforms();
 
         //ANIMATION SYSTEM
-        this->animationManager->UpdateAnimations((float)Timer::DeltaTime);
+        //this->animationManager->UpdateAnimations((float)Timer::DeltaTime);
 
         //COMPUTE NODES
         this->computeNodeManager->UpdateComputeNodes();

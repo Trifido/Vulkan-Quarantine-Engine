@@ -28,9 +28,9 @@ public:
     std::vector<std::shared_ptr<UniformBufferObject>>    ssboData;
     std::vector<VkDeviceSize>                            ssboSize;
 
-    std::shared_ptr<UniformBufferObject>    uboDeltaTime = nullptr;
-    VkDeviceSize                            uboDeltaTimeSize = 0;
-    bool    IsProgressiveComputation = false;
+    std::unordered_map<std::string, std::shared_ptr<UniformBufferObject>>  ubos;
+    std::unordered_map<std::string, VkDeviceSize> uboSizes;
+    bool IsProgressiveComputation = false;
 
 private:
     void StartResources(std::shared_ptr<ShaderModule> shader_ptr);

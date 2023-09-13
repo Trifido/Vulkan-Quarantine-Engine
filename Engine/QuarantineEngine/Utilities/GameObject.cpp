@@ -174,48 +174,58 @@ void GameObject::InitializeAnimationComponent()
 {
     if (this->animationComponent != nullptr)
     {
-        if (this->material != nullptr)
-        {
-            this->animationComponent->animator->InitializeUBOAnimation(this->material->shader);
-            this->animationComponent->animator->AssignAnimationBuffer(this->material->descriptor);
-            //this->material->descriptor->animationUBO = this->animationComponent->animator->animationUBO;
-            //this->material->descriptor->animationUniformSize = this->animationComponent->animator->animationUniformSize;
+        //if (this->material != nullptr)
+        //{
+        //    //this->animationComponent->animator->InitializeUBOAnimation(this->material->shader);
+        //    //this->animationComponent->animator->AssignAnimationBuffer(this->material->descriptor);
+        //    //this->material->descriptor->animationUBO = this->animationComponent->animator->animationUBO;
+        //    //this->material->descriptor->animationUniformSize = this->animationComponent->animator->animationUniformSize;
 
-            //this->animationComponent->animator->AddDescriptor(this->material->descriptor);
-        }
-        else if (!this->childs.empty())
+        //    //this->animationComponent->animator->AddDescriptor(this->material->descriptor);
+        //}
+        //else if (!this->childs.empty())
+        //{
+        //    bool findShader = false;
+        //    for(int i = 0; i < this->childs.size(); i++)
+        //    {
+        //        if (this->childs.at(i)->material != nullptr)
+        //        {
+        //            if (!findShader)
+        //            {
+        //                findShader = true;
+        //                //this->animationComponent->animator->InitializeUBOAnimation(this->childs.at(i)->material->shader);
+        //            }
+        //            //this->animationComponent->animator->AssignAnimationBuffer(this->childs.at(i)->material->descriptor);
+        //        }
+        //    }
+        //}
+
+        std::vector<std::string> idChilds;
+        if (!this->childs.empty())
         {
-            bool findShader = false;
-            for(int i = 0; i < this->childs.size(); i++)
+            for each (auto child in this->childs)
             {
-                if (this->childs.at(i)->material != nullptr)
-                {
-                    if (!findShader)
-                    {
-                        findShader = true;
-                        this->animationComponent->animator->InitializeUBOAnimation(this->childs.at(i)->material->shader);
-                    }
-                    this->animationComponent->animator->AssignAnimationBuffer(this->childs.at(i)->material->descriptor);
-                }
-            }
-        }
-
-        uint32_t numComputeNodes = (this->childs.empty()) ? 1 : this->childs.size();
-        this->animationComponent->animator->InitializeComputeNodes(numComputeNodes);
-
-        if (numComputeNodes > 1)
-        {
-            for (int idChild = 0; idChild < this->childs.size(); idChild++)
-            {
-                uint32_t numVertices = this->childs[idChild]->mesh->numVertices;
-                uint32_t bufferSize = sizeof(PBRAnimationVertex) * numVertices;
-                this->animationComponent->animator->SetVertexBufferInComputeNode(idChild, this->childs[idChild]->mesh->vertexBuffer, bufferSize, numVertices);
+                idChilds.push_back(child->id);
             }
         }
         else
         {
-            uint32_t bufferSize = sizeof(PBRAnimationVertex) * this->mesh->numVertices;
-            this->animationComponent->animator->SetVertexBufferInComputeNode(0, this->mesh->vertexBuffer, bufferSize, this->mesh->numVertices);
+            idChilds.push_back(this->id);
+        }
+
+        this->animationComponent->animator->InitializeComputeNodes(idChilds);
+
+        if (!this->childs.empty())
+        {
+            for (int idChild = 0; idChild < this->childs.size(); idChild++)
+            {
+                uint32_t numVertices = this->childs[idChild]->mesh->numVertices;
+                this->animationComponent->animator->SetVertexBufferInComputeNode(this->childs[idChild]->id, this->childs[idChild]->mesh->vertexBuffer, numVertices);
+            }
+        }
+        else
+        {
+            this->animationComponent->animator->SetVertexBufferInComputeNode(0, this->mesh->vertexBuffer, this->mesh->numVertices);
         }
     }
 }
@@ -340,9 +350,18 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
             vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
         }
 
-        VkBuffer vertexBuffers[] = { this->mesh->vertexBuffer };
         VkDeviceSize offsets[] = { 0 };
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+
+        if (this->animationComponent == nullptr)
+        {
+            VkBuffer vertexBuffers[] = { this->mesh->vertexBuffer };
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+        }
+        else
+        {
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &this->parent->animationComponent->animator->GetComputeNode(this->id)->computeDescriptor->ssboData[0]->uniformBuffers.at(idx), offsets);
+        }
+
         vkCmdBindIndexBuffer(commandBuffer, this->mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
         if (this->material->HasDescriptorBuffer())

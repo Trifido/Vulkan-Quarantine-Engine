@@ -66,12 +66,6 @@ void MeshImporter::SetVertexBoneData(PBRVertex& vertex, int boneID, float weight
         return;
     }
 
-    //for (int i = 0; i < 4; i++)
-    //{
-    //    if (vertex.boneIDs[i] == boneID)
-    //        return;
-    //}
-
     for (int i = 0; i < 4; ++i)
     {
         if (vertex.boneWeights[i] == 0.0f)

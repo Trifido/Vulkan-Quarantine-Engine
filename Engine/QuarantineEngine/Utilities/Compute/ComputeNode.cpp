@@ -67,7 +67,7 @@ void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, this->computeShader->ComputePipelineModule->pipeline);
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, this->computeShader->ComputePipelineModule->pipelineLayout, 0, 1, &computeDescriptor->descriptorSets[currentFrame], 0, 0);
 
-    uint32_t groupX = (this->NElements < 256) ? this->NElements : this->NElements / 256;
+    uint32_t groupX = (this->NElements < 256) ? this->NElements : ceil(float(this->NElements) / 256.0f);
     vkCmdDispatch(commandBuffer, groupX, 1, 1);
 }
 
