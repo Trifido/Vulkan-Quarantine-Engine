@@ -24,21 +24,13 @@ private:
     char* animationbuffer;
     Bone* auxiliarBone = nullptr;
     std::map<std::string, std::shared_ptr<ComputeNode>> computeNodes;
-
-public:
-    //std::shared_ptr<AnimationUniform> animationUniform_ptr;
-    //VkDeviceSize animationUniformSize = 0;
-    //std::shared_ptr<UniformBufferObject> animationUBO = nullptr;
     
 public:
     Animator();
-    //void AssignAnimationBuffer(std::shared_ptr<DescriptorBuffer> descriptorBuffer);
     void InitializeComputeNodes(std::vector<std::string> idChilds);
     void SetVertexBufferInComputeNode(std::string id, VkBuffer vertexBuffer, uint32_t numElements);
     std::shared_ptr<ComputeNode> GetComputeNode(std::string id);
-    //void InitializeUBOAnimation(std::shared_ptr<ShaderModule> shader_ptr);
     void UpdateUBOAnimation();
-    //void WriteToAnimationBuffer(char* data, size_t& position, const size_t& sizeToCopy);
     void UpdateAnimation(float dt);
     void PlayAnimation(std::shared_ptr<Animation> pAnimation);
     void CalculateBoneTransform(const AnimationNode* node, glm::mat4 parentTransform);

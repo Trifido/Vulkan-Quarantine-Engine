@@ -64,8 +64,8 @@ protected:
     void InitializeComponents(size_t numMeshAttributes);
     void InitializeAnimationComponent();
     bool CreateChildsGameObject(std::string pathfile);
-    void DrawChilds(VkCommandBuffer& commandBuffer, uint32_t idx);
     virtual void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
+    virtual void CreateAnimationDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator);
     size_t CheckNumAttributes();
 };
 

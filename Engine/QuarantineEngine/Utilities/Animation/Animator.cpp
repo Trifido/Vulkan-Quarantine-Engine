@@ -9,38 +9,7 @@ Animator::Animator()
 
 	m_CurrentTime = 0.0;
     m_FinalBoneMatrices = std::make_shared<std::vector<glm::mat4>>(std::vector<glm::mat4>(NUM_BONES, glm::mat4(1.0f)));
-    //this->animationUniform_ptr = std::make_shared<AnimationUniform>();
-
-    //this->computeNode->FillComputeBuffer(this->numParticles, sizeof(PBRVertex), particles.data());
 }
-
-//void Animator::AssignAnimationBuffer(std::shared_ptr<DescriptorBuffer> descriptorBuffer)
-//{
-//    descriptorBuffer->animationUBO = this->animationUBO;
-//    descriptorBuffer->animationUniformSize = this->animationUniformSize;
-//}
-
-//void Animator::InitializeUBOAnimation(std::shared_ptr<ShaderModule> shader_ptr)
-//{
-    //auto reflect = shader_ptr->reflectShader;
-
-    //this->animationUBO = std::make_shared<UniformBufferObject>();
-
-    //size_t position = 0;
-    //this->animationbuffer = new char[reflect.animationBufferSize];
-
-    //for each (auto name in reflect.animationUBOComponents)
-    //{
-    //    if (name == "finalBonesMatrices")
-    //    {
-    //        this->WriteToAnimationBuffer(reinterpret_cast<char*>(&this->animationUniform_ptr->finalBonesMatrices), position, reflect.animationBufferSize);
-    //    }
-    //}
-
-    //this->animationUBO->CreateUniformBuffer(reflect.animationBufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
-    //this->UpdateUBOAnimation();
-    
-//}
 
 void Animator::InitializeComputeNodes(std::vector<std::string> idChilds)
 {
@@ -55,18 +24,14 @@ void Animator::InitializeComputeNodes(std::vector<std::string> idChilds)
 void Animator::UpdateUBOAnimation()
 {
     auto currentFrame = SynchronizationModule::GetCurrentFrame();
-    //void* data;
-    //vkMapMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[currentFrame], 0, this->animationUniformSize, 0, &data);
-    //memcpy(data, static_cast<const void*>(this->m_FinalBoneMatrices.get()->data()), this->animationUniformSize);
-    //vkUnmapMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[currentFrame]);
 
-    //for each (auto cn in computeNodes)
-    //{
-    //    void* data;
-    //    vkMapMemory(deviceModule->device, cn.second->computeDescriptor->ubos["UniformAnimation"]->uniformBuffersMemory[currentFrame], 0, cn.second->computeDescriptor->uboSizes["UniformAnimation"], 0, &data);
-    //    memcpy(data, static_cast<const void*>(this->m_FinalBoneMatrices.get()->data()), cn.second->computeDescriptor->uboSizes["UniformAnimation"]);
-    //    vkUnmapMemory(deviceModule->device, cn.second->computeDescriptor->ubos["UniformAnimation"]->uniformBuffersMemory[currentFrame]);
-    //}
+    for each (auto cn in computeNodes)
+    {
+        void* data;
+        vkMapMemory(deviceModule->device, cn.second->computeDescriptor->ubos["UniformAnimation"]->uniformBuffersMemory[currentFrame], 0, cn.second->computeDescriptor->uboSizes["UniformAnimation"], 0, &data);
+        memcpy(data, static_cast<const void*>(this->m_FinalBoneMatrices.get()->data()), cn.second->computeDescriptor->uboSizes["UniformAnimation"]);
+        vkUnmapMemory(deviceModule->device, cn.second->computeDescriptor->ubos["UniformAnimation"]->uniformBuffersMemory[currentFrame]);
+    }
 }
 
 void Animator::SetVertexBufferInComputeNode(std::string id, VkBuffer vertexBuffer, uint32_t numElements)
@@ -79,12 +44,11 @@ void Animator::SetVertexBufferInComputeNode(std::string id, VkBuffer vertexBuffe
     uint32_t bufferSize = sizeof(PBRAnimationVertex) * numElements;
     this->computeNodes[id]->computeDescriptor->ssboData[0]->CreateSSBO(bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
     this->computeNodes[id]->computeDescriptor->ssboSize[0] = bufferSize;
+    this->computeNodes[id]->FillComputeBuffer(vertexBuffer, bufferSize);
 
     bufferSize = sizeof(AnimationVertex) * numElements;
     this->computeNodes[id]->computeDescriptor->ssboData[1]->CreateSSBO(bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
     this->computeNodes[id]->computeDescriptor->ssboSize[1] = bufferSize;
-
-    this->computeNodes[id]->FillComputeBuffer(vertexBuffer, bufferSize);
 
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {
@@ -93,27 +57,7 @@ void Animator::SetVertexBufferInComputeNode(std::string id, VkBuffer vertexBuffe
         memcpy(data, static_cast<const void*>(&this->computeNodes[id]->NElements), this->computeNodes[id]->computeDescriptor->uboSizes["UniformVertexParam"]);
         vkUnmapMemory(deviceModule->device, this->computeNodes[id]->computeDescriptor->ubos["UniformVertexParam"]->uniformBuffersMemory[currentFrame]);
     }
-
-    for (int i = 0; i < 200; i++)
-    {
-        this->m_FinalBoneMatrices->push_back(glm::mat4(1.0f));
-    }
-
-    for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
-    {
-        void* data;
-        vkMapMemory(deviceModule->device, this->computeNodes[id]->computeDescriptor->ubos["UniformAnimation"]->uniformBuffersMemory[currentFrame], 0, this->computeNodes[id]->computeDescriptor->uboSizes["UniformAnimation"], 0, &data);
-        memcpy(data, static_cast<const void*>(this->m_FinalBoneMatrices.get()->data()), this->computeNodes[id]->computeDescriptor->uboSizes["UniformAnimation"]);
-        vkUnmapMemory(deviceModule->device, this->computeNodes[id]->computeDescriptor->ubos["UniformAnimation"]->uniformBuffersMemory[currentFrame]);
-    }
 }
-
-//void Animator::WriteToAnimationBuffer(char* data, size_t& position, const size_t& sizeToCopy)
-//{
-//    memcpy(&animationbuffer[position], data, sizeToCopy);
-//    position += sizeToCopy;
-//    this->animationUniformSize += sizeToCopy;
-//}
 
 std::shared_ptr<ComputeNode> Animator::GetComputeNode(std::string id)
 {
@@ -122,14 +66,14 @@ std::shared_ptr<ComputeNode> Animator::GetComputeNode(std::string id)
 
 void Animator::UpdateAnimation(float dt)
 {
-    //m_DeltaTime = dt;
-    //if (m_CurrentAnimation != nullptr)
-    //{
-    //    m_CurrentTime += m_CurrentAnimation->GetTicksPerSecond() * dt;
-    //    m_CurrentTime = fmod(m_CurrentTime, m_CurrentAnimation->GetDuration());
-    //    CalculateBoneTransform(&m_CurrentAnimation->GetRootNode(), glm::mat4(1.0f));
-    //    this->UpdateUBOAnimation();
-    //}
+    m_DeltaTime = dt;
+    if (m_CurrentAnimation != nullptr)
+    {
+        m_CurrentTime += m_CurrentAnimation->GetTicksPerSecond() * dt;
+        m_CurrentTime = fmod(m_CurrentTime, m_CurrentAnimation->GetDuration());
+        CalculateBoneTransform(&m_CurrentAnimation->GetRootNode(), glm::mat4(1.0f));
+        this->UpdateUBOAnimation();
+    }
 }
 
 void Animator::PlayAnimation(std::shared_ptr<Animation> pAnimation)
@@ -182,23 +126,7 @@ void Animator::ChangeAnimation(std::shared_ptr<Animation> newAnimation)
 
 void Animator::CleanAnimatorUBO()
 {
-    //for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-    //{
-    //    // Material UBO
-    //    //if (this->animationUBO != nullptr)
-    //    //{
-    //    //    vkDestroyBuffer(deviceModule->device, this->animationUBO->uniformBuffers[i], nullptr);
-    //    //    vkFreeMemory(deviceModule->device, this->animationUBO->uniformBuffersMemory[i], nullptr);
-    //    //}
-    //}
-
     this->auxiliarBone = nullptr;
-
-    //this->animationUBO.reset();
-    //this->animationUBO = nullptr;
-
-    //delete [] this->animationbuffer;
-    //this->animationbuffer = nullptr;
 
     m_FinalBoneMatrices.reset();
     m_FinalBoneMatrices = nullptr;
