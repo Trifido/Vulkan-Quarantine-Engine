@@ -7,9 +7,9 @@
 
 struct Vertex
 {
-    glm::vec3 pos;
-    glm::vec3 norm;
-    glm::vec2 texCoord;
+    glm::vec4 pos;
+    glm::vec4 norm;
+    alignas(16)glm::vec2 texCoord;
     bool operator==(const Vertex& other) const {
         return this->pos == other.pos && this->norm == other.norm;
     }
@@ -17,20 +17,19 @@ struct Vertex
 
 struct PBRVertex : Vertex
 {
-    glm::vec3 Tangents;
-    glm::vec3 Bitangents;
+    glm::vec4 Tangents;
+    glm::vec4 Bitangents;
     int boneIDs[4];
     float boneWeights[4];
 };
 
 struct PBRAnimationVertex
 {
-    glm::vec3 pos;
-    glm::vec3 norm;
-    glm::vec2 texCoord;
-
-    glm::vec3 Tangents;
-    glm::vec3 Bitangents;
+    glm::vec4 pos;
+    glm::vec4 norm;
+    alignas(16)glm::vec2 texCoord;
+    glm::vec4 Tangents;
+    glm::vec4 Bitangents;
     int boneIDs[4];
     float boneWeights[4];
 
@@ -41,7 +40,21 @@ struct PBRAnimationVertex
 
 struct PrimitiveVertex : Vertex
 {
-    glm::vec3 color;
+    glm::vec4 color;
+};
+
+struct Particle {
+    glm::vec2 position;
+    glm::vec2 velocity;
+    glm::vec4 color;
+};
+
+struct AnimationVertex
+{
+    glm::vec4 pos;
+    glm::vec4 norm;
+    alignas(16)glm::vec2 texCoord;
+    glm::vec4 tangent;
 };
 
 namespace std {

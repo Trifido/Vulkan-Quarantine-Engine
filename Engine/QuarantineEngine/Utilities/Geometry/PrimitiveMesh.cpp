@@ -57,11 +57,11 @@ void PrimitiveMesh::InitializePoint()
     this->vertices.resize(1);
     PBRVertex vert;
 
-    vert.pos = glm::vec3(0.0f, 0.0f, 0.0f);
+    vert.pos = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(0.0f, 0.0f);
-    vert.norm = glm::vec3(0.0f, 1.0f, 0.0f);
-    vert.Tangents = glm::vec3(1.0f, 0.0f, 0.0f);
-    vert.Bitangents = glm::vec3(0.0f, 0.0f, 1.0f);
+    vert.norm = glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
+    vert.Tangents = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+    vert.Bitangents = glm::vec4(0.0f, 0.0f, 1.0f, 0.0f);
     this->vertices[0] = vert;
 
     this->indices.resize(1);
@@ -73,15 +73,15 @@ void PrimitiveMesh::InitializeTriangle()
     this->vertices.resize(3);
     PBRVertex vert;
 
-    vert.pos = glm::vec3(1.0f, 0.0f, 0.0f);
+    vert.pos = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(1.0f, 1.0f);
     this->vertices[0] = vert;
 
-    vert.pos = glm::vec3(-1.0f, 0.0f, 0.0f);
+    vert.pos = glm::vec4(-1.0f, 0.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(0.0f, 0.0f);
     this->vertices[1] = vert;
 
-    vert.pos = glm::vec3(0.0f, 1.0f, 0.0f);
+    vert.pos = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(1.0f, 0.0f);
     this->vertices[2] = vert;
 
@@ -97,19 +97,19 @@ void PrimitiveMesh::InitializePlane()
     this->vertices.resize(4);
     PBRVertex vert;
 
-    vert.pos = glm::vec3(1.0f, 1.0f, 0.0f);
+    vert.pos = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(1.0f, 1.0f);
     this->vertices[0] = vert;
 
-    vert.pos = glm::vec3(-1.0f, -1.0f, 0.0f);
+    vert.pos = glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(0.0f, 0.0f);
     this->vertices[1] = vert;
 
-    vert.pos = glm::vec3(-1.0f, 1.0f, 0.0f);
+    vert.pos = glm::vec4(-1.0f, 1.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(1.0f, 0.0f);
     this->vertices[2] = vert;
 
-    vert.pos = glm::vec3(1.0f, -1.0f, 0.0f);
+    vert.pos = glm::vec4(1.0f, -1.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(0.0f, 1.0f);
     this->vertices[3] = vert;
 
@@ -125,19 +125,19 @@ void PrimitiveMesh::InitializeFloorPlane()
     this->vertices.resize(4);
     PBRVertex vert;
 
-    vert.pos = glm::vec3(1.0f, 0.0f, 1.0f);
+    vert.pos = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
     vert.texCoord = glm::vec2(1.0f, 1.0f);
     this->vertices[0] = vert;
 
-    vert.pos = glm::vec3(-1.0f, 0.0f, -1.0f);
+    vert.pos = glm::vec4(-1.0f, 0.0f, -1.0f, 1.0f);
     vert.texCoord = glm::vec2(0.0f, 0.0f);
     this->vertices[1] = vert;
 
-    vert.pos = glm::vec3(-1.0f, 0.0f, 1.0f);
+    vert.pos = glm::vec4(-1.0f, 0.0f, 1.0f, 1.0f);
     vert.texCoord = glm::vec2(1.0f, 0.0f);
     this->vertices[2] = vert;
 
-    vert.pos = glm::vec3(1.0f, 0.0f, -1.0f);
+    vert.pos = glm::vec4(1.0f, 0.0f, -1.0f, 1.0f);
     vert.texCoord = glm::vec2(0.0f, 1.0f);
     this->vertices[3] = vert;
 
@@ -160,27 +160,27 @@ void PrimitiveMesh::InitializeGrid()
     this->vertices.resize(6);
     PBRVertex vert;
 
-    vert.pos = glm::vec3(1.0f, 1.0f, 0.0f);
+    vert.pos = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(1.0f, 1.0f);
     this->vertices[0] = vert;
 
-    vert.pos = glm::vec3(-1.0f, 1.0f, 0.0f);
+    vert.pos = glm::vec4(-1.0f, 1.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(0.0f, 1.0f);
     this->vertices[1] = vert;
 
-    vert.pos = glm::vec3(-1.0f, -1.0f, 0.0f);
+    vert.pos = glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(0.0f, 0.0f);
     this->vertices[2] = vert;
 
-    vert.pos = glm::vec3(1.0f, 1.0f, 0.0f);
+    vert.pos = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(1.0f, 1.0f);
     this->vertices[3] = vert;
 
-    vert.pos = glm::vec3(-1.0f, -1.0f, 0.0f);
+    vert.pos = glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(0.0f, 0.0f);
     this->vertices[4] = vert;
 
-    vert.pos = glm::vec3(1.0f, -1.0f, 0.0f);
+    vert.pos = glm::vec4(1.0f, -1.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(1.0f, 0.0f);
     this->vertices[5] = vert;
 

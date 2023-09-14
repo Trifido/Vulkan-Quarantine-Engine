@@ -21,8 +21,6 @@ GameObject::GameObject(PRIMITIVE_TYPE type)
     this->deviceModule = DeviceModule::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->materialManager = MaterialManager::getInstance();
-
-    this->parent = nullptr;
     this->mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh(type));
     this->meshImportedType = MeshImportedType::PRIMITIVE_GEO;
 
@@ -50,7 +48,6 @@ GameObject::GameObject(std::string meshPath)
     this->queueModule = QueueModule::getInstance();
     this->materialManager = MaterialManager::getInstance();
 
-    this->parent = nullptr;
     bool loadResult = this->CreateChildsGameObject(meshPath);
 
     if (loadResult)
@@ -75,21 +72,47 @@ void GameObject::cleanup()
 
     if (!this->childs.empty())
     {
-        for (auto& it : this->childs)
-        {
-            it->mesh->cleanup();
+        //for (auto& it : this->childs)
+        //{
+        //    it->mesh->cleanup();
 
-            if (it->animationComponent != nullptr)
+        //    if (it->animationComponent != nullptr)
+        //    {
+        //        it->animationComponent->CleanLastResources();
+        //    }
+        //}
+        for (auto& child : this->childs)
+        {
+            child->mesh->cleanup();
+
+            if (child->animationComponent != nullptr)
             {
-                it->animationComponent->CleanLastResources();
+                child->animationComponent->CleanLastResources();
             }
+
+            child->parent = nullptr;
         }
     }    
 }
 
 void GameObject::drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
-    this->CreateDrawCommand(commandBuffer, idx);
+    if (this->meshImportedType != ANIMATED_GEO)
+    {
+        this->CreateDrawCommand(commandBuffer, idx);
+        for each (auto child in childs)
+        {
+            child->CreateDrawCommand(commandBuffer, idx);
+        }
+    }
+    else
+    {
+        this->CreateAnimationDrawCommand(commandBuffer, idx, this->animationComponent->animator);
+        for each (auto child in childs)
+        {
+            child->CreateAnimationDrawCommand(commandBuffer, idx, this->animationComponent->animator);
+        }
+    }
 }
 
 void GameObject::addMaterial(std::shared_ptr<Material> material_ptr)
@@ -98,29 +121,11 @@ void GameObject::addMaterial(std::shared_ptr<Material> material_ptr)
         return;
 
     this->material = material_ptr;
-    //this->material->InitializeDescriptor();
-
-    if (this->meshImportedType == MeshImportedType::ANIMATED_GEO)
-    {
-        //this->material->descriptor->InitializeAnimationProperties();
-    }
 
     if (this->mesh != nullptr)
     {
         this->material->bindingMesh(this->mesh);
     }
-
-    //if (!this->childs.empty())
-    //{
-    //    for (auto& it : this->childs)
-    //    {
-    //        it->material = material_ptr;
-    //        it->material->InitializeDescriptor();// it->meshImportedType == MeshImportedType::ANIMATED_GEO);
-    //        if (it->meshImportedType == MeshImportedType::ANIMATED_GEO)
-    //            it->material->descriptor->InitializeAnimationProperties();
-    //        it->material->bindingMesh(it->mesh);
-    //    }
-    //}
 }
 
 void GameObject::addPhysicBody(std::shared_ptr<PhysicBody> physicBody_ptr)
@@ -163,9 +168,9 @@ void GameObject::InitializeComponents(size_t numMeshAttributes)
 
     if (!this->childs.empty())
     {
-        for (auto& it : this->childs)
+        for (auto& child : this->childs)
         {
-            it->InitializeComponents(numMeshAttributes);
+            child->InitializeComponents(numMeshAttributes);
         }
     }
 }
@@ -174,46 +179,33 @@ void GameObject::InitializeAnimationComponent()
 {
     if (this->animationComponent != nullptr)
     {
-        if (this->material != nullptr)
+        std::vector<std::string> idChilds;
+        if (!this->childs.empty())
         {
-            this->animationComponent->animator->InitializeUBOAnimation(this->material->shader);
-            this->animationComponent->animator->AssignAnimationBuffer(this->material->descriptor);
-            //this->material->descriptor->animationUBO = this->animationComponent->animator->animationUBO;
-            //this->material->descriptor->animationUniformSize = this->animationComponent->animator->animationUniformSize;
-
-            //this->animationComponent->animator->AddDescriptor(this->material->descriptor);
-        }
-        else if (!this->childs.empty())
-        {
-            bool findShader = false;
-            for(int i = 0; i < this->childs.size(); i++)
+            for each (auto child in this->childs)
             {
-                if (this->childs.at(i)->material != nullptr)
-                {
-                    if (!findShader)
-                    {
-                        findShader = true;
-                        this->animationComponent->animator->InitializeUBOAnimation(this->childs.at(i)->material->shader);
-                    }
-                    this->animationComponent->animator->AssignAnimationBuffer(this->childs.at(i)->material->descriptor);
-                }
+                idChilds.push_back(child->id);
             }
         }
+        else
+        {
+            idChilds.push_back(this->id);
+        }
 
-        //if (!this->childs.empty())
-        //{
-        //    for (auto& it : this->childs)
-        //    {
-        //        if (it->animationComponent != nullptr)
-        //        {
-        //            it->animationComponent->animator->InitializeUBOAnimation(it->material->shader);
-        //            it->material->descriptor->animationUBO = it->animationComponent->animator->animationUBO;
-        //            it->material->descriptor->animationUniformSize = it->animationComponent->animator->animationUniformSize;
+        this->animationComponent->animator->InitializeComputeNodes(idChilds);
 
-        //            //this->animationComponent->animator->AddDescriptor(it->material->descriptor);
-        //        }
-        //    }
-        //}
+        if (!this->childs.empty())
+        {
+            for (int idChild = 0; idChild < this->childs.size(); idChild++)
+            {
+                uint32_t numVertices = this->childs[idChild]->mesh->numVertices;
+                this->animationComponent->animator->SetVertexBufferInComputeNode(this->childs[idChild]->id, this->childs[idChild]->mesh->vertexBuffer, numVertices);
+            }
+        }
+        else
+        {
+            this->animationComponent->animator->SetVertexBufferInComputeNode(0, this->mesh->vertexBuffer, this->mesh->numVertices);
+        }
     }
 }
 
@@ -267,6 +259,8 @@ bool GameObject::CreateChildsGameObject(std::string pathfile)
 
         glm::mat4 parentModel = this->transform->GetModel();
 
+        std::weak_ptr<GameObject> wp;
+
         for (size_t id = 0; id < data.size(); id++)
         {
             this->childs[id] = std::make_shared<GameObject>();
@@ -307,14 +301,41 @@ bool GameObject::CreateChildsGameObject(std::string pathfile)
     return true;
 }
 
-void GameObject::DrawChilds(VkCommandBuffer& commandBuffer, uint32_t idx)
+void GameObject::CreateAnimationDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator)
 {
-    if (!this->childs.empty())
+    if (this->material != nullptr && this->mesh != nullptr)
     {
-        for (auto& it : this->childs)
+        auto pipelineModule = this->material->shader->PipelineModule;
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
+
+        vkCmdSetDepthTestEnable(commandBuffer, true);
+        if (this->meshImportedType == EDITOR_GEO)
         {
-            it->CreateDrawCommand(commandBuffer, idx);
+            vkCmdSetCullMode(commandBuffer, false);
         }
+        else
+        {
+            vkCmdSetCullMode(commandBuffer, true);
+            vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
+        }
+
+        VkDeviceSize animOffsets[] = { 0 };
+        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &animator->GetComputeNode(this->id)->computeDescriptor->ssboData[1]->uniformBuffers.at(idx), animOffsets);
+        vkCmdBindIndexBuffer(commandBuffer, this->mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+
+        if (this->material->HasDescriptorBuffer())
+        {
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, this->material->descriptor->getDescriptorSet(idx), 0, nullptr);
+        }
+
+        this->pushConstant.model = this->transform->GetModel();
+        if (this->parent != nullptr)
+        {
+            pushConstant.model = this->parent->transform->GetModel() * pushConstant.model;
+        }
+        vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantStruct), &pushConstant);
+
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->mesh->indices.size()), 1, 0, 0, 0);
     }
 }
 
@@ -326,7 +347,6 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
         vkCmdSetDepthTestEnable(commandBuffer, true);
-
         if (this->meshImportedType == EDITOR_GEO)
         {
             vkCmdSetCullMode(commandBuffer, false);
@@ -337,8 +357,8 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
             vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
         }
 
-        VkBuffer vertexBuffers[] = { this->mesh->vertexBuffer };
         VkDeviceSize offsets[] = { 0 };
+        VkBuffer vertexBuffers[] = { this->mesh->vertexBuffer };
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
         vkCmdBindIndexBuffer(commandBuffer, this->mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
@@ -348,18 +368,14 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
         }
 
         this->pushConstant.model = this->transform->GetModel();
-
         if (this->parent != nullptr)
         {
             pushConstant.model = this->parent->transform->GetModel() * pushConstant.model;
         }
-
         vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantStruct), &pushConstant);
 
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->mesh->indices.size()), 1, 0, 0, 0);
     }
-
-    this->DrawChilds(commandBuffer, idx);
 }
 
 size_t GameObject::CheckNumAttributes()

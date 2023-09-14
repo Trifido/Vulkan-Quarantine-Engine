@@ -32,11 +32,11 @@ layout(set = 0, binding = 2) uniform UniformManagerLight
 	LightData lights[8];
 } uboLight;
 
-layout(location = 0) in vec3 inPosition;
-layout(location = 1) in vec3 inNormal;
+layout(location = 0) in vec4 inPosition;
+layout(location = 1) in vec4 inNormal;
 layout(location = 2) in vec2 inTexCoord;
-layout(location = 3) in vec3 inTangent;
-layout(location = 4) in vec3 inBitangent;
+layout(location = 3) in vec4 inTangent;
+layout(location = 4) in vec4 inBitangent;
 
 layout(location = 0) out VS_OUT {
     vec3 FragPos;
@@ -49,16 +49,16 @@ layout(location = 0) out VS_OUT {
 
 
 void main() {
-    vs_out.FragPos = vec3(constants.model * vec4(inPosition, 1.0));
+    vs_out.FragPos = (constants.model * inPosition).xyz;
     vs_out.TexCoords = inTexCoord;
     
-    mat3 normalMatrix = transpose(inverse(mat3(constants.model)));
-    vs_out.Normal = normalMatrix * inNormal;
+    mat4 normalMatrix = transpose(inverse(constants.model));
+    vs_out.Normal = (normalMatrix * inNormal).xyz;
 
-    vec3 T = normalize(normalMatrix * inTangent);
-    vec3 N = normalize(normalMatrix * inNormal);
+    vec3 T = normalize(normalMatrix * inTangent).xyz;
+    vec3 N = normalize(normalMatrix * inNormal).xyz;
     T = normalize(T - dot(T, N) * N);
-    vec3 B = cross(N, T);
+    vec3 B = cross(N, T).xyz;
     
     mat3 TBN = transpose(mat3(T, B, N));   
 
@@ -67,7 +67,7 @@ void main() {
 
     for(int i = 0; i < uboLight.numLights; i++)
     {
-        vs_out.TangentLightPos[i] = TBN * vec3(uboLight.lights[i].position);
+        vs_out.TangentLightPos[i] = TBN * (uboLight.lights[i].position).xyz;
     }
 
     gl_Position = cameraData.viewproj * vec4(vs_out.FragPos, 1.0);

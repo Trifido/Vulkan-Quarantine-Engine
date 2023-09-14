@@ -69,14 +69,24 @@ void ShaderModule::CleanDescriptorSetLayout()
 void ShaderModule::createShaderBindings()
 {
     this->bindingDescription = std::make_shared<VkVertexInputBindingDescription>();
-    this->SetBindingDescription();
-    this->SetAttributeDescriptions(this->attributeDescriptions);
 
-    vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount = 1;
-    vertexInputInfo.pVertexBindingDescriptions = this->bindingDescription.get(); // Optional
-    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(this->attributeDescriptions.size());
-    vertexInputInfo.pVertexAttributeDescriptions = this->attributeDescriptions.data(); // Optional
+    if (this->graphicsPipelineData.HasVertexData)
+    {
+        this->SetBindingDescription();
+        this->SetAttributeDescriptions(this->attributeDescriptions);
+
+        vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+        vertexInputInfo.vertexBindingDescriptionCount = 1;
+        vertexInputInfo.pVertexBindingDescriptions = this->bindingDescription.get(); // Optional
+        vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(this->attributeDescriptions.size());
+        vertexInputInfo.pVertexAttributeDescriptions = this->attributeDescriptions.data(); // Optional
+    }
+    else
+    {
+        vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+        vertexInputInfo.vertexBindingDescriptionCount = 0;
+        vertexInputInfo.vertexAttributeDescriptionCount = 0;
+    }
 }
 
 void ShaderModule::cleanup()

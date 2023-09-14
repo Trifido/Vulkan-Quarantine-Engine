@@ -27,7 +27,7 @@ void MeshImporter::RecreateNormals(std::vector<PBRVertex>& vertices, std::vector
 {
     for (size_t v = 0; v < vertices.size(); v++)
     {
-        vertices.at(v).norm = glm::vec3(0.0f);
+        vertices.at(v).norm = glm::vec4(0.0f);
     }
 
     for (size_t idTr = 0; idTr < indices.size(); idTr += 3)
@@ -35,13 +35,19 @@ void MeshImporter::RecreateNormals(std::vector<PBRVertex>& vertices, std::vector
         size_t idx0 = indices[idTr];
         size_t idx1 = indices[idTr + 1];
         size_t idx2 = indices[idTr + 2];
-        glm::vec3 edge1 = vertices[idx1].pos - vertices[idx0].pos;
-        glm::vec3 edge2 = vertices[idx2].pos - vertices[idx0].pos;
-        glm::vec3 crossProduct = glm::cross(edge1, edge2);
 
-        vertices[idx0].norm += crossProduct;
-        vertices[idx1].norm += crossProduct;
-        vertices[idx2].norm += crossProduct;
+        glm::vec3 pos0 = glm::vec3(vertices[idx0].pos);
+        glm::vec3 pos1 = glm::vec3(vertices[idx1].pos);
+        glm::vec3 pos2 = glm::vec3(vertices[idx2].pos);
+
+        glm::vec3 edge1 = pos1 - pos0;
+        glm::vec3 edge2 = pos2 - pos0;
+        glm::vec3 crossProduct = glm::cross(edge1, edge2);
+        glm::vec4 crossProduct4 = glm::vec4(crossProduct.x, crossProduct.y, crossProduct.z, 0.0f);
+
+        vertices[idx0].norm += crossProduct4;
+        vertices[idx1].norm += crossProduct4;
+        vertices[idx2].norm += crossProduct4;
     }
 
     for (size_t v = 0; v < vertices.size(); v++)
@@ -65,12 +71,6 @@ void MeshImporter::SetVertexBoneData(PBRVertex& vertex, int boneID, float weight
     {
         return;
     }
-
-    //for (int i = 0; i < 4; i++)
-    //{
-    //    if (vertex.boneIDs[i] == boneID)
-    //        return;
-    //}
 
     for (int i = 0; i < 4; ++i)
     {
@@ -146,18 +146,26 @@ void MeshImporter::RecreateTangents(std::vector<PBRVertex>& vertices, std::vecto
         size_t idx0 = indices[idTr];
         size_t idx1 = indices[idTr + 1];
         size_t idx2 = indices[idTr + 2];
-        glm::vec3 edge1 = vertices[idx1].pos - vertices[idx0].pos;
-        glm::vec3 edge2 = vertices[idx2].pos - vertices[idx0].pos;
+
+
+        glm::vec3 pos0 = glm::vec3(vertices[idx0].pos);
+        glm::vec3 pos1 = glm::vec3(vertices[idx1].pos);
+        glm::vec3 pos2 = glm::vec3(vertices[idx2].pos);
+
+
+        glm::vec3 edge1 = pos1 - pos0;
+        glm::vec3 edge2 = pos2 - pos0;
         glm::vec2 deltaUV1 = vertices[idx1].texCoord - vertices[idx0].texCoord;
         glm::vec2 deltaUV2 = vertices[idx2].texCoord - vertices[idx0].texCoord;
 
         float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
 
-        glm::vec3 tangent, bitangent;
+        glm::vec4 tangent, bitangent;
 
         tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
         tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
         tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+        tangent.w = 0.0f;
         tangent = glm::normalize(tangent);
 
         vertices[idx0].Tangents = tangent;
@@ -167,6 +175,7 @@ void MeshImporter::RecreateTangents(std::vector<PBRVertex>& vertices, std::vecto
         bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
         bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
         bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+        bitangent.w = 0.0f;
         bitangent = glm::normalize(bitangent);
 
         vertices[idx0].Bitangents = bitangent;
@@ -249,10 +258,11 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
         this->SetVertexBoneDataToDefault(vertex);
 
         // process vertex positions, normals and texture coordinates
-        glm::vec3 vector;
+        glm::vec4 vector;
         vector.x = mesh->mVertices[i].x;
         vector.y = mesh->mVertices[i].y;
         vector.z = mesh->mVertices[i].z;
+        vector.w = 1.0f;
         vertex.pos = vector;
 
         if (existNormal)
@@ -260,6 +270,7 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
             vector.x = mesh->mNormals[i].x;
             vector.y = mesh->mNormals[i].y;
             vector.z = mesh->mNormals[i].z;
+            vector.w = 0.0f;
             vertex.norm = vector;
         }
 
@@ -268,11 +279,13 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
             vector.x = mesh->mTangents[i].x;
             vector.y = mesh->mTangents[i].y;
             vector.z = mesh->mTangents[i].z;
+            vector.w = 0.0f;
             vertex.Tangents = vector;
 
             vector.x = mesh->mBitangents[i].x;
             vector.y = mesh->mBitangents[i].y;
             vector.z = mesh->mBitangents[i].z;
+            vector.w = 0.0f;
             vertex.Bitangents = vector;
         }
 
@@ -330,15 +343,17 @@ MeshData MeshImporter::LoadRawMesh(float rawData[], unsigned int numData, unsign
 
         PBRVertex vertex;
         // process vertex positions, normals and texture coordinates
-        glm::vec3 vector;
+        glm::vec4 vector;
         vector.x = rawData[index];
         vector.y = rawData[index + 1];
         vector.z = rawData[index + 2];
+        vector.w = 1.0f;
         vertex.pos = vector;
 
         vector.x = rawData[index + 3];
         vector.y = rawData[index + 4];
         vector.z = rawData[index + 5];
+        vector.w = 0.0f;
         vertex.norm = vector;
 
         glm::vec2 vec;

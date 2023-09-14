@@ -1,5 +1,6 @@
 #include "ComputeNodeManager.h"
 #include <ShaderManager.h>
+#include <filesystem>
 
 ComputeNodeManager* ComputeNodeManager::instance = nullptr;
 
@@ -26,7 +27,6 @@ std::string ComputeNodeManager::CheckName(std::string nameComputeNode)
 
 ComputeNodeManager::ComputeNodeManager()
 {
-    auto shaderManager = ShaderManager::getInstance();
 }
 
 ComputeNodeManager* ComputeNodeManager::getInstance()
@@ -43,6 +43,26 @@ void ComputeNodeManager::ResetInstance()
     instance = nullptr;
 }
 
+void ComputeNodeManager::InitializeComputeResources()
+{
+    auto shaderManager = ShaderManager::getInstance();
+
+    auto absPath = std::filesystem::absolute("../../resources/shaders/").generic_string();
+
+    std::string substring = "/Engine";
+    std::size_t ind = absPath.find(substring);
+
+    if (ind != std::string::npos) {
+        absPath.erase(ind, substring.length());
+    }
+
+    const std::string absolute_default_compute_shader_path = absPath + "Compute/default_compute.spv";
+    const std::string absolute_animation_compute_shader_path = absPath + "Animation/computeSkinning.spv";
+
+    shaderManager->AddShader("default_compute_particles", std::make_shared<ShaderModule>(ShaderModule(absolute_default_compute_shader_path)));
+    shaderManager->AddShader("default_skinning", std::make_shared<ShaderModule>(ShaderModule(absolute_animation_compute_shader_path)));
+}
+
 void ComputeNodeManager::InitializeComputeNodes()
 {
     for (auto it : _computeNodes)
@@ -53,17 +73,21 @@ void ComputeNodeManager::InitializeComputeNodes()
 
 void ComputeNodeManager::AddComputeNode(std::string& nameComputeNode, ComputeNode mat)
 {
+    nameComputeNode = CheckName(nameComputeNode);
     std::shared_ptr<ComputeNode> mat_ptr = std::make_shared<ComputeNode>(mat);
     _computeNodes[nameComputeNode] = mat_ptr;
 }
 
 void ComputeNodeManager::AddComputeNode(const char* nameComputeNode, std::shared_ptr<ComputeNode> mat_ptr)
 {
-    _computeNodes[nameComputeNode] = mat_ptr;
+    std::string name = nameComputeNode;
+    name = CheckName(name);
+    _computeNodes[name] = mat_ptr;
 }
 
 void ComputeNodeManager::AddComputeNode(std::string& nameComputeNode, std::shared_ptr<ComputeNode> mat_ptr)
 {
+    nameComputeNode = CheckName(nameComputeNode);
     _computeNodes[nameComputeNode] = mat_ptr;
 }
 

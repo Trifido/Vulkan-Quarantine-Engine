@@ -18,16 +18,19 @@ private:
     VkDescriptorImageInfo outputImageInfo;
     std::shared_ptr<DeltaTimeUniform> deltaTimeUniform;
 
+    uint32_t _numSSBOs = 0;
+
 public:
     std::vector<VkDescriptorSet>    descriptorSets;
     std::shared_ptr<CustomTexture>  inputTexture = nullptr;
     std::shared_ptr<CustomTexture>  outputTexture = nullptr;
 
-    std::shared_ptr<UniformBufferObject>    ssbo = nullptr;
-    VkDeviceSize                            ssboSize = 0;
+    std::vector<std::shared_ptr<UniformBufferObject>>    ssboData;
+    std::vector<VkDeviceSize>                            ssboSize;
 
-    std::shared_ptr<UniformBufferObject>    uboDeltaTime = nullptr;
-    VkDeviceSize                            uboDeltaTimeSize = 0;
+    std::unordered_map<std::string, std::shared_ptr<UniformBufferObject>>  ubos;
+    std::unordered_map<std::string, VkDeviceSize> uboSizes;
+    bool IsProgressiveComputation = false;
 
 private:
     void StartResources(std::shared_ptr<ShaderModule> shader_ptr);
@@ -39,6 +42,7 @@ public:
     ComputeDescriptorBuffer();
     ComputeDescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr);
     void InitializeDescriptorSets(std::shared_ptr<ShaderModule> shader_ptr);
+    void InitializeSSBOData();
     void UpdateUBODeltaTime();
     void Cleanup();
 };

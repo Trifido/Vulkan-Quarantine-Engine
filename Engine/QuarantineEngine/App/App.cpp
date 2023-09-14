@@ -162,31 +162,32 @@ void App::initVulkan()
     this->materialManager->InitializeMaterialManager();
     this->gameObjectManager = GameObjectManager::getInstance();
     this->computeNodeManager = ComputeNodeManager::getInstance();
+    this->computeNodeManager->InitializeComputeResources();
 
     // Inicializamos los componentes del editor
-    std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
-    this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
+    //std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
+    //this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH));
-    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
+    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/microphone/scene.gltf"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/vampire/Capoeira.dae"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/CharacterRunning/CharacterRunning.gltf"));
 
-    //if (model->IsValid())
-    //{
-    //    model->transform->SetScale(glm::vec3(0.05f));
-    //    model->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-    //}
-    //this->gameObjectManager->AddGameObject(model, "model");
+    if (model->IsValid())
+    {
+        model->transform->SetScale(glm::vec3(0.05f));
+        model->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    }
+    this->gameObjectManager->AddGameObject(model, "model");
 
     //std::shared_ptr<GameObject> cube = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
     //cube->material->materialData.SetMaterialField("Diffuse", glm::vec3(1.0f, 0.3f, 0.3f));
     //cube->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
     //this->gameObjectManager->AddGameObject(cube, "cube");
 
-    std::shared_ptr<ParticleSystem> particleSystem = std::make_shared<ParticleSystem>(ParticleSystem());
-    this->gameObjectManager->AddGameObject(particleSystem, "particleSystem");
+    //std::shared_ptr<ParticleSystem> particleSystem = std::make_shared<ParticleSystem>(ParticleSystem());
+    //this->gameObjectManager->AddGameObject(particleSystem, "particleSystem");
 //DEMO
 /*
     //Creamos la textura

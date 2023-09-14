@@ -22,6 +22,7 @@ public:
     ComputeNodeManager();
     static ComputeNodeManager* getInstance();
     void ComputeNodeManager::ResetInstance();
+    void InitializeComputeResources();
     void InitializeComputeNodes();
     void AddComputeNode(std::string& nameComputeNode, ComputeNode mat);
     void AddComputeNode(const char* nameComputeNode, std::shared_ptr<ComputeNode> mat_ptr);

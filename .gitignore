@@ -360,8 +360,8 @@ MigrationBackup/
 .external/
 .resources/ 
 .resources/models/
-*.bat
-*.spv
+#*.bat
+#*.spv
 *.gltf
 *.bin
 *.jpeg
