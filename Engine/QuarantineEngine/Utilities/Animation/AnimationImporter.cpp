@@ -3,7 +3,7 @@
 #include <assimp/postprocess.h>
 #include <assimp/Importer.hpp>
 
-std::vector<AnimationData> AnimationImporter::ImportAnimation(std::string path, std::map<std::string, BoneInfo> m_BoneInfoMap, size_t numBones)
+std::vector<AnimationData> AnimationImporter::ImportAnimation(std::string path, std::unordered_map<std::string, BoneInfo> m_BoneInfoMap, size_t numBones)
 {
     std::vector<AnimationData> result = {};
     Assimp::Importer importer;
@@ -52,7 +52,7 @@ void AnimationImporter::ReadMissingBones(const aiAnimation* animation, Animation
             animationData.m_BoneInfoMap[boneName].offset = glm::mat4(1.0f);
             numBones++;
         }
-        animationData.m_Bones.push_back(Bone(channel->mNodeName.data, animationData.m_BoneInfoMap[channel->mNodeName.data].id, channel));
+        animationData.m_Bones[boneName] = Bone(channel->mNodeName.data, animationData.m_BoneInfoMap[channel->mNodeName.data].id, channel);
     }
 }
 

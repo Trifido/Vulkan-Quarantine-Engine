@@ -45,6 +45,7 @@ private:
     glm::mat4 InterpolateRotation(float animationTime);
     glm::mat4 Bone::InterpolateScaling(float animationTime);
 public:
+    Bone();
     Bone(const std::string& name, int ID, const aiNodeAnim* channel);
     void Update(float animationTime);
     glm::mat4 GetLocalTransform();
