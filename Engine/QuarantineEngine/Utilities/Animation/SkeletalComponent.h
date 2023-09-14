@@ -3,14 +3,13 @@
 #define SKELETAL_COMPONENT_H
 
 #include <GameComponent.h>
-#include <map>
 #include <AnimationResources.h>
 
 class SkeletalComponent : GameComponent
 {
 public:
     size_t numBones;
-    std::map<std::string, BoneInfo> m_BoneInfoMap;
+    std::unordered_map<std::string, BoneInfo> m_BoneInfoMap;
 };
 
 #endif

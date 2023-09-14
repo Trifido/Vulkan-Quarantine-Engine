@@ -33,7 +33,7 @@ private:
     std::string meshPath;
     std::string texturePath;
     std::string fileExtension;
-    std::map<std::string, BoneInfo> m_BoneInfoMap;
+    std::unordered_map<std::string, BoneInfo> m_BoneInfoMap;
     size_t numBones = 0;
     bool hasAnimation = false;
 

@@ -5,7 +5,7 @@
 
 #include <glm/glm.hpp>
 #include <Bone.h>
-#include <map>
+#include <unordered_map>
 
 struct BoneInfo
 {
@@ -23,8 +23,8 @@ struct AnimationNode
 struct AnimationData
 {
     std::string animationName;
-    std::map<std::string, BoneInfo> m_BoneInfoMap;
-    std::vector<Bone> m_Bones;
+    std::unordered_map<std::string, BoneInfo> m_BoneInfoMap;
+    std::unordered_map<std::string, Bone> m_Bones;
     AnimationNode animationNodeData;
     double m_Duration = 0.0;
     double m_TicksPerSecond = 0.0;

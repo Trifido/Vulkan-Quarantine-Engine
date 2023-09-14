@@ -55,6 +55,10 @@ glm::mat4 Bone::InterpolateScaling(float animationTime)
     return glm::scale(glm::mat4(1.0f), finalScale);
 }
 
+Bone::Bone()
+{
+}
+
 Bone::Bone(const std::string& name, int ID, const aiNodeAnim* channel) :
 	m_Name(name),
 	m_ID(ID),

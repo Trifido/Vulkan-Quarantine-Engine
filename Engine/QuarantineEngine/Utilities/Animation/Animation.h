@@ -8,10 +8,8 @@
 
 class Animation
 {
-private:
-    AnimationData animationData;
-
 public:
+    AnimationData animationData;
     std::string name;
 
 public:
@@ -19,7 +17,6 @@ public:
     inline float GetTicksPerSecond() { return animationData.m_TicksPerSecond; }
     inline float GetDuration() { return animationData.m_Duration; }
     inline const AnimationNode& GetRootNode() { return animationData.animationNodeData; }
-    const std::map<std::string, BoneInfo>& GetBoneIDMap();
     Bone* FindBone(const std::string& name);
 };
 

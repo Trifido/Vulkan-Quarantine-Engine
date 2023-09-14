@@ -72,15 +72,6 @@ void GameObject::cleanup()
 
     if (!this->childs.empty())
     {
-        //for (auto& it : this->childs)
-        //{
-        //    it->mesh->cleanup();
-
-        //    if (it->animationComponent != nullptr)
-        //    {
-        //        it->animationComponent->CleanLastResources();
-        //    }
-        //}
         for (auto& child : this->childs)
         {
             child->mesh->cleanup();
