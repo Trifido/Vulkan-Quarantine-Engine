@@ -10,7 +10,7 @@ Some of the main features that have been incorporated to Quarantine Engine (Vulk
 
 ## Features
 
-### CPU Animation system
+### GPU Animation system
 <img src="https://github.com/Trifido/Vulkan-Quarantine-Engine/assets/6890573/1f5b6a3f-2644-4143-9472-16a72840d27f" width="100%" height="100%"/>
 
 ### Physics System ([Bullet Real-Time Physics Simulation](https://pybullet.org/wordpress/))
