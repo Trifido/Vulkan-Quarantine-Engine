@@ -1,12 +1,12 @@
 # Quarantine Engine (Vulkan version)
-Quarantine Engine is a game engine under development with C++ and Vulkan, I started this [project](https://github.com/Trifido/QuarantineEngine) during the terrible quarantine we had to go through in 2020. At that time I started to develop it with OpenGL, and since then I have continued to develop and improve it.
+Quarantine Engine is a game engine under development using C++ and Vulkan. I started this project during the challenging quarantine we had to go through in 2020. At that time, I began developing it with OpenGL, and since then, I have continued to work on its development and improvement.
 
 More info about [Quarantine Engine](https://insidethepixels.wordpress.com/2021/01/18/quarantine-engine/).
 
-This version of the engine I am implementing it on Vulkan, and my goal with it, is to improve my knowledge in different areas of real-time 3D graphics.
+I am implementing this version of the engine in Vulkan, and my goal with it is to enhance my knowledge in various areas of real-time 3D graphics.
 
 
-Some of the main features that have been incorporated to Quarantine Engine (Vulkan version) are listed below.
+Below are some of the main features incorporated into Quarantine Engine (Vulkan version).
 
 ## Features
 
