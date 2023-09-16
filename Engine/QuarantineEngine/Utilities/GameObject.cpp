@@ -307,7 +307,7 @@ void GameObject::CreateAnimationDrawCommand(VkCommandBuffer& commandBuffer, uint
         else
         {
             vkCmdSetCullMode(commandBuffer, true);
-            vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
+            //vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
         }
 
         VkDeviceSize animOffsets[] = { 0 };
