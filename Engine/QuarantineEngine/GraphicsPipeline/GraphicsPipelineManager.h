@@ -9,6 +9,7 @@
 
 #include <vulkan/vulkan.h>
 #include <GraphicsPipelineModule.h>
+#include <GraphicsPipelineData.h>
 
 class GraphicsPipelineModule;
 class ShaderModule;
@@ -32,7 +33,7 @@ public:
     void AddGraphicsPipeline(const char* pipelineName, std::shared_ptr<GraphicsPipelineModule> gp_ptr);
     void AddGraphicsPipeline(std::string& pipelineName, std::shared_ptr<GraphicsPipelineModule> gp_ptr);
     void AddGraphicsPipeline(std::string& pipelineName, GraphicsPipelineModule gp);
-    std::shared_ptr<GraphicsPipelineModule> RegisterNewGraphicsPipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout, VkPolygonMode polygonMode = VkPolygonMode::VK_POLYGON_MODE_FILL);
+    std::shared_ptr<GraphicsPipelineModule> RegisterNewGraphicsPipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout, GraphicsPipelineData pipelineData);
     bool Exists(std::string pipelineName);
     void RegisterDefaultRenderPass(VkRenderPass renderPass);
     void CleanGraphicsPipeline();

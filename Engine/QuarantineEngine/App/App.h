@@ -127,6 +127,7 @@ private:
 
     bool show_demo_window = true;
     bool show_another_window = true;
+    bool isRender = false;
     //FontResourcesModule     fontModule;
 
     //RayTracingModule        raytracingModule;

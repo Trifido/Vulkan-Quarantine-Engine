@@ -17,7 +17,7 @@ void GraphicsPipelineModule::CompileGraphicsPipeline(std::vector<VkPipelineShade
 {
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    inputAssembly.topology = this->getInputTopology();
+    inputAssembly.topology = this->inputTopology;
     inputAssembly.primitiveRestartEnable = VK_FALSE;
 
     VkViewport viewport{};
@@ -184,23 +184,6 @@ void GraphicsPipelineModule::updateDepthBufferMode(DepthBufferMode depthBufferMo
             break;
         case DepthBufferMode::DISABLED:
             this->depthBufferMode = VK_FALSE;
-            break;
-    }
-}
-
-VkPrimitiveTopology GraphicsPipelineModule::getInputTopology()
-{
-    switch (inputTopology)
-    {
-        default:
-        case InputTopology::TRIANGLE_LIST:
-            return VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-            break;
-        case InputTopology::LINES:
-            return VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-            break;
-        case InputTopology::POINTS:
-            return VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
             break;
     }
 }

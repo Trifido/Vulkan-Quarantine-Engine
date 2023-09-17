@@ -65,6 +65,7 @@ MaterialManager::MaterialManager()
 
     GraphicsPipelineData pipelineParticleShader = {};
     pipelineParticleShader.polygonMode = VkPolygonMode::VK_POLYGON_MODE_POINT;
+    pipelineParticleShader.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
     pipelineParticleShader.vertexBufferStride = sizeof(Particle);
     this->default_particles_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_particles_vert_shader_path, absolute_particles_frag_shader_path, pipelineParticleShader));
     shaderManager->AddShader("default_particles", this->default_particles_shader);
@@ -77,7 +78,7 @@ void MaterialManager::InitializeMaterialManager()
     if (this->default_particles_shader != nullptr)
     {
         this->AddMaterial(std::string("defaultParticlesMat"), std::make_shared<Material>(Material(this->default_particles_shader)));
-        this->_materials["defaultParticlesMat"]->layer = 1;
+        this->_materials["defaultParticlesMat"]->layer = 0;
     }
 }
 

@@ -4,6 +4,7 @@
 #include <random>
 #include <filesystem>
 #include <ShaderManager.h>
+#include <SwapChainModule.h>
 
 ParticleSystem::ParticleSystem() : GameObject()
 {
@@ -36,6 +37,7 @@ void ParticleSystem::cleanup()
 
 void ParticleSystem::createShaderStorageBuffers()
 {
+    SwapChainModule* swapchain = SwapChainModule::getInstance();
     // Initialize particles
     std::default_random_engine rndEngine((unsigned)time(nullptr));
     std::uniform_real_distribution<float> rndDist(0.0f, 1.0f);
@@ -45,7 +47,7 @@ void ParticleSystem::createShaderStorageBuffers()
     for (auto& particle : particles) {
         float r = 0.25f * sqrt(rndDist(rndEngine));
         float theta = rndDist(rndEngine) * 2.0f * 3.14159265358979323846f;
-        float x = r * cos(theta) * 800 / 600;
+        float x = r * cos(theta) * swapchain->swapChainExtent.width / swapchain->swapChainExtent.height;
         float y = r * sin(theta);
         particle.position = glm::vec2(x, y);
         particle.velocity = glm::normalize(glm::vec2(x, y)) * 0.00025f;

@@ -11,6 +11,7 @@
 #include <Numbered.h>
 #include <GraphicsPipelineManager.h>
 #include <ComputePipelineManager.h>
+#include <GraphicsPipelineData.h>
 
 enum class SHADER_TYPE
 {
@@ -26,15 +27,6 @@ class ComputePipelineManager;
 class PipelineModule;
 class GraphicsPipelineModule;
 class ComputePipelineModule;
-
-struct GraphicsPipelineData
-{
-    VkPolygonMode polygonMode = VkPolygonMode::VK_POLYGON_MODE_FILL;
-    uint32_t vertexBufferStride = sizeof(PBRVertex);
-    bool HasVertexData = true;
-
-    GraphicsPipelineData() {}
-};
 
 class ShaderModule : public Numbered
 {

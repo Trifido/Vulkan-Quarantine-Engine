@@ -168,15 +168,23 @@ void App::initVulkan()
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
     this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/vikingRoom/viking_room.obj"));
-    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
+    VkPhysicalDeviceProperties properties{};
+    vkGetPhysicalDeviceProperties(deviceModule->physicalDevice, &properties);
+
+    //models.push_back(std::make_shared<GameObject>(GameObject("../../resources/models/vikingRoom/viking_room.obj")));
+    //models.push_back(std::make_shared<GameObject>(GameObject("../../resources/models/vikingRoom/viking_room.obj")));
+    //std::shared_ptr<GameObject> model2 = std::make_shared<GameObject>(GameObject("../../../resources/models/vikingRoom/viking_room.obj"));
+    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/microphone/scene.gltf"));
     //std::shared_ptr<GameObject> model2 = std::make_shared<GameObject>(GameObject("../../resources/models/vampire/Capoeira.dae"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/CharacterRunning/CharacterRunning.gltf"));
 
-    //model->transform->SetScale(glm::vec3(0.05f));
-    //model->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    model->transform->SetScale(glm::vec3(0.05f));
+    model->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
     this->gameObjectManager->AddGameObject(model, "model");
+
+    //model2->transform->SetPosition(glm::vec3(5.0f, 0.0f, 0.0f));
+    //this->gameObjectManager->AddGameObject(model2, "model2");
 
     //model2->transform->SetOrientation(glm::vec3(0.0f, -90.0f, 0.0f));
     //model2->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
@@ -188,8 +196,9 @@ void App::initVulkan()
     //cube->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
     //this->gameObjectManager->AddGameObject(cube, "cube");
 
-    //std::shared_ptr<ParticleSystem> particleSystem = std::make_shared<ParticleSystem>(ParticleSystem());
-    //this->gameObjectManager->AddGameObject(particleSystem, "particleSystem");
+    std::shared_ptr<ParticleSystem> particleSystem = std::make_shared<ParticleSystem>(ParticleSystem());
+    this->gameObjectManager->AddGameObject(particleSystem, "particleSystem");
+
 //DEMO
 /*
     //Creamos la textura
@@ -552,10 +561,13 @@ void App::cleanManagers()
 
 void App::computeFrame()
 {
-    synchronizationModule.synchronizeWaitComputeFences();
-    //Update uniformBuffer here -----> <-----
-    commandPoolModule->recordComputeCommandBuffer(commandPoolModule->getComputeCommandBuffer(synchronizationModule.GetCurrentFrame()));
-    synchronizationModule.submitComputeCommandBuffer(commandPoolModule->getComputeCommandBuffer(synchronizationModule.GetCurrentFrame()));
+    if (this->isRender)
+    {
+        synchronizationModule.synchronizeWaitComputeFences();
+        //Update uniformBuffer here -----> <-----
+        commandPoolModule->recordComputeCommandBuffer(commandPoolModule->getComputeCommandBuffer(synchronizationModule.GetCurrentFrame()));
+        synchronizationModule.submitComputeCommandBuffer(commandPoolModule->getComputeCommandBuffer(synchronizationModule.GetCurrentFrame()));
+    }
 }
 
 void App::drawFrame()
@@ -573,10 +585,11 @@ void App::drawFrame()
 
     commandPoolModule->Render(framebufferModule.swapChainFramebuffers[imageIndex], renderPassModule->renderPass);
 
-    synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer(synchronizationModule.GetCurrentFrame()));
+    synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer(synchronizationModule.GetCurrentFrame()), this->isRender);
 
     result = synchronizationModule.presentSwapchain(swapchainModule->getSwapchain(), imageIndex);
     resizeSwapchain(result, ERROR_RESIZE::IMAGE_ERROR);
+    this->isRender = true;
 }
 
 void App::resizeSwapchain(VkResult result, ERROR_RESIZE errorResize)

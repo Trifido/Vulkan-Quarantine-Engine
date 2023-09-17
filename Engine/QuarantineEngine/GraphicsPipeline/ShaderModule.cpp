@@ -58,7 +58,7 @@ void ShaderModule::createShaderModule(const std::string& filename_vertex, const 
 
     this->CreateDescriptorSetLayout();
     this->createShaderBindings();
-    this->PipelineModule = this->graphicsPipelineManager->RegisterNewGraphicsPipeline(*this, this->descriptorSetLayout, this->graphicsPipelineData.polygonMode);
+    this->PipelineModule = this->graphicsPipelineManager->RegisterNewGraphicsPipeline(*this, this->descriptorSetLayout, this->graphicsPipelineData);
 }
 
 void ShaderModule::CleanDescriptorSetLayout()

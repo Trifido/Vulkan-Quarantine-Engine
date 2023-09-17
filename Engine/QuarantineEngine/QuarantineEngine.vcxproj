@@ -265,6 +265,7 @@
     <ClInclude Include="Editor\Grid.h" />
     <ClInclude Include="GraphicsPipeline\ComputePipelineManager.h" />
     <ClInclude Include="GraphicsPipeline\ComputePipelineModule.h" />
+    <ClInclude Include="GraphicsPipeline\GraphicsPipelineData.h" />
     <ClInclude Include="GraphicsPipeline\GraphicsPipelineManager.h" />
     <ClInclude Include="GraphicsPipeline\GraphicsPipelineModule.h" />
     <ClInclude Include="GraphicsPipeline\PipelineModule.h" />

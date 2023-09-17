@@ -14,12 +14,7 @@ private:
     VkBool32            depthBufferMode;
 
 public:
-    enum InputTopology
-    {
-        TRIANGLE_LIST,
-        LINES,
-        POINTS
-    } inputTopology = TRIANGLE_LIST;
+    VkPrimitiveTopology inputTopology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
     enum PolygonRenderType
     {
@@ -46,7 +41,6 @@ public:
 private:
     void updatePolygonMode(PolygonRenderType polygonType);
     void updateDepthBufferMode(DepthBufferMode depthBufferMode);
-    VkPrimitiveTopology getInputTopology();
 };
 
 #endif
