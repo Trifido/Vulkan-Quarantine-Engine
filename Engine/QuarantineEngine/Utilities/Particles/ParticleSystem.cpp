@@ -63,7 +63,7 @@ void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t 
     auto pipelineModule = this->material->shader->PipelineModule;
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
-    vkCmdSetDepthTestEnable(commandBuffer, false);
+    vkCmdSetDepthTestEnable(commandBuffer, true);
     vkCmdSetCullMode(commandBuffer, false);
 
     VkDeviceSize offsets[] = { 0 };

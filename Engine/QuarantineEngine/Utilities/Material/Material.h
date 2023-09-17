@@ -14,6 +14,7 @@ class Material : public GameComponent
 {
 private:
     bool isMeshBinding = false;
+    bool IsInitialized = false;
     bool hasDescriptorBuffer = false;
 
 public:
