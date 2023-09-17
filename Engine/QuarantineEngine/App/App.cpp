@@ -168,12 +168,7 @@ void App::initVulkan()
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
     this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
-    VkPhysicalDeviceProperties properties{};
-    vkGetPhysicalDeviceProperties(deviceModule->physicalDevice, &properties);
-
-    //models.push_back(std::make_shared<GameObject>(GameObject("../../resources/models/vikingRoom/viking_room.obj")));
-    //models.push_back(std::make_shared<GameObject>(GameObject("../../resources/models/vikingRoom/viking_room.obj")));
-    //std::shared_ptr<GameObject> model2 = std::make_shared<GameObject>(GameObject("../../../resources/models/vikingRoom/viking_room.obj"));
+    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/vikingRoom/viking_room.obj"));
     std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/microphone/scene.gltf"));
     //std::shared_ptr<GameObject> model2 = std::make_shared<GameObject>(GameObject("../../resources/models/vampire/Capoeira.dae"));
@@ -197,6 +192,9 @@ void App::initVulkan()
     //this->gameObjectManager->AddGameObject(cube, "cube");
 
     std::shared_ptr<ParticleSystem> particleSystem = std::make_shared<ParticleSystem>(ParticleSystem());
+    particleSystem->transform->SetOrientation(glm::vec3(0.0f, 90.0f, 0.0f));
+    particleSystem->transform->SetPosition(glm::vec3(5.0f, 3.0f, 0.0f));
+    particleSystem->transform->SetScale(glm::vec3(5.0f));
     this->gameObjectManager->AddGameObject(particleSystem, "particleSystem");
 
 //DEMO
