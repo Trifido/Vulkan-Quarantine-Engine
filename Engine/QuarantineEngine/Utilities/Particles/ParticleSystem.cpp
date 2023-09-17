@@ -69,6 +69,18 @@ void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t 
     VkDeviceSize offsets[] = { 0 };
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, &computeNode->computeDescriptor->ssboData[0]->uniformBuffers.at(idx), offsets);
 
+    if (this->material->HasDescriptorBuffer())
+    {
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, this->material->descriptor->getDescriptorSet(idx), 0, nullptr);
+    }
+
+    this->pushConstant.model = this->transform->GetModel();
+    if (this->parent != nullptr)
+    {
+        pushConstant.model = this->parent->transform->GetModel() * pushConstant.model;
+    }
+    vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantStruct), &pushConstant);
+
     vkCmdDraw(commandBuffer, this->numParticles, 1, 0, 0);
 }
 
