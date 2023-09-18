@@ -43,9 +43,32 @@ struct PrimitiveVertex : Vertex
     glm::vec4 color;
 };
 
-struct Particle {
+struct Particle
+{
     glm::vec2 position;
     glm::vec2 velocity;
+    glm::vec4 color;
+
+    Particle()
+    {
+        position = glm::vec2(0, 0);
+        velocity = glm::vec2(0, 0);
+        color = glm::vec4(0, 0, 0, 0);
+    }
+};
+
+struct ParticleV2Input
+{
+    glm::vec3 position;
+    float lifeTime;
+    glm::vec4 color;
+    glm::vec3 velocity;
+    float mass;
+};
+
+struct ParticleV2Output
+{
+    glm::vec4 position;
     glm::vec4 color;
 };
 

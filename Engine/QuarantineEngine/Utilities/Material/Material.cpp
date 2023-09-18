@@ -68,15 +68,7 @@ void Material::bindingMesh(std::shared_ptr<GeometryComponent> mesh)
 
 void Material::InitializeMaterial()
 {
-/*    if (!this->isMeshBinding)
-    {
-        std::cout << "Falta enlazar el material con un gameobject.\n";
-    }
-    else if (this->shader == nullptr)
-    {
-        std::cout << "Falta shader en el material.\n";
-    }
-    else */if (this->hasDescriptorBuffer && this->IsInitialized)
+    if (this->hasDescriptorBuffer && this->IsInitialized)
     {        
         this->descriptor->InitializeDescriptorSets(this->shader);
     }

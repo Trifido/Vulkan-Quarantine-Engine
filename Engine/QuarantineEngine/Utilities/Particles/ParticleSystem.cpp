@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <ShaderManager.h>
 #include <SwapChainModule.h>
+#include <BufferManageModule.h>
 
 ParticleSystem::ParticleSystem() : GameObject()
 {
@@ -16,7 +17,6 @@ ParticleSystem::ParticleSystem() : GameObject()
     this->computeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("default_compute_particles"));
     this->computeNode->computeDescriptor->IsProgressiveComputation = true;
     this->computeNodeManager->AddComputeNode("default_compute", this->computeNode);
-    this->numParticles = 8192;
 
     this->createShaderStorageBuffers();
 
@@ -32,7 +32,10 @@ ParticleSystem::ParticleSystem() : GameObject()
 void ParticleSystem::cleanup()
 {
     GameObject::cleanup();
-    this->computeNode->cleanup();
+    vkDestroyBuffer(deviceModule->device, stagingBufferSSBO1, nullptr);
+    vkFreeMemory(deviceModule->device, stagingBufferSSBO1Memory, nullptr);
+    vkDestroyBuffer(deviceModule->device, stagingBufferSSBO2, nullptr);
+    vkFreeMemory(deviceModule->device, stagingBufferSSBO2Memory, nullptr);
 }
 
 void ParticleSystem::createShaderStorageBuffers()
@@ -43,7 +46,7 @@ void ParticleSystem::createShaderStorageBuffers()
     std::uniform_real_distribution<float> rndDist(0.0f, 1.0f);
 
     // Initial particle positions on a circle
-    std::vector<Particle> particles(this->numParticles);
+    std::vector<Particle> particles(this->MaxNumParticles);
     for (auto& particle : particles) {
         float r = 0.25f * sqrt(rndDist(rndEngine));
         float theta = rndDist(rndEngine) * 2.0f * 3.14159265358979323846f;
@@ -55,7 +58,21 @@ void ParticleSystem::createShaderStorageBuffers()
     }
 
     this->computeNode->computeDescriptor->InitializeSSBOData();
-    this->computeNode->FillComputeBuffer(this->numParticles, sizeof(Particle), particles.data());
+    this->computeNode->FillComputeBuffer(this->MaxNumParticles, sizeof(Particle), particles.data());
+
+    this->stagingbufferSize = sizeof(Particle) * this->MaxNumParticles;
+    BufferManageModule::createBuffer(stagingbufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        this->stagingBufferSSBO1, this->stagingBufferSSBO1Memory, *deviceModule);
+    BufferManageModule::createBuffer(stagingbufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        this->stagingBufferSSBO2, this->stagingBufferSSBO2Memory, *deviceModule);
+
+    vkMapMemory(this->deviceModule->device, stagingBufferSSBO1Memory, 0, stagingbufferSize, 0, &dataSSBO1);
+    vkUnmapMemory(this->deviceModule->device, stagingBufferSSBO1Memory);
+    vkMapMemory(this->deviceModule->device, stagingBufferSSBO2Memory, 0, stagingbufferSize, 0, &dataSSBO2);
+    vkUnmapMemory(this->deviceModule->device, stagingBufferSSBO2Memory);
+
+    this->tempSSBO1 = new Particle[this->MaxNumParticles];
+    this->tempSSBO2 = new Particle[this->MaxNumParticles];
 }
 
 void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
@@ -81,7 +98,68 @@ void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t 
     }
     vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantStruct), &pushConstant);
 
-    vkCmdDraw(commandBuffer, this->numParticles, 1, 0, 0);
+    vkCmdDraw(commandBuffer, this->MaxNumParticles, 1, 0, 0);
+}
+
+void ParticleSystem::GenerateParticles(size_t currentFrame)
+{
+    float particlesToCreate = this->ParticlesPerSecond * this->timer->DeltaTime;
+    int count = (int)floor(particlesToCreate);
+    int entero = (int)particlesToCreate;
+    float partialParticle = particlesToCreate - entero;
+
+
+    BufferManageModule::copyBuffer(this->computeNode->computeDescriptor->ssboData[0]->uniformBuffers[0], this->stagingBufferSSBO1, this->computeNode->computeDescriptor->ssboSize[0], *deviceModule);
+    BufferManageModule::copyBuffer(this->computeNode->computeDescriptor->ssboData[0]->uniformBuffers[1], this->stagingBufferSSBO2, this->computeNode->computeDescriptor->ssboSize[0], *deviceModule);
+
+    memcpy(tempSSBO1, dataSSBO1, stagingbufferSize);
+    memcpy(tempSSBO2, dataSSBO2, stagingbufferSize);
+
+    BufferManageModule::copyBuffer(this->stagingBufferSSBO1, this->computeNode->computeDescriptor->ssboData[0]->uniformBuffers[0],  this->computeNode->computeDescriptor->ssboSize[0], *deviceModule);
+    BufferManageModule::copyBuffer(this->stagingBufferSSBO2, this->computeNode->computeDescriptor->ssboData[0]->uniformBuffers[1],  this->computeNode->computeDescriptor->ssboSize[0], *deviceModule);
+
+    if (this->currentParticlesNum < this->MaxNumParticles)
+    {
+
+    }
+
+    if (this->InfinityLifeTime)
+    {
+        for (int i = 0; i < count; i++) {
+            EmitParticle();
+        }
+    }
+    else if (this->currentLifeTime < this->LifeTime)
+    {
+        for (int i = 0; i < count; i++) {
+            EmitParticle();
+        }
+        this->currentLifeTime += this->timer->DeltaTime;
+    }
+
+}
+
+void ParticleSystem::EmitParticle()
+{
+    glm::vec3 emitCone = glm::vec3(0.0, 1.0, 0.0);
+    if (this->EmissionAngle > 0.0f)
+    {
+        float dirX = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) * this->EmissionAngle - (this->EmissionAngle / 2.0f);
+        float dirZ = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) * this->EmissionAngle - (this->EmissionAngle / 2.0f);
+        emitCone = glm::vec3(dirX, 1.0, dirZ);
+    }
+
+    glm::vec3 velocity = glm::normalize(emitCone);
+    velocity *= this->Speed;
+
+    glm::vec3 emitCenter = this->transform->Position;
+
+    if (this->EmissionRadius > 0.0f)
+    {
+        float xPos = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) * this->EmissionRadius - (this->EmissionRadius / 2.0f);
+        float zPos = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) * this->EmissionRadius - (this->EmissionRadius / 2.0f);
+        emitCenter += glm::vec3(xPos, 0.0, zPos);
+    }
 }
 
 void ParticleSystem::drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
