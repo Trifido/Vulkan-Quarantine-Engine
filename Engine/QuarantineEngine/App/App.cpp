@@ -191,11 +191,11 @@ void App::initVulkan()
     //cube->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
     //this->gameObjectManager->AddGameObject(cube, "cube");
 
-    //std::shared_ptr<ParticleSystem> particleSystem = std::make_shared<ParticleSystem>(ParticleSystem());
-    //particleSystem->transform->SetOrientation(glm::vec3(0.0f, 90.0f, 0.0f));
-    //particleSystem->transform->SetPosition(glm::vec3(5.0f, 3.0f, 0.0f));
-    //particleSystem->transform->SetScale(glm::vec3(5.0f));
-    //this->gameObjectManager->AddGameObject(particleSystem, "particleSystem");
+    std::shared_ptr<ParticleSystem> particleSystem = std::make_shared<ParticleSystem>(ParticleSystem());
+    particleSystem->transform->SetOrientation(glm::vec3(0.0f, 90.0f, 0.0f));
+    particleSystem->transform->SetPosition(glm::vec3(5.0f, 3.0f, 0.0f));
+    particleSystem->transform->SetScale(glm::vec3(5.0f));
+    this->gameObjectManager->AddGameObject(particleSystem, "particleSystem");
 
 //DEMO
 /*

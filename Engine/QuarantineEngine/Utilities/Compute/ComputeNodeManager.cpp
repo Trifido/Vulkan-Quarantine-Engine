@@ -56,10 +56,12 @@ void ComputeNodeManager::InitializeComputeResources()
         absPath.erase(ind, substring.length());
     }
 
-    const std::string absolute_default_compute_shader_path = absPath + "Compute/default_compute.spv";
+    const std::string absolute_emit_compute_shader_path = absPath + "Particles/emitParticles.spv";
+    const std::string absolute_update_compute_shader_path = absPath + "Particles/updateParticles.spv";
     const std::string absolute_animation_compute_shader_path = absPath + "Animation/computeSkinning.spv";
 
-    shaderManager->AddShader("default_compute_particles", std::make_shared<ShaderModule>(ShaderModule(absolute_default_compute_shader_path)));
+    shaderManager->AddShader("emit_compute_particles", std::make_shared<ShaderModule>(ShaderModule(absolute_emit_compute_shader_path)));
+    shaderManager->AddShader("update_compute_particles", std::make_shared<ShaderModule>(ShaderModule(absolute_update_compute_shader_path)));
     shaderManager->AddShader("default_skinning", std::make_shared<ShaderModule>(ShaderModule(absolute_animation_compute_shader_path)));
 }
 

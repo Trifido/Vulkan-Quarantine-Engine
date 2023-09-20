@@ -11,29 +11,19 @@
 class ParticleSystem : public GameObject
 {
 private:
-    //size_t numParticles;
     ComputeNodeManager* computeNodeManager;
     SwapChainModule* swapchainModule;
-    std::shared_ptr<ComputeNode> computeNode;
+    std::shared_ptr<ComputeNode> computeNodeEmitParticles;
+    std::shared_ptr<ComputeNode> computeNodeUpdateParticles;
     Timer* timer;
 
     uint32_t currentParticlesNum = 0;
     double currentLifeTime = 0.0;
 
-    VkBuffer stagingBufferSSBO1;
-    VkBuffer stagingBufferSSBO2;
-    VkDeviceMemory stagingBufferSSBO1Memory;
-    VkDeviceMemory stagingBufferSSBO2Memory;
-    VkDeviceSize stagingbufferSize;
-    void* dataSSBO1;
-    void* dataSSBO2;
-    Particle* tempSSBO1;
-    Particle* tempSSBO2;
-
 public:
-    double  ParticleLifeTime = 10.0;
-    double  LifeTime = 0.0;
-    double  ParticlesPerSecond = 5.5;
+    float  ParticleLifeTime = 10.0;
+    float  LifeTime = 0.0;
+    float  ParticlesPerSecond = 5.5;
     float   EmissionAngle = 0.0f;
     float   EmissionRadius = 0.0f;
     float   Gravity = 0.0f;
@@ -45,7 +35,7 @@ public:
 private:
     void createShaderStorageBuffers();
     void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx) override;
-    void EmitParticle();
+
 public:
     ParticleSystem();
     void GenerateParticles(size_t currentFrame);

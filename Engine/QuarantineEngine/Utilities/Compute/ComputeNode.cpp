@@ -35,8 +35,8 @@ void ComputeNode::FillComputeBuffer(size_t numElements, unsigned long long eleme
     vkUnmapMemory(deviceModule->device, stagingBufferMemory);
 
     // Initialize ssbo
-    this->computeDescriptor->ssboData[0]->CreateSSBO(bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
-    this->computeDescriptor->ssboSize[0] = bufferSize;
+    this->InitializeComputeBuffer(0, bufferSize);
+
     // Fill ssbo
     this->computeDescriptor->ssboData[0]->FillSSBO(stagingBuffer, bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
 
@@ -60,6 +60,12 @@ void ComputeNode::cleanup()
     this->computeShader.reset();
     this->computeShader = nullptr;
     this->NElements = 0;
+}
+
+void ComputeNode::InitializeComputeBuffer(uint32_t idBuffer, uint32_t bufferSize)
+{
+    this->computeDescriptor->ssboData[idBuffer]->CreateSSBO(bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->computeDescriptor->ssboSize[idBuffer] = bufferSize;
 }
 
 void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t currentFrame)

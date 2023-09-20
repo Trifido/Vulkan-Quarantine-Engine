@@ -63,7 +63,7 @@ struct ParticleV2Input
     float lifeTime;
     glm::vec4 color;
     glm::vec3 velocity;
-    float mass;
+    float angle;
 };
 
 struct ParticleV2Output

@@ -1,0 +1,71 @@
+#version 450
+
+struct Particle {
+	vec3    position;
+    float   lifeTime;
+    vec4    color;
+	vec3    velocity;
+    float   seed;
+};
+
+layout(std140, binding = 0) buffer InputSSBO {
+   Particle particlesIn[ ];
+};
+
+layout(std140, binding = 1) buffer OutputSSBO {
+   Particle particlesOut[ ];
+};
+
+layout(std140, binding = 2) buffer DeadParticlesSSBO {
+    uint numDeadParticles;
+    uint deadParticles[ ];
+};
+
+layout(set = 0, binding = 3) uniform UniformDeltaTime
+{
+    float deltaTime;
+} uboTimer;
+
+layout(set = 0, binding = 4) uniform UniformParticleSystem
+{
+    vec4  initialColor;
+    float particleLifeTime;
+    float particleSystemDuration;
+    float particlePerFrame;
+    float gravity;
+    float emissionAngle;
+    float emissionRadius;
+    float mass;
+    float speed;
+    uint  maxParticles;
+} uboParticleSystem;
+
+layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+void main() 
+{
+    uint index = gl_GlobalInvocationID.x;
+
+    if (index < uboParticleSystem.maxParticles)
+    {
+        Particle pa = particlesIn[index];
+
+        if(pa.lifeTime > 0)
+        {
+            pa.lifeTime -= uboTimer.deltaTime;
+
+            if(pa.lifeTime <= 0)
+            {
+                pa.lifeTime = 0;
+                uint idDeadParticle = atomicAdd(numDeadParticles, 1);
+                deadParticles[idDeadParticle] = index;
+            }
+            else
+            {
+                pa.position += pa.velocity * uboTimer.deltaTime;
+                pa.velocity -= vec3(0, uboParticleSystem.gravity * uboTimer.deltaTime, 0);
+            }
+        }
+
+        particlesOut[index] = pa;
+    }
+}

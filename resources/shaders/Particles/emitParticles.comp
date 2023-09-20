@@ -1,0 +1,106 @@
+#version 450
+
+struct Particle {
+	vec3    position;
+    float   lifeTime;
+    vec4    color;
+	vec3    velocity;
+    float   seed;
+};
+
+layout(std140, binding = 0) buffer InputSSBO {
+   Particle particlesIn[ ];
+};
+
+layout(std140, binding = 1) buffer OutputSSBO {
+   Particle particlesOut[ ];
+};
+
+layout(std140, binding = 2) buffer DeadParticlesSSBO {
+    uint numDeadParticles;
+    uint deadParticles[ ];
+};
+
+layout(set = 0, binding = 3) uniform UniformParticleSystem
+{
+    vec4  initialColor;
+    float particleLifeTime;
+    float particleSystemDuration;
+    float particlePerFrame;
+    float gravity;
+    float emissionAngle;
+    float emissionRadius;
+    float mass;
+    float speed;
+    uint  maxParticles;
+} uboParticleSystem;
+
+layout(set = 0, binding = 4) uniform UniformNewParticles
+{
+    uint  newParticles;
+    uint  frameCount;
+} uboNewParticles;
+
+uint wang_hash(uint seed)
+{
+    uint resultSeed = seed;
+    resultSeed = (resultSeed ^ 61) ^ (resultSeed >> 16);
+    resultSeed *= 9;
+    resultSeed = resultSeed ^ (resultSeed >> 4);
+    resultSeed *= 0x27d4eb2d;
+    resultSeed = resultSeed ^ (resultSeed >> 15);
+    return resultSeed;
+}
+
+float random(float seed) 
+{
+    return fract(sin(seed) * 43758.5453123);
+}
+
+vec3 ComputeVelocity(uint seed)
+{
+    vec3 emitCone = vec3(0.0, 1.0, 0.0);
+    if (uboParticleSystem.emissionAngle > 0.0)
+    {
+        float dirX = random(seed) * uboParticleSystem.emissionAngle - (uboParticleSystem.emissionAngle / 2.0);
+        float dirZ = random(seed) * uboParticleSystem.emissionAngle - (uboParticleSystem.emissionAngle / 2.0);
+        emitCone = vec3(dirX, 1.0, dirZ);
+    }
+    vec3 velocity = normalize(emitCone);
+    return velocity * uboParticleSystem.speed;
+}
+
+vec3 ComputePosition(uint seed)
+{
+    if (uboParticleSystem.emissionRadius > 0.0)
+    {
+        float xPos = random(seed) * uboParticleSystem.emissionRadius - (uboParticleSystem.emissionRadius / 2.0);
+        float zPos = random(seed) * uboParticleSystem.emissionRadius - (uboParticleSystem.emissionRadius / 2.0);
+        return vec3(xPos, 0.0, zPos);
+    }
+
+    return vec3(0.0);
+}
+
+layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+void main() 
+{
+    uint index = gl_GlobalInvocationID.x;
+
+    if (index < uboNewParticles.newParticles)
+    {
+        uint seed = (index * 1973 + 9277 + uboNewParticles.frameCount * 26699) | 1;
+        uint idDeadParticle = atomicAdd(numDeadParticles, -1);
+
+        Particle initParticle;
+        initParticle.velocity = ComputeVelocity(seed);
+        initParticle.position = ComputePosition(seed);
+        initParticle.lifeTime = uboParticleSystem.particleLifeTime;
+        initParticle.color = uboParticleSystem.initialColor;
+        initParticle.seed = wang_hash(seed);
+
+        uint realParticleIndex = deadParticles[idDeadParticle];
+        particlesIn[realParticleIndex] = initParticle;
+        particlesOut[realParticleIndex] = initParticle;
+    }
+}

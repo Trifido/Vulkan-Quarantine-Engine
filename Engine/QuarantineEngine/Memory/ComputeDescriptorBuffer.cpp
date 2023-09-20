@@ -109,6 +109,12 @@ void ComputeDescriptorBuffer::InitializeSSBOData()
     }
 }
 
+void ComputeDescriptorBuffer::AssignSSBO(std::shared_ptr<UniformBufferObject> ssbo, VkDeviceSize size)
+{
+    this->ssboData.push_back(ssbo);
+    this->ssboSize.push_back(size);
+}
+
 VkDescriptorBufferInfo ComputeDescriptorBuffer::GetBufferInfo(VkBuffer buffer, VkDeviceSize bufferSize)
 {
     VkDescriptorBufferInfo bufferInfo = {};
