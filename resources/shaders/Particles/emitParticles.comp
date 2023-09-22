@@ -30,7 +30,6 @@ layout(set = 0, binding = 3) uniform UniformParticleSystem
     float gravity;
     float emissionAngle;
     float emissionRadius;
-    float mass;
     float speed;
     uint  maxParticles;
 } uboParticleSystem;

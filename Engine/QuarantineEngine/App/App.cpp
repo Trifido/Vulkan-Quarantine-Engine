@@ -169,14 +169,14 @@ void App::initVulkan()
     this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/vikingRoom/viking_room.obj"));
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
+    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/microphone/scene.gltf"));
     //std::shared_ptr<GameObject> model2 = std::make_shared<GameObject>(GameObject("../../resources/models/vampire/Capoeira.dae"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/CharacterRunning/CharacterRunning.gltf"));
 
-    model->transform->SetScale(glm::vec3(0.05f));
-    model->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-    this->gameObjectManager->AddGameObject(model, "model");
+    //model->transform->SetScale(glm::vec3(0.05f));
+    //model->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    //this->gameObjectManager->AddGameObject(model, "model");
 
     //model2->transform->SetPosition(glm::vec3(5.0f, 0.0f, 0.0f));
     //this->gameObjectManager->AddGameObject(model2, "model2");

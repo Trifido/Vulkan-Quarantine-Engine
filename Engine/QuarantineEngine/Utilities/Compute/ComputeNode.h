@@ -18,6 +18,7 @@ private:
 public:
     std::shared_ptr<ComputeDescriptorBuffer>    computeDescriptor = nullptr;
     uint32_t NElements = 0;
+    bool UseDependencyBuffer = false;
 
 public:
     ComputeNode();

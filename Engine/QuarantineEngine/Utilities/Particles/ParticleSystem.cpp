@@ -23,6 +23,7 @@ ParticleSystem::ParticleSystem() : GameObject()
     this->computeNodeManager->AddComputeNode("update_compute_particles", this->computeNodeUpdateParticles);
 
     this->createShaderStorageBuffers();
+    this->InitializeDeadList();
 
     auto mat = this->materialManager->GetMaterial("defaultParticlesMat");
 
@@ -41,11 +42,18 @@ void ParticleSystem::cleanup()
 void ParticleSystem::createShaderStorageBuffers()
 {
     this->computeNodeEmitParticles->computeDescriptor->InitializeSSBOData();
+    //Create particle dead list
+    this->computeNodeEmitParticles->computeDescriptor->ssboData.push_back(std::make_shared<UniformBufferObject>());
+    this->computeNodeEmitParticles->computeDescriptor->ssboSize.push_back(VkDeviceSize());
+
     this->computeNodeEmitParticles->NElements = this->MaxNumParticles;
     this->computeNodeEmitParticles->InitializeComputeBuffer(0, sizeof(ParticleV2Input) * this->MaxNumParticles);
+    this->computeNodeEmitParticles->InitializeComputeBuffer(1, sizeof(uint32_t) * (this->MaxNumParticles + 1));
 
     this->computeNodeUpdateParticles->computeDescriptor->AssignSSBO(this->computeNodeEmitParticles->computeDescriptor->ssboData[0], this->computeNodeEmitParticles->computeDescriptor->ssboSize[0]);
+    this->computeNodeUpdateParticles->computeDescriptor->AssignSSBO(this->computeNodeEmitParticles->computeDescriptor->ssboData[1], this->computeNodeEmitParticles->computeDescriptor->ssboSize[1]);
     this->computeNodeUpdateParticles->NElements = this->MaxNumParticles;
+    this->computeNodeUpdateParticles->UseDependencyBuffer = true;
 }
 
 void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
@@ -72,6 +80,25 @@ void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t 
     vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantStruct), &pushConstant);
 
     vkCmdDraw(commandBuffer, this->MaxNumParticles, 1, 0, 0);
+}
+
+void ParticleSystem::InitializeDeadList()
+{
+    this->deadParticleListSSBO.numDeadParticles = this->MaxNumParticles;
+    this->deadParticleListSSBO.deadParticles.reserve(this->MaxNumParticles);
+
+    for (int p = 0; p < this->MaxNumParticles; p++)
+    {
+        this->deadParticleListSSBO.deadParticles.push_back(p);
+    }
+
+    for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
+    {
+        void* data;
+        vkMapMemory(deviceModule->device, this->computeNodeEmitParticles->computeDescriptor->ssboData[1]->uniformBuffersMemory[currentFrame], 0, this->computeNodeEmitParticles->computeDescriptor->ssboSize[1], 0, &data);
+        memcpy(data, static_cast<const void*>(&this->deadParticleListSSBO), this->computeNodeEmitParticles->computeDescriptor->ssboSize[1]);
+        vkUnmapMemory(deviceModule->device, this->computeNodeEmitParticles->computeDescriptor->ssboData[1]->uniformBuffersMemory[currentFrame]);
+    }
 }
 
 void ParticleSystem::GenerateParticles(size_t currentFrame)

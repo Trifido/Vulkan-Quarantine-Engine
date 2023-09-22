@@ -44,6 +44,33 @@ struct MaterialUniform
     int idxHeight;
 };
 
+struct ParticleSystemUniform
+{
+    glm::vec4 initialColor;
+    float particleLifeTime;
+    float particleSystemDuration;
+    float particlePerFrame;
+    float gravity;
+    float emissionAngle;
+    float emissionRadius;
+    float speed;
+    uint32_t maxParticles;
+};
+
+struct NewParticleUniform
+{
+    uint32_t newParticles;
+    uint32_t frameCount;
+};
+
+struct DeadParticlesSSBO
+{
+    uint32_t numDeadParticles;
+    std::vector<uint32_t> deadParticles;
+
+    DeadParticlesSSBO() {}
+};
+
 struct AnimationUniform
 {
     alignas(16) glm::mat4 finalBonesMatrices[200];

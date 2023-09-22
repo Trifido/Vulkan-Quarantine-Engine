@@ -19,6 +19,7 @@ private:
 
     uint32_t currentParticlesNum = 0;
     double currentLifeTime = 0.0;
+    DeadParticlesSSBO deadParticleListSSBO;
 
 public:
     float  ParticleLifeTime = 10.0;
@@ -35,7 +36,7 @@ public:
 private:
     void createShaderStorageBuffers();
     void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx) override;
-
+    void InitializeDeadList();
 public:
     ParticleSystem();
     void GenerateParticles(size_t currentFrame);
