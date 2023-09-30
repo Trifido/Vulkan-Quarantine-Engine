@@ -63,14 +63,6 @@ struct NewParticleUniform
     uint32_t frameCount;
 };
 
-struct DeadParticlesSSBO
-{
-    uint32_t numDeadParticles;
-    std::vector<uint32_t> deadParticles;
-
-    DeadParticlesSSBO() {}
-};
-
 struct AnimationUniform
 {
     alignas(16) glm::mat4 finalBonesMatrices[200];

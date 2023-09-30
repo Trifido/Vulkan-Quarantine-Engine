@@ -569,7 +569,8 @@ void App::computeFrame()
         //Update uniformBuffer here -----> <-----
 
         // Update particles system
-        //auto ps = std::dynamic_pointer_cast<ParticleSystem>(this->gameObjectManager->GetGameObject("particleSystem"));
+        auto ps = std::dynamic_pointer_cast<ParticleSystem>(this->gameObjectManager->GetGameObject("particleSystem"));
+        ps->Update();
         //ps->GenerateParticles(synchronizationModule.GetCurrentFrame());
 
         commandPoolModule->recordComputeCommandBuffer(commandPoolModule->getComputeCommandBuffer(synchronizationModule.GetCurrentFrame()));

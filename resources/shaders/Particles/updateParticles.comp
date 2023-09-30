@@ -1,6 +1,7 @@
 #version 450
 
-struct Particle {
+struct Particle 
+{
 	vec3    position;
     float   lifeTime;
     vec4    color;
@@ -8,17 +9,19 @@ struct Particle {
     float   seed;
 };
 
-layout(std140, binding = 0) buffer InputSSBO {
+layout(std140, binding = 0) buffer InputSSBO 
+{
    Particle particlesIn[ ];
 };
 
-layout(std140, binding = 1) buffer OutputSSBO {
+layout(std140, binding = 1) buffer OutputSSBO 
+{
    Particle particlesOut[ ];
 };
 
-layout(std140, binding = 2) buffer DeadParticlesSSBO {
-    uint numDeadParticles;
-    uint deadParticles[ ];
+layout(std140, binding = 2) buffer DeadParticlesSSBO 
+{
+    int deadParticles[];
 };
 
 layout(set = 0, binding = 3) uniform UniformDeltaTime
@@ -55,8 +58,8 @@ void main()
             if(pa.lifeTime <= 0)
             {
                 pa.lifeTime = 0;
-                uint idDeadParticle = atomicAdd(numDeadParticles, 1);
-                deadParticles[idDeadParticle] = index;
+                //int idDeadParticle = atomicAdd(deadParticles[deadParticles.length() - 1], 1);
+                //deadParticles[idDeadParticle] = int(index);
             }
             else
             {

@@ -8,6 +8,25 @@
 #include <Compute/ComputeNodeManager.h>
 #include <Timer.h>
 
+struct ParticleSystemUBO
+{
+    glm::vec4  initialColor;
+    float particleLifeTime;
+    float particleSystemDuration;
+    float particlePerFrame;
+    float gravity;
+    float emissionAngle;
+    float emissionRadius;
+    float speed;
+    uint32_t  maxParticles;
+};
+
+struct NewParticlesUBO
+{
+    uint32_t  newParticles;
+    uint32_t  frameCount;
+};
+
 class ParticleSystem : public GameObject
 {
 private:
@@ -19,7 +38,9 @@ private:
 
     uint32_t currentParticlesNum = 0;
     double currentLifeTime = 0.0;
-    DeadParticlesSSBO deadParticleListSSBO;
+    std::vector<int32_t> deadParticles;
+    ParticleSystemUBO particleSystemParams;
+    NewParticlesUBO newParticles;
 
 public:
     float  ParticleLifeTime = 10.0;
@@ -31,15 +52,18 @@ public:
     float   Speed = 1.0f;
     float   Mass = 1.0f;
     bool    InfinityLifeTime = true;
-    uint32_t MaxNumParticles = 100;
+    int32_t MaxNumParticles = 100;
+    glm::vec4 InitialColor = glm::vec4(1.0f);
 
 private:
     void createShaderStorageBuffers();
     void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx) override;
     void InitializeDeadList();
+    void InitializeParticleSystemParameters();
 public:
     ParticleSystem();
     void GenerateParticles(size_t currentFrame);
+    void Update();
     void cleanup();
     void drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx) override;
     bool IsValid() override;

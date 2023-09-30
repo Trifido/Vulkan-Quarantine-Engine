@@ -24,6 +24,7 @@ ParticleSystem::ParticleSystem() : GameObject()
 
     this->createShaderStorageBuffers();
     this->InitializeDeadList();
+    this->InitializeParticleSystemParameters();
 
     auto mat = this->materialManager->GetMaterial("defaultParticlesMat");
 
@@ -48,7 +49,7 @@ void ParticleSystem::createShaderStorageBuffers()
 
     this->computeNodeEmitParticles->NElements = this->MaxNumParticles;
     this->computeNodeEmitParticles->InitializeComputeBuffer(0, sizeof(ParticleV2Input) * this->MaxNumParticles);
-    this->computeNodeEmitParticles->InitializeComputeBuffer(1, sizeof(uint32_t) * (this->MaxNumParticles + 1));
+    this->computeNodeEmitParticles->InitializeComputeBuffer(1, sizeof(int32_t) * (this->MaxNumParticles + 1));
 
     this->computeNodeUpdateParticles->computeDescriptor->AssignSSBO(this->computeNodeEmitParticles->computeDescriptor->ssboData[0], this->computeNodeEmitParticles->computeDescriptor->ssboSize[0]);
     this->computeNodeUpdateParticles->computeDescriptor->AssignSSBO(this->computeNodeEmitParticles->computeDescriptor->ssboData[1], this->computeNodeEmitParticles->computeDescriptor->ssboSize[1]);
@@ -84,20 +85,50 @@ void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t 
 
 void ParticleSystem::InitializeDeadList()
 {
-    this->deadParticleListSSBO.numDeadParticles = this->MaxNumParticles;
-    this->deadParticleListSSBO.deadParticles.reserve(this->MaxNumParticles);
+    this->deadParticles.reserve(this->MaxNumParticles + 1);
 
-    for (int p = 0; p < this->MaxNumParticles; p++)
+    int deadParticlesArray[1000];
+
+    for (int32_t p = 0; p < this->MaxNumParticles; p++)
     {
-        this->deadParticleListSSBO.deadParticles.push_back(p);
+        deadParticlesArray[p] = p;
+        this->deadParticles.push_back(p);
     }
+
+    deadParticlesArray[this->MaxNumParticles] = this->MaxNumParticles;
+    this->deadParticles.push_back(this->MaxNumParticles);
 
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {
         void* data;
         vkMapMemory(deviceModule->device, this->computeNodeEmitParticles->computeDescriptor->ssboData[1]->uniformBuffersMemory[currentFrame], 0, this->computeNodeEmitParticles->computeDescriptor->ssboSize[1], 0, &data);
-        memcpy(data, static_cast<const void*>(&this->deadParticleListSSBO), this->computeNodeEmitParticles->computeDescriptor->ssboSize[1]);
+        memcpy(data, deadParticlesArray, this->computeNodeEmitParticles->computeDescriptor->ssboSize[1]);
         vkUnmapMemory(deviceModule->device, this->computeNodeEmitParticles->computeDescriptor->ssboData[1]->uniformBuffersMemory[currentFrame]);
+    }
+}
+
+void ParticleSystem::InitializeParticleSystemParameters()
+{
+    this->particleSystemParams.emissionAngle = this->EmissionAngle;
+    this->particleSystemParams.emissionRadius = this->EmissionRadius;
+    this->particleSystemParams.gravity = this->Gravity;
+    this->particleSystemParams.initialColor = this->InitialColor;
+    this->particleSystemParams.maxParticles = this->MaxNumParticles;
+    this->particleSystemParams.particleLifeTime = this->ParticleLifeTime;
+    this->particleSystemParams.particlePerFrame = this->ParticlesPerSecond;
+    this->particleSystemParams.particleSystemDuration = this->LifeTime;
+    this->particleSystemParams.speed = this->Speed;
+
+    for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
+    {
+        void* data;
+        vkMapMemory(deviceModule->device, this->computeNodeEmitParticles->computeDescriptor->ubos["UniformParticleSystem"]->uniformBuffersMemory[currentFrame], 0, this->computeNodeEmitParticles->computeDescriptor->uboSizes["UniformParticleSystem"], 0, &data);
+        memcpy(data, static_cast<const void*>(&this->particleSystemParams), this->computeNodeEmitParticles->computeDescriptor->uboSizes["UniformParticleSystem"]);
+        vkUnmapMemory(deviceModule->device, this->computeNodeEmitParticles->computeDescriptor->ubos["UniformParticleSystem"]->uniformBuffersMemory[currentFrame]);
+
+        vkMapMemory(deviceModule->device, this->computeNodeUpdateParticles->computeDescriptor->ubos["UniformParticleSystem"]->uniformBuffersMemory[currentFrame], 0, this->computeNodeUpdateParticles->computeDescriptor->uboSizes["UniformParticleSystem"], 0, &data);
+        memcpy(data, static_cast<const void*>(&this->particleSystemParams), this->computeNodeUpdateParticles->computeDescriptor->uboSizes["UniformParticleSystem"]);
+        vkUnmapMemory(deviceModule->device, this->computeNodeUpdateParticles->computeDescriptor->ubos["UniformParticleSystem"]->uniformBuffersMemory[currentFrame]);
     }
 }
 
@@ -109,6 +140,24 @@ void ParticleSystem::GenerateParticles(size_t currentFrame)
     float partialParticle = particlesToCreate - entero;
 
 
+}
+
+void ParticleSystem::Update()
+{
+    this->newParticles.frameCount = this->timer->LimitFrameCounter;
+    this->newParticles.newParticles = 2;
+
+    for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
+    {
+        void* data;
+        vkMapMemory(deviceModule->device, this->computeNodeEmitParticles->computeDescriptor->ubos["UniformNewParticles"]->uniformBuffersMemory[currentFrame], 0, this->computeNodeEmitParticles->computeDescriptor->uboSizes["UniformNewParticles"], 0, &data);
+        memcpy(data, static_cast<const void*>(&this->newParticles), this->computeNodeEmitParticles->computeDescriptor->uboSizes["UniformNewParticles"]);
+        vkUnmapMemory(deviceModule->device, this->computeNodeEmitParticles->computeDescriptor->ubos["UniformNewParticles"]->uniformBuffersMemory[currentFrame]);
+
+        vkMapMemory(deviceModule->device, this->computeNodeUpdateParticles->computeDescriptor->ubos["UniformDeltaTime"]->uniformBuffersMemory[currentFrame], 0, this->computeNodeUpdateParticles->computeDescriptor->uboSizes["UniformDeltaTime"], 0, &data);
+        memcpy(data, static_cast<const void*>(&this->timer->DeltaTime), this->computeNodeUpdateParticles->computeDescriptor->uboSizes["UniformDeltaTime"]);
+        vkUnmapMemory(deviceModule->device, this->computeNodeUpdateParticles->computeDescriptor->ubos["UniformDeltaTime"]->uniformBuffersMemory[currentFrame]);
+    }
 }
 
 void ParticleSystem::drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
