@@ -19,7 +19,7 @@ layout(std140, binding = 1) buffer OutputSSBO
    Particle particlesOut[ ];
 };
 
-layout(std140, binding = 2) buffer DeadParticlesSSBO 
+layout(std430, binding = 2) buffer DeadParticlesSSBO 
 {
     int deadParticles[];
 };
@@ -93,8 +93,7 @@ void main()
     {
         uint seed = (index * 1973 + 9277 + uboNewParticles.frameCount * 26699) | 1;
  
-        //int idDeadParticle = atomicAdd(deadParticles[uboParticleSystem.maxParticles], -1);
-        deadParticles[index] = deadParticles[index];
+        int idDeadParticle = atomicAdd(deadParticles[uboParticleSystem.maxParticles], -1);
 
         Particle initParticle;
         initParticle.velocity = ComputeVelocity(seed);
@@ -103,8 +102,8 @@ void main()
         initParticle.color = uboParticleSystem.initialColor;
         initParticle.seed = wang_hash(seed);
 
-        //int realParticleIndex = deadParticles[idDeadParticle];
-        //particlesIn[realParticleIndex] = initParticle;
-        //particlesOut[realParticleIndex] = initParticle;
+        int realParticleIndex = deadParticles[idDeadParticle];
+        particlesIn[realParticleIndex] = initParticle;
+        particlesOut[realParticleIndex] = initParticle;
     }
 }
