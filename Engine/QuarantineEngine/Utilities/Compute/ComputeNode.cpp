@@ -70,17 +70,19 @@ void ComputeNode::InitializeComputeBuffer(uint32_t idBuffer, uint32_t bufferSize
 
 void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t currentFrame)
 {
-    //if (this->UseDependencyBuffer)
-    //{
-    //    VkBufferMemoryBarrier bufferBarrier = {};
-    //    bufferBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-    //    bufferBarrier.buffer = computeDescriptor->ssboData.at(0)->uniformBuffers[currentFrame]; // El mismo buffer
-    //    bufferBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT; // Dependiendo de cómo se usó en cmd1
-    //    bufferBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    if (this->UseDependencyBuffer)
+    {
+        VkBufferMemoryBarrier bufferBarrier = {};
+        bufferBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+        bufferBarrier.buffer = computeDescriptor->ssboData.at(0)->uniformBuffers[currentFrame];
+        bufferBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+        bufferBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        bufferBarrier.size = VK_WHOLE_SIZE;
+        bufferBarrier.pNext = NULL;
 
-    //    vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0,
-    //        0, nullptr, 1, &bufferBarrier, 0, nullptr);
-    //}
+        vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0,
+            0, nullptr, 1, &bufferBarrier, 0, nullptr);
+    }
 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, this->computeShader->ComputePipelineModule->pipeline);
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, this->computeShader->ComputePipelineModule->pipelineLayout, 0, 1, &computeDescriptor->descriptorSets[currentFrame], 0, 0);

@@ -35,6 +35,7 @@ private:
     std::shared_ptr<ComputeNode> computeNodeEmitParticles;
     std::shared_ptr<ComputeNode> computeNodeUpdateParticles;
     Timer* timer;
+    float acumulativeTimer = 0.0f;
 
     uint32_t currentParticlesNum = 0;
     double currentLifeTime = 0.0;
@@ -43,13 +44,14 @@ private:
     NewParticlesUBO newParticles;
 
 public:
-    float  ParticleLifeTime = 10.0;
-    float  LifeTime = 0.0;
-    float  ParticlesPerSecond = 5.5;
-    float   EmissionAngle = 0.0f;
+    float   ParticleLifeTime = 5.0;
+    float   LifeTime = 0.0;
+    float   SpawnTime = 0.25;
+    uint32_t    ParticlesPerSpawn = 5;
+    float   EmissionAngle = 0.43f;
     float   EmissionRadius = 0.0f;
     float   Gravity = 0.0f;
-    float   Speed = 1.0f;
+    float   Speed = 0.1f;
     float   Mass = 1.0f;
     bool    InfinityLifeTime = true;
     int32_t MaxNumParticles = 100;
@@ -62,7 +64,7 @@ private:
     void InitializeParticleSystemParameters();
 public:
     ParticleSystem();
-    void GenerateParticles(size_t currentFrame);
+    void GenerateParticles();
     void Update();
     void cleanup();
     void drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx) override;

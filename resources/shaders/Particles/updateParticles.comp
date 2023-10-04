@@ -58,6 +58,7 @@ void main()
             if(pa.lifeTime <= 0)
             {
                 pa.lifeTime = 0;
+                pa.color = vec4(0.0);
                 int idDeadParticle = atomicAdd(deadParticles[deadParticles.length() - 1], 1);
                 deadParticles[idDeadParticle] = int(index);
             }

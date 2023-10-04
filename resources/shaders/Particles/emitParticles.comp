@@ -93,14 +93,20 @@ void main()
     {
         uint seed = (index * 1973 + 9277 + uboNewParticles.frameCount * 26699) | 1;
  
-        int idDeadParticle = atomicAdd(deadParticles[uboParticleSystem.maxParticles], -1);
+        int idDeadParticle = atomicAdd(deadParticles[deadParticles.length() - 1], -1) - 1;
+
+        if (idDeadParticle < 0)
+        {
+            atomicAdd(deadParticles[deadParticles.length() - 1], 1);
+            return;
+        }
 
         Particle initParticle;
+        initParticle.seed = wang_hash(seed);
         initParticle.velocity = ComputeVelocity(seed);
         initParticle.position = ComputePosition(seed);
         initParticle.lifeTime = uboParticleSystem.particleLifeTime;
         initParticle.color = uboParticleSystem.initialColor;
-        initParticle.seed = wang_hash(seed);
 
         int realParticleIndex = deadParticles[idDeadParticle];
         particlesIn[realParticleIndex] = initParticle;
