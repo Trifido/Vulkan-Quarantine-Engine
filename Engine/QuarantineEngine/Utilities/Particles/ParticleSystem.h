@@ -43,18 +43,20 @@ private:
     ParticleSystemUBO particleSystemParams;
     NewParticlesUBO newParticles;
 
+    bool isAlreadySpawnZero = false;
+
 public:
-    float   ParticleLifeTime = 5.0;
+    float   ParticleLifeTime = 10.0;
     float   LifeTime = 0.0;
     float   SpawnTime = 0.25;
     uint32_t    ParticlesPerSpawn = 5;
     float   EmissionAngle = 0.43f;
     float   EmissionRadius = 0.0f;
-    float   Gravity = 0.0f;
-    float   Speed = 0.1f;
+    float   Gravity = 9.8f;
+    float   Speed = 10.5f;
     float   Mass = 1.0f;
     bool    InfinityLifeTime = true;
-    int32_t MaxNumParticles = 100;
+    int32_t MaxNumParticles = 500;
     glm::vec4 InitialColor = glm::vec4(1.0f);
 
 private:
@@ -62,6 +64,8 @@ private:
     void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx) override;
     void InitializeDeadList();
     void InitializeParticleSystemParameters();
+    void SetNewParticlesUBO(uint32_t newParticles, uint32_t nFrame);
+
 public:
     ParticleSystem();
     void GenerateParticles();

@@ -26,6 +26,5 @@ void main()
     vec4 position = (constants.model * vec4(inPosition, 1.0));
     gl_Position = cameraData.viewproj * position;
     gl_PointSize = 14.0;
-    //gl_Position = vec4(inPosition.xy, 1.0, 1.0);
     fragColor = inColor;
 }

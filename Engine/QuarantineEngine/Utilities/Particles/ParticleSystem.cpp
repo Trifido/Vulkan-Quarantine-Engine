@@ -151,8 +151,13 @@ void ParticleSystem::InitializeParticleSystemParameters()
         vkUnmapMemory(deviceModule->device, this->computeNodeUpdateParticles->computeDescriptor->ubos["UniformParticleSystem"]->uniformBuffersMemory[currentFrame]);
     }
 
-    this->newParticles.frameCount = 0;
-    this->newParticles.newParticles = 0;
+    this->SetNewParticlesUBO(0, 0);
+}
+
+void ParticleSystem::SetNewParticlesUBO(uint32_t newParticles, uint32_t nFrame)
+{
+    this->newParticles.frameCount = nFrame;
+    this->newParticles.newParticles = newParticles;
 
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {
@@ -177,22 +182,18 @@ void ParticleSystem::GenerateParticles()
 
     if (particlesToSpawn >= 1)
     {
+        this->isAlreadySpawnZero = false;
         this->ParticlesPerSpawn = 5;
     }
 
-    this->newParticles.frameCount = this->timer->LimitFrameCounter;
-    this->newParticles.newParticles = this->ParticlesPerSpawn;
-
-    for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
+    //if (!this->isAlreadySpawnZero)
     {
-        void* data;
-        vkMapMemory(deviceModule->device, this->computeNodeEmitParticles->computeDescriptor->ubos["UniformNewParticles"]->uniformBuffersMemory[currentFrame], 0, this->computeNodeEmitParticles->computeDescriptor->uboSizes["UniformNewParticles"], 0, &data);
-        memcpy(data, static_cast<const void*>(&this->newParticles), this->computeNodeEmitParticles->computeDescriptor->uboSizes["UniformNewParticles"]);
-        vkUnmapMemory(deviceModule->device, this->computeNodeEmitParticles->computeDescriptor->ubos["UniformNewParticles"]->uniformBuffersMemory[currentFrame]);
+        this->SetNewParticlesUBO(this->ParticlesPerSpawn, this->timer->LimitFrameCounter);
+    }
 
-        vkMapMemory(deviceModule->device, this->computeNodeUpdateParticles->computeDescriptor->ubos["UniformDeltaTime"]->uniformBuffersMemory[currentFrame], 0, this->computeNodeUpdateParticles->computeDescriptor->uboSizes["UniformDeltaTime"], 0, &data);
-        memcpy(data, static_cast<const void*>(&this->timer->DeltaTime), this->computeNodeUpdateParticles->computeDescriptor->uboSizes["UniformDeltaTime"]);
-        vkUnmapMemory(deviceModule->device, this->computeNodeUpdateParticles->computeDescriptor->ubos["UniformDeltaTime"]->uniformBuffersMemory[currentFrame]);
+    if (particlesToSpawn < 1)
+    {
+        this->isAlreadySpawnZero = true;
     }
 }
 

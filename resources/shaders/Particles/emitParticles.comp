@@ -54,9 +54,28 @@ uint wang_hash(uint seed)
     return resultSeed;
 }
 
+uint pcg_hash(uint inputValue)
+{
+    uint state = inputValue * 747796405u + 2891336453u;
+    uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+    return (word >> 22u) ^ word;
+}
+
 float random(float seed) 
 {
     return fract(sin(seed) * 43758.5453123);
+}
+
+float randomFloatX(uint value)
+{
+    float result = wang_hash(value);
+    return result * (1.0 / 4294967296.0);
+}
+
+float randomFloatZ(uint value)
+{
+    float result = pcg_hash(value);
+    return result * (1.0 / 4294967296.0);
 }
 
 vec3 ComputeVelocity(uint seed)
@@ -64,20 +83,20 @@ vec3 ComputeVelocity(uint seed)
     vec3 emitCone = vec3(0.0, 1.0, 0.0);
     if (uboParticleSystem.emissionAngle > 0.0)
     {
-        float dirX = random(seed) * uboParticleSystem.emissionAngle - (uboParticleSystem.emissionAngle / 2.0);
-        float dirZ = random(seed) * uboParticleSystem.emissionAngle - (uboParticleSystem.emissionAngle / 2.0);
+        float dirX = randomFloatX(seed) * uboParticleSystem.emissionAngle - (uboParticleSystem.emissionAngle * 0.5);
+        float dirZ = randomFloatZ(seed) * uboParticleSystem.emissionAngle - (uboParticleSystem.emissionAngle * 0.5);
         emitCone = vec3(dirX, 1.0, dirZ);
     }
-    vec3 velocity = normalize(emitCone);
-    return velocity * uboParticleSystem.speed;
+    
+    return emitCone * uboParticleSystem.speed;
 }
 
 vec3 ComputePosition(uint seed)
 {
     if (uboParticleSystem.emissionRadius > 0.0)
     {
-        float xPos = random(seed) * uboParticleSystem.emissionRadius - (uboParticleSystem.emissionRadius / 2.0);
-        float zPos = random(seed) * uboParticleSystem.emissionRadius - (uboParticleSystem.emissionRadius / 2.0);
+        float xPos = randomFloatX(seed) * uboParticleSystem.emissionRadius - (uboParticleSystem.emissionRadius * 0.5);
+        float zPos = randomFloatZ(seed) * uboParticleSystem.emissionRadius - (uboParticleSystem.emissionRadius * 0.5);
         return vec3(xPos, 0.0, zPos);
     }
 
@@ -92,7 +111,7 @@ void main()
     if (index < uboNewParticles.newParticles)
     {
         uint seed = (index * 1973 + 9277 + uboNewParticles.frameCount * 26699) | 1;
- 
+        
         int idDeadParticle = atomicAdd(deadParticles[deadParticles.length() - 1], -1) - 1;
 
         if (idDeadParticle < 0)
@@ -102,7 +121,7 @@ void main()
         }
 
         Particle initParticle;
-        initParticle.seed = wang_hash(seed);
+        initParticle.seed = randomFloatX(seed);
         initParticle.velocity = ComputeVelocity(seed);
         initParticle.position = ComputePosition(seed);
         initParticle.lifeTime = uboParticleSystem.particleLifeTime;
