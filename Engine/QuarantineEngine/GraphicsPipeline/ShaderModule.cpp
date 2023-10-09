@@ -22,6 +22,12 @@ ShaderModule::ShaderModule(std::string vertexShaderName, std::string fragmentSha
     this->createShaderModule(vertexShaderName, fragmentShaderName);
 }
 
+ShaderModule::ShaderModule(std::string vertexShaderName, std::string geometryShaderName, std::string fragmentShaderName, GraphicsPipelineData pipelineData)
+{
+    this->graphicsPipelineData = pipelineData;
+    this->createShaderModule(vertexShaderName, geometryShaderName, fragmentShaderName);
+}
+
 std::vector<char> ShaderModule::readFile(const std::string& filename)
 {
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);
@@ -54,6 +60,20 @@ void ShaderModule::createShaderModule(const std::string& filename_vertex, const 
     vertShaderStageInfo = createShader(deviceModule->device, filename_vertex, SHADER_TYPE::VERTEX_SHADER);
     fragShaderStageInfo = createShader(deviceModule->device, filename_fragment, SHADER_TYPE::FRAGMENT_SHADER);
     shaderStages.push_back(vertShaderStageInfo);
+    shaderStages.push_back(fragShaderStageInfo);
+
+    this->CreateDescriptorSetLayout();
+    this->createShaderBindings();
+    this->PipelineModule = this->graphicsPipelineManager->RegisterNewGraphicsPipeline(*this, this->descriptorSetLayout, this->graphicsPipelineData);
+}
+
+void ShaderModule::createShaderModule(const std::string& filename_vertex, const std::string& filename_geometry, const std::string& filename_fragment)
+{
+    vertShaderStageInfo = createShader(deviceModule->device, filename_vertex, SHADER_TYPE::VERTEX_SHADER);
+    geoShaderStageInfo = createShader(deviceModule->device, filename_geometry, SHADER_TYPE::GEOMETRY_SHADER);
+    fragShaderStageInfo = createShader(deviceModule->device, filename_fragment, SHADER_TYPE::FRAGMENT_SHADER);
+    shaderStages.push_back(vertShaderStageInfo);
+    shaderStages.push_back(geoShaderStageInfo);
     shaderStages.push_back(fragShaderStageInfo);
 
     this->CreateDescriptorSetLayout();
@@ -151,6 +171,12 @@ VkPipelineShaderStageCreateInfo ShaderModule::createShader(VkDevice& device, con
             break;
 
         case SHADER_TYPE::GEOMETRY_SHADER:
+            if (vkCreateShaderModule(device, &createInfo, nullptr, &geometry_shader) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create geometry shader module!");
+            }
+
+            shaderStageInfo.stage = VK_SHADER_STAGE_GEOMETRY_BIT;
+            shaderStageInfo.module = geometry_shader;
             break;
         case SHADER_TYPE::TESELLATION_SHADER:
             break;

@@ -52,8 +52,8 @@ public:
     uint32_t    ParticlesPerSpawn = 5;
     float   EmissionAngle = 0.43f;
     float   EmissionRadius = 0.0f;
-    float   Gravity = 9.8f;
-    float   Speed = 10.5f;
+    float   Gravity = 0.0f;// 9.8f;
+    float   Speed = 0.5f;// 10.5f;
     float   Mass = 1.0f;
     bool    InfinityLifeTime = true;
     int32_t MaxNumParticles = 500;
