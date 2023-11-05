@@ -56,7 +56,7 @@ void Material::cleanup()
 {
     if (this->hasDescriptorBuffer)
     {
-        this->descriptor->CleanDescriptorSetPool();
+        this->descriptor->Cleanup();
     }
     this->materialData.CleanMaterialUBO();
 }

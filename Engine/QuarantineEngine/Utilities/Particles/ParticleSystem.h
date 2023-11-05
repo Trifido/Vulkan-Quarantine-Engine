@@ -34,6 +34,9 @@ private:
     SwapChainModule* swapchainModule;
     std::shared_ptr<ComputeNode> computeNodeEmitParticles;
     std::shared_ptr<ComputeNode> computeNodeUpdateParticles;
+    VkDeviceMemory  indexBufferMemory = VK_NULL_HANDLE;
+    VkBuffer indexBuffer;
+    std::vector<uint32_t> indexList;
     Timer* timer;
     float acumulativeTimer = 0.0f;
 
@@ -64,7 +67,10 @@ private:
     void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx) override;
     void InitializeDeadList();
     void InitializeParticleSystemParameters();
+    void InitializeParticleIndexList();
+    void CreateIndexBuffer();
     void SetNewParticlesUBO(uint32_t newParticles, uint32_t nFrame);
+    void InitializeMaterial();
 
 public:
     ParticleSystem();

@@ -20,6 +20,7 @@ private:
     VkDescriptorPool                descriptorPool;
 
     uint32_t    numUBOs = 0;
+    uint32_t    numSSBOs = 0;
     uint32_t    numBinding = 0;
     bool        hasAnimationProperties = false;
 
@@ -28,6 +29,9 @@ private:
 
 public:
     std::vector<VkDescriptorSet>    descriptorSets;
+
+    std::vector<std::shared_ptr<UniformBufferObject>>    ssboData;
+    std::vector<VkDeviceSize>                            ssboSize;
 
     //UBO's
     std::shared_ptr<UniformBufferObject>    materialUBO = nullptr;
@@ -40,15 +44,17 @@ private:
     void StartResources(std::shared_ptr<ShaderModule> shader_ptr);
     std::vector<VkWriteDescriptorSet> GetDescriptorWrites(std::shared_ptr<ShaderModule> shader_ptr, uint32_t frameIdx);
     VkDescriptorBufferInfo GetBufferInfo(VkBuffer buffer, VkDeviceSize bufferSize);
-    void SetDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize, uint32_t frameIdx);
+    void SetDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize, uint32_t frameIdx);
+    void CleanDescriptorSetPool();
 
 public:
     DescriptorBuffer();
     DescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr);
     void InitializeDescriptorSets(std::shared_ptr<ShaderModule> shader_ptr);
+    void InitializeSSBOData();
     VkDescriptorSet* getDescriptorSet(size_t id) { return &descriptorSets.at(id); }
-    void CleanDescriptorSetPool();
     void CleanLastResources();
+    void Cleanup();
 };
 
 #endif // !DESCRIPTOR_BUFFER_H

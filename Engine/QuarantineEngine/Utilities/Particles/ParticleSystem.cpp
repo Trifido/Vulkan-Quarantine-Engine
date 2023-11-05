@@ -24,20 +24,27 @@ ParticleSystem::ParticleSystem() : GameObject()
 
     this->createShaderStorageBuffers();
     this->InitializeDeadList();
+    this->InitializeParticleIndexList();
     this->InitializeParticleSystemParameters();
-
-    auto mat = this->materialManager->GetMaterial("defaultParticlesMat");
-
-    auto newMatInstance = mat->CreateMaterialInstance();
-    this->materialManager->AddMaterial("defaultParticlesMat", newMatInstance);
-
-    this->addMaterial(newMatInstance);
-    this->material->InitializeMaterialDataUBO();
+    this->InitializeMaterial();
 }
 
 void ParticleSystem::cleanup()
 {
     GameObject::cleanup();
+}
+
+void ParticleSystem::InitializeMaterial()
+{
+    auto mat = this->materialManager->GetMaterial("defaultParticlesMat");
+    auto newMatInstance = mat->CreateMaterialInstance();
+    this->materialManager->AddMaterial("defaultParticlesMat", newMatInstance);
+
+    this->addMaterial(newMatInstance);
+    this->material->InitializeMaterialDataUBO();
+    this->material->descriptor->InitializeSSBOData();
+    this->material->descriptor->ssboData[0] = computeNodeUpdateParticles->computeDescriptor->ssboData[0];
+    this->material->descriptor->ssboSize[0] = computeNodeUpdateParticles->computeDescriptor->ssboSize[0];
 }
 
 void ParticleSystem::createShaderStorageBuffers()
@@ -48,7 +55,7 @@ void ParticleSystem::createShaderStorageBuffers()
     this->computeNodeEmitParticles->computeDescriptor->ssboSize.push_back(VkDeviceSize());
 
     this->computeNodeEmitParticles->NElements = this->MaxNumParticles;
-    this->computeNodeEmitParticles->InitializeComputeBuffer(0, sizeof(ParticleV2Input) * this->MaxNumParticles);
+    this->computeNodeEmitParticles->InitializeComputeBuffer(0, sizeof(Particle) * this->MaxNumParticles);
     this->computeNodeEmitParticles->InitializeComputeBuffer(1, sizeof(int32_t) * (this->MaxNumParticles + 1));
 
     this->computeNodeUpdateParticles->computeDescriptor->AssignSSBO(this->computeNodeEmitParticles->computeDescriptor->ssboData[0], this->computeNodeEmitParticles->computeDescriptor->ssboSize[0]);
@@ -63,10 +70,7 @@ void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
     vkCmdSetDepthTestEnable(commandBuffer, true);
-    vkCmdSetCullMode(commandBuffer, false);
-
-    VkDeviceSize offsets[] = { 0 };
-    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &computeNodeUpdateParticles->computeDescriptor->ssboData[0]->uniformBuffers.at(idx), offsets);
+    vkCmdSetCullMode(commandBuffer, true);
 
     if (this->material->HasDescriptorBuffer())
     {
@@ -80,7 +84,7 @@ void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t 
     }
     vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantStruct), &pushConstant);
 
-    vkCmdDraw(commandBuffer, this->MaxNumParticles, 1, 0, 0);
+    vkCmdDraw(commandBuffer, this->MaxNumParticles * 6, 1, 0, 0);
 }
 
 void ParticleSystem::InitializeDeadList()
@@ -102,12 +106,12 @@ void ParticleSystem::InitializeDeadList()
         vkUnmapMemory(deviceModule->device, this->computeNodeEmitParticles->computeDescriptor->ssboData[1]->uniformBuffersMemory[currentFrame]);
     }
 
-    std::vector<ParticleV2Input> particles;
+    std::vector<Particle> particles;
     particles.reserve(this->MaxNumParticles);
 
     for (int32_t p = 0; p < this->MaxNumParticles; p++)
     {
-        ParticleV2Input part = {};
+        Particle part = {};
         part.seed = 0.0f;
         part.color = glm::vec4(0.0f);
         part.lifeTime = 0.0f;
@@ -170,6 +174,43 @@ void ParticleSystem::SetNewParticlesUBO(uint32_t newParticles, uint32_t nFrame)
         memcpy(data, static_cast<const void*>(&this->timer->DeltaTime), this->computeNodeUpdateParticles->computeDescriptor->uboSizes["UniformDeltaTime"]);
         vkUnmapMemory(deviceModule->device, this->computeNodeUpdateParticles->computeDescriptor->ubos["UniformDeltaTime"]->uniformBuffersMemory[currentFrame]);
     }
+}
+
+void ParticleSystem::InitializeParticleIndexList()
+{
+    this->indexList.reserve(6 * this->MaxNumParticles);
+
+    for (int i = 0; i < this->MaxNumParticles; i++)
+    {
+        this->indexList.push_back(i);
+        this->indexList.push_back(i);
+        this->indexList.push_back(i);
+        this->indexList.push_back(i);
+        this->indexList.push_back(i);
+        this->indexList.push_back(i);
+    }
+
+    this->CreateIndexBuffer();
+}
+
+void ParticleSystem::CreateIndexBuffer()
+{
+    VkDeviceSize bufferSize = sizeof(this->indexList[0]) * this->indexList.size();
+
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+    BufferManageModule::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory, *deviceModule);
+
+    void* data;
+    vkMapMemory(deviceModule->device, stagingBufferMemory, 0, bufferSize, 0, &data);
+    memcpy(data, this->indexList.data(), (size_t)bufferSize);
+    vkUnmapMemory(deviceModule->device, stagingBufferMemory);
+
+    BufferManageModule::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, this->indexBuffer, this->indexBufferMemory, *deviceModule);
+    BufferManageModule::copyBuffer(stagingBuffer, this->indexBuffer, bufferSize, *deviceModule);
+
+    vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
+    vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
 }
 
 void ParticleSystem::GenerateParticles()
