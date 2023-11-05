@@ -329,15 +329,23 @@ void ComputeDescriptorBuffer::Cleanup()
         {
             for (uint32_t j = 0; j < this->ssboData.size(); j++)
             {
-                vkDestroyBuffer(deviceModule->device, this->ssboData[j]->uniformBuffers[i], nullptr);
-                vkFreeMemory(deviceModule->device, this->ssboData[j]->uniformBuffersMemory[i], nullptr);
+                if (this->ssboData[j]->uniformBuffers[i] != VK_NULL_HANDLE)
+                {
+                    vkDestroyBuffer(deviceModule->device, this->ssboData[j]->uniformBuffers[i], nullptr);
+                    vkFreeMemory(deviceModule->device, this->ssboData[j]->uniformBuffersMemory[i], nullptr);
+                    this->ssboData[j]->uniformBuffers[i] = VK_NULL_HANDLE;
+                }
             }
         }
 
         for each (auto ubo in ubos)
         {
-            vkDestroyBuffer(deviceModule->device, ubo.second->uniformBuffers[i], nullptr);
-            vkFreeMemory(deviceModule->device, ubo.second->uniformBuffersMemory[i], nullptr);
+            if (ubo.second->uniformBuffers[i] != VK_NULL_HANDLE)
+            {
+                vkDestroyBuffer(deviceModule->device, ubo.second->uniformBuffers[i], nullptr);
+                vkFreeMemory(deviceModule->device, ubo.second->uniformBuffersMemory[i], nullptr);
+                ubo.second->uniformBuffers[i] = VK_NULL_HANDLE;
+            }
         }
     }
 

@@ -222,6 +222,8 @@ void DescriptorBuffer::Cleanup()
             {
                 vkDestroyBuffer(deviceModule->device, this->ssboData[j]->uniformBuffers[i], nullptr);
                 vkFreeMemory(deviceModule->device, this->ssboData[j]->uniformBuffersMemory[i], nullptr);
+
+                this->ssboData[j]->uniformBuffers[i] = VK_NULL_HANDLE;
             }
         }
     }

@@ -440,9 +440,6 @@ void App::cleanUp()
     this->computeNodeManager->Cleanup();
     this->animationManager->Cleanup();
 
-    //auto ps = std::dynamic_pointer_cast<ParticleSystem>(this->gameObjectManager->GetGameObject("particleSystem"));
-    //ps->cleanup();
-
     this->gameObjectManager->Cleanup();
     this->editorManager->Cleanup();
 

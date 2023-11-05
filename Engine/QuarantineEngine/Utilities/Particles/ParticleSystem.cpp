@@ -24,7 +24,6 @@ ParticleSystem::ParticleSystem() : GameObject()
 
     this->createShaderStorageBuffers();
     this->InitializeDeadList();
-    this->InitializeParticleIndexList();
     this->InitializeParticleSystemParameters();
     this->InitializeMaterial();
 }
@@ -174,43 +173,6 @@ void ParticleSystem::SetNewParticlesUBO(uint32_t newParticles, uint32_t nFrame)
         memcpy(data, static_cast<const void*>(&this->timer->DeltaTime), this->computeNodeUpdateParticles->computeDescriptor->uboSizes["UniformDeltaTime"]);
         vkUnmapMemory(deviceModule->device, this->computeNodeUpdateParticles->computeDescriptor->ubos["UniformDeltaTime"]->uniformBuffersMemory[currentFrame]);
     }
-}
-
-void ParticleSystem::InitializeParticleIndexList()
-{
-    this->indexList.reserve(6 * this->MaxNumParticles);
-
-    for (int i = 0; i < this->MaxNumParticles; i++)
-    {
-        this->indexList.push_back(i);
-        this->indexList.push_back(i);
-        this->indexList.push_back(i);
-        this->indexList.push_back(i);
-        this->indexList.push_back(i);
-        this->indexList.push_back(i);
-    }
-
-    this->CreateIndexBuffer();
-}
-
-void ParticleSystem::CreateIndexBuffer()
-{
-    VkDeviceSize bufferSize = sizeof(this->indexList[0]) * this->indexList.size();
-
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-    BufferManageModule::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory, *deviceModule);
-
-    void* data;
-    vkMapMemory(deviceModule->device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, this->indexList.data(), (size_t)bufferSize);
-    vkUnmapMemory(deviceModule->device, stagingBufferMemory);
-
-    BufferManageModule::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, this->indexBuffer, this->indexBufferMemory, *deviceModule);
-    BufferManageModule::copyBuffer(stagingBuffer, this->indexBuffer, bufferSize, *deviceModule);
-
-    vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
-    vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
 }
 
 void ParticleSystem::GenerateParticles()
