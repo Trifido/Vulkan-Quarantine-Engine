@@ -191,7 +191,11 @@ void App::initVulkan()
     //cube->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
     //this->gameObjectManager->AddGameObject(cube, "cube");
 
+    std::shared_ptr<CustomTexture> smokeParticleTexture = std::make_shared<CustomTexture>("../../resources/textures/smoke.png", TEXTURE_TYPE::DIFFUSE_TYPE);
+    this->textureManager->AddTexture("smokeParticle", smokeParticleTexture);
+
     std::shared_ptr<ParticleSystem> particleSystem = std::make_shared<ParticleSystem>(ParticleSystem());
+    particleSystem->AddParticleTexture(smokeParticleTexture);
     this->gameObjectManager->AddGameObject(particleSystem, "particleSystem");
 
 //DEMO

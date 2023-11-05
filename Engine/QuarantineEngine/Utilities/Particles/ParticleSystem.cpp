@@ -200,6 +200,11 @@ void ParticleSystem::GenerateParticles()
     }
 }
 
+void ParticleSystem::AddParticleTexture(std::shared_ptr<CustomTexture> texture)
+{
+    this->material->materialData.texture_vector->at(0) = texture;
+}
+
 void ParticleSystem::Update()
 {
     this->GenerateParticles();

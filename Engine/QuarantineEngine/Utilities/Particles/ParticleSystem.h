@@ -70,6 +70,7 @@ private:
 public:
     ParticleSystem();
     void GenerateParticles();
+    void AddParticleTexture(std::shared_ptr<CustomTexture> texture);
     void Update();
     void cleanup();
     void drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx) override;

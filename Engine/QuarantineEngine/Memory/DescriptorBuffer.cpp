@@ -67,6 +67,12 @@ void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
             poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
             idx++;
         }
+        else if (binding.first == "Texture1")
+        {
+            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+            idx++;
+        }
         else if (binding.first == "ParticleSSBO")
         {
             poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
@@ -165,6 +171,25 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
             descriptorWrites[idx].dstArrayElement = 0;
             descriptorWrites[idx].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             descriptorWrites[idx].descriptorCount = textures->size();
+            descriptorWrites[idx].pBufferInfo = VK_NULL_HANDLE;
+            descriptorWrites[idx].dstSet = descriptorSets[frameIdx];
+            descriptorWrites[idx].pImageInfo = this->imageInfo.data();
+
+            idx++;
+        }
+        else if (binding.first == "Texture1")
+        {
+            this->imageInfo.resize(1);
+            this->imageInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            this->imageInfo[0].imageView = textures->at(0)->imageView;
+            this->imageInfo[0].sampler = textures->at(0)->textureSampler;
+
+            descriptorWrites[idx] = {};
+            descriptorWrites[idx].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrites[idx].dstBinding = binding.second.binding;
+            descriptorWrites[idx].dstArrayElement = 0;
+            descriptorWrites[idx].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            descriptorWrites[idx].descriptorCount = 1;
             descriptorWrites[idx].pBufferInfo = VK_NULL_HANDLE;
             descriptorWrites[idx].dstSet = descriptorSets[frameIdx];
             descriptorWrites[idx].pImageInfo = this->imageInfo.data();
