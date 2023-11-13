@@ -46,7 +46,7 @@ struct MaterialUniform
 
 struct ParticleSystemUniform
 {
-    glm::vec4 initialColor;
+    glm::vec4  initialColor;
     float particleLifeTime;
     float particleSystemDuration;
     float particlePerFrame;
@@ -54,7 +54,11 @@ struct ParticleSystemUniform
     float emissionAngle;
     float emissionRadius;
     float speed;
-    uint32_t maxParticles;
+    float angularSpeed;
+    float initAngle;
+    float initSize;
+    float auxData;
+    uint32_t  maxParticles;
 };
 
 struct NewParticleUniform

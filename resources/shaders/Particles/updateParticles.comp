@@ -6,7 +6,8 @@ struct Particle
     float   lifeTime;
     vec4    color;
 	vec3    velocity;
-    float   seed;
+    float   angle;
+    vec4    auxiliarData;
 };
 
 layout(std140, binding = 0) buffer InputSSBO 
@@ -39,6 +40,10 @@ layout(set = 0, binding = 4) uniform UniformParticleSystem
     float emissionAngle;
     float emissionRadius;
     float speed;
+    float angularSpeed;
+    float initAngle;
+    float initSize;
+    float auxData;
     uint  maxParticles;
 } uboParticleSystem;
 
@@ -64,8 +69,12 @@ void main()
             }
             else
             {
+                float value = pa.lifeTime / uboParticleSystem.particleLifeTime;
+                pa.color.a = value;
                 pa.position += pa.velocity * uboTimer.deltaTime;
                 pa.velocity -= vec3(0, uboParticleSystem.gravity * uboTimer.deltaTime, 0);
+                pa.angle += uboParticleSystem.angularSpeed * uboTimer.deltaTime;
+                pa.auxiliarData.x =  uboParticleSystem.initSize * value;
             }
         }
 

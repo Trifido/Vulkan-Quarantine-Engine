@@ -49,7 +49,8 @@ struct Particle
     float lifeTime;
     glm::vec4 color;
     glm::vec3 velocity;
-    float seed;
+    float angle;
+    glm::vec4 auxiliarData;
 };
 
 struct AnimationVertex

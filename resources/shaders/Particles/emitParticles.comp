@@ -6,7 +6,8 @@ struct Particle
     float   lifeTime;
     vec4    color;
 	vec3    velocity;
-    float   seed;
+    float   angle;
+    vec4    auxiliarData;
 };
 
 layout(std140, binding = 0) buffer InputSSBO 
@@ -34,6 +35,10 @@ layout(set = 0, binding = 3) uniform UniformParticleSystem
     float emissionAngle;
     float emissionRadius;
     float speed;
+    float angularSpeed;
+    float initAngle;
+    float initSize;
+    float auxData;
     uint  maxParticles;
 } uboParticleSystem;
 
@@ -121,11 +126,12 @@ void main()
         }
 
         Particle initParticle;
-        initParticle.seed = randomFloatX(seed);
         initParticle.velocity = ComputeVelocity(seed);
         initParticle.position = ComputePosition(seed);
         initParticle.lifeTime = uboParticleSystem.particleLifeTime;
+        initParticle.angle = uboParticleSystem.initAngle;
         initParticle.color = uboParticleSystem.initialColor;
+        initParticle.auxiliarData.x = uboParticleSystem.initSize;
 
         int realParticleIndex = deadParticles[idDeadParticle];
 

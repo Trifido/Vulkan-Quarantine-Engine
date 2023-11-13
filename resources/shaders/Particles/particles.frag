@@ -10,9 +10,6 @@ layout(set = 0, binding = 2) uniform sampler2D Texture1;
 
 void main() 
 {
-    if(fragColor.a == 0.0)
-        discard;
-
     //vec2 coord = gl_PointCoord - vec2(0.5);
     outColor = fragColor * texture(Texture1, texCoord);
 

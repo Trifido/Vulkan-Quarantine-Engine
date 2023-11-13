@@ -8,19 +8,6 @@
 #include <Compute/ComputeNodeManager.h>
 #include <Timer.h>
 
-struct ParticleSystemUBO
-{
-    glm::vec4  initialColor;
-    float particleLifeTime;
-    float particleSystemDuration;
-    float particlePerFrame;
-    float gravity;
-    float emissionAngle;
-    float emissionRadius;
-    float speed;
-    uint32_t  maxParticles;
-};
-
 struct NewParticlesUBO
 {
     uint32_t  newParticles;
@@ -40,7 +27,7 @@ private:
     uint32_t currentParticlesNum = 0;
     double currentLifeTime = 0.0;
     std::vector<int32_t> deadParticles;
-    ParticleSystemUBO particleSystemParams;
+    ParticleSystemUniform particleSystemParams;
     NewParticlesUBO newParticles;
 
     bool isAlreadySpawnZero = false;
@@ -54,6 +41,9 @@ public:
     float   EmissionRadius = 0.0f;
     float   Gravity = 0.0f;// 9.8f;
     float   Speed = 0.5f;// 10.5f;
+    float   AngularSpeed = 0.0f;
+    float   InitialAngle = 0.0f;
+    float   InitialSize = 1.0f;
     float   Mass = 1.0f;
     bool    InfinityLifeTime = true;
     int32_t MaxNumParticles = 500;

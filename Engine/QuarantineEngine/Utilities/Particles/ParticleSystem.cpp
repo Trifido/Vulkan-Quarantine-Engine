@@ -111,11 +111,12 @@ void ParticleSystem::InitializeDeadList()
     for (int32_t p = 0; p < this->MaxNumParticles; p++)
     {
         Particle part = {};
-        part.seed = 0.0f;
         part.color = glm::vec4(0.0f);
         part.lifeTime = 0.0f;
         part.position = glm::vec3(0.0f);
         part.velocity = glm::vec3(0.0f);
+        part.angle = 0.0f;
+        part.auxiliarData = glm::vec4(0.0f);
 
         particles.push_back(part);
     }
@@ -141,6 +142,10 @@ void ParticleSystem::InitializeParticleSystemParameters()
     this->particleSystemParams.particlePerFrame = this->SpawnTime;
     this->particleSystemParams.particleSystemDuration = this->LifeTime;
     this->particleSystemParams.speed = this->Speed;
+    this->particleSystemParams.angularSpeed = this->AngularSpeed;
+    this->particleSystemParams.initAngle = this->InitialAngle;
+    this->particleSystemParams.initSize = this->InitialSize;
+    this->particleSystemParams.auxData = 0.0f;
 
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {
@@ -186,7 +191,7 @@ void ParticleSystem::GenerateParticles()
     if (particlesToSpawn >= 1)
     {
         this->isAlreadySpawnZero = false;
-        this->ParticlesPerSpawn = 5;
+        this->ParticlesPerSpawn = particlesToSpawn;
     }
 
     //if (!this->isAlreadySpawnZero)
