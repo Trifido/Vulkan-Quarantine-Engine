@@ -69,7 +69,7 @@ void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
     vkCmdSetDepthTestEnable(commandBuffer, true);
-    vkCmdSetCullMode(commandBuffer, true);
+    vkCmdSetCullMode(commandBuffer, false);
 
     if (this->material->HasDescriptorBuffer())
     {

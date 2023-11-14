@@ -5,6 +5,7 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
 #include <BufferManageModule.h>
+#include <filesystem>
 #include "../Editor/Grid.h"
 
 
@@ -163,6 +164,7 @@ void App::initVulkan()
     this->gameObjectManager = GameObjectManager::getInstance();
     this->computeNodeManager = ComputeNodeManager::getInstance();
     this->computeNodeManager->InitializeComputeResources();
+    this->particleSystemManager = ParticleSystemManager::getInstance();
 
     // Inicializamos los componentes del editor
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
@@ -191,12 +193,25 @@ void App::initVulkan()
     //cube->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
     //this->gameObjectManager->AddGameObject(cube, "cube");
 
-    std::shared_ptr<CustomTexture> smokeParticleTexture = std::make_shared<CustomTexture>("../../resources/textures/smoke.png", TEXTURE_TYPE::DIFFUSE_TYPE);
+
+    auto absPath = std::filesystem::absolute("../../resources/textures").generic_string();
+
+    std::string substring = "/Engine";
+    std::size_t ind = absPath.find(substring);
+
+    if (ind != std::string::npos) {
+        absPath.erase(ind, substring.length());
+    }
+
+    const std::string absolute_texture_path = absPath + "/smoke.png";
+
+    std::shared_ptr<CustomTexture> smokeParticleTexture = std::make_shared<CustomTexture>(absolute_texture_path, TEXTURE_TYPE::DIFFUSE_TYPE);
     this->textureManager->AddTexture("smokeParticle", smokeParticleTexture);
 
     std::shared_ptr<ParticleSystem> particleSystem = std::make_shared<ParticleSystem>(ParticleSystem());
     particleSystem->AddParticleTexture(smokeParticleTexture);
-    this->gameObjectManager->AddGameObject(particleSystem, "particleSystem");
+
+    this->particleSystemManager->AddParticleSystem(particleSystem, "smokeParticles");
 
 //DEMO
 /*
@@ -445,6 +460,7 @@ void App::cleanUp()
     this->animationManager->Cleanup();
 
     this->gameObjectManager->Cleanup();
+    this->particleSystemManager->Cleanup();
     this->editorManager->Cleanup();
 
     this->textureManager->Clean();
@@ -501,6 +517,10 @@ void App::cleanManagers()
 
     this->gameObjectManager->CleanLastResources();
     this->gameObjectManager->ResetInstance();
+    this->gameObjectManager = nullptr;
+
+    this->particleSystemManager->CleanLastResources();
+    this->particleSystemManager->ResetInstance();
     this->gameObjectManager = nullptr;
 
     this->textureManager->CleanLastResources();
@@ -567,8 +587,7 @@ void App::computeFrame()
         //Update uniformBuffer here -----> <-----
 
         // Update particles system
-        auto ps = std::dynamic_pointer_cast<ParticleSystem>(this->gameObjectManager->GetGameObject("particleSystem"));
-        ps->Update();
+        this->particleSystemManager->UpdateParticleSystems();
 
         commandPoolModule->recordComputeCommandBuffer(commandPoolModule->getComputeCommandBuffer(synchronizationModule.GetCurrentFrame()));
         synchronizationModule.submitComputeCommandBuffer(commandPoolModule->getComputeCommandBuffer(synchronizationModule.GetCurrentFrame()));

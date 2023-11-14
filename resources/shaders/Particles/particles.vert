@@ -57,6 +57,9 @@ void main()
     uint vertexInQuad = gl_VertexIndex % 6;
 
     Particle pa = particles[particleIndex];
+    float size = pa.auxiliarData.x;
+    float sinRotation = sin(pa.angle);
+    float cosRotation = cos(pa.angle);
     vec3 center = pa.position;
     vec2 quad = quadCoords[vertexInQuad];
     vec2 uv = texCoords[vertexInQuad];
@@ -64,7 +67,12 @@ void main()
     vec3 cameraRight = vec3(cameraData.view[0][0], cameraData.view[1][0], cameraData.view[2][0]);
     vec3 cameraUp = vec3(cameraData.view[0][1], cameraData.view[1][1], cameraData.view[2][1]);
 
-    vec3 vertexCoord = center + cameraRight * quad.x - cameraUp * quad.y;
+    vec3 halfRight = size * cameraRight;
+    vec3 halfUp = size * cameraUp;
+    vec3 particleHalfRight = (halfRight * cosRotation) + (halfUp * sinRotation);
+    vec3 particleHalfUp = (halfRight * sinRotation) - (halfUp * cosRotation);
+
+    vec3 vertexCoord = center + (particleHalfUp * quad.y) - (particleHalfRight * quad.x);
 
     vec4 position = constants.model * vec4(vertexCoord, 1.0);
     gl_Position = cameraData.viewproj * position;

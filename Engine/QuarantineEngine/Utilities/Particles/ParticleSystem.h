@@ -35,14 +35,14 @@ private:
 public:
     float   ParticleLifeTime = 10.0;
     float   LifeTime = 0.0;
-    float   SpawnTime = 0.25;
-    uint32_t    ParticlesPerSpawn = 5;
+    float   SpawnTime = 0.15;
+    uint32_t    ParticlesPerSpawn = 10;
     float   EmissionAngle = 0.43f;
     float   EmissionRadius = 0.0f;
     float   Gravity = 0.0f;// 9.8f;
     float   Speed = 0.5f;// 10.5f;
-    float   AngularSpeed = 0.0f;
-    float   InitialAngle = 0.0f;
+    float   AngularSpeed = 0.1f;
+    float   InitialAngle = 1.0f;
     float   InitialSize = 1.0f;
     float   Mass = 1.0f;
     bool    InfinityLifeTime = true;

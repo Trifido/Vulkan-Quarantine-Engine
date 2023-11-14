@@ -412,6 +412,9 @@
     <ClCompile Include="Utilities\Timer.cpp">
       <Filter>Kernel\Utilities\sources</Filter>
     </ClCompile>
+    <ClCompile Include="Utilities\Particles\ParticleSystemManager.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SetUp\DeviceModule.h">
@@ -671,6 +674,8 @@
     <ClInclude Include="Utilities\Timer.h">
       <Filter>Kernel\Utilities\headers</Filter>
     </ClInclude>
+    <ClInclude Include="GraphicsPipeline\GraphicsPipelineData.h" />
+    <ClInclude Include="Utilities\Particles\ParticleSystemManager.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.txt" />

@@ -17,6 +17,9 @@ private:
 public:
     static GameObjectManager* instance;
 
+private:
+    std::string CheckName(std::string nameGameObject);
+
 public:
     GameObjectManager();
     void AddGameObject(std::shared_ptr<GameObject> object_ptr, std::string name);

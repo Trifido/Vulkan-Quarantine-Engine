@@ -9,10 +9,35 @@ GameObjectManager::GameObjectManager()
     this->renderLayers = RenderLayerModule::getInstance();
 }
 
+std::string GameObjectManager::CheckName(std::string nameGameObject)
+{
+    std::unordered_map<std::string, std::shared_ptr<GameObject>>::const_iterator got;
+    std::string newName = nameGameObject;
+    unsigned int id = 0;
+
+    for (unsigned int idl = 0; idl < this->renderLayers->GetCount(); idl++)
+    {
+        do
+        {
+            got = this->_objects[this->renderLayers->GetLayer(idl)].find(newName);
+
+            if (got != this->_objects[this->renderLayers->GetLayer(idl)].end())
+            {
+                id++;
+                newName = nameGameObject + "_" + std::to_string(id);
+            }
+        } while (got != this->_objects[this->renderLayers->GetLayer(idl)].end());
+    }
+
+    return newName;
+}
+
 void GameObjectManager::AddGameObject(std::shared_ptr<GameObject> object_ptr, std::string name)
 {
     if (object_ptr->IsValid())
     {
+        name = CheckName(name);
+
         if (object_ptr->material == nullptr)
         {
             if (!object_ptr->childs.empty())

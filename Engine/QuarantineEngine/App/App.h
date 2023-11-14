@@ -51,6 +51,7 @@
 #include <GameObjectManager.h>
 //#include <Compute/ComputeNodeManager.h>
 #include <ComputePipelineManager.h>
+#include <Particles/ParticleSystemManager.h>
 
 const std::string MODEL_PATH = "../../resources/models/head/head.obj";
 const std::string TEXTURE_WALL_NORMAL_PATH = "../../resources/textures/wall/brickwall_normal.jpg";
@@ -142,6 +143,7 @@ private:
     AnimationManager*   animationManager{};
     GraphicsPipelineManager* graphicsPipelineManager{};
     ComputePipelineManager* computePipelineManager{};
+    ParticleSystemManager* particleSystemManager{};
 
     KeyboardController* keyboard_ptr {};
 

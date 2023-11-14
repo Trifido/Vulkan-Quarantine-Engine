@@ -239,6 +239,7 @@
     <ClCompile Include="Utilities\Material\TextureManager.cpp" />
     <ClCompile Include="Utilities\Numbered.cpp" />
     <ClCompile Include="Utilities\Particles\ParticleSystem.cpp" />
+    <ClCompile Include="Utilities\Particles\ParticleSystemManager.cpp" />
     <ClCompile Include="Utilities\Physics\BoxCollider.cpp" />
     <ClCompile Include="Utilities\Physics\Collider.cpp" />
     <ClCompile Include="Utilities\Physics\PhysicBody.cpp" />
@@ -331,6 +332,7 @@
     <ClInclude Include="Utilities\Material\TextureTypes.h" />
     <ClInclude Include="Utilities\Numbered.h" />
     <ClInclude Include="Utilities\Particles\ParticleSystem.h" />
+    <ClInclude Include="Utilities\Particles\ParticleSystemManager.h" />
     <ClInclude Include="Utilities\Physics\BoxCollider.h" />
     <ClInclude Include="Utilities\Physics\Collider.h" />
     <ClInclude Include="Utilities\Physics\PhysicBody.h" />
