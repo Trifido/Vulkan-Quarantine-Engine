@@ -76,7 +76,7 @@ void MaterialManager::InitializeMaterialManager()
     if (this->default_particles_shader != nullptr)
     {
         this->AddMaterial(std::string("defaultParticlesMat"), std::make_shared<Material>(Material(this->default_particles_shader)));
-        this->_materials["defaultParticlesMat"]->layer = 0;
+        this->_materials["defaultParticlesMat"]->layer = 1;
     }
 }
 

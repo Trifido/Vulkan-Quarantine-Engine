@@ -68,7 +68,7 @@ void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t 
     auto pipelineModule = this->material->shader->PipelineModule;
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
-    vkCmdSetDepthTestEnable(commandBuffer, true);
+    vkCmdSetDepthTestEnable(commandBuffer, false);
     vkCmdSetCullMode(commandBuffer, false);
 
     if (this->material->HasDescriptorBuffer())
