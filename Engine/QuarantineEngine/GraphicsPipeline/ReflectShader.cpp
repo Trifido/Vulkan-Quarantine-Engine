@@ -695,13 +695,16 @@ void ReflectShader::CheckUBOMaterial(SpvReflectDescriptorSet* set)
     {
         for (int b = 0; b < set->binding_count && !this->isUBOMaterial; b++)
         {
-            if (strcmp(set->bindings[b]->block.name, "uboMaterial") == 0)
+            if (set->bindings[b]->block.name != NULL)
             {
-                this->isUBOMaterial = true;
-                this->materialBufferSize = set->bindings[b]->block.size;
-                for (int m = 0; m < set->bindings[b]->block.member_count; m++)
+                if (strcmp(set->bindings[b]->block.name, "uboMaterial") == 0)
                 {
-                    materialUBOComponents.push_back(set->bindings[b]->block.members[m].name);
+                    this->isUBOMaterial = true;
+                    this->materialBufferSize = set->bindings[b]->block.size;
+                    for (int m = 0; m < set->bindings[b]->block.member_count; m++)
+                    {
+                        materialUBOComponents.push_back(set->bindings[b]->block.members[m].name);
+                    }
                 }
             }
         }
@@ -742,8 +745,12 @@ DescriptorBindingReflect ReflectShader::GetDescriptorBinding(const SpvReflectDes
 
     if (obj.type_description->type_name != NULL)
         descriptor.name = obj.type_description->type_name;
-    else
+    else if (strcmp(obj.name, "texSampler") == 0)
+    {
         descriptor.name = "Texture2DArray";
+    }
+    else
+        descriptor.name = obj.name;
 
     return descriptor;
 }

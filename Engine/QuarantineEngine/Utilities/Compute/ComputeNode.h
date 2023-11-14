@@ -18,12 +18,14 @@ private:
 public:
     std::shared_ptr<ComputeDescriptorBuffer>    computeDescriptor = nullptr;
     uint32_t NElements = 0;
+    bool UseDependencyBuffer = false;
 
 public:
     ComputeNode();
     ComputeNode(std::string computeShaderPath);
     ComputeNode(std::shared_ptr<ShaderModule> shader_ptr);
     void cleanup();
+    void InitializeComputeBuffer(uint32_t idBuffer, uint32_t bufferSize);
     void FillComputeBuffer(size_t numElements, unsigned long long elementType, void* data);
     void FillComputeBuffer(VkBuffer buffer, uint32_t bufferSize);
     void InitializeComputeNode();

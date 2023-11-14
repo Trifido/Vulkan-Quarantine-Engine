@@ -11,6 +11,7 @@
 #include <Numbered.h>
 #include <GraphicsPipelineManager.h>
 #include <ComputePipelineManager.h>
+#include <GraphicsPipelineData.h>
 
 enum class SHADER_TYPE
 {
@@ -27,15 +28,6 @@ class PipelineModule;
 class GraphicsPipelineModule;
 class ComputePipelineModule;
 
-struct GraphicsPipelineData
-{
-    VkPolygonMode polygonMode = VkPolygonMode::VK_POLYGON_MODE_FILL;
-    uint32_t vertexBufferStride = sizeof(PBRVertex);
-    bool HasVertexData = true;
-
-    GraphicsPipelineData() {}
-};
-
 class ShaderModule : public Numbered
 {
 private:
@@ -44,6 +36,8 @@ private:
     VkPipelineShaderStageCreateInfo                 vertShaderStageInfo{};
     VkShaderModule                                  fragment_shader = nullptr;
     VkPipelineShaderStageCreateInfo                 fragShaderStageInfo{};
+    VkShaderModule                                  geometry_shader = nullptr;
+    VkPipelineShaderStageCreateInfo                 geoShaderStageInfo{};
     VkShaderModule                                  compute_shader = nullptr;
     VkPipelineShaderStageCreateInfo                 compShaderStageInfo{};
     std::shared_ptr<VkVertexInputBindingDescription>   bindingDescription;
@@ -64,10 +58,12 @@ public:
     ShaderModule();
     ShaderModule(std::string computeShaderName);
     ShaderModule(std::string vertexShaderName, std::string fragmentShaderName, GraphicsPipelineData pipelineData = GraphicsPipelineData());
+    ShaderModule(std::string vertexShaderName, std::string geometryShaderName, std::string fragmentShaderName, GraphicsPipelineData pipelineData = GraphicsPipelineData());
 
     static std::vector<char> readFile(const std::string& filename);
     void createShaderModule(const std::string& filename_compute);
     void createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment);
+    void createShaderModule(const std::string& filename_vertex, const std::string& filename_geometry, const std::string& filename_fragment);
     void CleanDescriptorSetLayout();
     void cleanup();
     void CleanLastResources();

@@ -35,8 +35,8 @@ void ComputeNode::FillComputeBuffer(size_t numElements, unsigned long long eleme
     vkUnmapMemory(deviceModule->device, stagingBufferMemory);
 
     // Initialize ssbo
-    this->computeDescriptor->ssboData[0]->CreateSSBO(bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
-    this->computeDescriptor->ssboSize[0] = bufferSize;
+    this->InitializeComputeBuffer(0, bufferSize);
+
     // Fill ssbo
     this->computeDescriptor->ssboData[0]->FillSSBO(stagingBuffer, bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
 
@@ -62,8 +62,28 @@ void ComputeNode::cleanup()
     this->NElements = 0;
 }
 
+void ComputeNode::InitializeComputeBuffer(uint32_t idBuffer, uint32_t bufferSize)
+{
+    this->computeDescriptor->ssboData[idBuffer]->CreateSSBO(bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->computeDescriptor->ssboSize[idBuffer] = bufferSize;
+}
+
 void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t currentFrame)
 {
+    if (this->UseDependencyBuffer)
+    {
+        VkBufferMemoryBarrier bufferBarrier = {};
+        bufferBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+        bufferBarrier.buffer = computeDescriptor->ssboData.at(0)->uniformBuffers[currentFrame];
+        bufferBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+        bufferBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        bufferBarrier.size = VK_WHOLE_SIZE;
+        bufferBarrier.pNext = NULL;
+
+        vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0,
+            0, nullptr, 1, &bufferBarrier, 0, nullptr);
+    }
+
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, this->computeShader->ComputePipelineModule->pipeline);
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, this->computeShader->ComputePipelineModule->pipelineLayout, 0, 1, &computeDescriptor->descriptorSets[currentFrame], 0, 0);
 

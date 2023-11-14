@@ -43,6 +43,7 @@ public:
     ComputeDescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr);
     void InitializeDescriptorSets(std::shared_ptr<ShaderModule> shader_ptr);
     void InitializeSSBOData();
+    void AssignSSBO(std::shared_ptr<UniformBufferObject> ssbo, VkDeviceSize size);
     void UpdateUBODeltaTime();
     void Cleanup();
 };

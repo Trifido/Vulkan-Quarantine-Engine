@@ -30,7 +30,7 @@ public:
     VkSemaphore getImageAvailableSemaphore() { return imageAvailableSemaphores[currentFrame]; };
     void createSyncObjects(uint32_t swapChainImagesNum);
     void cleanup();
-    void submitCommandBuffer(VkCommandBuffer& commandBuffer);
+    void submitCommandBuffer(VkCommandBuffer& commandBuffer, bool isRendered);
     void submitComputeCommandBuffer(VkCommandBuffer& commandBuffer);
     VkResult presentSwapchain(VkSwapchainKHR& swapChain, const uint32_t& imageIdx);
     void synchronizeWaitFences();

@@ -7,10 +7,11 @@
 class Timer
 {
 public:
-    static double  DeltaTime;
-    double  lastFrame;
-    double  currentFrame;
-
+    static float DeltaTime;
+    float  lastFrame;
+    float  currentFrame;
+    uint32_t LimitFrameCounter;
+    long long unsigned int FrameCounter;
 private:
     static Timer* instance;
 

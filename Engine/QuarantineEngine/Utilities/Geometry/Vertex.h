@@ -43,10 +43,14 @@ struct PrimitiveVertex : Vertex
     glm::vec4 color;
 };
 
-struct Particle {
-    glm::vec2 position;
-    glm::vec2 velocity;
+struct Particle
+{
+    glm::vec3 position;
+    float lifeTime;
     glm::vec4 color;
+    glm::vec3 velocity;
+    float angle;
+    glm::vec4 auxiliarData;
 };
 
 struct AnimationVertex

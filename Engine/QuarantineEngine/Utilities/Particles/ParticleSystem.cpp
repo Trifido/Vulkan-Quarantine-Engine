@@ -4,6 +4,8 @@
 #include <random>
 #include <filesystem>
 #include <ShaderManager.h>
+#include <SwapChainModule.h>
+#include <BufferManageModule.h>
 
 ParticleSystem::ParticleSystem() : GameObject()
 {
@@ -12,48 +14,53 @@ ParticleSystem::ParticleSystem() : GameObject()
     swapchainModule = SwapChainModule::getInstance();
     auto shaderManager = ShaderManager::getInstance();
 
-    this->computeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("default_compute_particles"));
-    this->computeNode->computeDescriptor->IsProgressiveComputation = true;
-    this->computeNodeManager->AddComputeNode("default_compute", this->computeNode);
-    this->numParticles = 8192;
+    this->computeNodeEmitParticles = std::make_shared<ComputeNode>(shaderManager->GetShader("emit_compute_particles"));
+    this->computeNodeEmitParticles->computeDescriptor->IsProgressiveComputation = true;
+    this->computeNodeManager->AddComputeNode("emit_compute_particles", this->computeNodeEmitParticles);
+
+    this->computeNodeUpdateParticles = std::make_shared<ComputeNode>(shaderManager->GetShader("update_compute_particles"));
+    this->computeNodeUpdateParticles->computeDescriptor->IsProgressiveComputation = true;
+    this->computeNodeManager->AddComputeNode("update_compute_particles", this->computeNodeUpdateParticles);
 
     this->createShaderStorageBuffers();
-
-    auto mat = this->materialManager->GetMaterial("defaultParticlesMat");
-
-    auto newMatInstance = mat->CreateMaterialInstance();
-    this->materialManager->AddMaterial("defaultParticlesMat", newMatInstance);
-
-    this->addMaterial(newMatInstance);
-    this->material->InitializeMaterialDataUBO();
+    this->InitializeDeadList();
+    this->InitializeParticleSystemParameters();
+    this->InitializeMaterial();
 }
 
 void ParticleSystem::cleanup()
 {
     GameObject::cleanup();
-    this->computeNode->cleanup();
+}
+
+void ParticleSystem::InitializeMaterial()
+{
+    auto mat = this->materialManager->GetMaterial("defaultParticlesMat");
+    auto newMatInstance = mat->CreateMaterialInstance();
+    this->materialManager->AddMaterial("defaultParticlesMat", newMatInstance);
+
+    this->addMaterial(newMatInstance);
+    this->material->InitializeMaterialDataUBO();
+    this->material->descriptor->InitializeSSBOData();
+    this->material->descriptor->ssboData[0] = computeNodeUpdateParticles->computeDescriptor->ssboData[0];
+    this->material->descriptor->ssboSize[0] = computeNodeUpdateParticles->computeDescriptor->ssboSize[0];
 }
 
 void ParticleSystem::createShaderStorageBuffers()
 {
-    // Initialize particles
-    std::default_random_engine rndEngine((unsigned)time(nullptr));
-    std::uniform_real_distribution<float> rndDist(0.0f, 1.0f);
+    this->computeNodeEmitParticles->computeDescriptor->InitializeSSBOData();
+    //Create particle dead list
+    this->computeNodeEmitParticles->computeDescriptor->ssboData.push_back(std::make_shared<UniformBufferObject>());
+    this->computeNodeEmitParticles->computeDescriptor->ssboSize.push_back(VkDeviceSize());
 
-    // Initial particle positions on a circle
-    std::vector<Particle> particles(this->numParticles);
-    for (auto& particle : particles) {
-        float r = 0.25f * sqrt(rndDist(rndEngine));
-        float theta = rndDist(rndEngine) * 2.0f * 3.14159265358979323846f;
-        float x = r * cos(theta) * 800 / 600;
-        float y = r * sin(theta);
-        particle.position = glm::vec2(x, y);
-        particle.velocity = glm::normalize(glm::vec2(x, y)) * 0.00025f;
-        particle.color = glm::vec4(rndDist(rndEngine), rndDist(rndEngine), rndDist(rndEngine), 1.0f);
-    }
+    this->computeNodeEmitParticles->NElements = this->MaxNumParticles;
+    this->computeNodeEmitParticles->InitializeComputeBuffer(0, sizeof(Particle) * this->MaxNumParticles);
+    this->computeNodeEmitParticles->InitializeComputeBuffer(1, sizeof(int32_t) * (this->MaxNumParticles + 1));
 
-    this->computeNode->computeDescriptor->InitializeSSBOData();
-    this->computeNode->FillComputeBuffer(this->numParticles, sizeof(Particle), particles.data());
+    this->computeNodeUpdateParticles->computeDescriptor->AssignSSBO(this->computeNodeEmitParticles->computeDescriptor->ssboData[0], this->computeNodeEmitParticles->computeDescriptor->ssboSize[0]);
+    this->computeNodeUpdateParticles->computeDescriptor->AssignSSBO(this->computeNodeEmitParticles->computeDescriptor->ssboData[1], this->computeNodeEmitParticles->computeDescriptor->ssboSize[1]);
+    this->computeNodeUpdateParticles->NElements = this->MaxNumParticles;
+    this->computeNodeUpdateParticles->UseDependencyBuffer = true;
 }
 
 void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
@@ -61,13 +68,151 @@ void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t 
     auto pipelineModule = this->material->shader->PipelineModule;
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
-    vkCmdSetDepthTestEnable(commandBuffer, false);
+    vkCmdSetDepthTestEnable(commandBuffer, true);
     vkCmdSetCullMode(commandBuffer, false);
 
-    VkDeviceSize offsets[] = { 0 };
-    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &computeNode->computeDescriptor->ssboData[0]->uniformBuffers.at(idx), offsets);
+    if (this->material->HasDescriptorBuffer())
+    {
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, this->material->descriptor->getDescriptorSet(idx), 0, nullptr);
+    }
 
-    vkCmdDraw(commandBuffer, this->numParticles, 1, 0, 0);
+    this->pushConstant.model = this->transform->GetModel();
+    if (this->parent != nullptr)
+    {
+        pushConstant.model = this->parent->transform->GetModel() * pushConstant.model;
+    }
+    vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantStruct), &pushConstant);
+
+    vkCmdDraw(commandBuffer, this->MaxNumParticles * 6, 1, 0, 0);
+}
+
+void ParticleSystem::InitializeDeadList()
+{
+    this->deadParticles.reserve(this->MaxNumParticles + 1);
+
+    for (int32_t p = 0; p < this->MaxNumParticles; p++)
+    {
+        this->deadParticles.push_back(p);
+    }
+
+    this->deadParticles.push_back(this->MaxNumParticles);
+
+    for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
+    {
+        void* data;
+        vkMapMemory(deviceModule->device, this->computeNodeEmitParticles->computeDescriptor->ssboData[1]->uniformBuffersMemory[currentFrame], 0, this->computeNodeEmitParticles->computeDescriptor->ssboSize[1], 0, &data);
+        memcpy(data, this->deadParticles.data(), this->computeNodeEmitParticles->computeDescriptor->ssboSize[1]);
+        vkUnmapMemory(deviceModule->device, this->computeNodeEmitParticles->computeDescriptor->ssboData[1]->uniformBuffersMemory[currentFrame]);
+    }
+
+    std::vector<Particle> particles;
+    particles.reserve(this->MaxNumParticles);
+
+    for (int32_t p = 0; p < this->MaxNumParticles; p++)
+    {
+        Particle part = {};
+        part.color = glm::vec4(0.0f);
+        part.lifeTime = 0.0f;
+        part.position = glm::vec3(0.0f);
+        part.velocity = glm::vec3(0.0f);
+        part.angle = 0.0f;
+        part.auxiliarData = glm::vec4(0.0f);
+
+        particles.push_back(part);
+    }
+
+    // Initialize particles
+    for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
+    {
+        void* data;
+        vkMapMemory(deviceModule->device, this->computeNodeEmitParticles->computeDescriptor->ssboData[0]->uniformBuffersMemory[currentFrame], 0, this->computeNodeEmitParticles->computeDescriptor->ssboSize[0], 0, &data);
+        memcpy(data, particles.data(), this->computeNodeEmitParticles->computeDescriptor->ssboSize[0]);
+        vkUnmapMemory(deviceModule->device, this->computeNodeEmitParticles->computeDescriptor->ssboData[0]->uniformBuffersMemory[currentFrame]);
+    }
+}
+
+void ParticleSystem::InitializeParticleSystemParameters()
+{
+    this->particleSystemParams.emissionAngle = this->EmissionAngle;
+    this->particleSystemParams.emissionRadius = this->EmissionRadius;
+    this->particleSystemParams.gravity = this->Gravity;
+    this->particleSystemParams.initialColor = this->InitialColor;
+    this->particleSystemParams.maxParticles = this->MaxNumParticles;
+    this->particleSystemParams.particleLifeTime = this->ParticleLifeTime;
+    this->particleSystemParams.particlePerFrame = this->SpawnTime;
+    this->particleSystemParams.particleSystemDuration = this->LifeTime;
+    this->particleSystemParams.speed = this->Speed;
+    this->particleSystemParams.angularSpeed = this->AngularSpeed;
+    this->particleSystemParams.initAngle = this->InitialAngle;
+    this->particleSystemParams.initSize = this->InitialSize;
+    this->particleSystemParams.auxData = 0.0f;
+
+    for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
+    {
+        void* data;
+        vkMapMemory(deviceModule->device, this->computeNodeEmitParticles->computeDescriptor->ubos["UniformParticleSystem"]->uniformBuffersMemory[currentFrame], 0, this->computeNodeEmitParticles->computeDescriptor->uboSizes["UniformParticleSystem"], 0, &data);
+        memcpy(data, static_cast<const void*>(&this->particleSystemParams), this->computeNodeEmitParticles->computeDescriptor->uboSizes["UniformParticleSystem"]);
+        vkUnmapMemory(deviceModule->device, this->computeNodeEmitParticles->computeDescriptor->ubos["UniformParticleSystem"]->uniformBuffersMemory[currentFrame]);
+
+        vkMapMemory(deviceModule->device, this->computeNodeUpdateParticles->computeDescriptor->ubos["UniformParticleSystem"]->uniformBuffersMemory[currentFrame], 0, this->computeNodeUpdateParticles->computeDescriptor->uboSizes["UniformParticleSystem"], 0, &data);
+        memcpy(data, static_cast<const void*>(&this->particleSystemParams), this->computeNodeUpdateParticles->computeDescriptor->uboSizes["UniformParticleSystem"]);
+        vkUnmapMemory(deviceModule->device, this->computeNodeUpdateParticles->computeDescriptor->ubos["UniformParticleSystem"]->uniformBuffersMemory[currentFrame]);
+    }
+
+    this->SetNewParticlesUBO(0, 0);
+}
+
+void ParticleSystem::SetNewParticlesUBO(uint32_t newParticles, uint32_t nFrame)
+{
+    this->newParticles.frameCount = nFrame;
+    this->newParticles.newParticles = newParticles;
+
+    for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
+    {
+        void* data;
+        vkMapMemory(deviceModule->device, this->computeNodeEmitParticles->computeDescriptor->ubos["UniformNewParticles"]->uniformBuffersMemory[currentFrame], 0, this->computeNodeEmitParticles->computeDescriptor->uboSizes["UniformNewParticles"], 0, &data);
+        memcpy(data, static_cast<const void*>(&this->newParticles), this->computeNodeEmitParticles->computeDescriptor->uboSizes["UniformNewParticles"]);
+        vkUnmapMemory(deviceModule->device, this->computeNodeEmitParticles->computeDescriptor->ubos["UniformNewParticles"]->uniformBuffersMemory[currentFrame]);
+
+        vkMapMemory(deviceModule->device, this->computeNodeUpdateParticles->computeDescriptor->ubos["UniformDeltaTime"]->uniformBuffersMemory[currentFrame], 0, this->computeNodeUpdateParticles->computeDescriptor->uboSizes["UniformDeltaTime"], 0, &data);
+        memcpy(data, static_cast<const void*>(&this->timer->DeltaTime), this->computeNodeUpdateParticles->computeDescriptor->uboSizes["UniformDeltaTime"]);
+        vkUnmapMemory(deviceModule->device, this->computeNodeUpdateParticles->computeDescriptor->ubos["UniformDeltaTime"]->uniformBuffersMemory[currentFrame]);
+    }
+}
+
+void ParticleSystem::GenerateParticles()
+{
+    this->ParticlesPerSpawn = 0;
+    this->acumulativeTimer += this->timer->DeltaTime;
+
+    unsigned int particlesToSpawn = this->acumulativeTimer / this->SpawnTime;
+    this->acumulativeTimer = std::fmod(this->acumulativeTimer, this->SpawnTime);
+
+    if (particlesToSpawn >= 1)
+    {
+        this->isAlreadySpawnZero = false;
+        this->ParticlesPerSpawn = particlesToSpawn;
+    }
+
+    //if (!this->isAlreadySpawnZero)
+    {
+        this->SetNewParticlesUBO(this->ParticlesPerSpawn, this->timer->LimitFrameCounter);
+    }
+
+    if (particlesToSpawn < 1)
+    {
+        this->isAlreadySpawnZero = true;
+    }
+}
+
+void ParticleSystem::AddParticleTexture(std::shared_ptr<CustomTexture> texture)
+{
+    this->material->materialData.texture_vector->at(0) = texture;
+}
+
+void ParticleSystem::Update()
+{
+    this->GenerateParticles();
 }
 
 void ParticleSystem::drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)

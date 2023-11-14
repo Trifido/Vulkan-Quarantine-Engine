@@ -5,6 +5,7 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
 #include <BufferManageModule.h>
+#include <filesystem>
 #include "../Editor/Grid.h"
 
 
@@ -163,36 +164,55 @@ void App::initVulkan()
     this->gameObjectManager = GameObjectManager::getInstance();
     this->computeNodeManager = ComputeNodeManager::getInstance();
     this->computeNodeManager->InitializeComputeResources();
+    this->particleSystemManager = ParticleSystemManager::getInstance();
 
     // Inicializamos los componentes del editor
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
     this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
-    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(MODEL_CRYSIS_PATH));
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
+    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/vikingRoom/viking_room.obj"));
+    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/microphone/scene.gltf"));
-    std::shared_ptr<GameObject> model2 = std::make_shared<GameObject>(GameObject("../../resources/models/vampire/Capoeira.dae"));
+    //std::shared_ptr<GameObject> model2 = std::make_shared<GameObject>(GameObject("../../resources/models/vampire/Capoeira.dae"));
     //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/CharacterRunning/CharacterRunning.gltf"));
 
-    if (model->IsValid())
-    {
-        model->transform->SetScale(glm::vec3(0.05f));
-        model->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-    }
-    this->gameObjectManager->AddGameObject(model, "model");
+    //model->transform->SetScale(glm::vec3(0.05f));
+    //model->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    //this->gameObjectManager->AddGameObject(model, "model");
 
+    //model2->transform->SetPosition(glm::vec3(5.0f, 0.0f, 0.0f));
+    //this->gameObjectManager->AddGameObject(model2, "model2");
 
-    model2->transform->SetOrientation(glm::vec3(0.0f, -90.0f, 0.0f));
-    model2->transform->SetPosition(glm::vec3(4.0f, 0.0f, 0.0f));
-    this->gameObjectManager->AddGameObject(model2, "model2");
+    //model2->transform->SetOrientation(glm::vec3(0.0f, -90.0f, 0.0f));
+    //model2->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    //model2->transform->SetScale(glm::vec3(0.05f));
+    //this->gameObjectManager->AddGameObject(model2, "model2");
 
     //std::shared_ptr<GameObject> cube = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
     //cube->material->materialData.SetMaterialField("Diffuse", glm::vec3(1.0f, 0.3f, 0.3f));
     //cube->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
     //this->gameObjectManager->AddGameObject(cube, "cube");
 
-    //std::shared_ptr<ParticleSystem> particleSystem = std::make_shared<ParticleSystem>(ParticleSystem());
-    //this->gameObjectManager->AddGameObject(particleSystem, "particleSystem");
+
+    auto absPath = std::filesystem::absolute("../../resources/textures").generic_string();
+
+    std::string substring = "/Engine";
+    std::size_t ind = absPath.find(substring);
+
+    if (ind != std::string::npos) {
+        absPath.erase(ind, substring.length());
+    }
+
+    const std::string absolute_texture_path = absPath + "/smoke.png";
+
+    std::shared_ptr<CustomTexture> smokeParticleTexture = std::make_shared<CustomTexture>(absolute_texture_path, TEXTURE_TYPE::DIFFUSE_TYPE);
+    this->textureManager->AddTexture("smokeParticle", smokeParticleTexture);
+
+    std::shared_ptr<ParticleSystem> particleSystem = std::make_shared<ParticleSystem>(ParticleSystem());
+    particleSystem->AddParticleTexture(smokeParticleTexture);
+
+    this->particleSystemManager->AddParticleSystem(particleSystem, "smokeParticles");
+
 //DEMO
 /*
     //Creamos la textura
@@ -438,7 +458,9 @@ void App::cleanUp()
     this->computePipelineManager->CleanComputePipeline();
     this->computeNodeManager->Cleanup();
     this->animationManager->Cleanup();
+
     this->gameObjectManager->Cleanup();
+    this->particleSystemManager->Cleanup();
     this->editorManager->Cleanup();
 
     this->textureManager->Clean();
@@ -495,6 +517,10 @@ void App::cleanManagers()
 
     this->gameObjectManager->CleanLastResources();
     this->gameObjectManager->ResetInstance();
+    this->gameObjectManager = nullptr;
+
+    this->particleSystemManager->CleanLastResources();
+    this->particleSystemManager->ResetInstance();
     this->gameObjectManager = nullptr;
 
     this->textureManager->CleanLastResources();
@@ -555,10 +581,17 @@ void App::cleanManagers()
 
 void App::computeFrame()
 {
-    synchronizationModule.synchronizeWaitComputeFences();
-    //Update uniformBuffer here -----> <-----
-    commandPoolModule->recordComputeCommandBuffer(commandPoolModule->getComputeCommandBuffer(synchronizationModule.GetCurrentFrame()));
-    synchronizationModule.submitComputeCommandBuffer(commandPoolModule->getComputeCommandBuffer(synchronizationModule.GetCurrentFrame()));
+    if (this->isRender)
+    {
+        synchronizationModule.synchronizeWaitComputeFences();
+        //Update uniformBuffer here -----> <-----
+
+        // Update particles system
+        this->particleSystemManager->UpdateParticleSystems();
+
+        commandPoolModule->recordComputeCommandBuffer(commandPoolModule->getComputeCommandBuffer(synchronizationModule.GetCurrentFrame()));
+        synchronizationModule.submitComputeCommandBuffer(commandPoolModule->getComputeCommandBuffer(synchronizationModule.GetCurrentFrame()));
+    }
 }
 
 void App::drawFrame()
@@ -576,10 +609,11 @@ void App::drawFrame()
 
     commandPoolModule->Render(framebufferModule.swapChainFramebuffers[imageIndex], renderPassModule->renderPass);
 
-    synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer(synchronizationModule.GetCurrentFrame()));
+    synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer(synchronizationModule.GetCurrentFrame()), this->isRender);
 
     result = synchronizationModule.presentSwapchain(swapchainModule->getSwapchain(), imageIndex);
     resizeSwapchain(result, ERROR_RESIZE::IMAGE_ERROR);
+    this->isRender = true;
 }
 
 void App::resizeSwapchain(VkResult result, ERROR_RESIZE errorResize)

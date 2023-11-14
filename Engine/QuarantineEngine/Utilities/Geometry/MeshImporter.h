@@ -37,14 +37,11 @@ private:
     size_t numBones = 0;
     bool hasAnimation = false;
 
-    //std::map<std::string, glm::mat4> offsetsReserve;
-
 private:
     MeshData ProcessMesh(aiMesh* mesh, const aiScene* scene);
     void ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, std::vector<MeshData> &meshes);
     glm::mat4 GetGLMMatrix(aiMatrix4x4 transform);
     void ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData& meshData);
-    //std::string GetTexture(aiMaterial* mat, aiTextureType type, TEXTURE_TYPE textureType);
     void CheckPaths(std::string path);
     void SetVertexBoneDataToDefault(PBRVertex& vertex);
     void SetVertexBoneData(PBRVertex& vertex, int boneID, float weight);

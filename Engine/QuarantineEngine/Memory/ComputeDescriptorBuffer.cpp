@@ -78,6 +78,34 @@ void ComputeDescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shade
             this->uboSizes["UniformVertexParam"] = sizeof(int);
             this->ubos["UniformVertexParam"]->CreateUniformBuffer(this->uboSizes["UniformVertexParam"], MAX_FRAMES_IN_FLIGHT, *deviceModule);
         }
+        else if (binding.first == "DeadParticlesSSBO")
+        {
+            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+            
+            this->_numSSBOs++;
+            idx++;
+        }
+        else if (binding.first == "UniformParticleSystem")
+        {
+            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+            idx++;
+
+            this->ubos["UniformParticleSystem"] = std::make_shared<UniformBufferObject>();
+            this->uboSizes["UniformParticleSystem"] = sizeof(ParticleSystemUniform);
+            this->ubos["UniformParticleSystem"]->CreateUniformBuffer(this->uboSizes["UniformParticleSystem"], MAX_FRAMES_IN_FLIGHT, *deviceModule);
+        }
+        else if (binding.first == "UniformNewParticles")
+        {
+            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+            idx++;
+
+            this->ubos["UniformNewParticles"] = std::make_shared<UniformBufferObject>();
+            this->uboSizes["UniformNewParticles"] = sizeof(NewParticleUniform);
+            this->ubos["UniformNewParticles"]->CreateUniformBuffer(this->uboSizes["UniformNewParticles"], MAX_FRAMES_IN_FLIGHT, *deviceModule);
+        }
     }
 
     VkDescriptorPoolCreateInfo poolInfo{};
@@ -107,6 +135,12 @@ void ComputeDescriptorBuffer::InitializeSSBOData()
             this->ssboSize.push_back(VkDeviceSize());
         }
     }
+}
+
+void ComputeDescriptorBuffer::AssignSSBO(std::shared_ptr<UniformBufferObject> ssbo, VkDeviceSize size)
+{
+    this->ssboData.push_back(ssbo);
+    this->ssboSize.push_back(size);
 }
 
 VkDescriptorBufferInfo ComputeDescriptorBuffer::GetBufferInfo(VkBuffer buffer, VkDeviceSize bufferSize)
@@ -182,6 +216,21 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
         if (binding.first == "UniformVertexParam")
         {
             this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->ubos["UniformVertexParam"]->uniformBuffers[frameIdx], this->uboSizes["UniformVertexParam"], frameIdx);
+            idx++;
+        }
+        else if (binding.first == "DeadParticlesSSBO")
+        {
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssboData[1]->uniformBuffers[0], this->ssboSize[1], frameIdx);
+            idx++;
+        }
+        else if (binding.first == "UniformParticleSystem")
+        {
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->ubos["UniformParticleSystem"]->uniformBuffers[frameIdx], this->uboSizes["UniformParticleSystem"], frameIdx);
+            idx++;
+        }
+        else if (binding.first == "UniformNewParticles")
+        {
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->ubos["UniformNewParticles"]->uniformBuffers[frameIdx], this->uboSizes["UniformNewParticles"], frameIdx);
             idx++;
         }
         else if (binding.first == "InputImage")
@@ -268,7 +317,11 @@ void ComputeDescriptorBuffer::UpdateUBODeltaTime()
 void ComputeDescriptorBuffer::Cleanup()
 {
     vkDestroyDescriptorPool(deviceModule->device, this->descriptorPool, nullptr);
-    this->descriptorSets.clear();
+
+    if (!this->descriptorSets.empty())
+    {
+        this->descriptorSets.clear();
+    }
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
@@ -276,15 +329,23 @@ void ComputeDescriptorBuffer::Cleanup()
         {
             for (uint32_t j = 0; j < this->ssboData.size(); j++)
             {
-                vkDestroyBuffer(deviceModule->device, this->ssboData[j]->uniformBuffers[i], nullptr);
-                vkFreeMemory(deviceModule->device, this->ssboData[j]->uniformBuffersMemory[i], nullptr);
+                if (this->ssboData[j]->uniformBuffers[i] != VK_NULL_HANDLE)
+                {
+                    vkDestroyBuffer(deviceModule->device, this->ssboData[j]->uniformBuffers[i], nullptr);
+                    vkFreeMemory(deviceModule->device, this->ssboData[j]->uniformBuffersMemory[i], nullptr);
+                    this->ssboData[j]->uniformBuffers[i] = VK_NULL_HANDLE;
+                }
             }
         }
 
         for each (auto ubo in ubos)
         {
-            vkDestroyBuffer(deviceModule->device, ubo.second->uniformBuffers[i], nullptr);
-            vkFreeMemory(deviceModule->device, ubo.second->uniformBuffersMemory[i], nullptr);
+            if (ubo.second->uniformBuffers[i] != VK_NULL_HANDLE)
+            {
+                vkDestroyBuffer(deviceModule->device, ubo.second->uniformBuffers[i], nullptr);
+                vkFreeMemory(deviceModule->device, ubo.second->uniformBuffersMemory[i], nullptr);
+                ubo.second->uniformBuffers[i] = VK_NULL_HANDLE;
+            }
         }
     }
 

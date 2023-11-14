@@ -48,16 +48,28 @@ void SynchronizationModule::cleanup()
     }
 }
 
-void SynchronizationModule::submitCommandBuffer(VkCommandBuffer& commandBuffer)
+void SynchronizationModule::submitCommandBuffer(VkCommandBuffer& commandBuffer, bool isRendered)
 {
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
     waitSemaphores = &imageAvailableSemaphores[currentFrame];
+
+
+    VkSemaphore firstWaitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
     VkSemaphore waitSemaphores[] = {computeFinishedSemaphores[currentFrame], imageAvailableSemaphores[currentFrame]};
+
     VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-    submitInfo.waitSemaphoreCount = 2;
-    submitInfo.pWaitSemaphores = waitSemaphores;
+    if (isRendered)
+    {
+        submitInfo.pWaitSemaphores = waitSemaphores;
+        submitInfo.waitSemaphoreCount = 2;
+    }
+    else
+    {
+        submitInfo.pWaitSemaphores = firstWaitSemaphores;
+        submitInfo.waitSemaphoreCount = 1;
+    }
     submitInfo.pWaitDstStageMask = waitStages;
 
     submitInfo.commandBufferCount = 1;
