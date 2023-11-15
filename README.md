@@ -17,4 +17,4 @@ Below are some of the main features incorporated into Quarantine Engine (Vulkan 
 <img src="https://github.com/Trifido/Vulkan-Quarantine-Engine/assets/6890573/49e7249e-d57e-4693-9d61-8ca243906290" width="100%" height="100%"/>
 
 ### GPU Particle System
-<img src="https://github.com/Trifido/Vulkan-Quarantine-Engine/assets/6890573/3038ded2-6d78-4ac3-94db-e293f7694ade" width="100%" height="100%"/>
+<img src="https://github.com/Trifido/Vulkan-Quarantine-Engine/assets/6890573/0ecb8720-c69c-4157-8656-be98b1800b0c" width="100%" height="100%"/>
