@@ -96,6 +96,16 @@ void ComputeDescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shade
             this->uboSizes["UniformParticleSystem"] = sizeof(ParticleSystemUniform);
             this->ubos["UniformParticleSystem"]->CreateUniformBuffer(this->uboSizes["UniformParticleSystem"], MAX_FRAMES_IN_FLIGHT, *deviceModule);
         }
+        else if (binding.first == "UniformParticleTexture")
+        {
+            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+            idx++;
+
+            this->ubos["UniformParticleTexture"] = std::make_shared<UniformBufferObject>();
+            this->uboSizes["UniformParticleTexture"] = sizeof(ParticleTextureParamsUniform);
+            this->ubos["UniformParticleTexture"]->CreateUniformBuffer(this->uboSizes["UniformParticleTexture"], MAX_FRAMES_IN_FLIGHT, *deviceModule);
+        }
         else if (binding.first == "UniformNewParticles")
         {
             poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -226,6 +236,11 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
         else if (binding.first == "UniformParticleSystem")
         {
             this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->ubos["UniformParticleSystem"]->uniformBuffers[frameIdx], this->uboSizes["UniformParticleSystem"], frameIdx);
+            idx++;
+        }
+        else if (binding.first == "UniformParticleTexture")
+        {
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->ubos["UniformParticleTexture"]->uniformBuffers[frameIdx], this->uboSizes["UniformParticleTexture"], frameIdx);
             idx++;
         }
         else if (binding.first == "UniformNewParticles")

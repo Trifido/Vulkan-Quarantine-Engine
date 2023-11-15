@@ -28,6 +28,7 @@ private:
     double currentLifeTime = 0.0;
     std::vector<int32_t> deadParticles;
     ParticleSystemUniform particleSystemParams;
+    ParticleTextureParamsUniform particleTextureParams;
     NewParticlesUBO newParticles;
 
     bool isAlreadySpawnZero = false;
@@ -35,19 +36,22 @@ private:
 public:
     float   ParticleLifeTime = 10.0;
     float   LifeTime = 0.0;
-    float   SpawnTime = 0.15;
+    float   SpawnTime = 0.1;
     uint32_t    ParticlesPerSpawn = 10;
-    float   EmissionAngle = 0.43f;
+    float   EmissionAngle = 0.35f;
     float   EmissionRadius = 0.0f;
     float   Gravity = 0.0f;// 9.8f;
-    float   Speed = 0.5f;// 10.5f;
+    float   Speed = 0.75f;// 10.5f;
     float   AngularSpeed = 0.1f;
     float   InitialAngle = 1.0f;
     float   InitialSize = 1.0f;
     float   Mass = 1.0f;
+    float   NumRows = 4.0f;
+    float   NumCols = 4.0f;
+    float   TotalSprites = 16.0f;
     bool    InfinityLifeTime = true;
     int32_t MaxNumParticles = 500;
-    glm::vec4 InitialColor = glm::vec4(1.0f);
+    glm::vec4 InitialColor = glm::vec4(0.5, 0.5, 0.5, 1.0f);
 
 private:
     void createShaderStorageBuffers();
@@ -59,6 +63,7 @@ private:
 
 public:
     ParticleSystem();
+    void InitializeParticleSystem();
     void GenerateParticles();
     void AddParticleTexture(std::shared_ptr<CustomTexture> texture);
     void Update();

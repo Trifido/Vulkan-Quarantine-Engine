@@ -22,6 +22,11 @@ ParticleSystem::ParticleSystem() : GameObject()
     this->computeNodeUpdateParticles->computeDescriptor->IsProgressiveComputation = true;
     this->computeNodeManager->AddComputeNode("update_compute_particles", this->computeNodeUpdateParticles);
 
+    this->InitializeParticleSystem();
+}
+
+void ParticleSystem::InitializeParticleSystem()
+{
     this->createShaderStorageBuffers();
     this->InitializeDeadList();
     this->InitializeParticleSystemParameters();
@@ -44,6 +49,16 @@ void ParticleSystem::InitializeMaterial()
     this->material->descriptor->InitializeSSBOData();
     this->material->descriptor->ssboData[0] = computeNodeUpdateParticles->computeDescriptor->ssboData[0];
     this->material->descriptor->ssboSize[0] = computeNodeUpdateParticles->computeDescriptor->ssboSize[0];
+
+    this->material->descriptor->particleSystemUBO = std::make_shared<UniformBufferObject>();
+    this->material->descriptor->particleSystemUBO->CreateUniformBuffer(sizeof(ParticleTextureParamsUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
+    {
+        void* data;
+        vkMapMemory(deviceModule->device, this->material->descriptor->particleSystemUBO->uniformBuffersMemory[currentFrame], 0, sizeof(ParticleTextureParamsUniform), 0, &data);
+        memcpy(data, static_cast<const void*>(&this->particleTextureParams), sizeof(ParticleTextureParamsUniform));
+        vkUnmapMemory(deviceModule->device, this->material->descriptor->particleSystemUBO->uniformBuffersMemory[currentFrame]);
+    }
 }
 
 void ParticleSystem::createShaderStorageBuffers()
@@ -68,7 +83,8 @@ void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t 
     auto pipelineModule = this->material->shader->PipelineModule;
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
-    vkCmdSetDepthTestEnable(commandBuffer, false);
+    vkCmdSetDepthTestEnable(commandBuffer, true);
+    vkCmdSetDepthWriteEnable(commandBuffer, false);
     vkCmdSetCullMode(commandBuffer, false);
 
     if (this->material->HasDescriptorBuffer())
@@ -147,6 +163,11 @@ void ParticleSystem::InitializeParticleSystemParameters()
     this->particleSystemParams.initSize = this->InitialSize;
     this->particleSystemParams.auxData = 0.0f;
 
+    this->particleTextureParams.numCols = this->NumCols;
+    this->particleTextureParams.numRows = this->NumRows;
+    this->particleTextureParams.totalSprites = this->NumCols * this->NumRows;
+    this->particleTextureParams.auxiliarData = 0.0f;
+
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {
         void* data;
@@ -157,6 +178,10 @@ void ParticleSystem::InitializeParticleSystemParameters()
         vkMapMemory(deviceModule->device, this->computeNodeUpdateParticles->computeDescriptor->ubos["UniformParticleSystem"]->uniformBuffersMemory[currentFrame], 0, this->computeNodeUpdateParticles->computeDescriptor->uboSizes["UniformParticleSystem"], 0, &data);
         memcpy(data, static_cast<const void*>(&this->particleSystemParams), this->computeNodeUpdateParticles->computeDescriptor->uboSizes["UniformParticleSystem"]);
         vkUnmapMemory(deviceModule->device, this->computeNodeUpdateParticles->computeDescriptor->ubos["UniformParticleSystem"]->uniformBuffersMemory[currentFrame]);
+
+        vkMapMemory(deviceModule->device, this->computeNodeUpdateParticles->computeDescriptor->ubos["UniformParticleTexture"]->uniformBuffersMemory[currentFrame], 0, this->computeNodeUpdateParticles->computeDescriptor->uboSizes["UniformParticleTexture"], 0, &data);
+        memcpy(data, static_cast<const void*>(&this->particleTextureParams), this->computeNodeUpdateParticles->computeDescriptor->uboSizes["UniformParticleTexture"]);
+        vkUnmapMemory(deviceModule->device, this->computeNodeUpdateParticles->computeDescriptor->ubos["UniformParticleTexture"]->uniformBuffersMemory[currentFrame]);
     }
 
     this->SetNewParticlesUBO(0, 0);

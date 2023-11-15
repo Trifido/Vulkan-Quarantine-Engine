@@ -61,6 +61,14 @@ struct ParticleSystemUniform
     uint32_t  maxParticles;
 };
 
+struct ParticleTextureParamsUniform
+{
+    float numCols;
+    float numRows;
+    float totalSprites;
+    float auxiliarData;
+};
+
 struct NewParticleUniform
 {
     uint32_t newParticles;

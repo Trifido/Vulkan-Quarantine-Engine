@@ -28,12 +28,13 @@ unsigned int RenderLayerModule::GetCount()
 
 RenderLayerModule::RenderLayerModule()
 {
-    enabledLayers.resize(5);
+    enabledLayers.resize(6);
     enabledLayers[0] = RenderLayer::SOLID;
     enabledLayers[1] = RenderLayer::TRANSPARENT_LAYER;
-    enabledLayers[2] = RenderLayer::UI;
-    enabledLayers[3] = RenderLayer::DEBUG;
-    enabledLayers[4] = RenderLayer::EDITOR;
+    enabledLayers[2] = RenderLayer::PARTICLES;
+    enabledLayers[3] = RenderLayer::UI;
+    enabledLayers[4] = RenderLayer::DEBUG;
+    enabledLayers[5] = RenderLayer::EDITOR;
 }
 
 RenderLayerModule* RenderLayerModule::getInstance()

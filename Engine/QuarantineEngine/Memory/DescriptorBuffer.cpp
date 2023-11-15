@@ -61,6 +61,12 @@ void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
             poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
             idx++;
         }
+        else if (binding.first == "UniformParticleTexture")
+        {
+            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+            idx++;
+        }
         else if (binding.first == "Texture2DArray")
         {
             poolSizes[idx].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -153,6 +159,11 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
         else if (binding.first == "UniformAnimation")
         {
             this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->animationUBO->uniformBuffers[frameIdx], this->animationUniformSize, frameIdx);
+            idx++;
+        }
+        else if (binding.first == "UniformParticleTexture")
+        {
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->particleSystemUBO->uniformBuffers[frameIdx], sizeof(ParticleTextureParamsUniform), frameIdx);
             idx++;
         }
         else if (binding.first == "Texture2DArray")
@@ -251,7 +262,15 @@ void DescriptorBuffer::Cleanup()
                 this->ssboData[j]->uniformBuffers[i] = VK_NULL_HANDLE;
             }
         }
+
+        if (this->particleSystemUBO != nullptr)
+        {
+            vkDestroyBuffer(deviceModule->device, this->particleSystemUBO->uniformBuffers[i], nullptr);
+            vkFreeMemory(deviceModule->device, this->particleSystemUBO->uniformBuffersMemory[i], nullptr);
+        }
     }
+
+    this->particleSystemUBO = nullptr;
 
     this->ssboData.clear();
     this->buffersInfo.clear();

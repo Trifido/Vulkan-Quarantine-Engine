@@ -1,7 +1,9 @@
 #version 450
 
 layout(location = 0) out vec4 fragColor;
-layout(location = 1) out vec2 texCoord;
+layout(location = 1) out vec2 currentTexCoord;
+layout(location = 2) out vec2 nextTexCoord;
+layout(location = 3) out float blendFactor;
 
 struct Particle 
 {
@@ -11,6 +13,8 @@ struct Particle
 	vec3    velocity;
     float   angle;
     vec4    auxiliarData;
+    vec2    currentOffset;
+    vec2    nextOffset;
 };
 
 layout(set = 0, binding = 0) uniform CameraUniform
@@ -25,6 +29,14 @@ layout(std140, binding = 1) buffer ParticleSSBO
 {
    Particle particles[ ];
 };
+
+layout(set = 0, binding = 3) uniform UniformParticleTexture
+{
+    float numCols;
+    float numRows;
+    float totalSprites;
+    float auxiliarData;
+}uboParticleTexture;
 
 layout(std430, push_constant) uniform PushConstants
 {
@@ -78,5 +90,7 @@ void main()
     gl_Position = cameraData.viewproj * position;
     
     fragColor = pa.color;
-    texCoord = uv;
+    currentTexCoord = uv / vec2(uboParticleTexture.numCols, uboParticleTexture.numRows) + pa.currentOffset;
+    nextTexCoord = uv / vec2(uboParticleTexture.numCols, uboParticleTexture.numRows) + pa.nextOffset;
+    blendFactor = pa.auxiliarData.y;
 }

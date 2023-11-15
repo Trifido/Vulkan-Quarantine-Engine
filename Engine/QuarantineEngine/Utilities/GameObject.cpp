@@ -338,6 +338,8 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
         vkCmdSetDepthTestEnable(commandBuffer, true);
+        vkCmdSetDepthWriteEnable(commandBuffer, true);
+
         if (this->meshImportedType == EDITOR_GEO)
         {
             vkCmdSetCullMode(commandBuffer, false);

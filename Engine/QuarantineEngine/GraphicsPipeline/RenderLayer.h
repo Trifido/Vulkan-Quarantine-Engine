@@ -7,7 +7,8 @@ enum class RenderLayer
 {
     SOLID = 0,
     TRANSPARENT_LAYER = 1,
-    UI = 2,
+    PARTICLES = 1,
+    UI = 3,
     DEBUG = 98,
     EDITOR = 99
 };

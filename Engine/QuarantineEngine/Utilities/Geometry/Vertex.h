@@ -51,6 +51,8 @@ struct Particle
     glm::vec3 velocity;
     float angle;
     glm::vec4 auxiliarData;
+    glm::vec2 currentOffset;
+    glm::vec2 nextOffset;
 };
 
 struct AnimationVertex

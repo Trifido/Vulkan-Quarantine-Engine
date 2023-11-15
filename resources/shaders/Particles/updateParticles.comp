@@ -8,6 +8,8 @@ struct Particle
 	vec3    velocity;
     float   angle;
     vec4    auxiliarData;
+    vec2    currentOffset;
+    vec2    nextOffset;
 };
 
 layout(std140, binding = 0) buffer InputSSBO 
@@ -47,6 +49,42 @@ layout(set = 0, binding = 4) uniform UniformParticleSystem
     uint  maxParticles;
 } uboParticleSystem;
 
+layout(set = 0, binding = 5) uniform UniformParticleTexture
+{
+    float numCols;
+    float numRows;
+    float totalSprites;
+    float auxiliarData;
+}uboParticleTexture;
+
+vec2 ComputeOffset(float numRows, float numCols, int index)
+{
+    int col = 0;
+    int row = 0;
+    if (numRows < 2 && numCols < 2)
+    {
+        return vec2(0.0, 0.0);
+    }
+    else if (numCols == numRows)
+    {
+        col = index % int(numRows);
+        row = index / int(numCols);
+        return vec2(float(col) / numRows, float(row) / numCols);
+    }
+    else if (numCols > numRows)
+    {
+        col = index % int(numCols);
+        row = index / int(numCols);
+        return vec2(float(col) / numCols, float(row) / numCols);
+    }
+    else
+    {
+        col = index / int(numRows);
+        row = index % int(numRows);
+        return vec2(float(col) / numRows, float(row) / numRows);
+    }
+}
+
 layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 void main() 
 {
@@ -69,12 +107,25 @@ void main()
             }
             else
             {
-                float value = pa.lifeTime / uboParticleSystem.particleLifeTime;
-                pa.color.a = value;
+                float currentTime = uboParticleSystem.particleLifeTime - pa.lifeTime;
+                float lifeFactor = currentTime / uboParticleSystem.particleLifeTime;
+                float invertLifeFactor = pa.lifeTime / uboParticleSystem.particleLifeTime;
+
+                pa.color.a = invertLifeFactor;
                 pa.position += pa.velocity * uboTimer.deltaTime;
                 pa.velocity -= vec3(0, uboParticleSystem.gravity * uboTimer.deltaTime, 0);
                 pa.angle += uboParticleSystem.angularSpeed * uboTimer.deltaTime;
-                pa.auxiliarData.x =  uboParticleSystem.initSize * value;
+                pa.auxiliarData.x =  uboParticleSystem.initSize * invertLifeFactor;
+
+                float atlasProgression = lifeFactor * uboParticleTexture.totalSprites;
+                int currentIndex = int (atlasProgression);
+                int nextIndex = currentIndex < uboParticleTexture.totalSprites - 1 ? currentIndex + 1 : currentIndex;
+                float decimal = currentIndex;
+
+                pa.auxiliarData.y = atlasProgression - decimal;
+
+                pa.currentOffset = ComputeOffset(uboParticleTexture.numRows, uboParticleTexture.numCols, currentIndex);
+                pa.nextOffset = ComputeOffset(uboParticleTexture.numRows, uboParticleTexture.numCols, nextIndex);
             }
         }
 

@@ -38,6 +38,8 @@ public:
     VkDeviceSize    materialUniformSize = 0;
     std::shared_ptr<UniformBufferObject>    animationUBO = nullptr;
     VkDeviceSize    animationUniformSize = 0;
+    std::shared_ptr<UniformBufferObject>    particleSystemUBO = nullptr;
+    VkDeviceSize    particleSystemUniformSize = 0;
     std::shared_ptr<std::vector<std::shared_ptr<CustomTexture>>> textures;
 
 private:
