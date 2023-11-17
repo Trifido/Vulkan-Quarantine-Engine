@@ -298,7 +298,7 @@ void GameObject::CreateAnimationDrawCommand(VkCommandBuffer& commandBuffer, uint
     {
         auto pipelineModule = this->material->shader->PipelineModule;
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
-
+        vkCmdSetDepthWriteEnable(commandBuffer, true);
         vkCmdSetDepthTestEnable(commandBuffer, true);
         if (this->meshImportedType == EDITOR_GEO)
         {
