@@ -24,6 +24,8 @@ App::App()
     this->computePipelineManager = ComputePipelineManager::getInstance();
 
     commandPoolModule->ClearColor = glm::vec3(0.1f);
+
+    MeshPipelineTest meshPipeTest;
 }
 
 App::~App()
@@ -171,51 +173,10 @@ void App::initVulkan()
     this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
     std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/teapot/scene.gltf"));
-    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
-    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/microphone/scene.gltf"));
-    //std::shared_ptr<GameObject> model2 = std::make_shared<GameObject>(GameObject("../../resources/models/vampire/Capoeira.dae"));
-    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/CharacterRunning/CharacterRunning.gltf"));
 
     model->transform->SetScale(glm::vec3(100.0f));
     model->transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
     this->gameObjectManager->AddGameObject(model, "model");
-
-    //model2->transform->SetPosition(glm::vec3(5.0f, 0.0f, 0.0f));
-    //this->gameObjectManager->AddGameObject(model2, "model2");
-
-    //model2->transform->SetOrientation(glm::vec3(0.0f, -90.0f, 0.0f));
-    //model2->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-    //model2->transform->SetScale(glm::vec3(0.05f));
-    //this->gameObjectManager->AddGameObject(model2, "model2");
-
-    //std::shared_ptr<GameObject> cube = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
-    //cube->material->materialData.SetMaterialField("Diffuse", glm::vec3(1.0f, 0.3f, 0.3f));
-    //cube->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-    //this->gameObjectManager->AddGameObject(cube, "cube");
-
-
-    auto absPath = std::filesystem::absolute("../../resources/textures").generic_string();
-
-    std::string substring = "/Engine";
-    std::size_t ind = absPath.find(substring);
-
-    if (ind != std::string::npos) {
-        absPath.erase(ind, substring.length());
-    }
-
-    const std::string absolute_texture_path = absPath + "/particles-flipbook.png";
-
-    std::shared_ptr<CustomTexture> smokeParticleTexture = std::make_shared<CustomTexture>(absolute_texture_path, TEXTURE_TYPE::DIFFUSE_TYPE);
-    this->textureManager->AddTexture("smokeParticle", smokeParticleTexture);
-
-    std::shared_ptr<ParticleSystem> particleSystem = std::make_shared<ParticleSystem>(ParticleSystem());
-    particleSystem->AddParticleTexture(smokeParticleTexture);
-    particleSystem->transform->SetPosition(glm::vec3(0.2f, 2.0f, 1.0f));
-    //particleSystem->NumCols = 4;
-    //particleSystem->NumRows = 4;
-    //particleSystem->InitializeParticleSystem();
-
-    this->particleSystemManager->AddParticleSystem(particleSystem, "smokeParticles");
 
 //DEMO
 /*
