@@ -139,6 +139,25 @@ void MeshImporter::ExtractBoneWeightForVertices(MeshData& data, aiMesh* mesh)
     }
 }
 
+void MeshImporter::RemapGeometry(MeshData& data)
+{
+    std::vector<unsigned int> remap(data.numIndices);
+
+    std::vector<uint32_t> resultIndices;
+    std::vector<PBRVertex> resultVertices;
+
+    size_t total_vertices = meshopt_generateVertexRemap(&remap[0], NULL, data.numIndices, &data.vertices[0], data.numIndices, sizeof(PBRVertex));
+
+    resultIndices.resize(data.numIndices);
+    meshopt_remapIndexBuffer(&resultIndices[0], NULL, data.numIndices, &remap[0]);
+
+    resultVertices.resize(total_vertices);
+    meshopt_remapVertexBuffer(&resultVertices[0], &data.vertices[0], data.numIndices, sizeof(PBRVertex), &remap[0]);
+
+    data.indices = resultIndices;
+    data.vertices = resultVertices;
+}
+
 void MeshImporter::RecreateTangents(std::vector<PBRVertex>& vertices, std::vector<unsigned int>& indices)
 {
     for (size_t idTr = 0; idTr < indices.size(); idTr += 3)
@@ -305,18 +324,19 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
     }
 
     // process indices
-    data.numIndices = 0;
+    data.numIndices = mesh->mNumFaces * mesh->mFaces[0].mNumIndices;
+    data.indices.reserve(data.numIndices);
+
     for (unsigned int i = 0; i < mesh->mNumFaces; i++)
     {
         aiFace face = mesh->mFaces[i];
         for (unsigned int j = 0; j < face.mNumIndices; j++)
         {
-            data.numIndices += face.mNumIndices;
             data.indices.push_back(face.mIndices[j]);
         }
     }
-    data.indices.resize(data.numIndices);
 
+    //this->RemapGeometry(data);
 
     if (!existNormal)
     {

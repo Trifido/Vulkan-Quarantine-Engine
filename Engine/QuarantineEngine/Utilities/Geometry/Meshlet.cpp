@@ -1,6 +1,4 @@
 #include "Meshlet.h"
-#include <time.h>
-#include <iostream>
 
 void Meshlet::GenerateMeshlet(const std::vector<PBRVertex>& vertices, const std::vector<uint32_t>& indices)
 {
@@ -15,8 +13,6 @@ void Meshlet::GenerateMeshlet(const std::vector<PBRVertex>& vertices, const std:
     this->meshlets = std::vector<meshopt_Meshlet>(this->max_meshlets);
     this->meshlet_vertices = std::vector<unsigned int>(this->max_meshlets * this->MAX_VERTICES);
     this->meshlet_triangles = std::vector<unsigned char>(this->max_meshlets * this->MAX_TRIANGLES * 3);
-
-    double startc = double(clock()) / double(CLOCKS_PER_SEC);
 
     //meshlets.resize(meshopt_buildMeshlets(
     //    &meshlets[0],
@@ -42,10 +38,6 @@ void Meshlet::GenerateMeshlet(const std::vector<PBRVertex>& vertices, const std:
         this->MAX_TRIANGLES,
         this->CONE_WEIGHT);
     meshlets.resize(this->meshlets_count);
-
-    double endc = double(clock()) / double(CLOCKS_PER_SEC);
-
-    std::cout << ("Time: %d", endc - startc) << std::endl;
 
     if (this->meshlets_count)
     {
