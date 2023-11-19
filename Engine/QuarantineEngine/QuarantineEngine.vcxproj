@@ -184,7 +184,6 @@
     <ClCompile Include="GraphicsPipeline\ComputePipelineModule.cpp" />
     <ClCompile Include="GraphicsPipeline\GraphicsPipelineManager.cpp" />
     <ClCompile Include="GraphicsPipeline\GraphicsPipelineModule.cpp" />
-    <ClCompile Include="GraphicsPipeline\MeshPipelineTest.cpp" />
     <ClCompile Include="GraphicsPipeline\PipelineModule.cpp" />
     <ClCompile Include="GraphicsPipeline\ReflectShader.cpp" />
     <ClCompile Include="GraphicsPipeline\RenderLayerModule.cpp" />
@@ -226,6 +225,7 @@
     <ClCompile Include="Utilities\Geometry\GeometryComponent.cpp" />
     <ClCompile Include="Utilities\Geometry\Mesh.cpp" />
     <ClCompile Include="Utilities\Geometry\MeshImporter.cpp" />
+    <ClCompile Include="Utilities\Geometry\Meshlet.cpp" />
     <ClCompile Include="Utilities\Geometry\PrimitiveMesh.cpp" />
     <ClCompile Include="Utilities\Light\DirectionalLight.cpp" />
     <ClCompile Include="Utilities\Light\Light.cpp" />
@@ -270,7 +270,6 @@
     <ClInclude Include="GraphicsPipeline\GraphicsPipelineData.h" />
     <ClInclude Include="GraphicsPipeline\GraphicsPipelineManager.h" />
     <ClInclude Include="GraphicsPipeline\GraphicsPipelineModule.h" />
-    <ClInclude Include="GraphicsPipeline\MeshPipelineTest.h" />
     <ClInclude Include="GraphicsPipeline\PipelineModule.h" />
     <ClInclude Include="GraphicsPipeline\ReflectShader.h" />
     <ClInclude Include="GraphicsPipeline\RenderLayer.h" />
@@ -316,6 +315,7 @@
     <ClInclude Include="Utilities\Geometry\GeometryComponent.h" />
     <ClInclude Include="Utilities\Geometry\Mesh.h" />
     <ClInclude Include="Utilities\Geometry\MeshImporter.h" />
+    <ClInclude Include="Utilities\Geometry\Meshlet.h" />
     <ClInclude Include="Utilities\Geometry\PrimitiveMesh.h" />
     <ClInclude Include="Utilities\Geometry\PrimitiveTypes.h" />
     <ClInclude Include="Utilities\Geometry\RawGeometry.h" />

@@ -52,7 +52,6 @@
 //#include <Compute/ComputeNodeManager.h>
 #include <ComputePipelineManager.h>
 #include <Particles/ParticleSystemManager.h>
-#include <MeshPipelineTest.h>
 
 const std::string MODEL_PATH = "../../resources/models/head/head.obj";
 const std::string TEXTURE_WALL_NORMAL_PATH = "../../resources/textures/wall/brickwall_normal.jpg";

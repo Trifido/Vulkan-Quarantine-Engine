@@ -24,8 +24,6 @@ App::App()
     this->computePipelineManager = ComputePipelineManager::getInstance();
 
     commandPoolModule->ClearColor = glm::vec3(0.1f);
-
-    MeshPipelineTest meshPipeTest;
 }
 
 App::~App()

@@ -415,8 +415,8 @@
     <ClCompile Include="Utilities\Particles\ParticleSystemManager.cpp">
       <Filter>Kernel\Utilities\Particles\sources</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsPipeline\MeshPipelineTest.cpp">
-      <Filter>Kernel\GraphicsPipeline\sources</Filter>
+    <ClCompile Include="Utilities\Geometry\Meshlet.cpp">
+      <Filter>Kernel\Utilities\Geometry\sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -681,8 +681,8 @@
     <ClInclude Include="Utilities\Particles\ParticleSystemManager.h">
       <Filter>Kernel\Utilities\Particles\headers</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsPipeline\MeshPipelineTest.h">
-      <Filter>Kernel\GraphicsPipeline\headers</Filter>
+    <ClInclude Include="Utilities\Geometry\Meshlet.h">
+      <Filter>Kernel\Utilities\Geometry\headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

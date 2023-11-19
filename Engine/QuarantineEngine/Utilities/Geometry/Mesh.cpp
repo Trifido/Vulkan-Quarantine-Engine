@@ -23,6 +23,7 @@ Mesh::Mesh(const MeshData& data)
 void Mesh::InitializeMesh(size_t numAttributes)
 {
     this->numAttributes = numAttributes;
+    this->meshlet.GenerateMeshlet(this->vertices, this->indices);
     this->createVertexBuffer();
     this->createIndexBuffer();
 }
