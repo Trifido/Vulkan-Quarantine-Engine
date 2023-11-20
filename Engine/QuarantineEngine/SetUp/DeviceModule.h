@@ -25,6 +25,7 @@ private:
     VkPhysicalDeviceMemoryProperties    memoryProperties;
     QueueModule                         queueModule;
     bool                                bindless_supported;
+    bool                                meshShader_supported;
 
 public:
     static DeviceModule* getInstance();

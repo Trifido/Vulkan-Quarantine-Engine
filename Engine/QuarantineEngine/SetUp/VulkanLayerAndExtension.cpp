@@ -62,6 +62,24 @@ bool checkDeviceExtensionSupport(VkPhysicalDevice device)
     return requiredExtensions.empty();
 }
 
+bool checkMeshShaderExtensionSupport(VkPhysicalDevice device)
+{
+    uint32_t extensionCount;
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+
+    std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+
+    for (size_t i = 0; i < extensionCount; i++)
+    {
+        if (!strcmp(availableExtensions[i].extensionName, VK_NV_MESH_SHADER_EXTENSION_NAME)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 std::vector<const char*> getRequiredExtensions() {
     uint32_t glfwExtensionCount = 0;
     const char** glfwExtensions;

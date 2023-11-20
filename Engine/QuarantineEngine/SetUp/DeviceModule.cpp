@@ -99,10 +99,17 @@ void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& nQueu
         physical_features2.pNext = &indexing_features;
     }
 
+    //Mesh shader features
+    VkPhysicalDeviceMeshShaderFeaturesNV mesh_shaders_feature = {};
+    mesh_shaders_feature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_NV;
+    mesh_shaders_feature.taskShader = true;
+    mesh_shaders_feature.meshShader = true;
+    mesh_shaders_feature.pNext = &physical_features2;
+
     //Raytracing features
     VkPhysicalDeviceBufferDeviceAddressFeaturesEXT bufferDeviceAddressFeatures = {};
     bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_EXT;
-    bufferDeviceAddressFeatures.pNext = &physical_features2;
+    bufferDeviceAddressFeatures.pNext = &mesh_shaders_feature;
     bufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
     bufferDeviceAddressFeatures.bufferDeviceAddressCaptureReplay = VK_FALSE;
     bufferDeviceAddressFeatures.bufferDeviceAddressMultiDevice = VK_FALSE;
@@ -204,5 +211,9 @@ bool DeviceModule::isDeviceSuitable(VkPhysicalDevice newDevice, VkSurfaceKHR& su
     vkGetPhysicalDeviceFeatures2(newDevice, &device_features);
     this->bindless_supported = this->indexing_features.descriptorBindingPartiallyBound && indexing_features.runtimeDescriptorArray;
 
-    return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy && this->bindless_supported;
+    this->meshShader_supported = checkMeshShaderExtensionSupport(newDevice);
+
+    return indices.isComplete() && extensionsSupported
+        && swapChainAdequate && supportedFeatures.samplerAnisotropy
+        && this->bindless_supported && this->meshShader_supported;
 }
