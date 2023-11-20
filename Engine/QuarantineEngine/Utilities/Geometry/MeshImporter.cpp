@@ -132,7 +132,9 @@ void MeshImporter::ExtractBoneWeightForVertices(MeshData& data, aiMesh* mesh)
             {
                 int vertexId = weights[weightIndex].mVertexId;
                 float weight = weights[weightIndex].mWeight;
+
                 assert(vertexId <= data.vertices.size());
+
                 SetVertexBoneData(data.vertices[vertexId], boneID, weight);
             }
         }
@@ -148,6 +150,7 @@ void MeshImporter::RemapGeometry(MeshData& data)
 
     size_t total_vertices = meshopt_generateVertexRemap(&remap[0], NULL, data.numIndices, &data.vertices[0], data.numIndices, sizeof(PBRVertex));
 
+    data.numVertices = total_vertices;
     resultIndices.resize(data.numIndices);
     meshopt_remapIndexBuffer(&resultIndices[0], NULL, data.numIndices, &remap[0]);
 
@@ -336,8 +339,6 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
         }
     }
 
-    //this->RemapGeometry(data);
-
     if (!existNormal)
     {
         this->RecreateNormals(data.vertices, data.indices);
@@ -349,6 +350,8 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
     }
 
     ExtractBoneWeightForVertices(data, mesh);
+
+    this->RemapGeometry(data);
 
     return data;
 }
