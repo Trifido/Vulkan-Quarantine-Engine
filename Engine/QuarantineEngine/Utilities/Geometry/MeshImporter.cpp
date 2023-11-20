@@ -148,11 +148,17 @@ void MeshImporter::RemapGeometry(MeshData& data)
     std::vector<uint32_t> resultIndices;
     std::vector<PBRVertex> resultVertices;
 
-    size_t total_vertices = meshopt_generateVertexRemap(&remap[0], NULL, data.numIndices, &data.vertices[0], data.numIndices, sizeof(PBRVertex));
+    std::vector<VertexMeshlet> test;
+    for (int i = 0; i < data.vertices.size(); i++)
+    {
+        test.push_back(VertexMeshlet(data.vertices.at(i)));
+    }
+
+    size_t total_vertices = meshopt_generateVertexRemap(&remap[0], &data.indices[0], data.numIndices, &data.vertices[0], data.numIndices, sizeof(PBRVertex)); //meshopt_generateVertexRemap
 
     data.numVertices = total_vertices;
     resultIndices.resize(data.numIndices);
-    meshopt_remapIndexBuffer(&resultIndices[0], NULL, data.numIndices, &remap[0]);
+    meshopt_remapIndexBuffer(&resultIndices[0], &data.indices[0], data.numIndices, &remap[0]);
 
     resultVertices.resize(total_vertices);
     meshopt_remapVertexBuffer(&resultVertices[0], &data.vertices[0], data.numIndices, sizeof(PBRVertex), &remap[0]);
