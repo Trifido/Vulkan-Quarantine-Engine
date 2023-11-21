@@ -31,7 +31,8 @@ struct CameraUniform
     glm::mat4 view;
     glm::mat4 projection;
     glm::mat4 viewproj;
-    glm::vec3 position;
+    glm::vec4 position;
+    alignas(16) glm::vec4 frustumPlanes[6];
 };
 
 struct MaterialUniform

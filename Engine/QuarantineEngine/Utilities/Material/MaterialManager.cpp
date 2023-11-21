@@ -46,6 +46,9 @@ MaterialManager::MaterialManager()
     const std::string absolute_animation_frag_shader_path = absPath + "/Animation/exampleAnimated_frag.spv";
     const std::string absolute_particles_vert_shader_path = absPath + "/Particles/particles_vert.spv";
     const std::string absolute_particles_frag_shader_path = absPath + "/Particles/particles_frag.spv";
+    const std::string absolute_mesh_task_shader_path = absPath + "/mesh/mesh_task.spv";
+    const std::string absolute_mesh_mesh_shader_path = absPath + "/mesh/mesh_mesh.spv";
+    const std::string absolute_mesh_frag_shader_path = absPath + "/mesh/mesh_frag.spv";
 
     this->lightManager = LightManager::getInstance();
     this->cameraEditor = CameraEditor::getInstance();
@@ -67,6 +70,12 @@ MaterialManager::MaterialManager()
     pipelineParticleShader.HasVertexData = false;
     this->default_particles_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_particles_vert_shader_path, absolute_particles_frag_shader_path, pipelineParticleShader));
     shaderManager->AddShader("default_particles", this->default_particles_shader);
+
+    //GraphicsPipelineData pipelineMeshShader = {};
+    //pipelineMeshShader.HasVertexData = false;
+    //pipelineMeshShader.IsMeshShader = true;
+    //this->mesh_shader_test = std::make_shared<ShaderModule>(ShaderModule(absolute_mesh_task_shader_path, absolute_mesh_mesh_shader_path, absolute_mesh_frag_shader_path, pipelineParticleShader));
+    //shaderManager->AddShader("mesh_shader", this->mesh_shader_test);
 }
 
 void MaterialManager::InitializeMaterialManager()

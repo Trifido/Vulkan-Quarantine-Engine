@@ -1,0 +1,92 @@
+
+#extension GL_ARB_shader_draw_parameters : enable
+#extension GL_NV_mesh_shader: require
+#extension GL_KHR_shader_subgroup_ballot: require
+
+struct Meshlet
+{
+    // vec3 keeps Meshlet aligned to 16 bytes which is important because C++ has an alignas() directive
+    vec3 center;
+    float radius;
+    int8_t cone_axis[3];
+    int8_t cone_cutoff;
+
+    uint dataOffset;
+    uint mesh_index;
+    uint8_t vertexCount;
+    uint8_t triangleCount;
+};
+
+layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
+
+out taskNV block
+{
+    uint meshletIndices[32];
+};
+
+layout(set = 0, binding = 0) uniform CameraUniform
+{
+	mat4 view;
+	mat4 proj;
+	mat4 viewproj;
+    vec4 position;
+    vec4 frustumPlanes[6];
+} cameraData;
+
+layout(set = 0, binding = 1) readonly buffer Meshlets
+{
+    Meshlet meshlets[];
+};
+
+layout(std430, push_constant) uniform PushConstants
+{
+    mat4 model;
+} constants;
+
+bool coneCull(vec3 center, float radius, vec3 cone_axis, float cone_cutoff)
+{
+    return dot(center - cameraData.position.xyz, cone_axis) >= cone_cutoff * length(center - cameraData.position.xyz) + radius;
+}
+
+void main()
+{
+    uint thread_index = gl_LocalInvocationID.x;
+    uint group_index = gl_WorkGroupID.x;
+    uint meshlet_index = group_index * 32 + thread_index;
+
+    uint mesh_instance_index = draw_commands[gl_DrawIDARB].drawId;
+
+    vec4 center = model * vec4(meshlets[meshlet_index].center, 1);
+    float scale = length( model[0] );
+    float radius = meshlets[meshlet_index].radius * scale;
+
+    vec3 cone_axis = mat3( model ) * 
+    vec3(int(meshlets[meshlet_index].cone_axis[0]) / 127.0, 
+    int(meshlets[meshlet_index].cone_axis[1]) / 127.0, 
+    int(meshlets[meshlet_index].cone_axis[2]) / 127.0);
+
+    float cone_cutoff = int(meshlets[meshlet_index].cone_cutoff) / 127.0;
+
+    bool accept = false;
+    accept = !coneCull(center.xyz, radius, cone_axis, cone_cutoff);
+
+    vec4 view_center = cameraData.view * center;
+
+    bool frustum_visible = true;
+    for ( uint i = 0; i < 6; ++i ) {
+        frustum_visible = frustum_visible && (dot( cameraData.frustumPlanes[i], view_center) > -radius);
+    }
+
+    accept = accept && frustum_visible;
+
+    uvec4 ballot = subgroupBallot(accept);
+    uint index = subgroupBallotExclusiveBitCount(ballot);
+
+    if (accept)
+        meshletIndices[index] = mi;
+
+    uint count = subgroupBallotBitCount(ballot);
+
+    if (thread_index == 0)
+        gl_TaskCountNV = count;
+}

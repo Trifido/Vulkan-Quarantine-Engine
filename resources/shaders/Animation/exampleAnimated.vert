@@ -6,7 +6,8 @@ layout(set = 0, binding = 0) uniform CameraUniform
 	mat4 view;
 	mat4 proj;
 	mat4 viewproj;
-    vec3 position;
+    vec4 position;
+    vec4 frustumPlanes[6];
 } cameraData;
 
 layout(std430, push_constant) uniform PushConstants
@@ -59,7 +60,7 @@ void main()
     
     mat3 TBN = transpose(mat3(T, B, N));   
 
-    vs_out.TangentViewPos = TBN * cameraData.position;
+    vs_out.TangentViewPos = TBN * cameraData.position.xyz;
     vs_out.TangentFragPos = TBN * vs_out.FragPos; 
 
     for(int i = 0; i < uboLight.numLights; i++)
