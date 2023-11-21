@@ -170,7 +170,7 @@ void App::initVulkan()
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
     this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/Raptoid/scene.gltf"));
+    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../../resources/models/Vampire/Capoeira.dae"));
 
     //model->transform->SetScale(glm::vec3(0.1f));
     model->transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));

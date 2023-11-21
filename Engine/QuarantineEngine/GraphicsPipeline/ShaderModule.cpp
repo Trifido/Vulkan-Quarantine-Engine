@@ -22,10 +22,18 @@ ShaderModule::ShaderModule(std::string vertexShaderName, std::string fragmentSha
     this->createShaderModule(vertexShaderName, fragmentShaderName);
 }
 
-ShaderModule::ShaderModule(std::string vertexShaderName, std::string geometryShaderName, std::string fragmentShaderName, GraphicsPipelineData pipelineData)
+ShaderModule::ShaderModule(std::string firstShaderName, std::string secondShaderName, std::string thirdShaderName, GraphicsPipelineData pipelineData)
 {
     this->graphicsPipelineData = pipelineData;
-    this->createShaderModule(vertexShaderName, geometryShaderName, fragmentShaderName);
+
+    if (!this->graphicsPipelineData.IsMeshShader)
+    {
+        this->createShaderModule(firstShaderName, secondShaderName, thirdShaderName);
+    }
+    else
+    {
+        this->createMeshShaderModule(firstShaderName, secondShaderName, thirdShaderName);
+    }
 }
 
 std::vector<char> ShaderModule::readFile(const std::string& filename)
@@ -74,6 +82,26 @@ void ShaderModule::createShaderModule(const std::string& filename_vertex, const 
     fragShaderStageInfo = createShader(deviceModule->device, filename_fragment, SHADER_TYPE::FRAGMENT_SHADER);
     shaderStages.push_back(vertShaderStageInfo);
     shaderStages.push_back(geoShaderStageInfo);
+    shaderStages.push_back(fragShaderStageInfo);
+
+    this->CreateDescriptorSetLayout();
+    this->createShaderBindings();
+    this->PipelineModule = this->graphicsPipelineManager->RegisterNewGraphicsPipeline(*this, this->descriptorSetLayout, this->graphicsPipelineData);
+}
+
+void ShaderModule::createMeshShaderModule(const std::string& filename_task, const std::string& filename_mesh, const std::string& filename_fragment)
+{
+    this->graphicsPipelineData.HasVertexData = false;
+
+    if (filename_task != "")
+    {
+        taskShaderStageInfo = createShader(deviceModule->device, filename_task, SHADER_TYPE::TASK_SHADER);
+        shaderStages.push_back(taskShaderStageInfo);
+    }
+
+    meshShaderStageInfo = createShader(deviceModule->device, filename_mesh, SHADER_TYPE::MESH_SHADER);
+    fragShaderStageInfo = createShader(deviceModule->device, filename_fragment, SHADER_TYPE::FRAGMENT_SHADER);
+    shaderStages.push_back(meshShaderStageInfo);
     shaderStages.push_back(fragShaderStageInfo);
 
     this->CreateDescriptorSetLayout();
@@ -178,8 +206,10 @@ VkPipelineShaderStageCreateInfo ShaderModule::createShader(VkDevice& device, con
             shaderStageInfo.stage = VK_SHADER_STAGE_GEOMETRY_BIT;
             shaderStageInfo.module = geometry_shader;
             break;
+
         case SHADER_TYPE::TESELLATION_SHADER:
             break;
+
         case SHADER_TYPE::COMPUTE_SHADER:
             if (vkCreateShaderModule(device, &createInfo, nullptr, &compute_shader) != VK_SUCCESS) {
                 throw std::runtime_error("failed to create compute shader module!");
@@ -188,6 +218,25 @@ VkPipelineShaderStageCreateInfo ShaderModule::createShader(VkDevice& device, con
             shaderStageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
             shaderStageInfo.module = compute_shader;
             break;
+
+        case SHADER_TYPE::TASK_SHADER:
+            if (vkCreateShaderModule(device, &createInfo, nullptr, &task_shader) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create task shader module!");
+            }
+
+            shaderStageInfo.stage = VK_SHADER_STAGE_TASK_BIT_NV;
+            shaderStageInfo.module = task_shader;
+            break;
+
+        case SHADER_TYPE::MESH_SHADER:
+            if (vkCreateShaderModule(device, &createInfo, nullptr, &mesh_shader) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create mesh shader module!");
+            }
+
+            shaderStageInfo.stage = VK_SHADER_STAGE_MESH_BIT_NV;
+            shaderStageInfo.module = mesh_shader;
+            break;
+
         default:
             break;
     }

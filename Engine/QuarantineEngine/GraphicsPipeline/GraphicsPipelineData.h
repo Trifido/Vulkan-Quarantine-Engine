@@ -12,6 +12,7 @@ struct GraphicsPipelineData
     VkPrimitiveTopology topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     uint32_t vertexBufferStride = sizeof(PBRVertex);
     bool HasVertexData = true;
+    bool IsMeshShader = false;
 
     GraphicsPipelineData() {}
 };
