@@ -1,2 +1,115 @@
-
+#version 450
+#extension GL_EXT_shader_16bit_storage: require
+#extension GL_EXT_shader_8bit_storage: require
 #extension GL_NV_mesh_shader: require
+
+layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
+layout(triangles, max_vertices = 64, max_primitives = 124) out;
+
+struct Meshlet
+{
+    // vec3 keeps Meshlet aligned to 16 bytes which is important because C++ has an alignas() directive
+    vec3 center;
+    float radius;
+    int8_t cone_axis[3];
+    int8_t cone_cutoff;
+
+    uint dataOffset;
+    uint mesh_index;
+    uint8_t vertexCount;
+    uint8_t triangleCount;
+};
+
+struct PBRVertex
+{
+    vec4 pos;
+    vec4 norm;
+    vec2 texCoord;
+    vec4 tangents;
+    vec4 bitangents;
+    int boneIDs[4];
+    float boneWeights[4];
+};
+
+layout(set = 0, binding = 0) uniform CameraUniform
+{
+	mat4 view;
+	mat4 proj;
+	mat4 viewproj;
+    vec4 position;
+    vec4 frustumPlanes[6];
+} cameraData;
+
+layout(set = 0, binding = 1) readonly buffer Meshlets
+{
+    Meshlet meshlets[];
+};
+
+layout(set = 0, binding = 2) readonly buffer MeshletData
+{
+    uint meshletData[];
+};
+
+layout(set = 0, binding = 3) readonly buffer Vertices
+{
+    PBRVertex vertex[];
+};
+
+layout(std430, push_constant) uniform PushConstants
+{
+    mat4 model;
+} constants;
+
+in taskNV block
+{
+    uint meshletIndices[32];
+};
+
+layout(location = 0) out vec3 outPosition[];
+layout(location = 1) out vec3 outNormal[];
+layout(location = 2) out vec2 outTexCoord[];
+layout(location = 3) out vec3 outTangent[];
+layout(location = 4) out vec3 outBiTangent[];
+
+void main()
+{
+    uint ti = gl_LocalInvocationID.x;
+    uint mi = meshletIndices[gl_WorkGroupID.x];
+
+    uint vertexCount = uint(meshlets[mi].vertexCount);
+    uint triangleCount = uint(meshlets[mi].triangleCount);
+    uint indexCount = triangleCount * 3;
+
+    uint dataOffset = meshlets[mi].dataOffset;
+    uint vertexOffset = dataOffset;
+    uint indexOffset = dataOffset + vertexCount;
+
+    for (uint i = ti; i < vertexCount; i += 32)
+    {
+        uint vi = meshletData[vertexOffset + i];
+
+        outPosition[i] = (constants.model * vertex[vi].pos).xyz;
+ 
+        mat4 normalMatrix = transpose(inverse(constants.model));
+        outNormal[i] = (normalMatrix * vertex[vi].norm).xyz;
+
+        outTexCoord[i] = vertex[vi].texCoord;
+
+        vec3 T = normalize(normalMatrix * vertex[vi].tangents).xyz;
+        outTangent[i] = normalize(T - dot(T, outNormal[i]) * outNormal[i]);
+
+        outBiTangent[i] = vertex[vi].bitangents.xyz;
+
+        gl_MeshVerticesNV[ i ].gl_Position = cameraData.view * vec4(outPosition[i], 1.0);
+    }
+
+    uint indexGroupCount = (indexCount + 3) / 4;
+
+    for (uint i = ti; i < indexGroupCount; i += 32)
+    {
+        writePackedPrimitiveIndices4x8NV(i * 4, meshletData[indexOffset + i]);
+    }
+
+    if (ti == 0)
+        gl_PrimitiveCountNV = uint(meshlets[mi].triangleCount);
+}

@@ -1,5 +1,7 @@
-
+#version 450
 #extension GL_ARB_shader_draw_parameters : enable
+#extension GL_EXT_shader_16bit_storage: require
+#extension GL_EXT_shader_8bit_storage: require
 #extension GL_NV_mesh_shader: require
 #extension GL_KHR_shader_subgroup_ballot: require
 
@@ -54,13 +56,11 @@ void main()
     uint group_index = gl_WorkGroupID.x;
     uint meshlet_index = group_index * 32 + thread_index;
 
-    uint mesh_instance_index = draw_commands[gl_DrawIDARB].drawId;
-
-    vec4 center = model * vec4(meshlets[meshlet_index].center, 1);
-    float scale = length( model[0] );
+    vec4 center = constants.model * vec4(meshlets[meshlet_index].center, 1);
+    float scale = length( constants.model[0] );
     float radius = meshlets[meshlet_index].radius * scale;
 
-    vec3 cone_axis = mat3( model ) * 
+    vec3 cone_axis = mat3( constants.model ) * 
     vec3(int(meshlets[meshlet_index].cone_axis[0]) / 127.0, 
     int(meshlets[meshlet_index].cone_axis[1]) / 127.0, 
     int(meshlets[meshlet_index].cone_axis[2]) / 127.0);
@@ -83,7 +83,7 @@ void main()
     uint index = subgroupBallotExclusiveBitCount(ballot);
 
     if (accept)
-        meshletIndices[index] = mi;
+        meshletIndices[index] = meshlet_index;
 
     uint count = subgroupBallotBitCount(ballot);
 
