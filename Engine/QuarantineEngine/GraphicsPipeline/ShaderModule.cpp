@@ -23,6 +23,7 @@ ShaderModule::ShaderModule(std::string vertexShaderName, std::string fragmentSha
 }
 
 ShaderModule::ShaderModule(std::string firstShaderName, std::string secondShaderName, std::string thirdShaderName, GraphicsPipelineData pipelineData)
+    : ShaderModule()
 {
     this->graphicsPipelineData = pipelineData;
 
