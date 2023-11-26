@@ -45,11 +45,6 @@ layout(set = 0, binding = 5) uniform UniformManagerLight
 
 layout(set = 0, binding = 6) uniform sampler2D texSampler[5];
 
-layout(std430, push_constant) uniform PushConstants
-{
-    mat4 model;
-} constants;
-
 vec3 getNormalFromMap(vec2 TexCoords);
 
 //BLINN-PHONG LIGHT EQUATIONS
@@ -76,7 +71,6 @@ void main()
     }
 
     //COMPUTE TANGENT SPACE DATA
-    mat4 normalMatrix = transpose(inverse(constants.model));
     
     mat3 TBN = transpose(mat3(inTangent, inBitangent, inNormal));
     vec3 tangentViewPos = TBN * cameraData.position.xyz;

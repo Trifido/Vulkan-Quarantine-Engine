@@ -324,7 +324,9 @@ void GameObject::CreateAnimationDrawCommand(VkCommandBuffer& commandBuffer, uint
         {
             pushConstant.model = this->parent->transform->GetModel() * pushConstant.model;
         }
-        vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantStruct), &pushConstant);
+
+        VkShaderStageFlagBits stages = VK_SHADER_STAGE_ALL;
+        vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, stages, 0, sizeof(PushConstantStruct), &pushConstant);
 
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->mesh->indices.size()), 1, 0, 0, 0);
     }
@@ -365,7 +367,9 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
         {
             pushConstant.model = this->parent->transform->GetModel() * pushConstant.model;
         }
-        vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantStruct), &pushConstant);
+
+        VkShaderStageFlagBits stages = VK_SHADER_STAGE_ALL;
+        vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, stages, 0, sizeof(PushConstantStruct), &pushConstant);
 
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->mesh->indices.size()), 1, 0, 0, 0);
     }

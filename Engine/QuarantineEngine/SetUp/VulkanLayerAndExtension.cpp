@@ -72,7 +72,7 @@ bool checkMeshShaderExtensionSupport(VkPhysicalDevice device)
 
     for (size_t i = 0; i < extensionCount; i++)
     {
-        if (!strcmp(availableExtensions[i].extensionName, "VK_EXT_mesh_shader")) {
+        if (!strcmp(availableExtensions[i].extensionName, VK_NV_MESH_SHADER_EXTENSION_NAME)) {
             return true;
         }
     }

@@ -143,10 +143,14 @@ void ShaderModule::cleanup()
     shaderStages.clear();
     if (vertex_shader != nullptr)
         vkDestroyShaderModule(deviceModule->device, vertex_shader, nullptr);
-    if(fragment_shader != nullptr)
+    if (fragment_shader != nullptr)
         vkDestroyShaderModule(deviceModule->device, fragment_shader, nullptr);
     if (compute_shader != nullptr)
         vkDestroyShaderModule(deviceModule->device, compute_shader, nullptr);
+    if (task_shader != nullptr)
+        vkDestroyShaderModule(deviceModule->device, task_shader, nullptr);
+    if (mesh_shader != nullptr)
+        vkDestroyShaderModule(deviceModule->device, mesh_shader, nullptr);
 }
 
 void ShaderModule::RecreatePipeline()

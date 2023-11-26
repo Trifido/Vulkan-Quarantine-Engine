@@ -36,6 +36,7 @@ public:
     VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
     void cleanup();
     VkSampleCountFlagBits* getMsaaSamples();
+    void InitializeMeshShaderExtension();
 private:
     bool isDeviceSuitable(VkPhysicalDevice newDevice, VkSurfaceKHR& surface);
     VkSampleCountFlagBits getMaxUsableSampleCount();
