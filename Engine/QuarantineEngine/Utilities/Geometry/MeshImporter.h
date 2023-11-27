@@ -49,6 +49,9 @@ private:
     void RemapGeometry(MeshData& data);
 
 public:
+    bool EnableMeshShaderMaterials = false;
+
+public:
     MeshImporter();
     std::vector<MeshData> LoadMesh(std::string path);
     static MeshData LoadRawMesh(float rawData[], unsigned int numData, unsigned int offset);

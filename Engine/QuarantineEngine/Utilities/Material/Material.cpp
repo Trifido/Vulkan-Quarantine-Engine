@@ -45,8 +45,8 @@ void Material::InitializeMaterialDataUBO()
     if (this->hasDescriptorBuffer)
     {
         this->materialData.InitializeUBOMaterial(this->shader);
-        this->descriptor->materialUBO = this->materialData.materialUBO;
-        this->descriptor->materialUniformSize = this->materialData.materialUniformSize;
+        this->descriptor->ubos["materialUBO"] = this->materialData.materialUBO;
+        this->descriptor->uboSizes["materialUBO"] = this->materialData.materialUniformSize;
         this->descriptor->textures = this->materialData.texture_vector;
         this->IsInitialized = true;
     }
@@ -80,5 +80,35 @@ void Material::UpdateUniformData()
     if (this->isMeshBinding && this->shader != nullptr && this->hasDescriptorBuffer)
     {
         this->materialData.UpdateUBOMaterial();
+    }
+}
+
+void Material::SetMeshShaderPipeline(bool value)
+{
+    if (this->isMeshShaderEnabled != value)
+    {
+        this->isMeshShaderEnabled = value;
+        if (this->hasDescriptorBuffer)
+        {
+            this->descriptor->Cleanup();
+            this->descriptor.reset();
+            this->descriptor = nullptr;
+        }
+
+        if (this->isMeshShaderEnabled)
+        {
+            if (this->hasDescriptorBuffer)
+            {
+                auto shaderManager = ShaderManager::getInstance();
+                auto meshShader = shaderManager->GetShader("mesh_shader");
+                this->descriptor = std::make_shared<DescriptorBuffer>(meshShader);
+                this->materialData.InitializeUBOMaterial(meshShader);
+            }
+        }
+        else
+        {
+            this->descriptor = std::make_shared<DescriptorBuffer>(this->shader);
+            this->materialData.InitializeUBOMaterial(this->shader);
+        }
     }
 }

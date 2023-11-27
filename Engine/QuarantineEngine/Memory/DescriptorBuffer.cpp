@@ -10,7 +10,8 @@ DescriptorBuffer::DescriptorBuffer()
 DescriptorBuffer::DescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr) : DescriptorBuffer()
 {
     this->numBinding = shader_ptr->reflectShader.bindings.size();
-    this->materialUBO = std::make_shared<UniformBufferObject>();
+
+    this->ubos["materialUBO"] = std::make_shared<UniformBufferObject>();
     this->StartResources(shader_ptr);
 }
 
@@ -21,10 +22,18 @@ void DescriptorBuffer::CleanLastResources()
     this->camera = nullptr;
     this->textures.reset();
     this->textures = nullptr;
-    this->materialUBO.reset();
-    this->materialUBO = nullptr;
-    this->animationUBO.reset();
-    this->animationUBO = nullptr;
+
+    auto it = this->ubos.begin();
+    for (int i = 0; i < ubos.size(); i++)
+    {
+        it->second.reset();
+        it->second = nullptr;
+
+        it++;
+    }
+
+    this->ubos.clear();
+    this->uboSizes.clear();
 }
 
 void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
@@ -83,6 +92,43 @@ void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
         {
             poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
             poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+            this->ssboData["ParticleSSBO"] = std::make_shared<UniformBufferObject>();
+            this->ssboSize["ParticleSSBO"] = VkDeviceSize();
+
+            this->numSSBOs++;
+            idx++;
+        }
+        else if (binding.first == "Meshlets")
+        {
+            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+            this->ssboData["Meshlets"] = std::make_shared<UniformBufferObject>();
+            this->ssboSize["Meshlets"] = VkDeviceSize();
+
+            this->numSSBOs++;
+            idx++;
+        }
+        else if (binding.first == "MeshletData")
+        {
+            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+            this->ssboData["MeshletData"] = std::make_shared<UniformBufferObject>();
+            this->ssboSize["MeshletData"] = VkDeviceSize();
+
+            this->numSSBOs++;
+            idx++;
+        }
+        else if (binding.first == "Vertices")
+        {
+            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+            this->ssboData["Vertices"] = std::make_shared<UniformBufferObject>();
+            this->ssboSize["Vertices"] = VkDeviceSize();
+
             this->numSSBOs++;
             idx++;
         }
@@ -97,15 +143,6 @@ void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
     if (vkCreateDescriptorPool(deviceModule->device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create descriptor pool!");
-    }
-}
-
-void DescriptorBuffer::InitializeSSBOData()
-{
-    for (uint32_t i = 0; i < this->numSSBOs; i++)
-    {
-        this->ssboData.push_back(std::make_shared<UniformBufferObject>());
-        this->ssboSize.push_back(VkDeviceSize());
     }
 }
 
@@ -153,17 +190,17 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
         }
         else if (binding.first == "UniformMaterial")
         {
-            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->materialUBO->uniformBuffers[frameIdx], this->materialUniformSize, frameIdx);
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->ubos["materialUBO"]->uniformBuffers[frameIdx], this->uboSizes["materialUBO"], frameIdx);
             idx++;
         }
         else if (binding.first == "UniformAnimation")
         {
-            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->animationUBO->uniformBuffers[frameIdx], this->animationUniformSize, frameIdx);
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->ubos["animationUBO"]->uniformBuffers[frameIdx], this->uboSizes["animationUBO"], frameIdx);
             idx++;
         }
         else if (binding.first == "UniformParticleTexture")
         {
-            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->particleSystemUBO->uniformBuffers[frameIdx], sizeof(ParticleTextureParamsUniform), frameIdx);
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->ubos["particleSystemUBO"]->uniformBuffers[frameIdx], this->uboSizes["particleSystemUBO"], frameIdx);
             idx++;
         }
         else if (binding.first == "Texture2DArray")
@@ -212,6 +249,11 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
             this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssboData[0]->uniformBuffers[frameIdx], this->ssboSize[0], frameIdx);
             idx++;
         }
+        else if (binding.first == "Meshlets")
+        {
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssboData[0]->uniformBuffers[frameIdx], this->ssboSize[0], frameIdx);
+            idx++;
+        }
     }
 
     return descriptorWrites;
@@ -254,23 +296,29 @@ void DescriptorBuffer::Cleanup()
     {
         if (!this->ssboData.empty())
         {
+            auto it = this->ssboData.begin();
             for (uint32_t j = 0; j < this->ssboData.size(); j++)
             {
-                vkDestroyBuffer(deviceModule->device, this->ssboData[j]->uniformBuffers[i], nullptr);
-                vkFreeMemory(deviceModule->device, this->ssboData[j]->uniformBuffersMemory[i], nullptr);
+                if (!it->second->uniformBuffers.empty())
+                {
+                    vkDestroyBuffer(deviceModule->device, it->second->uniformBuffers[i], nullptr);
+                    vkFreeMemory(deviceModule->device, it->second->uniformBuffersMemory[i], nullptr);
+                    it->second->uniformBuffers[i] = VK_NULL_HANDLE;
+                }
 
-                this->ssboData[j]->uniformBuffers[i] = VK_NULL_HANDLE;
+                it++;
             }
         }
 
-        if (this->particleSystemUBO != nullptr)
+        if (this->ubos["particleSystemUBO"] != nullptr)
         {
-            vkDestroyBuffer(deviceModule->device, this->particleSystemUBO->uniformBuffers[i], nullptr);
-            vkFreeMemory(deviceModule->device, this->particleSystemUBO->uniformBuffersMemory[i], nullptr);
+            vkDestroyBuffer(deviceModule->device, this->ubos["particleSystemUBO"]->uniformBuffers[i], nullptr);
+            vkFreeMemory(deviceModule->device, this->ubos["particleSystemUBO"]->uniformBuffersMemory[i], nullptr);
         }
     }
 
-    this->particleSystemUBO = nullptr;
+    if (this->ubos["particleSystemUBO"] != nullptr)
+        this->ubos["particleSystemUBO"] = nullptr;
 
     this->ssboData.clear();
     this->buffersInfo.clear();

@@ -47,8 +47,8 @@ public:
 
 public:
     GameObject();
-    GameObject(PRIMITIVE_TYPE type);
-    GameObject(std::string meshPath);
+    GameObject(PRIMITIVE_TYPE type, bool isMeshShading = false);
+    GameObject(std::string meshPath, bool isMeshShading = false);
     inline std::string ID() const { return id; }
     void cleanup();
     virtual void drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
@@ -63,7 +63,7 @@ public:
 protected:
     void InitializeComponents(size_t numMeshAttributes);
     void InitializeAnimationComponent();
-    bool CreateChildsGameObject(std::string pathfile);
+    bool CreateChildsGameObject(std::string pathfile, bool isMeshShading);
     virtual void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
     virtual void CreateAnimationDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator);
     size_t CheckNumAttributes();

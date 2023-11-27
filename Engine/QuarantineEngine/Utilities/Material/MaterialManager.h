@@ -40,6 +40,7 @@ public:
     void AddMaterial(std::string& nameMaterial, Material mat);
     void AddMaterial(const char* nameMaterial, Material mat);
     void CreateMaterial(std::string& nameMaterial, bool hasAnimation);
+    void CreateMeshShaderMaterial(std::string& nameMaterial);
     bool Exists(std::string materialName);
     void CleanPipelines();
     void CleanLastResources();

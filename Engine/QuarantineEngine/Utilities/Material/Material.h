@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 #include "GameComponent.h"
 #include <RenderLayer.h>
+#include <ShaderManager.h>
 #include <ShaderModule.h>
 #include <MaterialData.h>
 #include <DescriptorBuffer.h>
@@ -16,6 +17,7 @@ private:
     bool isMeshBinding = false;
     bool IsInitialized = false;
     bool hasDescriptorBuffer = false;
+    bool isMeshShaderEnabled = false;
 
 public:
     MaterialData materialData;
@@ -35,6 +37,7 @@ public:
     void InitializeMaterialDataUBO();
     void UpdateUniformData();
     bool HasDescriptorBuffer() { return this->hasDescriptorBuffer; }
+    void SetMeshShaderPipeline(bool value);
 };
 
 #endif // !MATERIAL_H

@@ -30,16 +30,12 @@ private:
 public:
     std::vector<VkDescriptorSet>    descriptorSets;
 
-    std::vector<std::shared_ptr<UniformBufferObject>>    ssboData;
-    std::vector<VkDeviceSize>                            ssboSize;
+    std::unordered_map<std::string, std::shared_ptr<UniformBufferObject>>    ssboData;
+    std::unordered_map<std::string, VkDeviceSize>                            ssboSize;
 
     //UBO's
-    std::shared_ptr<UniformBufferObject>    materialUBO = nullptr;
-    VkDeviceSize    materialUniformSize = 0;
-    std::shared_ptr<UniformBufferObject>    animationUBO = nullptr;
-    VkDeviceSize    animationUniformSize = 0;
-    std::shared_ptr<UniformBufferObject>    particleSystemUBO = nullptr;
-    VkDeviceSize    particleSystemUniformSize = 0;
+    std::unordered_map<std::string, std::shared_ptr<UniformBufferObject>>  ubos;
+    std::unordered_map<std::string, VkDeviceSize> uboSizes;
     std::shared_ptr<std::vector<std::shared_ptr<CustomTexture>>> textures;
 
 private:
@@ -53,7 +49,6 @@ public:
     DescriptorBuffer();
     DescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr);
     void InitializeDescriptorSets(std::shared_ptr<ShaderModule> shader_ptr);
-    void InitializeSSBOData();
     VkDescriptorSet* getDescriptorSet(size_t id) { return &descriptorSets.at(id); }
     void CleanLastResources();
     void Cleanup();

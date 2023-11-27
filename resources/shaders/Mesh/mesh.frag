@@ -28,7 +28,8 @@ layout(set = 0, binding = 0) uniform CameraUniform
     vec4 frustumPlanes[6];
 } cameraData;
 
-layout(set = 0, binding = 4) uniform UniformMaterial {
+layout(set = 0, binding = 4) uniform UniformMaterial 
+{
     float Shininess;
     int idxDiffuse;
     int idxNormal;

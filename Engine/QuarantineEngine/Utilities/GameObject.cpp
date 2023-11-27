@@ -16,7 +16,7 @@ GameObject::GameObject()
     this->InitializeComponents(numMeshAttributes);
 }
 
-GameObject::GameObject(PRIMITIVE_TYPE type)
+GameObject::GameObject(PRIMITIVE_TYPE type, bool isMeshShading)
 {
     this->deviceModule = DeviceModule::getInstance();
     this->queueModule = QueueModule::getInstance();
@@ -26,9 +26,9 @@ GameObject::GameObject(PRIMITIVE_TYPE type)
 
     if (type != PRIMITIVE_TYPE::GRID_TYPE)
     {
-        auto mat = this->materialManager->GetMaterial("defaultPrimitiveMat");
+        auto mat = (!isMeshShading) ? this->materialManager->GetMaterial("defaultPrimitiveMat") : this->materialManager->GetMaterial("defaultMeshPrimitiveMat");
         auto newMatInstance = mat->CreateMaterialInstance();
-        this->materialManager->AddMaterial("defaultPrimitiveMat", newMatInstance);
+        this->materialManager->AddMaterial((!isMeshShading) ? "defaultPrimitiveMat" : "defaultMeshPrimitiveMat", newMatInstance);
 
         this->addMaterial(newMatInstance);
         this->material->InitializeMaterialDataUBO();
@@ -42,13 +42,13 @@ GameObject::GameObject(PRIMITIVE_TYPE type)
     this->InitializeComponents(numMeshAttributes);
 }
 
-GameObject::GameObject(std::string meshPath)
+GameObject::GameObject(std::string meshPath, bool isMeshShading)
 {
     this->deviceModule = DeviceModule::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->materialManager = MaterialManager::getInstance();
 
-    bool loadResult = this->CreateChildsGameObject(meshPath);
+    bool loadResult = this->CreateChildsGameObject(meshPath, isMeshShading);
 
     if (loadResult)
     {
@@ -233,9 +233,10 @@ void GameObject::UpdatePhysicTransform()
     }
 }
 
-bool GameObject::CreateChildsGameObject(std::string pathfile)
+bool GameObject::CreateChildsGameObject(std::string pathfile, bool isMeshShading)
 {
     MeshImporter importer = {};
+    importer.EnableMeshShaderMaterials = isMeshShading;
     std::vector<MeshData> data = importer.LoadMesh(pathfile);
 
     if (data.empty())

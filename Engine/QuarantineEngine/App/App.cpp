@@ -167,14 +167,14 @@ void App::initVulkan()
     this->particleSystemManager = ParticleSystemManager::getInstance();
 
     // Inicializamos los componentes del editor
-    //std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
-    //this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
+    std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
+    this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
-    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/microphone/scene.gltf"));
+    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../resources/models/microphone/scene.gltf", true));
 
     ////model->transform->SetScale(glm::vec3(0.1f));
     //model->transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
-    //this->gameObjectManager->AddGameObject(model, "model");
+    this->gameObjectManager->AddGameObject(model, "model");
 
 //DEMO
 /*

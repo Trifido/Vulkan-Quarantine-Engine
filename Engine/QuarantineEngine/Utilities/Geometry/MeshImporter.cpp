@@ -448,7 +448,15 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
 
     if (!materialManager->Exists(materialName))
     {
-        materialManager->CreateMaterial(materialName, this->hasAnimation);
+        if (this->EnableMeshShaderMaterials)
+        {
+            materialManager->CreateMeshShaderMaterial(materialName); 
+        }
+        else
+        {
+            materialManager->CreateMaterial(materialName, this->hasAnimation);
+        }
+
         std::shared_ptr<Material> mat = materialManager->GetMaterial(materialName);
 
         //Import material atributes
