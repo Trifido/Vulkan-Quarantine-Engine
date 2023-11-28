@@ -7,6 +7,18 @@
 #include <meshoptimizer.h>
 #include <Vertex.h>
 
+struct MeshletGPU
+{
+    glm::vec3 center;
+    float radius;
+    int8_t cone_axis[3];
+    int8_t cone_cutoff;
+    uint32_t data_offset;
+    uint32_t mesh_index;
+    uint8_t vertex_count;
+    uint8_t triangle_count;
+};
+
 class Meshlet
 {
 private:
@@ -14,12 +26,10 @@ private:
     const size_t MAX_TRIANGLES = 124;
     const float CONE_WEIGHT = 0.0f;
 
-    size_t max_meshlets;
-    size_t meshlets_count;
-    std::vector<meshopt_Meshlet> meshlets;
-    std::vector<unsigned int> meshlet_vertices;
-    std::vector<unsigned char> meshlet_triangles;
-    std::vector<VertexMeshlet> meshletVertices;
+public:
+    std::vector<MeshletGPU> gpuMeshlets;
+    std::vector<uint32_t> meshletData;
+    std::vector<PBRVertex> verticesData;
 
 public:
     void GenerateMeshlet(const std::vector<PBRVertex>& vertices, const std::vector<uint32_t>& indices);

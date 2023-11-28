@@ -239,5 +239,5 @@ bool DeviceModule::isDeviceSuitable(VkPhysicalDevice newDevice, VkSurfaceKHR& su
 
     return indices.isComplete() && extensionsSupported
         && swapChainAdequate && supportedFeatures.samplerAnisotropy
-        && this->bindless_supported && this->meshShader_supported;
+        && this->bindless_supported /*&& this->meshShader_supported*/;
 }

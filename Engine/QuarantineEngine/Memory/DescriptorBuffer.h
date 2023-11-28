@@ -9,6 +9,7 @@
 #include "LightManager.h"
 #include "UBO.h"
 #include <MaterialData.h>
+#include <Meshlet.h>
 
 class DescriptorBuffer
 {
@@ -16,6 +17,7 @@ private:
     DeviceModule*   deviceModule = nullptr;
     LightManager*   lightManager = nullptr;
     Camera*         camera = nullptr;
+    std::shared_ptr<Meshlet> meshlets_ptr = nullptr;
 
     VkDescriptorPool                descriptorPool;
 
@@ -48,6 +50,7 @@ private:
 public:
     DescriptorBuffer();
     DescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr);
+    void SetMeshletBuffers(std::shared_ptr<Meshlet> meshlets_ptr);
     void InitializeDescriptorSets(std::shared_ptr<ShaderModule> shader_ptr);
     VkDescriptorSet* getDescriptorSet(size_t id) { return &descriptorSets.at(id); }
     void CleanLastResources();

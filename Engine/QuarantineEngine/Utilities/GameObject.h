@@ -26,6 +26,9 @@ enum MeshImportedType
 
 class GameObject : Numbered
 {
+private:
+    bool isMeshShading = false;
+
 protected:
     DeviceModule*       deviceModule = nullptr;
     QueueModule*        queueModule = nullptr;
@@ -33,6 +36,7 @@ protected:
     AnimationManager*   animationManager = nullptr;
     MeshImportedType    meshImportedType;
     PushConstantStruct  pushConstant;
+
 public:
     std::shared_ptr<GeometryComponent>  mesh = nullptr;
     std::shared_ptr<Transform>          transform = nullptr;
@@ -63,7 +67,7 @@ public:
 protected:
     void InitializeComponents(size_t numMeshAttributes);
     void InitializeAnimationComponent();
-    bool CreateChildsGameObject(std::string pathfile, bool isMeshShading);
+    bool CreateChildsGameObject(std::string pathfile);
     virtual void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
     virtual void CreateAnimationDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator);
     size_t CheckNumAttributes();

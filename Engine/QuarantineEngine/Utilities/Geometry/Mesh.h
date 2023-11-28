@@ -20,7 +20,6 @@ class Mesh : public GeometryComponent
 private:
     std::string PATH;
     std::vector<PBRVertex> vertices;
-    Meshlet meshlet;
 
 public:
     bool IsMeshletEnabled = false;
