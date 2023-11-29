@@ -406,6 +406,7 @@ void MaterialData::CleanMaterialUBO()
         {
             vkDestroyBuffer(deviceModule->device, this->materialUBO->uniformBuffers[i], nullptr);
             vkFreeMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[i], nullptr);
+            this->materialUBO->uniformBuffers[i] = VK_NULL_HANDLE;
         }
     }
 }

@@ -56,7 +56,16 @@ void DescriptorBuffer::CleanLastResources()
     this->textures = nullptr;
 
     auto it = this->ubos.begin();
-    for (int i = 0; i < ubos.size(); i++)
+    while(it != this->ubos.end())
+    {
+        it->second.reset();
+        it->second = nullptr;
+
+        it++;
+    }
+
+    it = this->ssboData.begin();
+    while (it != this->ssboData.end())
     {
         it->second.reset();
         it->second = nullptr;
@@ -339,7 +348,7 @@ void DescriptorBuffer::Cleanup()
         if (!this->ssboData.empty())
         {
             auto it = this->ssboData.begin();
-            for (uint32_t j = 0; j < this->ssboData.size(); j++)
+            while(it != this->ssboData.end())
             {
                 if (!it->second->uniformBuffers.empty())
                 {
