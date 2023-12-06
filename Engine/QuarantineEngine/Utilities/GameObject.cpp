@@ -14,6 +14,9 @@ GameObject::GameObject()
 
     size_t numMeshAttributes = this->CheckNumAttributes();
     this->InitializeComponents(numMeshAttributes);
+
+    this->vkCmdDrawMeshTasksNV =
+        (PFN_vkCmdDrawMeshTasksNV)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksNV");
 }
 
 GameObject::GameObject(PRIMITIVE_TYPE type, bool isMeshShading)
@@ -51,6 +54,9 @@ GameObject::GameObject(PRIMITIVE_TYPE type, bool isMeshShading)
 
     size_t numMeshAttributes = this->CheckNumAttributes();
     this->InitializeComponents(numMeshAttributes);
+
+    this->vkCmdDrawMeshTasksNV =
+        (PFN_vkCmdDrawMeshTasksNV)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksNV");
 }
 
 GameObject::GameObject(std::string meshPath, bool isMeshShading)
@@ -68,6 +74,9 @@ GameObject::GameObject(std::string meshPath, bool isMeshShading)
         this->InitializeComponents(numMeshAttributes);
         this->InitializeAnimationComponent();
     }
+
+    this->vkCmdDrawMeshTasksNV =
+        (PFN_vkCmdDrawMeshTasksNV)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksNV");
 }
 
 void GameObject::cleanup()
@@ -370,10 +379,13 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
             vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
         }
 
-        VkDeviceSize offsets[] = { 0 };
-        VkBuffer vertexBuffers[] = { this->mesh->vertexBuffer };
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-        vkCmdBindIndexBuffer(commandBuffer, this->mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+        if (!this->isMeshShading)
+        {
+            VkDeviceSize offsets[] = { 0 };
+            VkBuffer vertexBuffers[] = { this->mesh->vertexBuffer };
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+            vkCmdBindIndexBuffer(commandBuffer, this->mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+        }
 
         if (this->material->HasDescriptorBuffer())
         {
@@ -389,7 +401,14 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
         VkShaderStageFlagBits stages = VK_SHADER_STAGE_ALL;
         vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, stages, 0, sizeof(PushConstantStruct), &pushConstant);
 
-        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->mesh->indices.size()), 1, 0, 0, 0);
+        if (this->isMeshShading)
+        {
+            this->vkCmdDrawMeshTasksNV(commandBuffer, 32, 0);
+        }
+        else
+        {
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->mesh->indices.size()), 1, 0, 0, 0);
+        }
     }
 }
 
