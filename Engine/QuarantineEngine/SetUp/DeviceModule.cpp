@@ -110,13 +110,16 @@ void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& nQueu
 
         physical_features2.pNext = &device8BitFeature;
     }
-
-
     //Mesh shader features
-    VkPhysicalDeviceMeshShaderFeaturesNV mesh_shaders_feature = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_NV };
+    VkPhysicalDeviceMeshShaderFeaturesEXT mesh_shaders_feature = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT };
     mesh_shaders_feature.taskShader = VK_TRUE;
     mesh_shaders_feature.meshShader = VK_TRUE;
     mesh_shaders_feature.pNext = &physical_features2;
+
+    //VkPhysicalDeviceMeshShaderFeaturesNV mesh_shaders_feature = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_NV };
+    //mesh_shaders_feature.taskShader = VK_TRUE;
+    //mesh_shaders_feature.meshShader = VK_TRUE;
+    //mesh_shaders_feature.pNext = &physical_features2;
 
     //Raytracing features
     VkPhysicalDeviceBufferDeviceAddressFeaturesEXT bufferDeviceAddressFeatures = {};

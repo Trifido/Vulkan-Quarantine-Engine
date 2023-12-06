@@ -657,11 +657,11 @@ void ReflectShader::CheckStage(DescriptorSetReflect& descripReflect, const SpvRe
     case SPV_REFLECT_SHADER_STAGE_COMPUTE_BIT:
         descripReflect.stage = VkShaderStageFlagBits::VK_SHADER_STAGE_COMPUTE_BIT;
         break;
-    case SPV_REFLECT_SHADER_STAGE_TASK_BIT_NV:
-        descripReflect.stage = VkShaderStageFlagBits::VK_SHADER_STAGE_TASK_BIT_NV;
+    case SPV_REFLECT_SHADER_STAGE_TASK_BIT_EXT:
+        descripReflect.stage = VkShaderStageFlagBits::VK_SHADER_STAGE_TASK_BIT_EXT;
         break;
-    case SPV_REFLECT_SHADER_STAGE_MESH_BIT_NV:
-        descripReflect.stage = VkShaderStageFlagBits::VK_SHADER_STAGE_MESH_BIT_NV;
+    case SPV_REFLECT_SHADER_STAGE_MESH_BIT_EXT:
+        descripReflect.stage = VkShaderStageFlagBits::VK_SHADER_STAGE_MESH_BIT_EXT;
         break;
     }
 }

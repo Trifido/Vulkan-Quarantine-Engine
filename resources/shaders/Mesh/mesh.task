@@ -1,9 +1,12 @@
 #version 450
+
+#extension GL_EXT_mesh_shader : require
 #extension GL_ARB_shader_draw_parameters : enable
 #extension GL_EXT_shader_16bit_storage: require
 #extension GL_EXT_shader_8bit_storage: require
-#extension GL_NV_mesh_shader: require
 #extension GL_KHR_shader_subgroup_ballot: require
+
+layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 
 struct Meshlet
 {
@@ -19,12 +22,12 @@ struct Meshlet
     uint8_t triangleCount;
 };
 
-layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
-
-out taskNV block
+struct Task
 {
-    uint meshletIndices[32];
+  uint meshletIndices[32];
 };
+
+taskPayloadSharedEXT Task OUT;
 
 layout(set = 0, binding = 0) uniform CameraUniform
 {
@@ -83,10 +86,10 @@ void main()
     uint index = subgroupBallotExclusiveBitCount(ballot);
 
     if (accept)
-        meshletIndices[index] = meshlet_index;
+        OUT.meshletIndices[index] = meshlet_index;
 
     uint count = subgroupBallotBitCount(ballot);
 
     if (thread_index == 0)
-        gl_TaskCountNV = count;
+        EmitMeshTasksEXT(count, 1, 1);
 }

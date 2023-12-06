@@ -15,8 +15,8 @@ GameObject::GameObject()
     size_t numMeshAttributes = this->CheckNumAttributes();
     this->InitializeComponents(numMeshAttributes);
 
-    this->vkCmdDrawMeshTasksNV =
-        (PFN_vkCmdDrawMeshTasksNV)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksNV");
+    this->vkCmdDrawMeshTasksEXT =
+        (PFN_vkCmdDrawMeshTasksEXT)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksEXT");
 }
 
 GameObject::GameObject(PRIMITIVE_TYPE type, bool isMeshShading)
@@ -55,8 +55,8 @@ GameObject::GameObject(PRIMITIVE_TYPE type, bool isMeshShading)
     size_t numMeshAttributes = this->CheckNumAttributes();
     this->InitializeComponents(numMeshAttributes);
 
-    this->vkCmdDrawMeshTasksNV =
-        (PFN_vkCmdDrawMeshTasksNV)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksNV");
+    this->vkCmdDrawMeshTasksEXT =
+        (PFN_vkCmdDrawMeshTasksEXT)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksEXT");
 }
 
 GameObject::GameObject(std::string meshPath, bool isMeshShading)
@@ -75,8 +75,8 @@ GameObject::GameObject(std::string meshPath, bool isMeshShading)
         this->InitializeAnimationComponent();
     }
 
-    this->vkCmdDrawMeshTasksNV =
-        (PFN_vkCmdDrawMeshTasksNV)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksNV");
+    this->vkCmdDrawMeshTasksEXT =
+        (PFN_vkCmdDrawMeshTasksEXT)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksEXT");
 }
 
 void GameObject::cleanup()
@@ -403,7 +403,7 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 
         if (this->isMeshShading)
         {
-            this->vkCmdDrawMeshTasksNV(commandBuffer, 32, 0);
+            this->vkCmdDrawMeshTasksEXT(commandBuffer, 32, 1, 1);
         }
         else
         {

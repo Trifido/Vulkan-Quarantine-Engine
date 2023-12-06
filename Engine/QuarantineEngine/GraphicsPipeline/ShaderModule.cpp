@@ -229,7 +229,7 @@ VkPipelineShaderStageCreateInfo ShaderModule::createShader(VkDevice& device, con
                 throw std::runtime_error("failed to create task shader module!");
             }
 
-            shaderStageInfo.stage = VK_SHADER_STAGE_TASK_BIT_NV;
+            shaderStageInfo.stage = VK_SHADER_STAGE_TASK_BIT_EXT;
             shaderStageInfo.module = task_shader;
             break;
 
@@ -238,7 +238,7 @@ VkPipelineShaderStageCreateInfo ShaderModule::createShader(VkDevice& device, con
                 throw std::runtime_error("failed to create mesh shader module!");
             }
 
-            shaderStageInfo.stage = VK_SHADER_STAGE_MESH_BIT_NV;
+            shaderStageInfo.stage = VK_SHADER_STAGE_MESH_BIT_EXT;
             shaderStageInfo.module = mesh_shader;
             break;
 
