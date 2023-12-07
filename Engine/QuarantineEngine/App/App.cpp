@@ -170,7 +170,18 @@ void App::initVulkan()
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
     this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
 
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject("../../../resources/models/vikingRoom/viking_room.obj", true));
+    auto absPath = std::filesystem::absolute("../../resources/models").generic_string();
+
+    std::string substring = "/Engine";
+    std::size_t ind = absPath.find(substring);
+
+    if (ind != std::string::npos) {
+        absPath.erase(ind, substring.length());
+    }
+
+    const std::string absolute_path = absPath + "/vikingRoom/viking_room.obj";
+
+    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(absolute_path, true));
 
     ////model->transform->SetScale(glm::vec3(0.1f));
     //model->transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));

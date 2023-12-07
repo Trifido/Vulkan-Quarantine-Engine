@@ -19,8 +19,12 @@ void DescriptorBuffer::SetMeshletBuffers(std::shared_ptr<Meshlet> meshlets_ptr)
 {
     this->meshlets_ptr = meshlets_ptr;
 
-    this->ssboData["Meshlets"]->CreateSSBO(sizeof(Meshlet) * meshlets_ptr->gpuMeshlets.size(), MAX_FRAMES_IN_FLIGHT, *deviceModule);
-    this->ssboSize["Meshlets"] = sizeof(Meshlet) * meshlets_ptr->gpuMeshlets.size();
+    uint32_t sizeMeshlet = sizeof(MeshletGPU);
+    uint32_t sizeBuffer = meshlets_ptr->gpuMeshlets.size();
+    uint32_t sizeTotalBuffer = sizeof(MeshletGPU) * meshlets_ptr->gpuMeshlets.size();
+
+    this->ssboData["Meshlets"]->CreateSSBO(sizeof(MeshletGPU) * meshlets_ptr->gpuMeshlets.size(), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->ssboSize["Meshlets"] = sizeof(MeshletGPU) * meshlets_ptr->gpuMeshlets.size();
 
     this->ssboData["MeshletData"]->CreateSSBO(sizeof(uint32_t) * meshlets_ptr->meshletData.size(), MAX_FRAMES_IN_FLIGHT, *deviceModule);
     this->ssboSize["MeshletData"] = sizeof(uint32_t) * meshlets_ptr->meshletData.size();

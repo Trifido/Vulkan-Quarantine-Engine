@@ -50,7 +50,6 @@ const std::vector<const char*> instanceExtensions = {
 
 bool checkValidationLayerSupport();
 bool checkDeviceExtensionSupport(VkPhysicalDevice device);
-bool checkMeshShaderExtensionSupport(VkPhysicalDevice device);
 std::vector<const char*> getRequiredExtensions();
 void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo, DEBUG_LEVEL level);
 

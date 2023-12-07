@@ -5,19 +5,19 @@ void Meshlet::GenerateMeshlet(const std::vector<PBRVertex>& vertices, const std:
     size_t max_meshlets;
     size_t meshlets_count;
     std::vector<meshopt_Meshlet> meshlets;
-    std::vector<unsigned int> meshlet_vertices;
+    std::vector<unsigned int> meshlet_vertices_indices;
     std::vector<unsigned char> meshlet_triangles;
 
     this->verticesData = vertices;
 
     max_meshlets = meshopt_buildMeshletsBound(indices.size(), this->MAX_VERTICES, this->MAX_TRIANGLES);
     meshlets = std::vector<meshopt_Meshlet>(max_meshlets);
-    meshlet_vertices = std::vector<unsigned int>(max_meshlets * this->MAX_VERTICES);
+    meshlet_vertices_indices = std::vector<unsigned int>(max_meshlets * this->MAX_VERTICES);
     meshlet_triangles = std::vector<unsigned char>(max_meshlets * this->MAX_TRIANGLES * 3);
 
      meshlets_count = meshopt_buildMeshlets(
         &meshlets[0],
-        &meshlet_vertices[0],
+        &meshlet_vertices_indices[0],
         &meshlet_triangles[0], &indices[0],
         indices.size(),
         &vertices[0].pos.x,
@@ -28,18 +28,18 @@ void Meshlet::GenerateMeshlet(const std::vector<PBRVertex>& vertices, const std:
         this->CONE_WEIGHT);
     meshlets.resize(meshlets_count);
 
-    if (meshlets_count)
-    {
-        const meshopt_Meshlet& last = meshlets.back();
-        meshlet_vertices.resize(last.vertex_offset + last.vertex_count);
-        meshlet_triangles.resize(last.triangle_offset + ((last.triangle_count * 3 + 3) & ~3));
-    }
+    //if (meshlets_count)
+    //{
+    //    const meshopt_Meshlet& last = meshlets.back();
+    //    meshlet_vertices.resize(last.vertex_offset + last.vertex_count);
+    //    meshlet_triangles.resize(last.triangle_offset + ((last.triangle_count * 3 + 3) & ~3));
+    //}
 
-    uint32_t meshlet_vertex_offset = meshlet_vertices.size();
+    uint32_t meshlet_vertex_offset = meshlet_vertices_indices.size();
     for (size_t i = 0; i < meshlets_count; ++i)
     {
         const meshopt_Meshlet& m = meshlets[i];
-        meshopt_Bounds bounds = meshopt_computeMeshletBounds(&meshlet_vertices[m.vertex_offset], &meshlet_triangles[m.triangle_offset], m.triangle_count, &vertices[0].pos.x, vertices.size(), sizeof(PBRVertex));
+        meshopt_Bounds bounds = meshopt_computeMeshletBounds(&meshlet_vertices_indices[m.vertex_offset], &meshlet_triangles[m.triangle_offset], m.triangle_count, &vertices[0].pos.x, vertices.size(), sizeof(PBRVertex));
 
         MeshletGPU newMeshlet = {};
         newMeshlet.data_offset = this->meshletData.size();
@@ -61,7 +61,7 @@ void Meshlet::GenerateMeshlet(const std::vector<PBRVertex>& vertices, const std:
 
         for (uint32_t i = 0; i < newMeshlet.vertex_count; ++i)
         {
-            uint32_t vertex_index = meshlet_vertex_offset + meshlet_vertices[m.vertex_offset + i];
+            uint32_t vertex_index = meshlet_vertex_offset + meshlet_vertices_indices[m.vertex_offset + i];
             this->meshletData.push_back(vertex_index);
         }
 

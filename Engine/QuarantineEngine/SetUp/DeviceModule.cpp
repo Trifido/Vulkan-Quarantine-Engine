@@ -116,11 +116,6 @@ void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& nQueu
     mesh_shaders_feature.meshShader = VK_TRUE;
     mesh_shaders_feature.pNext = &physical_features2;
 
-    //VkPhysicalDeviceMeshShaderFeaturesNV mesh_shaders_feature = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_NV };
-    //mesh_shaders_feature.taskShader = VK_TRUE;
-    //mesh_shaders_feature.meshShader = VK_TRUE;
-    //mesh_shaders_feature.pNext = &physical_features2;
-
     //Raytracing features
     VkPhysicalDeviceBufferDeviceAddressFeaturesEXT bufferDeviceAddressFeatures = {};
     bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_EXT;
@@ -238,9 +233,7 @@ bool DeviceModule::isDeviceSuitable(VkPhysicalDevice newDevice, VkSurfaceKHR& su
     vkGetPhysicalDeviceFeatures2(newDevice, &device_features);
     this->bindless_supported = this->indexing_features.descriptorBindingPartiallyBound && indexing_features.runtimeDescriptorArray;
 
-    this->meshShader_supported = checkMeshShaderExtensionSupport(newDevice);
-
     return indices.isComplete() && extensionsSupported
         && swapChainAdequate && supportedFeatures.samplerAnisotropy
-        && this->bindless_supported /*&& this->meshShader_supported*/;
+        && this->bindless_supported;
 }

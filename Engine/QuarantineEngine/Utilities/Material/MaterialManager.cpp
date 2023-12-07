@@ -169,7 +169,7 @@ void MaterialManager::CreateDefaultPrimitiveMaterial()
     }
 }
 
-void MaterialManager::CreateMaterial(std::string& nameMaterial, bool hasAnimation)                                                                          // --------------------- En desarrollo ------------------------
+void MaterialManager::CreateMaterial(std::string& nameMaterial, bool hasAnimation)
 {
     nameMaterial = CheckName(nameMaterial);
 
