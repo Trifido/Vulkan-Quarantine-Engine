@@ -6,25 +6,34 @@
 #extension GL_EXT_shader_8bit_storage: require
 #extension GL_KHR_shader_subgroup_ballot: require
 
-layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
+#define GPU_WARP_SIZE 32
+#define GPU_GROUP_SIZE GPU_WARP_SIZE
+
+layout(local_size_x = GPU_GROUP_SIZE, local_size_y = 1, local_size_z = 1) in;
+
+const float pi_half = 1.57079;
 
 struct Meshlet
 {
     // vec3 keeps Meshlet aligned to 16 bytes which is important because C++ has an alignas() directive
     vec3 center;
     float radius;
-    float cone_axis[3];
+    vec3 cone_axis;
     float cone_cutoff;
+    vec3 cone_apex;
 
     uint dataOffset;
     uint mesh_index;
     uint vertexCount;
     uint triangleCount;
+    uint auxiliar;
 };
 
 struct Task
 {
-  uint meshletIndices[32];
+    uint    primitive_base_id;
+    uint    primitive_offsets[GPU_GROUP_SIZE];
+    uint    meshletIndices[GPU_GROUP_SIZE];
 };
 
 taskPayloadSharedEXT Task OUT;
@@ -50,46 +59,68 @@ layout(std430, push_constant) uniform PushConstants
 
 bool coneCull(vec3 center, float radius, vec3 cone_axis, float cone_cutoff)
 {
-    return dot(center - cameraData.position.xyz, cone_axis) >= cone_cutoff * length(center - cameraData.position.xyz) + radius;
+    vec3 dir = normalize(center - cameraData.position.xyz);
+    return dot(dir, cone_axis) >= cone_cutoff * length(center - cameraData.position.xyz) + radius;
+}
+
+bool isFrontFaceVisible(vec3 sphere_center, float sphere_radius, vec3 cone_normal, float cone_angle)
+{
+    vec3 sphere_center_dir = normalize(sphere_center - cameraData.position.xyz);
+    float sin_cone_angle = sin(min(cone_angle, pi_half));
+    return dot(cone_normal, sphere_center_dir) < sin_cone_angle;
+}
+
+bool isSphereInsideFrustum(vec4 sphere_center, float sphere_radius)
+{
+    vec4 sphere_view_center = cameraData.view * sphere_center;
+
+    bool isInside = false;
+    for(int i = 0; i < 6; i++)
+    {
+        isInside = isInside || (dot(cameraData.frustumPlanes[i], sphere_view_center) + cameraData.frustumPlanes[i].w < -sphere_radius);
+    }
+    return isInside;
+}
+
+bool cullTest(vec3 cone_apex, vec3 cone_axis, float cone_cutoff)
+{
+    vec3 mview = {cone_apex.x - cameraData.position.x, cone_apex.y - cameraData.position.y, cone_apex.z - cameraData.position.z};
+    float mviewlength = length(mview);
+    return (mview.x * cone_axis.x + mview.y * cone_axis.y + mview.z * cone_axis.z >= cone_cutoff * mviewlength);
 }
 
 void main()
 {
-    uint thread_index = gl_LocalInvocationID.x;
-    uint group_index = gl_WorkGroupID.x;
-    uint meshlet_index = group_index * 32 + thread_index;
+    uint meshlet_id = gl_GlobalInvocationID.x;
+    uint workgroup_meshlet_base_id = gl_WorkGroupID.x * GPU_GROUP_SIZE;
+    uint workgroup_primitive_base_id = workgroup_meshlet_base_id * GPU_GROUP_SIZE;
+    uint local_primitive_offset = gl_LocalInvocationID.x * GPU_GROUP_SIZE;
 
-    vec4 center = constants.model * vec4(meshlets[meshlet_index].center, 1);
-    float scale = length( constants.model[0] );
-    float radius = meshlets[meshlet_index].radius * scale;
+    Meshlet meshlet = meshlets[meshlet_id];
 
-    vec3 cone_axis = mat3( constants.model ) * 
-    vec3(int(meshlets[meshlet_index].cone_axis[0]) / 127.0, 
-    int(meshlets[meshlet_index].cone_axis[1]) / 127.0, 
-    int(meshlets[meshlet_index].cone_axis[2]) / 127.0);
+    vec4 center = constants.model * vec4(meshlet.center, 1);
+    vec3 cone_axis = mat3(constants.model) * meshlet.cone_axis;
+    vec3 cone_nomal = normalize(meshlet.cone_apex);
 
-    float cone_cutoff = int(meshlets[meshlet_index].cone_cutoff) / 127.0;
+    // bool render = !isSphereOutsideFrustum(center, meshlet.radius) && isFrontFaceVisible(meshlet.center, meshlet.radius, meshlet.cone_axis, meshlet.cone_cutoff); 
+    // bool render = isFrontFaceVisible(meshlet.center, meshlet.radius, meshlet.cone_axis, meshlet.cone_cutoff);
+    // bool render = isSphereInsideFrustum(vec4(cone_axis, 1.0), meshlet.radius);
+    //bool render = !cullTest(meshlet.cone_apex, meshlet.cone_axis, meshlet.cone_cutoff);
+    bool render = !coneCull(cone_axis, meshlet.radius, cone_nomal, meshlet.cone_cutoff);
 
-    bool accept = false;
-    accept = !coneCull(center.xyz, radius, cone_axis, cone_cutoff);
+    uvec4 warp_bitfield = subgroupBallot(render);
+    uint task_count = subgroupBallotBitCount(warp_bitfield);
+    uint task_out_index = subgroupBallotExclusiveBitCount(warp_bitfield);
 
-    vec4 view_center = cameraData.view * center;
-
-    bool frustum_visible = true;
-    for ( uint i = 0; i < 6; ++i ) {
-        frustum_visible = frustum_visible && (dot( cameraData.frustumPlanes[i], view_center) > -radius);
+    if (render)
+    {
+        OUT.primitive_offsets[task_out_index] = local_primitive_offset;
+        OUT.meshletIndices[task_out_index] = meshlet_id;
     }
 
-    accept = accept && frustum_visible;
-
-    uvec4 ballot = subgroupBallot(accept);
-    uint index = subgroupBallotExclusiveBitCount(ballot);
-
-    if (accept)
-        OUT.meshletIndices[index] = meshlet_index;
-
-    uint count = subgroupBallotBitCount(ballot);
-
-    if (thread_index == 0)
-        EmitMeshTasksEXT(count, 1, 1);
+    if (gl_LocalInvocationID.x == 0)
+    {
+        OUT.primitive_base_id = workgroup_primitive_base_id;
+        EmitMeshTasksEXT(task_count, 1, 1);
+    }
 }

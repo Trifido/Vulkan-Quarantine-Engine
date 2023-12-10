@@ -1,0 +1,109 @@
+#version 450
+
+#extension GL_EXT_mesh_shader : require
+#extension GL_EXT_shader_16bit_storage: require
+#extension GL_EXT_shader_8bit_storage: require
+
+layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
+layout(triangles, max_vertices = 96, max_primitives = 32) out;
+
+struct Meshlet
+{
+    // vec3 keeps Meshlet aligned to 16 bytes which is important because C++ has an alignas() directive
+    vec3 center;
+    float radius;
+    float cone_axis[3];
+    float cone_cutoff;
+
+    uint dataOffset;
+    uint mesh_index;
+    uint vertexCount;
+    uint triangleCount;
+};
+
+struct PBRVertex
+{
+    vec4 pos;
+    vec4 norm;
+    vec2 texCoord;
+    vec4 tangents;
+    vec4 bitangents;
+    int boneIDs[4];
+    float boneWeights[4];
+};
+
+layout(set = 0, binding = 0) uniform CameraUniform
+{
+	mat4 view;
+	mat4 proj;
+	mat4 viewproj;
+    vec4 position;
+    vec4 frustumPlanes[6];
+} cameraData;
+
+layout(set = 0, binding = 1) readonly buffer Meshlets
+{
+    Meshlet meshlets[];
+};
+
+layout(set = 0, binding = 2) readonly buffer MeshletData
+{
+    uint meshletData[];
+};
+
+layout(set = 0, binding = 3) readonly buffer MeshletVertices
+{
+    PBRVertex vertex[];
+};
+
+layout(set = 0, binding = 4) readonly buffer IndexBuffer
+{
+    uint indices[];
+};
+
+layout(std430, push_constant) uniform PushConstants
+{
+    mat4 model;
+} constants;
+
+struct Task
+{
+    uint    primitive_base_id;
+    uint    primitive_offsets[32];
+    uint    meshletIndices[32];
+};
+
+taskPayloadSharedEXT Task IN;
+
+layout(location = 0) out perVertexData {
+  vec4 color;
+} customData[96];
+
+void main()
+{
+    uint lid = gl_LocalInvocationID.x;
+    uint gid = gl_GlobalInvocationID.x;
+    uint base_index = gid * 3;
+
+    uvec3 face_indices = uvec3(indices[base_index], indices[base_index + 1], indices[base_index + 2]);
+    
+    uint vertex_index = lid * 3;
+
+    
+    gl_MeshVerticesEXT[vertex_index].gl_Position  = cameraData.viewproj * constants.model * vertex[face_indices.x].pos;
+    gl_MeshVerticesEXT[vertex_index + 1].gl_Position  = cameraData.viewproj * constants.model * vertex[face_indices.y].pos;
+    gl_MeshVerticesEXT[vertex_index + 2].gl_Position  = cameraData.viewproj * constants.model * vertex[face_indices.z].pos;
+
+    gl_PrimitiveTriangleIndicesEXT[lid].x = vertex_index;
+    gl_PrimitiveTriangleIndicesEXT[lid].y = vertex_index + 1;
+    gl_PrimitiveTriangleIndicesEXT[lid].z = vertex_index + 2;
+
+    customData[vertex_index].color = vec4(0.0, 1.0, 0.0, 1.0);
+    customData[vertex_index + 1].color = vec4(0.0, 1.0, 0.0, 1.0);
+    customData[vertex_index + 2].color = vec4(0.0, 1.0, 0.0, 1.0);
+
+    if (gl_LocalInvocationID.x == 0)
+    {
+        SetMeshOutputsEXT(96, 32);
+    }
+}

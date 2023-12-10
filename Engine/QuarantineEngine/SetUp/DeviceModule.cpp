@@ -121,8 +121,8 @@ void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& nQueu
     bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_EXT;
     bufferDeviceAddressFeatures.pNext = &mesh_shaders_feature;
     bufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
-    bufferDeviceAddressFeatures.bufferDeviceAddressCaptureReplay = VK_FALSE;
-    bufferDeviceAddressFeatures.bufferDeviceAddressMultiDevice = VK_FALSE;
+    bufferDeviceAddressFeatures.bufferDeviceAddressCaptureReplay = VK_TRUE;
+    bufferDeviceAddressFeatures.bufferDeviceAddressMultiDevice = VK_TRUE;
 
     VkPhysicalDeviceRayTracingPipelineFeaturesKHR rayTracingPipelineFeatures = {};
     rayTracingPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
