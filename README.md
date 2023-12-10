@@ -18,3 +18,6 @@ Below are some of the main features incorporated into Quarantine Engine (Vulkan 
 
 ### GPU Particle System
 <img src="https://github.com/Trifido/Vulkan-Quarantine-Engine/assets/6890573/0ecb8720-c69c-4157-8656-be98b1800b0c" width="100%" height="100%"/>
+
+### Task/Mesh shader pipeline
+![MeshShader](https://github.com/Trifido/Vulkan-Quarantine-Engine/assets/6890573/8a8dca40-46b1-4032-809e-947dcba1e77e)
