@@ -94,7 +94,7 @@ void MaterialManager::InitializeMaterialManager()
 
     if (this->default_particles_shader != nullptr)
     {
-        this->AddMaterial(std::string("defaultParticlesMat"), std::make_shared<Material>(Material(this->default_particles_shader)));
+        this->AddMaterial("defaultParticlesMat", std::make_shared<Material>(Material(this->default_particles_shader)));
         this->_materials["defaultParticlesMat"]->layer = (int)RenderLayer::PARTICLES;
     }
 }
@@ -159,12 +159,12 @@ void MaterialManager::CreateDefaultPrimitiveMaterial()
 {
     if (this->default_primitive_shader != nullptr)
     {
-        this->AddMaterial(std::string("defaultPrimitiveMat"), std::make_shared<Material>(Material(this->default_primitive_shader)));
+        this->AddMaterial("defaultPrimitiveMat", std::make_shared<Material>(Material(this->default_primitive_shader)));
     }
 
     if (this->mesh_shader_test != nullptr)
     {
-        this->AddMaterial(std::string("defaultMeshPrimitiveMat"), std::make_shared<Material>(Material(this->mesh_shader_test)));
+        this->AddMaterial("defaultMeshPrimitiveMat", std::make_shared<Material>(Material(this->mesh_shader_test)));
         _materials["defaultMeshPrimitiveMat"]->SetMeshShaderPipeline(true);
     }
 }
@@ -214,11 +214,13 @@ void MaterialManager::CleanPipelines()
 
 void MaterialManager::CleanLastResources()
 {
-    for each (auto mat in this->_materials)
+
+    for (auto mat : this->_materials)
     {
         mat.second->CleanLastResources();
         mat.second.reset();
     }
+
     this->_materials.clear();
     this->cameraEditor = nullptr;
     this->lightManager = nullptr;

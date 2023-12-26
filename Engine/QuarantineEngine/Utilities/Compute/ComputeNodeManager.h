@@ -21,7 +21,7 @@ private:
 public:
     ComputeNodeManager();
     static ComputeNodeManager* getInstance();
-    void ComputeNodeManager::ResetInstance();
+    void ResetInstance();
     void InitializeComputeResources();
     void InitializeComputeNodes();
     void AddComputeNode(std::string& nameComputeNode, ComputeNode mat);

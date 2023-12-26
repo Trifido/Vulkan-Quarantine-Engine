@@ -107,6 +107,15 @@ layout(location = 0) out perVertexData {
 } customData[96];
 
 
+bool isNotFrontFaceVisible(vec3 cone_apex, vec3 cone_axis, float cone_cutoff)
+{
+    vec3 position = cameraData.position.xyz;
+    //vec3 position = vec3(-6.02295, 2.25656, -0.49126);
+
+    return dot(normalize(cone_apex - position), normalize(cone_axis)) > 0.0;//cone_cutoff;
+}
+
+
 uint workgroup_primitive_base_id = IN.primitive_base_id + IN.primitive_offsets[gl_WorkGroupID.x];
 uint primitive_id = workgroup_primitive_base_id + gl_LocalInvocationID.x;
 uint index_base_id = primitive_id * GPU_INDICES_PER_PRIMITIVE;
@@ -115,12 +124,20 @@ uint vertex_base_id = gl_LocalInvocationID.x * GPU_INDICES_PER_PRIMITIVE;
 
 void main()
 {
+    uint ind = IN.meshletIndices[gl_WorkGroupID.x];
+    bool notRender = isNotFrontFaceVisible(meshlets[ind].center.xyz, meshlets[ind].cone_axis, meshlets[ind].cone_cutoff);
+
     for(uint i = 0; i < GPU_INDICES_PER_PRIMITIVE; i++)
     {
         uint cur_index = indices[index_base_id + i];
-        gl_MeshVerticesEXT[vertex_base_id + i].gl_Position  = cameraData.viewproj * constants.model * vertex[cur_index].pos;
+        gl_MeshVerticesEXT[vertex_base_id + i].gl_Position = cameraData.viewproj * constants.model * vertex[cur_index].pos;
         
-        customData[vertex_base_id + i].color = meshletcolors[gl_WorkGroupID.x % MAX_COLORS];
+        //customData[vertex_base_id + i].color = meshletcolors[gl_WorkGroupID.x % MAX_COLORS];
+
+        if(notRender)
+            customData[vertex_base_id + i].color = vec4(1.0, 0.0, 0.0, 1.0);
+        else
+            customData[vertex_base_id + i].color = vec4(0.0, 1.0, 0.0, 1.0);
     }
 
     gl_PrimitiveTriangleIndicesEXT[gl_LocalInvocationID.x].x = vertex_base_id;

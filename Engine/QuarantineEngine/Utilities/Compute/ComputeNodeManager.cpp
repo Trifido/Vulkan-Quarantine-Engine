@@ -95,7 +95,7 @@ void ComputeNodeManager::AddComputeNode(std::string& nameComputeNode, std::share
 
 void ComputeNodeManager::UpdateComputeNodes()
 {
-    for each (auto node in _computeNodes)
+    for (auto node : _computeNodes)
     {
         node.second->UpdateComputeDescriptor();
     }
@@ -124,7 +124,7 @@ void ComputeNodeManager::RecordComputeNodes(VkCommandBuffer commandBuffer, uint3
 
 void ComputeNodeManager::Cleanup()
 {
-    for each (auto node in _computeNodes)
+    for (auto node : _computeNodes)
     {
         node.second->cleanup();
     }

@@ -19,7 +19,7 @@ void ComputeDescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shade
     poolSizes.resize(this->numBinding);
     size_t idx = 0;
 
-    for each (auto binding in shader_ptr->reflectShader.bindings)
+    for (auto binding : shader_ptr->reflectShader.bindings)
     {
         if (binding.first == "InputSSBO")
         {
@@ -183,7 +183,7 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
     this->buffersInfo.resize(this->numBinding);
     uint32_t idx = 0;
 
-    for each (auto binding in shader_ptr->reflectShader.bindings)
+    for (auto binding : shader_ptr->reflectShader.bindings)
     {
         if (this->IsProgressiveComputation)
         {
@@ -353,7 +353,7 @@ void ComputeDescriptorBuffer::Cleanup()
             }
         }
 
-        for each (auto ubo in ubos)
+        for (auto ubo : ubos)
         {
             if (ubo.second->uniformBuffers[i] != VK_NULL_HANDLE)
             {

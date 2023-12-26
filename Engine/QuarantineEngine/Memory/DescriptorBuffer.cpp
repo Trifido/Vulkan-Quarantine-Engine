@@ -92,7 +92,7 @@ void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
     poolSizes.resize(this->numBinding);
     size_t idx = 0;
 
-    for each (auto binding in shader_ptr->reflectShader.bindings)
+    for (auto binding : shader_ptr->reflectShader.bindings)
     {
         if (binding.first == "CameraUniform")
         {
@@ -237,7 +237,7 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
     this->buffersInfo.resize(this->numBinding);
     uint32_t idx = 0;
 
-    for each (auto binding in shader_ptr->reflectShader.bindings)
+    for (auto binding : shader_ptr->reflectShader.bindings)
     {
         if (binding.first == "CameraUniform")
         {

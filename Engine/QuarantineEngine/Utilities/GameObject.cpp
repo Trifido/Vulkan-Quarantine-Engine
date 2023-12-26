@@ -112,7 +112,7 @@ void GameObject::drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
     if (this->meshImportedType != ANIMATED_GEO)
     {
         this->CreateDrawCommand(commandBuffer, idx);
-        for each (auto child in childs)
+        for (auto child : childs)
         {
             child->CreateDrawCommand(commandBuffer, idx);
         }
@@ -120,7 +120,7 @@ void GameObject::drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
     else
     {
         this->CreateAnimationDrawCommand(commandBuffer, idx, this->animationComponent->animator);
-        for each (auto child in childs)
+        for (auto child : childs)
         {
             child->CreateAnimationDrawCommand(commandBuffer, idx, this->animationComponent->animator);
         }
@@ -199,7 +199,7 @@ void GameObject::InitializeAnimationComponent()
         std::vector<std::string> idChilds;
         if (!this->childs.empty())
         {
-            for each (auto child in this->childs)
+            for (auto child : this->childs)
             {
                 idChilds.push_back(child->id);
             }

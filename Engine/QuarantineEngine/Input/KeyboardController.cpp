@@ -38,7 +38,7 @@ void KeyboardController::cleanup()
 
 void KeyboardController::CleanLastResources()
 {
-    for each (auto var in list_observer_)
+    for (auto var : list_observer_)
     {
         delete var;
         var = nullptr;

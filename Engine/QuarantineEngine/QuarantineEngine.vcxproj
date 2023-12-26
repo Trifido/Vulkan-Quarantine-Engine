@@ -91,7 +91,7 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>%VULKAN_SDK%\Include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\Linking\meshoptimizer;$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -107,7 +107,7 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>%VULKAN_SDK%\Include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\Linking\meshoptimizer;$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Utilities\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Input;.\Utilities\Light;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -126,7 +126,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalIncludeDirectories>%VULKAN_SDK%\Include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\Linking\meshoptimizer;$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Compute;$(SolutionDir)\QuarantineEngine\Utilities\Particles;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -149,7 +149,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalIncludeDirectories>%VULKAN_SDK%\Include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\Linking\meshoptimizer;$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Compute;$(SolutionDir)\QuarantineEngine\Utilities\Particles;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\Linking;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Utilities\Geometry;.\Input;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>

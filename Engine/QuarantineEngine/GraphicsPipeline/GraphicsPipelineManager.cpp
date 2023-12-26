@@ -92,7 +92,7 @@ void GraphicsPipelineManager::RegisterDefaultRenderPass(VkRenderPass renderPass)
 
 void GraphicsPipelineManager::CleanGraphicsPipeline()
 {
-    for each (auto gPipeline in this->_graphicsPipelines)
+    for (auto gPipeline : this->_graphicsPipelines)
     {
         gPipeline.second->CleanPipelineData();
     }

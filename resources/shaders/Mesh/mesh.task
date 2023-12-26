@@ -57,17 +57,29 @@ layout(std430, push_constant) uniform PushConstants
     mat4 model;
 } constants;
 
-bool coneCull(vec3 center, float radius, vec3 cone_axis, float cone_cutoff)
+// bool coneCull(vec3 center, float radius, vec3 cone_axis, float cone_cutoff)
+// {
+//     vec3 dir = normalize(center - cameraData.position.xyz);
+//     return dot(dir, cone_axis) >= cone_cutoff * length(center - cameraData.position.xyz) + radius;
+// }
+
+bool isFrontFaceVisible(vec3 sphere_center, vec3 cone_normal, float cone_angle)
 {
-    vec3 dir = normalize(center - cameraData.position.xyz);
-    return dot(dir, cone_axis) >= cone_cutoff * length(center - cameraData.position.xyz) + radius;
+    //vec3 position = cameraData.position.xyz;
+    vec3 position = vec3(-6.02295, 2.25656, -0.49126);
+    vec3 sphere_center_dir = normalize(sphere_center - position);
+
+    float sin_cone_angle = sin(min(cone_angle, pi_half));
+    return dot(cone_normal, sphere_center_dir) > 0.0;
 }
 
-bool isFrontFaceVisible(vec3 sphere_center, float sphere_radius, vec3 cone_normal, float cone_angle)
-{
-    vec3 sphere_center_dir = normalize(sphere_center - cameraData.position.xyz);
-    float sin_cone_angle = sin(min(cone_angle, pi_half));
-    return dot(cone_normal, sphere_center_dir) < sin_cone_angle;
+bool coneCull(vec3 center, float radius, vec3 cone_axis, float cone_cutoff)
+{   
+    //vec3 position = cameraData.position.xyz;
+    vec3 position = vec3(-6.02295, 2.25656, -0.49126);
+
+    vec3 dir = normalize(center - position);
+    return dot(dir, cone_axis) >= cone_cutoff * length(center - position) + radius;
 }
 
 bool isSphereInsideFrustum(vec4 sphere_center, float sphere_radius)
@@ -82,13 +94,6 @@ bool isSphereInsideFrustum(vec4 sphere_center, float sphere_radius)
     return isInside;
 }
 
-bool cullTest(vec3 cone_apex, vec3 cone_axis, float cone_cutoff)
-{
-    vec3 mview = {cone_apex.x - cameraData.position.x, cone_apex.y - cameraData.position.y, cone_apex.z - cameraData.position.z};
-    float mviewlength = length(mview);
-    return (mview.x * cone_axis.x + mview.y * cone_axis.y + mview.z * cone_axis.z >= cone_cutoff * mviewlength);
-}
-
 void main()
 {
     uint meshlet_id = gl_GlobalInvocationID.x;
@@ -100,13 +105,16 @@ void main()
 
     vec4 center = constants.model * vec4(meshlet.center, 1);
     vec3 cone_axis = mat3(constants.model) * meshlet.cone_axis;
-    vec3 cone_nomal = normalize(meshlet.cone_apex);
+    float radius = meshlet.radius * length(constants.model[0]);
+    vec3 norm_cone_axis = normalize(meshlet.cone_axis);
+    vec3 norm_cone_apex = normalize(meshlet.cone_apex);
 
     // bool render = !isSphereOutsideFrustum(center, meshlet.radius) && isFrontFaceVisible(meshlet.center, meshlet.radius, meshlet.cone_axis, meshlet.cone_cutoff); 
-    // bool render = isFrontFaceVisible(meshlet.center, meshlet.radius, meshlet.cone_axis, meshlet.cone_cutoff);
     // bool render = isSphereInsideFrustum(vec4(cone_axis, 1.0), meshlet.radius);
     //bool render = !cullTest(meshlet.cone_apex, meshlet.cone_axis, meshlet.cone_cutoff);
-    bool render = !coneCull(cone_axis, meshlet.radius, cone_nomal, meshlet.cone_cutoff);
+    //bool render = !coneCull(cone_axis, meshlet.radius, cone_nomal, meshlet.cone_cutoff);
+    //bool render = !coneCull(center.xyz, radius, meshlet.cone_axis, meshlet.cone_cutoff);
+    bool render = true;//isFrontFaceVisible(center.xyz, cone_axis, meshlet.cone_cutoff);
 
     uvec4 warp_bitfield = subgroupBallot(render);
     uint task_count = subgroupBallotBitCount(warp_bitfield);

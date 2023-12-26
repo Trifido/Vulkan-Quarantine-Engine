@@ -27,7 +27,7 @@ void Animator::UpdateUBOAnimation()
 {
     auto currentFrame = SynchronizationModule::GetCurrentFrame();
 
-    for each (auto cn in computeNodes)
+    for (auto cn : computeNodes)
     {
         void* data;
         vkMapMemory(deviceModule->device, cn.second->computeDescriptor->ubos["UniformAnimation"]->uniformBuffersMemory[currentFrame], 0, cn.second->computeDescriptor->uboSizes["UniformAnimation"], 0, &data);
@@ -87,7 +87,7 @@ void Animator::PlayAnimation(std::shared_ptr<Animation> pAnimation)
 
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {
-        for each (auto cn in computeNodes)
+        for (auto cn : computeNodes)
         {
             void* data;
             vkMapMemory(deviceModule->device, cn.second->computeDescriptor->ubos["UniformAnimation"]->uniformBuffersMemory[currentFrame], 0, cn.second->computeDescriptor->uboSizes["UniformAnimation"], 0, &data);

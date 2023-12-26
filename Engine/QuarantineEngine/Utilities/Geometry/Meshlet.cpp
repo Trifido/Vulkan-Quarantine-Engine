@@ -1,4 +1,45 @@
 #include "Meshlet.h"
+#include <map>
+#include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
+
+BoundingCone BoundingCone::GetApproximateReflexBoundingCone(
+    std::vector<glm::vec4*>& normals)
+{
+    glm::vec3 mean_normal{};
+    for (auto normal : normals)
+    {
+        mean_normal += glm::vec3(*normal);
+    }
+    mean_normal = glm::normalize(mean_normal);
+
+    float angular_span = 0.0f;
+    for (auto normal : normals)
+    {
+        angular_span =
+            glm::max(angular_span,
+                glm::acos(glm::dot(mean_normal, glm::vec3(*normal))));
+    }
+
+    BoundingCone cone;
+    cone.normal = mean_normal;
+    cone.angle = angular_span;
+    return cone;
+}
+
+AxisAlignedBoundingBox::AxisAlignedBoundingBox(
+    std::vector<glm::vec4*>& vertices)
+{
+    _min = *vertices[0];
+    _max = _min;
+    for (auto vertex : vertices)
+    {
+        _min = glm::min(_min, glm::vec3(*vertex));
+        _max = glm::max(_max, glm::vec3(*vertex));
+    }
+    _extents = (_max - _min) / 2.f;
+    _center = _min + _extents;
+}
 
 void Meshlet::GenerateMeshlet(const std::vector<PBRVertex>& vertices, const std::vector<uint32_t>& indices)
 {
@@ -27,7 +68,7 @@ void Meshlet::GenerateMeshlet(const std::vector<PBRVertex>& vertices, const std:
         sizeof(PBRVertex),
         this->MAX_VERTICES,
         this->MAX_TRIANGLES,
-        this->CONE_WEIGHT);
+        0.5f);
     meshlets.resize(meshlets_count);
 
     uint32_t meshlet_vertex_offset = meshlet_vertices_indices.size();
@@ -51,7 +92,7 @@ void Meshlet::GenerateMeshlet(const std::vector<PBRVertex>& vertices, const std:
         newMeshlet.center = glm::vec3(bounds.center[0], bounds.center[1], bounds.center[2]);
         newMeshlet.radius = bounds.radius;
 
-        newMeshlet.cone_axis = glm::vec3(bounds.cone_axis[0], bounds.cone_axis[1], bounds.cone_axis[2]);
+        newMeshlet.cone_axis = glm::vec3(0.0f, 1.0f, 0.0f);//glm::vec3(bounds.cone_axis[0], bounds.cone_axis[1], bounds.cone_axis[2]);
         newMeshlet.cone_apex = glm::vec3(bounds.cone_apex[0], bounds.cone_apex[1], bounds.cone_apex[2]);
 
         newMeshlet.cone_cutoff = bounds.cone_cutoff;
@@ -80,5 +121,87 @@ void Meshlet::GenerateMeshlet(const std::vector<PBRVertex>& vertices, const std:
     while (gpuMeshlets.size() % 32)
     {
         gpuMeshlets.push_back(MeshletGPU());
+    }
+}
+
+void Meshlet::GenerateCustomMeshlet(std::vector<PBRVertex>& vertices, std::vector<uint32_t>& indices)
+{
+    const auto max_indices_count = indices.size();
+    const auto num_faces = indices.size() / 3;
+
+    const auto meshlet_count = num_faces / this->meshlet_primitive_count +
+        (num_faces % this->meshlet_primitive_count != 0);
+
+    this->meshlet_descriptors.reserve(meshlet_count);
+
+    auto i_face_from = 0u;
+    const unsigned int face_count = num_faces;
+
+    std::map<unsigned, bool> unique_index_map;
+    std::vector<glm::vec4*> meshlet_vertices;
+    std::vector<glm::vec4*> meshlet_normals;
+
+    for (unsigned i_meshlet = 0; i_meshlet < meshlet_count; ++i_meshlet)
+    {
+        const auto i_face_to = glm::min(i_face_from + this->meshlet_primitive_count, face_count);
+        auto global_index_to = i_face_to * 3;
+        auto global_index_from = i_face_from * 3;
+
+        uint16_t primitive_count = i_face_to - i_face_from;
+        unique_index_map.clear();
+
+        meshlet_vertices.clear();
+        meshlet_vertices.reserve(max_indices_count);
+
+        meshlet_normals.clear();
+        meshlet_normals.reserve(max_indices_count);
+
+        // Iterate primitives of this meshlet
+        for (unsigned i_face = i_face_from; i_face < i_face_to; ++i_face)
+        {
+            auto global_index_to = i_face * 3;
+            auto init_index = this->indexData.at(global_index_to);
+
+            for (unsigned i_indx = 0; i_indx < 3; ++i_indx)
+            {
+                unsigned index = this->indexData.at(global_index_to + i_indx);
+
+                // Add to map to test if index already present
+                if (unique_index_map
+                    .insert(std::make_pair(index, true))
+                    .second)
+                {
+                    auto* vertex = &vertices.at(index).pos;
+                    auto* normal = &vertices.at(index).norm;
+
+                    meshlet_vertices.push_back(vertex);
+                    meshlet_normals.push_back(normal);
+                }
+            }
+        }
+
+        auto aabb = AxisAlignedBoundingBox(meshlet_vertices);
+        BoundingSphere bounding_sphere{
+            .center = aabb.getCenter(), .radius = [&]() -> float {
+              float radius = 0.f;
+              for (auto vertex : meshlet_vertices)
+              {
+                radius =
+                    glm::max(radius, glm::distance(bounding_sphere.center,
+                                                   glm::vec3(*vertex)));
+              }
+              return radius;
+            }() };
+
+        BoundingCone bounding_cone =
+            BoundingCone::GetApproximateReflexBoundingCone(
+                meshlet_normals);
+
+        meshlet_descriptors.push_back(
+            MeshletDescriptor{ .sphere = bounding_sphere,
+                                   .cone = bounding_cone,
+                                   .primitive_count = primitive_count });
+
+        i_face_from += this->meshlet_primitive_count;
     }
 }

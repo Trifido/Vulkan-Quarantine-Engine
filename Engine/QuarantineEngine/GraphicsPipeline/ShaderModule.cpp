@@ -254,7 +254,7 @@ void ShaderModule::CreateDescriptorSetLayout()
 {
     std::vector<VkDescriptorSetLayoutBinding> bindings{};
 
-    for each (auto reflectLayotBinding in this->reflectShader.bindings)
+    for (auto reflectLayotBinding : this->reflectShader.bindings)
     {
         VkDescriptorSetLayoutBinding layoutBinding = {};
         layoutBinding.binding = reflectLayotBinding.second.binding;

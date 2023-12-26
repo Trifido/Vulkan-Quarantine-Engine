@@ -17,7 +17,7 @@ public:
 
 public:
     void AddEditorObject(std::shared_ptr<EditorObject> object_ptr, std::string name);
-    std::shared_ptr<EditorObject> EditorObjectManager::GetObject(std::string name);
+    std::shared_ptr<EditorObject> GetObject(std::string name);
     static EditorObjectManager* getInstance();
     static void ResetInstance();
     void DrawCommnad(VkCommandBuffer& commandBuffer, uint32_t idx);
