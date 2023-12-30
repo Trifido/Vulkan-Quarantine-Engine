@@ -19,15 +19,12 @@ void DescriptorBuffer::SetMeshletBuffers(std::shared_ptr<Meshlet> meshlets_ptr)
 {
     this->meshlets_ptr = meshlets_ptr;
 
-    uint32_t sizeMeshlet = sizeof(MeshletGPU);
+    uint32_t sizeMeshlet = sizeof(MeshletDescriptor);
     uint32_t sizeBuffer = meshlets_ptr->gpuMeshlets.size();
-    uint32_t sizeTotalBuffer = sizeof(MeshletGPU) * meshlets_ptr->gpuMeshlets.size();
+    uint32_t sizeTotalBuffer = sizeof(MeshletDescriptor) * meshlets_ptr->gpuMeshlets.size();
 
-    this->ssboData["Meshlets"]->CreateSSBO(sizeof(MeshletGPU) * meshlets_ptr->gpuMeshlets.size(), MAX_FRAMES_IN_FLIGHT, *deviceModule);
-    this->ssboSize["Meshlets"] = sizeof(MeshletGPU) * meshlets_ptr->gpuMeshlets.size();
-
-    this->ssboData["MeshletData"]->CreateSSBO(sizeof(uint32_t) * meshlets_ptr->meshletData.size(), MAX_FRAMES_IN_FLIGHT, *deviceModule);
-    this->ssboSize["MeshletData"] = sizeof(uint32_t) * meshlets_ptr->meshletData.size();
+    this->ssboData["Meshlets"]->CreateSSBO(sizeof(MeshletDescriptor) * meshlets_ptr->gpuMeshlets.size(), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->ssboSize["Meshlets"] = sizeof(MeshletDescriptor) * meshlets_ptr->gpuMeshlets.size();
 
     this->ssboData["MeshletVertices"]->CreateSSBO(sizeof(PBRVertex) * meshlets_ptr->verticesData.size(), MAX_FRAMES_IN_FLIGHT, *deviceModule);
     this->ssboSize["MeshletVertices"] = sizeof(PBRVertex) * meshlets_ptr->verticesData.size();
@@ -41,10 +38,6 @@ void DescriptorBuffer::SetMeshletBuffers(std::shared_ptr<Meshlet> meshlets_ptr)
         vkMapMemory(deviceModule->device, this->ssboData["Meshlets"]->uniformBuffersMemory[currentFrame], 0, this->ssboSize["Meshlets"], 0, &data);
         memcpy(data, this->meshlets_ptr->gpuMeshlets.data(), this->ssboSize["Meshlets"]);
         vkUnmapMemory(deviceModule->device, this->ssboData["Meshlets"]->uniformBuffersMemory[currentFrame]);
-
-        vkMapMemory(deviceModule->device, this->ssboData["MeshletData"]->uniformBuffersMemory[currentFrame], 0, this->ssboSize["MeshletData"], 0, &data);
-        memcpy(data, this->meshlets_ptr->meshletData.data(), this->ssboSize["MeshletData"]);
-        vkUnmapMemory(deviceModule->device, this->ssboData["MeshletData"]->uniformBuffersMemory[currentFrame]);
 
         vkMapMemory(deviceModule->device, this->ssboData["MeshletVertices"]->uniformBuffersMemory[currentFrame], 0, this->ssboSize["MeshletVertices"], 0, &data);
         memcpy(data, this->meshlets_ptr->verticesData.data(), this->ssboSize["MeshletVertices"]);
@@ -156,17 +149,6 @@ void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
 
             this->ssboData["Meshlets"] = std::make_shared<UniformBufferObject>();
             this->ssboSize["Meshlets"] = VkDeviceSize();
-
-            this->numSSBOs++;
-            idx++;
-        }
-        else if (binding.first == "MeshletData")
-        {
-            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-
-            this->ssboData["MeshletData"] = std::make_shared<UniformBufferObject>();
-            this->ssboSize["MeshletData"] = VkDeviceSize();
 
             this->numSSBOs++;
             idx++;
@@ -313,11 +295,6 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
         else if (binding.first == "Meshlets")
         {
             this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssboData["Meshlets"]->uniformBuffers[frameIdx], this->ssboSize["Meshlets"], frameIdx);
-            idx++;
-        }
-        else if (binding.first == "MeshletData")
-        {
-            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssboData["MeshletData"]->uniformBuffers[frameIdx], this->ssboSize["MeshletData"], frameIdx);
             idx++;
         }
         else if (binding.first == "MeshletVertices")

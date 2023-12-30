@@ -7,20 +7,6 @@
 #include <meshoptimizer.h>
 #include <Vertex.h>
 
-struct MeshletGPU
-{
-    glm::vec3 center;
-    float radius;
-    glm::vec3 cone_axis;
-    float cone_cutoff;
-    glm::vec3 cone_apex;
-    uint32_t data_offset;
-    uint32_t mesh_index;
-    uint32_t vertex_count;
-    uint32_t triangle_count;
-    uint32_t auxiliar;
-};
-
 struct BoundingSphere
 {
     alignas(16) glm::vec3 center;
@@ -31,9 +17,17 @@ struct BoundingCone
 {
     alignas(16) glm::vec3 normal;
     alignas(4) float angle;
+    glm::vec4 position;
 
     static BoundingCone GetApproximateReflexBoundingCone(
         std::vector<glm::vec4*>& normals);
+};
+
+struct MeshletDescriptor
+{
+    BoundingSphere sphere;
+    BoundingCone cone;
+    uint16_t primitive_count;
 };
 
 class AxisAlignedBoundingBox
@@ -54,27 +48,18 @@ private:
     glm::vec3 _max{};
 };
 
-struct MeshletDescriptor
-{
-    BoundingSphere sphere;
-    BoundingCone cone;
-    uint16_t primitive_count;
-};
-
 class Meshlet
 {
 private:
     const uint16_t meshlet_primitive_count = 32;
-public:
-    std::vector<MeshletDescriptor> meshlet_descriptors;
 
 private:
-    const size_t MAX_VERTICES = 64;
-    const size_t MAX_TRIANGLES = 124;
+    const size_t MAX_VERTICES = 96;
+    const size_t MAX_TRIANGLES = 32;
     const float CONE_WEIGHT = 0.5f;
 
 public:
-    std::vector<MeshletGPU> gpuMeshlets;
+    std::vector<MeshletDescriptor> gpuMeshlets;
     std::vector<uint32_t> meshletData;
     std::vector<PBRVertex> verticesData;
     std::vector<uint32_t> indexData;

@@ -176,11 +176,11 @@ void GameObject::InitializeComponents(size_t numMeshAttributes)
     if (this->mesh != nullptr)
     {
         this->mesh->InitializeMesh(numMeshAttributes);
-    }
 
-    if (this->isMeshShading)
-    {
-        this->material->descriptor->SetMeshletBuffers(this->mesh->meshlets_ptr);
+        if (this->isMeshShading)
+        {
+            this->material->descriptor->SetMeshletBuffers(this->mesh->meshlets_ptr);
+        }
     }
 
     if (!this->childs.empty())
@@ -285,6 +285,7 @@ bool GameObject::CreateChildsGameObject(std::string pathfile)
             this->childs[id]->parent = std::make_shared<GameObject>(*this);
             this->childs[id]->mesh = std::make_shared<Mesh>(Mesh(data[id]));
             this->childs[id]->meshImportedType = this->meshImportedType;
+            this->childs[id]->isMeshShading = this->isMeshShading;
             this->childs[id]->transform = std::make_shared<Transform>(Transform(parentModel * data[id].model));
             this->childs[id]->addMaterial(this->materialManager->GetMaterial(data[id].materialID));
         }
