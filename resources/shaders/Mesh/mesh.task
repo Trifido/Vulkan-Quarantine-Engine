@@ -64,7 +64,7 @@ layout(std430, push_constant) uniform PushConstants
 
 bool coneCull(vec3 center, float radius, vec3 cone_axis, float cone_cutoff)
 {   
-    vec3 position = vec3(0.0); //cameraData.position.xyz;
+    vec3 position = cameraData.position.xyz;
     vec3 dir = normalize(center - position);
     return dot(dir, cone_axis) >= cone_cutoff * CUT_OFF_FACTOR;
 }

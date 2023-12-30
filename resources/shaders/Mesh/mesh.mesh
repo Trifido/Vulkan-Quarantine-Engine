@@ -97,7 +97,7 @@ void main()
         gl_MeshVerticesEXT[vertex_base_id + i].gl_Position = cameraData.viewproj * constants.model * vertex[cur_index].pos;
         
         customData[vertex_base_id + i].color = meshletcolors[ind % MAX_COLORS];
-        customData[vertex_base_id + i].color = 0.5 * (resultModel * vertex[cur_index].norm) + 0.5;
+        //customData[vertex_base_id + i].color = 0.5 * (resultModel * vertex[cur_index].norm) + 0.5;
     }
 
     gl_PrimitiveTriangleIndicesEXT[gl_LocalInvocationID.x].x = vertex_base_id;
