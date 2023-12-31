@@ -19,7 +19,9 @@ enum class SHADER_TYPE
     FRAGMENT_SHADER = 1,
     GEOMETRY_SHADER = 2,
     TESELLATION_SHADER = 3,
-    COMPUTE_SHADER = 4
+    COMPUTE_SHADER = 4,
+    TASK_SHADER = 5,
+    MESH_SHADER = 6
 };
 
 class GraphicsPipelineManager;
@@ -40,6 +42,11 @@ private:
     VkPipelineShaderStageCreateInfo                 geoShaderStageInfo{};
     VkShaderModule                                  compute_shader = nullptr;
     VkPipelineShaderStageCreateInfo                 compShaderStageInfo{};
+    VkShaderModule                                  task_shader = nullptr;
+    VkPipelineShaderStageCreateInfo                 taskShaderStageInfo{};
+    VkShaderModule                                  mesh_shader = nullptr;
+    VkPipelineShaderStageCreateInfo                 meshShaderStageInfo{};
+
     std::shared_ptr<VkVertexInputBindingDescription>   bindingDescription;
     std::vector<VkVertexInputAttributeDescription>  attributeDescriptions;
     GraphicsPipelineManager*                        graphicsPipelineManager;
@@ -58,12 +65,13 @@ public:
     ShaderModule();
     ShaderModule(std::string computeShaderName);
     ShaderModule(std::string vertexShaderName, std::string fragmentShaderName, GraphicsPipelineData pipelineData = GraphicsPipelineData());
-    ShaderModule(std::string vertexShaderName, std::string geometryShaderName, std::string fragmentShaderName, GraphicsPipelineData pipelineData = GraphicsPipelineData());
+    ShaderModule(std::string firstShaderName, std::string secondShaderName, std::string thirdShaderName, GraphicsPipelineData pipelineData = GraphicsPipelineData());
 
     static std::vector<char> readFile(const std::string& filename);
     void createShaderModule(const std::string& filename_compute);
     void createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment);
     void createShaderModule(const std::string& filename_vertex, const std::string& filename_geometry, const std::string& filename_fragment);
+    void createMeshShaderModule(const std::string& filename_task, const std::string& filename_mesh, const std::string& filename_fragment);
     void CleanDescriptorSetLayout();
     void cleanup();
     void CleanLastResources();

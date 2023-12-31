@@ -43,7 +43,7 @@ private:
     float GetScaleFactor(float lastTimeStamp, float nextTimeStamp, float animationTime);
     glm::mat4 InterpolatePosition(float animationTime);
     glm::mat4 InterpolateRotation(float animationTime);
-    glm::mat4 Bone::InterpolateScaling(float animationTime);
+    glm::mat4 InterpolateScaling(float animationTime);
 public:
     Bone();
     Bone(const std::string& name, int ID, const aiNodeAnim* channel);

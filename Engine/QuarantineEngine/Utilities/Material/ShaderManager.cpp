@@ -79,7 +79,7 @@ void ShaderManager::Clean()
 
 void ShaderManager::CleanDescriptorSetLayouts()
 {
-    for each (auto shader in this->_shaders)
+    for (auto shader : this->_shaders)
     {
         shader.second->CleanDescriptorSetLayout();
     }
@@ -92,7 +92,7 @@ void ShaderManager::CleanLastResources()
 
 void ShaderManager::RecreateShaderGraphicsPipelines()
 {
-    for each (auto shader in this->_shaders)
+    for (auto shader : this->_shaders)
     {
         if (shader.second->shaderStages.size() > 1)
         {

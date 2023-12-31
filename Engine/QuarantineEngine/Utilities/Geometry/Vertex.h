@@ -63,14 +63,22 @@ struct AnimationVertex
     glm::vec4 tangent;
 };
 
-namespace std {
-    template<> struct hash<Vertex> {
-        size_t operator()(Vertex const& vertex) const {
-            return ((hash<glm::vec3>()(vertex.pos) ^
-                (hash<glm::vec3>()(vertex.norm) << 1)) >> 1) ^
-                (hash<glm::vec2>()(vertex.texCoord) << 1);
-        }
-    };
-}
+struct VertexMeshlet
+{
+    glm::vec4 pos;
+
+    VertexMeshlet()
+    {
+
+    }
+
+    VertexMeshlet(PBRVertex vertex)
+    {
+        this->pos.x = vertex.pos.x;
+        this->pos.y = vertex.pos.y;
+        this->pos.z = vertex.pos.z;
+        this->pos.w = vertex.pos.w;
+    }
+};
 
 #endif

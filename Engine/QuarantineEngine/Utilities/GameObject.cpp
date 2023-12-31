@@ -14,10 +14,14 @@ GameObject::GameObject()
 
     size_t numMeshAttributes = this->CheckNumAttributes();
     this->InitializeComponents(numMeshAttributes);
+
+    this->vkCmdDrawMeshTasksEXT =
+        (PFN_vkCmdDrawMeshTasksEXT)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksEXT");
 }
 
-GameObject::GameObject(PRIMITIVE_TYPE type)
+GameObject::GameObject(PRIMITIVE_TYPE type, bool isMeshShading)
 {
+    this->isMeshShading = isMeshShading;
     this->deviceModule = DeviceModule::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->materialManager = MaterialManager::getInstance();
@@ -26,11 +30,21 @@ GameObject::GameObject(PRIMITIVE_TYPE type)
 
     if (type != PRIMITIVE_TYPE::GRID_TYPE)
     {
-        auto mat = this->materialManager->GetMaterial("defaultPrimitiveMat");
-        auto newMatInstance = mat->CreateMaterialInstance();
-        this->materialManager->AddMaterial("defaultPrimitiveMat", newMatInstance);
+        if (this->isMeshShading)
+        {
+            auto mat = this->materialManager->GetMaterial("defaultMeshPrimitiveMat");
+            auto newMatInstance = mat->CreateMaterialInstance();
+            this->materialManager->AddMaterial("defaultMeshPrimitiveMat", newMatInstance);
+            this->addMaterial(newMatInstance);
+        }
+        else
+        {
+            auto mat = this->materialManager->GetMaterial("defaultPrimitiveMat");
+            auto newMatInstance = mat->CreateMaterialInstance();
+            this->materialManager->AddMaterial("defaultPrimitiveMat", newMatInstance);
+            this->addMaterial(newMatInstance);
+        }
 
-        this->addMaterial(newMatInstance);
         this->material->InitializeMaterialDataUBO();
     }
     else if (type == PRIMITIVE_TYPE::GRID_TYPE)
@@ -40,10 +54,14 @@ GameObject::GameObject(PRIMITIVE_TYPE type)
 
     size_t numMeshAttributes = this->CheckNumAttributes();
     this->InitializeComponents(numMeshAttributes);
+
+    this->vkCmdDrawMeshTasksEXT =
+        (PFN_vkCmdDrawMeshTasksEXT)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksEXT");
 }
 
-GameObject::GameObject(std::string meshPath)
+GameObject::GameObject(std::string meshPath, bool isMeshShading)
 {
+    this->isMeshShading = isMeshShading;
     this->deviceModule = DeviceModule::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->materialManager = MaterialManager::getInstance();
@@ -56,6 +74,9 @@ GameObject::GameObject(std::string meshPath)
         this->InitializeComponents(numMeshAttributes);
         this->InitializeAnimationComponent();
     }
+
+    this->vkCmdDrawMeshTasksEXT =
+        (PFN_vkCmdDrawMeshTasksEXT)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksEXT");
 }
 
 void GameObject::cleanup()
@@ -91,7 +112,7 @@ void GameObject::drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
     if (this->meshImportedType != ANIMATED_GEO)
     {
         this->CreateDrawCommand(commandBuffer, idx);
-        for each (auto child in childs)
+        for (auto child : childs)
         {
             child->CreateDrawCommand(commandBuffer, idx);
         }
@@ -99,7 +120,7 @@ void GameObject::drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
     else
     {
         this->CreateAnimationDrawCommand(commandBuffer, idx, this->animationComponent->animator);
-        for each (auto child in childs)
+        for (auto child : childs)
         {
             child->CreateAnimationDrawCommand(commandBuffer, idx, this->animationComponent->animator);
         }
@@ -155,6 +176,11 @@ void GameObject::InitializeComponents(size_t numMeshAttributes)
     if (this->mesh != nullptr)
     {
         this->mesh->InitializeMesh(numMeshAttributes);
+
+        if (this->isMeshShading)
+        {
+            this->material->descriptor->SetMeshletBuffers(this->mesh->meshlets_ptr);
+        }
     }
 
     if (!this->childs.empty())
@@ -173,7 +199,7 @@ void GameObject::InitializeAnimationComponent()
         std::vector<std::string> idChilds;
         if (!this->childs.empty())
         {
-            for each (auto child in this->childs)
+            for (auto child : this->childs)
             {
                 idChilds.push_back(child->id);
             }
@@ -236,6 +262,7 @@ void GameObject::UpdatePhysicTransform()
 bool GameObject::CreateChildsGameObject(std::string pathfile)
 {
     MeshImporter importer = {};
+    importer.EnableMeshShaderMaterials = this->isMeshShading;
     std::vector<MeshData> data = importer.LoadMesh(pathfile);
 
     if (data.empty())
@@ -258,6 +285,7 @@ bool GameObject::CreateChildsGameObject(std::string pathfile)
             this->childs[id]->parent = std::make_shared<GameObject>(*this);
             this->childs[id]->mesh = std::make_shared<Mesh>(Mesh(data[id]));
             this->childs[id]->meshImportedType = this->meshImportedType;
+            this->childs[id]->isMeshShading = this->isMeshShading;
             this->childs[id]->transform = std::make_shared<Transform>(Transform(parentModel * data[id].model));
             this->childs[id]->addMaterial(this->materialManager->GetMaterial(data[id].materialID));
         }
@@ -324,7 +352,9 @@ void GameObject::CreateAnimationDrawCommand(VkCommandBuffer& commandBuffer, uint
         {
             pushConstant.model = this->parent->transform->GetModel() * pushConstant.model;
         }
-        vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantStruct), &pushConstant);
+
+        VkShaderStageFlagBits stages = VK_SHADER_STAGE_ALL;
+        vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, stages, 0, sizeof(PushConstantStruct), &pushConstant);
 
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->mesh->indices.size()), 1, 0, 0, 0);
     }
@@ -350,10 +380,13 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
             vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
         }
 
-        VkDeviceSize offsets[] = { 0 };
-        VkBuffer vertexBuffers[] = { this->mesh->vertexBuffer };
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-        vkCmdBindIndexBuffer(commandBuffer, this->mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+        if (!this->isMeshShading)
+        {
+            VkDeviceSize offsets[] = { 0 };
+            VkBuffer vertexBuffers[] = { this->mesh->vertexBuffer };
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+            vkCmdBindIndexBuffer(commandBuffer, this->mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+        }
 
         if (this->material->HasDescriptorBuffer())
         {
@@ -365,9 +398,18 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
         {
             pushConstant.model = this->parent->transform->GetModel() * pushConstant.model;
         }
-        vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantStruct), &pushConstant);
 
-        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->mesh->indices.size()), 1, 0, 0, 0);
+        VkShaderStageFlagBits stages = VK_SHADER_STAGE_ALL;
+        vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, stages, 0, sizeof(PushConstantStruct), &pushConstant);
+
+        if (this->isMeshShading)
+        {
+            this->vkCmdDrawMeshTasksEXT(commandBuffer, 32, 1, 1);
+        }
+        else
+        {
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->mesh->indices.size()), 1, 0, 0, 0);
+        }
     }
 }
 

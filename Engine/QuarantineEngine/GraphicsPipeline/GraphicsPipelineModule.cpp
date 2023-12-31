@@ -113,7 +113,7 @@ void GraphicsPipelineModule::CompileGraphicsPipeline(std::vector<VkPipelineShade
 
     // Setup the push constants.
     VkPushConstantRange pushConstantInfo = { 0 };
-    pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    pushConstantInfo.stageFlags = VK_SHADER_STAGE_ALL;
     pushConstantInfo.offset = 0;
     pushConstantInfo.size = sizeof(PushConstantStruct);
 

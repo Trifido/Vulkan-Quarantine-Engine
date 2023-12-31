@@ -132,11 +132,33 @@ void MeshImporter::ExtractBoneWeightForVertices(MeshData& data, aiMesh* mesh)
             {
                 int vertexId = weights[weightIndex].mVertexId;
                 float weight = weights[weightIndex].mWeight;
+
                 assert(vertexId <= data.vertices.size());
+
                 SetVertexBoneData(data.vertices[vertexId], boneID, weight);
             }
         }
     }
+}
+
+void MeshImporter::RemapGeometry(MeshData& data)
+{
+    std::vector<unsigned int> remap(data.numIndices);
+
+    std::vector<uint32_t> resultIndices;
+    std::vector<PBRVertex> resultVertices;
+
+    size_t total_vertices = meshopt_generateVertexRemap(&remap[0], &data.indices[0], data.numIndices, &data.vertices[0], data.numIndices, sizeof(PBRVertex));
+
+    data.numVertices = total_vertices;
+    resultIndices.resize(data.numIndices);
+    meshopt_remapIndexBuffer(&resultIndices[0], &data.indices[0], data.numIndices, &remap[0]);
+
+    resultVertices.resize(total_vertices);
+    meshopt_remapVertexBuffer(&resultVertices[0], &data.vertices[0], data.numIndices, sizeof(PBRVertex), &remap[0]);
+
+    data.indices = resultIndices;
+    data.vertices = resultVertices;
 }
 
 void MeshImporter::RecreateTangents(std::vector<PBRVertex>& vertices, std::vector<unsigned int>& indices)
@@ -305,18 +327,17 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
     }
 
     // process indices
-    data.numIndices = 0;
+    data.numIndices = mesh->mNumFaces * mesh->mFaces[0].mNumIndices;
+    data.indices.reserve(data.numIndices);
+
     for (unsigned int i = 0; i < mesh->mNumFaces; i++)
     {
         aiFace face = mesh->mFaces[i];
         for (unsigned int j = 0; j < face.mNumIndices; j++)
         {
-            data.numIndices += face.mNumIndices;
             data.indices.push_back(face.mIndices[j]);
         }
     }
-    data.indices.resize(data.numIndices);
-
 
     if (!existNormal)
     {
@@ -329,6 +350,8 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
     }
 
     ExtractBoneWeightForVertices(data, mesh);
+
+    this->RemapGeometry(data);
 
     return data;
 }
@@ -419,7 +442,15 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
 
     if (!materialManager->Exists(materialName))
     {
-        materialManager->CreateMaterial(materialName, this->hasAnimation);
+        if (this->EnableMeshShaderMaterials)
+        {
+            materialManager->CreateMeshShaderMaterial(materialName); 
+        }
+        else
+        {
+            materialManager->CreateMaterial(materialName, this->hasAnimation);
+        }
+
         std::shared_ptr<Material> mat = materialManager->GetMaterial(materialName);
 
         //Import material atributes

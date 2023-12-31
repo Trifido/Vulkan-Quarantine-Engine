@@ -413,7 +413,10 @@
       <Filter>Kernel\Utilities\sources</Filter>
     </ClCompile>
     <ClCompile Include="Utilities\Particles\ParticleSystemManager.cpp">
-      <Filter>sources</Filter>
+      <Filter>Kernel\Utilities\Particles\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Geometry\Meshlet.cpp">
+      <Filter>Kernel\Utilities\Geometry\sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -675,7 +678,12 @@
       <Filter>Kernel\Utilities\headers</Filter>
     </ClInclude>
     <ClInclude Include="GraphicsPipeline\GraphicsPipelineData.h" />
-    <ClInclude Include="Utilities\Particles\ParticleSystemManager.h" />
+    <ClInclude Include="Utilities\Particles\ParticleSystemManager.h">
+      <Filter>Kernel\Utilities\Particles\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Geometry\Meshlet.h">
+      <Filter>Kernel\Utilities\Geometry\headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.txt" />

@@ -23,7 +23,7 @@ private:
 public:
     ParticleSystemManager();
     void AddParticleSystem(std::shared_ptr<ParticleSystem> object_ptr, std::string name);
-    std::shared_ptr<ParticleSystem> ParticleSystemManager::GetParticleSystem(std::string name);
+    std::shared_ptr<ParticleSystem> GetParticleSystem(std::string name);
     static ParticleSystemManager* getInstance();
     static void ResetInstance();
     void Cleanup();

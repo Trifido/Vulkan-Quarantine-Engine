@@ -25,6 +25,7 @@ private:
     VkPhysicalDeviceMemoryProperties    memoryProperties;
     QueueModule                         queueModule;
     bool                                bindless_supported;
+    bool                                meshShader_supported;
 
 public:
     static DeviceModule* getInstance();
@@ -35,6 +36,7 @@ public:
     VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
     void cleanup();
     VkSampleCountFlagBits* getMsaaSamples();
+    void InitializeMeshShaderExtension();
 private:
     bool isDeviceSuitable(VkPhysicalDevice newDevice, VkSurfaceKHR& surface);
     VkSampleCountFlagBits getMaxUsableSampleCount();

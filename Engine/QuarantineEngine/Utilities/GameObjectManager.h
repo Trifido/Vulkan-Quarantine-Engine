@@ -23,7 +23,7 @@ private:
 public:
     GameObjectManager();
     void AddGameObject(std::shared_ptr<GameObject> object_ptr, std::string name);
-    std::shared_ptr<GameObject> GameObjectManager::GetGameObject(std::string name);
+    std::shared_ptr<GameObject> GetGameObject(std::string name);
     static GameObjectManager* getInstance();
     static void ResetInstance();
     void DrawCommnad(VkCommandBuffer& commandBuffer, uint32_t idx);

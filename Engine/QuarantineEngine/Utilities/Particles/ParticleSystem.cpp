@@ -46,18 +46,18 @@ void ParticleSystem::InitializeMaterial()
 
     this->addMaterial(newMatInstance);
     this->material->InitializeMaterialDataUBO();
-    this->material->descriptor->InitializeSSBOData();
-    this->material->descriptor->ssboData[0] = computeNodeUpdateParticles->computeDescriptor->ssboData[0];
-    this->material->descriptor->ssboSize[0] = computeNodeUpdateParticles->computeDescriptor->ssboSize[0];
+    this->material->descriptor->ssboData["ParticleSSBO"] = computeNodeUpdateParticles->computeDescriptor->ssboData[0];
+    this->material->descriptor->ssboSize["ParticleSSBO"] = computeNodeUpdateParticles->computeDescriptor->ssboSize[0];
 
-    this->material->descriptor->particleSystemUBO = std::make_shared<UniformBufferObject>();
-    this->material->descriptor->particleSystemUBO->CreateUniformBuffer(sizeof(ParticleTextureParamsUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->material->descriptor->ubos["particleSystemUBO"] = std::make_shared<UniformBufferObject>();
+    this->material->descriptor->ubos["particleSystemUBO"]->CreateUniformBuffer(sizeof(ParticleTextureParamsUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->material->descriptor->uboSizes["particleSystemUBO"] = sizeof(ParticleTextureParamsUniform);
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {
         void* data;
-        vkMapMemory(deviceModule->device, this->material->descriptor->particleSystemUBO->uniformBuffersMemory[currentFrame], 0, sizeof(ParticleTextureParamsUniform), 0, &data);
+        vkMapMemory(deviceModule->device, this->material->descriptor->ubos["particleSystemUBO"]->uniformBuffersMemory[currentFrame], 0, sizeof(ParticleTextureParamsUniform), 0, &data);
         memcpy(data, static_cast<const void*>(&this->particleTextureParams), sizeof(ParticleTextureParamsUniform));
-        vkUnmapMemory(deviceModule->device, this->material->descriptor->particleSystemUBO->uniformBuffersMemory[currentFrame]);
+        vkUnmapMemory(deviceModule->device, this->material->descriptor->ubos["particleSystemUBO"]->uniformBuffersMemory[currentFrame]);
     }
 }
 

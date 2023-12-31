@@ -1,0 +1,116 @@
+#version 450
+
+#extension GL_EXT_mesh_shader : require
+#extension GL_ARB_shader_draw_parameters : enable
+#extension GL_EXT_shader_16bit_storage: require
+#extension GL_EXT_shader_8bit_storage: require
+#extension GL_KHR_shader_subgroup_ballot: require
+
+#define GPU_WARP_SIZE 32
+#define GPU_GROUP_SIZE GPU_WARP_SIZE
+#define CUT_OFF_FACTOR 0.75
+
+layout(local_size_x = GPU_GROUP_SIZE, local_size_y = 1, local_size_z = 1) in;
+
+const float pi_half = 1.57079;
+
+struct BoundingSphere
+{
+  vec3 center;
+  float radius;
+};
+
+struct BoundingCone
+{
+  vec3 normal;
+  float angle;
+  vec4 position;
+};
+
+struct MeshletDescriptor
+{
+  BoundingSphere sphere;
+  BoundingCone cone;
+  uint primitive_count;
+};
+
+struct Task
+{
+    uint    primitive_base_id;
+    uint    primitive_offsets[GPU_GROUP_SIZE];
+    uint    meshletIndices[GPU_GROUP_SIZE];
+};
+
+taskPayloadSharedEXT Task OUT;
+
+layout(set = 0, binding = 0) uniform CameraUniform
+{
+	mat4 view;
+	mat4 proj;
+	mat4 viewproj;
+    vec4 position;
+    vec4 frustumPlanes[6];
+} cameraData;
+
+layout(set = 0, binding = 1) readonly buffer Meshlets
+{
+    MeshletDescriptor meshlets[];
+};
+
+layout(std430, push_constant) uniform PushConstants
+{
+    mat4 model;
+} constants;
+
+bool coneCull(vec3 center, float radius, vec3 cone_axis, float cone_cutoff)
+{   
+    return dot(center - cameraData.position.xyz, cone_axis) >= cone_cutoff * length(center - cameraData.position.xyz) + radius;
+    // vec3 position = cameraData.position.xyz;
+    // vec3 dir = normalize(center - position);
+    // return dot(dir, cone_axis) >= cone_cutoff;
+}
+
+bool isSphereOutsideFrustum(vec4 sphere_center, float sphere_radius)
+{                    
+    vec4 sphere_view_center = cameraData.view * sphere_center;
+
+    bool isInside = false;
+    for(int i = 0; i < 6; i++)
+    {
+        isInside = isInside || (dot(cameraData.frustumPlanes[i].xyz, sphere_view_center.xyz) + cameraData.frustumPlanes[i].w < -sphere_radius);
+    }
+    return isInside;
+}
+
+void main()
+{
+    uint meshlet_id = gl_GlobalInvocationID.x;
+    uint workgroup_meshlet_base_id = gl_WorkGroupID.x * GPU_GROUP_SIZE;
+    uint workgroup_primitive_base_id = workgroup_meshlet_base_id * GPU_GROUP_SIZE;
+    uint local_primitive_offset = gl_LocalInvocationID.x * GPU_GROUP_SIZE;
+
+    MeshletDescriptor meshlet = meshlets[meshlet_id];
+
+    vec4 center = constants.model * vec4(meshlet.sphere.center, 1);
+    vec4 cone_pos = constants.model * meshlet.cone.position;
+    vec3 cone_axis = normalize(mat3(constants.model) * meshlet.cone.normal);
+    float radius = meshlet.sphere.radius * length(constants.model[0]);
+
+    bool render = !isSphereOutsideFrustum(center, radius) && !coneCull(cone_pos.xyz, radius, cone_axis, meshlet.cone.angle);
+
+    uvec4 warp_bitfield = subgroupBallot(render);
+    uint task_count = subgroupBallotBitCount(warp_bitfield);
+    uint task_out_index = subgroupBallotExclusiveBitCount(warp_bitfield);
+
+    if (render)
+    {
+        OUT.primitive_offsets[task_out_index] = local_primitive_offset;
+        OUT.meshletIndices[task_out_index] = meshlet_id;
+    }
+
+    if (gl_LocalInvocationID.x == 0)
+    {
+        OUT.primitive_base_id = workgroup_primitive_base_id;
+        EmitMeshTasksEXT(task_count, 1, 1);
+    }
+}

@@ -39,6 +39,15 @@ public:
     glm::mat4 view;
     glm::mat4 projection;
     glm::mat4 VP;
+
+private:
+    glm::vec4 normalize_plane(glm::vec4 plane);
+
+protected:
+    void UpdateUniform();
+    void UpdateFrustumPlanes();
+
+public:
     Camera() {};
     Camera(float width, float height);
     void CameraController(float deltaTime);
@@ -55,8 +64,6 @@ public:
     void UpdateSize(VkExtent2D size);
     void UpdateUBOCamera();
     void CleanCameraUBO();
-protected:
-    void UpdateUniform();
 };
 
 #endif // !CAMERA_H

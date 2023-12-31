@@ -1,0 +1,111 @@
+#version 450
+
+#extension GL_EXT_mesh_shader : require
+#extension GL_EXT_shader_16bit_storage: require
+#extension GL_EXT_shader_8bit_storage: require
+
+#define GPU_WARP_SIZE 32
+
+#define GPU_GROUP_SIZE GPU_WARP_SIZE
+
+#define GPU_PRIMITIVES_PER_MESHLET GPU_GROUP_SIZE
+
+#define GPU_INDICES_PER_PRIMITIVE 3
+
+#define MAX_VER  GPU_PRIMITIVES_PER_MESHLET * GPU_INDICES_PER_PRIMITIVE
+#define MAX_PRIM GPU_PRIMITIVES_PER_MESHLET
+
+layout(local_size_x = GPU_PRIMITIVES_PER_MESHLET, local_size_y = 1, local_size_z = 1) in;
+layout(triangles, max_vertices = MAX_VER, max_primitives = MAX_PRIM) out;
+
+#define MAX_COLORS 10
+vec4 meshletcolors[MAX_COLORS] = {
+  vec4(1,0,0,1), 
+  vec4(0,1,0,1),
+  vec4(0,0,1,1),
+  vec4(1,1,0,1),
+  vec4(1,0,1,1),
+  vec4(0,1,1,1),
+  vec4(1,0.5,0,1),
+  vec4(0.5,1,0,1),
+  vec4(0,0.5,1,1),
+  vec4(1,1,1,1)
+};
+
+struct PBRVertex
+{
+    vec4 pos;
+    vec4 norm;
+    vec2 texCoord;
+    vec4 tangents;
+    vec4 bitangents;
+    int boneIDs[4];
+    float boneWeights[4];
+};
+
+layout(set = 0, binding = 0) uniform CameraUniform
+{
+	mat4 view;
+	mat4 proj;
+	mat4 viewproj;
+    vec4 position;
+    vec4 frustumPlanes[6];
+} cameraData;
+
+layout(set = 0, binding = 2) readonly buffer MeshletVertices
+{
+    PBRVertex vertex[];
+};
+
+layout(set = 0, binding = 3) readonly buffer IndexBuffer
+{
+    uint indices[];
+};
+
+layout(std430, push_constant) uniform PushConstants
+{
+    mat4 model;
+} constants;
+
+struct Task
+{
+    uint    primitive_base_id;
+    uint    primitive_offsets[GPU_GROUP_SIZE];
+    uint    meshletIndices[GPU_GROUP_SIZE];
+};
+
+taskPayloadSharedEXT Task IN;
+
+layout(location = 0) out perVertexData {
+  vec4 color;
+} customData[96];
+
+uint workgroup_primitive_base_id = IN.primitive_base_id + IN.primitive_offsets[gl_WorkGroupID.x];
+uint primitive_id = workgroup_primitive_base_id + gl_LocalInvocationID.x;
+uint index_base_id = primitive_id * GPU_INDICES_PER_PRIMITIVE;
+uint vertex_base_id = gl_LocalInvocationID.x * GPU_INDICES_PER_PRIMITIVE;
+
+void main()
+{
+    uint ind = IN.meshletIndices[gl_WorkGroupID.x];
+
+    mat4 resultModel = mat4(inverse(transpose(constants.model)));
+
+    for(uint i = 0; i < GPU_INDICES_PER_PRIMITIVE; i++)
+    {
+        uint cur_index = indices[index_base_id + i];
+        gl_MeshVerticesEXT[vertex_base_id + i].gl_Position = cameraData.viewproj * constants.model * vertex[cur_index].pos;
+        
+        customData[vertex_base_id + i].color = meshletcolors[ind % MAX_COLORS];
+        //customData[vertex_base_id + i].color = 0.5 * (resultModel * vertex[cur_index].norm) + 0.5;
+    }
+
+    gl_PrimitiveTriangleIndicesEXT[gl_LocalInvocationID.x].x = vertex_base_id;
+    gl_PrimitiveTriangleIndicesEXT[gl_LocalInvocationID.x].y = vertex_base_id + 1;
+    gl_PrimitiveTriangleIndicesEXT[gl_LocalInvocationID.x].z = vertex_base_id + 2;
+
+    if (gl_LocalInvocationID.x == 0)
+    {
+        SetMeshOutputsEXT(MAX_VER, MAX_PRIM);
+    }
+}

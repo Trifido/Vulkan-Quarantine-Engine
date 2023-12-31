@@ -26,6 +26,10 @@ enum MeshImportedType
 
 class GameObject : Numbered
 {
+private:
+    bool isMeshShading = false;
+    PFN_vkCmdDrawMeshTasksEXT vkCmdDrawMeshTasksEXT = nullptr;
+
 protected:
     DeviceModule*       deviceModule = nullptr;
     QueueModule*        queueModule = nullptr;
@@ -33,6 +37,7 @@ protected:
     AnimationManager*   animationManager = nullptr;
     MeshImportedType    meshImportedType;
     PushConstantStruct  pushConstant;
+
 public:
     std::shared_ptr<GeometryComponent>  mesh = nullptr;
     std::shared_ptr<Transform>          transform = nullptr;
@@ -47,8 +52,8 @@ public:
 
 public:
     GameObject();
-    GameObject(PRIMITIVE_TYPE type);
-    GameObject(std::string meshPath);
+    GameObject(PRIMITIVE_TYPE type, bool isMeshShading = false);
+    GameObject(std::string meshPath, bool isMeshShading = false);
     inline std::string ID() const { return id; }
     void cleanup();
     virtual void drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);

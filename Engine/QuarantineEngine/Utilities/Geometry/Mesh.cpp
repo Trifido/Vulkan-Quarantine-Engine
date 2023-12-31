@@ -23,6 +23,11 @@ Mesh::Mesh(const MeshData& data)
 void Mesh::InitializeMesh(size_t numAttributes)
 {
     this->numAttributes = numAttributes;
+
+    this->meshlets_ptr = std::make_shared<Meshlet>();
+    //this->meshlets_ptr->GenerateMeshlet(this->vertices, this->indices);
+    this->meshlets_ptr->GenerateCustomMeshlet(this->vertices, this->indices);
+
     this->createVertexBuffer();
     this->createIndexBuffer();
 }

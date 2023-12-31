@@ -46,6 +46,10 @@ private:
     void SetVertexBoneDataToDefault(PBRVertex& vertex);
     void SetVertexBoneData(PBRVertex& vertex, int boneID, float weight);
     void ExtractBoneWeightForVertices(MeshData& data, aiMesh* mesh);
+    void RemapGeometry(MeshData& data);
+
+public:
+    bool EnableMeshShaderMaterials = false;
 
 public:
     MeshImporter();

@@ -77,8 +77,6 @@ public:
     void SetMaterialField(std::string nameField, float value);
     void SetMaterialField(std::string nameField, glm::vec3 value);
     void SetMaterialField(std::string nameField, int value);
-
-
 };
 
 #endif // !MATERIAL_DATA_H

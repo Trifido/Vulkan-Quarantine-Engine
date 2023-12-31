@@ -7,6 +7,7 @@
 #include <Geometry/Vertex.h>
 #include <DeviceModule.h>
 #include <Geometry/PrimitiveTypes.h>
+#include <Meshlet.h>
 
 class GeometryComponent : GameComponent
 {
@@ -27,6 +28,7 @@ public:
     uint32_t numVertices;
     uint32_t numFaces;
     std::vector<uint32_t> indices;
+    std::shared_ptr<Meshlet> meshlets_ptr = nullptr;
 
     virtual void InitializeMesh(size_t numAttributes) = 0;
     static VkVertexInputBindingDescription  getBindingDescription(bool hasAnimation);

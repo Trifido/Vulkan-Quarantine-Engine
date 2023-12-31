@@ -85,7 +85,7 @@ bool ComputePipelineManager::Exists(std::string pipelineName)
 
 void ComputePipelineManager::CleanComputePipeline()
 {
-    for each (auto gPipeline in this->_computePipelines)
+    for (auto gPipeline : this->_computePipelines)
     {
         gPipeline.second->CleanPipelineData();
     }

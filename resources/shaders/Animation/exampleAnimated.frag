@@ -19,7 +19,8 @@ layout(set = 0, binding = 0) uniform CameraUniform
 	mat4 view;
 	mat4 proj;
 	mat4 viewproj;
-    vec3 position;
+    vec4 position;
+    vec4 frustumPlanes[6];
 } cameraData;
 
 layout(set = 0, binding = 1) uniform UniformMaterial {
@@ -181,7 +182,7 @@ vec3 ComputeSpotLight(LightData light, int id, vec3 normal, vec2 texCoords)
 {
     vec3 lightDir = normalize(fs_in.TangentLightPos[id] - fs_in.TangentFragPos);
 
-    float distance = length(cameraData.position - fs_in.FragPos);
+    float distance = length(cameraData.position.xyz - fs_in.FragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
     float theta = dot(normalize(light.position.xyz - fs_in.FragPos), normalize(-light.spotDirection)); 

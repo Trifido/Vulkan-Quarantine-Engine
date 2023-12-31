@@ -11,6 +11,7 @@
 #include <assimp/postprocess.h>
 
 #include <MeshImporter.h>
+#include <Meshlet.h>
 
 typedef struct MeshData MeshData;
 
@@ -20,7 +21,12 @@ private:
     std::string PATH;
     std::vector<PBRVertex> vertices;
 
+public:
+    bool IsMeshletEnabled = false;
+
+private:
     void createVertexBuffer() override;
+
 public:
     Mesh(const MeshData& data);
     void InitializeMesh(size_t numAttributes) override;

@@ -2,6 +2,18 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <SynchronizationModule.h>
 
+float glm_vec3_dot(glm::vec3 a, glm::vec3 b) {
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+float glm_vec3_norm2(glm::vec3 v) {
+    return glm_vec3_dot(v, v);
+}
+
+float glm_vec3_norm(glm::vec3 v) {
+    return sqrtf(glm_vec3_norm2(v));
+}
+
 Camera::Camera(float width, float height)
 {
     deviceModule = DeviceModule::getInstance();
@@ -12,7 +24,7 @@ Camera::Camera(float width, float height)
     lastX = WIDTH / 2.0f;
     lastY = HEIGHT / 2.0f;
     nearPlane = 0.01f;
-    farPlane = 1000.0f;
+    farPlane = 100.0f;
     view = projection = VP = glm::mat4(1.0);
     this->cameraUniform = std::make_shared<CameraUniform>();
     this->cameraUBO = std::make_shared<UniformBufferObject>();
@@ -191,7 +203,28 @@ void Camera::UpdateUniform()
     this->cameraUniform->projection = this->projection;
     this->cameraUniform->view = this->view;
     this->cameraUniform->viewproj = this->projection * this->view;
-    this->cameraUniform->position = this->cameraPos;
+    this->cameraUniform->position = glm::vec4(this->cameraPos, 1.0f);
+
+    this->UpdateFrustumPlanes();
+}
+
+glm::vec4 Camera::normalize_plane(glm::vec4 plane) {
+    float len = glm_vec3_norm({ plane.x, plane.y, plane.z });
+
+    float value = 1.0f / len;
+    plane *= value;
+    return plane;
+}
+
+void Camera::UpdateFrustumPlanes()
+{
+    glm::mat4 projectionTranspose = glm::transpose(this->projection);
+    this->cameraUniform->frustumPlanes[0] = normalize_plane(projectionTranspose[3] + projectionTranspose[0]);
+    this->cameraUniform->frustumPlanes[1] = normalize_plane(projectionTranspose[3] - projectionTranspose[0]);
+    this->cameraUniform->frustumPlanes[2] = normalize_plane(projectionTranspose[3] + projectionTranspose[1]);
+    this->cameraUniform->frustumPlanes[3] = normalize_plane(projectionTranspose[3] - projectionTranspose[1]);
+    this->cameraUniform->frustumPlanes[4] = normalize_plane(projectionTranspose[3] + projectionTranspose[2]);
+    this->cameraUniform->frustumPlanes[5] = normalize_plane(projectionTranspose[3] - projectionTranspose[2]);
 }
 
 void Camera::UpdateUBOCamera()

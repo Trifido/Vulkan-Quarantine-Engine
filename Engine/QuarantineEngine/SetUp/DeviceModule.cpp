@@ -47,6 +47,8 @@ void DeviceModule::pickPhysicalDevice(const VkInstance &newInstance, VkSurfaceKH
         std::cout << "failed to find a suitable GPU!\n";
         throw std::runtime_error("failed to find a suitable GPU!");
     }
+
+    this->InitializeMeshShaderExtension();
 }
 
 DeviceModule* DeviceModule::getInstance()
@@ -84,6 +86,16 @@ void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& nQueu
     physicalDeviceFeatures.sampleRateShading = VK_TRUE;
     physicalDeviceFeatures.fillModeNonSolid = VK_TRUE;
 
+    VkPhysicalDeviceMaintenance4Features maintenance4Feature = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_FEATURES };
+    maintenance4Feature.maintenance4 = VK_TRUE;
+    maintenance4Feature.pNext = &indexing_features;
+
+    //8 bit storage features
+    VkPhysicalDevice8BitStorageFeatures device8BitFeature = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES };
+    device8BitFeature.storageBuffer8BitAccess = VK_TRUE;
+    device8BitFeature.storagePushConstant8 = VK_TRUE;
+    device8BitFeature.pNext = &maintenance4Feature;
+
     //Bindless features
     VkPhysicalDeviceFeatures2 physical_features2 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
     physical_features2.features.samplerAnisotropy = VK_TRUE;
@@ -96,16 +108,21 @@ void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& nQueu
         this->indexing_features.descriptorBindingPartiallyBound = VK_TRUE;
         this->indexing_features.runtimeDescriptorArray = VK_TRUE;
 
-        physical_features2.pNext = &indexing_features;
+        physical_features2.pNext = &device8BitFeature;
     }
+    //Mesh shader features
+    VkPhysicalDeviceMeshShaderFeaturesEXT mesh_shaders_feature = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT };
+    mesh_shaders_feature.taskShader = VK_TRUE;
+    mesh_shaders_feature.meshShader = VK_TRUE;
+    mesh_shaders_feature.pNext = &physical_features2;
 
     //Raytracing features
     VkPhysicalDeviceBufferDeviceAddressFeaturesEXT bufferDeviceAddressFeatures = {};
     bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_EXT;
-    bufferDeviceAddressFeatures.pNext = &physical_features2;
+    bufferDeviceAddressFeatures.pNext = &mesh_shaders_feature;
     bufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
-    bufferDeviceAddressFeatures.bufferDeviceAddressCaptureReplay = VK_FALSE;
-    bufferDeviceAddressFeatures.bufferDeviceAddressMultiDevice = VK_FALSE;
+    bufferDeviceAddressFeatures.bufferDeviceAddressCaptureReplay = VK_TRUE;
+    bufferDeviceAddressFeatures.bufferDeviceAddressMultiDevice = VK_TRUE;
 
     VkPhysicalDeviceRayTracingPipelineFeaturesKHR rayTracingPipelineFeatures = {};
     rayTracingPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
@@ -184,6 +201,18 @@ VkSampleCountFlagBits* DeviceModule::getMsaaSamples()
     return &msaaSamples;
 }
 
+void DeviceModule::InitializeMeshShaderExtension()
+{
+    VkPhysicalDeviceMeshShaderPropertiesNV meshShaderProperties = {};
+    meshShaderProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_NV;
+
+    VkPhysicalDeviceProperties2 props = {};
+    props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+    props.pNext = &meshShaderProperties;
+
+    vkGetPhysicalDeviceProperties2(this->physicalDevice, &props);
+}
+
 bool DeviceModule::isDeviceSuitable(VkPhysicalDevice newDevice, VkSurfaceKHR& surface) {
     QueueFamilyIndices indices = QueueFamilyIndices::findQueueFamilies(newDevice, surface);
 
@@ -204,5 +233,7 @@ bool DeviceModule::isDeviceSuitable(VkPhysicalDevice newDevice, VkSurfaceKHR& su
     vkGetPhysicalDeviceFeatures2(newDevice, &device_features);
     this->bindless_supported = this->indexing_features.descriptorBindingPartiallyBound && indexing_features.runtimeDescriptorArray;
 
-    return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy && this->bindless_supported;
+    return indices.isComplete() && extensionsSupported
+        && swapChainAdequate && supportedFeatures.samplerAnisotropy
+        && this->bindless_supported;
 }
