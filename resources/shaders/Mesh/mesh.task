@@ -64,9 +64,10 @@ layout(std430, push_constant) uniform PushConstants
 
 bool coneCull(vec3 center, float radius, vec3 cone_axis, float cone_cutoff)
 {   
-    vec3 position = cameraData.position.xyz;
-    vec3 dir = normalize(center - position);
-    return dot(dir, cone_axis) >= cone_cutoff * CUT_OFF_FACTOR;
+    return dot(center - cameraData.position.xyz, cone_axis) >= cone_cutoff * length(center - cameraData.position.xyz) + radius;
+    // vec3 position = cameraData.position.xyz;
+    // vec3 dir = normalize(center - position);
+    // return dot(dir, cone_axis) >= cone_cutoff;
 }
 
 bool isSphereOutsideFrustum(vec4 sphere_center, float sphere_radius)
@@ -92,10 +93,10 @@ void main()
 
     vec4 center = constants.model * vec4(meshlet.sphere.center, 1);
     vec4 cone_pos = constants.model * meshlet.cone.position;
-    vec3 cone_axis = mat3(constants.model) * meshlet.cone.normal;
+    vec3 cone_axis = normalize(mat3(constants.model) * meshlet.cone.normal);
     float radius = meshlet.sphere.radius * length(constants.model[0]);
 
-    bool render = !isSphereOutsideFrustum(vec4(meshlet.sphere.center, 1), radius) && !coneCull(cone_pos.xyz, radius, cone_axis, meshlet.cone.angle);
+    bool render = !isSphereOutsideFrustum(center, radius) && !coneCull(cone_pos.xyz, radius, cone_axis, meshlet.cone.angle);
 
     uvec4 warp_bitfield = subgroupBallot(render);
     uint task_count = subgroupBallotBitCount(warp_bitfield);
