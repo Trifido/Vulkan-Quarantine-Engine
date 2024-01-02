@@ -27,7 +27,10 @@ struct MeshletDescriptor
 {
     BoundingSphere sphere;
     BoundingCone cone;
-    uint16_t primitive_count;
+    uint16_t dataOffset;
+    uint16_t meshIndex;
+    uint16_t vertexCount;
+    uint16_t triangleCount;
 };
 
 class AxisAlignedBoundingBox
@@ -52,10 +55,11 @@ class Meshlet
 {
 private:
     const uint16_t meshlet_primitive_count = 32;
+    uint32_t meshlet_vertex_offset = 0;
 
 private:
-    const size_t MAX_VERTICES = 96;
-    const size_t MAX_TRIANGLES = 32;
+    const size_t MAX_VERTICES = 64;
+    const size_t MAX_TRIANGLES = 124;
     const float CONE_WEIGHT = 0.5f;
 
 public:
@@ -63,6 +67,8 @@ public:
     std::vector<uint32_t> meshletData;
     std::vector<PBRVertex> verticesData;
     std::vector<uint32_t> indexData;
+
+    std::vector<uint32_t> meshletIndexData;
 
 public:
     void GenerateMeshlet(const std::vector<PBRVertex>& vertices, const std::vector<uint32_t>& indices);

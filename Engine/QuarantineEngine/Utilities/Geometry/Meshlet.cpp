@@ -61,12 +61,15 @@ void Meshlet::GenerateCustomMeshlet(std::vector<PBRVertex>& vertices, std::vecto
     std::vector<glm::vec4*> meshlet_vertices;
     std::vector<glm::vec4*> meshlet_normals;
 
+    uint16_t dataOffset = 0u;
+
     for (unsigned i_meshlet = 0; i_meshlet < meshlet_count; ++i_meshlet)
     {
         const auto i_face_to = glm::min(i_face_from + this->meshlet_primitive_count, face_count);
         auto global_index_to = i_face_to * 3;
         auto global_index_from = i_face_from * 3;
 
+        uint16_t vertex_count = global_index_to - global_index_from;
         uint16_t primitive_count = i_face_to - i_face_from;
         unique_index_map.clear();
 
@@ -79,12 +82,12 @@ void Meshlet::GenerateCustomMeshlet(std::vector<PBRVertex>& vertices, std::vecto
         // Iterate primitives of this meshlet
         for (unsigned i_face = i_face_from; i_face < i_face_to; ++i_face)
         {
-            auto global_index_to = i_face * 3;
-            auto init_index = this->indexData.at(global_index_to);
+            auto current_global_index_to = i_face * 3;
+            auto init_index = this->indexData.at(current_global_index_to);
 
             for (unsigned i_indx = 0; i_indx < 3; ++i_indx)
             {
-                unsigned index = this->indexData.at(global_index_to + i_indx);
+                unsigned index = this->indexData.at(current_global_index_to + i_indx);
 
                 // Add to map to test if index already present
                 if (unique_index_map
@@ -122,7 +125,11 @@ void Meshlet::GenerateCustomMeshlet(std::vector<PBRVertex>& vertices, std::vecto
         gpuMeshlets.push_back(
             MeshletDescriptor{ .sphere = bounding_sphere,
                                    .cone = bounding_cone,
-                                   .primitive_count = primitive_count });
+                                   .dataOffset = (uint16_t) global_index_from,
+                                   .meshIndex = 0,
+                                   .vertexCount = (uint16_t) vertex_count,
+                                   .triangleCount = (uint16_t) primitive_count,
+            });
 
         i_face_from += this->meshlet_primitive_count;
     }
@@ -135,6 +142,7 @@ void Meshlet::GenerateMeshlet(const std::vector<PBRVertex>& vertices, const std:
     std::vector<meshopt_Meshlet> meshlets;
     std::vector<unsigned int> meshlet_vertices_indices;
     std::vector<unsigned char> meshlet_triangles;
+    unsigned int dataOffset;
 
     this->verticesData = vertices;
     this->indexData = indices;
@@ -155,10 +163,11 @@ void Meshlet::GenerateMeshlet(const std::vector<PBRVertex>& vertices, const std:
         sizeof(PBRVertex),
         this->MAX_VERTICES,
         this->MAX_TRIANGLES,
-        0.5f);
+        this->CONE_WEIGHT);
     meshlets.resize(meshlets_count);
 
-    uint32_t meshlet_vertex_offset = meshlet_vertices_indices.size();
+    uint32_t meshlet_vertex_offset = 0;
+
     for (size_t i = 0; i < meshlets_count; ++i)
     {
         const meshopt_Meshlet& local_meshlet = meshlets[i];
@@ -188,9 +197,28 @@ void Meshlet::GenerateMeshlet(const std::vector<PBRVertex>& vertices, const std:
 
         newMeshlet.cone = bounding_cone;
         newMeshlet.sphere = bounding_sphere;
-        newMeshlet.primitive_count = local_meshlet.triangle_count;
+        newMeshlet.vertexCount = local_meshlet.vertex_count;
+        newMeshlet.meshIndex = 0u;
+        newMeshlet.triangleCount = local_meshlet.triangle_count;
+        newMeshlet.dataOffset = meshletIndexData.size();
 
         this->gpuMeshlets.push_back(newMeshlet);
+
+        uint32_t indexGroupCount = (local_meshlet.triangle_count * 3 + 3) / 4;
+        meshletIndexData.reserve(meshletIndexData.size() + local_meshlet.vertex_count + indexGroupCount);
+
+        for (uint32_t j = 0; j < newMeshlet.vertexCount; j++)
+        {
+            uint32_t vertexIndex = meshlet_vertex_offset + meshlet_vertices_indices[local_meshlet.vertex_offset + j];
+            meshletIndexData.push_back(vertexIndex);
+        }
+
+        const uint32_t* index_groups = reinterpret_cast<const uint32_t*>(meshlet_triangles.data() + local_meshlet.triangle_offset);
+        for (uint32_t j = 0; j < indexGroupCount; j++)
+        {
+            const uint32_t index_group = index_groups[j];
+            meshletIndexData.push_back(index_group);
+        }
     }
 
     while (gpuMeshlets.size() % 32)

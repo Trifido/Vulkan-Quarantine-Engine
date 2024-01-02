@@ -1,0 +1,140 @@
+#version 460
+
+#extension GL_EXT_shader_16bit_storage: require
+#extension GL_EXT_shader_8bit_storage: require
+#extension GL_NV_mesh_shader: require
+
+#extension GL_KHR_shader_subgroup_ballot: require
+
+#define GPU_WARP_SIZE 32
+
+#define GPU_GROUP_SIZE GPU_WARP_SIZE
+
+layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
+layout(triangles, max_vertices = 64, max_primitives = 124) out;
+
+#define MAX_COLORS 10
+vec4 meshletcolors[MAX_COLORS] = {
+  vec4(1,0,0,1), 
+  vec4(0,1,0,1),
+  vec4(0,0,1,1),
+  vec4(1,1,0,1),
+  vec4(1,0,1,1),
+  vec4(0,1,1,1),
+  vec4(1,0.5,0,1),
+  vec4(0.5,1,0,1),
+  vec4(0,0.5,1,1),
+  vec4(1,1,1,1)
+};
+
+struct BoundingSphere
+{
+  vec3 center;
+  float radius;
+};
+
+struct BoundingCone
+{
+  vec3 normal;
+  float angle;
+  vec4 position;
+};
+
+struct MeshletDescriptor
+{
+  BoundingSphere sphere;
+  BoundingCone cone;
+  uint dataOffset;
+  uint meshIndex;
+  uint vertexCount;
+  uint triangleCount;
+};
+
+
+struct PBRVertex
+{
+    vec4 pos;
+    vec4 norm;
+    vec2 texCoord;
+    vec4 tangents;
+    vec4 bitangents;
+    int boneIDs[4];
+    float boneWeights[4];
+};
+
+layout(set = 0, binding = 0) uniform CameraUniform
+{
+	mat4 view;
+	mat4 proj;
+	mat4 viewproj;
+    vec4 position;
+    vec4 frustumPlanes[6];
+} cameraData;
+
+layout(set = 0, binding = 1) readonly buffer Meshlets
+{
+    MeshletDescriptor meshlets[];
+};
+
+layout(set = 0, binding = 2) readonly buffer MeshletVertices
+{
+    PBRVertex vertex[];
+};
+
+layout(set = 0, binding = 3) readonly buffer IndexBuffer
+{
+    uint indices[];
+};
+
+layout(std430, push_constant) uniform PushConstants
+{
+    mat4 model;
+} constants;
+
+taskNV in Task
+{
+    uint  meshletIndices[GPU_GROUP_SIZE];
+} IN;
+
+layout(location = 0) out perVertexData {
+  vec4 color;
+} customData[];
+
+
+void main()
+{
+    uint ti = gl_LocalInvocationID.x;
+    uint mi = IN.meshletIndices[gl_WorkGroupID.x];
+
+    uint vertexCount = uint(meshlets[mi].vertexCount);
+    uint triangleCount = uint(meshlets[mi].triangleCount);
+    uint indexCount = triangleCount * 3;
+
+    uint dataOffset = meshlets[mi].dataOffset;
+    uint vertexOffset = dataOffset;
+    uint indexOffset = dataOffset + vertexCount;
+
+    mat4 resultModel = mat4(inverse(transpose(constants.model)));
+
+    for(uint i = ti; i < vertexCount; i+=32)
+    {
+        uint cur_index = indices[vertexOffset + i];
+
+        gl_MeshVerticesNV[i].gl_Position  = cameraData.viewproj * constants.model * vertex[cur_index].pos;
+        
+        customData[i].color = meshletcolors[mi % MAX_COLORS];
+        //customData[vertex_base_id + i].color = 0.5 * (resultModel * vertex[cur_index].norm) + 0.5;
+    }
+
+    uint indexGroupCount = (indexCount + 3) / 4;
+
+    for (uint i = ti; i < indexGroupCount; i += 32)
+    {
+        writePackedPrimitiveIndices4x8NV(i * 4, indices[indexOffset + i]);
+    }
+
+    if (ti == 0) 
+    {
+        gl_PrimitiveCountNV = uint(meshlets[mi].triangleCount);
+    }
+}

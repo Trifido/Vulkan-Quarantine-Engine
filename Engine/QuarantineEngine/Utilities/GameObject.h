@@ -28,7 +28,8 @@ class GameObject : Numbered
 {
 private:
     bool isMeshShading = false;
-    PFN_vkCmdDrawMeshTasksEXT vkCmdDrawMeshTasksEXT = nullptr;
+    //PFN_vkCmdDrawMeshTasksEXT vkCmdDrawMeshTasksEXT = nullptr;
+    PFN_vkCmdDrawMeshTasksNV vkCmdDrawMeshTasksNV = nullptr;
 
 protected:
     DeviceModule*       deviceModule = nullptr;

@@ -46,9 +46,9 @@ MaterialManager::MaterialManager()
     const std::string absolute_animation_frag_shader_path = absPath + "/Animation/exampleAnimated_frag.spv";
     const std::string absolute_particles_vert_shader_path = absPath + "/Particles/particles_vert.spv";
     const std::string absolute_particles_frag_shader_path = absPath + "/Particles/particles_frag.spv";
-    const std::string absolute_mesh_task_shader_path = absPath + "/mesh/mesh_task.spv";
-    const std::string absolute_mesh_mesh_shader_path = absPath + "/mesh/mesh_mesh.spv";
-    const std::string absolute_mesh_frag_shader_path = absPath + "/mesh/mesh_frag.spv";
+    const std::string absolute_mesh_task_shader_path = absPath + "/mesh/meshNV_task.spv";
+    const std::string absolute_mesh_mesh_shader_path = absPath + "/mesh/meshNV_mesh.spv";
+    const std::string absolute_mesh_frag_shader_path = absPath + "/mesh/meshNV_frag.spv";
 
     this->lightManager = LightManager::getInstance();
     this->cameraEditor = CameraEditor::getInstance();
