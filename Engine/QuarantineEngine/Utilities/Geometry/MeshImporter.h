@@ -37,6 +37,9 @@ private:
     size_t numBones = 0;
     bool hasAnimation = false;
 
+    glm::vec3 aabbMin;
+    glm::vec3 aabbMax;
+
 private:
     MeshData ProcessMesh(aiMesh* mesh, const aiScene* scene);
     void ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, std::vector<MeshData> &meshes);
@@ -47,6 +50,7 @@ private:
     void SetVertexBoneData(PBRVertex& vertex, int boneID, float weight);
     void ExtractBoneWeightForVertices(MeshData& data, aiMesh* mesh);
     void RemapGeometry(MeshData& data);
+    void ComputeAABB(const glm::vec4 & coord);
 
 public:
     bool EnableMeshShaderMaterials = false;
@@ -60,6 +64,7 @@ public:
     auto& GetBoneInfoMap() { return m_BoneInfoMap; }
     size_t& GetBoneCount() { return numBones; }
     inline bool HasAnimation() { return hasAnimation; }
+    std::pair<glm::vec3, glm::vec3> GetAABBData();
 };
 
 #endif // !MESH_H

@@ -164,6 +164,12 @@
     <Filter Include="Kernel\Utilities\Particles\sources">
       <UniqueIdentifier>{d3d38f78-ea29-4509-a50b-178b1326321f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Kernel\Utilities\Camera\headers">
+      <UniqueIdentifier>{bfcc7120-36c4-4eb1-bd6c-c7d6f9580d58}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Utilities\Camera\sources">
+      <UniqueIdentifier>{ecb8f644-0dda-4680-856e-df6fd7f62528}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -256,9 +262,6 @@
     <ClCompile Include="Memory\UBO.cpp">
       <Filter>Kernel\Memory\sources</Filter>
     </ClCompile>
-    <ClCompile Include="Utilities\Camera.cpp">
-      <Filter>Kernel\Utilities\Camera</Filter>
-    </ClCompile>
     <ClCompile Include="Utilities\Light\Light.cpp">
       <Filter>Kernel\Utilities\Light\sources</Filter>
     </ClCompile>
@@ -300,9 +303,6 @@
     </ClCompile>
     <ClCompile Include="Utilities\Material\MaterialManager.cpp">
       <Filter>Kernel\Utilities\Material\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="Utilities\CameraEditor.cpp">
-      <Filter>Kernel\Utilities\Camera</Filter>
     </ClCompile>
     <ClCompile Include="Utilities\Material\TextureManager.cpp">
       <Filter>Kernel\Utilities\Material\sources</Filter>
@@ -418,6 +418,18 @@
     <ClCompile Include="Utilities\Geometry\Meshlet.cpp">
       <Filter>Kernel\Utilities\Geometry\sources</Filter>
     </ClCompile>
+    <ClCompile Include="Utilities\Camera\CullingSceneManager.cpp">
+      <Filter>Kernel\Utilities\Camera\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Camera\Camera.cpp">
+      <Filter>Kernel\Utilities\Camera\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Camera\CameraEditor.cpp">
+      <Filter>Kernel\Utilities\Camera\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Physics\AABBObject.cpp">
+      <Filter>Kernel\Utilities\Physics\sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SetUp\DeviceModule.h">
@@ -525,9 +537,6 @@
     <ClInclude Include="Memory\UBO.h">
       <Filter>Kernel\Memory\headers</Filter>
     </ClInclude>
-    <ClInclude Include="Utilities\Camera.h">
-      <Filter>Kernel\Utilities\Camera</Filter>
-    </ClInclude>
     <ClInclude Include="Utilities\Light\Light.h">
       <Filter>Kernel\Utilities\Light\headers</Filter>
     </ClInclude>
@@ -559,9 +568,6 @@
     </ClInclude>
     <ClInclude Include="Utilities\Material\MaterialManager.h">
       <Filter>Kernel\Utilities\Material\headers</Filter>
-    </ClInclude>
-    <ClInclude Include="Utilities\CameraEditor.h">
-      <Filter>Kernel\Utilities\Camera</Filter>
     </ClInclude>
     <ClInclude Include="Utilities\Material\TextureManager.h">
       <Filter>Kernel\Utilities\Material\headers</Filter>
@@ -683,6 +689,18 @@
     </ClInclude>
     <ClInclude Include="Utilities\Geometry\Meshlet.h">
       <Filter>Kernel\Utilities\Geometry\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Camera\Camera.h">
+      <Filter>Kernel\Utilities\Camera\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Camera\CameraEditor.h">
+      <Filter>Kernel\Utilities\Camera\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Camera\CullingSceneManager.h">
+      <Filter>Kernel\Utilities\Camera\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Physics\AABBObject.h">
+      <Filter>Kernel\Utilities\Physics\headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

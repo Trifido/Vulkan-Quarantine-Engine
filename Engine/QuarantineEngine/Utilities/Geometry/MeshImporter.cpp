@@ -161,6 +161,23 @@ void MeshImporter::RemapGeometry(MeshData& data)
     data.vertices = resultVertices;
 }
 
+void MeshImporter::ComputeAABB(const glm::vec4& coord)
+{
+    if (this->aabbMin.x > coord.x)
+        this->aabbMin.x = coord.x;
+    if (this->aabbMin.y > coord.y)
+        this->aabbMin.y = coord.y;
+    if (this->aabbMin.z > coord.z)
+        this->aabbMin.z = coord.z;
+
+    if (this->aabbMax.x < coord.x)
+        this->aabbMax.x = coord.x;
+    if (this->aabbMax.y < coord.y)
+        this->aabbMax.y = coord.y;
+    if (this->aabbMax.z < coord.z)
+        this->aabbMax.z = coord.z;
+}
+
 void MeshImporter::RecreateTangents(std::vector<PBRVertex>& vertices, std::vector<unsigned int>& indices)
 {
     for (size_t idTr = 0; idTr < indices.size(); idTr += 3)
@@ -228,6 +245,9 @@ std::vector<MeshData> MeshImporter::LoadMesh(std::string path)
 
     this->CheckPaths(path);
 
+    this->aabbMax = glm::vec3(-std::numeric_limits<float>::infinity());
+    this->aabbMin = glm::vec3(std::numeric_limits<float>::infinity());
+
     glm::mat4 parentTransform = glm::mat4(1.0f);
     ProcessNode(scene->mRootNode, scene, parentTransform, meshes);
 
@@ -286,6 +306,8 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
         vector.z = mesh->mVertices[i].z;
         vector.w = 1.0f;
         vertex.pos = vector;
+
+        this->ComputeAABB(vertex.pos);
 
         if (existNormal)
         {
@@ -466,4 +488,9 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
     meshData.materialID = materialName;
 
     material = nullptr;
+}
+
+std::pair<glm::vec3, glm::vec3> MeshImporter::GetAABBData()
+{
+    return std::pair<glm::vec3, glm::vec3>(this->aabbMin, this->aabbMax);
 }

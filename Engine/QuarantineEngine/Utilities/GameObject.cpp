@@ -5,11 +5,17 @@
 #include "PrimitiveTypes.h"
 #include <AnimationImporter.h>
 
-GameObject::GameObject()
+void GameObject::InitializeResources()
 {
     this->deviceModule = DeviceModule::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->materialManager = MaterialManager::getInstance();
+    this->cullingSceneManager = CullingSceneManager::getInstance();
+}
+
+GameObject::GameObject()
+{
+    this->InitializeResources();
     this->meshImportedType = MeshImportedType::NONE_GEO;
 
     size_t numMeshAttributes = this->CheckNumAttributes();
@@ -21,10 +27,8 @@ GameObject::GameObject()
 
 GameObject::GameObject(PRIMITIVE_TYPE type, bool isMeshShading)
 {
+    this->InitializeResources();
     this->isMeshShading = isMeshShading;
-    this->deviceModule = DeviceModule::getInstance();
-    this->queueModule = QueueModule::getInstance();
-    this->materialManager = MaterialManager::getInstance();
     this->mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh(type));
     this->meshImportedType = MeshImportedType::PRIMITIVE_GEO;
 
@@ -61,10 +65,8 @@ GameObject::GameObject(PRIMITIVE_TYPE type, bool isMeshShading)
 
 GameObject::GameObject(std::string meshPath, bool isMeshShading)
 {
+    this->InitializeResources();
     this->isMeshShading = isMeshShading;
-    this->deviceModule = DeviceModule::getInstance();
-    this->queueModule = QueueModule::getInstance();
-    this->materialManager = MaterialManager::getInstance();
 
     bool loadResult = this->CreateChildsGameObject(meshPath);
 
@@ -264,6 +266,9 @@ bool GameObject::CreateChildsGameObject(std::string pathfile)
     MeshImporter importer = {};
     importer.EnableMeshShaderMaterials = this->isMeshShading;
     std::vector<MeshData> data = importer.LoadMesh(pathfile);
+
+    std::pair<glm::vec3, glm::vec3> aabbData = importer.GetAABBData();
+    this->aabbculling = this->cullingSceneManager->GenerateAABB(aabbData);
 
     if (data.empty())
         return false;
