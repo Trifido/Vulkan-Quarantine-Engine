@@ -71,15 +71,18 @@ bool coneCull(vec3 center, float radius, vec3 cone_axis, float cone_cutoff)
 }
 
 bool isSphereOutsideFrustum(vec4 sphere_center, float sphere_radius)
-{                    
-    vec4 sphere_view_center = cameraData.view * sphere_center;
+{
+    mat4 invVP = inverse(cameraData.proj);
+    vec4 sphere_view_center = invVP * sphere_center;
+    sphere_view_center /= sphere_view_center.w;
 
-    bool isInside = false;
+    bool isOutside = false;
     for(int i = 0; i < 6; i++)
     {
-        isInside = isInside || (dot(cameraData.frustumPlanes[i].xyz, sphere_view_center.xyz) + cameraData.frustumPlanes[i].w < -sphere_radius);
+        isOutside = isOutside || (dot(cameraData.frustumPlanes[i].xyz, sphere_view_center.xyz) + cameraData.frustumPlanes[i].w < -sphere_radius * 0.1);
     }
-    return isInside;
+
+    return isOutside;
 }
 
 void main()
@@ -96,7 +99,7 @@ void main()
     vec3 cone_axis = normalize(mat3(constants.model) * meshlet.cone.normal);
     float radius = meshlet.sphere.radius * length(constants.model[0]);
 
-    bool render = !isSphereOutsideFrustum(center, radius) && !coneCull(cone_pos.xyz, radius, cone_axis, meshlet.cone.angle);
+    bool render = !isSphereOutsideFrustum(center, radius) ;//&& !coneCull(cone_pos.xyz, radius, cone_axis, meshlet.cone.angle);
 
     uvec4 warp_bitfield = subgroupBallot(render);
     uint task_count = subgroupBallotBitCount(warp_bitfield);
