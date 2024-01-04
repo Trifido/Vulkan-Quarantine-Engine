@@ -13,6 +13,7 @@
 #include <CullingSceneManager.h>
 #include <SkeletalComponent.h>
 #include <Numbered.h>
+#include <AABBObject.h>
 
 typedef class GameObject GameObject;
 
@@ -25,8 +26,11 @@ enum MeshImportedType
     NONE_GEO
 };
 
+
 class GameObject : Numbered
 {
+    friend class CullingSceneManager;
+
 private:
     bool isMeshShading = false;
     PFN_vkCmdDrawMeshTasksEXT vkCmdDrawMeshTasksEXT = nullptr;

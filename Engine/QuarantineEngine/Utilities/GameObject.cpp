@@ -267,9 +267,6 @@ bool GameObject::CreateChildsGameObject(std::string pathfile)
     importer.EnableMeshShaderMaterials = this->isMeshShading;
     std::vector<MeshData> data = importer.LoadMesh(pathfile);
 
-    std::pair<glm::vec3, glm::vec3> aabbData = importer.GetAABBData();
-    this->aabbculling = this->cullingSceneManager->GenerateAABB(aabbData);
-
     if (data.empty())
         return false;
 
@@ -321,6 +318,9 @@ bool GameObject::CreateChildsGameObject(std::string pathfile)
             }
         }
     }
+
+    std::pair<glm::vec3, glm::vec3> aabbData = importer.GetAABBData();
+    this->aabbculling = this->cullingSceneManager->GenerateAABB(aabbData, this->transform);
 
     return true;
 }

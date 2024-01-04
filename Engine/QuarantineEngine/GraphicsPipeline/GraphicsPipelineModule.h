@@ -31,6 +31,7 @@ public:
 
     VkPolygonMode PoligonMode = VkPolygonMode::VK_POLYGON_MODE_FILL;
     std::shared_ptr<VkRenderPass> renderPass = nullptr;
+    float lineWidth = 1.0f;
 
 public:
     GraphicsPipelineModule();

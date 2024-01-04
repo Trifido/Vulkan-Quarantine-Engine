@@ -144,6 +144,7 @@ private:
     GraphicsPipelineManager* graphicsPipelineManager{};
     ComputePipelineManager* computePipelineManager{};
     ParticleSystemManager* particleSystemManager{};
+    CullingSceneManager* cullingSceneManager{};
 
     KeyboardController* keyboard_ptr {};
 

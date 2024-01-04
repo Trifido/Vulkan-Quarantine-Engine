@@ -19,6 +19,7 @@ private:
     EditorObjectManager*            editorManager;
     GameObjectManager*              gameObjectManager;
     ComputeNodeManager*             computeNodeManager;
+    CullingSceneManager*            cullingSceneManager;
 
     VkCommandPool                   commandPool;
     VkCommandPool                   computeCommandPool;

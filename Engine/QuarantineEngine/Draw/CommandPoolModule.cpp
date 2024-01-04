@@ -16,6 +16,7 @@ CommandPoolModule::CommandPoolModule()
     editorManager = EditorObjectManager::getInstance();
     gameObjectManager = GameObjectManager::getInstance();
     computeNodeManager = ComputeNodeManager::getInstance();
+    cullingSceneManager = CullingSceneManager::getInstance();
 
     this->ClearColor = glm::vec3(0.1f);
 }
@@ -127,6 +128,7 @@ void CommandPoolModule::Render(VkFramebuffer& swapChainFramebuffer, VkRenderPass
 
         this->gameObjectManager->DrawCommnad(commandBuffers[i], i);
         this->editorManager->DrawCommnad(commandBuffers[i], i);
+        this->cullingSceneManager->DrawDebug(commandBuffers[i], i);
 
         if(ImGui::GetDrawData() != nullptr)
             ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[i]);
@@ -171,4 +173,5 @@ void CommandPoolModule::CleanLastResources()
     this->editorManager = nullptr;
     this->gameObjectManager = nullptr;
     this->computeNodeManager = nullptr;
+    this->cullingSceneManager = nullptr;
 }

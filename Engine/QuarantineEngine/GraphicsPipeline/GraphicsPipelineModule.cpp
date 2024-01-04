@@ -45,7 +45,7 @@ void GraphicsPipelineModule::CompileGraphicsPipeline(std::vector<VkPipelineShade
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
 
     rasterizer.polygonMode = this->PoligonMode;
-    rasterizer.lineWidth = 1.0f;
+    rasterizer.lineWidth = this->lineWidth;
     rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
     rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
