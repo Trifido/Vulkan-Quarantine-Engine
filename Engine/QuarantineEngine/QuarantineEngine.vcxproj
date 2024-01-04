@@ -218,6 +218,7 @@
     <ClCompile Include="Utilities\Camera\Camera.cpp" />
     <ClCompile Include="Utilities\Camera\CameraEditor.cpp" />
     <ClCompile Include="Utilities\Camera\CullingSceneManager.cpp" />
+    <ClCompile Include="Utilities\Camera\FrustumComponent.cpp" />
     <ClCompile Include="Utilities\Compute\ComputeNode.cpp" />
     <ClCompile Include="Utilities\Compute\ComputeNodeManager.cpp" />
     <ClCompile Include="Utilities\GameComponent.cpp" />
@@ -310,6 +311,7 @@
     <ClInclude Include="Utilities\Camera\Camera.h" />
     <ClInclude Include="Utilities\Camera\CameraEditor.h" />
     <ClInclude Include="Utilities\Camera\CullingSceneManager.h" />
+    <ClInclude Include="Utilities\Camera\FrustumComponent.h" />
     <ClInclude Include="Utilities\Compute\ComputeNode.h" />
     <ClInclude Include="Utilities\Compute\ComputeNodeManager.h" />
     <ClInclude Include="Utilities\GameComponent.h" />

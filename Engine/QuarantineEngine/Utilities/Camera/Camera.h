@@ -10,6 +10,7 @@
 #include <vulkan/vulkan_core.h>
 #include <memory>
 #include "UBO.h"
+#include <FrustumComponent.h>
 
 class Camera
 {
@@ -32,6 +33,7 @@ protected:
     float pitch = 0.0f;
 
 public:
+    std::shared_ptr<FrustumComponent> frustumComponent = nullptr;
     std::shared_ptr<UniformBufferObject> cameraUBO = nullptr;
     float WIDTH, HEIGHT;
     glm::vec3 cameraFront;

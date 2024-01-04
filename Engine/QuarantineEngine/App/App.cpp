@@ -167,6 +167,7 @@ void App::initVulkan()
     this->particleSystemManager = ParticleSystemManager::getInstance();
     this->cullingSceneManager = CullingSceneManager::getInstance();
     this->cullingSceneManager->InitializeCullingSceneResources();
+    this->cullingSceneManager->AddCameraFrustum(this->cameraEditor->frustumComponent);
 
     // Inicializamos los componentes del editor
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
@@ -183,7 +184,7 @@ void App::initVulkan()
 
     const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
 
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(absolute_path, true));
+    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(absolute_path));
 
     //model->transform->SetScale(glm::vec3(0.1f));
     //model->transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
@@ -332,6 +333,9 @@ void App::mainLoop()
         // INPUT EVENTS
         this->keyboard_ptr->ReadKeyboardEvents();
         this->cameraEditor->CameraController((float)Timer::DeltaTime);
+
+        // UPDATE CULLING SCENE
+        this->cullingSceneManager->UpdateCullingScene();
 
         if (ImGui::IsKeyDown('j') || ImGui::IsKeyDown('J'))
         {

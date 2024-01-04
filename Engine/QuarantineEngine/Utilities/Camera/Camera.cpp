@@ -16,16 +16,19 @@ float glm_vec3_norm(glm::vec3 v) {
 
 Camera::Camera(float width, float height)
 {
-    deviceModule = DeviceModule::getInstance();
-    cameraFront = glm::vec3(0.815122545f, -0.579281569f, 0.0f);
-    cameraPos = glm::vec3(-5.0f, 5.0f, 0.0f);
-    WIDTH = width;
-    HEIGHT = height;
-    lastX = WIDTH / 2.0f;
-    lastY = HEIGHT / 2.0f;
-    nearPlane = 0.01f;
-    farPlane = 100.0f;
-    view = projection = VP = glm::mat4(1.0);
+    this->deviceModule = DeviceModule::getInstance();
+
+    this->frustumComponent = std::make_shared<FrustumComponent>();
+
+    this->cameraFront = glm::vec3(0.815122545f, -0.579281569f, 0.0f);
+    this->cameraPos = glm::vec3(-5.0f, 5.0f, 0.0f);
+    this->WIDTH = width;
+    this->HEIGHT = height;
+    this->lastX = WIDTH / 2.0f;
+    this->lastY = HEIGHT / 2.0f;
+    this->nearPlane = 0.01f;
+    this->farPlane = 100.0f;
+    this->view = projection = VP = glm::mat4(1.0);
     this->cameraUniform = std::make_shared<CameraUniform>();
     this->cameraUBO = std::make_shared<UniformBufferObject>();
     this->cameraUBO->CreateUniformBuffer(sizeof(CameraUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
@@ -35,12 +38,12 @@ Camera::Camera(float width, float height)
     float value = asin(-cameraFront.y);
     float degreeValue = glm::degrees(value);
     if (degreeValue < 0) degreeValue += 180;
-    pitch = -degreeValue;
+    this->pitch = -degreeValue;
 
     value = atan2(cameraFront.x, cameraFront.z);
     degreeValue = glm::degrees(value);
     if (degreeValue < 0) degreeValue += 180;
-    yaw = (270 + (int)degreeValue) % 360;
+    this->yaw = (270 + (int)degreeValue) % 360;
 
 }
 
@@ -225,6 +228,8 @@ void Camera::UpdateFrustumPlanes()
     this->cameraUniform->frustumPlanes[3] = normalize_plane(viewprojectionTranspose[3] - viewprojectionTranspose[1]);
     this->cameraUniform->frustumPlanes[4] = normalize_plane(viewprojectionTranspose[3] + viewprojectionTranspose[2]);
     this->cameraUniform->frustumPlanes[5] = normalize_plane(viewprojectionTranspose[3] - viewprojectionTranspose[2]);
+
+    this->frustumComponent->RecreateFrustum(this->VP);
 }
 
 void Camera::UpdateUBOCamera()

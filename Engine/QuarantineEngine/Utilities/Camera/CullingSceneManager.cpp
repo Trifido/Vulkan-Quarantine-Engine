@@ -17,6 +17,11 @@ void CullingSceneManager::ResetInstance()
     instance = nullptr;
 }
 
+void CullingSceneManager::AddCameraFrustum(std::shared_ptr<FrustumComponent> frustum)
+{
+    this->cameraFrustum = frustum;
+}
+
 void CullingSceneManager::InitializeCullingSceneResources()
 {
     this->aabb_objects.reserve(32);
@@ -105,5 +110,13 @@ void CullingSceneManager::DrawDebug(VkCommandBuffer& commandBuffer, uint32_t idx
 
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->aabb_objects.at(i)->indices.size()), 1, 0, 0, 0);
         }
+    }
+}
+
+void CullingSceneManager::UpdateCullingScene()
+{
+    for (unsigned int i = 0; i < this->aabb_objects.size(); i++)
+    {
+        aabb_objects.at(i)->isGameObjectVisible = this->cameraFrustum->isAABBInside(*this->aabb_objects.at(i));
     }
 }

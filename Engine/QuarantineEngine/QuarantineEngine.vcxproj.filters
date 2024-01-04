@@ -430,6 +430,9 @@
     <ClCompile Include="Utilities\Physics\AABBObject.cpp">
       <Filter>Kernel\Utilities\Physics\sources</Filter>
     </ClCompile>
+    <ClCompile Include="Utilities\Camera\FrustumComponent.cpp">
+      <Filter>Kernel\Utilities\Camera\sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SetUp\DeviceModule.h">
@@ -701,6 +704,9 @@
     </ClInclude>
     <ClInclude Include="Utilities\Physics\AABBObject.h">
       <Filter>Kernel\Utilities\Physics\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Camera\FrustumComponent.h">
+      <Filter>Kernel\Utilities\Camera\headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
