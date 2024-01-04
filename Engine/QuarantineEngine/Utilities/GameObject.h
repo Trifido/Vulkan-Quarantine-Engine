@@ -10,8 +10,10 @@
 #include <PhysicBody.h>
 #include <Collider.h>
 #include <AnimationManager.h>
+#include <CullingSceneManager.h>
 #include <SkeletalComponent.h>
 #include <Numbered.h>
+#include <AABBObject.h>
 
 typedef class GameObject GameObject;
 
@@ -24,11 +26,16 @@ enum MeshImportedType
     NONE_GEO
 };
 
+
 class GameObject : Numbered
 {
+    friend class CullingSceneManager;
+
 private:
     bool isMeshShading = false;
     PFN_vkCmdDrawMeshTasksEXT vkCmdDrawMeshTasksEXT = nullptr;
+    CullingSceneManager* cullingSceneManager = nullptr;
+    std::shared_ptr<AABBObject> aabbculling = nullptr;
 
 protected:
     DeviceModule*       deviceModule = nullptr;
@@ -49,6 +56,10 @@ public:
 
     std::shared_ptr<GameObject>                 parent = nullptr;
     std::vector<std::shared_ptr<GameObject>>    childs;
+
+private:
+    void InitializeResources();
+    bool isRenderEnable();
 
 public:
     GameObject();

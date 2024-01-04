@@ -166,6 +166,11 @@ void App::initVulkan()
     this->computeNodeManager->InitializeComputeResources();
     this->particleSystemManager = ParticleSystemManager::getInstance();
 
+    this->cullingSceneManager = CullingSceneManager::getInstance();
+    this->cullingSceneManager->InitializeCullingSceneResources();
+    this->cullingSceneManager->AddCameraFrustum(this->cameraEditor->frustumComponent);
+    this->cullingSceneManager->isDebugEnable = false;
+
     // Inicializamos los componentes del editor
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
     this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
@@ -181,12 +186,22 @@ void App::initVulkan()
 
     const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
 
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(absolute_path, true));
+    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(absolute_path));
 
     //model->transform->SetScale(glm::vec3(0.1f));
     //model->transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
     //model->transform->SetOrientation(glm::vec3(-90.0f, 180.0f, 0.0f));
     this->gameObjectManager->AddGameObject(model, "model");
+
+
+    const std::string absolute_path2 = absPath + "/xeno/scene.gltf";
+
+    std::shared_ptr<GameObject> model2 = std::make_shared<GameObject>(GameObject(absolute_path2));
+
+    model2->transform->SetScale(glm::vec3(0.05f));
+    model2->transform->SetPosition(glm::vec3(-3.5f, 0.0f, -2.0f));
+    //model->transform->SetOrientation(glm::vec3(-90.0f, 180.0f, 0.0f));
+    this->gameObjectManager->AddGameObject(model2, "model2");
 
 //DEMO
 /*
@@ -301,7 +316,8 @@ void App::mainLoop()
 {
     bool changeAnimation = true;
 
-    while (!glfwWindowShouldClose(mainWindow.getWindow())) {
+    while (!glfwWindowShouldClose(mainWindow.getWindow()))
+    {
         glfwPollEvents();
         this->timer->UpdateDeltaTime();
 
@@ -320,6 +336,9 @@ void App::mainLoop()
         // INPUT EVENTS
         this->keyboard_ptr->ReadKeyboardEvents();
         this->cameraEditor->CameraController((float)Timer::DeltaTime);
+
+        // UPDATE CULLING SCENE
+        this->cullingSceneManager->UpdateCullingScene();
 
         if (ImGui::IsKeyDown('j') || ImGui::IsKeyDown('J'))
         {
@@ -437,6 +456,7 @@ void App::cleanUp()
     this->gameObjectManager->Cleanup();
     this->particleSystemManager->Cleanup();
     this->editorManager->Cleanup();
+    this->cullingSceneManager->CleanUp();
 
     this->textureManager->Clean();
 
@@ -493,6 +513,9 @@ void App::cleanManagers()
     this->gameObjectManager->CleanLastResources();
     this->gameObjectManager->ResetInstance();
     this->gameObjectManager = nullptr;
+
+    this->cullingSceneManager->ResetInstance();
+    this->cullingSceneManager = nullptr;
 
     this->particleSystemManager->CleanLastResources();
     this->particleSystemManager->ResetInstance();

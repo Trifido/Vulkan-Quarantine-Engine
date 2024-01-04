@@ -5,11 +5,27 @@
 #include "PrimitiveTypes.h"
 #include <AnimationImporter.h>
 
-GameObject::GameObject()
+void GameObject::InitializeResources()
 {
     this->deviceModule = DeviceModule::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->materialManager = MaterialManager::getInstance();
+    this->cullingSceneManager = CullingSceneManager::getInstance();
+}
+
+bool GameObject::isRenderEnable()
+{
+    bool isRender = true;
+    isRender = isRender && this->material != nullptr;
+    isRender = isRender && this->mesh != nullptr;
+    isRender = isRender && this->aabbculling->isGameObjectVisible;
+
+    return isRender;
+}
+
+GameObject::GameObject()
+{
+    this->InitializeResources();
     this->meshImportedType = MeshImportedType::NONE_GEO;
 
     size_t numMeshAttributes = this->CheckNumAttributes();
@@ -21,10 +37,8 @@ GameObject::GameObject()
 
 GameObject::GameObject(PRIMITIVE_TYPE type, bool isMeshShading)
 {
+    this->InitializeResources();
     this->isMeshShading = isMeshShading;
-    this->deviceModule = DeviceModule::getInstance();
-    this->queueModule = QueueModule::getInstance();
-    this->materialManager = MaterialManager::getInstance();
     this->mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh(type));
     this->meshImportedType = MeshImportedType::PRIMITIVE_GEO;
 
@@ -61,10 +75,8 @@ GameObject::GameObject(PRIMITIVE_TYPE type, bool isMeshShading)
 
 GameObject::GameObject(std::string meshPath, bool isMeshShading)
 {
+    this->InitializeResources();
     this->isMeshShading = isMeshShading;
-    this->deviceModule = DeviceModule::getInstance();
-    this->queueModule = QueueModule::getInstance();
-    this->materialManager = MaterialManager::getInstance();
 
     bool loadResult = this->CreateChildsGameObject(meshPath);
 
@@ -317,12 +329,20 @@ bool GameObject::CreateChildsGameObject(std::string pathfile)
         }
     }
 
+    std::pair<glm::vec3, glm::vec3> aabbData = importer.GetAABBData();
+    this->aabbculling = this->cullingSceneManager->GenerateAABB(aabbData, this->transform);
+
+    for (unsigned int i = 0; i < childs.size(); i++)
+    {
+        childs.at(i)->aabbculling = this->aabbculling;
+    }
+
     return true;
 }
 
 void GameObject::CreateAnimationDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator)
 {
-    if (this->material != nullptr && this->mesh != nullptr)
+    if (this->isRenderEnable())
     {
         auto pipelineModule = this->material->shader->PipelineModule;
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
@@ -362,7 +382,7 @@ void GameObject::CreateAnimationDrawCommand(VkCommandBuffer& commandBuffer, uint
 
 void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
-    if (this->material != nullptr && this->mesh != nullptr)
+    if (this->isRenderEnable())
     {
         auto pipelineModule = this->material->shader->PipelineModule;
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);

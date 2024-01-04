@@ -11,6 +11,7 @@ struct GraphicsPipelineData
     VkPolygonMode polygonMode = VkPolygonMode::VK_POLYGON_MODE_FILL;
     VkPrimitiveTopology topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     uint32_t vertexBufferStride = sizeof(PBRVertex);
+    float lineWidth = 1.0f;
     bool HasVertexData = true;
     bool IsMeshShader = false;
 
