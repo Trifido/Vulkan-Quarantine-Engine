@@ -13,6 +13,16 @@ void GameObject::InitializeResources()
     this->cullingSceneManager = CullingSceneManager::getInstance();
 }
 
+bool GameObject::isRenderEnable()
+{
+    bool isRender = true;
+    isRender = isRender && this->material != nullptr;
+    isRender = isRender && this->mesh != nullptr;
+    isRender = isRender && this->aabbculling->isGameObjectVisible;
+
+    return isRender;
+}
+
 GameObject::GameObject()
 {
     this->InitializeResources();
@@ -327,7 +337,7 @@ bool GameObject::CreateChildsGameObject(std::string pathfile)
 
 void GameObject::CreateAnimationDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator)
 {
-    if (this->material != nullptr && this->mesh != nullptr)
+    if (this->isRenderEnable())
     {
         auto pipelineModule = this->material->shader->PipelineModule;
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
@@ -367,7 +377,7 @@ void GameObject::CreateAnimationDrawCommand(VkCommandBuffer& commandBuffer, uint
 
 void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
-    if (this->material != nullptr && this->mesh != nullptr)
+    if (this->isRenderEnable())
     {
         auto pipelineModule = this->material->shader->PipelineModule;
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);

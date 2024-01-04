@@ -59,6 +59,7 @@ public:
 
 private:
     void InitializeResources();
+    bool isRenderEnable();
 
 public:
     GameObject();
