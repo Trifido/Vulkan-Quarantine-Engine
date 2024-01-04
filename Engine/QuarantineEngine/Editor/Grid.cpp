@@ -43,6 +43,8 @@ void Grid::Draw(VkCommandBuffer& commandBuffer, uint32_t idx)
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
     vkCmdSetDepthTestEnable(commandBuffer, true);
+    vkCmdSetDepthWriteEnable(commandBuffer, true);
+    vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
     vkCmdSetCullMode(commandBuffer, false);
 
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, this->gridMesh->material->descriptor->getDescriptorSet(idx), 0, nullptr);

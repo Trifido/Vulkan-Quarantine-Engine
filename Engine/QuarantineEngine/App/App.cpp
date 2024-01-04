@@ -316,7 +316,8 @@ void App::mainLoop()
 {
     bool changeAnimation = true;
 
-    while (!glfwWindowShouldClose(mainWindow.getWindow())) {
+    while (!glfwWindowShouldClose(mainWindow.getWindow()))
+    {
         glfwPollEvents();
         this->timer->UpdateDeltaTime();
 

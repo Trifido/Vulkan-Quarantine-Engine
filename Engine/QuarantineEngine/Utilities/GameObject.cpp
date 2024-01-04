@@ -18,7 +18,7 @@ bool GameObject::isRenderEnable()
     bool isRender = true;
     isRender = isRender && this->material != nullptr;
     isRender = isRender && this->mesh != nullptr;
-    //isRender = isRender && this->aabbculling->isGameObjectVisible;
+    isRender = isRender && this->aabbculling->isGameObjectVisible;
 
     return isRender;
 }
@@ -331,6 +331,11 @@ bool GameObject::CreateChildsGameObject(std::string pathfile)
 
     std::pair<glm::vec3, glm::vec3> aabbData = importer.GetAABBData();
     this->aabbculling = this->cullingSceneManager->GenerateAABB(aabbData, this->transform);
+
+    for (unsigned int i = 0; i < childs.size(); i++)
+    {
+        childs.at(i)->aabbculling = this->aabbculling;
+    }
 
     return true;
 }
