@@ -183,7 +183,7 @@ void App::initVulkan()
 
     const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
 
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(absolute_path));
+    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(absolute_path, true));
 
     //model->transform->SetScale(glm::vec3(0.1f));
     //model->transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));

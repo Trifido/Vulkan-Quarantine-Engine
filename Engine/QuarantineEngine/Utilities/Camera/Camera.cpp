@@ -218,13 +218,13 @@ glm::vec4 Camera::normalize_plane(glm::vec4 plane) {
 
 void Camera::UpdateFrustumPlanes()
 {
-    glm::mat4 projectionTranspose = glm::transpose(this->projection);
-    this->cameraUniform->frustumPlanes[0] = normalize_plane(projectionTranspose[3] + projectionTranspose[0]);
-    this->cameraUniform->frustumPlanes[1] = normalize_plane(projectionTranspose[3] - projectionTranspose[0]);
-    this->cameraUniform->frustumPlanes[2] = normalize_plane(projectionTranspose[3] + projectionTranspose[1]);
-    this->cameraUniform->frustumPlanes[3] = normalize_plane(projectionTranspose[3] - projectionTranspose[1]);
-    this->cameraUniform->frustumPlanes[4] = normalize_plane(projectionTranspose[3] + projectionTranspose[2]);
-    this->cameraUniform->frustumPlanes[5] = normalize_plane(projectionTranspose[3] - projectionTranspose[2]);
+    glm::mat4 viewprojectionTranspose = glm::transpose(this->VP);
+    this->cameraUniform->frustumPlanes[0] = normalize_plane(viewprojectionTranspose[3] + viewprojectionTranspose[0]);
+    this->cameraUniform->frustumPlanes[1] = normalize_plane(viewprojectionTranspose[3] - viewprojectionTranspose[0]);
+    this->cameraUniform->frustumPlanes[2] = normalize_plane(viewprojectionTranspose[3] + viewprojectionTranspose[1]);
+    this->cameraUniform->frustumPlanes[3] = normalize_plane(viewprojectionTranspose[3] - viewprojectionTranspose[1]);
+    this->cameraUniform->frustumPlanes[4] = normalize_plane(viewprojectionTranspose[3] + viewprojectionTranspose[2]);
+    this->cameraUniform->frustumPlanes[5] = normalize_plane(viewprojectionTranspose[3] - viewprojectionTranspose[2]);
 }
 
 void Camera::UpdateUBOCamera()
