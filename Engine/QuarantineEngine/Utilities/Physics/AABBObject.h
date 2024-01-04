@@ -10,14 +10,15 @@
 
 class AABBObject : public GeometryComponent
 {
+private:
+    std::shared_ptr<Transform> transform;
+
 public:
     glm::vec3 min;
     glm::vec3 max;
     glm::vec3 Size;
     glm::vec3 Center;
-    std::shared_ptr<Transform> transform;
     bool isGameObjectVisible = true;
-
     std::vector<glm::vec4> vertices;
 
 private:
@@ -27,6 +28,8 @@ public:
     void CreateBuffers();
     void CleanResources();
     void InitializeMesh(size_t numAttributes) override;
+    void AddTransform(std::shared_ptr<Transform> modelTransform);
+    const std::shared_ptr<Transform> GetTransform();
 };
 
 #endif // !AABB_OBJECT_H

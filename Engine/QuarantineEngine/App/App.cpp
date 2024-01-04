@@ -165,9 +165,11 @@ void App::initVulkan()
     this->computeNodeManager = ComputeNodeManager::getInstance();
     this->computeNodeManager->InitializeComputeResources();
     this->particleSystemManager = ParticleSystemManager::getInstance();
+
     this->cullingSceneManager = CullingSceneManager::getInstance();
     this->cullingSceneManager->InitializeCullingSceneResources();
     this->cullingSceneManager->AddCameraFrustum(this->cameraEditor->frustumComponent);
+    this->cullingSceneManager->isDebugEnable = false;
 
     // Inicializamos los componentes del editor
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();

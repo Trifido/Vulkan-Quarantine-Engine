@@ -18,7 +18,7 @@ bool GameObject::isRenderEnable()
     bool isRender = true;
     isRender = isRender && this->material != nullptr;
     isRender = isRender && this->mesh != nullptr;
-    isRender = isRender && this->aabbculling->isGameObjectVisible;
+    //isRender = isRender && this->aabbculling->isGameObjectVisible;
 
     return isRender;
 }

@@ -57,3 +57,13 @@ void AABBObject::InitializeMesh(size_t numAttributes)
     this->createVertexBuffer();
     this->createIndexBuffer();
 }
+
+void AABBObject::AddTransform(std::shared_ptr<Transform> modelTransform)
+{
+    this->transform = modelTransform;
+}
+
+const std::shared_ptr<Transform> AABBObject::GetTransform()
+{
+    return this->transform;
+}

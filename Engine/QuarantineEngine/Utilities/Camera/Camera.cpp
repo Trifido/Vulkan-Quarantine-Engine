@@ -57,6 +57,7 @@ void Camera::CameraController(float deltaTime)
         (ImGui::GetIO().KeyShift && ImGui::IsKeyDown('w')))
     {
         cameraPos += cameraSpeed * deltaTime * cameraFront;
+        this->isInputUpdated = true;
     }
 
     if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_DownArrow)) ||
@@ -64,6 +65,7 @@ void Camera::CameraController(float deltaTime)
         (ImGui::GetIO().KeyShift && ImGui::IsKeyDown('s')))
     {
         cameraPos -= cameraSpeed * deltaTime * cameraFront;
+        this->isInputUpdated = true;
     }
 
     if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_LeftArrow)) ||
@@ -71,6 +73,7 @@ void Camera::CameraController(float deltaTime)
         (ImGui::GetIO().KeyShift && ImGui::IsKeyDown('a')))
     {
         cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * deltaTime * cameraSpeed;
+        this->isInputUpdated = true;
     }
 
     if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_RightArrow)) ||
@@ -78,15 +81,23 @@ void Camera::CameraController(float deltaTime)
         (ImGui::GetIO().KeyShift && ImGui::IsKeyDown('d')))
     {
         cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * deltaTime * cameraSpeed;
+        this->isInputUpdated = true;
     }
 
-    view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-    projection = glm::perspective(glm::radians(fov), (float)WIDTH / (float)HEIGHT, nearPlane, farPlane);
-    projection[1][1] *= -1;
-    VP = projection * view;
+    if (this->isInputUpdated)
+    {
+        view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        projection = glm::perspective(glm::radians(fov), (float)WIDTH / (float)HEIGHT, nearPlane, farPlane);
+        projection[1][1] *= -1;
+        VP = projection * view;
 
-    this->UpdateUniform();
-    this->UpdateUBOCamera();
+        this->UpdateUniform();
+        this->UpdateUBOCamera();
+
+        this->frustumComponent->ActivateComputeCulling(true);
+
+        this->isInputUpdated = false;
+    }
 }
 
 void Camera::EditorScroll()
@@ -99,6 +110,8 @@ void Camera::EditorScroll()
             fov = 1.0f;
         if (fov >= 45.0f)
             fov = 45.0f;
+
+        this->isInputUpdated = true;
     }
 }
 
@@ -140,6 +153,8 @@ void Camera::EditorRotate()
         front.z = sin(yawDegrees) * cos(pitchDegrees);
 
         cameraFront = glm::normalize(front);
+
+        this->isInputUpdated = true;
     }
     else
     {

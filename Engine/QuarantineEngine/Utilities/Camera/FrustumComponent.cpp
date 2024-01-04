@@ -12,6 +12,16 @@ FrustumComponent::FrustumComponent()
     this->initCorners[7] = glm::vec4(-1, 1, 1, 1);
 }
 
+void FrustumComponent::ActivateComputeCulling(bool value)
+{
+    this->isComputeCullingEnable = value;
+}
+
+bool FrustumComponent::IsComputeCullingActive()
+{
+    return this->isComputeCullingEnable;
+}
+
 void FrustumComponent::RecreateFrustumCorners(glm::mat4 viewProjection)
 {
     const glm::mat4 inverseViewProj = glm::inverse(viewProjection);
@@ -36,52 +46,56 @@ void FrustumComponent::RecreateFrustum(glm::mat4 viewProjection)
     this->RecreateFrustumCorners(viewProjection);
 }
 
-bool FrustumComponent::isAABBInside(const AABBObject& box)
+bool FrustumComponent::isAABBInside(AABBObject& box)
 {
+    auto model = box.GetTransform()->GetModel();
+    glm::vec4 min = model * glm::vec4(box.min, 1.0f);
+    glm::vec4 max = model * glm::vec4(box.max, 1.0f);
+
     for (int i = 0; i < 6; i++)
     {
         int r = 0;
 
-        r += (glm::dot(this->frustumPlanes[i], glm::vec4(box.min.x, box.min.y, box.min.z, 1.0f)) < 0) ? 1 : 0;
-        r += (glm::dot(this->frustumPlanes[i], glm::vec4(box.max.x, box.min.y, box.min.z, 1.0f)) < 0) ? 1 : 0;
-        r += (glm::dot(this->frustumPlanes[i], glm::vec4(box.min.x, box.max.y, box.min.z, 1.0f)) < 0) ? 1 : 0;
-        r += (glm::dot(this->frustumPlanes[i], glm::vec4(box.max.x, box.max.y, box.min.z, 1.0f)) < 0) ? 1 : 0;
-        r += (glm::dot(this->frustumPlanes[i], glm::vec4(box.min.x, box.min.y, box.max.z, 1.0f)) < 0) ? 1 : 0;
-        r += (glm::dot(this->frustumPlanes[i], glm::vec4(box.max.x, box.min.y, box.max.z, 1.0f)) < 0) ? 1 : 0;
-        r += (glm::dot(this->frustumPlanes[i], glm::vec4(box.min.x, box.max.y, box.max.z, 1.0f)) < 0) ? 1 : 0;
-        r += (glm::dot(this->frustumPlanes[i], glm::vec4(box.max.x, box.max.y, box.max.z, 1.0f)) < 0) ? 1 : 0;
+        r += (glm::dot(this->frustumPlanes[i], glm::vec4(min.x, min.y, min.z, 1.0f)) < 0) ? 1 : 0;
+        r += (glm::dot(this->frustumPlanes[i], glm::vec4(max.x, min.y, min.z, 1.0f)) < 0) ? 1 : 0;
+        r += (glm::dot(this->frustumPlanes[i], glm::vec4(min.x, max.y, min.z, 1.0f)) < 0) ? 1 : 0;
+        r += (glm::dot(this->frustumPlanes[i], glm::vec4(max.x, max.y, min.z, 1.0f)) < 0) ? 1 : 0;
+        r += (glm::dot(this->frustumPlanes[i], glm::vec4(min.x, min.y, max.z, 1.0f)) < 0) ? 1 : 0;
+        r += (glm::dot(this->frustumPlanes[i], glm::vec4(max.x, min.y, max.z, 1.0f)) < 0) ? 1 : 0;
+        r += (glm::dot(this->frustumPlanes[i], glm::vec4(min.x, max.y, max.z, 1.0f)) < 0) ? 1 : 0;
+        r += (glm::dot(this->frustumPlanes[i], glm::vec4(max.x, max.y, max.z, 1.0f)) < 0) ? 1 : 0;
 
         if (r == 8) return false;
     }
 
     int r = 0;
     for (int i = 0; i < 8; i++)
-        r += ((this->corners[i].x > box.max.x)) ? 1 : 0;
+        r += ((this->corners[i].x > max.x)) ? 1 : 0;
     if (r == 8) return false;
 
     r = 0;
     for (int i = 0; i < 8; i++)
-        r += ((this->corners[i].x < box.min.x)) ? 1 : 0;
+        r += ((this->corners[i].x < min.x)) ? 1 : 0;
     if (r == 8) return false;
 
     r = 0;
     for (int i = 0; i < 8; i++)
-        r += ((this->corners[i].y > box.max.y)) ? 1 : 0;
+        r += ((this->corners[i].y > max.y)) ? 1 : 0;
     if (r == 8) return false;
 
     r = 0;
     for (int i = 0; i < 8; i++)
-        r += ((this->corners[i].y < box.min.y)) ? 1 : 0;
+        r += ((this->corners[i].y < min.y)) ? 1 : 0;
     if (r == 8) return false;
 
     r = 0;
     for (int i = 0; i < 8; i++)
-        r += ((this->corners[i].z > box.max.z)) ? 1 : 0;
+        r += ((this->corners[i].z > max.z)) ? 1 : 0;
     if (r == 8) return false;
 
     r = 0;
     for (int i = 0; i < 8; i++)
-        r += ((this->corners[i].z < box.min.z)) ? 1 : 0;
+        r += ((this->corners[i].z < min.z)) ? 1 : 0;
     if (r == 8) return false;
 
     return true;

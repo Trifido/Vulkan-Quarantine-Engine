@@ -6,7 +6,7 @@
 #include <vector>
 #include <FrustumComponent.h>
 #include <Transform.h>
-#include <MaterialManager.h>
+#include <Material.h>
 
 class CullingSceneManager
 {

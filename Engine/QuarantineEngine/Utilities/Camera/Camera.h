@@ -17,6 +17,8 @@ class Camera
 private:
     DeviceModule* deviceModule = nullptr;
     std::shared_ptr<CameraUniform> cameraUniform = nullptr;
+    glm::vec4 normalize_plane(glm::vec4 plane);
+    bool isInputUpdated = true;
 
 protected:
     glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -41,9 +43,6 @@ public:
     glm::mat4 view;
     glm::mat4 projection;
     glm::mat4 VP;
-
-private:
-    glm::vec4 normalize_plane(glm::vec4 plane);
 
 protected:
     void UpdateUniform();

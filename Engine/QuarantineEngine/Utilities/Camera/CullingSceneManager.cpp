@@ -1,4 +1,5 @@
 #include "CullingSceneManager.h"
+#include <MaterialManager.h>
 #include <filesystem>
 
 CullingSceneManager* CullingSceneManager::instance = nullptr;
@@ -66,7 +67,7 @@ std::shared_ptr<AABBObject> CullingSceneManager::GenerateAABB(std::pair<glm::vec
     aabb.max = aabbData.second;
     aabb.Size = (aabbData.second + aabbData.first) * 0.5f;
     aabb.Center = (aabbData.first - aabbData.second) * 0.5f;
-    aabb.transform = transform_ptr;
+    aabb.AddTransform(transform_ptr);
 
     aabb.CreateBuffers();
 
@@ -106,7 +107,7 @@ void CullingSceneManager::DrawDebug(VkCommandBuffer& commandBuffer, uint32_t idx
             vkCmdBindIndexBuffer(commandBuffer, this->aabb_objects.at(i)->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
             VkShaderStageFlagBits stages = VK_SHADER_STAGE_ALL;
-            vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, stages, 0, sizeof(PushConstantStruct), &this->aabb_objects.at(i)->transform->GetModel());
+            vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, stages, 0, sizeof(PushConstantStruct), &this->aabb_objects.at(i)->GetTransform()->GetModel());
 
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->aabb_objects.at(i)->indices.size()), 1, 0, 0, 0);
         }
@@ -115,8 +116,12 @@ void CullingSceneManager::DrawDebug(VkCommandBuffer& commandBuffer, uint32_t idx
 
 void CullingSceneManager::UpdateCullingScene()
 {
-    for (unsigned int i = 0; i < this->aabb_objects.size(); i++)
+    if (this->cameraFrustum->IsComputeCullingActive())
     {
-        aabb_objects.at(i)->isGameObjectVisible = this->cameraFrustum->isAABBInside(*this->aabb_objects.at(i));
+        for (unsigned int i = 0; i < this->aabb_objects.size(); i++)
+        {
+            aabb_objects.at(i)->isGameObjectVisible = this->cameraFrustum->isAABBInside(*this->aabb_objects.at(i));
+        }
+        this->cameraFrustum->ActivateComputeCulling(false);
     }
 }
