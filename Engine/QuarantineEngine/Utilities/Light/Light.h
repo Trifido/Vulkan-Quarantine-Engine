@@ -26,6 +26,8 @@ public:
     float quadratic;
     float spotCutOff;
     float spotExponent;
+    float radius;
+
 public:
     Light();
     virtual void UpdateUniform();

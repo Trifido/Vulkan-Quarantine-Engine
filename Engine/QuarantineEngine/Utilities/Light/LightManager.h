@@ -5,11 +5,14 @@
 #include <unordered_map>
 #include <memory>
 #include <Light/Light.h>
+#include <Camera.h>
 
 class LightManager
 {
 private:
     DeviceModule* deviceModule = nullptr;
+    Camera* camera = nullptr;
+
     uint32_t maxNumLights = 8;
     uint32_t currentNumLights = 0;
     std::unordered_map<std::string, std::shared_ptr<Light>> _lights;
@@ -31,6 +34,8 @@ public:
     void UpdateUBOLight();
     void CleanLightUBO();
     void CleanLastResources();
+    void SetCamera(Camera* camera_ptr);
+    void SortLightByDepth();
 };
 
 #endif

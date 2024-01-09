@@ -166,6 +166,7 @@ void App::initVulkan()
     this->computeNodeManager->InitializeComputeResources();
     this->particleSystemManager = ParticleSystemManager::getInstance();
 
+    this->lightManager->SetCamera(this->cameraEditor);
     this->cullingSceneManager = CullingSceneManager::getInstance();
     this->cullingSceneManager->InitializeCullingSceneResources();
     this->cullingSceneManager->AddCameraFrustum(this->cameraEditor->frustumComponent);
@@ -192,16 +193,6 @@ void App::initVulkan()
     //model->transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
     //model->transform->SetOrientation(glm::vec3(-90.0f, 180.0f, 0.0f));
     this->gameObjectManager->AddGameObject(model, "model");
-
-
-    const std::string absolute_path2 = absPath + "/xeno/scene.gltf";
-
-    std::shared_ptr<GameObject> model2 = std::make_shared<GameObject>(GameObject(absolute_path2));
-
-    model2->transform->SetScale(glm::vec3(0.05f));
-    model2->transform->SetPosition(glm::vec3(-3.5f, 0.0f, -2.0f));
-    //model->transform->SetOrientation(glm::vec3(-90.0f, 180.0f, 0.0f));
-    this->gameObjectManager->AddGameObject(model2, "model2");
 
 //DEMO
 /*

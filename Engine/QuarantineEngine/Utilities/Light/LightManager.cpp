@@ -111,6 +111,11 @@ void LightManager::CleanLastResources()
     this->lightManagerUniform.reset();
 }
 
+void LightManager::SetCamera(Camera* camera_ptr)
+{
+    this->camera = camera_ptr;
+}
+
 void LightManager::AddLight(std::shared_ptr<Light> light_ptr, std::string name)
 {
     if (this->_lights.find(name) == _lights.end())
@@ -123,4 +128,9 @@ void LightManager::AddLight(std::shared_ptr<Light> light_ptr, std::string name)
     }
 
     this->currentNumLights++;
+}
+
+
+void LightManager::SortLightByDepth()
+{
 }
