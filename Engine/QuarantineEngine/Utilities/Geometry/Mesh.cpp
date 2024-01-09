@@ -36,14 +36,7 @@ void Mesh::createVertexBuffer()
 {
     VkDeviceSize bufferSize;
 
-    if (numAttributes == 5)
-    {
-        bufferSize = sizeof(PBRVertex) * vertices.size();
-    }
-    else
-    {
-        bufferSize = sizeof(PBRAnimationVertex) * vertices.size();
-    }
+    bufferSize = sizeof(PBRVertex) * vertices.size();
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
