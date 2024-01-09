@@ -19,6 +19,7 @@ public:
 public:
     std::shared_ptr<LightUniform> uniform;
 
+    uint32_t lightType;
     glm::vec3 diffuse;
     glm::vec3 specular;
     float constant;
@@ -27,6 +28,7 @@ public:
     float spotCutOff;
     float spotExponent;
     float radius;
+    uint32_t idxShadowMap;
 
 public:
     Light();

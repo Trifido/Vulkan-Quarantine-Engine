@@ -9,7 +9,8 @@
 
 struct LightUniform
 {
-    glm::vec4 position;
+    glm::vec3 position;
+    uint32_t lightType;
     glm::vec3 diffuse;
     float constant;
     glm::vec3 specular;
@@ -18,12 +19,13 @@ struct LightUniform
     float quadratic;
     float spotCutOff;
     float spotExponent;
+    float radius;
+    uint32_t idxShadowMap;
 };
 
 struct LightManagerUniform
 {
-    int numLights;
-    alignas(16) LightUniform lights[8];
+    uint32_t numLights;
 };
 
 struct CameraUniform

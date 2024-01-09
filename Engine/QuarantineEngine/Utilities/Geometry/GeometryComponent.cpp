@@ -81,22 +81,17 @@ std::vector<VkVertexInputAttributeDescription> GeometryComponent::getAttributeDe
     attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
     attributeDescriptions[3].offset = offsetof(PBRVertex, Tangents);
 
-    attributeDescriptions[4].binding = 0;
-    attributeDescriptions[4].location = 4;
-    attributeDescriptions[4].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[4].offset = offsetof(PBRVertex, Bitangents);
-
     if (hasAnimation)
     {
-        attributeDescriptions[5].binding = 0;
-        attributeDescriptions[5].location = 5;
-        attributeDescriptions[5].format = VK_FORMAT_R32G32B32A32_SINT;
-        attributeDescriptions[5].offset = offsetof(PBRVertex, boneIDs);
+        attributeDescriptions[4].binding = 0;
+        attributeDescriptions[4].location = 5;
+        attributeDescriptions[4].format = VK_FORMAT_R32G32B32A32_SINT;
+        attributeDescriptions[4].offset = offsetof(PBRVertex, boneIDs);
 
-        attributeDescriptions[6].binding = 0;
-        attributeDescriptions[6].location = 6;
-        attributeDescriptions[6].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-        attributeDescriptions[6].offset = offsetof(PBRVertex, boneWeights);
+        attributeDescriptions[5].binding = 0;
+        attributeDescriptions[5].location = 6;
+        attributeDescriptions[5].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+        attributeDescriptions[5].offset = offsetof(PBRVertex, boneWeights);
     }
 
     return attributeDescriptions;

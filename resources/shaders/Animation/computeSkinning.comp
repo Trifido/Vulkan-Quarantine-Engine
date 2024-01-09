@@ -5,7 +5,6 @@ struct VertexIN {
     vec4 inNormal;
     vec2 inTexCoord;
     vec4 inTangent;
-    vec4 inBitangent;
     ivec4 inBoneIds; 
     vec4 inWeights;
 };

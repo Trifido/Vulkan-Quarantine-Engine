@@ -142,6 +142,17 @@ void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
             this->numSSBOs++;
             idx++;
         }
+        else if (binding.first == "LightSSBO")
+        {
+            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+            this->ssboData["LightSSBO"] = std::make_shared<UniformBufferObject>();
+            this->ssboSize["LightSSBO"] = VkDeviceSize();
+
+            this->numSSBOs++;
+            idx++;
+        }
         else if (binding.first == "Meshlets")
         {
             poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
@@ -228,7 +239,7 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
         }
         else if (binding.first == "UniformManagerLight")
         {
-            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->lightManager->lightUBO->uniformBuffers[frameIdx], sizeof(LightUniform), frameIdx);
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->lightManager->lightUBO->uniformBuffers[frameIdx], sizeof(LightManagerUniform), frameIdx);
             idx++;
         }
         else if (binding.first == "UniformMaterial")
@@ -290,6 +301,11 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
         else if (binding.first == "ParticleSSBO")
         {
             this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssboData["ParticleSSBO"]->uniformBuffers[frameIdx], this->ssboSize["ParticleSSBO"], frameIdx);
+            idx++;
+        }
+        else if (binding.first == "LightSSBO")
+        {
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->lightManager->lightSSBO->uniformBuffers[frameIdx], this->lightManager->lightSSBOSize, frameIdx);
             idx++;
         }
         else if (binding.first == "Meshlets")

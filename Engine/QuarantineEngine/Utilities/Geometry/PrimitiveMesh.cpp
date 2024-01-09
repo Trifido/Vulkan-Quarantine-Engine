@@ -61,7 +61,6 @@ void PrimitiveMesh::InitializePoint()
     vert.texCoord = glm::vec2(0.0f, 0.0f);
     vert.norm = glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
     vert.Tangents = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
-    vert.Bitangents = glm::vec4(0.0f, 0.0f, 1.0f, 0.0f);
     this->vertices[0] = vert;
 
     this->indices.resize(1);

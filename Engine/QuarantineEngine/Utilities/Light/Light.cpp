@@ -14,6 +14,8 @@ Light::Light()
     this->spotCutOff = 0.0f;
     this->spotExponent = 0.0f;
 
+    this->idxShadowMap = 0;
+
     this->UpdateUniform();
 }
 
@@ -25,4 +27,6 @@ void Light::UpdateUniform()
     this->uniform->constant  = this->constant;
     this->uniform->linear = this->linear;
     this->uniform->quadratic = this->quadratic;
+
+    this->uniform->idxShadowMap = this->idxShadowMap;
 }

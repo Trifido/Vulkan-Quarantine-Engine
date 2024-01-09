@@ -18,7 +18,6 @@ struct Vertex
 struct PBRVertex : Vertex
 {
     glm::vec4 Tangents;
-    glm::vec4 Bitangents;
     int boneIDs[4];
     float boneWeights[4];
 };
@@ -29,7 +28,6 @@ struct PBRAnimationVertex
     glm::vec4 norm;
     alignas(16)glm::vec2 texCoord;
     glm::vec4 Tangents;
-    glm::vec4 Bitangents;
     int boneIDs[4];
     float boneWeights[4];
 

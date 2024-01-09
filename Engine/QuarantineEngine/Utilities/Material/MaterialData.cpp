@@ -385,15 +385,16 @@ void MaterialData::UpdateMaterialData(std::string materialField, char* value)
 
 void MaterialData::UpdateUBOMaterial()
 {
-    auto currentFrame = SynchronizationModule::GetCurrentFrame();
-
-    if (!this->materialUBO->uniformBuffers.empty() && this->isModified[currentFrame])
+    for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {
-        vkMapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame], 0, this->materialUniformSize, 0, &this->auxiliarBuffer[currentFrame]);
-        memcpy(this->auxiliarBuffer[currentFrame], this->materialbuffer, this->materialUniformSize);
-        vkUnmapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame]);
+        if (!this->materialUBO->uniformBuffers.empty() && this->isModified[currentFrame])
+        {
+            vkMapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame], 0, this->materialUniformSize, 0, &this->auxiliarBuffer[currentFrame]);
+            memcpy(this->auxiliarBuffer[currentFrame], this->materialbuffer, this->materialUniformSize);
+            vkUnmapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame]);
 
-        this->isModified[currentFrame] = false;
+            this->isModified[currentFrame] = false;
+        }
     }
 }
 

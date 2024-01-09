@@ -1,18 +1,36 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-const int numberOfLights = 8;
+#define POINT_LIGHT 0
+#define DIRECTIONAL_LIGHT 1
+#define SPOT_LIGHT 2
+
+
 
 layout(location = 0) in VS_OUT {
     vec3 FragPos;
     vec3 Normal;
-    vec3 TangentViewPos;
-    vec3 TangentFragPos;
-    vec3 TangentLightPos[8];
+    mat3 TBN;
     vec2 TexCoords;
 } fs_in;
 
 layout(location = 0) out vec4 outColor;
+
+struct LightData 
+{
+    vec3 position;
+    uint lightType;
+    vec3 diffuse;
+    float constant;
+    vec3 specular;
+    float linear;
+    vec3 spotDirection;
+    float quadratic; 
+    float spotCutoff;
+    float spotExponent;
+    float radius;
+    uint idxShadowMap;
+};
 
 layout(set = 0, binding = 0) uniform CameraUniform
 {
@@ -32,45 +50,32 @@ layout(set = 0, binding = 1) uniform UniformMaterial {
     int idxHeight;
 } uboMaterial;
 
-struct LightData {
-    vec4 position;
-    vec3 diffuse;
-    float constant;
-    vec3 specular;
-    float linear;
-    vec3 spotDirection;
-    float quadratic; 
-    float spotCutoff;
-    float spotExponent;
-};
-
 layout(set = 0, binding = 2) uniform UniformManagerLight
 {
     int numLights;
-	LightData lights[8];
 } uboLight;
 
-layout(set = 0, binding = 3) uniform sampler2D texSampler[5];
+layout(std140, binding = 3) buffer LightSSBO 
+{
+   LightData lights[];
+};
 
-vec3 getNormalFromMap(vec2 TexCoords);
+layout(set = 0, binding = 4) uniform sampler2D texSampler[5];
 
 //BLINN-PHONG LIGHT EQUATIONS
-vec3 ComputePointLight(LightData light, int id, vec3 normal, vec2 texCoords);
-vec3 ComputeDirectionalLight(LightData light, int id, vec3 normal, vec2 texCoords);
-vec3 ComputeSpotLight(LightData light, int id, vec3 normal, vec2 texCoords);
+vec3 ComputePointLight(LightData light, vec3 normal, vec2 texCoords);
+vec3 ComputeDirectionalLight(LightData light, vec3 normal, vec2 texCoords);
+vec3 ComputeSpotLight(LightData light, vec3 normal, vec2 texCoords);
 
 void main()
 {
-    //GET TEXTURE COORDS
-    vec2 texCoords = fs_in.TexCoords;
-    //if(texture(texSampler[uboMaterial.idxDiffuse], texCoords).a < 0.1)
-    //    discard;
-
     vec3 normal = fs_in.Normal;
 
     if(uboMaterial.idxNormal > -1)
     {
-        normal = getNormalFromMap(texCoords);
+        normal = texture(texSampler[uboMaterial.idxNormal], fs_in.TexCoords).rgb;
+        normal = normal * 2.0 - 1.0;
+        normal = normalize(fs_in.TBN * normal); 
     }
 
     //COMPUTE LIGHT
@@ -85,19 +90,19 @@ void main()
     vec3 resultDir = vec3(0.0);
     vec3 resultSpot = vec3(0.0);
 
-    for(int i = 0; i < 1; i++)
+    for(int i = 0; i < uboLight.numLights; i++)
     {
-        if(uboLight.lights[i].position.w == 1.0)
+        if(lights[i].lightType == POINT_LIGHT)
         {
-            resultPoint += ComputePointLight(uboLight.lights[i], i, normal, texCoords);
+            resultPoint += ComputePointLight(lights[i], normal, fs_in.TexCoords);
         }
-        else if(uboLight.lights[i].spotCutoff == 0.0)
+        else if(lights[i].lightType == DIRECTIONAL_LIGHT)
         {
-            resultDir += ComputeDirectionalLight(uboLight.lights[i], i, normal, texCoords);
+            resultDir += ComputeDirectionalLight(lights[i], normal, fs_in.TexCoords);
         }
         else
         {
-            resultSpot += ComputeSpotLight(uboLight.lights[i], i, normal, texCoords);
+            resultSpot += ComputeSpotLight(lights[i], normal, fs_in.TexCoords);
         }
     }
 
@@ -105,9 +110,9 @@ void main()
     outColor = vec4(result, 1.0);
 }
 
-vec3 ComputePointLight(LightData light, int id, vec3 normal, vec2 texCoords)
+vec3 ComputePointLight(LightData light, vec3 normal, vec2 texCoords)
 {
-    float distance = length(fs_in.TangentViewPos - fs_in.TangentFragPos);
+    float distance = length(cameraData.position.xyz - fs_in.FragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
     // - DIFFUSE
@@ -115,7 +120,7 @@ vec3 ComputePointLight(LightData light, int id, vec3 normal, vec2 texCoords)
     if(uboMaterial.idxDiffuse > -1)
         colorDiffuse = vec3(texture(texSampler[uboMaterial.idxDiffuse], texCoords));
 
-    vec3 lightDir = normalize(fs_in.TangentLightPos[id] - fs_in.TangentFragPos);
+    vec3 lightDir = normalize(light.position - fs_in.FragPos);
     float diff = max(dot(lightDir, normal), 0.0);
     vec3 diffuse = diff * light.diffuse * colorDiffuse * attenuation;
 
@@ -127,7 +132,7 @@ vec3 ComputePointLight(LightData light, int id, vec3 normal, vec2 texCoords)
     if(uboMaterial.idxSpecular > -1)
         colorSpecular = vec3(texture(texSampler[uboMaterial.idxSpecular], texCoords));
 
-    vec3 view_dir = normalize(fs_in.TangentViewPos - fs_in.TangentFragPos);
+    vec3 view_dir = normalize(cameraData.position.xyz - fs_in.FragPos);
     vec3 reflectDir = reflect(-lightDir, normal);
     vec3 halfwayDir = normalize(lightDir + view_dir);  
     float spec = pow(max(dot(normal, halfwayDir), 0.0), uboMaterial.Shininess);
@@ -139,12 +144,12 @@ vec3 ComputePointLight(LightData light, int id, vec3 normal, vec2 texCoords)
         emissive = vec3(texture(texSampler[uboMaterial.idxEmissive], texCoords));
 
     // -- RESULT --
-    return ((ambient + diffuse + specular + emissive));
+    return ambient + diffuse + specular + emissive;
 }
 
-vec3 ComputeDirectionalLight(LightData light, int id, vec3 normal, vec2 texCoords)
+vec3 ComputeDirectionalLight(LightData light, vec3 normal, vec2 texCoords)
 {
-    vec3 lightDir = normalize(fs_in.TangentLightPos[id] - fs_in.TangentFragPos);
+    vec3 lightDir = normalize(light.position);
 
     // - DIFFUSE
     vec3 colorDiffuse = vec3 (1.0, 1.0, 1.0);
@@ -162,7 +167,7 @@ vec3 ComputeDirectionalLight(LightData light, int id, vec3 normal, vec2 texCoord
     if(uboMaterial.idxSpecular > -1)
         colorSpecular = vec3(texture(texSampler[uboMaterial.idxSpecular], texCoords));
 
-    vec3 view_dir = normalize(fs_in.TangentViewPos - fs_in.TangentFragPos);
+    vec3 view_dir = normalize(cameraData.position.xyz - fs_in.FragPos);
     vec3 reflectDir = reflect(-lightDir, normal);
     vec3 halfwayDir = normalize(lightDir + view_dir);  
     float spec = pow(max(dot(normal, halfwayDir), 0.0), uboMaterial.Shininess);
@@ -174,18 +179,17 @@ vec3 ComputeDirectionalLight(LightData light, int id, vec3 normal, vec2 texCoord
         emissive = vec3(texture(texSampler[uboMaterial.idxEmissive], texCoords));
 
     // -- RESULT --
-    return (ambient + diffuse + specular + emissive);
+    return ambient + diffuse + specular + emissive;
 }
 
-
-vec3 ComputeSpotLight(LightData light, int id, vec3 normal, vec2 texCoords)
+vec3 ComputeSpotLight(LightData light, vec3 normal, vec2 texCoords)
 {
-    vec3 lightDir = normalize(fs_in.TangentLightPos[id] - fs_in.TangentFragPos);
+    vec3 lightDir = normalize(light.position.xyz - fs_in.FragPos);
 
     float distance = length(cameraData.position.xyz - fs_in.FragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
-    float theta = dot(normalize(light.position.xyz - fs_in.FragPos), normalize(-light.spotDirection)); 
+    float theta = dot(normalize(light.position - fs_in.FragPos), normalize(-light.spotDirection)); 
     float epsilon = light.spotCutoff - light.spotExponent;
     float intensity = clamp((theta - light.spotExponent) / epsilon, 0.0, 1.0);
 
@@ -205,7 +209,7 @@ vec3 ComputeSpotLight(LightData light, int id, vec3 normal, vec2 texCoords)
     if(uboMaterial.idxSpecular > -1)
         colorSpecular = vec3(texture(texSampler[uboMaterial.idxSpecular], texCoords));
 
-    vec3 view_dir = normalize(fs_in.TangentViewPos - fs_in.TangentFragPos);
+    vec3 view_dir = normalize(cameraData.position.xyz - fs_in.FragPos);
     vec3 reflectDir = reflect(-lightDir, normal);
     vec3 halfwayDir = normalize(lightDir + view_dir);  
     float spec = pow(max(dot(normal, halfwayDir), 0.0), uboMaterial.Shininess);
@@ -217,12 +221,5 @@ vec3 ComputeSpotLight(LightData light, int id, vec3 normal, vec2 texCoords)
         emissive = vec3(texture(texSampler[uboMaterial.idxEmissive], texCoords));
 
     // -- RESULT --
-    return ((ambient + diffuse + specular + emissive));
-}
-
-
-vec3 getNormalFromMap(vec2 TexCoords)
-{
-    vec3 tangentNormal = texture(texSampler[uboMaterial.idxNormal], TexCoords).xyz;
-    return normalize(tangentNormal * 2.0 - 1.0);
+    return ambient + diffuse + specular + emissive;
 }

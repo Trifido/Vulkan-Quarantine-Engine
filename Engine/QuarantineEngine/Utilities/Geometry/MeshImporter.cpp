@@ -199,7 +199,7 @@ void MeshImporter::RecreateTangents(std::vector<PBRVertex>& vertices, std::vecto
 
         float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
 
-        glm::vec4 tangent, bitangent;
+        glm::vec4 tangent;
 
         tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
         tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
@@ -210,16 +210,6 @@ void MeshImporter::RecreateTangents(std::vector<PBRVertex>& vertices, std::vecto
         vertices[idx0].Tangents = tangent;
         vertices[idx1].Tangents = tangent;
         vertices[idx2].Tangents = tangent;
-
-        bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
-        bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
-        bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
-        bitangent.w = 0.0f;
-        bitangent = glm::normalize(bitangent);
-
-        vertices[idx0].Bitangents = bitangent;
-        vertices[idx1].Bitangents = bitangent;
-        vertices[idx2].Bitangents = bitangent;
     }
 }
 
@@ -325,12 +315,6 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
             vector.z = mesh->mTangents[i].z;
             vector.w = 0.0f;
             vertex.Tangents = vector;
-
-            vector.x = mesh->mBitangents[i].x;
-            vector.y = mesh->mBitangents[i].y;
-            vector.z = mesh->mBitangents[i].z;
-            vector.w = 0.0f;
-            vertex.Bitangents = vector;
         }
 
         if (mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?

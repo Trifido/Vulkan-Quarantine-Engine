@@ -249,11 +249,13 @@ void Camera::UpdateFrustumPlanes()
 
 void Camera::UpdateUBOCamera()
 {
-    auto currentFrame = SynchronizationModule::GetCurrentFrame();
-    void* data;
-    vkMapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame], 0, sizeof(CameraUniform), 0, &data);
-    memcpy(data, static_cast<const void*>(this->cameraUniform.get()), sizeof(CameraUniform));
-    vkUnmapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame]);
+    for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
+    {
+        void* data;
+        vkMapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame], 0, sizeof(CameraUniform), 0, &data);
+        memcpy(data, static_cast<const void*>(this->cameraUniform.get()), sizeof(CameraUniform));
+        vkUnmapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame]);
+    }
 }
 
 void Camera::CleanCameraUBO()

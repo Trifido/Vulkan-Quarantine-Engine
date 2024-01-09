@@ -38,10 +38,8 @@ MaterialManager::MaterialManager()
         absPath.erase(ind, substring.length());
     }
 
-    const std::string absolute_default_vertex_shader_path = absPath + "/vert.spv";
-    const std::string absolute_default_frag_shader_path = absPath + "/frag.spv";
-    const std::string absolute_primitive_vertex_shader_path = absPath + "/Primitive/primitiveDefault_vert.spv";
-    const std::string absolute_primitive_frag_shader_path = absPath + "/Primitive/primitiveDefault_frag.spv";
+    const std::string absolute_default_vertex_shader_path = absPath + "/Default/default_vert.spv";
+    const std::string absolute_default_frag_shader_path = absPath + "/Default/default_frag.spv";
     const std::string absolute_animation_vertex_shader_path = absPath + "/Animation/exampleAnimated_vert.spv";
     const std::string absolute_animation_frag_shader_path = absPath + "/Animation/exampleAnimated_frag.spv";
     const std::string absolute_particles_vert_shader_path = absPath + "/Particles/particles_vert.spv";
@@ -60,7 +58,7 @@ MaterialManager::MaterialManager()
     shaderManager->AddShader("default", this->default_shader);
 
     this->default_primitive_shader = std::make_shared<ShaderModule>(
-        ShaderModule(absolute_primitive_vertex_shader_path, absolute_primitive_frag_shader_path)
+        ShaderModule(absolute_default_vertex_shader_path, absolute_default_frag_shader_path)
     );
     shaderManager->AddShader("default_primitive", this->default_primitive_shader);
 

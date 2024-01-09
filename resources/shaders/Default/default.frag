@@ -1,7 +1,9 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-const int numberOfLights = 8;
+#define POINT_LIGHT 0
+#define DIRECTIONAL_LIGHT 1
+#define SPOT_LIGHT 2
 
 layout(location = 0) in VS_OUT {
     vec3 FragPos;
@@ -11,6 +13,22 @@ layout(location = 0) in VS_OUT {
 } fs_in;
 
 layout(location = 0) out vec4 outColor;
+
+struct LightData 
+{
+    vec3 position;
+    uint lightType;
+    vec3 diffuse;
+    float constant;
+    vec3 specular;
+    float linear;
+    vec3 spotDirection;
+    float quadratic; 
+    float spotCutoff;
+    float spotExponent;
+    float radius;
+    uint idxShadowMap;
+};
 
 layout(set = 0, binding = 0) uniform CameraUniform
 {
@@ -29,18 +47,6 @@ layout(set = 0, binding = 1) uniform UniformMaterial {
     int idxEmissive;
     int idxHeight;
 } uboMaterial;
-
-struct LightData {
-    vec4 position;
-    vec3 diffuse;
-    float constant;
-    vec3 specular;
-    float linear;
-    vec3 spotDirection;
-    float quadratic; 
-    float spotCutoff;
-    float spotExponent;
-};
 
 layout(set = 0, binding = 2) uniform UniformManagerLight
 {
@@ -84,11 +90,11 @@ void main()
 
     for(int i = 0; i < uboLight.numLights; i++)
     {
-        if(lights[i].position.w == 1.0)
+        if(lights[i].lightType == POINT_LIGHT)
         {
             resultPoint += ComputePointLight(lights[i], normal, fs_in.TexCoords);
         }
-        else if(lights[i].spotCutoff == 0.0)
+        else if(lights[i].lightType == DIRECTIONAL_LIGHT)
         {
             resultDir += ComputeDirectionalLight(lights[i], normal, fs_in.TexCoords);
         }
@@ -112,7 +118,7 @@ vec3 ComputePointLight(LightData light, vec3 normal, vec2 texCoords)
     if(uboMaterial.idxDiffuse > -1)
         colorDiffuse = vec3(texture(texSampler[uboMaterial.idxDiffuse], texCoords));
 
-    vec3 lightDir = normalize(light.position.xyz - fs_in.FragPos);
+    vec3 lightDir = normalize(light.position - fs_in.FragPos);
     float diff = max(dot(lightDir, normal), 0.0);
     vec3 diffuse = diff * light.diffuse * colorDiffuse * attenuation;
 
@@ -136,12 +142,12 @@ vec3 ComputePointLight(LightData light, vec3 normal, vec2 texCoords)
         emissive = vec3(texture(texSampler[uboMaterial.idxEmissive], texCoords));
 
     // -- RESULT --
-    return ((ambient + diffuse + specular + emissive));
+    return ambient + diffuse + specular + emissive;
 }
 
 vec3 ComputeDirectionalLight(LightData light, vec3 normal, vec2 texCoords)
 {
-    vec3 lightDir = normalize(light.position.xyz);
+    vec3 lightDir = normalize(light.position);
 
     // - DIFFUSE
     vec3 colorDiffuse = vec3 (1.0, 1.0, 1.0);
@@ -171,7 +177,7 @@ vec3 ComputeDirectionalLight(LightData light, vec3 normal, vec2 texCoords)
         emissive = vec3(texture(texSampler[uboMaterial.idxEmissive], texCoords));
 
     // -- RESULT --
-    return ((ambient + diffuse + specular + emissive));
+    return ambient + diffuse + specular + emissive;
 }
 
 vec3 ComputeSpotLight(LightData light, vec3 normal, vec2 texCoords)
@@ -181,7 +187,7 @@ vec3 ComputeSpotLight(LightData light, vec3 normal, vec2 texCoords)
     float distance = length(cameraData.position.xyz - fs_in.FragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
-    float theta = dot(normalize(light.position.xyz - fs_in.FragPos), normalize(-light.spotDirection)); 
+    float theta = dot(normalize(light.position - fs_in.FragPos), normalize(-light.spotDirection)); 
     float epsilon = light.spotCutoff - light.spotExponent;
     float intensity = clamp((theta - light.spotExponent) / epsilon, 0.0, 1.0);
 
@@ -213,5 +219,5 @@ vec3 ComputeSpotLight(LightData light, vec3 normal, vec2 texCoords)
         emissive = vec3(texture(texSampler[uboMaterial.idxEmissive], texCoords));
 
     // -- RESULT --
-    return ((ambient + diffuse + specular + emissive));
+    return ambient + diffuse + specular + emissive;
 }

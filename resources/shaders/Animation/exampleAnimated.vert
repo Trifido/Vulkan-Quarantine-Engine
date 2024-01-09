@@ -1,6 +1,18 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
+layout(location = 0) in vec4 inPosition;
+layout(location = 1) in vec4 inNormal;
+layout(location = 2) in vec2 inTexCoord;
+layout(location = 3) in vec4 inTangent;
+
+layout(location = 0) out VS_OUT {
+    vec3 FragPos;
+    vec3 Normal;
+    mat3 TBN;
+    vec2 TexCoords;
+} vs_out;
+
 layout(set = 0, binding = 0) uniform CameraUniform
 {
 	mat4 view;
@@ -15,58 +27,17 @@ layout(std430, push_constant) uniform PushConstants
     mat4 model;
 } constants;
 
-struct LightData {
-    vec4 position;
-    vec3 diffuse;
-    float constant;
-    vec3 specular;
-    float linear;
-    vec3 spotDirection;
-    float quadratic; 
-    float spotCutoff;
-    float spotExponent;
-};
-
-layout(set = 0, binding = 2) uniform UniformManagerLight
-{
-    int numLights;
-	LightData lights[8];
-} uboLight;
-
-layout(location = 0) in vec4 inPosition;
-layout(location = 1) in vec4 inNormal;
-layout(location = 2) in vec2 inTexCoord;
-layout(location = 3) in vec4 inTangent;
-
-layout(location = 0) out VS_OUT {
-    vec3 FragPos;
-    vec3 Normal;
-    vec3 TangentViewPos;
-    vec3 TangentFragPos;
-    vec3 TangentLightPos[8];
-    vec2 TexCoords;
-} vs_out;
-
-void main() 
-{
+void main() {
     vs_out.FragPos = (constants.model * inPosition).xyz;
     vs_out.TexCoords = inTexCoord;
     vs_out.Normal = inNormal.xyz;
 
-    vec3 T = normalize(inTangent).xyz;
-    vec3 N = normalize(inNormal).xyz;
-    T = normalize(T - dot(T, N) * N).xyz;
-    vec3 B = cross(N, T).xyz;
+    vec3 T = normalize(constants.model * inTangent).xyz;
+    vec3 N = normalize(constants.model * inNormal).xyz;
+    T = normalize(T - dot(T, N) * N);
+    vec3 B = cross(N, T);
     
-    mat3 TBN = transpose(mat3(T, B, N));   
-
-    vs_out.TangentViewPos = TBN * cameraData.position.xyz;
-    vs_out.TangentFragPos = TBN * vs_out.FragPos; 
-
-    for(int i = 0; i < uboLight.numLights; i++)
-    {
-        vs_out.TangentLightPos[i] = TBN * (uboLight.lights[i].position).xyz;
-    }
+    vs_out.TBN = mat3(T, B, N);
 
     gl_Position = cameraData.viewproj * vec4(vs_out.FragPos, 1.0);
 }
