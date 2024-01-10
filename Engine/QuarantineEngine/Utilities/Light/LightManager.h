@@ -7,6 +7,22 @@
 #include <Light/Light.h>
 #include <Camera.h>
 
+struct LightMap
+{
+    uint32_t    id;
+    float       projected_z;
+    float       projected_z_min;
+    float       projected_z_max;
+};
+
+struct BinElement
+{
+    uint32_t min;
+    uint32_t max;
+};
+
+bool compareDistance(const LightMap& a, const LightMap& b);
+
 class LightManager
 {
 private:
@@ -18,6 +34,9 @@ private:
     std::unordered_map<std::string, std::shared_ptr<Light>> _lights;
     std::shared_ptr<LightManagerUniform> lightManagerUniform;
     std::vector<LightUniform> lightBuffer;
+    std::vector<LightMap> sortedLight;
+    std::vector<BinElement> binData;
+    std::vector<uint32_t> lights_lut;
 
 public:
     static LightManager* instance;
@@ -27,6 +46,8 @@ public:
 
 private:
     void AddLight(std::shared_ptr<Light> light_ptr, std::string name);
+    void SortingLights();
+    void ComputeLightsLUT();
 
 public:
     static LightManager* getInstance();
@@ -39,7 +60,6 @@ public:
     void CleanLightUBO();
     void CleanLastResources();
     void SetCamera(Camera* camera_ptr);
-    void SortLightByDepth();
 };
 
 #endif

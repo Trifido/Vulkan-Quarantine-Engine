@@ -5,6 +5,13 @@
 #include "SpotLight.h"
 #include <SynchronizationModule.h>
 
+bool compareDistance(const LightMap& a, const LightMap& b)
+{
+    if (a.projected_z < b.projected_z) return -1;
+    if (a.projected_z > b.projected_z) return 1;
+    return 0;
+}
+
 LightManager* LightManager::instance = nullptr;
 
 LightManager::LightManager()
@@ -140,7 +147,69 @@ void LightManager::AddLight(std::shared_ptr<Light> light_ptr, std::string name)
     this->currentNumLights++;
 }
 
-
-void LightManager::SortLightByDepth()
+void LightManager::SortingLights()
 {
+    this->sortedLight.clear();
+    this->sortedLight.reserve(this->lightBuffer.size());
+
+    float near = *this->camera->GetRawNearPlane();
+    float far = *this->camera->GetRawFarPlane();
+    for (uint32_t i = 0; i < this->lightBuffer.size(); i++)
+    {
+        glm::vec4 position = glm::vec4(this->lightBuffer.at(i).position, 1.0f);
+        glm::vec4 projected_position = this->camera->view * position;
+
+        glm::vec4 p_min = projected_position - glm::vec4(0.0f, 0.0f, this->lightBuffer.at(i).radius, 0.0f);
+        glm::vec4 p_max = projected_position + glm::vec4(0.0f, 0.0f, this->lightBuffer.at(i).radius, 0.0f);
+
+        this->sortedLight.push_back({
+                .id = i,
+                .projected_z = ((projected_position.z - near) / (far - near)),
+                .projected_z_min = ((p_min.z - near) / (far - near)),
+                .projected_z_max = ((p_max.z - near) / (far - near))
+        });
+    }
+
+    std::sort(this->sortedLight.begin(), this->sortedLight.end(), compareDistance);
+}
+
+void LightManager::ComputeLightsLUT()
+{
+    const uint32_t BIN_SLICES = 16;
+
+    this->lights_lut.clear();
+    this->lights_lut.reserve(BIN_SLICES);
+
+    float bin_size = 1.0f / BIN_SLICES;
+
+    for (uint32_t bin = 0; bin < BIN_SLICES; bin++)
+    {
+        uint32_t min_light_id = this->sortedLight.size() + 1;
+        uint32_t max_light_id = 0;
+
+        float bin_min = bin_size * bin;
+        float bin_max = bin_min + bin_size;
+
+        for (uint32_t i = 0; i < this->sortedLight.size(); i++)
+        {
+            const LightMap& light = this->sortedLight.at(i);
+
+            if ((light.projected_z >= bin_min && light.projected_z <= bin_max) ||
+                (light.projected_z_min >= bin_min && light.projected_z_min <= bin_max) ||
+                (light.projected_z_max >= bin_min && light.projected_z_max <= bin_max))
+            {
+                if (i < min_light_id)
+                {
+                    min_light_id = i;
+                }
+
+                if (i > max_light_id)
+                {
+                    max_light_id = i;
+                }
+            }
+        }
+
+        this->lights_lut.push_back(min_light_id | (max_light_id << 16));
+    }
 }
