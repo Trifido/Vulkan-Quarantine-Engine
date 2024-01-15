@@ -37,6 +37,7 @@ private:
     std::vector<LightMap> sortedLight;
     std::vector<BinElement> binData;
     std::vector<uint32_t> lights_lut;
+    std::vector<uint32_t> lights_index;
 
 public:
     static LightManager* instance;

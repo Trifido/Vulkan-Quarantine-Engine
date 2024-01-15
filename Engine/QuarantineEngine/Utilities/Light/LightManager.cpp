@@ -151,6 +151,8 @@ void LightManager::SortingLights()
 {
     this->sortedLight.clear();
     this->sortedLight.reserve(this->lightBuffer.size());
+    this->lights_index.clear();
+    this->lights_index.reserve(this->lightBuffer.size());
 
     float near = *this->camera->GetRawNearPlane();
     float far = *this->camera->GetRawFarPlane();
@@ -171,6 +173,11 @@ void LightManager::SortingLights()
     }
 
     std::sort(this->sortedLight.begin(), this->sortedLight.end(), compareDistance);
+
+    for (uint32_t i = 0; i < this->sortedLight.size(); i++)
+    {
+        lights_index.push_back(this->sortedLight.at(i).id);
+    }
 }
 
 void LightManager::ComputeLightsLUT()
