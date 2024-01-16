@@ -153,6 +153,39 @@ void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
             this->numSSBOs++;
             idx++;
         }
+        else if (binding.first == "LightIndices")
+        {
+            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+            this->ssboData["LightIndices"] = std::make_shared<UniformBufferObject>();
+            this->ssboSize["LightIndices"] = VkDeviceSize();
+
+            this->numSSBOs++;
+            idx++;
+        }
+        else if (binding.first == "ZBins")
+        {
+            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+            this->ssboData["ZBins"] = std::make_shared<UniformBufferObject>();
+            this->ssboSize["ZBins"] = VkDeviceSize();
+
+            this->numSSBOs++;
+            idx++;
+        }
+        else if (binding.first == "Tiles")
+        {
+            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+            this->ssboData["Tiles"] = std::make_shared<UniformBufferObject>();
+            this->ssboSize["Tiles"] = VkDeviceSize();
+
+            this->numSSBOs++;
+            idx++;
+        }
         else if (binding.first == "Meshlets")
         {
             poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
@@ -306,6 +339,21 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
         else if (binding.first == "LightSSBO")
         {
             this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->lightManager->lightSSBO->uniformBuffers[frameIdx], this->lightManager->lightSSBOSize, frameIdx);
+            idx++;
+        }
+        else if (binding.first == "LightIndices")
+        {
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->lightManager->lightIndexSSBO->uniformBuffers[frameIdx], this->lightManager->lightIndexSSBOSize, frameIdx);
+            idx++;
+        }
+        else if (binding.first == "ZBins")
+        {
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->lightManager->lightBinSSBO->uniformBuffers[frameIdx], this->lightManager->lightBinSSBOSize, frameIdx);
+            idx++;
+        }
+        else if (binding.first == "Tiles")
+        {
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->lightManager->lightTilesSSBO->uniformBuffers[frameIdx], this->lightManager->lightTilesSSBOSize, frameIdx);
             idx++;
         }
         else if (binding.first == "Meshlets")

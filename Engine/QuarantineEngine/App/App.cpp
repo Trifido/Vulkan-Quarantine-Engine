@@ -170,7 +170,7 @@ void App::initVulkan()
     this->cullingSceneManager = CullingSceneManager::getInstance();
     this->cullingSceneManager->InitializeCullingSceneResources();
     this->cullingSceneManager->AddCameraFrustum(this->cameraEditor->frustumComponent);
-    this->cullingSceneManager->isDebugEnable = false;
+    this->cullingSceneManager->isDebugEnable = true;
 
     // Inicializamos los componentes del editor
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
@@ -185,12 +185,12 @@ void App::initVulkan()
         absPath.erase(ind, substring.length());
     }
 
-    //const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
-    const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
+    const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
+    //const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
 
     std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(absolute_path));
 
-    model->transform->SetScale(glm::vec3(0.1f));
+    //model->transform->SetScale(glm::vec3(0.1f));
     //model->transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
     //model->transform->SetOrientation(glm::vec3(-90.0f, 180.0f, 0.0f));
     this->gameObjectManager->AddGameObject(model, "model");
@@ -251,6 +251,7 @@ void App::initVulkan()
     this->lightManager->GetLight("PointLight0")->specular = glm::vec3(0.8f);
     this->lightManager->GetLight("PointLight0")->linear = 0.09f;
     this->lightManager->GetLight("PointLight0")->quadratic = 0.032f;
+    this->lightManager->GetLight("PointLight0")->radius = 5.0f;
 
     this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
     this->lightManager->GetLight("PointLight1")->transform->SetPosition(glm::vec3(0.5f, 1.0f, 0.3f));
@@ -258,14 +259,15 @@ void App::initVulkan()
     this->lightManager->GetLight("PointLight1")->specular = glm::vec3(0.5f);
     this->lightManager->GetLight("PointLight1")->linear = 0.09f;
     this->lightManager->GetLight("PointLight1")->quadratic = 0.032f;
+    this->lightManager->GetLight("PointLight1")->quadratic = 1.5f;
 
-    this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
-    this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(2.0f, 8.0f, -1.0f));
-    this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.6f);
-    this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.1f);
-    this->lightManager->GetLight("DirectionalLight0")->constant = 1.0f;
-    this->lightManager->GetLight("DirectionalLight0")->linear = 0.09f;
-    this->lightManager->GetLight("DirectionalLight0")->quadratic = 0.032f;
+    //this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
+    //this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(2.0f, 8.0f, -1.0f));
+    //this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.6f);
+    //this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.1f);
+    //this->lightManager->GetLight("DirectionalLight0")->constant = 1.0f;
+    //this->lightManager->GetLight("DirectionalLight0")->linear = 0.09f;
+    //this->lightManager->GetLight("DirectionalLight0")->quadratic = 0.032f;
 
     this->lightManager->UpdateUniform();
     // END -------------------------- Lights ----------------------------------------
@@ -331,6 +333,9 @@ void App::mainLoop()
 
         // UPDATE CULLING SCENE
         this->cullingSceneManager->UpdateCullingScene();
+
+        // UPDATE LIGHT SYSTEM
+        this->lightManager->Update();
 
         if (ImGui::IsKeyDown('j') || ImGui::IsKeyDown('J'))
         {

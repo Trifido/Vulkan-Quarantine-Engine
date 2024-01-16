@@ -53,12 +53,27 @@ layout(set = 0, binding = 2) uniform UniformManagerLight
     int numLights;
 } uboLight;
 
-layout(std140, binding = 3) buffer LightSSBO 
+layout(set = 0, binding = 3) readonly buffer LightSSBO 
 {
    LightData lights[];
 };
 
-layout(set = 0, binding = 4) uniform sampler2D texSampler[5];
+layout(set = 0, binding = 4) readonly buffer LightIndices 
+{
+    uint light_indices[];
+};
+
+layout(set = 0, binding = 5) readonly buffer ZBins 
+{
+    uint bins[];
+};
+
+layout(set = 0, binding = 6) readonly buffer Tiles 
+{
+    uint tiles[];
+};
+
+layout(set = 0, binding = 7) uniform sampler2D texSampler[5];
 
 //BLINN-PHONG LIGHT EQUATIONS
 vec3 ComputePointLight(LightData light, vec3 normal, vec2 texCoords);
@@ -67,6 +82,10 @@ vec3 ComputeSpotLight(LightData light, vec3 normal, vec2 texCoords);
 
 void main()
 {
+    uint test = light_indices[0];
+    uint test1 = bins[0];
+    uint test2 = tiles[0];
+
     vec3 normal = fs_in.Normal;
 
     if(uboMaterial.idxNormal > -1)
