@@ -94,6 +94,13 @@ void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
             poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
             idx++;
         }
+        else if (binding.first == "ScreenData")
+        {
+            this->swapChainModule = SwapChainModule::getInstance();
+            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+            idx++;
+        }
         else if (binding.first == "UniformManagerLight")
         {
             this->lightManager = LightManager::getInstance();
@@ -268,6 +275,11 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
         if (binding.first == "CameraUniform")
         {
             this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->camera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform), frameIdx);
+            idx++;
+        }
+        if (binding.first == "ScreenData")
+        {
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->swapChainModule->screenData->uniformBuffers[frameIdx], sizeof(glm::vec2), frameIdx);
             idx++;
         }
         else if (binding.first == "UniformManagerLight")

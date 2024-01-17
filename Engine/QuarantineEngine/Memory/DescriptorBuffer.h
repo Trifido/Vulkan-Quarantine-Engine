@@ -16,6 +16,7 @@ class DescriptorBuffer
 private:
     DeviceModule*   deviceModule = nullptr;
     LightManager*   lightManager = nullptr;
+    SwapChainModule* swapChainModule = nullptr;
     Camera*         camera = nullptr;
     std::shared_ptr<Meshlet> meshlets_ptr = nullptr;
 

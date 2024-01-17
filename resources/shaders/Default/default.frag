@@ -5,6 +5,12 @@
 #define DIRECTIONAL_LIGHT 1
 #define SPOT_LIGHT 2
 
+#define TILE_SIZE 16
+#define NUM_BINS 16.0
+#define BIN_WIDTH ( 1.0 / NUM_BINS )
+#define MAX_NUM_LIGHTS 64
+#define NUM_WORDS ( ( MAX_NUM_LIGHTS + 31 ) / 32 )
+
 layout(location = 0) in VS_OUT {
     vec3 FragPos;
     vec3 Normal;
@@ -75,6 +81,11 @@ layout(set = 0, binding = 6) readonly buffer Tiles
 
 layout(set = 0, binding = 7) uniform sampler2D texSampler[5];
 
+layout(set = 0, binding = 8) uniform ScreenData 
+{
+    vec2 resolution;
+} screenData;
+
 //BLINN-PHONG LIGHT EQUATIONS
 vec3 ComputePointLight(LightData light, vec3 normal, vec2 texCoords);
 vec3 ComputeDirectionalLight(LightData light, vec3 normal, vec2 texCoords);
@@ -85,6 +96,25 @@ void main()
     uint test = light_indices[0];
     uint test1 = bins[0];
     uint test2 = tiles[0];
+
+    vec4 pos_camera_space = cameraData.view * vec4(fs_in.FragPos, 1.0);
+    float z_light_far = 100.0;
+    float z_near = 0.01;
+    float linear_d = (-pos_camera_space.z - z_near) / (z_light_far - z_near);
+    int bin_index = int( linear_d / BIN_WIDTH );
+    uint bin_value = bins[ bin_index ];
+
+    uint min_light_id = bin_value & 0xFFFF;
+    uint max_light_id = ( bin_value >> 16 ) & 0xFFFF;
+
+    uvec2 position = uvec2(gl_FragCoord.x - 0.5, gl_FragCoord.y - 0.5);
+    position.y = uint( screenData.resolution.y ) - position.y;
+
+    uvec2 tile = position / uint( TILE_SIZE );
+    uint stride = uint( NUM_WORDS ) * ( uint( screenData.resolution.x ) / uint( TILE_SIZE ) );
+    uint address = tile.y * stride + tile.x;
+
+    //------------------------------------------------------------------------------------
 
     vec3 normal = fs_in.Normal;
 
@@ -107,21 +137,38 @@ void main()
     vec3 resultDir = vec3(0.0);
     vec3 resultSpot = vec3(0.0);
 
-    for(int i = 0; i < uboLight.numLights; i++)
+    //-----------------------------------------------------------------------------------
+
+    if( min_light_id != uboLight.numLights + 1 )
     {
-        if(lights[i].lightType == POINT_LIGHT)
+        for (uint light_id = min_light_id; light_id <= max_light_id; ++light_id) 
         {
-            resultPoint += ComputePointLight(lights[i], normal, fs_in.TexCoords);
-        }
-        else if(lights[i].lightType == DIRECTIONAL_LIGHT)
-        {
-            resultDir += ComputeDirectionalLight(lights[i], normal, fs_in.TexCoords);
-        }
-        else
-        {
-            resultSpot += ComputeSpotLight(lights[i], normal, fs_in.TexCoords);
-        }
+            uint word_id = light_id / 32;
+            uint bit_id = light_id % 32;
+
+            if ( ( tiles[ address + word_id ] & ( 1 << bit_id ) ) != 0 ) 
+            {
+                uint global_light_index = light_indices[light_id];
+                resultPoint += ComputePointLight(lights[global_light_index], normal, fs_in.TexCoords);
+            }
+        }  
     }
+
+    // for(int i = 0; i < uboLight.numLights; i++)
+    // {
+    //     if(lights[i].lightType == POINT_LIGHT)
+    //     {
+    //         resultPoint += ComputePointLight(lights[i], normal, fs_in.TexCoords);
+    //     }
+    //     else if(lights[i].lightType == DIRECTIONAL_LIGHT)
+    //     {
+    //         resultDir += ComputeDirectionalLight(lights[i], normal, fs_in.TexCoords);
+    //     }
+    //     else
+    //     {
+    //         resultSpot += ComputeSpotLight(lights[i], normal, fs_in.TexCoords);
+    //     }
+    // }
 
     result = resultPoint + resultDir + resultSpot;
     outColor = vec4(result, 1.0);

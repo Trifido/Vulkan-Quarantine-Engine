@@ -119,6 +119,7 @@ void App::initVulkan()
 
     //Inicializamos el Swapchain Module
     swapchainModule = SwapChainModule::getInstance();
+    swapchainModule->InitializeScreenDataResources();
     swapchainModule->createSwapChain(windowSurface.getSurface(), mainWindow.getWindow());
 
     //Creamos el Command pool module y los Command buffers
@@ -170,11 +171,12 @@ void App::initVulkan()
     this->cullingSceneManager = CullingSceneManager::getInstance();
     this->cullingSceneManager->InitializeCullingSceneResources();
     this->cullingSceneManager->AddCameraFrustum(this->cameraEditor->frustumComponent);
-    this->cullingSceneManager->isDebugEnable = true;
+    this->cullingSceneManager->isDebugEnable = false;
 
     // Inicializamos los componentes del editor
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
     this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
+    grid_ptr->IsRenderable = false;
 
     auto absPath = std::filesystem::absolute("../../resources/models").generic_string();
 
@@ -444,6 +446,7 @@ void App::cleanUp()
     this->shaderManager->Clean();
 
     this->cleanUpSwapchain();
+    this->swapchainModule->CleanScreenDataResources();
 
     this->materialManager->CleanPipelines();
     this->computePipelineManager->CleanComputePipeline();

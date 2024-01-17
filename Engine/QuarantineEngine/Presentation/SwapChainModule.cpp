@@ -4,6 +4,7 @@
 
 #include "ImageMemoryTools.h"
 #include "SwapChainTool.hpp"
+#include <SynchronizationModule.h>
 
 SwapChainModule* SwapChainModule::instance = nullptr;
 
@@ -86,6 +87,8 @@ void SwapChainModule::createSwapChain(VkSurfaceKHR& surface, GLFWwindow* window)
     {
         swapChainImageViews[i] = IMT::createImageView(deviceModule->device, this->swapChainImages[i], this->swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
     }
+
+    this->UpdateScreenData();
 }
 
 void SwapChainModule::cleanup()
@@ -137,5 +140,35 @@ VkExtent2D SwapChainModule::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& cap
         actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));
 
         return actualExtent;
+    }
+}
+
+void SwapChainModule::UpdateScreenData()
+{
+    this->screenResolution = { this->swapChainExtent.width, this->swapChainExtent.height };
+    for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
+    {
+        void* data;
+        vkMapMemory(deviceModule->device, this->screenData->uniformBuffersMemory[currentFrame], 0, sizeof(glm::vec2), 0, &data);
+        memcpy(data, &this->screenResolution, sizeof(glm::vec2));
+        vkUnmapMemory(deviceModule->device, this->screenData->uniformBuffersMemory[currentFrame]);
+    }
+}
+
+void SwapChainModule::InitializeScreenDataResources()
+{
+    this->screenData = std::make_shared<UniformBufferObject>();
+    this->screenData->CreateUniformBuffer(sizeof(glm::vec2), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+}
+
+void SwapChainModule::CleanScreenDataResources()
+{
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        if (this->screenData != nullptr)
+        {
+            vkDestroyBuffer(deviceModule->device, this->screenData->uniformBuffers[i], nullptr);
+            vkFreeMemory(deviceModule->device, this->screenData->uniformBuffersMemory[i], nullptr);
+        }
     }
 }
