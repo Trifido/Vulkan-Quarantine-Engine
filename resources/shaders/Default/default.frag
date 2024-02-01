@@ -5,7 +5,7 @@
 #define DIRECTIONAL_LIGHT 1
 #define SPOT_LIGHT 2
 
-#define TILE_SIZE 16
+#define TILE_SIZE 8
 #define NUM_BINS 16.0
 #define BIN_WIDTH ( 1.0 / NUM_BINS )
 #define MAX_NUM_LIGHTS 64
@@ -93,13 +93,10 @@ vec3 ComputeSpotLight(LightData light, vec3 normal, vec2 texCoords);
 
 void main()
 {
-    uint test = light_indices[0];
-    uint test1 = bins[0];
-    uint test2 = tiles[0];
-
+    //------------------------------------------------------------------------------------
     vec4 pos_camera_space = cameraData.view * vec4(fs_in.FragPos, 1.0);
     float z_light_far = 100.0;
-    float z_near = 0.01;
+    float z_near = 0.1;
     float linear_d = (-pos_camera_space.z - z_near) / (z_light_far - z_near);
     int bin_index = int( linear_d / BIN_WIDTH );
     uint bin_value = bins[ bin_index ];
@@ -107,13 +104,10 @@ void main()
     uint min_light_id = bin_value & 0xFFFF;
     uint max_light_id = ( bin_value >> 16 ) & 0xFFFF;
 
-    uvec2 position = uvec2(gl_FragCoord.x - 0.5, gl_FragCoord.y - 0.5);
-    position.y = uint( screenData.resolution.y ) - position.y;
-
-    uvec2 tile = position / uint( TILE_SIZE );
-    uint stride = uint( NUM_WORDS ) * ( uint( screenData.resolution.x ) / uint( TILE_SIZE ) );
+    uvec2 pix_tile_size = uvec2(screenData.resolution / TILE_SIZE);
+    uvec2 tile = uvec2(gl_FragCoord.xy / pix_tile_size);
+    uint stride = uint( NUM_WORDS ) * pix_tile_size.x;
     uint address = tile.y * stride + tile.x;
-
     //------------------------------------------------------------------------------------
 
     vec3 normal = fs_in.Normal;
@@ -138,8 +132,7 @@ void main()
     vec3 resultSpot = vec3(0.0);
 
     //-----------------------------------------------------------------------------------
-
-    if( min_light_id != uboLight.numLights + 1 )
+    if (min_light_id != uboLight.numLights + 1)
     {
         for (uint light_id = min_light_id; light_id <= max_light_id; ++light_id) 
         {
@@ -153,6 +146,7 @@ void main()
             }
         }  
     }
+    //------------------------------------------------------------------------------------
 
     // for(int i = 0; i < uboLight.numLights; i++)
     // {
@@ -170,7 +164,7 @@ void main()
     //     }
     // }
 
-    result = resultPoint + resultDir + resultSpot;
+    result = resultPoint ;//+ resultDir + resultSpot;
     outColor = vec4(result, 1.0);
 }
 
@@ -186,7 +180,7 @@ vec3 ComputePointLight(LightData light, vec3 normal, vec2 texCoords)
 
     vec3 lightDir = normalize(light.position - fs_in.FragPos);
     float diff = max(dot(lightDir, normal), 0.0);
-    vec3 diffuse = diff * light.diffuse * colorDiffuse * attenuation;
+    vec3 diffuse = diff * light.diffuse * colorDiffuse ;//* attenuation;
 
     // - AMBIENT
     vec3 ambient = 0.1 * colorDiffuse;
@@ -200,7 +194,7 @@ vec3 ComputePointLight(LightData light, vec3 normal, vec2 texCoords)
     vec3 reflectDir = reflect(-lightDir, normal);
     vec3 halfwayDir = normalize(lightDir + view_dir);  
     float spec = pow(max(dot(normal, halfwayDir), 0.0), uboMaterial.Shininess);
-    vec3 specular = spec * light.specular * colorSpecular * attenuation;
+    vec3 specular = spec * light.specular * colorSpecular ;//* attenuation;
 
     // - EMISSIVE
     vec3 emissive = vec3 (0.0, 0.0, 0.0);

@@ -173,7 +173,7 @@ void App::initVulkan()
     this->cullingSceneManager->AddCameraFrustum(this->cameraEditor->frustumComponent);
     this->cullingSceneManager->isDebugEnable = false;
 
-    // Inicializamos los componentes del editor
+    // Inicializamos los componentes del editorW
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
     this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
     grid_ptr->IsRenderable = false;
@@ -248,20 +248,20 @@ void App::initVulkan()
 
     // INIT ------------------------- Lights ----------------------------------------
     this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight0");
-    this->lightManager->GetLight("PointLight0")->transform->SetPosition(glm::vec3(0.0f, 0.0f, -3.0f));
+    this->lightManager->GetLight("PointLight0")->transform->SetPosition(glm::vec3(5.0f, 0.0f, 0.0f));
     this->lightManager->GetLight("PointLight0")->diffuse = glm::vec3(0.7f, 0.0f, 0.0f);
-    this->lightManager->GetLight("PointLight0")->specular = glm::vec3(0.8f);
+    this->lightManager->GetLight("PointLight0")->specular = glm::vec3(0.7f, 0.0f, 0.0f);
     this->lightManager->GetLight("PointLight0")->linear = 0.09f;
     this->lightManager->GetLight("PointLight0")->quadratic = 0.032f;
     this->lightManager->GetLight("PointLight0")->radius = 5.0f;
 
     this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
-    this->lightManager->GetLight("PointLight1")->transform->SetPosition(glm::vec3(0.5f, 1.0f, 0.3f));
-    this->lightManager->GetLight("PointLight1")->diffuse = glm::vec3(0.1f);
-    this->lightManager->GetLight("PointLight1")->specular = glm::vec3(0.5f);
+    this->lightManager->GetLight("PointLight1")->transform->SetPosition(glm::vec3(-5.0f, 0.0f, 0.0f));
+    this->lightManager->GetLight("PointLight1")->diffuse = glm::vec3(0.0f, 0.0f, 0.7f);
+    this->lightManager->GetLight("PointLight1")->specular = glm::vec3(0.0f, 0.0f, 0.7f);
     this->lightManager->GetLight("PointLight1")->linear = 0.09f;
     this->lightManager->GetLight("PointLight1")->quadratic = 0.032f;
-    this->lightManager->GetLight("PointLight1")->quadratic = 1.5f;
+    this->lightManager->GetLight("PointLight1")->radius = 5.0f;
 
     //this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
     //this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(2.0f, 8.0f, -1.0f));

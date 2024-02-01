@@ -23,7 +23,7 @@ class LightManager
 private:
     const size_t MAX_NUM_LIGHT = 64;
     const uint32_t BIN_SLICES = 16;
-    const uint32_t TILE_SIZE = 16;
+    const uint32_t TILE_SIZE = 8;
     const uint32_t NUM_WORDS = (MAX_NUM_LIGHT + 31) / 32;
     const uint32_t MAX_NUM_TILES = 240 * 135;
 
