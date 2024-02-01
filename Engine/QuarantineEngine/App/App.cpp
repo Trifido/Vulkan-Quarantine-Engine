@@ -263,13 +263,13 @@ void App::initVulkan()
     this->lightManager->GetLight("PointLight1")->quadratic = 0.032f;
     this->lightManager->GetLight("PointLight1")->radius = 10.0f;
 
-    //this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
-    //this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(2.0f, 8.0f, -1.0f));
-    //this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.6f);
-    //this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.1f);
-    //this->lightManager->GetLight("DirectionalLight0")->constant = 1.0f;
-    //this->lightManager->GetLight("DirectionalLight0")->linear = 0.09f;
-    //this->lightManager->GetLight("DirectionalLight0")->quadratic = 0.032f;
+    this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
+    this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(2.0f, 8.0f, -1.0f));
+    this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.6f);
+    this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.1f);
+    this->lightManager->GetLight("DirectionalLight0")->constant = 1.0f;
+    this->lightManager->GetLight("DirectionalLight0")->linear = 0.09f;
+    this->lightManager->GetLight("DirectionalLight0")->quadratic = 0.032f;
 
     this->lightManager->UpdateUniform();
     // END -------------------------- Lights ----------------------------------------

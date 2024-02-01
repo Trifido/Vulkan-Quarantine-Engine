@@ -139,32 +139,27 @@ void main()
             uint word_id = light_id / 32;
             uint bit_id = light_id % 32;
 
-            if ( ( tiles[ address + word_id ] & ( 1 << bit_id ) ) != 0 ) 
+            if ((tiles[ address + word_id ] & (1 << bit_id)) != 0) 
             {
                 uint global_light_index = light_indices[light_id];
-                resultPoint += ComputePointLight(lights[global_light_index], normal, fs_in.TexCoords);
+
+                if (lights[global_light_index].lightType == POINT_LIGHT)
+                {
+                    resultPoint += ComputePointLight(lights[global_light_index], normal, fs_in.TexCoords);
+                }
+                else if (lights[global_light_index].lightType == DIRECTIONAL_LIGHT)
+                {
+                    resultDir += ComputeDirectionalLight(lights[global_light_index], normal, fs_in.TexCoords);
+                }
+                else
+                {
+                    resultSpot += ComputeSpotLight(lights[global_light_index], normal, fs_in.TexCoords);
+                }
             }
         }  
     }
-    //------------------------------------------------------------------------------------
 
-    // for(int i = 0; i < uboLight.numLights; i++)
-    // {
-    //     if(lights[i].lightType == POINT_LIGHT)
-    //     {
-    //         resultPoint += ComputePointLight(lights[i], normal, fs_in.TexCoords);
-    //     }
-    //     else if(lights[i].lightType == DIRECTIONAL_LIGHT)
-    //     {
-    //         resultDir += ComputeDirectionalLight(lights[i], normal, fs_in.TexCoords);
-    //     }
-    //     else
-    //     {
-    //         resultSpot += ComputeSpotLight(lights[i], normal, fs_in.TexCoords);
-    //     }
-    // }
-
-    result = resultPoint ;//+ resultDir + resultSpot;
+    result = resultPoint + resultDir + resultSpot;
     outColor = vec4(result, 1.0);
 }
 
