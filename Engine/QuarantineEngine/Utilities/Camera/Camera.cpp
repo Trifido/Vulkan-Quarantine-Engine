@@ -20,8 +20,8 @@ Camera::Camera(float width, float height)
 
     this->frustumComponent = std::make_shared<FrustumComponent>();
 
-    this->cameraFront = glm::vec3(0.0f, 0.0f, 1.0f);
-    this->cameraPos = glm::vec3(0.0f, 0.0f, -10.0f);
+    this->cameraFront = glm::vec3(1.0f, 0.0f, 0.0f);
+    this->cameraPos = glm::vec3(-10.0f, 0.0f, 0.0f);
     this->WIDTH = width;
     this->HEIGHT = height;
     this->lastX = WIDTH / 2.0f;
@@ -43,7 +43,7 @@ Camera::Camera(float width, float height)
     value = atan2(cameraFront.x, cameraFront.z);
     degreeValue = glm::degrees(value);
     if (degreeValue < 0) degreeValue += 180;
-    this->yaw = 90;// (270 + (int)degreeValue) % 360;
+    this->yaw = (270 + (int)degreeValue) % 360;
 
 }
 

@@ -182,8 +182,8 @@ void LightManager::SortingLights()
     for (uint32_t i = 0; i < this->lightBuffer.size(); i++)
     {
         glm::vec4 position = glm::vec4(this->lightBuffer.at(i).position, 1.0f);
-        glm::vec4 p_min = position + glm::vec4(this->camera->cameraFront * -this->lightBuffer.at(i).radius, 0.0f);// glm::vec4(0.0f, 0.0f, -this->lightBuffer.at(i).radius, 0.0f);
-        glm::vec4 p_max = position + glm::vec4(this->camera->cameraFront * this->lightBuffer.at(i).radius, 0.0f);//glm::vec4(0.0f, 0.0f, this->lightBuffer.at(i).radius, 0.0f);
+        glm::vec4 p_min = position + glm::vec4(this->camera->cameraFront * -this->lightBuffer.at(i).radius, 0.0f);
+        glm::vec4 p_max = position + glm::vec4(this->camera->cameraFront * this->lightBuffer.at(i).radius, 0.0f);
 
         glm::vec4 projected_position = this->camera->view * position;
         glm::vec4 projected_p_min = this->camera->view * p_min;
@@ -225,15 +225,12 @@ void LightManager::ComputeLightsLUT()
             const LightMap& light = this->sortedLight.at(i);
 
             bool isInside = light.projected_z >= bin_min && light.projected_z <= bin_max;
-            bool isMinor = light.projected_z_min <= bin_min || light.projected_z_min <= bin_max;
-            bool isMayor = light.projected_z_max >= bin_max || light.projected_z_max >= bin_min;
+            bool isInsideMinor = light.projected_z_min <= bin_min && light.projected_z_min <= bin_max && light.projected_z >= bin_min;
+            bool isInsideMayor = light.projected_z_max >= bin_min && light.projected_z_max >= bin_max && light.projected_z <= bin_max;
+            bool isMinor = light.projected_z_min >= bin_min && light.projected_z_min <= bin_max;
+            bool isMayor = light.projected_z_max <= bin_max && light.projected_z_max >= bin_min;
 
-            float near = *this->camera->GetRawNearPlane();
-            float far = *this->camera->GetRawFarPlane();
-            float bin_real_min = bin_min * (far - near);
-            float bin_real_max = bin_max * (far - near);
-
-            if (isInside || isMinor && isMayor)
+            if (isInside || isMinor || isMayor || isInsideMinor || isInsideMayor)
             {
                 if (i < min_light_id)
                 {
@@ -275,16 +272,6 @@ void LightManager::ComputeLightTiles()
         float radius = light.radius;
 
         glm::vec4 view_space_pos = camera->view * pos;
-        //bool camera_visible = -view_space_pos.z - radius < near_z;
-
-        //glm::vec4 position = glm::vec4(this->lightBuffer.at(i).position, 1.0f);
-        //glm::vec4 p_min = position + glm::vec4(this->camera->cameraFront * -this->lightBuffer.at(i).radius, 0.0f);
-        //camera_visible = p_min.z < near_z;
-
-        //if (!camera_visible)
-        //    continue;
-
-        // X is positive, then it returns the same values as the longer method.
         glm::vec2 cx{ view_space_pos.x, view_space_pos.z };
         const float tx_squared = glm::dot(cx, cx) - (radius * radius);
         const bool tx_camera_inside = tx_squared <= 0;
