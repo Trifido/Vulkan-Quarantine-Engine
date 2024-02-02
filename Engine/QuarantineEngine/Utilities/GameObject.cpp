@@ -358,7 +358,7 @@ void GameObject::CreateAnimationDrawCommand(VkCommandBuffer& commandBuffer, uint
             vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
         }
 
-        VkDeviceSize animOffsets[] = { 0 };
+        VkDeviceSize animOffsets[] = {0};
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, &animator->GetComputeNode(this->id)->computeDescriptor->ssboData[1]->uniformBuffers.at(idx), animOffsets);
         vkCmdBindIndexBuffer(commandBuffer, this->mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
