@@ -55,25 +55,25 @@ MaterialManager::MaterialManager()
     );
     shaderManager->AddShader("default", this->default_shader);
 
-    //this->default_primitive_shader = std::make_shared<ShaderModule>(
-    //    ShaderModule(absolute_default_vertex_shader_path, absolute_default_frag_shader_path)
-    //);
-    //shaderManager->AddShader("default_primitive", this->default_primitive_shader);
+    this->default_primitive_shader = std::make_shared<ShaderModule>(
+        ShaderModule(absolute_default_vertex_shader_path, absolute_default_frag_shader_path)
+    );
+    shaderManager->AddShader("default_primitive", this->default_primitive_shader);
 
-    //GraphicsPipelineData pipelineParticleShader = {};
-    //pipelineParticleShader.HasVertexData = false;
-    //this->default_particles_shader = std::make_shared<ShaderModule>(
-    //    ShaderModule(absolute_particles_vert_shader_path, absolute_particles_frag_shader_path, pipelineParticleShader)
-    //);
-    //shaderManager->AddShader("default_particles", this->default_particles_shader);
+    GraphicsPipelineData pipelineParticleShader = {};
+    pipelineParticleShader.HasVertexData = false;
+    this->default_particles_shader = std::make_shared<ShaderModule>(
+        ShaderModule(absolute_particles_vert_shader_path, absolute_particles_frag_shader_path, pipelineParticleShader)
+    );
+    shaderManager->AddShader("default_particles", this->default_particles_shader);
 
-    //GraphicsPipelineData pipelineMeshShader = {};
-    //pipelineMeshShader.HasVertexData = false;
-    //pipelineMeshShader.IsMeshShader = true;
-    //this->mesh_shader_test = std::make_shared<ShaderModule>(
-    //    ShaderModule(absolute_mesh_task_shader_path, absolute_mesh_mesh_shader_path, absolute_mesh_frag_shader_path, pipelineMeshShader)
-    //);
-    //shaderManager->AddShader("mesh_shader", this->mesh_shader_test);
+    GraphicsPipelineData pipelineMeshShader = {};
+    pipelineMeshShader.HasVertexData = false;
+    pipelineMeshShader.IsMeshShader = true;
+    this->mesh_shader_test = std::make_shared<ShaderModule>(
+        ShaderModule(absolute_mesh_task_shader_path, absolute_mesh_mesh_shader_path, absolute_mesh_frag_shader_path, pipelineMeshShader)
+    );
+    shaderManager->AddShader("mesh_shader", this->mesh_shader_test);
 }
 
 void MaterialManager::InitializeMaterialManager()
