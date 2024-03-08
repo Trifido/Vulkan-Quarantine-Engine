@@ -187,12 +187,12 @@ void App::initVulkan()
         absPath.erase(ind, substring.length());
     }
 
-    //const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
-    const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
+    const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
+    //const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
 
     std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(absolute_path));
 
-    model->transform->SetScale(glm::vec3(0.1f));
+    //model->transform->SetScale(glm::vec3(0.1f));
     //model->transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
     //model->transform->SetOrientation(glm::vec3(-90.0f, 180.0f, 0.0f));
     this->gameObjectManager->AddGameObject(model, "model");
@@ -253,7 +253,7 @@ void App::initVulkan()
     this->lightManager->GetLight("PointLight0")->specular = glm::vec3(0.7f, 0.0f, 0.0f);
     this->lightManager->GetLight("PointLight0")->linear = 0.09f;
     this->lightManager->GetLight("PointLight0")->quadratic = 0.032f;
-    this->lightManager->GetLight("PointLight0")->radius = 10.0f;
+    this->lightManager->GetLight("PointLight0")->radius = 30.0f;
 
     this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
     this->lightManager->GetLight("PointLight1")->transform->SetPosition(glm::vec3(-5.0f, 0.0f, 0.0f));
@@ -261,7 +261,7 @@ void App::initVulkan()
     this->lightManager->GetLight("PointLight1")->specular = glm::vec3(0.0f, 0.0f, 0.7f);
     this->lightManager->GetLight("PointLight1")->linear = 0.09f;
     this->lightManager->GetLight("PointLight1")->quadratic = 0.032f;
-    this->lightManager->GetLight("PointLight1")->radius = 10.0f;
+    this->lightManager->GetLight("PointLight1")->radius = 30.0f;
 
     this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
     this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(2.0f, 8.0f, -1.0f));

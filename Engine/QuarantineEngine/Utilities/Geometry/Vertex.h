@@ -16,12 +16,6 @@ struct Vertex
     glm::vec4 Tangents;
 };
 
-struct PBRVertex : Vertex
-{
-    int boneIDs[4];
-    float boneWeights[4];
-};
-
 struct Particle
 {
     glm::vec3 position;

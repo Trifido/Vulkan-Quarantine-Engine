@@ -55,7 +55,7 @@ void PrimitiveMesh::InitializeMesh(size_t numAttributes)
 void PrimitiveMesh::InitializePoint()
 {
     this->vertices.resize(1);
-    PBRVertex vert;
+    Vertex vert;
 
     vert.pos = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(0.0f, 0.0f);
@@ -70,7 +70,7 @@ void PrimitiveMesh::InitializePoint()
 void PrimitiveMesh::InitializeTriangle()
 {
     this->vertices.resize(3);
-    PBRVertex vert;
+    Vertex vert;
 
     vert.pos = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(1.0f, 1.0f);
@@ -94,7 +94,7 @@ void PrimitiveMesh::InitializeTriangle()
 void PrimitiveMesh::InitializePlane()
 {
     this->vertices.resize(4);
-    PBRVertex vert;
+    Vertex vert;
 
     vert.pos = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(1.0f, 1.0f);
@@ -122,7 +122,7 @@ void PrimitiveMesh::InitializePlane()
 void PrimitiveMesh::InitializeFloorPlane()
 {
     this->vertices.resize(4);
-    PBRVertex vert;
+    Vertex vert;
 
     vert.pos = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
     vert.texCoord = glm::vec2(1.0f, 1.0f);
@@ -157,7 +157,7 @@ vec3 gridPlane[6] = vec3[] (
 void PrimitiveMesh::InitializeGrid()
 {
     this->vertices.resize(6);
-    PBRVertex vert;
+    Vertex vert;
 
     vert.pos = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(1.0f, 1.0f);
@@ -212,7 +212,7 @@ void PrimitiveMesh::InitializeSphere()
 
 void PrimitiveMesh::createVertexBuffer()
 {
-    VkDeviceSize bufferSize = sizeof(PBRVertex) * vertices.size();
+    VkDeviceSize bufferSize = sizeof(Vertex) * vertices.size();
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;

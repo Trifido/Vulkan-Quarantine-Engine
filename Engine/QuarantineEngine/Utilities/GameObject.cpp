@@ -228,12 +228,12 @@ void GameObject::InitializeAnimationComponent()
             for (int idChild = 0; idChild < this->childs.size(); idChild++)
             {
                 uint32_t numVertices = this->childs[idChild]->mesh->numVertices;
-                this->animationComponent->animator->SetVertexBufferInComputeNode(this->childs[idChild]->id, this->childs[idChild]->mesh->vertexBuffer, numVertices);
+                this->animationComponent->animator->SetVertexBufferInComputeNode(this->childs[idChild]->id, this->childs[idChild]->mesh->vertexBuffer, this->childs[idChild]->mesh->animationBuffer, numVertices);
             }
         }
         else
         {
-            this->animationComponent->animator->SetVertexBufferInComputeNode(0, this->mesh->vertexBuffer, this->mesh->numVertices);
+            this->animationComponent->animator->SetVertexBufferInComputeNode(0, this->mesh->vertexBuffer, this->mesh->animationBuffer, this->mesh->numVertices);
         }
     }
 }
@@ -359,7 +359,7 @@ void GameObject::CreateAnimationDrawCommand(VkCommandBuffer& commandBuffer, uint
         }
 
         VkDeviceSize animOffsets[] = {0};
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &animator->GetComputeNode(this->id)->computeDescriptor->ssboData[1]->uniformBuffers.at(idx), animOffsets);
+        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &animator->GetComputeNode(this->id)->computeDescriptor->ssboData[2]->uniformBuffers.at(idx), animOffsets);
         vkCmdBindIndexBuffer(commandBuffer, this->mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
         if (this->material->HasDescriptorBuffer())
@@ -440,16 +440,16 @@ size_t GameObject::CheckNumAttributes()
     switch (this->meshImportedType)
     {
     case MeshImportedType::ANIMATED_GEO:
-        numAttributes = 7;
+        numAttributes = 6;
         break;
     case MeshImportedType::PRIMITIVE_GEO:
-        numAttributes = 5;
+        numAttributes = 4;
         break;
     case MeshImportedType::NONE_GEO:
         numAttributes = 0;
         break;
     case MeshImportedType::COMMON_GEO:
-        numAttributes = 5;
+        numAttributes = 4;
     default:
         break;
     }

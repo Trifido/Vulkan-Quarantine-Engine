@@ -11,8 +11,7 @@ class PrimitiveMesh : public GeometryComponent
 {
 public:
     PRIMITIVE_TYPE type;
-    //std::vector<PrimitiveVertex> vertices;
-    std::vector<PBRVertex> vertices;
+    std::vector<Vertex> vertices;
 
     PrimitiveMesh();
     PrimitiveMesh(PRIMITIVE_TYPE type);

@@ -28,7 +28,7 @@ private:
 public:
     Animator();
     void InitializeComputeNodes(std::vector<std::string> idChilds);
-    void SetVertexBufferInComputeNode(std::string id, VkBuffer vertexBuffer, uint32_t numElements);
+    void SetVertexBufferInComputeNode(std::string id, VkBuffer vertexBuffer, VkBuffer animationVertexBuffer, uint32_t numElements);
     std::shared_ptr<ComputeNode> GetComputeNode(std::string id);
     void UpdateUBOAnimation();
     void UpdateAnimation(float dt);

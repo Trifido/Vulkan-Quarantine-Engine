@@ -28,6 +28,13 @@ void ComputeDescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shade
             this->_numSSBOs++;
             idx++;
         }
+        else if (binding.first == "InputBoneSSBO")
+        {
+            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+            this->_numSSBOs++;
+            idx++;
+        }
         else if (binding.first == "OutputSSBO")
         {
             poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
@@ -193,9 +200,15 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
                 this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssboData[0]->uniformBuffers[(frameIdx - 1) % MAX_FRAMES_IN_FLIGHT], this->ssboSize[0], frameIdx);
                 idx++;
             }
+            else if (binding.first == "InputBoneSSBO")
+            {
+                // Alteramos los ssbo para calcular en progresión las coordenadas de las partículas
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssboData[1]->uniformBuffers[(frameIdx - 1) % MAX_FRAMES_IN_FLIGHT], this->ssboSize[1], frameIdx);
+                idx++;
+            }
             else if (binding.first == "OutputSSBO")
             {
-                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssboData[0]->uniformBuffers[frameIdx], this->ssboSize[0], frameIdx);
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssboData[2]->uniformBuffers[frameIdx], this->ssboSize[2], frameIdx);
                 idx++;
             }
         }
@@ -206,9 +219,14 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
                 this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssboData[0]->uniformBuffers[frameIdx], this->ssboSize[0], frameIdx);
                 idx++;
             }
-            else if (binding.first == "OutputSSBO")
+            else if (binding.first == "InputBoneSSBO")
             {
                 this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssboData[1]->uniformBuffers[frameIdx], this->ssboSize[1], frameIdx);
+                idx++;
+            }
+            else if (binding.first == "OutputSSBO")
+            {
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssboData[2]->uniformBuffers[frameIdx], this->ssboSize[2], frameIdx);
                 idx++;
             }
         }

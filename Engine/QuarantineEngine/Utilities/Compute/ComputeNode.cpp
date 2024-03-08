@@ -44,9 +44,9 @@ void ComputeNode::FillComputeBuffer(size_t numElements, unsigned long long eleme
     vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
 }
 
-void ComputeNode::FillComputeBuffer(VkBuffer buffer, uint32_t bufferSize)
+void ComputeNode::FillComputeBuffer(uint32_t ssboIndex, VkBuffer buffer, uint32_t bufferSize)
 {
-    this->computeDescriptor->ssboData[0]->FillSSBO(buffer, bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->computeDescriptor->ssboData[ssboIndex]->FillSSBO(buffer, bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
 }
 
 void ComputeNode::InitializeComputeNode()
