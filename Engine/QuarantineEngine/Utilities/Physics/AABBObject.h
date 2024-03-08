@@ -27,7 +27,7 @@ private:
 public:
     void CreateBuffers();
     void CleanResources();
-    void InitializeMesh(size_t numAttributes) override;
+    void InitializeMesh() override;
     void AddTransform(std::shared_ptr<Transform> modelTransform);
     const std::shared_ptr<Transform> GetTransform();
 };

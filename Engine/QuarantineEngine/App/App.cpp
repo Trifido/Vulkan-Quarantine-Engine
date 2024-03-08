@@ -171,7 +171,7 @@ void App::initVulkan()
     this->cullingSceneManager = CullingSceneManager::getInstance();
     this->cullingSceneManager->InitializeCullingSceneResources();
     this->cullingSceneManager->AddCameraFrustum(this->cameraEditor->frustumComponent);
-    this->cullingSceneManager->isDebugEnable = false;
+    this->cullingSceneManager->isDebugEnable = true;
 
     // Inicializamos los componentes del editorW
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();

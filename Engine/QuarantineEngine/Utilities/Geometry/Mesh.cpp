@@ -13,7 +13,6 @@
 Mesh::Mesh(const MeshData& data)
 {
     this->PATH = data.name;
-    this->numAttributes = 3;
     this->numFaces = data.numFaces;
     this->hasAnimationData = data.HasAnimation;
     this->vertices = data.vertices;
@@ -22,10 +21,8 @@ Mesh::Mesh(const MeshData& data)
     this->indices = data.indices;
 }
 
-void Mesh::InitializeMesh(size_t numAttributes)
+void Mesh::InitializeMesh()
 {
-    this->numAttributes = numAttributes;
-
     this->meshlets_ptr = std::make_shared<Meshlet>();
     this->meshlets_ptr->GenerateMeshlet(this->vertices, this->indices);
     //this->meshlets_ptr->GenerateCustomMeshlet(this->vertices, this->indices);

@@ -16,8 +16,6 @@ protected:
     VkDeviceMemory  indexBufferMemory = VK_NULL_HANDLE;
     VkDeviceMemory  animationBufferMemory = VK_NULL_HANDLE;
 
-    uint32_t    numAttributes;
-
     void createIndexBuffer();
     virtual void createVertexBuffer() = 0;
 
@@ -31,7 +29,7 @@ public:
     std::vector<uint32_t> indices;
     std::shared_ptr<Meshlet> meshlets_ptr = nullptr;
 
-    virtual void InitializeMesh(size_t attributesSize) = 0;
+    virtual void InitializeMesh() = 0;
     virtual void cleanup();
 };
 

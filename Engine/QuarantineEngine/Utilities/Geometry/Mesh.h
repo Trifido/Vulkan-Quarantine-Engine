@@ -33,7 +33,7 @@ private:
 
 public:
     Mesh(const MeshData& data);
-    void InitializeMesh(size_t numAttributes) override;
+    void InitializeMesh() override;
 };
 
 #endif // !MESH_H

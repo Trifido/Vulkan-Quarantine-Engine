@@ -77,12 +77,11 @@ public:
     void UpdatePhysicTransform();
 
 protected:
-    void InitializeComponents(size_t numMeshAttributes);
+    void InitializeComponents();
     void InitializeAnimationComponent();
     bool CreateChildsGameObject(std::string pathfile);
     virtual void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
     virtual void CreateAnimationDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator);
-    size_t CheckNumAttributes();
 };
 
 #endif

@@ -38,8 +38,7 @@ void AABBObject::CreateBuffers()
     this->numFaces = 12;
     this->numVertices = 8;
 
-    size_t numAttributes = 1;
-    this->InitializeMesh(numAttributes);
+    this->InitializeMesh();
 }
 
 void AABBObject::CleanResources()
@@ -51,9 +50,8 @@ void AABBObject::CleanResources()
     this->cleanup();
 }
 
-void AABBObject::InitializeMesh(size_t numAttributes)
+void AABBObject::InitializeMesh()
 {
-    this->numAttributes = numAttributes;
     this->createVertexBuffer();
     this->createIndexBuffer();
 }

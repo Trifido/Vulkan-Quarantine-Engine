@@ -12,7 +12,7 @@ PrimitiveMesh::PrimitiveMesh(PRIMITIVE_TYPE type)
     this->type = type;
 }
 
-void PrimitiveMesh::InitializeMesh(size_t numAttributes)
+void PrimitiveMesh::InitializeMesh()
 {
     this->type = type;
 
@@ -42,8 +42,6 @@ void PrimitiveMesh::InitializeMesh(size_t numAttributes)
     default:
         break;
     }
-
-    this->numAttributes = numAttributes;
 
     this->numVertices = (uint32_t)this->indices.size();
     this->numFaces = this->numVertices / 3;
