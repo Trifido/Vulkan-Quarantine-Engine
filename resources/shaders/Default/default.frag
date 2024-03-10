@@ -45,13 +45,27 @@ layout(set = 0, binding = 0) uniform CameraUniform
     vec4 frustumPlanes[6];
 } cameraData;
 
-layout(set = 0, binding = 1) uniform UniformMaterial {
-    float Shininess;
+layout(set = 0, binding = 1) uniform UniformMaterial 
+{
+    vec4 Diffuse;
+    vec4 Ambient;
+    vec4 Specular;
+    vec4 Emissive;
+    vec4 Transparent;
+    vec4 Reflective;
+
     int idxDiffuse;
     int idxNormal;
     int idxSpecular;
     int idxEmissive;
     int idxHeight;
+
+    float Opacity;
+    float BumpScaling;
+    float Reflectivity;
+    float Refractivity;
+    float Shininess;
+    float Shininess_Strength;
 } uboMaterial;
 
 layout(set = 0, binding = 2) uniform UniformManagerLight
@@ -87,9 +101,9 @@ layout(set = 0, binding = 8) uniform ScreenData
 } screenData;
 
 //BLINN-PHONG LIGHT EQUATIONS
-vec3 ComputePointLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive, vec2 texCoords);
-vec3 ComputeDirectionalLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive, vec2 texCoords);
-vec3 ComputeSpotLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive, vec2 texCoords);
+vec3 ComputePointLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive);
+vec3 ComputeDirectionalLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive);
+vec3 ComputeSpotLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive);
 vec3 ComputeAmbientLight(vec3 diffuseColor);
 vec3 GetAlbedoColor();
 vec3 GetSpecularColor();
@@ -97,7 +111,6 @@ vec3 GetEmissiveColor();
 
 void main()
 {
-    //------------------------------------------------------------------------------------
     vec4 pos_camera_space = cameraData.view * vec4(fs_in.FragPos, 1.0);
     float z_light_far = 500.0;
     float z_near = 0.1;
@@ -112,7 +125,6 @@ void main()
     uvec2 tile = uvec2(gl_FragCoord.xy / pix_tile_size);
     uint stride = uint( NUM_WORDS ) * pix_tile_size.x;
     uint address = tile.y * stride + tile.x;
-    //------------------------------------------------------------------------------------
 
     vec3 normal = fs_in.Normal;
 
@@ -120,23 +132,19 @@ void main()
     {
         normal = texture(texSampler[uboMaterial.idxNormal], fs_in.TexCoords).rgb;
         normal = normal * 2.0 - 1.0;
-        normal = normalize(fs_in.TBN * normal); 
+        normal = normalize(fs_in.TBN * normal) * uboMaterial.BumpScaling; 
     }
 
     //COMPUTE LIGHT
-    vec3 result = vec3(1.0, 0.0, 0.5);
-
     vec3 albedoColor = GetAlbedoColor();
     vec3 specularColor = GetSpecularColor();
     vec3 emissiveColor = GetEmissiveColor();
-    vec3 resultAmbient = ComputeAmbientLight(albedoColor);
+    vec3 result = ComputeAmbientLight(albedoColor);
 
     vec3 resultPoint = vec3(0.0);
     vec3 resultDir = vec3(0.0);
     vec3 resultSpot = vec3(0.0);
-
-    bool isRendered = false;
-    //-----------------------------------------------------------------------------------
+    
     if (min_light_id != uboLight.numLights + 1)
     {
         for (uint light_id = min_light_id; light_id <= max_light_id; ++light_id) 
@@ -146,35 +154,31 @@ void main()
 
             if ((tiles[ address + word_id ] & (1 << bit_id)) != 0) 
             {
-                isRendered = true;
-                uint global_light_index = light_indices[light_id];
+                uint gli = light_indices[light_id];
 
-                if (lights[global_light_index].lightType == POINT_LIGHT)
+                if (lights[gli].lightType == POINT_LIGHT)
                 {
-                    resultPoint += ComputePointLight(lights[global_light_index], normal, albedoColor, specularColor, emissiveColor, fs_in.TexCoords);
+                    resultPoint += ComputePointLight(lights[gli], normal, albedoColor, specularColor, emissiveColor);
                 }
-                else if (lights[global_light_index].lightType == DIRECTIONAL_LIGHT)
+                else if (lights[gli].lightType == DIRECTIONAL_LIGHT)
                 {
-                    resultDir += ComputeDirectionalLight(lights[global_light_index], normal, albedoColor, specularColor, emissiveColor, fs_in.TexCoords);
+                    resultDir += ComputeDirectionalLight(lights[gli], normal, albedoColor, specularColor, emissiveColor);
                 }
                 else
                 {
-                    resultSpot += ComputeSpotLight(lights[global_light_index], normal, albedoColor, specularColor, emissiveColor, fs_in.TexCoords);
+                    resultSpot += ComputeSpotLight(lights[gli], normal, albedoColor, specularColor, emissiveColor);
                 }
             }
         }  
     }
 
-
-    result = resultAmbient + resultPoint + resultDir + resultSpot;
-
-
-    outColor = vec4(result, 1.0);
+    result += resultPoint + resultDir + resultSpot;
+    outColor = vec4(result, uboMaterial.Opacity);
 }
 
 vec3 GetAlbedoColor()
 {
-    vec3 colorDiffuse = vec3 (1.0, 1.0, 1.0);
+    vec3 colorDiffuse = uboMaterial.Diffuse.rgb;
     if(uboMaterial.idxDiffuse > -1)
         colorDiffuse = vec3(texture(texSampler[uboMaterial.idxDiffuse], fs_in.TexCoords));
 
@@ -183,7 +187,7 @@ vec3 GetAlbedoColor()
 
 vec3 GetSpecularColor()
 {
-    vec3 colorSpecular = vec3 (1.0, 1.0, 1.0);
+    vec3 colorSpecular = uboMaterial.Specular.rgb;
     if(uboMaterial.idxSpecular > -1)
         colorSpecular = vec3(texture(texSampler[uboMaterial.idxSpecular], fs_in.TexCoords));
     return colorSpecular;
@@ -191,7 +195,7 @@ vec3 GetSpecularColor()
 
 vec3 GetEmissiveColor()
 {
-    vec3 emissive = vec3 (0.0, 0.0, 0.0);
+    vec3 emissive = uboMaterial.Emissive.rgb;
     if(uboMaterial.idxEmissive > -1)
         emissive = vec3(texture(texSampler[uboMaterial.idxEmissive], fs_in.TexCoords));
     return emissive;
@@ -199,10 +203,10 @@ vec3 GetEmissiveColor()
 
 vec3 ComputeAmbientLight(vec3 diffuseColor)
 {
-    return 0.1 * diffuseColor;
+    return diffuseColor * uboMaterial.Ambient.rgb; //0.1 * 
 }
 
-vec3 ComputePointLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive, vec2 texCoords)
+vec3 ComputePointLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive)
 {
     float distance = length(light.position.xyz - fs_in.FragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
@@ -220,7 +224,7 @@ vec3 ComputePointLight(LightData light, vec3 normal, vec3 albedo, vec3 specular,
     return diffuse + specularResult + emissive;
 }
 
-vec3 ComputeDirectionalLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive, vec2 texCoords)
+vec3 ComputeDirectionalLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive)
 {
     vec3 lightDir = normalize(light.position);
 
@@ -236,7 +240,7 @@ vec3 ComputeDirectionalLight(LightData light, vec3 normal, vec3 albedo, vec3 spe
     return diffuse + specularResult + emissive;
 }
 
-vec3 ComputeSpotLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive, vec2 texCoords)
+vec3 ComputeSpotLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive)
 {
     vec3 lightDir = normalize(light.position.xyz - fs_in.FragPos);
 

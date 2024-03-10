@@ -39,12 +39,25 @@ struct CameraUniform
 
 struct MaterialUniform
 {
-    float shininess;
+    glm::vec4 Diffuse;
+    glm::vec4 Ambient;
+    glm::vec4 Specular;
+    glm::vec4 Emissive;
+    glm::vec4 Transparent;
+    glm::vec4 Reflective;
+
     int idxDiffuse;
     int idxNormal;
     int idxSpecular;
     int idxEmissive;
     int idxHeight;
+
+    float Opacity;
+    float BumpScaling;
+    float Reflectivity;
+    float Refractivity;
+    float Shininess;
+    float Shininess_Strength;
 };
 
 struct ParticleSystemUniform

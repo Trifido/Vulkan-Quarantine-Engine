@@ -193,14 +193,17 @@ void App::initVulkan()
     std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(absolute_path));
 
     //model->transform->SetScale(glm::vec3(0.1f));
-    //model->transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));W
+    //model->transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
     //model->transform->SetOrientation(glm::vec3(-90.0f, 180.0f, 0.0f));
+    model->material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
+    model->material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
     this->gameObjectManager->AddGameObject(model, "model");
 
-    std::shared_ptr<GameObject> floor = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
-    floor->transform->SetPosition(glm::vec3(0.0f, -0.10f, 0.0f));
-    floor->transform->SetScale(glm::vec3(50.0f, 1.0f, 50.0f));
-    this->gameObjectManager->AddGameObject(floor, "floor");
+    //std::shared_ptr<GameObject> floor = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
+    //floor->transform->SetPosition(glm::vec3(0.0f, -0.10f, 0.0f));
+    //floor->transform->SetScale(glm::vec3(50.0f, 1.0f, 50.0f));
+    //floor->material->materialData.SetMaterialField("Diffuse", glm::vec3(0.0f, 0.0f, 0.3f));
+    //this->gameObjectManager->AddGameObject(floor, "floor");
 
 //DEMO
 /*
@@ -254,11 +257,9 @@ void App::initVulkan()
     // INIT ------------------------- Lights ----------------------------------------
     this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight0");
     this->lightManager->GetLight("PointLight0")->transform->SetPosition(glm::vec3(5.0f, 5.0f, 0.0f));
-    this->lightManager->GetLight("PointLight0")->diffuse = glm::vec3(0.7f, 0.0f, 0.0f);
-    this->lightManager->GetLight("PointLight0")->specular = glm::vec3(0.7f, 0.0f, 0.0f);
-    this->lightManager->GetLight("PointLight0")->linear = 0.09f;
-    this->lightManager->GetLight("PointLight0")->quadratic = 0.032f;
-    this->lightManager->GetLight("PointLight0")->radius = 10.0f;
+    this->lightManager->GetLight("PointLight0")->diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
+    this->lightManager->GetLight("PointLight0")->specular = glm::vec3(0.7f, 0.7f, 0.7f);
+    this->lightManager->GetLight("PointLight0")->SetDistanceEffect(20.0f);
 
     //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
     //this->lightManager->GetLight("PointLight1")->transform->SetPosition(glm::vec3(-5.0f, 0.0f, 0.0f));
@@ -619,7 +620,7 @@ void App::drawFrame()
 
     //this->cameraEditor->UpdateUBOCamera();
     //this->lightManager->UpdateUBOLight();
-    //this->materialManager->UpdateUniforms();
+    this->materialManager->UpdateUniforms();
 
     vkDeviceWaitIdle(deviceModule->device);
 
