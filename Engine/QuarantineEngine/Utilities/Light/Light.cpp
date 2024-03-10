@@ -9,8 +9,8 @@ Light::Light()
     this->constant = 1.0f;
     this->linear = 0.7f;
     this->quadratic = 1.8f;
-    this->spotCutOff = 0.0f;
-    this->spotExponent = 0.0f;
+    this->cutOff = 0.0f;
+    this->outerCutoff = 0.0f;
     this->uniform->radius = 1.0f;
     this->idxShadowMap = 0;
 
@@ -19,6 +19,7 @@ Light::Light()
 
 void Light::UpdateUniform()
 {
+    this->uniform->lightType = this->lightType;
     this->uniform->specular = this->specular;
     this->uniform->diffuse = this->diffuse;
     this->uniform->constant  = this->constant;

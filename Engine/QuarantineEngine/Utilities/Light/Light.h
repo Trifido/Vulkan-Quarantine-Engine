@@ -25,8 +25,8 @@ public:
     float constant;
     float linear;
     float quadratic;
-    float spotCutOff;
-    float spotExponent;
+    float cutOff;
+    float outerCutoff;
     float radius;
     uint32_t idxShadowMap;
 

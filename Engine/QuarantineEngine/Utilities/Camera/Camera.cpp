@@ -27,7 +27,7 @@ Camera::Camera(float width, float height)
     this->lastX = WIDTH / 2.0f;
     this->lastY = HEIGHT / 2.0f;
     this->nearPlane = 0.1f;
-    this->farPlane = 100.0f;
+    this->farPlane = 500.0f;
     this->view = projection = VP = glm::mat4(1.0);
     this->cameraUniform = std::make_shared<CameraUniform>();
     this->cameraUBO = std::make_shared<UniformBufferObject>();

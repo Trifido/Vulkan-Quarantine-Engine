@@ -171,7 +171,7 @@ void App::initVulkan()
     this->cullingSceneManager = CullingSceneManager::getInstance();
     this->cullingSceneManager->InitializeCullingSceneResources();
     this->cullingSceneManager->AddCameraFrustum(this->cameraEditor->frustumComponent);
-    this->cullingSceneManager->isDebugEnable = true;
+    this->cullingSceneManager->isDebugEnable = false;
 
     // Inicializamos los componentes del editorW
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
@@ -187,15 +187,20 @@ void App::initVulkan()
         absPath.erase(ind, substring.length());
     }
 
-    const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
+    //const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
     //const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
 
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(absolute_path));
+    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(absolute_path));
 
     //model->transform->SetScale(glm::vec3(0.1f));
     //model->transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
     //model->transform->SetOrientation(glm::vec3(-90.0f, 180.0f, 0.0f));
-    this->gameObjectManager->AddGameObject(model, "model");
+    //this->gameObjectManager->AddGameObject(model, "model");
+
+    std::shared_ptr<GameObject> floor = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
+    floor->transform->SetPosition(glm::vec3(0.0f, -0.10f, 0.0f));
+    floor->transform->SetScale(glm::vec3(50.0f, 1.0f, 50.0f));
+    this->gameObjectManager->AddGameObject(floor, "floor");
 
 //DEMO
 /*
@@ -248,28 +253,41 @@ void App::initVulkan()
 
     // INIT ------------------------- Lights ----------------------------------------
     this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight0");
-    this->lightManager->GetLight("PointLight0")->transform->SetPosition(glm::vec3(5.0f, 0.0f, 0.0f));
+    this->lightManager->GetLight("PointLight0")->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
     this->lightManager->GetLight("PointLight0")->diffuse = glm::vec3(0.7f, 0.0f, 0.0f);
     this->lightManager->GetLight("PointLight0")->specular = glm::vec3(0.7f, 0.0f, 0.0f);
     this->lightManager->GetLight("PointLight0")->linear = 0.09f;
     this->lightManager->GetLight("PointLight0")->quadratic = 0.032f;
-    this->lightManager->GetLight("PointLight0")->radius = 30.0f;
+    this->lightManager->GetLight("PointLight0")->radius = 10.0f;
 
-    this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
-    this->lightManager->GetLight("PointLight1")->transform->SetPosition(glm::vec3(-5.0f, 0.0f, 0.0f));
-    this->lightManager->GetLight("PointLight1")->diffuse = glm::vec3(0.0f, 0.0f, 0.7f);
-    this->lightManager->GetLight("PointLight1")->specular = glm::vec3(0.0f, 0.0f, 0.7f);
-    this->lightManager->GetLight("PointLight1")->linear = 0.09f;
-    this->lightManager->GetLight("PointLight1")->quadratic = 0.032f;
-    this->lightManager->GetLight("PointLight1")->radius = 30.0f;
+    //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
+    //this->lightManager->GetLight("PointLight1")->transform->SetPosition(glm::vec3(-5.0f, 0.0f, 0.0f));
+    //this->lightManager->GetLight("PointLight1")->diffuse = glm::vec3(0.0f, 0.0f, 0.7f);
+    //this->lightManager->GetLight("PointLight1")->specular = glm::vec3(0.0f, 0.0f, 0.7f);
+    //this->lightManager->GetLight("PointLight1")->linear = 0.09f;
+    //this->lightManager->GetLight("PointLight1")->quadratic = 0.032f;
+    //this->lightManager->GetLight("PointLight1")->radius = 30.0f;
 
-    this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
-    this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(2.0f, 8.0f, -1.0f));
-    this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.6f);
-    this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.1f);
-    this->lightManager->GetLight("DirectionalLight0")->constant = 1.0f;
-    this->lightManager->GetLight("DirectionalLight0")->linear = 0.09f;
-    this->lightManager->GetLight("DirectionalLight0")->quadratic = 0.032f;
+    //this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
+    //this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(2.0f, 8.0f, -1.0f));
+    //this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.6f);
+    //this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.1f);
+    //this->lightManager->GetLight("DirectionalLight0")->constant = 1.0f;
+    //this->lightManager->GetLight("DirectionalLight0")->linear = 0.09f;
+    //this->lightManager->GetLight("DirectionalLight0")->quadratic = 0.032f;
+
+    //this->lightManager->CreateLight(LightType::SPOT_LIGHT, "SpotLight0");
+    //auto spotLight = this->lightManager->GetLight("SpotLight0");
+    //spotLight->transform->SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
+    //spotLight->transform->SetOrientation(glm::vec3(0.0f, -1.0f, 0.0f));
+    //spotLight->diffuse = glm::vec3(0.6f);
+    //spotLight->specular = glm::vec3(0.1f);
+    //spotLight->constant = 1.0f;
+    //spotLight->linear = 0.09f;
+    //spotLight->quadratic = 0.032f;
+    //spotLight->cutOff = glm::cos(glm::radians(32.5f));
+    //spotLight->outerCutoff = glm::cos(glm::radians(37.5f));
+    //spotLight->radius = 100.0f;
 
     this->lightManager->UpdateUniform();
     // END -------------------------- Lights ----------------------------------------

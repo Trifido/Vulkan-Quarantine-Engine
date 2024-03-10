@@ -94,7 +94,7 @@ void CullingSceneManager::DrawDebug(VkCommandBuffer& commandBuffer, uint32_t idx
         auto pipelineModule = this->shader_aabb_ptr->PipelineModule;
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
-        vkCmdSetDepthTestEnable(commandBuffer, true);
+        vkCmdSetDepthTestEnable(commandBuffer, false);
         vkCmdSetCullMode(commandBuffer, false);
 
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, this->material_aabb_ptr->descriptor->getDescriptorSet(idx), 0, nullptr);

@@ -15,10 +15,10 @@ struct LightUniform
     float constant;
     glm::vec3 specular;
     float linear;
-    glm::vec3 spotDirection;
+    glm::vec3 direction;
     float quadratic;
-    float spotCutOff;
-    float spotExponent;
+    float cutOff;
+    float outerCutoff;
     float radius;
     uint32_t idxShadowMap;
 };

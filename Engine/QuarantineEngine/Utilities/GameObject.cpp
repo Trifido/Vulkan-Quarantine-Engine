@@ -60,12 +60,18 @@ GameObject::GameObject(PRIMITIVE_TYPE type, bool isMeshShading)
 
         this->material->InitializeMaterialDataUBO();
     }
-    else if (type == PRIMITIVE_TYPE::GRID_TYPE)
+    else
     {
         this->meshImportedType = MeshImportedType::EDITOR_GEO;
     }
 
     this->InitializeComponents();
+
+    if (type != PRIMITIVE_TYPE::GRID_TYPE)
+    {
+        auto downcastedPtr = std::dynamic_pointer_cast<PrimitiveMesh>(this->mesh);
+        this->aabbculling = this->cullingSceneManager->GenerateAABB(downcastedPtr->aabbData, this->transform);
+    }
 
     this->vkCmdDrawMeshTasksEXT =
         (PFN_vkCmdDrawMeshTasksEXT)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksEXT");

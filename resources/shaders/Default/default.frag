@@ -30,8 +30,8 @@ struct LightData
     float linear;
     vec3 spotDirection;
     float quadratic; 
-    float spotCutoff;
-    float spotExponent;
+    float cutoff;
+    float outerCutoff;
     float radius;
     uint idxShadowMap;
 };
@@ -90,12 +90,13 @@ layout(set = 0, binding = 8) uniform ScreenData
 vec3 ComputePointLight(LightData light, vec3 normal, vec2 texCoords);
 vec3 ComputeDirectionalLight(LightData light, vec3 normal, vec2 texCoords);
 vec3 ComputeSpotLight(LightData light, vec3 normal, vec2 texCoords);
+vec3 ComputeAmbientLight();
 
 void main()
 {
     //------------------------------------------------------------------------------------
     vec4 pos_camera_space = cameraData.view * vec4(fs_in.FragPos, 1.0);
-    float z_light_far = 100.0;
+    float z_light_far = 500.0;
     float z_near = 0.1;
     float linear_d = (-pos_camera_space.z - z_near) / (z_light_far - z_near);
     int bin_index = int( linear_d / BIN_WIDTH );
@@ -163,9 +164,21 @@ void main()
     outColor = vec4(result, 1.0);
 }
 
+vec3 ComputeAmbientLight()
+{
+    vec3 colorDiffuse = vec3 (1.0, 1.0, 1.0);
+    if(uboMaterial.idxDiffuse > -1)
+        colorDiffuse = vec3(texture(texSampler[uboMaterial.idxDiffuse], fs_in.TexCoords));
+        
+    // - AMBIENT
+    vec3 ambient = 0.1 * colorDiffuse;
+
+    return ambient;
+}
+
 vec3 ComputePointLight(LightData light, vec3 normal, vec2 texCoords)
 {
-    float distance = length(cameraData.position.xyz - fs_in.FragPos);
+    float distance = length(light.position.xyz - fs_in.FragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
     // - DIFFUSE
@@ -175,7 +188,7 @@ vec3 ComputePointLight(LightData light, vec3 normal, vec2 texCoords)
 
     vec3 lightDir = normalize(light.position - fs_in.FragPos);
     float diff = max(dot(lightDir, normal), 0.0);
-    vec3 diffuse = diff * light.diffuse * colorDiffuse ;//* attenuation;
+    vec3 diffuse = diff * light.diffuse * colorDiffuse * attenuation;
 
     // - AMBIENT
     vec3 ambient = 0.1 * colorDiffuse;
@@ -189,7 +202,7 @@ vec3 ComputePointLight(LightData light, vec3 normal, vec2 texCoords)
     vec3 reflectDir = reflect(-lightDir, normal);
     vec3 halfwayDir = normalize(lightDir + view_dir);  
     float spec = pow(max(dot(normal, halfwayDir), 0.0), uboMaterial.Shininess);
-    vec3 specular = spec * light.specular * colorSpecular ;//* attenuation;
+    vec3 specular = spec * light.specular * colorSpecular * attenuation;
 
     // - EMISSIVE
     vec3 emissive = vec3 (0.0, 0.0, 0.0);
@@ -239,12 +252,12 @@ vec3 ComputeSpotLight(LightData light, vec3 normal, vec2 texCoords)
 {
     vec3 lightDir = normalize(light.position.xyz - fs_in.FragPos);
 
-    float distance = length(cameraData.position.xyz - fs_in.FragPos);
+    float distance = length(light.position.xyz - fs_in.FragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
-    float theta = dot(normalize(light.position - fs_in.FragPos), normalize(-light.spotDirection)); 
-    float epsilon = light.spotCutoff - light.spotExponent;
-    float intensity = clamp((theta - light.spotExponent) / epsilon, 0.0, 1.0);
+    float theta = dot(lightDir, normalize(-light.spotDirection)); 
+    float epsilon = light.cutoff - light.outerCutoff;
+    float intensity = clamp((theta - light.outerCutoff) / epsilon, 0.0, 1.0);
 
     // - DIFFUSE
     vec3 colorDiffuse = vec3(1.0, 1.0, 1.0);

@@ -11,5 +11,4 @@ void PointLight::UpdateUniform()
 
     this->uniform->position = this->transform->Position;
     this->uniform->radius = this->radius;
-    this->uniform->lightType = 0;
 }

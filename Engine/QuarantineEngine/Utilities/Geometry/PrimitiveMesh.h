@@ -12,6 +12,7 @@ class PrimitiveMesh : public GeometryComponent
 public:
     PRIMITIVE_TYPE type;
     std::vector<Vertex> vertices;
+    std::pair<glm::vec3, glm::vec3> aabbData;
 
     PrimitiveMesh();
     PrimitiveMesh(PRIMITIVE_TYPE type);
