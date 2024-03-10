@@ -203,7 +203,7 @@ vec3 GetEmissiveColor()
 
 vec3 ComputeAmbientLight(vec3 diffuseColor)
 {
-    return diffuseColor * uboMaterial.Ambient.rgb; //0.1 * 
+    return diffuseColor * uboMaterial.Ambient.rgb;
 }
 
 vec3 ComputePointLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive)
