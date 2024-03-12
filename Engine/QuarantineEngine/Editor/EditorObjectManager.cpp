@@ -26,7 +26,10 @@ void EditorObjectManager::DrawCommnad(VkCommandBuffer& commandBuffer, uint32_t i
 {
     for (auto model : this->_objects)
     {
-        model.second->Draw(commandBuffer, idx); 
+        if (model.second->IsRenderable)
+        {
+            model.second->Draw(commandBuffer, idx);
+        }
     }
 }
 

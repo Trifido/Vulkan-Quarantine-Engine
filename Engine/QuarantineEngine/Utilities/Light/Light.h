@@ -12,23 +12,38 @@ enum LightType
     AREA_LIGHT
 };
 
+struct AttenuationData
+{
+    float distance;
+    float Linear;
+    float Quadratic;
+};
+
+const uint32_t NUM_ATTENUATIONS = 12;
+
 class Light
 {
+protected:
+    float constant;
+    float linear;
+    float quadratic;
+    float radius;
+
 public:
     std::unique_ptr<Transform> transform;
 public:
     std::shared_ptr<LightUniform> uniform;
 
+    uint32_t lightType;
     glm::vec3 diffuse;
     glm::vec3 specular;
-    float constant;
-    float linear;
-    float quadratic;
-    float spotCutOff;
-    float spotExponent;
+    uint32_t idxShadowMap;
+    float cutOff;
+    float outerCutoff;
 public:
     Light();
     virtual void UpdateUniform();
+    void SetDistanceEffect(float radiusEffect);
 };
 
 #endif

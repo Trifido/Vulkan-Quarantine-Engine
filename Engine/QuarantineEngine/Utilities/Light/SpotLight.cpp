@@ -1,26 +1,19 @@
 #include "SpotLight.h"
 
-SpotLight::SpotLight()
+SpotLight::SpotLight() : Light()
 {
-    this->transform = std::make_unique<Transform>();
-    this->uniform = std::make_shared<LightUniform>();
+    this->lightType = LightType::SPOT_LIGHT;
 
-    this->diffuse = this->specular = glm::vec3(0.0f);
-
-    this->constant = 1.0f;
-    this->linear = 0.0f;
-    this->quadratic = 0.0f;
-
-    this->spotCutOff = glm::cos(glm::radians(12.5f));
-    this->spotExponent = glm::cos(glm::radians(17.5f));
+    this->cutOff = glm::cos(glm::radians(12.5f));
+    this->outerCutoff = glm::cos(glm::radians(17.5f));
 }
 
 void SpotLight::UpdateUniform()
 {
     Light::UpdateUniform();
 
-    this->uniform->position = glm::vec4(this->transform->Position, 0.0f);
-    this->uniform->spotCutOff = this->spotCutOff;
-    this->uniform->spotExponent = this->spotExponent;
-    this->uniform->spotDirection = this->transform->Rotation;
+    this->uniform->position = this->transform->Position;
+    this->uniform->cutOff = this->cutOff;
+    this->uniform->outerCutoff = this->outerCutoff;
+    this->uniform->direction = this->transform->Rotation;
 }

@@ -12,7 +12,7 @@ PrimitiveMesh::PrimitiveMesh(PRIMITIVE_TYPE type)
     this->type = type;
 }
 
-void PrimitiveMesh::InitializeMesh(size_t numAttributes)
+void PrimitiveMesh::InitializeMesh()
 {
     this->type = type;
 
@@ -43,8 +43,6 @@ void PrimitiveMesh::InitializeMesh(size_t numAttributes)
         break;
     }
 
-    this->numAttributes = numAttributes;
-
     this->numVertices = (uint32_t)this->indices.size();
     this->numFaces = this->numVertices / 3;
 
@@ -55,23 +53,24 @@ void PrimitiveMesh::InitializeMesh(size_t numAttributes)
 void PrimitiveMesh::InitializePoint()
 {
     this->vertices.resize(1);
-    PBRVertex vert;
+    Vertex vert;
 
     vert.pos = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(0.0f, 0.0f);
     vert.norm = glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
     vert.Tangents = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
-    vert.Bitangents = glm::vec4(0.0f, 0.0f, 1.0f, 0.0f);
     this->vertices[0] = vert;
 
     this->indices.resize(1);
     this->indices = { 0 };
+
+    this->aabbData = std::pair<glm::vec3, glm::vec3>(glm::vec3(-0.1f), glm::vec3(0.1f));
 }
 
 void PrimitiveMesh::InitializeTriangle()
 {
     this->vertices.resize(3);
-    PBRVertex vert;
+    Vertex vert;
 
     vert.pos = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(1.0f, 1.0f);
@@ -90,12 +89,14 @@ void PrimitiveMesh::InitializeTriangle()
 
     MeshImporter::RecreateNormals(this->vertices, this->indices);
     MeshImporter::RecreateTangents(this->vertices, this->indices);
+
+    this->aabbData = std::pair<glm::vec3, glm::vec3>(glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f));
 }
 
 void PrimitiveMesh::InitializePlane()
 {
     this->vertices.resize(4);
-    PBRVertex vert;
+    Vertex vert;
 
     vert.pos = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(1.0f, 1.0f);
@@ -118,12 +119,14 @@ void PrimitiveMesh::InitializePlane()
 
     MeshImporter::RecreateNormals(this->vertices, this->indices);
     MeshImporter::RecreateTangents(this->vertices, this->indices);
+
+    this->aabbData = std::pair<glm::vec3, glm::vec3>(glm::vec3(-1.0f, -1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f));
 }
 
 void PrimitiveMesh::InitializeFloorPlane()
 {
     this->vertices.resize(4);
-    PBRVertex vert;
+    Vertex vert;
 
     vert.pos = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
     vert.texCoord = glm::vec2(1.0f, 1.0f);
@@ -146,6 +149,8 @@ void PrimitiveMesh::InitializeFloorPlane()
 
     MeshImporter::RecreateNormals(this->vertices, this->indices);
     MeshImporter::RecreateTangents(this->vertices, this->indices);
+
+    this->aabbData = std::pair<glm::vec3, glm::vec3>(glm::vec3(-1.0f, -0.001f, -1.0f), glm::vec3(1.0f, 0.001f, 1.0f));
 }
 
 /*
@@ -158,7 +163,7 @@ vec3 gridPlane[6] = vec3[] (
 void PrimitiveMesh::InitializeGrid()
 {
     this->vertices.resize(6);
-    PBRVertex vert;
+    Vertex vert;
 
     vert.pos = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
     vert.texCoord = glm::vec2(1.0f, 1.0f);
@@ -189,6 +194,8 @@ void PrimitiveMesh::InitializeGrid()
 
     MeshImporter::RecreateNormals(this->vertices, this->indices);
     MeshImporter::RecreateTangents(this->vertices, this->indices);
+
+    this->aabbData = std::pair<glm::vec3, glm::vec3>(glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(1.0f, 0.0f, 1.0f));
 }
 
 void PrimitiveMesh::InitializeCube()
@@ -200,6 +207,8 @@ void PrimitiveMesh::InitializeCube()
 
     MeshImporter::RecreateNormals(this->vertices, this->indices);
     MeshImporter::RecreateTangents(this->vertices, this->indices);
+
+    this->aabbData = std::pair<glm::vec3, glm::vec3>(glm::vec3(-0.5f), glm::vec3(0.5f));
 }
 
 void PrimitiveMesh::InitializeSphere()
@@ -209,11 +218,13 @@ void PrimitiveMesh::InitializeSphere()
 
     this->vertices = data[0].vertices;
     this->indices = data[0].indices;
+
+    this->aabbData = std::pair<glm::vec3, glm::vec3>(glm::vec3(-1.0f), glm::vec3(1.0f));
 }
 
 void PrimitiveMesh::createVertexBuffer()
 {
-    VkDeviceSize bufferSize = sizeof(PBRVertex) * vertices.size();
+    VkDeviceSize bufferSize = sizeof(Vertex) * vertices.size();
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;

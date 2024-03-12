@@ -7,6 +7,7 @@
 class PointLight : public Light
 {
 public:
+    PointLight();
     void UpdateUniform() override;
 };
 

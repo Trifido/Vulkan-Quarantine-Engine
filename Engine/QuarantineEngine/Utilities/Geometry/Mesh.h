@@ -14,22 +14,26 @@
 #include <Meshlet.h>
 
 typedef struct MeshData MeshData;
+typedef struct AnimationVertexData AnimationVertexData;
 
 class Mesh : public GeometryComponent
 {
 private:
     std::string PATH;
-    std::vector<PBRVertex> vertices;
+    std::vector<Vertex> vertices;
+    std::vector<AnimationVertexData> animationData;
+    bool hasAnimationData = false;
 
 public:
     bool IsMeshletEnabled = false;
 
 private:
     void createVertexBuffer() override;
+    void createAnimationVertexBuffer();
 
 public:
     Mesh(const MeshData& data);
-    void InitializeMesh(size_t numAttributes) override;
+    void InitializeMesh() override;
 };
 
 #endif // !MESH_H

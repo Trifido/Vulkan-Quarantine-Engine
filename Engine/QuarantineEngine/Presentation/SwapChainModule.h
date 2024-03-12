@@ -9,6 +9,7 @@
 #include <GLFW/glfw3.h>
 
 #include "DeviceModule.h"
+#include <UBO.h>
 
 class SwapChainModule
 {
@@ -20,10 +21,13 @@ public:
 
     VkFormat swapChainImageFormat;
     VkExtent2D swapChainExtent;
+    std::shared_ptr<UniformBufferObject> screenData = nullptr;
+
 private:
     DeviceModule* deviceModule;
     VkSwapchainKHR swapChain;
     uint32_t numSwapChainImages;
+    glm::vec2 screenResolution;
 
 public:
     static SwapChainModule* getInstance();
@@ -33,10 +37,13 @@ public:
     void cleanup();
     uint32_t getNumSwapChainImages() { return numSwapChainImages; }
     VkSwapchainKHR &getSwapchain() { return swapChain; }
+    void InitializeScreenDataResources();
+    void CleanScreenDataResources();
 private:
     VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
     VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, GLFWwindow* window);
+    void UpdateScreenData();
 };
 
 #endif

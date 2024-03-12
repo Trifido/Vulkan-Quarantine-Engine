@@ -28,8 +28,7 @@ GameObject::GameObject()
     this->InitializeResources();
     this->meshImportedType = MeshImportedType::NONE_GEO;
 
-    size_t numMeshAttributes = this->CheckNumAttributes();
-    this->InitializeComponents(numMeshAttributes);
+    this->InitializeComponents();
 
     this->vkCmdDrawMeshTasksEXT =
         (PFN_vkCmdDrawMeshTasksEXT)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksEXT");
@@ -61,13 +60,18 @@ GameObject::GameObject(PRIMITIVE_TYPE type, bool isMeshShading)
 
         this->material->InitializeMaterialDataUBO();
     }
-    else if (type == PRIMITIVE_TYPE::GRID_TYPE)
+    else
     {
         this->meshImportedType = MeshImportedType::EDITOR_GEO;
     }
 
-    size_t numMeshAttributes = this->CheckNumAttributes();
-    this->InitializeComponents(numMeshAttributes);
+    this->InitializeComponents();
+
+    if (type != PRIMITIVE_TYPE::GRID_TYPE)
+    {
+        auto downcastedPtr = std::dynamic_pointer_cast<PrimitiveMesh>(this->mesh);
+        this->aabbculling = this->cullingSceneManager->GenerateAABB(downcastedPtr->aabbData, this->transform);
+    }
 
     this->vkCmdDrawMeshTasksEXT =
         (PFN_vkCmdDrawMeshTasksEXT)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksEXT");
@@ -82,8 +86,7 @@ GameObject::GameObject(std::string meshPath, bool isMeshShading)
 
     if (loadResult)
     {
-        size_t numMeshAttributes = this->CheckNumAttributes();
-        this->InitializeComponents(numMeshAttributes);
+        this->InitializeComponents();
         this->InitializeAnimationComponent();
     }
 
@@ -178,7 +181,7 @@ void GameObject::addAnimation(std::shared_ptr<Animation> animation_ptr)
     }
 }
 
-void GameObject::InitializeComponents(size_t numMeshAttributes)
+void GameObject::InitializeComponents()
 {
     if (this->transform == nullptr)
     {
@@ -187,7 +190,7 @@ void GameObject::InitializeComponents(size_t numMeshAttributes)
 
     if (this->mesh != nullptr)
     {
-        this->mesh->InitializeMesh(numMeshAttributes);
+        this->mesh->InitializeMesh();
 
         if (this->isMeshShading)
         {
@@ -199,7 +202,7 @@ void GameObject::InitializeComponents(size_t numMeshAttributes)
     {
         for (auto& child : this->childs)
         {
-            child->InitializeComponents(numMeshAttributes);
+            child->InitializeComponents();
         }
     }
 }
@@ -228,12 +231,12 @@ void GameObject::InitializeAnimationComponent()
             for (int idChild = 0; idChild < this->childs.size(); idChild++)
             {
                 uint32_t numVertices = this->childs[idChild]->mesh->numVertices;
-                this->animationComponent->animator->SetVertexBufferInComputeNode(this->childs[idChild]->id, this->childs[idChild]->mesh->vertexBuffer, numVertices);
+                this->animationComponent->animator->SetVertexBufferInComputeNode(this->childs[idChild]->id, this->childs[idChild]->mesh->vertexBuffer, this->childs[idChild]->mesh->animationBuffer, numVertices);
             }
         }
         else
         {
-            this->animationComponent->animator->SetVertexBufferInComputeNode(0, this->mesh->vertexBuffer, this->mesh->numVertices);
+            this->animationComponent->animator->SetVertexBufferInComputeNode(0, this->mesh->vertexBuffer, this->mesh->animationBuffer, this->mesh->numVertices);
         }
     }
 }
@@ -358,8 +361,8 @@ void GameObject::CreateAnimationDrawCommand(VkCommandBuffer& commandBuffer, uint
             vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
         }
 
-        VkDeviceSize animOffsets[] = { 0 };
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &animator->GetComputeNode(this->id)->computeDescriptor->ssboData[1]->uniformBuffers.at(idx), animOffsets);
+        VkDeviceSize animOffsets[] = {0};
+        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &animator->GetComputeNode(this->id)->computeDescriptor->ssboData[2]->uniformBuffers.at(idx), animOffsets);
         vkCmdBindIndexBuffer(commandBuffer, this->mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
         if (this->material->HasDescriptorBuffer())
@@ -431,28 +434,4 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->mesh->indices.size()), 1, 0, 0, 0);
         }
     }
-}
-
-size_t GameObject::CheckNumAttributes()
-{
-    size_t numAttributes = 0;
-
-    switch (this->meshImportedType)
-    {
-    case MeshImportedType::ANIMATED_GEO:
-        numAttributes = 7;
-        break;
-    case MeshImportedType::PRIMITIVE_GEO:
-        numAttributes = 5;
-        break;
-    case MeshImportedType::NONE_GEO:
-        numAttributes = 0;
-        break;
-    case MeshImportedType::COMMON_GEO:
-        numAttributes = 5;
-    default:
-        break;
-    }
-
-    return numAttributes;
 }

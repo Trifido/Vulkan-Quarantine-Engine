@@ -26,8 +26,8 @@ void DescriptorBuffer::SetMeshletBuffers(std::shared_ptr<Meshlet> meshlets_ptr)
     this->ssboData["Meshlets"]->CreateSSBO(sizeof(MeshletDescriptor) * meshlets_ptr->gpuMeshlets.size(), MAX_FRAMES_IN_FLIGHT, *deviceModule);
     this->ssboSize["Meshlets"] = sizeof(MeshletDescriptor) * meshlets_ptr->gpuMeshlets.size();
 
-    this->ssboData["MeshletVertices"]->CreateSSBO(sizeof(PBRVertex) * meshlets_ptr->verticesData.size(), MAX_FRAMES_IN_FLIGHT, *deviceModule);
-    this->ssboSize["MeshletVertices"] = sizeof(PBRVertex) * meshlets_ptr->verticesData.size();
+    this->ssboData["MeshletVertices"]->CreateSSBO(sizeof(Vertex) * meshlets_ptr->verticesData.size(), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->ssboSize["MeshletVertices"] = sizeof(Vertex) * meshlets_ptr->verticesData.size();
 
     this->ssboData["IndexBuffer"]->CreateSSBO(sizeof(uint32_t) * meshlets_ptr->indexData.size(), MAX_FRAMES_IN_FLIGHT, *deviceModule);
     this->ssboSize["IndexBuffer"] = sizeof(uint32_t) * meshlets_ptr->indexData.size();
@@ -94,6 +94,13 @@ void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
             poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
             idx++;
         }
+        else if (binding.first == "ScreenData")
+        {
+            this->swapChainModule = SwapChainModule::getInstance();
+            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+            idx++;
+        }
         else if (binding.first == "UniformManagerLight")
         {
             this->lightManager = LightManager::getInstance();
@@ -138,6 +145,50 @@ void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
 
             this->ssboData["ParticleSSBO"] = std::make_shared<UniformBufferObject>();
             this->ssboSize["ParticleSSBO"] = VkDeviceSize();
+
+            this->numSSBOs++;
+            idx++;
+        }
+        else if (binding.first == "LightSSBO")
+        {
+            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+            this->ssboData["LightSSBO"] = std::make_shared<UniformBufferObject>();
+            this->ssboSize["LightSSBO"] = VkDeviceSize();
+
+            this->numSSBOs++;
+            idx++;
+        }
+        else if (binding.first == "LightIndices")
+        {
+            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+            this->ssboData["LightIndices"] = std::make_shared<UniformBufferObject>();
+            this->ssboSize["LightIndices"] = VkDeviceSize();
+
+            this->numSSBOs++;
+            idx++;
+        }
+        else if (binding.first == "ZBins")
+        {
+            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+            this->ssboData["ZBins"] = std::make_shared<UniformBufferObject>();
+            this->ssboSize["ZBins"] = VkDeviceSize();
+
+            this->numSSBOs++;
+            idx++;
+        }
+        else if (binding.first == "Tiles")
+        {
+            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+            this->ssboData["Tiles"] = std::make_shared<UniformBufferObject>();
+            this->ssboSize["Tiles"] = VkDeviceSize();
 
             this->numSSBOs++;
             idx++;
@@ -226,9 +277,14 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
             this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->camera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform), frameIdx);
             idx++;
         }
+        if (binding.first == "ScreenData")
+        {
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->swapChainModule->screenData->uniformBuffers[frameIdx], sizeof(glm::vec2), frameIdx);
+            idx++;
+        }
         else if (binding.first == "UniformManagerLight")
         {
-            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->lightManager->lightUBO->uniformBuffers[frameIdx], sizeof(LightUniform), frameIdx);
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->lightManager->lightUBO->uniformBuffers[frameIdx], sizeof(LightManagerUniform), frameIdx);
             idx++;
         }
         else if (binding.first == "UniformMaterial")
@@ -290,6 +346,26 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
         else if (binding.first == "ParticleSSBO")
         {
             this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssboData["ParticleSSBO"]->uniformBuffers[frameIdx], this->ssboSize["ParticleSSBO"], frameIdx);
+            idx++;
+        }
+        else if (binding.first == "LightSSBO")
+        {
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->lightManager->lightSSBO->uniformBuffers[frameIdx], this->lightManager->lightSSBOSize, frameIdx);
+            idx++;
+        }
+        else if (binding.first == "LightIndices")
+        {
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->lightManager->lightIndexSSBO->uniformBuffers[frameIdx], this->lightManager->lightIndexSSBOSize, frameIdx);
+            idx++;
+        }
+        else if (binding.first == "ZBins")
+        {
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->lightManager->lightBinSSBO->uniformBuffers[frameIdx], this->lightManager->lightBinSSBOSize, frameIdx);
+            idx++;
+        }
+        else if (binding.first == "Tiles")
+        {
+            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->lightManager->lightTilesSSBO->uniformBuffers[frameIdx], this->lightManager->lightTilesSSBOSize, frameIdx);
             idx++;
         }
         else if (binding.first == "Meshlets")

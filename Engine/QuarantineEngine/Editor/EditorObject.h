@@ -7,6 +7,7 @@
 class EditorObject
 {
 public:
+    bool IsRenderable = true;
     virtual void Clean() = 0;
     virtual void Draw(VkCommandBuffer& commandBuffer, uint32_t idx) = 0;
 };

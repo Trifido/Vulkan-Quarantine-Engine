@@ -10,9 +10,22 @@ MaterialData::MaterialData()
     this->texture_vector = std::make_shared<std::vector<std::shared_ptr<CustomTexture>>>();
     this->texture_vector->resize(this->TOTAL_NUM_TEXTURES, nullptr);
     this->fillEmptyTextures();
+
     this->numTextures = 0;
     this->idxDiffuse = this->idxEmissive = this->idxHeight = this->idxNormal = this->idxSpecular = -1;
+
     this->Shininess = 32.0f;
+    this->Opacity = 1.0f;
+    this->BumpScaling = 1.0f;
+    this->Reflectivity = 0.0f;
+    this->Shininess_Strength = 0.0f;
+    this->Refractivity = 0.0f;
+    this->Diffuse = glm::vec4(1.0f);
+    this->Ambient = glm::vec4(0.1f);
+    this->Specular = glm::vec4(1.0f);
+    this->Emissive = glm::vec4(0.0f);
+    this->Transparent = glm::vec4(1.0f);
+    this->Reflective = glm::vec4(0.0f);
 
     this->materialUBO = std::make_shared<UniformBufferObject>();
 }
@@ -22,10 +35,8 @@ void MaterialData::ImportAssimpMaterial(aiMaterial* material)
     aiReturn ret;
 
     ret = material->Get(AI_MATKEY_OPACITY, this->Opacity);
-    if (ret != AI_SUCCESS) this->Opacity = 1.0f;
 
     ret = material->Get(AI_MATKEY_BUMPSCALING, this->BumpScaling);
-    if (ret != AI_SUCCESS) this->BumpScaling = 0.0f;
 
     ret = material->Get(AI_MATKEY_SHININESS, this->Shininess);
     if (ret == AI_SUCCESS)
@@ -37,31 +48,22 @@ void MaterialData::ImportAssimpMaterial(aiMaterial* material)
     }
 
     ret = material->Get(AI_MATKEY_REFLECTIVITY, this->Reflectivity);
-    if (ret != AI_SUCCESS) this->Reflectivity = 0.0f;
 
     ret = material->Get(AI_MATKEY_SHININESS_STRENGTH, this->Shininess_Strength);
-    if (ret != AI_SUCCESS) this->Shininess_Strength = 0.0f;
 
     ret = material->Get(AI_MATKEY_REFRACTI, this->Refractivity);
-    if (ret != AI_SUCCESS) this->Refractivity = 0.0f;
 
     ret = material->Get(AI_MATKEY_COLOR_DIFFUSE, this->Diffuse);
-    if (ret != AI_SUCCESS) this->Diffuse = glm::vec3(0.0f);
 
     ret = material->Get(AI_MATKEY_COLOR_AMBIENT, this->Ambient);
-    if (ret != AI_SUCCESS) this->Ambient = glm::vec3(0.0f);
 
     ret = material->Get(AI_MATKEY_COLOR_SPECULAR, this->Specular);
-    if (ret != AI_SUCCESS) this->Specular = glm::vec3(0.0f);
 
     ret = material->Get(AI_MATKEY_COLOR_EMISSIVE, this->Emissive);
-    if (ret != AI_SUCCESS) this->Emissive = glm::vec3(0.0f);
 
     ret = material->Get(AI_MATKEY_COLOR_TRANSPARENT, this->Transparent);
-    if (ret != AI_SUCCESS) this->Transparent = glm::vec3(0.0f);
 
     ret = material->Get(AI_MATKEY_COLOR_REFLECTIVE, this->Reflective);
-    if (ret != AI_SUCCESS) this->Reflective = glm::vec3(0.0f);
 }
 
 void MaterialData::ImportAssimpTexture(const aiScene* scene, aiMaterial* material, std::string fileExtension, std::string texturePath)
@@ -363,6 +365,7 @@ void MaterialData::InitializeUBOMaterial(std::shared_ptr<ShaderModule> shader_pt
             }
         }
 
+        this->materialUniformSize = reflect.materialBufferSize;
         this->materialUBO->CreateUniformBuffer(this->materialUniformSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
         this->UpdateUBOMaterial();
     }
@@ -374,8 +377,7 @@ void MaterialData::UpdateMaterialData(std::string materialField, char* value)
     auto ptr = materialFields.find(materialField);
     if (ptr != materialFields.end())
     {
-        this->WriteToMaterialBuffer(value, materialFields[materialField].first, materialFields[materialField].second);
-
+        this->UpdateMaterialBuffer(value, materialFields[materialField].first, materialFields[materialField].second);
         for (uint32_t id = 0; id < MAX_FRAMES_IN_FLIGHT; id++)
         {
             this->isModified[id] = true;
@@ -385,15 +387,16 @@ void MaterialData::UpdateMaterialData(std::string materialField, char* value)
 
 void MaterialData::UpdateUBOMaterial()
 {
-    auto currentFrame = SynchronizationModule::GetCurrentFrame();
-
-    if (!this->materialUBO->uniformBuffers.empty() && this->isModified[currentFrame])
+    for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {
-        vkMapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame], 0, this->materialUniformSize, 0, &this->auxiliarBuffer[currentFrame]);
-        memcpy(this->auxiliarBuffer[currentFrame], this->materialbuffer, this->materialUniformSize);
-        vkUnmapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame]);
+        if (!this->materialUBO->uniformBuffers.empty() && this->isModified[currentFrame])
+        {
+            vkMapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame], 0, this->materialUniformSize, 0, &this->auxiliarBuffer[currentFrame]);
+            memcpy(this->auxiliarBuffer[currentFrame], this->materialbuffer, this->materialUniformSize);
+            vkUnmapMemory(deviceModule->device, this->materialUBO->uniformBuffersMemory[currentFrame]);
 
-        this->isModified[currentFrame] = false;
+            this->isModified[currentFrame] = false;
+        }
     }
 }
 
@@ -415,7 +418,12 @@ void MaterialData::WriteToMaterialBuffer(char* bufferdata, size_t& position, con
 {
     memcpy(&materialbuffer[position], bufferdata, sizeToCopy);
     position += sizeToCopy;
-    this->materialUniformSize += sizeToCopy;
+    ////this->materialUniformSize += sizeToCopy;
+}
+
+void MaterialData::UpdateMaterialBuffer(char* bufferdata, size_t& position, const size_t& sizeToCopy)
+{
+    memcpy(&materialbuffer[position], bufferdata, sizeToCopy);
 }
 
 void MaterialData::SetMaterialField(std::string nameField, float value)
@@ -456,32 +464,32 @@ void MaterialData::SetMaterialField(std::string nameField, glm::vec3 value)
 {
     if (nameField == "Diffuse")
     {
-        this->Diffuse = value;
+        this->Diffuse = glm::vec4(value, 1.0f);
         this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->Diffuse));
     }
     if(nameField == "Ambient")
     {
-        this->Ambient = value;
+        this->Ambient = glm::vec4(value, 1.0f);
         this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->Ambient));
     }
     if(nameField == "Specular")
     {
-        this->Specular = value;
+        this->Specular = glm::vec4(value, 1.0f);
         this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->Specular));
     }
     if(nameField == "Emissive")
     {
-        this->Emissive = value;
+        this->Emissive = glm::vec4(value, 1.0f);
         this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->Emissive));
     }
     if(nameField == "Transparent")
     {
-        this->Transparent = value;
+        this->Transparent = glm::vec4(value, 1.0f);
         this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->Transparent));
     }
     if(nameField == "Reflective")
     {
-        this->Reflective = value;
+        this->Reflective = glm::vec4(value, 1.0f);
         this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->Reflective));
     }
 }

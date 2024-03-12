@@ -41,7 +41,7 @@ AxisAlignedBoundingBox::AxisAlignedBoundingBox(
     _center = _min + _extents;
 }
 
-void Meshlet::GenerateCustomMeshlet(std::vector<PBRVertex>& vertices, std::vector<uint32_t>& indices)
+void Meshlet::GenerateCustomMeshlet(std::vector<Vertex>& vertices, std::vector<uint32_t>& indices)
 {
     const auto max_indices_count = indices.size();
     const auto num_faces = indices.size() / 3;
@@ -128,7 +128,7 @@ void Meshlet::GenerateCustomMeshlet(std::vector<PBRVertex>& vertices, std::vecto
     }
 }
 
-void Meshlet::GenerateMeshlet(const std::vector<PBRVertex>& vertices, const std::vector<uint32_t>& indices)
+void Meshlet::GenerateMeshlet(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices)
 {
     size_t max_meshlets;
     size_t meshlets_count;
@@ -152,7 +152,7 @@ void Meshlet::GenerateMeshlet(const std::vector<PBRVertex>& vertices, const std:
         indices.size(),
         &vertices[0].pos.x,
         vertices.size(),
-        sizeof(PBRVertex),
+        sizeof(Vertex),
         this->MAX_VERTICES,
         this->MAX_TRIANGLES,
         0.5f);
@@ -169,7 +169,7 @@ void Meshlet::GenerateMeshlet(const std::vector<PBRVertex>& vertices, const std:
             local_meshlet.triangle_count,
             &vertices[0].pos.x,
             vertices.size(),
-            sizeof(PBRVertex)
+            sizeof(Vertex)
         );
 
         MeshletDescriptor newMeshlet = {};

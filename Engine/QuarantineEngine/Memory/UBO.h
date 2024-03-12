@@ -9,21 +9,23 @@
 
 struct LightUniform
 {
-    glm::vec4 position;
+    glm::vec3 position;
+    uint32_t lightType;
     glm::vec3 diffuse;
     float constant;
     glm::vec3 specular;
     float linear;
-    glm::vec3 spotDirection;
+    glm::vec3 direction;
     float quadratic;
-    float spotCutOff;
-    float spotExponent;
+    float cutOff;
+    float outerCutoff;
+    float radius;
+    uint32_t idxShadowMap;
 };
 
 struct LightManagerUniform
 {
-    int numLights;
-    alignas(16) LightUniform lights[8];
+    uint32_t numLights;
 };
 
 struct CameraUniform
@@ -37,12 +39,25 @@ struct CameraUniform
 
 struct MaterialUniform
 {
-    float shininess;
+    glm::vec4 Diffuse;
+    glm::vec4 Ambient;
+    glm::vec4 Specular;
+    glm::vec4 Emissive;
+    glm::vec4 Transparent;
+    glm::vec4 Reflective;
+
     int idxDiffuse;
     int idxNormal;
     int idxSpecular;
     int idxEmissive;
     int idxHeight;
+
+    float Opacity;
+    float BumpScaling;
+    float Reflectivity;
+    float Refractivity;
+    float Shininess;
+    float Shininess_Strength;
 };
 
 struct ParticleSystemUniform

@@ -16,6 +16,12 @@ void GeometryComponent::cleanup()
         vkDestroyBuffer(deviceModule_ptr->device, vertexBuffer, nullptr);
         vkFreeMemory(deviceModule_ptr->device, vertexBufferMemory, nullptr);
     }
+
+    if (this->animationBufferMemory != VK_NULL_HANDLE)
+    {
+        vkDestroyBuffer(deviceModule_ptr->device, animationBuffer, nullptr);
+        vkFreeMemory(deviceModule_ptr->device, animationBufferMemory, nullptr);
+    }
 }
 
 void GeometryComponent::createIndexBuffer()
@@ -39,65 +45,4 @@ void GeometryComponent::createIndexBuffer()
 
     vkDestroyBuffer(deviceModule_ptr->device, stagingBuffer, nullptr);
     vkFreeMemory(deviceModule_ptr->device, stagingBufferMemory, nullptr);
-}
-
-void GeometryComponent::createComputeBuffer()
-{
-
-}
-
-VkVertexInputBindingDescription GeometryComponent::getBindingDescription(bool hasAnimation)
-{
-    VkVertexInputBindingDescription bindingDescription{};
-    bindingDescription.binding = 0;
-    bindingDescription.stride = (hasAnimation) ? sizeof(PBRAnimationVertex) : sizeof(PBRVertex);
-    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-    return bindingDescription;
-}
-
-std::vector<VkVertexInputAttributeDescription> GeometryComponent::getAttributeDescriptions(bool hasAnimation) {
-    std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
-
-    size_t numAttributes = (hasAnimation) ? 7 : 5;
-    attributeDescriptions.resize(numAttributes);
-
-    attributeDescriptions[0].binding = 0;
-    attributeDescriptions[0].location = 0;
-    attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[0].offset = offsetof(PBRVertex, pos);
-
-    attributeDescriptions[1].binding = 0;
-    attributeDescriptions[1].location = 1;
-    attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[1].offset = offsetof(PBRVertex, norm);
-
-    attributeDescriptions[2].binding = 0;
-    attributeDescriptions[2].location = 2;
-    attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-    attributeDescriptions[2].offset = offsetof(PBRVertex, texCoord);
-
-    attributeDescriptions[3].binding = 0;
-    attributeDescriptions[3].location = 3;
-    attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[3].offset = offsetof(PBRVertex, Tangents);
-
-    attributeDescriptions[4].binding = 0;
-    attributeDescriptions[4].location = 4;
-    attributeDescriptions[4].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[4].offset = offsetof(PBRVertex, Bitangents);
-
-    if (hasAnimation)
-    {
-        attributeDescriptions[5].binding = 0;
-        attributeDescriptions[5].location = 5;
-        attributeDescriptions[5].format = VK_FORMAT_R32G32B32A32_SINT;
-        attributeDescriptions[5].offset = offsetof(PBRVertex, boneIDs);
-
-        attributeDescriptions[6].binding = 0;
-        attributeDescriptions[6].location = 6;
-        attributeDescriptions[6].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-        attributeDescriptions[6].offset = offsetof(PBRVertex, boneWeights);
-    }
-
-    return attributeDescriptions;
 }

@@ -11,12 +11,12 @@ class PrimitiveMesh : public GeometryComponent
 {
 public:
     PRIMITIVE_TYPE type;
-    //std::vector<PrimitiveVertex> vertices;
-    std::vector<PBRVertex> vertices;
+    std::vector<Vertex> vertices;
+    std::pair<glm::vec3, glm::vec3> aabbData;
 
     PrimitiveMesh();
     PrimitiveMesh(PRIMITIVE_TYPE type);
-    void InitializeMesh(size_t numAttributes) override;
+    void InitializeMesh() override;
 
 private:
     void InitializePoint();

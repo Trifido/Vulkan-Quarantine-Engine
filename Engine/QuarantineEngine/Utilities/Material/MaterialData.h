@@ -35,12 +35,12 @@ public:
     float Shininess_Strength;
     float Refractivity;
 
-    glm::vec3 Diffuse;
-    glm::vec3 Ambient;
-    glm::vec3 Specular;
-    glm::vec3 Emissive;
-    glm::vec3 Transparent;
-    glm::vec3 Reflective;
+    glm::vec4 Diffuse;
+    glm::vec4 Ambient;
+    glm::vec4 Specular;
+    glm::vec4 Emissive;
+    glm::vec4 Transparent;
+    glm::vec4 Reflective;
 
     static const int TOTAL_NUM_TEXTURES = 5;
     std::shared_ptr<CustomTexture> diffuseTexture = nullptr;
@@ -64,7 +64,8 @@ private:
     std::shared_ptr<CustomTexture> findTextureByType(TEXTURE_TYPE newtype);
     std::string GetTexture(const aiScene* scene, aiMaterial* mat, aiTextureType type, TEXTURE_TYPE textureType);
     void fillEmptyTextures();
-    void WriteToMaterialBuffer(char* data, size_t &position, const size_t& sizeToCopy);
+    void WriteToMaterialBuffer(char* bufferdata, size_t& position, const size_t& sizeToCopy);
+    void UpdateMaterialBuffer(char* bufferdata, size_t &position, const size_t& sizeToCopy);
     void UpdateMaterialData(std::string materialField, char* value);
 public:
     MaterialData();

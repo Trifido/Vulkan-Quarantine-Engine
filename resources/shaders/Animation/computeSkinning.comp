@@ -5,7 +5,9 @@ struct VertexIN {
     vec4 inNormal;
     vec2 inTexCoord;
     vec4 inTangent;
-    vec4 inBitangent;
+};
+
+struct VertexBonesIN {
     ivec4 inBoneIds; 
     vec4 inWeights;
 };
@@ -24,16 +26,20 @@ layout(std430, binding = 0) buffer InputSSBO {
    VertexIN verticesIn[ ];
 };
 
-layout(std430, binding = 1) buffer OutputSSBO {
+layout(std430, binding = 1) buffer InputBoneSSBO {
+   VertexBonesIN verticesBonesIn[ ];
+};
+
+layout(std430, binding = 2) buffer OutputSSBO {
    VertexOUT verticesOut[ ];
 };
 
-layout(std140, set = 0, binding = 2) uniform UniformAnimation
+layout(std140, set = 0, binding = 3) uniform UniformAnimation
 {
 	mat4 finalBonesMatrices[200];
 } uboAnimation;
 
-layout(std140, set = 0, binding = 3) uniform UniformVertexParam
+layout(std140, set = 0, binding = 4) uniform UniformVertexParam
 {
 	uint numVertices;
 } uboVertexParam;
@@ -46,8 +52,8 @@ void main()
 
     if(index < uboVertexParam.numVertices)
     {
-        ivec4 boneIds = verticesIn[index].inBoneIds;
-        vec4 weights = verticesIn[index].inWeights;
+        ivec4 boneIds = verticesBonesIn[index].inBoneIds;
+        vec4 weights = verticesBonesIn[index].inWeights;
 
         mat4 BoneTransform = uboAnimation.finalBonesMatrices[boneIds[0]] * weights[0] +
                              uboAnimation.finalBonesMatrices[boneIds[1]] * weights[1] +

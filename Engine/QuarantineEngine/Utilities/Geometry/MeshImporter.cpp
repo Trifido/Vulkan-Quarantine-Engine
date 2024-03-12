@@ -23,7 +23,7 @@ void MeshImporter::CheckPaths(std::string path)
     }
 }
 
-void MeshImporter::RecreateNormals(std::vector<PBRVertex>& vertices, std::vector<unsigned int>& indices)
+void MeshImporter::RecreateNormals(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices)
 {
     for (size_t v = 0; v < vertices.size(); v++)
     {
@@ -56,16 +56,16 @@ void MeshImporter::RecreateNormals(std::vector<PBRVertex>& vertices, std::vector
     }
 }
 
-void MeshImporter::SetVertexBoneDataToDefault(PBRVertex& vertex)
+void MeshImporter::SetVertexBoneDataToDefault(AnimationVertexData& animData)
 {
     for (int i = 0; i < 4; i++)
     {
-        vertex.boneIDs[i] = -1;
-        vertex.boneWeights[i] = 0.0f;
+        animData.boneIDs[i] = -1;
+        animData.boneWeights[i] = 0.0f;
     }
 }
 
-void MeshImporter::SetVertexBoneData(PBRVertex& vertex, int boneID, float weight)
+void MeshImporter::SetVertexBoneData(AnimationVertexData& animData, int boneID, float weight)
 {
     if (weight == 0.0f)
     {
@@ -74,14 +74,14 @@ void MeshImporter::SetVertexBoneData(PBRVertex& vertex, int boneID, float weight
 
     for (int i = 0; i < 4; ++i)
     {
-        if (vertex.boneWeights[i] == 0.0f)
+        if (animData.boneWeights[i] == 0.0f)
         {
-            vertex.boneWeights[i] = weight;
-            vertex.boneIDs[i] = boneID;
+            animData.boneWeights[i] = weight;
+            animData.boneIDs[i] = boneID;
 
             if (i == 4)
             {
-                float sum = vertex.boneWeights[0] + vertex.boneWeights[1] + vertex.boneWeights[2] + vertex.boneWeights[3];
+                float sum = animData.boneWeights[0] + animData.boneWeights[1] + animData.boneWeights[2] + animData.boneWeights[3];
 
                 if (sum < 1.0f)
                 {
@@ -90,10 +90,10 @@ void MeshImporter::SetVertexBoneData(PBRVertex& vertex, int boneID, float weight
 
                     if (rest > 0.0f)
                     {
-                        vertex.boneWeights[0] += rest;
-                        vertex.boneWeights[1] += rest;
-                        vertex.boneWeights[2] += rest;
-                        vertex.boneWeights[3] += rest;
+                        animData.boneWeights[0] += rest;
+                        animData.boneWeights[1] += rest;
+                        animData.boneWeights[2] += rest;
+                        animData.boneWeights[3] += rest;
                     }
                 }
             }
@@ -135,7 +135,7 @@ void MeshImporter::ExtractBoneWeightForVertices(MeshData& data, aiMesh* mesh)
 
                 assert(vertexId <= data.vertices.size());
 
-                SetVertexBoneData(data.vertices[vertexId], boneID, weight);
+                SetVertexBoneData(data.animationData[vertexId], boneID, weight);
             }
         }
     }
@@ -146,16 +146,16 @@ void MeshImporter::RemapGeometry(MeshData& data)
     std::vector<unsigned int> remap(data.numIndices);
 
     std::vector<uint32_t> resultIndices;
-    std::vector<PBRVertex> resultVertices;
+    std::vector<Vertex> resultVertices;
 
-    size_t total_vertices = meshopt_generateVertexRemap(&remap[0], &data.indices[0], data.numIndices, &data.vertices[0], data.numIndices, sizeof(PBRVertex));
+    size_t total_vertices = meshopt_generateVertexRemap(&remap[0], &data.indices[0], data.numIndices, &data.vertices[0], data.numIndices, sizeof(Vertex));
 
     data.numVertices = total_vertices;
     resultIndices.resize(data.numIndices);
     meshopt_remapIndexBuffer(&resultIndices[0], &data.indices[0], data.numIndices, &remap[0]);
 
     resultVertices.resize(total_vertices);
-    meshopt_remapVertexBuffer(&resultVertices[0], &data.vertices[0], data.numIndices, sizeof(PBRVertex), &remap[0]);
+    meshopt_remapVertexBuffer(&resultVertices[0], &data.vertices[0], data.numIndices, sizeof(Vertex), &remap[0]);
 
     data.indices = resultIndices;
     data.vertices = resultVertices;
@@ -178,7 +178,7 @@ void MeshImporter::ComputeAABB(const glm::vec4& coord)
         this->aabbMax.z = coord.z;
 }
 
-void MeshImporter::RecreateTangents(std::vector<PBRVertex>& vertices, std::vector<unsigned int>& indices)
+void MeshImporter::RecreateTangents(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices)
 {
     for (size_t idTr = 0; idTr < indices.size(); idTr += 3)
     {
@@ -199,7 +199,7 @@ void MeshImporter::RecreateTangents(std::vector<PBRVertex>& vertices, std::vecto
 
         float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
 
-        glm::vec4 tangent, bitangent;
+        glm::vec4 tangent;
 
         tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
         tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
@@ -210,16 +210,6 @@ void MeshImporter::RecreateTangents(std::vector<PBRVertex>& vertices, std::vecto
         vertices[idx0].Tangents = tangent;
         vertices[idx1].Tangents = tangent;
         vertices[idx2].Tangents = tangent;
-
-        bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
-        bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
-        bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
-        bitangent.w = 0.0f;
-        bitangent = glm::normalize(bitangent);
-
-        vertices[idx0].Bitangents = bitangent;
-        vertices[idx1].Bitangents = bitangent;
-        vertices[idx2].Bitangents = bitangent;
     }
 }
 
@@ -293,11 +283,13 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
     data.numIndices = mesh->mNumFaces * 3;
 
     data.vertices.resize(data.numVertices);
+    data.animationData.resize(data.numVertices);
     for (unsigned int i = 0; i < data.numVertices; i++)
     {
-        PBRVertex vertex;
+        Vertex vertex;
+        AnimationVertexData animData;
 
-        this->SetVertexBoneDataToDefault(vertex);
+        this->SetVertexBoneDataToDefault(animData);
 
         // process vertex positions, normals and texture coordinates
         glm::vec4 vector;
@@ -325,12 +317,6 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
             vector.z = mesh->mTangents[i].z;
             vector.w = 0.0f;
             vertex.Tangents = vector;
-
-            vector.x = mesh->mBitangents[i].x;
-            vector.y = mesh->mBitangents[i].y;
-            vector.z = mesh->mBitangents[i].z;
-            vector.w = 0.0f;
-            vertex.Bitangents = vector;
         }
 
         if (mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
@@ -346,6 +332,7 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
         }
 
         data.vertices.at(i) = vertex;
+        data.animationData.at(i) = animData;
     }
 
     // process indices
@@ -375,6 +362,8 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 
     this->RemapGeometry(data);
 
+    data.HasAnimation = this->hasAnimation;
+
     return data;
 }
 
@@ -386,7 +375,7 @@ MeshData MeshImporter::LoadRawMesh(float rawData[], unsigned int numData, unsign
     {
         unsigned int index = i * NUMCOMP;
 
-        PBRVertex vertex;
+        Vertex vertex;
         // process vertex positions, normals and texture coordinates
         glm::vec4 vector;
         vector.x = rawData[index];

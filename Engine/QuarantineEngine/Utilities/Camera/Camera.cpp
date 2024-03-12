@@ -20,14 +20,14 @@ Camera::Camera(float width, float height)
 
     this->frustumComponent = std::make_shared<FrustumComponent>();
 
-    this->cameraFront = glm::vec3(0.815122545f, -0.579281569f, 0.0f);
-    this->cameraPos = glm::vec3(-5.0f, 5.0f, 0.0f);
+    this->cameraFront = glm::vec3(1.0f, 0.0f, 0.0f);
+    this->cameraPos = glm::vec3(-10.0f, 0.0f, 0.0f);
     this->WIDTH = width;
     this->HEIGHT = height;
     this->lastX = WIDTH / 2.0f;
     this->lastY = HEIGHT / 2.0f;
-    this->nearPlane = 0.01f;
-    this->farPlane = 100.0f;
+    this->nearPlane = 0.1f;
+    this->farPlane = 500.0f;
     this->view = projection = VP = glm::mat4(1.0);
     this->cameraUniform = std::make_shared<CameraUniform>();
     this->cameraUBO = std::make_shared<UniformBufferObject>();
@@ -125,36 +125,38 @@ void Camera::EditorRotate()
             lastY = ImGui::GetIO().MousePos.y;
             firstMouse = false;
         }
+        else
+        {
+            float xoffset = ImGui::GetIO().MousePos.x - lastX;
+            float yoffset = lastY - ImGui::GetIO().MousePos.y; // reversed since y-coordinates go from bottom to top
+            lastX = ImGui::GetIO().MousePos.x;
+            lastY = ImGui::GetIO().MousePos.y;
 
-        float xoffset = ImGui::GetIO().MousePos.x - lastX;
-        float yoffset = lastY - ImGui::GetIO().MousePos.y; // reversed since y-coordinates go from bottom to top
-        lastX = ImGui::GetIO().MousePos.x;
-        lastY = ImGui::GetIO().MousePos.y;
+            float sensitivity = 0.1f; // change this value to your liking
+            xoffset *= sensitivity;
+            yoffset *= sensitivity;
 
-        float sensitivity = 0.1f; // change this value to your liking
-        xoffset *= sensitivity;
-        yoffset *= sensitivity;
+            yaw += xoffset;
+            pitch += yoffset;
 
-        yaw += xoffset;
-        pitch += yoffset;
+            // make sure that when pitch is out of bounds, screen doesn't get flipped
+            if (pitch > 89.0f)
+                pitch = 89.0f;
+            if (pitch < -89.0f)
+                pitch = -89.0f;
 
-        // make sure that when pitch is out of bounds, screen doesn't get flipped
-        if (pitch > 89.0f)
-            pitch = 89.0f;
-        if (pitch < -89.0f)
-            pitch = -89.0f;
+            float yawDegrees = glm::radians(yaw);
+            float pitchDegrees = glm::radians(pitch);
 
-        float yawDegrees = glm::radians(yaw);
-        float pitchDegrees = glm::radians(pitch);
+            glm::vec3 front;
+            front.x = cos(yawDegrees) * cos(pitchDegrees);
+            front.y = sin(pitchDegrees);
+            front.z = sin(yawDegrees) * cos(pitchDegrees);
 
-        glm::vec3 front;
-        front.x = cos(yawDegrees) * cos(pitchDegrees);
-        front.y = sin(pitchDegrees);
-        front.z = sin(yawDegrees) * cos(pitchDegrees);
+            cameraFront = glm::normalize(front);
 
-        cameraFront = glm::normalize(front);
-
-        this->isInputUpdated = true;
+            this->isInputUpdated = true;
+        }
     }
     else
     {
@@ -249,11 +251,13 @@ void Camera::UpdateFrustumPlanes()
 
 void Camera::UpdateUBOCamera()
 {
-    auto currentFrame = SynchronizationModule::GetCurrentFrame();
-    void* data;
-    vkMapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame], 0, sizeof(CameraUniform), 0, &data);
-    memcpy(data, static_cast<const void*>(this->cameraUniform.get()), sizeof(CameraUniform));
-    vkUnmapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame]);
+    for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
+    {
+        void* data;
+        vkMapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame], 0, sizeof(CameraUniform), 0, &data);
+        memcpy(data, static_cast<const void*>(this->cameraUniform.get()), sizeof(CameraUniform));
+        vkUnmapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame]);
+    }
 }
 
 void Camera::CleanCameraUBO()

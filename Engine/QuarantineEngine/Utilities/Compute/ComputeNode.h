@@ -27,7 +27,7 @@ public:
     void cleanup();
     void InitializeComputeBuffer(uint32_t idBuffer, uint32_t bufferSize);
     void FillComputeBuffer(size_t numElements, unsigned long long elementType, void* data);
-    void FillComputeBuffer(VkBuffer buffer, uint32_t bufferSize);
+    void FillComputeBuffer(uint32_t ssboIndex, VkBuffer buffer, uint32_t bufferSize);
     void InitializeComputeNode();
     void DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t currentFrame);
     void UpdateComputeDescriptor();

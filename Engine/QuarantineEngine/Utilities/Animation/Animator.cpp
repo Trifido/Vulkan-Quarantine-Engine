@@ -3,6 +3,7 @@
 #include <ShaderManager.h>
 
 #include <chrono>
+#include <MeshImporter.h>
 
 Animator::Animator()
 {
@@ -36,21 +37,26 @@ void Animator::UpdateUBOAnimation()
     }
 }
 
-void Animator::SetVertexBufferInComputeNode(std::string id, VkBuffer vertexBuffer, uint32_t numElements)
+void Animator::SetVertexBufferInComputeNode(std::string id, VkBuffer vertexBuffer, VkBuffer animationVertexBuffer, uint32_t numElements)
 {
     this->computeNodes[id]->NElements = numElements;
     this->computeNodes[id]->computeDescriptor->InitializeSSBOData();
 
     uint32_t numSSBOs = this->computeNodes[id]->computeDescriptor->ssboData.size();
 
-    uint32_t bufferSize = sizeof(PBRAnimationVertex) * numElements;
+    uint32_t bufferSize = sizeof(Vertex) * numElements;
     this->computeNodes[id]->computeDescriptor->ssboData[0]->CreateSSBO(bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
     this->computeNodes[id]->computeDescriptor->ssboSize[0] = bufferSize;
-    this->computeNodes[id]->FillComputeBuffer(vertexBuffer, bufferSize);
+    this->computeNodes[id]->FillComputeBuffer(0, vertexBuffer, bufferSize);
 
-    bufferSize = sizeof(AnimationVertex) * numElements;
+    bufferSize = sizeof(AnimationVertexData) * numElements;
     this->computeNodes[id]->computeDescriptor->ssboData[1]->CreateSSBO(bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
     this->computeNodes[id]->computeDescriptor->ssboSize[1] = bufferSize;
+    this->computeNodes[id]->FillComputeBuffer(1, animationVertexBuffer, bufferSize);
+
+    bufferSize = sizeof(Vertex) * numElements;
+    this->computeNodes[id]->computeDescriptor->ssboData[2]->CreateSSBO(bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->computeNodes[id]->computeDescriptor->ssboSize[2] = bufferSize;
 
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {

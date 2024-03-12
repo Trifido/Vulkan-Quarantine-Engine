@@ -61,12 +61,12 @@ private:
 public:
     std::vector<MeshletDescriptor> gpuMeshlets;
     std::vector<uint32_t> meshletData;
-    std::vector<PBRVertex> verticesData;
+    std::vector<Vertex> verticesData;
     std::vector<uint32_t> indexData;
 
 public:
-    void GenerateMeshlet(const std::vector<PBRVertex>& vertices, const std::vector<uint32_t>& indices);
-    void GenerateCustomMeshlet(std::vector<PBRVertex>& vertices, std::vector<uint32_t>& indices);
+    void GenerateMeshlet(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
+    void GenerateCustomMeshlet(std::vector<Vertex>& vertices, std::vector<uint32_t>& indices);
 };
 
 #endif // !MESHLET_H

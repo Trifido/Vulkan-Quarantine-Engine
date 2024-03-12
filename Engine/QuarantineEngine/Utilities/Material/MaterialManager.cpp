@@ -38,12 +38,8 @@ MaterialManager::MaterialManager()
         absPath.erase(ind, substring.length());
     }
 
-    const std::string absolute_default_vertex_shader_path = absPath + "/vert.spv";
-    const std::string absolute_default_frag_shader_path = absPath + "/frag.spv";
-    const std::string absolute_primitive_vertex_shader_path = absPath + "/Primitive/primitiveDefault_vert.spv";
-    const std::string absolute_primitive_frag_shader_path = absPath + "/Primitive/primitiveDefault_frag.spv";
-    const std::string absolute_animation_vertex_shader_path = absPath + "/Animation/exampleAnimated_vert.spv";
-    const std::string absolute_animation_frag_shader_path = absPath + "/Animation/exampleAnimated_frag.spv";
+    const std::string absolute_default_vertex_shader_path = absPath + "/Default/default_vert.spv";
+    const std::string absolute_default_frag_shader_path = absPath + "/Default/default_frag.spv";
     const std::string absolute_particles_vert_shader_path = absPath + "/Particles/particles_vert.spv";
     const std::string absolute_particles_frag_shader_path = absPath + "/Particles/particles_frag.spv";
     const std::string absolute_mesh_task_shader_path = absPath + "/mesh/mesh_task.spv";
@@ -60,17 +56,9 @@ MaterialManager::MaterialManager()
     shaderManager->AddShader("default", this->default_shader);
 
     this->default_primitive_shader = std::make_shared<ShaderModule>(
-        ShaderModule(absolute_primitive_vertex_shader_path, absolute_primitive_frag_shader_path)
+        ShaderModule(absolute_default_vertex_shader_path, absolute_default_frag_shader_path)
     );
     shaderManager->AddShader("default_primitive", this->default_primitive_shader);
-
-    GraphicsPipelineData pipelineData = {};
-    pipelineData.polygonMode = VkPolygonMode::VK_POLYGON_MODE_FILL;
-    pipelineData.vertexBufferStride = sizeof(AnimationVertex);
-    this->default_animation_shader = std::make_shared<ShaderModule>(
-        ShaderModule(absolute_animation_vertex_shader_path, absolute_animation_frag_shader_path, pipelineData)
-    );
-    shaderManager->AddShader("default_animation", this->default_animation_shader);
 
     GraphicsPipelineData pipelineParticleShader = {};
     pipelineParticleShader.HasVertexData = false;
@@ -172,15 +160,7 @@ void MaterialManager::CreateDefaultPrimitiveMaterial()
 void MaterialManager::CreateMaterial(std::string& nameMaterial, bool hasAnimation)
 {
     nameMaterial = CheckName(nameMaterial);
-
-    if (!hasAnimation)
-    {
-        return this->AddMaterial(nameMaterial, std::make_shared<Material>(Material(this->default_shader)));
-    }
-    else
-    {
-        return this->AddMaterial(nameMaterial, std::make_shared<Material>(Material(this->default_animation_shader)));
-    }
+    return this->AddMaterial(nameMaterial, std::make_shared<Material>(Material(this->default_shader)));
 }
 
 void MaterialManager::CreateMeshShaderMaterial(std::string& nameMaterial)
@@ -226,10 +206,8 @@ void MaterialManager::CleanLastResources()
     this->lightManager = nullptr;
     this->default_shader.reset();
     this->default_primitive_shader.reset();
-    this->default_animation_shader.reset();
     this->default_shader = nullptr;
     this->default_primitive_shader = nullptr;
-    this->default_animation_shader = nullptr;
     this->mesh_shader_test.reset();
     this->mesh_shader_test = nullptr;
 }
