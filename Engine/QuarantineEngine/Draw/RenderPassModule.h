@@ -11,11 +11,14 @@ private:
     DeviceModule* device_ptr;
 public:
     VkRenderPass    renderPass;
+    VkRenderPass    shadowMappingRenderPass;
+
 public:
     RenderPassModule();
     ~RenderPassModule();
     void cleanup();
     void createRenderPass(VkFormat swapchainFormat, VkFormat depthFormat, VkSampleCountFlagBits msaaSamples);
+    void createShadowRenderPass(VkFormat shadowFormat);
 };
 
 #endif

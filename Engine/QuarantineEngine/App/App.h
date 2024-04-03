@@ -22,6 +22,7 @@
 #include "DepthBufferModule.h"
 #include "AntiAliasingModule.h"
 #include "RenderPassModule.h"
+#include "ShadowMappingModule.h"
 #include "Timer.h"
 
 //  Physics System
@@ -123,6 +124,7 @@ private:
 
     DepthBufferModule*      depthBufferModule;
     AntiAliasingModule*     antialiasingModule;
+    ShadowMappingModule*    shadowMappingModule;
     RenderPassModule*       renderPassModule;
     Timer*                  timer;
 

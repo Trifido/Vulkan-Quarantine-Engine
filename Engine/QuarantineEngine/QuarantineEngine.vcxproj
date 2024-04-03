@@ -201,6 +201,7 @@
     <ClCompile Include="Presentation\AntiAliasingModule.cpp" />
     <ClCompile Include="Presentation\DepthBufferModule.cpp" />
     <ClCompile Include="Presentation\ImageViewModule.cpp" />
+    <ClCompile Include="Presentation\ShadowMappingModule.cpp" />
     <ClCompile Include="Presentation\SwapChainModule.cpp" />
     <ClCompile Include="Presentation\WindowSurface.cpp" />
     <ClCompile Include="RayTracing\RayTracingModule.cpp" />
@@ -291,6 +292,7 @@
     <ClInclude Include="Presentation\AntiAliasingModule.h" />
     <ClInclude Include="Presentation\DepthBufferModule.h" />
     <ClInclude Include="Presentation\ImageViewModule.h" />
+    <ClInclude Include="Presentation\ShadowMappingModule.h" />
     <ClInclude Include="Presentation\SwapChainModule.h" />
     <ClInclude Include="Presentation\SwapChainTool.hpp" />
     <ClInclude Include="Presentation\WindowSurface.h" />

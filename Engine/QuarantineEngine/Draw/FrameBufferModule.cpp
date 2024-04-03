@@ -4,10 +4,11 @@
 
 FramebufferModule::FramebufferModule()
 {
-    deviceModule = DeviceModule::getInstance();
-    antialiasingModule = AntiAliasingModule::getInstance();
-    swapchainModule = SwapChainModule::getInstance();
-    depthbufferModule = DepthBufferModule::getInstance();
+    this->deviceModule = DeviceModule::getInstance();
+    this->antialiasingModule = AntiAliasingModule::getInstance();
+    this->swapchainModule = SwapChainModule::getInstance();
+    this->depthbufferModule = DepthBufferModule::getInstance();
+    this->shadowMappingModule = ShadowMappingModule::getInstance();
 }
 
 void FramebufferModule::createFramebuffer(VkRenderPass& renderPass)
@@ -35,6 +36,23 @@ void FramebufferModule::createFramebuffer(VkRenderPass& renderPass)
         if (vkCreateFramebuffer(deviceModule->device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
             throw std::runtime_error("failed to create framebuffer!");
         }
+    }
+}
+
+void FramebufferModule::createShadowFramebuffer(VkRenderPass& renderPass)
+{
+    // Create frame buffer
+    VkFramebufferCreateInfo framebufferInfo{};
+    framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    framebufferInfo.renderPass = renderPass;
+    framebufferInfo.attachmentCount = 1;
+    framebufferInfo.pAttachments = &(this->shadowMappingModule->imageView);
+    framebufferInfo.width = this->shadowMappingModule->TextureSize;
+    framebufferInfo.height = this->shadowMappingModule->TextureSize;
+    framebufferInfo.layers = 1;
+
+    if (vkCreateFramebuffer(deviceModule->device, &framebufferInfo, nullptr, &shadowMapFramebuffer) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create shadow map framebuffer!");
     }
 }
 

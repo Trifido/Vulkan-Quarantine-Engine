@@ -134,9 +134,14 @@ void App::initVulkan()
     depthBufferModule = DepthBufferModule::getInstance();
     depthBufferModule->createDepthResources(swapchainModule->swapChainExtent, commandPoolModule->getCommandPool());
 
+    //Creamos el shadow mapping module
+    shadowMappingModule = ShadowMappingModule::getInstance();
+    shadowMappingModule->CreateShadowMapResources();
+
     //Creamos el Render Pass
     renderPassModule = new RenderPassModule();
     renderPassModule->createRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
+    renderPassModule->createShadowRenderPass(shadowMappingModule->shadowFormat);
 
     //Registramos el default render pass
     this->graphicsPipelineManager->RegisterDefaultRenderPass(renderPassModule->renderPass);
@@ -199,11 +204,11 @@ void App::initVulkan()
     model->material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
     this->gameObjectManager->AddGameObject(model, "model");
 
-    //std::shared_ptr<GameObject> floor = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
-    //floor->transform->SetPosition(glm::vec3(0.0f, -0.10f, 0.0f));
-    //floor->transform->SetScale(glm::vec3(50.0f, 1.0f, 50.0f));
-    //floor->material->materialData.SetMaterialField("Diffuse", glm::vec3(0.0f, 0.0f, 0.3f));
-    //this->gameObjectManager->AddGameObject(floor, "floor");
+    std::shared_ptr<GameObject> floor = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
+    floor->transform->SetPosition(glm::vec3(0.0f, -0.10f, 0.0f));
+    floor->transform->SetScale(glm::vec3(3.0f, 1.0f, 3.0f));
+    floor->material->materialData.SetMaterialField("Diffuse", glm::vec3(0.0f, 0.0f, 0.3f));
+    this->gameObjectManager->AddGameObject(floor, "floor");
 
 //DEMO
 /*
@@ -461,6 +466,7 @@ void App::cleanUp()
 {
     this->shaderManager->Clean();
 
+    this->shadowMappingModule->cleanup();
     this->cleanUpSwapchain();
     this->swapchainModule->CleanScreenDataResources();
 
@@ -571,6 +577,9 @@ void App::cleanManagers()
     this->depthBufferModule->CleanLastResources();
     this->depthBufferModule->ResetInstance();
     this->depthBufferModule = nullptr;
+
+    this->shadowMappingModule->ResetInstance();
+    this->shadowMappingModule = nullptr;
 
     this->physicsModule->ResetInstance();
     this->physicsModule = nullptr;
