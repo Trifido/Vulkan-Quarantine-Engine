@@ -22,6 +22,7 @@ public:
     VkFormat swapChainImageFormat;
     VkExtent2D swapChainExtent;
     std::shared_ptr<UniformBufferObject> screenData = nullptr;
+    uint32_t  currentImage = 0;
 
 private:
     DeviceModule* deviceModule;

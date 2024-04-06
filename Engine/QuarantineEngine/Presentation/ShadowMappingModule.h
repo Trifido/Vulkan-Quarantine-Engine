@@ -13,6 +13,11 @@ public:
     uint32_t TextureSize;
     VkFormat shadowFormat;
     VkSampler depthSampler;
+    // Depth bias (and slope) are used to avoid shadowing artifacts
+    // Constant depth bias factor (always applied)
+    float depthBiasConstant = 1.25f;
+    // Slope depth bias factor, applied depending on polygon's slope
+    float depthBiasSlope = 1.75f;
 
 public:
     static ShadowMappingModule* getInstance();

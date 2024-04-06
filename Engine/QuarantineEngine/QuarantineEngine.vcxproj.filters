@@ -436,6 +436,12 @@
     <ClCompile Include="Presentation\ShadowMappingModule.cpp">
       <Filter>Kernel\Presentation\sources</Filter>
     </ClCompile>
+    <ClCompile Include="GraphicsPipeline\ShadowPipelineModule.cpp">
+      <Filter>Kernel\GraphicsPipeline\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsPipeline\ShadowPipelineManager.cpp">
+      <Filter>Kernel\GraphicsPipeline\sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SetUp\DeviceModule.h">
@@ -713,6 +719,12 @@
     </ClInclude>
     <ClInclude Include="Presentation\ShadowMappingModule.h">
       <Filter>Kernel\Presentation\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsPipeline\ShadowPipelineModule.h">
+      <Filter>Kernel\GraphicsPipeline\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsPipeline\ShadowPipelineManager.h">
+      <Filter>Kernel\GraphicsPipeline\headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

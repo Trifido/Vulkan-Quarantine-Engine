@@ -9,7 +9,8 @@ DescriptorBuffer::DescriptorBuffer()
 
 DescriptorBuffer::DescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr) : DescriptorBuffer()
 {
-    this->numBinding = shader_ptr->reflectShader.bindings.size();
+    uint32_t size = shader_ptr->reflectShader.bindings.size();
+    this->numBinding = size;
 
     this->ubos["materialUBO"] = std::make_shared<UniformBufferObject>();
     this->StartResources(shader_ptr);

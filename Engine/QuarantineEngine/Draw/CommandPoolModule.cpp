@@ -17,6 +17,7 @@ CommandPoolModule::CommandPoolModule()
     gameObjectManager = GameObjectManager::getInstance();
     computeNodeManager = ComputeNodeManager::getInstance();
     cullingSceneManager = CullingSceneManager::getInstance();
+    shadowMappingModule = ShadowMappingModule::getInstance();
 
     this->ClearColor = glm::vec3(0.1f);
 }
@@ -98,7 +99,93 @@ void CommandPoolModule::recreateCommandBuffers()
     }
 }
 
-void CommandPoolModule::Render(VkFramebuffer& swapChainFramebuffer, VkRenderPass& renderPass)
+
+void CommandPoolModule::setDefaultRenderPass(VkRenderPass& renderPass, VkFramebuffer& framebuffer, uint32_t iCBuffer)
+{
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = swapchainModule->swapChainExtent.width;
+    viewport.height = swapchainModule->swapChainExtent.height;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent = swapchainModule->swapChainExtent;
+
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = renderPass;
+    renderPassInfo.framebuffer = framebuffer;
+    renderPassInfo.renderArea.offset = { 0, 0 };
+    renderPassInfo.renderArea.extent = swapchainModule->swapChainExtent;
+
+    std::array<VkClearValue, 2> clearValues{};
+    clearValues[0].color = { this->ClearColor.x, this->ClearColor.y, this->ClearColor.z, 1.0f };
+    clearValues[1].depthStencil = { 1.0f, 0 };
+    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+    renderPassInfo.pClearValues = clearValues.data();
+
+    vkCmdBeginRenderPass(commandBuffers[iCBuffer], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    vkCmdSetViewport(commandBuffers[iCBuffer], 0, 1, &viewport);
+    vkCmdSetScissor(commandBuffers[iCBuffer], 0, 1, &scissor);
+
+    this->gameObjectManager->DrawCommnad(commandBuffers[iCBuffer], iCBuffer);
+    this->editorManager->DrawCommnad(commandBuffers[iCBuffer], iCBuffer);
+    this->cullingSceneManager->DrawDebug(commandBuffers[iCBuffer], iCBuffer);
+
+    if (ImGui::GetDrawData() != nullptr)
+        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[iCBuffer]);
+
+    vkCmdEndRenderPass(commandBuffers[iCBuffer]);
+}
+
+void CommandPoolModule::setShadowRenderPass(VkRenderPass& renderPass, VkFramebuffer& framebuffer, uint32_t iCBuffer)
+{
+    uint32_t size = shadowMappingModule->TextureSize;
+
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = size;
+    viewport.height = size;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent.width = size;
+    scissor.extent.height = size;
+
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = renderPass;
+    renderPassInfo.framebuffer = framebuffer;
+    renderPassInfo.renderArea.offset = { 0, 0 };
+    renderPassInfo.renderArea.extent.width = size;
+    renderPassInfo.renderArea.extent.height = size;
+
+    VkClearValue clearValues{};
+    clearValues.depthStencil = { 1.0f, 0 };
+    renderPassInfo.clearValueCount = 1;
+    renderPassInfo.pClearValues = &clearValues;
+
+    vkCmdBeginRenderPass(commandBuffers[iCBuffer], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    vkCmdSetViewport(commandBuffers[iCBuffer], 0, 1, &viewport);
+    vkCmdSetScissor(commandBuffers[iCBuffer], 0, 1, &scissor);
+    vkCmdSetDepthBias( commandBuffers[iCBuffer], shadowMappingModule->depthBiasConstant, 0.0f, shadowMappingModule->depthBiasSlope);
+
+    //vkCmdBindPipeline(drawCmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.offscreen);
+    //vkCmdBindDescriptorSets(drawCmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets.offscreen, 0, nullptr);
+    //scenes[sceneIndex].draw(drawCmdBuffers[i]);
+
+    vkCmdEndRenderPass(commandBuffers[iCBuffer]);
+}
+
+void CommandPoolModule::Render(FramebufferModule* framebufferModule, RenderPassModule* renderPassModule)
 {
     for (uint32_t i = 0; i < commandBuffers.size(); i++) {
         VkCommandBufferBeginInfo beginInfo{};
@@ -111,29 +198,9 @@ void CommandPoolModule::Render(VkFramebuffer& swapChainFramebuffer, VkRenderPass
             throw std::runtime_error("failed to begin recording command buffer!");
         }
 
-        VkRenderPassBeginInfo renderPassInfo{};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassInfo.renderPass = renderPass;
-        renderPassInfo.framebuffer = swapChainFramebuffer;
-        renderPassInfo.renderArea.offset = { 0, 0 };
-        renderPassInfo.renderArea.extent = swapchainModule->swapChainExtent;
+        //this->setShadowRenderPass(renderPassModule->shadowMappingRenderPass, framebufferModule->shadowMapFramebuffer, i);
 
-        std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].color = { this->ClearColor.x, this->ClearColor.y, this->ClearColor.z, 1.0f };
-        clearValues[1].depthStencil = { 1.0f, 0 };
-        renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-        renderPassInfo.pClearValues = clearValues.data();
-
-        vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-        this->gameObjectManager->DrawCommnad(commandBuffers[i], i);
-        this->editorManager->DrawCommnad(commandBuffers[i], i);
-        this->cullingSceneManager->DrawDebug(commandBuffers[i], i);
-
-        if(ImGui::GetDrawData() != nullptr)
-            ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[i]);
-
-        vkCmdEndRenderPass(commandBuffers[i]);
+        this->setDefaultRenderPass(renderPassModule->renderPass, framebufferModule->swapChainFramebuffers[swapchainModule->currentImage], i);
 
         if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
             throw std::runtime_error("failed to record command buffer!");

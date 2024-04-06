@@ -188,6 +188,8 @@
     <ClCompile Include="GraphicsPipeline\ReflectShader.cpp" />
     <ClCompile Include="GraphicsPipeline\RenderLayerModule.cpp" />
     <ClCompile Include="GraphicsPipeline\ShaderModule.cpp" />
+    <ClCompile Include="GraphicsPipeline\ShadowPipelineManager.cpp" />
+    <ClCompile Include="GraphicsPipeline\ShadowPipelineModule.cpp" />
     <ClCompile Include="GUI\GUIWindow.cpp" />
     <ClCompile Include="GUI\SceneWindow.cpp" />
     <ClCompile Include="Input\KeyboardController.cpp" />
@@ -279,6 +281,8 @@
     <ClInclude Include="GraphicsPipeline\RenderLayer.h" />
     <ClInclude Include="GraphicsPipeline\RenderLayerModule.h" />
     <ClInclude Include="GraphicsPipeline\ShaderModule.h" />
+    <ClInclude Include="GraphicsPipeline\ShadowPipelineManager.h" />
+    <ClInclude Include="GraphicsPipeline\ShadowPipelineModule.h" />
     <ClInclude Include="GUI\GUIWindow.h" />
     <ClInclude Include="GUI\SceneWindow.h" />
     <ClInclude Include="Input\KeyboardController.h" />

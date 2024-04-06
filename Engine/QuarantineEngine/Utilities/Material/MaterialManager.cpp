@@ -40,6 +40,7 @@ MaterialManager::MaterialManager()
 
     const std::string absolute_default_vertex_shader_path = absPath + "/Default/default_vert.spv";
     const std::string absolute_default_frag_shader_path = absPath + "/Default/default_frag.spv";
+    const std::string absolute_shadow_vertex_shader_path = absPath + "/Shadow/shadow_vert.spv";
     const std::string absolute_particles_vert_shader_path = absPath + "/Particles/particles_vert.spv";
     const std::string absolute_particles_frag_shader_path = absPath + "/Particles/particles_frag.spv";
     const std::string absolute_mesh_task_shader_path = absPath + "/mesh/mesh_task.spv";
@@ -74,6 +75,11 @@ MaterialManager::MaterialManager()
         ShaderModule(absolute_mesh_task_shader_path, absolute_mesh_mesh_shader_path, absolute_mesh_frag_shader_path, pipelineMeshShader)
     );
     shaderManager->AddShader("mesh_shader", this->mesh_shader_test);
+
+    GraphicsPipelineData pipelineShadowShader = {};
+    pipelineShadowShader.IsShadowMap = true;
+    this->shadow_mapping_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_shadow_vertex_shader_path, pipelineShadowShader));
+    shaderManager->AddShader("shadow_mapping_shader", this->shadow_mapping_shader);
 }
 
 void MaterialManager::InitializeMaterialManager()
@@ -210,6 +216,8 @@ void MaterialManager::CleanLastResources()
     this->default_primitive_shader = nullptr;
     this->mesh_shader_test.reset();
     this->mesh_shader_test = nullptr;
+    this->shadow_mapping_shader.reset();
+    this->shadow_mapping_shader = nullptr;
 }
 
 void MaterialManager::UpdateUniforms()

@@ -21,6 +21,7 @@ App::App()
     this->editorManager = EditorObjectManager::getInstance();
     this->animationManager = AnimationManager::getInstance();
     this->graphicsPipelineManager = GraphicsPipelineManager::getInstance();
+    this->shadowPipelineManager = ShadowPipelineManager::getInstance();
     this->computePipelineManager = ComputePipelineManager::getInstance();
 
     commandPoolModule->ClearColor = glm::vec3(0.1f);
@@ -145,6 +146,8 @@ void App::initVulkan()
 
     //Registramos el default render pass
     this->graphicsPipelineManager->RegisterDefaultRenderPass(renderPassModule->renderPass);
+    //Registramos el shadow render pass
+    this->shadowPipelineManager->RegisterDefaultRenderPass(renderPassModule->shadowMappingRenderPass);
 
     //Creamos el frame buffer
     framebufferModule.createFramebuffer(renderPassModule->renderPass);
@@ -323,7 +326,7 @@ void App::initVulkan()
     this->materialManager->InitializeMaterials();
     this->computeNodeManager->InitializeComputeNodes();
 
-    this->commandPoolModule->Render(framebufferModule.swapChainFramebuffers[0], renderPassModule->renderPass);
+    this->commandPoolModule->Render(&framebufferModule, renderPassModule);
     this->synchronizationModule.createSyncObjects(swapchainModule->getNumSwapChainImages());
 
     init_imgui();
@@ -514,6 +517,7 @@ void App::cleanUpSwapchain()
 
     //Limpiamos los VKPipelines, VkPipelineLayouts y shader del material
     graphicsPipelineManager->CleanGraphicsPipeline();
+    shadowPipelineManager->CleanShadowPipeline();
 
     swapchainModule->cleanup();
 }
@@ -525,6 +529,9 @@ void App::cleanManagers()
 
     this->graphicsPipelineManager->ResetInstance();
     this->graphicsPipelineManager = nullptr;
+
+    this->shadowPipelineManager->ResetInstance();
+    this->shadowPipelineManager = nullptr;
 
     this->computePipelineManager->ResetInstance();
     this->computePipelineManager = nullptr;
@@ -621,7 +628,7 @@ void App::drawFrame()
 {
     synchronizationModule.synchronizeWaitFences();
 
-    VkResult result = vkAcquireNextImageKHR(deviceModule->device, swapchainModule->getSwapchain(), UINT64_MAX, synchronizationModule.getImageAvailableSemaphore(), VK_NULL_HANDLE, &imageIndex);
+    VkResult result = vkAcquireNextImageKHR(deviceModule->device, swapchainModule->getSwapchain(), UINT64_MAX, synchronizationModule.getImageAvailableSemaphore(), VK_NULL_HANDLE, &swapchainModule->currentImage);
     resizeSwapchain(result, ERROR_RESIZE::SWAPCHAIN_ERROR);
 
     //this->cameraEditor->UpdateUBOCamera();
@@ -630,11 +637,11 @@ void App::drawFrame()
 
     vkDeviceWaitIdle(deviceModule->device);
 
-    commandPoolModule->Render(framebufferModule.swapChainFramebuffers[imageIndex], renderPassModule->renderPass);
+    commandPoolModule->Render(&framebufferModule, renderPassModule);
 
     synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer(synchronizationModule.GetCurrentFrame()), this->isRender);
 
-    result = synchronizationModule.presentSwapchain(swapchainModule->getSwapchain(), imageIndex);
+    result = synchronizationModule.presentSwapchain(swapchainModule->getSwapchain(), swapchainModule->currentImage);
     resizeSwapchain(result, ERROR_RESIZE::IMAGE_ERROR);
     this->isRender = true;
 }
@@ -697,5 +704,5 @@ void App::recreateSwapchain()
     framebufferModule.createFramebuffer(renderPassModule->renderPass);
 
     commandPoolModule->recreateCommandBuffers();
-    commandPoolModule->Render(framebufferModule.swapChainFramebuffers[imageIndex], renderPassModule->renderPass);
+    commandPoolModule->Render(&framebufferModule, renderPassModule);
 }

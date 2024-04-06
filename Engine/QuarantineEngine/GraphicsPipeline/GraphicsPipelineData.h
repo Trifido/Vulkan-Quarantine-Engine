@@ -14,6 +14,7 @@ struct GraphicsPipelineData
     float lineWidth = 1.0f;
     bool HasVertexData = true;
     bool IsMeshShader = false;
+    bool IsShadowMap = false;
 
     GraphicsPipelineData() {}
 };

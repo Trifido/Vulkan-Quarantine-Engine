@@ -9,6 +9,8 @@
 #include "../Editor/EditorObjectManager.h"
 #include <GameObjectManager.h>
 #include <Compute/ComputeNodeManager.h>
+#include <ShadowMappingModule.h>
+#include <FrameBufferModule.h>
 
 class CommandPoolModule
 {
@@ -20,6 +22,7 @@ private:
     GameObjectManager*              gameObjectManager;
     ComputeNodeManager*             computeNodeManager;
     CullingSceneManager*            cullingSceneManager;
+    ShadowMappingModule*            shadowMappingModule;
 
     VkCommandPool                   commandPool;
     VkCommandPool                   computeCommandPool;
@@ -29,6 +32,9 @@ private:
 public:
     glm::vec3 ClearColor;
 
+private:
+    void setDefaultRenderPass(VkRenderPass& renderPass, VkFramebuffer& framebuffer, uint32_t iCBuffer);
+    void setShadowRenderPass(VkRenderPass& renderPass, VkFramebuffer& framebuffer, uint32_t iCBuffer);
 public:
     CommandPoolModule();
     static CommandPoolModule* getInstance();
@@ -45,7 +51,7 @@ public:
     void createCommandPool(VkSurfaceKHR& surface);
     void createCommandBuffers();
     void recreateCommandBuffers();
-    void Render(VkFramebuffer& swapChainFramebuffer, VkRenderPass& renderPass);
+    void Render(FramebufferModule* framebufferModule, RenderPassModule* renderPassModule);
     void recordComputeCommandBuffer(VkCommandBuffer commandBuffer);
     void cleanup();
     void CleanLastResources();

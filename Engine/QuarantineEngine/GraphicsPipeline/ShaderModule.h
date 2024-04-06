@@ -11,6 +11,7 @@
 #include <Numbered.h>
 #include <GraphicsPipelineManager.h>
 #include <ComputePipelineManager.h>
+#include <ShadowPipelineManager.h>
 #include <GraphicsPipelineData.h>
 
 enum class SHADER_TYPE
@@ -26,9 +27,11 @@ enum class SHADER_TYPE
 
 class GraphicsPipelineManager;
 class ComputePipelineManager;
+class ShadowPipelineManager;
 class PipelineModule;
 class GraphicsPipelineModule;
 class ComputePipelineModule;
+class ShadowPipelineModule;
 
 class ShaderModule : public Numbered
 {
@@ -51,6 +54,7 @@ private:
     std::vector<VkVertexInputAttributeDescription>  attributeDescriptions;
     GraphicsPipelineManager*                        graphicsPipelineManager;
     ComputePipelineManager*                         computePipelineManager;
+    ShadowPipelineManager*                          shadowPipelineManager;
     GraphicsPipelineData                            graphicsPipelineData;
 
 public:
@@ -60,15 +64,17 @@ public:
     VkDescriptorSetLayout                           descriptorSetLayout;
     std::shared_ptr<GraphicsPipelineModule>         PipelineModule;
     std::shared_ptr<ComputePipelineModule>          ComputePipelineModule;
+    std::shared_ptr<ShadowPipelineModule>           ShadowPipelineModule;
 
 public:
     ShaderModule();
-    ShaderModule(std::string computeShaderName);
+    ShaderModule(std::string shaderName, GraphicsPipelineData pipelineData = GraphicsPipelineData());
     ShaderModule(std::string vertexShaderName, std::string fragmentShaderName, GraphicsPipelineData pipelineData = GraphicsPipelineData());
     ShaderModule(std::string firstShaderName, std::string secondShaderName, std::string thirdShaderName, GraphicsPipelineData pipelineData = GraphicsPipelineData());
 
     static std::vector<char> readFile(const std::string& filename);
     void createShaderModule(const std::string& filename_compute);
+    void createShadowShaderModule(const std::string& filename_compute);
     void createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment);
     void createShaderModule(const std::string& filename_vertex, const std::string& filename_geometry, const std::string& filename_fragment);
     void createMeshShaderModule(const std::string& filename_task, const std::string& filename_mesh, const std::string& filename_fragment);
