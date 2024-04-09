@@ -72,7 +72,7 @@ void GameObjectManager::ResetInstance()
 	instance = nullptr;
 }
 
-void GameObjectManager::DrawCommnad(VkCommandBuffer& commandBuffer, uint32_t idx)
+void GameObjectManager::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
     for (unsigned int idl = 0; idl < this->renderLayers->GetCount(); idl++)
     {
@@ -81,6 +81,14 @@ void GameObjectManager::DrawCommnad(VkCommandBuffer& commandBuffer, uint32_t idx
             model.second->drawCommand(commandBuffer, idx);
         }
     }
+}
+
+void GameObjectManager::ShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
+{
+    //for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
+    //{
+    //    model.second->drawCommand(commandBuffer, idx);
+    //}
 }
 
 void GameObjectManager::InitializePhysics()

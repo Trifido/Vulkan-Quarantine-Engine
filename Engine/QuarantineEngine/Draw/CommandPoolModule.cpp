@@ -132,7 +132,7 @@ void CommandPoolModule::setDefaultRenderPass(VkRenderPass& renderPass, VkFramebu
     vkCmdSetViewport(commandBuffers[iCBuffer], 0, 1, &viewport);
     vkCmdSetScissor(commandBuffers[iCBuffer], 0, 1, &scissor);
 
-    this->gameObjectManager->DrawCommnad(commandBuffers[iCBuffer], iCBuffer);
+    this->gameObjectManager->DrawCommand(commandBuffers[iCBuffer], iCBuffer);
     this->editorManager->DrawCommnad(commandBuffers[iCBuffer], iCBuffer);
     this->cullingSceneManager->DrawDebug(commandBuffers[iCBuffer], iCBuffer);
 
@@ -178,6 +178,7 @@ void CommandPoolModule::setShadowRenderPass(VkRenderPass& renderPass, VkFramebuf
     vkCmdSetScissor(commandBuffers[iCBuffer], 0, 1, &scissor);
     vkCmdSetDepthBias( commandBuffers[iCBuffer], shadowMappingModule->depthBiasConstant, 0.0f, shadowMappingModule->depthBiasSlope);
 
+    this->gameObjectManager->ShadowCommand(commandBuffers[iCBuffer], iCBuffer);
     //vkCmdBindPipeline(drawCmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.offscreen);
     //vkCmdBindDescriptorSets(drawCmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets.offscreen, 0, nullptr);
     //scenes[sceneIndex].draw(drawCmdBuffers[i]);

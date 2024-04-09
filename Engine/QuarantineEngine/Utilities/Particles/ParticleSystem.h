@@ -55,7 +55,7 @@ public:
 
 private:
     void createShaderStorageBuffers();
-    void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx) override;
+    void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator_ptr = nullptr) override;
     void InitializeDeadList();
     void InitializeParticleSystemParameters();
     void SetNewParticlesUBO(uint32_t newParticles, uint32_t nFrame);

@@ -124,21 +124,34 @@ void GameObject::cleanup()
 
 void GameObject::drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
-    if (this->meshImportedType != ANIMATED_GEO)
+    bool isAnimationPipeline = this->meshImportedType == ANIMATED_GEO;
+
+    if (isAnimationPipeline)
     {
-        this->CreateDrawCommand(commandBuffer, idx);
+        this->CreateDrawCommand(commandBuffer, idx, this->animationComponent->animator);
         for (auto child : childs)
         {
-            child->CreateDrawCommand(commandBuffer, idx);
+            child->CreateDrawCommand(commandBuffer, idx, this->animationComponent->animator);
         }
     }
     else
     {
-        this->CreateAnimationDrawCommand(commandBuffer, idx, this->animationComponent->animator);
+        this->CreateDrawCommand(commandBuffer, idx, nullptr);
         for (auto child : childs)
         {
-            child->CreateAnimationDrawCommand(commandBuffer, idx, this->animationComponent->animator);
+            child->CreateDrawCommand(commandBuffer, idx, nullptr);
         }
+    }
+}
+
+void GameObject::shadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
+{
+    bool isAnimationPipeline = this->meshImportedType == ANIMATED_GEO;
+
+    this->CreateDrawCommand(commandBuffer, idx, this->animationComponent->animator);
+    for (auto child : childs)
+    {
+        child->CreateDrawCommand(commandBuffer, idx, this->animationComponent->animator);
     }
 }
 
@@ -343,47 +356,7 @@ bool GameObject::CreateChildsGameObject(std::string pathfile)
     return true;
 }
 
-void GameObject::CreateAnimationDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator)
-{
-    if (this->isRenderEnable())
-    {
-        auto pipelineModule = this->material->shader->PipelineModule;
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
-        vkCmdSetDepthWriteEnable(commandBuffer, true);
-        vkCmdSetDepthTestEnable(commandBuffer, true);
-        if (this->meshImportedType == EDITOR_GEO)
-        {
-            vkCmdSetCullMode(commandBuffer, false);
-        }
-        else
-        {
-            vkCmdSetCullMode(commandBuffer, true);
-            vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
-        }
-
-        VkDeviceSize animOffsets[] = {0};
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &animator->GetComputeNode(this->id)->computeDescriptor->ssboData[2]->uniformBuffers.at(idx), animOffsets);
-        vkCmdBindIndexBuffer(commandBuffer, this->mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-
-        if (this->material->HasDescriptorBuffer())
-        {
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, this->material->descriptor->getDescriptorSet(idx), 0, nullptr);
-        }
-
-        this->pushConstant.model = this->transform->GetModel();
-        if (this->parent != nullptr)
-        {
-            pushConstant.model = this->parent->transform->GetModel() * pushConstant.model;
-        }
-
-        VkShaderStageFlagBits stages = VK_SHADER_STAGE_ALL;
-        vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, stages, 0, sizeof(PushConstantStruct), &pushConstant);
-
-        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->mesh->indices.size()), 1, 0, 0, 0);
-    }
-}
-
-void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
+void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator_ptr)
 {
     if (this->isRenderEnable())
     {
@@ -406,8 +379,16 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
         if (!this->isMeshShading)
         {
             VkDeviceSize offsets[] = { 0 };
-            VkBuffer vertexBuffers[] = { this->mesh->vertexBuffer };
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+
+            if (animator_ptr != nullptr)
+            {
+                vkCmdBindVertexBuffers(commandBuffer, 0, 1, &animator_ptr->GetComputeNode(this->id)->computeDescriptor->ssboData[2]->uniformBuffers.at(idx), offsets);
+            }
+            else
+            {
+                VkBuffer vertexBuffers[] = { this->mesh->vertexBuffer };
+                vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+            }
             vkCmdBindIndexBuffer(commandBuffer, this->mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
         }
 
