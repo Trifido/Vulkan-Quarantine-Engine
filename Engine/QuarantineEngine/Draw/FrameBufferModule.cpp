@@ -62,3 +62,8 @@ void FramebufferModule::cleanup()
         vkDestroyFramebuffer(deviceModule->device, framebuffer, nullptr);
     }
 }
+
+void FramebufferModule::cleanupShadowBuffer()
+{
+    vkDestroyFramebuffer(deviceModule->device, shadowMapFramebuffer, nullptr);
+}

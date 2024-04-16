@@ -151,6 +151,7 @@ void App::initVulkan()
 
     //Creamos el frame buffer
     framebufferModule.createFramebuffer(renderPassModule->renderPass);
+    framebufferModule.createShadowFramebuffer(renderPassModule->shadowMappingRenderPass);
 
     //Añadimos el camera editor
     this->cameraEditor = CameraEditor::getInstance();
@@ -181,6 +182,9 @@ void App::initVulkan()
     this->cullingSceneManager->AddCameraFrustum(this->cameraEditor->frustumComponent);
     this->cullingSceneManager->isDebugEnable = false;
 
+    //Inicializamos pipeline de sombras
+    shadowMappingModule->InitializeShadowMapPipeline(materialManager->shadow_mapping_shader->ShadowPipelineModule);
+
     // Inicializamos los componentes del editorW
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
     this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
@@ -195,16 +199,16 @@ void App::initVulkan()
         absPath.erase(ind, substring.length());
     }
 
-    //const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
-    const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
+    const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
+    //const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
 
     std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(absolute_path));
 
-    model->transform->SetScale(glm::vec3(0.1f));
+    //model->transform->SetScale(glm::vec3(0.1f));
     //model->transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
     //model->transform->SetOrientation(glm::vec3(-90.0f, 180.0f, 0.0f));
-    //model->material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
-    //model->material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
+    model->material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
+    model->material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
     this->gameObjectManager->AddGameObject(model, "model");
 
     std::shared_ptr<GameObject> floor = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
@@ -471,6 +475,7 @@ void App::cleanUp()
 
     this->shadowMappingModule->cleanup();
     this->cleanUpSwapchain();
+    this->framebufferModule.cleanupShadowBuffer();
     this->swapchainModule->CleanScreenDataResources();
 
     this->materialManager->CleanPipelines();

@@ -178,8 +178,9 @@ void CommandPoolModule::setShadowRenderPass(VkRenderPass& renderPass, VkFramebuf
     vkCmdSetScissor(commandBuffers[iCBuffer], 0, 1, &scissor);
     vkCmdSetDepthBias( commandBuffers[iCBuffer], shadowMappingModule->depthBiasConstant, 0.0f, shadowMappingModule->depthBiasSlope);
 
-    this->gameObjectManager->ShadowCommand(commandBuffers[iCBuffer], iCBuffer);
-    //vkCmdBindPipeline(drawCmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.offscreen);
+    vkCmdBindPipeline(commandBuffers[iCBuffer], VK_PIPELINE_BIND_POINT_GRAPHICS, this->shadowMappingModule->shadowPipelineModule->pipeline);
+    this->gameObjectManager->ShadowCommand(commandBuffers[iCBuffer], iCBuffer, shadowMappingModule->shadowPipelineModule);
+    //
     //vkCmdBindDescriptorSets(drawCmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets.offscreen, 0, nullptr);
     //scenes[sceneIndex].draw(drawCmdBuffers[i]);
 
@@ -199,7 +200,7 @@ void CommandPoolModule::Render(FramebufferModule* framebufferModule, RenderPassM
             throw std::runtime_error("failed to begin recording command buffer!");
         }
 
-        //this->setShadowRenderPass(renderPassModule->shadowMappingRenderPass, framebufferModule->shadowMapFramebuffer, i);
+        this->setShadowRenderPass(renderPassModule->shadowMappingRenderPass, framebufferModule->shadowMapFramebuffer, i);
 
         this->setDefaultRenderPass(renderPassModule->renderPass, framebufferModule->swapChainFramebuffers[swapchainModule->currentImage], i);
 

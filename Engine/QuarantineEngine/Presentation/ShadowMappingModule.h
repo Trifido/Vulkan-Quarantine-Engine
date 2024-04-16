@@ -5,6 +5,7 @@
 
 #include <vulkan/vulkan.hpp>
 #include "TextureManagerModule.h"
+#include <ShadowPipelineModule.h>
 
 class ShadowMappingModule : public TextureManagerModule
 {
@@ -13,6 +14,7 @@ public:
     uint32_t TextureSize;
     VkFormat shadowFormat;
     VkSampler depthSampler;
+    std::shared_ptr<ShadowPipelineModule> shadowPipelineModule = nullptr;
     // Depth bias (and slope) are used to avoid shadowing artifacts
     // Constant depth bias factor (always applied)
     float depthBiasConstant = 1.25f;
@@ -23,6 +25,7 @@ public:
     static ShadowMappingModule* getInstance();
     static void ResetInstance();
     ShadowMappingModule();
+    void InitializeShadowMapPipeline(std::shared_ptr<ShadowPipelineModule> shadowPipelineModule);
     void CreateShadowMapResources();
     void cleanup() override;
 };

@@ -27,7 +27,7 @@ public:
     static GameObjectManager* getInstance();
     static void ResetInstance();
     void DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
-    void ShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
+    void ShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<ShadowPipelineModule> shadowPipelineModule);
     void InitializePhysics();
     void UpdatePhysicTransforms();
     void Cleanup();

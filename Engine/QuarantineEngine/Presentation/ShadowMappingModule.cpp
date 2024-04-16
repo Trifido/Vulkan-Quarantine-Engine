@@ -9,6 +9,11 @@ ShadowMappingModule::ShadowMappingModule()
     this->shadowFormat = VK_FORMAT_D32_SFLOAT;
 }
 
+void ShadowMappingModule::InitializeShadowMapPipeline(std::shared_ptr<ShadowPipelineModule> shadowPipelineModule)
+{
+    this->shadowPipelineModule = shadowPipelineModule;
+}
+
 void ShadowMappingModule::CreateShadowMapResources()
 {
     this->createImage(this->TextureSize, this->TextureSize, this->shadowFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1);

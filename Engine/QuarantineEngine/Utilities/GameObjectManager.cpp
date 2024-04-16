@@ -83,12 +83,12 @@ void GameObjectManager::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx
     }
 }
 
-void GameObjectManager::ShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
+void GameObjectManager::ShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<ShadowPipelineModule> shadowPipelineModule)
 {
-    //for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
-    //{
-    //    model.second->drawCommand(commandBuffer, idx);
-    //}
+    for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
+    {
+        model.second->drawShadowCommand(commandBuffer, idx, *shadowPipelineModule);
+    }
 }
 
 void GameObjectManager::InitializePhysics()

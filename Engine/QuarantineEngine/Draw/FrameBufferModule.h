@@ -27,6 +27,7 @@ public:
     void createFramebuffer(VkRenderPass& renderPass);
     void createShadowFramebuffer(VkRenderPass& renderPass);
     void cleanup();
+    void cleanupShadowBuffer();
 };
 
 #endif
