@@ -1,7 +1,6 @@
 #include "ShadowMappingModule.h"
 #include "ImageMemoryTools.h"
-
-ShadowMappingModule* ShadowMappingModule::instance = nullptr;
+#include "FrameBufferModule.h"
 
 ShadowMappingModule::ShadowMappingModule()
 {
@@ -9,12 +8,14 @@ ShadowMappingModule::ShadowMappingModule()
     this->shadowFormat = VK_FORMAT_D32_SFLOAT;
 }
 
-void ShadowMappingModule::InitializeShadowMapPipeline(std::shared_ptr<ShadowPipelineModule> shadowPipelineModule)
+ShadowMappingModule::ShadowMappingModule(std::shared_ptr<ShaderModule> shaderModule, VkRenderPass& renderPass) : ShadowMappingModule()
 {
-    this->shadowPipelineModule = shadowPipelineModule;
+    this->shaderModule = shaderModule;
+    this->shadowPipelineModule = this->shaderModule->ShadowPipelineModule;
+    this->CreateShadowMapResources(renderPass);
 }
 
-void ShadowMappingModule::CreateShadowMapResources()
+void ShadowMappingModule::CreateShadowMapResources(VkRenderPass& renderPass)
 {
     this->createImage(this->TextureSize, this->TextureSize, this->shadowFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1);
     this->imageView = IMT::createImageView(this->deviceModule->device, this->image, this->shadowFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
@@ -37,24 +38,14 @@ void ShadowMappingModule::CreateShadowMapResources()
     {
         throw std::runtime_error("failed to create shadow texture sampler!");
     }
+
+    this->shadowFrameBuffer = FramebufferModule::CreateShadowFramebuffer(renderPass, this->imageView, this->TextureSize, this->deviceModule->device);
 }
 
 void ShadowMappingModule::cleanup()
 {
     TextureManagerModule::cleanup();
     vkDestroySampler(this->deviceModule->device, this->depthSampler, nullptr);
-}
 
-ShadowMappingModule* ShadowMappingModule::getInstance()
-{
-    if (instance == NULL)
-        instance = new ShadowMappingModule();
-
-    return instance;
-}
-
-void ShadowMappingModule::ResetInstance()
-{
-    delete instance;
-    instance = nullptr;
+    vkDestroyFramebuffer(this->deviceModule->device, this->shadowFrameBuffer, nullptr);
 }

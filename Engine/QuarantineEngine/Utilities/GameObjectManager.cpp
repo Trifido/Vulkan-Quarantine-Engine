@@ -83,11 +83,11 @@ void GameObjectManager::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx
     }
 }
 
-void GameObjectManager::ShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<ShadowPipelineModule> shadowPipelineModule)
+void GameObjectManager::ShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout)
 {
     for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
     {
-        model.second->drawShadowCommand(commandBuffer, idx, *shadowPipelineModule);
+        model.second->drawShadowCommand(commandBuffer, idx, pipelineLayout);
     }
 }
 

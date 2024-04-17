@@ -7,6 +7,13 @@
 #include <Light/Light.h>
 #include <Camera.h>
 #include <SwapChainModule.h>
+#include <ShaderModule.h>
+#include <RenderPassModule.h>
+#include <DirectionalLight.h>
+
+#include <DescriptorBuffer.h>
+
+class DirectionalLight;
 
 struct LightMap
 {
@@ -40,6 +47,9 @@ private:
     std::vector<uint32_t> lights_index;
     std::vector<uint32_t> light_tiles_bits;
 
+    std::shared_ptr<RenderPassModule> renderPassPtr = nullptr;
+    std::shared_ptr<ShaderModule> dir_shadow_map_shader = nullptr;
+
 public:
     static LightManager* instance;
     std::shared_ptr<UniformBufferObject>    lightUBO = nullptr;
@@ -52,8 +62,10 @@ public:
     std::shared_ptr<UniformBufferObject>    lightBinSSBO = nullptr;
     VkDeviceSize                            lightBinSSBOSize;
 
+    std::vector<std::shared_ptr<DirectionalLight>> DirLights;
+
 private:
-    void AddLight(std::shared_ptr<Light> light_ptr, std::string name);
+    void AddLight(std::shared_ptr<Light> light_ptr, std::string& name);
     void SortingLights();
     void ComputeLightsLUT();
     void ComputeLightTiles();
@@ -62,6 +74,8 @@ public:
     static LightManager* getInstance();
     static void ResetInstance();
     LightManager();
+    void AddRenderPassModule(std::shared_ptr<RenderPassModule> renderPassModule);
+    void AddDirShadowMapShader(std::shared_ptr<ShaderModule> shadow_mapping_shader);
     void CreateLight(LightType type, std::string name);
     std::shared_ptr<Light> GetLight(std::string name);
     void Update();

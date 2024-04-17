@@ -68,7 +68,7 @@ public:
     inline std::string ID() const { return id; }
     void cleanup();
     virtual void drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
-    virtual void drawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, ShadowPipelineModule& shadowPipelineModule);
+    virtual void drawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout);
     void addMaterial(std::shared_ptr<Material> material_ptr);
     void addPhysicBody(std::shared_ptr<PhysicBody> physicBody_ptr);
     void addCollider(std::shared_ptr<Collider> collider_ptr);
@@ -82,7 +82,7 @@ protected:
     void InitializeAnimationComponent();
     bool CreateChildsGameObject(std::string pathfile);
     virtual void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator_ptr = nullptr);
-    void CreateDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, ShadowPipelineModule& shadowPipelineModule, std::shared_ptr<Animator> animator_ptr = nullptr);
+    void CreateDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, std::shared_ptr<Animator> animator_ptr = nullptr);
 };
 
 #endif

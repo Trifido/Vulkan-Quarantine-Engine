@@ -22,7 +22,7 @@ private:
     GameObjectManager*              gameObjectManager;
     ComputeNodeManager*             computeNodeManager;
     CullingSceneManager*            cullingSceneManager;
-    ShadowMappingModule*            shadowMappingModule;
+    LightManager*                   lightManager;
 
     VkCommandPool                   commandPool;
     VkCommandPool                   computeCommandPool;
@@ -34,7 +34,7 @@ public:
 
 private:
     void setDefaultRenderPass(VkRenderPass& renderPass, VkFramebuffer& framebuffer, uint32_t iCBuffer);
-    void setShadowRenderPass(VkRenderPass& renderPass, VkFramebuffer& framebuffer, uint32_t iCBuffer);
+    void setShadowRenderPass(VkRenderPass& renderPass, std::shared_ptr<DirectionalLight> dirLight, uint32_t iCBuffer);
 public:
     CommandPoolModule();
     static CommandPoolModule* getInstance();
@@ -51,7 +51,7 @@ public:
     void createCommandPool(VkSurfaceKHR& surface);
     void createCommandBuffers();
     void recreateCommandBuffers();
-    void Render(FramebufferModule* framebufferModule, RenderPassModule* renderPassModule);
+    void Render(FramebufferModule* framebufferModule, std::shared_ptr<RenderPassModule> renderPassModule);
     void recordComputeCommandBuffer(VkCommandBuffer commandBuffer);
     void cleanup();
     void CleanLastResources();

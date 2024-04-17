@@ -7,7 +7,6 @@
 #include "DeviceModule.h"
 #include "DepthBufferModule.h"
 #include "AntiAliasingModule.h"
-#include "ShadowMappingModule.h"
 
 class FramebufferModule
 {
@@ -16,18 +15,16 @@ private:
     AntiAliasingModule* antialiasingModule;
     SwapChainModule*    swapchainModule;
     DepthBufferModule*  depthbufferModule;
-    ShadowMappingModule* shadowMappingModule;
 
 public:
     std::vector<VkFramebuffer> swapChainFramebuffers;
-    VkFramebuffer shadowMapFramebuffer;
     
 public:
     FramebufferModule();
     void createFramebuffer(VkRenderPass& renderPass);
-    void createShadowFramebuffer(VkRenderPass& renderPass);
+    static VkFramebuffer CreateShadowFramebuffer(VkRenderPass& renderPass, VkImageView& imageView, uint32_t textureSize, VkDevice& device);
     void cleanup();
-    void cleanupShadowBuffer();
+    //void cleanupShadowBuffer();
 };
 
 #endif

@@ -95,6 +95,12 @@ void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
             poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
             idx++;
         }
+        else if (binding.first == "LightCameraUniform")
+        {
+            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+            idx++;
+        }
         else if (binding.first == "ScreenData")
         {
             this->swapChainModule = SwapChainModule::getInstance();
@@ -278,7 +284,7 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
             this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->camera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform), frameIdx);
             idx++;
         }
-        if (binding.first == "ScreenData")
+        else if (binding.first == "ScreenData")
         {
             this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->swapChainModule->screenData->uniformBuffers[frameIdx], sizeof(glm::vec2), frameIdx);
             idx++;
@@ -408,6 +414,40 @@ void DescriptorBuffer::InitializeDescriptorSets(std::shared_ptr<ShaderModule> sh
     {
         std::vector<VkWriteDescriptorSet> descriptorWrites{};
         descriptorWrites = this->GetDescriptorWrites(shader_ptr, i);
+        vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+    }
+}
+
+void DescriptorBuffer::InitializeShadowMapDescritorSets(std::shared_ptr<ShaderModule> shader_ptr, std::shared_ptr<UniformBufferObject> dirLightUniformBuffer)
+{
+    std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, shader_ptr->descriptorSetLayout);
+    VkDescriptorSetAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocInfo.descriptorPool = this->descriptorPool;
+    allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    allocInfo.pSetLayouts = layouts.data();
+
+    descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
+    if (vkAllocateDescriptorSets(deviceModule->device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
+        throw std::runtime_error("failed to allocate descriptor sets!");
+    }
+
+    size_t numDescriptors = this->numBinding;
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        std::vector<VkWriteDescriptorSet> descriptorWrites{};
+        descriptorWrites.resize(this->numBinding);
+        this->buffersInfo.resize(this->numBinding);
+        uint32_t idx = 0;
+
+        for (auto binding : shader_ptr->reflectShader.bindings)
+        {
+            if (binding.first == "LightCameraUniform")
+            {
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, dirLightUniformBuffer->uniformBuffers[i], sizeof(glm::mat4), i);
+                idx++;
+            }
+        }
         vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
 }

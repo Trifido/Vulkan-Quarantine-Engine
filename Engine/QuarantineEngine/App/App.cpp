@@ -15,7 +15,6 @@ App::App()
     this->keyboard_ptr = KeyboardController::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->deviceModule = DeviceModule::getInstance();
-    this->commandPoolModule = CommandPoolModule::getInstance();
 
     this->physicsModule = PhysicsModule::getInstance();
     this->editorManager = EditorObjectManager::getInstance();
@@ -23,8 +22,6 @@ App::App()
     this->graphicsPipelineManager = GraphicsPipelineManager::getInstance();
     this->shadowPipelineManager = ShadowPipelineManager::getInstance();
     this->computePipelineManager = ComputePipelineManager::getInstance();
-
-    commandPoolModule->ClearColor = glm::vec3(0.1f);
 }
 
 App::~App()
@@ -118,6 +115,10 @@ void App::initVulkan()
     deviceModule->pickPhysicalDevice(vulkanInstance.getInstance(), windowSurface.getSurface());
     deviceModule->createLogicalDevice(windowSurface.getSurface(), *queueModule);
 
+    //Inicializamos el CommandPool Module
+    commandPoolModule = CommandPoolModule::getInstance();
+    commandPoolModule->ClearColor = glm::vec3(0.1f);
+
     //Inicializamos el Swapchain Module
     swapchainModule = SwapChainModule::getInstance();
     swapchainModule->InitializeScreenDataResources();
@@ -135,14 +136,10 @@ void App::initVulkan()
     depthBufferModule = DepthBufferModule::getInstance();
     depthBufferModule->createDepthResources(swapchainModule->swapChainExtent, commandPoolModule->getCommandPool());
 
-    //Creamos el shadow mapping module
-    shadowMappingModule = ShadowMappingModule::getInstance();
-    shadowMappingModule->CreateShadowMapResources();
-
     //Creamos el Render Pass
-    renderPassModule = new RenderPassModule();
+    renderPassModule = std::make_shared<RenderPassModule>();
     renderPassModule->createRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
-    renderPassModule->createShadowRenderPass(shadowMappingModule->shadowFormat);
+    renderPassModule->createShadowRenderPass(VK_FORMAT_D32_SFLOAT);
 
     //Registramos el default render pass
     this->graphicsPipelineManager->RegisterDefaultRenderPass(renderPassModule->renderPass);
@@ -151,7 +148,6 @@ void App::initVulkan()
 
     //Creamos el frame buffer
     framebufferModule.createFramebuffer(renderPassModule->renderPass);
-    framebufferModule.createShadowFramebuffer(renderPassModule->shadowMappingRenderPass);
 
     //Añadimos el camera editor
     this->cameraEditor = CameraEditor::getInstance();
@@ -176,14 +172,13 @@ void App::initVulkan()
     this->computeNodeManager->InitializeComputeResources();
     this->particleSystemManager = ParticleSystemManager::getInstance();
 
+    this->lightManager->AddDirShadowMapShader(materialManager->shadow_mapping_shader);
+    this->lightManager->AddRenderPassModule(renderPassModule);
     this->lightManager->SetCamera(this->cameraEditor);
     this->cullingSceneManager = CullingSceneManager::getInstance();
     this->cullingSceneManager->InitializeCullingSceneResources();
     this->cullingSceneManager->AddCameraFrustum(this->cameraEditor->frustumComponent);
     this->cullingSceneManager->isDebugEnable = false;
-
-    //Inicializamos pipeline de sombras
-    shadowMappingModule->InitializeShadowMapPipeline(materialManager->shadow_mapping_shader->ShadowPipelineModule);
 
     // Inicializamos los componentes del editorW
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
@@ -209,13 +204,13 @@ void App::initVulkan()
     //model->transform->SetOrientation(glm::vec3(-90.0f, 180.0f, 0.0f));
     model->material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
     model->material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
-    this->gameObjectManager->AddGameObject(model, "model");
 
     std::shared_ptr<GameObject> floor = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
     floor->transform->SetPosition(glm::vec3(0.0f, -0.10f, 0.0f));
     floor->transform->SetScale(glm::vec3(3.0f, 1.0f, 3.0f));
     floor->material->materialData.SetMaterialField("Diffuse", glm::vec3(0.0f, 0.0f, 0.3f));
     this->gameObjectManager->AddGameObject(floor, "floor");
+    this->gameObjectManager->AddGameObject(model, "model");
 
 //DEMO
 /*
@@ -281,23 +276,20 @@ void App::initVulkan()
     //this->lightManager->GetLight("PointLight1")->quadratic = 0.032f;
     //this->lightManager->GetLight("PointLight1")->radius = 30.0f;
 
-    //this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
-    //this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(2.0f, 8.0f, -1.0f));
-    //this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.6f);
-    //this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.1f);
-    //this->lightManager->GetLight("DirectionalLight0")->constant = 1.0f;
-    //this->lightManager->GetLight("DirectionalLight0")->linear = 0.09f;
-    //this->lightManager->GetLight("DirectionalLight0")->quadratic = 0.032f;
+    this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
+    this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(2.0f, 8.0f, -1.0f));
+    this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.6f);
+    this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.1f);
 
-    this->lightManager->CreateLight(LightType::SPOT_LIGHT, "SpotLight0");
-    auto spotLight = this->lightManager->GetLight("SpotLight0");
-    spotLight->transform->SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
-    spotLight->transform->SetOrientation(glm::vec3(0.0f, -1.0f, 0.0f));
-    spotLight->diffuse = glm::vec3(0.6f);
-    spotLight->specular = glm::vec3(0.1f);
-    spotLight->cutOff = glm::cos(glm::radians(32.5f));
-    spotLight->outerCutoff = glm::cos(glm::radians(37.5f));
-    spotLight->SetDistanceEffect(100.0f);
+    //this->lightManager->CreateLight(LightType::SPOT_LIGHT, "SpotLight0");
+    //auto spotLight = this->lightManager->GetLight("SpotLight0");
+    //spotLight->transform->SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
+    //spotLight->transform->SetOrientation(glm::vec3(0.0f, -1.0f, 0.0f));
+    //spotLight->diffuse = glm::vec3(0.6f);
+    //spotLight->specular = glm::vec3(0.1f);
+    //spotLight->cutOff = glm::cos(glm::radians(32.5f));
+    //spotLight->outerCutoff = glm::cos(glm::radians(37.5f));
+    //spotLight->SetDistanceEffect(100.0f);
 
     this->lightManager->UpdateUniform();
     // END -------------------------- Lights ----------------------------------------
@@ -473,9 +465,9 @@ void App::cleanUp()
 {
     this->shaderManager->Clean();
 
-    this->shadowMappingModule->cleanup();
+    //this->shadowMappingModule->cleanup();
     this->cleanUpSwapchain();
-    this->framebufferModule.cleanupShadowBuffer();
+    //this->framebufferModule.cleanupShadowBuffer();
     this->swapchainModule->CleanScreenDataResources();
 
     this->materialManager->CleanPipelines();
@@ -529,7 +521,7 @@ void App::cleanUpSwapchain()
 
 void App::cleanManagers()
 {
-    delete this->renderPassModule;
+    //delete this->renderPassModule;
     this->renderPassModule = nullptr;
 
     this->graphicsPipelineManager->ResetInstance();
@@ -590,8 +582,8 @@ void App::cleanManagers()
     this->depthBufferModule->ResetInstance();
     this->depthBufferModule = nullptr;
 
-    this->shadowMappingModule->ResetInstance();
-    this->shadowMappingModule = nullptr;
+    //this->shadowMappingModule->ResetInstance();
+    //this->shadowMappingModule = nullptr;
 
     this->physicsModule->ResetInstance();
     this->physicsModule = nullptr;

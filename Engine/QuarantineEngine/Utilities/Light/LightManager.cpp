@@ -42,6 +42,16 @@ LightManager::LightManager()
     this->lightBuffer.reserve(this->MAX_NUM_LIGHT);
 }
 
+void LightManager::AddRenderPassModule(std::shared_ptr<RenderPassModule> renderPassModule)
+{
+    this->renderPassPtr = renderPassModule;
+}
+
+void LightManager::AddDirShadowMapShader(std::shared_ptr<ShaderModule> shadow_mapping_shader)
+{
+    this->dir_shadow_map_shader = shadow_mapping_shader;
+}
+
 LightManager* LightManager::getInstance()
 {
     if (instance == NULL)
@@ -66,7 +76,8 @@ void LightManager::CreateLight(LightType type, std::string name)
         break;
 
     case LightType::DIRECTIONAL_LIGHT:
-        this->AddLight(std::static_pointer_cast<Light>(std::make_shared<DirectionalLight>()), name);
+        this->DirLights.push_back(std::make_shared<DirectionalLight>(this->dir_shadow_map_shader, this->renderPassPtr->shadowMappingRenderPass, this->deviceModule));
+        this->AddLight(std::static_pointer_cast<Light>(this->DirLights.back()), name);
         break;
 
     case LightType::SPOT_LIGHT:
@@ -154,7 +165,7 @@ void LightManager::SetCamera(Camera* camera_ptr)
     this->camera = camera_ptr;
 }
 
-void LightManager::AddLight(std::shared_ptr<Light> light_ptr, std::string name)
+void LightManager::AddLight(std::shared_ptr<Light> light_ptr, std::string& name)
 {
     this->lightBuffer.push_back(*light_ptr->uniform);
 
@@ -164,7 +175,8 @@ void LightManager::AddLight(std::shared_ptr<Light> light_ptr, std::string name)
     }
     else
     {
-        this->_lights[name + "_1"] = light_ptr;
+        name += "_1";
+        this->_lights[name] = light_ptr;
     }
 
     this->currentNumLights++;

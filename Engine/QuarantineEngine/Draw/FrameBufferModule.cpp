@@ -8,7 +8,6 @@ FramebufferModule::FramebufferModule()
     this->antialiasingModule = AntiAliasingModule::getInstance();
     this->swapchainModule = SwapChainModule::getInstance();
     this->depthbufferModule = DepthBufferModule::getInstance();
-    this->shadowMappingModule = ShadowMappingModule::getInstance();
 }
 
 void FramebufferModule::createFramebuffer(VkRenderPass& renderPass)
@@ -39,21 +38,25 @@ void FramebufferModule::createFramebuffer(VkRenderPass& renderPass)
     }
 }
 
-void FramebufferModule::createShadowFramebuffer(VkRenderPass& renderPass)
+VkFramebuffer FramebufferModule::CreateShadowFramebuffer(VkRenderPass& renderPass, VkImageView& imageView, uint32_t textureSize, VkDevice& device)
 {
+    VkFramebuffer result;
+
     // Create frame buffer
     VkFramebufferCreateInfo framebufferInfo{};
     framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     framebufferInfo.renderPass = renderPass;
     framebufferInfo.attachmentCount = 1;
-    framebufferInfo.pAttachments = &(this->shadowMappingModule->imageView);
-    framebufferInfo.width = this->shadowMappingModule->TextureSize;
-    framebufferInfo.height = this->shadowMappingModule->TextureSize;
+    framebufferInfo.pAttachments = &imageView;
+    framebufferInfo.width = textureSize;
+    framebufferInfo.height = textureSize;
     framebufferInfo.layers = 1;
 
-    if (vkCreateFramebuffer(deviceModule->device, &framebufferInfo, nullptr, &shadowMapFramebuffer) != VK_SUCCESS) {
+    if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &result) != VK_SUCCESS) {
         throw std::runtime_error("failed to create shadow map framebuffer!");
     }
+
+    return result;
 }
 
 void FramebufferModule::cleanup()
@@ -63,7 +66,7 @@ void FramebufferModule::cleanup()
     }
 }
 
-void FramebufferModule::cleanupShadowBuffer()
-{
-    vkDestroyFramebuffer(deviceModule->device, shadowMapFramebuffer, nullptr);
-}
+//void FramebufferModule::cleanupShadowBuffer()
+//{
+//    vkDestroyFramebuffer(deviceModule->device, shadowMapFramebuffer, nullptr);
+//}

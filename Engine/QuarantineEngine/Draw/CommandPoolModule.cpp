@@ -17,7 +17,7 @@ CommandPoolModule::CommandPoolModule()
     gameObjectManager = GameObjectManager::getInstance();
     computeNodeManager = ComputeNodeManager::getInstance();
     cullingSceneManager = CullingSceneManager::getInstance();
-    shadowMappingModule = ShadowMappingModule::getInstance();
+    lightManager = LightManager::getInstance();
 
     this->ClearColor = glm::vec3(0.1f);
 }
@@ -142,9 +142,9 @@ void CommandPoolModule::setDefaultRenderPass(VkRenderPass& renderPass, VkFramebu
     vkCmdEndRenderPass(commandBuffers[iCBuffer]);
 }
 
-void CommandPoolModule::setShadowRenderPass(VkRenderPass& renderPass, VkFramebuffer& framebuffer, uint32_t iCBuffer)
+void CommandPoolModule::setShadowRenderPass(VkRenderPass& renderPass, std::shared_ptr<DirectionalLight> dirLight, uint32_t iCBuffer)
 {
-    uint32_t size = shadowMappingModule->TextureSize;
+    uint32_t size = dirLight->shadowMappingPtr->TextureSize;
 
     VkViewport viewport{};
     viewport.x = 0.0f;
@@ -162,7 +162,7 @@ void CommandPoolModule::setShadowRenderPass(VkRenderPass& renderPass, VkFramebuf
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassInfo.renderPass = renderPass;
-    renderPassInfo.framebuffer = framebuffer;
+    renderPassInfo.framebuffer = dirLight->shadowMappingPtr->shadowFrameBuffer;
     renderPassInfo.renderArea.offset = { 0, 0 };
     renderPassInfo.renderArea.extent.width = size;
     renderPassInfo.renderArea.extent.height = size;
@@ -176,18 +176,17 @@ void CommandPoolModule::setShadowRenderPass(VkRenderPass& renderPass, VkFramebuf
 
     vkCmdSetViewport(commandBuffers[iCBuffer], 0, 1, &viewport);
     vkCmdSetScissor(commandBuffers[iCBuffer], 0, 1, &scissor);
-    vkCmdSetDepthBias( commandBuffers[iCBuffer], shadowMappingModule->depthBiasConstant, 0.0f, shadowMappingModule->depthBiasSlope);
+    vkCmdSetDepthBias( commandBuffers[iCBuffer], dirLight->shadowMappingPtr->depthBiasConstant, 0.0f, dirLight->shadowMappingPtr->depthBiasSlope);
 
-    vkCmdBindPipeline(commandBuffers[iCBuffer], VK_PIPELINE_BIND_POINT_GRAPHICS, this->shadowMappingModule->shadowPipelineModule->pipeline);
-    this->gameObjectManager->ShadowCommand(commandBuffers[iCBuffer], iCBuffer, shadowMappingModule->shadowPipelineModule);
-    //
-    //vkCmdBindDescriptorSets(drawCmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets.offscreen, 0, nullptr);
-    //scenes[sceneIndex].draw(drawCmdBuffers[i]);
+    vkCmdBindPipeline(commandBuffers[iCBuffer], VK_PIPELINE_BIND_POINT_GRAPHICS, dirLight->shadowMappingPtr->shadowPipelineModule->pipeline);
+
+    vkCmdBindDescriptorSets(commandBuffers[iCBuffer], VK_PIPELINE_BIND_POINT_GRAPHICS, dirLight->shadowMappingPtr->shadowPipelineModule->pipelineLayout, 0, 1, dirLight->descriptorBuffer->getDescriptorSet(iCBuffer), 0, nullptr);
+    this->gameObjectManager->ShadowCommand(commandBuffers[iCBuffer], iCBuffer, dirLight->shadowMappingPtr->shadowPipelineModule->pipelineLayout);
 
     vkCmdEndRenderPass(commandBuffers[iCBuffer]);
 }
 
-void CommandPoolModule::Render(FramebufferModule* framebufferModule, RenderPassModule* renderPassModule)
+void CommandPoolModule::Render(FramebufferModule* framebufferModule, std::shared_ptr<RenderPassModule> renderPassModule)
 {
     for (uint32_t i = 0; i < commandBuffers.size(); i++) {
         VkCommandBufferBeginInfo beginInfo{};
@@ -200,7 +199,13 @@ void CommandPoolModule::Render(FramebufferModule* framebufferModule, RenderPassM
             throw std::runtime_error("failed to begin recording command buffer!");
         }
 
-        this->setShadowRenderPass(renderPassModule->shadowMappingRenderPass, framebufferModule->shadowMapFramebuffer, i);
+        auto itDirlight = this->lightManager->DirLights.begin();
+        while (itDirlight != this->lightManager->DirLights.end())
+        {
+            this->setShadowRenderPass(renderPassModule->shadowMappingRenderPass, *itDirlight, i);
+            itDirlight++;
+        }
+
 
         this->setDefaultRenderPass(renderPassModule->renderPass, framebufferModule->swapChainFramebuffers[swapchainModule->currentImage], i);
 
