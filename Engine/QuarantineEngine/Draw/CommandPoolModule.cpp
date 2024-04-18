@@ -176,7 +176,7 @@ void CommandPoolModule::setShadowRenderPass(VkRenderPass& renderPass, std::share
 
     vkCmdSetViewport(commandBuffers[iCBuffer], 0, 1, &viewport);
     vkCmdSetScissor(commandBuffers[iCBuffer], 0, 1, &scissor);
-    vkCmdSetDepthBias( commandBuffers[iCBuffer], dirLight->shadowMappingPtr->depthBiasConstant, 0.0f, dirLight->shadowMappingPtr->depthBiasSlope);
+    vkCmdSetDepthBias(commandBuffers[iCBuffer], dirLight->shadowMappingPtr->depthBiasConstant, 0.0f, dirLight->shadowMappingPtr->depthBiasSlope);
 
     vkCmdBindPipeline(commandBuffers[iCBuffer], VK_PIPELINE_BIND_POINT_GRAPHICS, dirLight->shadowMappingPtr->shadowPipelineModule->pipeline);
 

@@ -14,9 +14,13 @@ DirectionalLight::DirectionalLight(std::shared_ptr<ShaderModule> shaderModule, V
     this->shadowMapUBO = std::make_shared<UniformBufferObject>();
     this->shadowMapUBO->CreateUniformBuffer(sizeof(glm::mat4), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 
+    glm::mat4 clip = glm::mat4( 1.0f, 0.0f, 0.0f, 0.0f,
+                                0.0f, -1.0f, 0.0f, 0.0f,
+                                0.0f, 0.0f, 0.5f, 0.0f,
+                                0.0f, 0.0f, 0.5f, 1.0f);
+
     glm::mat4 lightview = glm::lookAt(glm::vec3(0.0f, 10.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    glm::vec4 projDimension = glm::vec4(-10.0f, 10.0f, -10.0f, 10.0f);
-    glm::mat4 lightProjection = glm::ortho(projDimension.x, projDimension.y, projDimension.z, projDimension.w, 0.01f, 20.0f);
+    glm::mat4 lightProjection = clip * glm::ortho(-10.f, 10.f, -10.f, 10.f, 0.01f, 20.0f);
     glm::mat4 viewproj = lightProjection * lightview;
 
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)

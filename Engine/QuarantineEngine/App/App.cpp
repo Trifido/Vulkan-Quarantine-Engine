@@ -204,13 +204,13 @@ void App::initVulkan()
     //model->transform->SetOrientation(glm::vec3(-90.0f, 180.0f, 0.0f));
     model->material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
     model->material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
+    this->gameObjectManager->AddGameObject(model, "model");
 
     std::shared_ptr<GameObject> floor = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
     floor->transform->SetPosition(glm::vec3(0.0f, -0.10f, 0.0f));
     floor->transform->SetScale(glm::vec3(3.0f, 1.0f, 3.0f));
     floor->material->materialData.SetMaterialField("Diffuse", glm::vec3(0.0f, 0.0f, 0.3f));
     this->gameObjectManager->AddGameObject(floor, "floor");
-    this->gameObjectManager->AddGameObject(model, "model");
 
 //DEMO
 /*

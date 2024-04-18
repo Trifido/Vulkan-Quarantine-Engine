@@ -436,16 +436,7 @@ void GameObject::CreateDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_
     {
         vkCmdSetDepthTestEnable(commandBuffer, true);
         vkCmdSetDepthWriteEnable(commandBuffer, true);
-
-        if(this->meshImportedType == EDITOR_GEO)
-        {
-            vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_COUNTER_CLOCKWISE);
-        }
-        else
-        {
-            vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_COUNTER_CLOCKWISE);
-            //vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
-        }
+        vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
 
         if (!this->isMeshShading)
         {
