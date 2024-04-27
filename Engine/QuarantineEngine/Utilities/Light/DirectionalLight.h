@@ -19,7 +19,7 @@ public:
 
 public:
     DirectionalLight();
-    DirectionalLight(std::shared_ptr<ShaderModule> shaderModule, VkRenderPass& renderPass, DeviceModule* deviceModule);
+    DirectionalLight(std::shared_ptr<ShaderModule> shaderModule, VkRenderPass& renderPass);
     void UpdateUniform() override;
 };
 

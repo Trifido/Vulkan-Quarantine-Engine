@@ -10,10 +10,12 @@
 #include <ShaderModule.h>
 #include <RenderPassModule.h>
 #include <DirectionalLight.h>
+#include <SpotLight.h>
 
 #include <DescriptorBuffer.h>
 
 class DirectionalLight;
+class SpotLight;
 
 struct LightMap
 {
@@ -63,6 +65,7 @@ public:
     VkDeviceSize                            lightBinSSBOSize;
 
     std::vector<std::shared_ptr<DirectionalLight>> DirLights;
+    std::vector<std::shared_ptr<SpotLight>> SpotLights;
 
 private:
     void AddLight(std::shared_ptr<Light> light_ptr, std::string& name);

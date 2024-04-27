@@ -28,7 +28,7 @@ struct LightData
     float constant;
     vec3 specular;
     float linear;
-    vec3 spotDirection;
+    vec3 direction;
     float quadratic; 
     float cutoff;
     float outerCutoff;
@@ -226,7 +226,7 @@ vec3 ComputePointLight(LightData light, vec3 normal, vec3 albedo, vec3 specular,
 
 vec3 ComputeDirectionalLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive)
 {
-    vec3 lightDir = normalize(light.position);
+    vec3 lightDir = normalize(light.direction);
 
     float diff = max(dot(lightDir, normal), 0.0);
     vec3 diffuse = diff * light.diffuse * albedo;
@@ -247,7 +247,7 @@ vec3 ComputeSpotLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, 
     float distance = length(light.position.xyz - fs_in.FragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
-    float theta = dot(lightDir, normalize(-light.spotDirection)); 
+    float theta = dot(lightDir, normalize(-light.direction)); 
     float epsilon = light.cutoff - light.outerCutoff;
     float intensity = clamp((theta - light.outerCutoff) / epsilon, 0.0, 1.0);
 

@@ -80,11 +80,13 @@
     <OutDir>$(ProjectDir)$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)$(Configuration)\</IntDir>
     <IncludePath>$(IncludePath)</IncludePath>
+    <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(ProjectDir)$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)$(Configuration)\</IntDir>
     <IncludePath>$(IncludePath)</IncludePath>
+    <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -93,6 +95,7 @@
       <AdditionalIncludeDirectories>%VULKAN_SDK%\Include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\Linking\meshoptimizer;$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\QuarantineEngine\Utilities\Camera;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -109,6 +112,7 @@
       <AdditionalIncludeDirectories>%VULKAN_SDK%\Include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\Linking\meshoptimizer;$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\QuarantineEngine\Utilities\Camera;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Utilities\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Input;.\Utilities\Light;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -128,6 +132,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -151,6 +156,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

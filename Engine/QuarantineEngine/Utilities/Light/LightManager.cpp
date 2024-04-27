@@ -76,12 +76,13 @@ void LightManager::CreateLight(LightType type, std::string name)
         break;
 
     case LightType::DIRECTIONAL_LIGHT:
-        this->DirLights.push_back(std::make_shared<DirectionalLight>(this->dir_shadow_map_shader, this->renderPassPtr->shadowMappingRenderPass, this->deviceModule));
+        this->DirLights.push_back(std::make_shared<DirectionalLight>(this->dir_shadow_map_shader, this->renderPassPtr->shadowMappingRenderPass));
         this->AddLight(std::static_pointer_cast<Light>(this->DirLights.back()), name);
         break;
 
     case LightType::SPOT_LIGHT:
-        this->AddLight(std::static_pointer_cast<Light>(std::make_shared<SpotLight>()), name);
+        this->SpotLights.push_back(std::make_shared<SpotLight>(this->dir_shadow_map_shader, this->renderPassPtr->shadowMappingRenderPass));
+        this->AddLight(std::static_pointer_cast<Light>(this->SpotLights.back()), name);
         break;
     }
 }

@@ -65,6 +65,7 @@ AttenuationData ATTENUATION_TAB[12] = {
 
 Light::Light()
 {
+    this->deviceModule = DeviceModule::getInstance();
     this->transform = std::make_unique<Transform>();
     this->uniform = std::make_shared<LightUniform>();
 

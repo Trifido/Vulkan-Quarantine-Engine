@@ -277,19 +277,19 @@ void App::initVulkan()
     //this->lightManager->GetLight("PointLight1")->radius = 30.0f;
 
     this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
-    this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(glm::vec3(2.0f, 8.0f, -1.0f));
     this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.6f);
     this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.1f);
+    this->lightManager->GetLight("DirectionalLight0")->SetDistanceEffect(100.0f);
 
-    //this->lightManager->CreateLight(LightType::SPOT_LIGHT, "SpotLight0");
-    //auto spotLight = this->lightManager->GetLight("SpotLight0");
-    //spotLight->transform->SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
-    //spotLight->transform->SetOrientation(glm::vec3(0.0f, -1.0f, 0.0f));
-    //spotLight->diffuse = glm::vec3(0.6f);
-    //spotLight->specular = glm::vec3(0.1f);
-    //spotLight->cutOff = glm::cos(glm::radians(32.5f));
-    //spotLight->outerCutoff = glm::cos(glm::radians(37.5f));
-    //spotLight->SetDistanceEffect(100.0f);
+    this->lightManager->CreateLight(LightType::SPOT_LIGHT, "SpotLight0");
+    auto spotLight = this->lightManager->GetLight("SpotLight0");
+    spotLight->transform->SetPosition(glm::vec3(0.0f, 5.0f, 5.0f));// -5.0f));
+    spotLight->transform->SetOrientation(glm::vec3(45.0f, 0.0f, 0.0f));
+    spotLight->diffuse = glm::vec3(0.6f);
+    spotLight->specular = glm::vec3(0.1f);
+    spotLight->cutOff = glm::cos(glm::radians(32.5f));
+    spotLight->outerCutoff = glm::cos(glm::radians(45.0f));
+    spotLight->SetDistanceEffect(100.0f);
 
     this->lightManager->UpdateUniform();
     // END -------------------------- Lights ----------------------------------------
