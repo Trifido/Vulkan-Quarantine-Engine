@@ -41,6 +41,8 @@ MaterialManager::MaterialManager()
     const std::string absolute_default_vertex_shader_path = absPath + "/Default/default_vert.spv";
     const std::string absolute_default_frag_shader_path = absPath + "/Default/default_frag.spv";
     const std::string absolute_shadow_vertex_shader_path = absPath + "/Shadow/shadow_vert.spv";
+    const std::string absolute_omni_shadow_vertex_shader_path = absPath + "/Shadow/omni_shadow_vert.spv";
+    const std::string absolute_omni_shadow_frag_shader_path = absPath + "/Shadow/omni_shadow_frag.spv";
     const std::string absolute_particles_vert_shader_path = absPath + "/Particles/particles_vert.spv";
     const std::string absolute_particles_frag_shader_path = absPath + "/Particles/particles_frag.spv";
     const std::string absolute_mesh_task_shader_path = absPath + "/mesh/mesh_task.spv";
@@ -80,6 +82,9 @@ MaterialManager::MaterialManager()
     pipelineShadowShader.IsShadowMap = true;
     this->shadow_mapping_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_shadow_vertex_shader_path, pipelineShadowShader));
     shaderManager->AddShader("shadow_mapping_shader", this->shadow_mapping_shader);
+
+    this->omni_shadow_mapping_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_omni_shadow_vertex_shader_path, absolute_omni_shadow_frag_shader_path, pipelineShadowShader));
+    shaderManager->AddShader("omni_shadow_mapping_shader", this->omni_shadow_mapping_shader);
 }
 
 void MaterialManager::InitializeMaterialManager()

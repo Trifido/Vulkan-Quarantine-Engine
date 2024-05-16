@@ -11,11 +11,13 @@
 #include <RenderPassModule.h>
 #include <DirectionalLight.h>
 #include <SpotLight.h>
+#include <PointLight.h>
 
 #include <DescriptorBuffer.h>
 
 class DirectionalLight;
 class SpotLight;
+class PointLight;
 
 struct LightMap
 {
@@ -51,6 +53,7 @@ private:
 
     std::shared_ptr<RenderPassModule> renderPassPtr = nullptr;
     std::shared_ptr<ShaderModule> dir_shadow_map_shader = nullptr;
+    std::shared_ptr<ShaderModule> omni_shadow_map_shader = nullptr;
 
 public:
     static LightManager* instance;
@@ -66,6 +69,7 @@ public:
 
     std::vector<std::shared_ptr<DirectionalLight>> DirLights;
     std::vector<std::shared_ptr<SpotLight>> SpotLights;
+    std::vector<std::shared_ptr<PointLight>> PointLights;
 
 private:
     void AddLight(std::shared_ptr<Light> light_ptr, std::string& name);
@@ -79,6 +83,7 @@ public:
     LightManager();
     void AddRenderPassModule(std::shared_ptr<RenderPassModule> renderPassModule);
     void AddDirShadowMapShader(std::shared_ptr<ShaderModule> shadow_mapping_shader);
+    void AddOmniShadowMapShader(std::shared_ptr<ShaderModule> omni_shadow_mapping_shader);
     void CreateLight(LightType type, std::string name);
     std::shared_ptr<Light> GetLight(std::string name);
     void Update();

@@ -25,6 +25,7 @@ private:
 public:
     static MaterialManager* instance;
     std::shared_ptr<ShaderModule> shadow_mapping_shader;
+    std::shared_ptr<ShaderModule> omni_shadow_mapping_shader;
 
 private:
     std::string CheckName(std::string nameMaterial);

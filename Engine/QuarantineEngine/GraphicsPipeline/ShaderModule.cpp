@@ -29,7 +29,15 @@ ShaderModule::ShaderModule(std::string shaderName, GraphicsPipelineData pipeline
 ShaderModule::ShaderModule(std::string vertexShaderName, std::string fragmentShaderName, GraphicsPipelineData pipelineData) : ShaderModule()
 {
     this->graphicsPipelineData = pipelineData;
-    this->createShaderModule(vertexShaderName, fragmentShaderName);
+
+    if (this->graphicsPipelineData.IsShadowMap)
+    {
+        this->createShadowShaderModule(vertexShaderName, fragmentShaderName);
+    }
+    else
+    {
+        this->createShaderModule(vertexShaderName, fragmentShaderName);
+    }
 }
 
 ShaderModule::ShaderModule(std::string firstShaderName, std::string secondShaderName, std::string thirdShaderName, GraphicsPipelineData pipelineData)
@@ -78,6 +86,18 @@ void ShaderModule::createShadowShaderModule(const std::string& filename_compute)
 {
     this->vertShaderStageInfo = createShader(deviceModule->device, filename_compute, SHADER_TYPE::VERTEX_SHADER);
     this->shaderStages.push_back(vertShaderStageInfo);
+    this->CreateDescriptorSetLayout();
+    this->createShaderBindings();
+    this->ShadowPipelineModule = this->shadowPipelineManager->RegisterNewShadowPipeline(*this, this->descriptorSetLayout, this->graphicsPipelineData);
+}
+
+void ShaderModule::createShadowShaderModule(const std::string& filename_vertex, const std::string& filename_fragment)
+{
+    vertShaderStageInfo = createShader(deviceModule->device, filename_vertex, SHADER_TYPE::VERTEX_SHADER);
+    fragShaderStageInfo = createShader(deviceModule->device, filename_fragment, SHADER_TYPE::FRAGMENT_SHADER);
+    shaderStages.push_back(vertShaderStageInfo);
+    shaderStages.push_back(fragShaderStageInfo);
+
     this->CreateDescriptorSetLayout();
     this->createShaderBindings();
     this->ShadowPipelineModule = this->shadowPipelineManager->RegisterNewShadowPipeline(*this, this->descriptorSetLayout, this->graphicsPipelineData);

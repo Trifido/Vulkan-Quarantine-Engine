@@ -173,6 +173,7 @@ void App::initVulkan()
     this->particleSystemManager = ParticleSystemManager::getInstance();
 
     this->lightManager->AddDirShadowMapShader(materialManager->shadow_mapping_shader);
+    this->lightManager->AddOmniShadowMapShader(materialManager->omni_shadow_mapping_shader);
     this->lightManager->AddRenderPassModule(renderPassModule);
     this->lightManager->SetCamera(this->cameraEditor);
     this->cullingSceneManager = CullingSceneManager::getInstance();

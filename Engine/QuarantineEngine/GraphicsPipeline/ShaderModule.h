@@ -75,6 +75,7 @@ public:
     static std::vector<char> readFile(const std::string& filename);
     void createShaderModule(const std::string& filename_compute);
     void createShadowShaderModule(const std::string& filename_compute);
+    void createShadowShaderModule(const std::string& filename_vertex, const std::string& filename_fragment);
     void createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment);
     void createShaderModule(const std::string& filename_vertex, const std::string& filename_geometry, const std::string& filename_fragment);
     void createMeshShaderModule(const std::string& filename_task, const std::string& filename_mesh, const std::string& filename_fragment);

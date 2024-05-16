@@ -52,6 +52,11 @@ void LightManager::AddDirShadowMapShader(std::shared_ptr<ShaderModule> shadow_ma
     this->dir_shadow_map_shader = shadow_mapping_shader;
 }
 
+void LightManager::AddOmniShadowMapShader(std::shared_ptr<ShaderModule> omni_shadow_mapping_shader)
+{
+    this->omni_shadow_map_shader = omni_shadow_mapping_shader;
+}
+
 LightManager* LightManager::getInstance()
 {
     if (instance == NULL)
@@ -70,20 +75,21 @@ void LightManager::CreateLight(LightType type, std::string name)
 {
     switch (type)
     {
-    default:
-    case LightType::POINT_LIGHT:
-        this->AddLight(std::static_pointer_cast<Light>(std::make_shared<PointLight>()), name);
-        break;
+        default:
+        case LightType::POINT_LIGHT:
+            this->PointLights.push_back(std::make_shared<PointLight>(this->dir_shadow_map_shader, this->renderPassPtr->shadowMappingRenderPass));
+            this->AddLight(std::static_pointer_cast<Light>(this->PointLights.back()), name);
+            break;
 
-    case LightType::DIRECTIONAL_LIGHT:
-        this->DirLights.push_back(std::make_shared<DirectionalLight>(this->dir_shadow_map_shader, this->renderPassPtr->shadowMappingRenderPass));
-        this->AddLight(std::static_pointer_cast<Light>(this->DirLights.back()), name);
-        break;
+        case LightType::DIRECTIONAL_LIGHT:
+            this->DirLights.push_back(std::make_shared<DirectionalLight>(this->dir_shadow_map_shader, this->renderPassPtr->shadowMappingRenderPass));
+            this->AddLight(std::static_pointer_cast<Light>(this->DirLights.back()), name);
+            break;
 
-    case LightType::SPOT_LIGHT:
-        this->SpotLights.push_back(std::make_shared<SpotLight>(this->dir_shadow_map_shader, this->renderPassPtr->shadowMappingRenderPass));
-        this->AddLight(std::static_pointer_cast<Light>(this->SpotLights.back()), name);
-        break;
+        case LightType::SPOT_LIGHT:
+            this->SpotLights.push_back(std::make_shared<SpotLight>(this->dir_shadow_map_shader, this->renderPassPtr->shadowMappingRenderPass));
+            this->AddLight(std::static_pointer_cast<Light>(this->SpotLights.back()), name);
+            break;
     }
 }
 
