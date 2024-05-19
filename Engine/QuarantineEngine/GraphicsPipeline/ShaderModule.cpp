@@ -16,7 +16,7 @@ ShaderModule::ShaderModule(std::string shaderName, GraphicsPipelineData pipeline
 {
     this->graphicsPipelineData = pipelineData;
 
-    if (this->graphicsPipelineData.IsShadowMap)
+    if (this->graphicsPipelineData.shadowMode != ShadowMappingMode::NONE)
     {
         this->createShadowShaderModule(shaderName);
     }
@@ -30,7 +30,7 @@ ShaderModule::ShaderModule(std::string vertexShaderName, std::string fragmentSha
 {
     this->graphicsPipelineData = pipelineData;
 
-    if (this->graphicsPipelineData.IsShadowMap)
+    if (this->graphicsPipelineData.shadowMode != ShadowMappingMode::NONE)
     {
         this->createShadowShaderModule(vertexShaderName, fragmentShaderName);
     }

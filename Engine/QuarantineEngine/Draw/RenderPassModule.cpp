@@ -1,6 +1,8 @@
 #include "RenderPassModule.h"
 #include <array>
 
+RenderPassModule* RenderPassModule::instance = nullptr;
+
 RenderPassModule::RenderPassModule()
 {
     device_ptr = DeviceModule::getInstance();
@@ -11,10 +13,18 @@ RenderPassModule::~RenderPassModule()
     device_ptr = nullptr;
 }
 
+RenderPassModule* RenderPassModule::getInstance()
+{
+    if (instance == NULL)
+        instance = new RenderPassModule();
+
+    return instance;
+}
+
 void RenderPassModule::cleanup()
 {
     vkDestroyRenderPass(device_ptr->device, renderPass, nullptr);
-    vkDestroyRenderPass(device_ptr->device, shadowMappingRenderPass, nullptr);
+    vkDestroyRenderPass(device_ptr->device, dirShadowMappingRenderPass, nullptr);
 }
 
 void RenderPassModule::createRenderPass(VkFormat swapchainFormat, VkFormat depthFormat, VkSampleCountFlagBits msaaSamples)
@@ -90,7 +100,7 @@ void RenderPassModule::createRenderPass(VkFormat swapchainFormat, VkFormat depth
     }
 }
 
-void RenderPassModule::createShadowRenderPass(VkFormat shadowFormat)
+void RenderPassModule::createDirShadowRenderPass(VkFormat shadowFormat)
 {
     VkAttachmentDescription attachmentDescription{};
     attachmentDescription.format = shadowFormat;
@@ -139,7 +149,58 @@ void RenderPassModule::createShadowRenderPass(VkFormat shadowFormat)
     renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
     renderPassInfo.pDependencies = dependencies.data();
 
-    if (vkCreateRenderPass(device_ptr->device, &renderPassInfo, nullptr, &shadowMappingRenderPass) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create shadow render pass!");
+    if (vkCreateRenderPass(device_ptr->device, &renderPassInfo, nullptr, &dirShadowMappingRenderPass) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to create directional shadow render pass!");
+    }
+}
+
+void RenderPassModule::createOmniShadowRenderPass(VkFormat shadowFormat, VkFormat shadowDepthFormat)
+{
+    VkAttachmentDescription attachmentsDescription[2]{};
+
+    attachmentsDescription[0].format = shadowFormat;
+    attachmentsDescription[0].samples = VK_SAMPLE_COUNT_1_BIT;
+    attachmentsDescription[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    attachmentsDescription[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    attachmentsDescription[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachmentsDescription[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attachmentsDescription[0].initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    attachmentsDescription[0].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+    // Depth attachment
+    attachmentsDescription[1].format = shadowDepthFormat;
+    attachmentsDescription[1].samples = VK_SAMPLE_COUNT_1_BIT;
+    attachmentsDescription[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    attachmentsDescription[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    attachmentsDescription[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachmentsDescription[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attachmentsDescription[1].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    attachmentsDescription[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    VkAttachmentReference colorReference = {};
+    colorReference.attachment = 0;
+    colorReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkAttachmentReference depthReference = {};
+    depthReference.attachment = 1;
+    depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    VkSubpassDescription subpass = {};
+    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass.colorAttachmentCount = 1;
+    subpass.pColorAttachments = &colorReference;
+    subpass.pDepthStencilAttachment = &depthReference;
+
+    VkRenderPassCreateInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    renderPassInfo.attachmentCount = 2;
+    renderPassInfo.pAttachments = attachmentsDescription;
+    renderPassInfo.subpassCount = 1;
+    renderPassInfo.pSubpasses = &subpass;
+
+    if (vkCreateRenderPass(device_ptr->device, &renderPassInfo, nullptr, &omniShadowMappingRenderPass) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to create omni shadow render pass!");
     }
 }

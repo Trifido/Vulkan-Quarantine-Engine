@@ -13,11 +13,12 @@
 
 class ShaderModule;
 
+typedef std::unordered_map<std::string, std::pair<std::shared_ptr<ShadowPipelineModule>, std::shared_ptr<VkRenderPass>>> ShadowResourcesMap;
+
 class ShadowPipelineManager
 {
 private:
-    std::unordered_map<std::string, std::shared_ptr<ShadowPipelineModule>> _shadowPipelines;
-    std::shared_ptr<VkRenderPass> defaultRenderPass = nullptr;
+    ShadowResourcesMap _shadowPipelines;
 
 public:
     static ShadowPipelineManager* instance;
@@ -30,12 +31,8 @@ public:
     static ShadowPipelineManager* getInstance();
     static void ResetInstance();
     std::shared_ptr<ShadowPipelineModule> GetPipeline(std::string pipelineName);
-    void AddShadowPipeline(const char* pipelineName, std::shared_ptr<ShadowPipelineModule> gp_ptr);
-    void AddShadowPipeline(std::string& pipelineName, std::shared_ptr<ShadowPipelineModule> gp_ptr);
-    void AddShadowPipeline(std::string& pipelineName, ShadowPipelineModule gp);
     std::shared_ptr<ShadowPipelineModule> RegisterNewShadowPipeline(ShaderModule& shader, VkDescriptorSetLayout descriptorLayout, GraphicsPipelineData pipelineData);
     bool Exists(std::string pipelineName);
-    void RegisterDefaultRenderPass(VkRenderPass renderPass);
     void CleanShadowPipeline();
     void RecreateShadowPipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout);
 };

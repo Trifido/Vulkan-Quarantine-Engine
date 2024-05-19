@@ -7,13 +7,17 @@
 #include "TextureManagerModule.h"
 #include <ShadowPipelineModule.h>
 #include <ShaderModule.h>
+#include <ShadowMappingMode.h>
+
 
 class ShadowMappingModule : public TextureManagerModule
 {
 public:
+    ShadowMappingMode shadowMode;
     uint32_t TextureSize;
     VkFormat shadowFormat;
     VkSampler depthSampler;
+    std::array<VkImageView, 6> createCubeMapImageViews;
     std::shared_ptr<ShadowPipelineModule> shadowPipelineModule = nullptr;
     std::shared_ptr<ShaderModule> shaderModule = nullptr;
     // Depth bias (and slope) are used to avoid shadowing artifacts
@@ -25,11 +29,12 @@ public:
     VkFramebuffer shadowFrameBuffer;
 
 private:
-    void CreateShadowMapResources(VkRenderPass& renderPass);
+    void CreateDirectionalShadowMapResources(VkRenderPass& renderPass);
+    void CreateOmniShadowMapResources(VkRenderPass& renderPass);
 
 public:
     ShadowMappingModule();
-    ShadowMappingModule(std::shared_ptr<ShaderModule> shaderModule, VkRenderPass& renderPass);
+    ShadowMappingModule(std::shared_ptr<ShaderModule> shaderModule, VkRenderPass& renderPass, ShadowMappingMode mode);
     void cleanup() override;
 };
 

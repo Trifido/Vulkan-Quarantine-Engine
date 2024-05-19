@@ -18,6 +18,7 @@ LightManager::LightManager()
 {
     this->deviceModule = DeviceModule::getInstance();
     this->swapChainModule = SwapChainModule::getInstance();
+    this->renderPassModule = RenderPassModule::getInstance();
 
     this->lightManagerUniform = std::make_shared<LightManagerUniform>();
     this->lightUBO = std::make_shared<UniformBufferObject>();
@@ -40,11 +41,6 @@ LightManager::LightManager()
     this->lightBinSSBO->CreateSSBO(this->lightBinSSBOSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
 
     this->lightBuffer.reserve(this->MAX_NUM_LIGHT);
-}
-
-void LightManager::AddRenderPassModule(std::shared_ptr<RenderPassModule> renderPassModule)
-{
-    this->renderPassPtr = renderPassModule;
 }
 
 void LightManager::AddDirShadowMapShader(std::shared_ptr<ShaderModule> shadow_mapping_shader)
@@ -77,17 +73,17 @@ void LightManager::CreateLight(LightType type, std::string name)
     {
         default:
         case LightType::POINT_LIGHT:
-            this->PointLights.push_back(std::make_shared<PointLight>(this->dir_shadow_map_shader, this->renderPassPtr->shadowMappingRenderPass));
+            this->PointLights.push_back(std::make_shared<PointLight>(this->dir_shadow_map_shader, this->renderPassModule->dirShadowMappingRenderPass));
             this->AddLight(std::static_pointer_cast<Light>(this->PointLights.back()), name);
             break;
 
         case LightType::DIRECTIONAL_LIGHT:
-            this->DirLights.push_back(std::make_shared<DirectionalLight>(this->dir_shadow_map_shader, this->renderPassPtr->shadowMappingRenderPass));
+            this->DirLights.push_back(std::make_shared<DirectionalLight>(this->dir_shadow_map_shader, this->renderPassModule->dirShadowMappingRenderPass));
             this->AddLight(std::static_pointer_cast<Light>(this->DirLights.back()), name);
             break;
 
         case LightType::SPOT_LIGHT:
-            this->SpotLights.push_back(std::make_shared<SpotLight>(this->dir_shadow_map_shader, this->renderPassPtr->shadowMappingRenderPass));
+            this->SpotLights.push_back(std::make_shared<SpotLight>(this->dir_shadow_map_shader, this->renderPassModule->dirShadowMappingRenderPass));
             this->AddLight(std::static_pointer_cast<Light>(this->SpotLights.back()), name);
             break;
     }

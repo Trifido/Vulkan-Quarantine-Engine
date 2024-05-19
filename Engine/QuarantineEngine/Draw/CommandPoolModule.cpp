@@ -18,6 +18,7 @@ CommandPoolModule::CommandPoolModule()
     computeNodeManager = ComputeNodeManager::getInstance();
     cullingSceneManager = CullingSceneManager::getInstance();
     lightManager = LightManager::getInstance();
+    renderPassModule = RenderPassModule::getInstance();
 
     this->ClearColor = glm::vec3(0.1f);
 }
@@ -100,7 +101,7 @@ void CommandPoolModule::recreateCommandBuffers()
 }
 
 
-void CommandPoolModule::setDefaultRenderPass(VkRenderPass& renderPass, VkFramebuffer& framebuffer, uint32_t iCBuffer)
+void CommandPoolModule::setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t iCBuffer)
 {
     VkViewport viewport{};
     viewport.x = 0.0f;
@@ -116,7 +117,7 @@ void CommandPoolModule::setDefaultRenderPass(VkRenderPass& renderPass, VkFramebu
 
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = renderPass;
+    renderPassInfo.renderPass = this->renderPassModule->renderPass;
     renderPassInfo.framebuffer = framebuffer;
     renderPassInfo.renderArea.offset = { 0, 0 };
     renderPassInfo.renderArea.extent = swapchainModule->swapChainExtent;
@@ -217,7 +218,7 @@ void CommandPoolModule::setShadowRenderPass(VkRenderPass& renderPass, std::share
     vkCmdEndRenderPass(commandBuffers[iCBuffer]);
 }
 
-void CommandPoolModule::Render(FramebufferModule* framebufferModule, std::shared_ptr<RenderPassModule> renderPassModule)
+void CommandPoolModule::Render(FramebufferModule* framebufferModule)
 {
     for (uint32_t i = 0; i < commandBuffers.size(); i++) {
         VkCommandBufferBeginInfo beginInfo{};
@@ -233,25 +234,25 @@ void CommandPoolModule::Render(FramebufferModule* framebufferModule, std::shared
         auto itDirlight = this->lightManager->DirLights.begin();
         while (itDirlight != this->lightManager->DirLights.end())
         {
-            this->setShadowRenderPass(renderPassModule->shadowMappingRenderPass, *itDirlight, i);
+            this->setShadowRenderPass(this->renderPassModule->dirShadowMappingRenderPass, *itDirlight, i);
             itDirlight++;
         }
 
         auto itSpotlight = this->lightManager->SpotLights.begin();
         while (itSpotlight != this->lightManager->SpotLights.end())
         {
-            this->setShadowRenderPass(renderPassModule->shadowMappingRenderPass, *itSpotlight, i);
+            this->setShadowRenderPass(this->renderPassModule->dirShadowMappingRenderPass, *itSpotlight, i);
             itSpotlight++;
         }
 
         auto itPointlight = this->lightManager->PointLights.begin();
         while (itPointlight != this->lightManager->PointLights.end())
         {
-            this->setShadowRenderPass(renderPassModule->shadowMappingRenderPass, *itPointlight, i);
+            this->setShadowRenderPass(this->renderPassModule->omniShadowMappingRenderPass, *itPointlight, i);
             itPointlight++;
         }
 
-        this->setDefaultRenderPass(renderPassModule->renderPass, framebufferModule->swapChainFramebuffers[swapchainModule->currentImage], i);
+        this->setCustomRenderPass(framebufferModule->swapChainFramebuffers[swapchainModule->currentImage], i);
 
         if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
             throw std::runtime_error("failed to record command buffer!");

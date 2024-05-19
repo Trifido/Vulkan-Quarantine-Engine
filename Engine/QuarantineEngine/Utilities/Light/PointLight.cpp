@@ -9,7 +9,7 @@ PointLight::PointLight() : Light()
 PointLight::PointLight(std::shared_ptr<ShaderModule> shaderModule, VkRenderPass& renderPass)
 {
     auto size = sizeof(OmnniShadowUniform);
-    this->shadowMappingPtr = std::make_shared<ShadowMappingModule>(shaderModule, renderPass);
+    this->shadowMappingPtr = std::make_shared<ShadowMappingModule>(shaderModule, renderPass, ShadowMappingMode::OMNI_SHADOW);
 
     this->shadowMapUBO = std::make_shared<UniformBufferObject>();
     this->shadowMapUBO->CreateUniformBuffer(size, MAX_FRAMES_IN_FLIGHT, *deviceModule);

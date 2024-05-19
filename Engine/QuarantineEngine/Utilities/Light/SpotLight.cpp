@@ -15,7 +15,7 @@ SpotLight::SpotLight() : Light()
 SpotLight::SpotLight(std::shared_ptr<ShaderModule> shaderModule, VkRenderPass& renderPass)
 {
     auto size = sizeof(glm::mat4);
-    this->shadowMappingPtr = std::make_shared<ShadowMappingModule>(shaderModule, renderPass);
+    this->shadowMappingPtr = std::make_shared<ShadowMappingModule>(shaderModule, renderPass, ShadowMappingMode::DIRECTIONAL_SHADOW);
 
     this->shadowMapUBO = std::make_shared<UniformBufferObject>();
     this->shadowMapUBO->CreateUniformBuffer(size, MAX_FRAMES_IN_FLIGHT, *deviceModule);

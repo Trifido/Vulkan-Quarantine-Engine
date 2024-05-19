@@ -124,7 +124,7 @@ private:
 
     DepthBufferModule*      depthBufferModule;
     AntiAliasingModule*     antialiasingModule;
-    std::shared_ptr<RenderPassModule>   renderPassModule;
+    RenderPassModule*       renderPassModule;
     Timer*                  timer;
 
     bool show_demo_window = true;

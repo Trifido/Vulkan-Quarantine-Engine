@@ -23,6 +23,7 @@ private:
     ComputeNodeManager*             computeNodeManager;
     CullingSceneManager*            cullingSceneManager;
     LightManager*                   lightManager;
+    RenderPassModule*               renderPassModule;
 
     VkCommandPool                   commandPool;
     VkCommandPool                   computeCommandPool;
@@ -33,7 +34,7 @@ public:
     glm::vec3 ClearColor;
 
 private:
-    void setDefaultRenderPass(VkRenderPass& renderPass, VkFramebuffer& framebuffer, uint32_t iCBuffer);
+    void setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t iCBuffer);
     void setShadowRenderPass(VkRenderPass& renderPass, std::shared_ptr<Light> dirLight, uint32_t iCBuffer);
 public:
     CommandPoolModule();
@@ -51,7 +52,7 @@ public:
     void createCommandPool(VkSurfaceKHR& surface);
     void createCommandBuffers();
     void recreateCommandBuffers();
-    void Render(FramebufferModule* framebufferModule, std::shared_ptr<RenderPassModule> renderPassModule);
+    void Render(FramebufferModule* framebufferModule);
     void recordComputeCommandBuffer(VkCommandBuffer commandBuffer);
     void cleanup();
     void CleanLastResources();

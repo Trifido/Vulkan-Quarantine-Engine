@@ -137,14 +137,13 @@ void App::initVulkan()
     depthBufferModule->createDepthResources(swapchainModule->swapChainExtent, commandPoolModule->getCommandPool());
 
     //Creamos el Render Pass
-    renderPassModule = std::make_shared<RenderPassModule>();
+    renderPassModule = RenderPassModule::getInstance();
     renderPassModule->createRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
-    renderPassModule->createShadowRenderPass(VK_FORMAT_D32_SFLOAT);
+    renderPassModule->createDirShadowRenderPass(VK_FORMAT_D32_SFLOAT);
+    renderPassModule->createOmniShadowRenderPass(VK_FORMAT_R32_SFLOAT, VK_FORMAT_D32_SFLOAT);
 
     //Registramos el default render pass
     this->graphicsPipelineManager->RegisterDefaultRenderPass(renderPassModule->renderPass);
-    //Registramos el shadow render pass
-    this->shadowPipelineManager->RegisterDefaultRenderPass(renderPassModule->shadowMappingRenderPass);
 
     //Creamos el frame buffer
     framebufferModule.createFramebuffer(renderPassModule->renderPass);
@@ -172,10 +171,10 @@ void App::initVulkan()
     this->computeNodeManager->InitializeComputeResources();
     this->particleSystemManager = ParticleSystemManager::getInstance();
 
-    this->lightManager->AddDirShadowMapShader(materialManager->shadow_mapping_shader);
+    this->lightManager->AddDirShadowMapShader(materialManager->dir_shadow_mapping_shader);
     this->lightManager->AddOmniShadowMapShader(materialManager->omni_shadow_mapping_shader);
-    this->lightManager->AddRenderPassModule(renderPassModule);
     this->lightManager->SetCamera(this->cameraEditor);
+
     this->cullingSceneManager = CullingSceneManager::getInstance();
     this->cullingSceneManager->InitializeCullingSceneResources();
     this->cullingSceneManager->AddCameraFrustum(this->cameraEditor->frustumComponent);
@@ -323,7 +322,7 @@ void App::initVulkan()
     this->materialManager->InitializeMaterials();
     this->computeNodeManager->InitializeComputeNodes();
 
-    this->commandPoolModule->Render(&framebufferModule, renderPassModule);
+    this->commandPoolModule->Render(&framebufferModule);
     this->synchronizationModule.createSyncObjects(swapchainModule->getNumSwapChainImages());
 
     init_imgui();
@@ -635,7 +634,7 @@ void App::drawFrame()
 
     vkDeviceWaitIdle(deviceModule->device);
 
-    commandPoolModule->Render(&framebufferModule, renderPassModule);
+    commandPoolModule->Render(&framebufferModule);
 
     synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer(synchronizationModule.GetCurrentFrame()), this->isRender);
 
@@ -702,5 +701,5 @@ void App::recreateSwapchain()
     framebufferModule.createFramebuffer(renderPassModule->renderPass);
 
     commandPoolModule->recreateCommandBuffers();
-    commandPoolModule->Render(&framebufferModule, renderPassModule);
+    commandPoolModule->Render(&framebufferModule);
 }

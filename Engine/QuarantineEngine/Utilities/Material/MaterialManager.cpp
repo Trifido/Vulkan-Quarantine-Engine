@@ -29,6 +29,8 @@ std::string MaterialManager::CheckName(std::string nameMaterial)
 
 MaterialManager::MaterialManager()
 {
+    this->renderPassModule = RenderPassModule::getInstance();
+
     auto absPath = std::filesystem::absolute("../../resources/shaders").generic_string();
 
     std::string substring = "/Engine";
@@ -79,10 +81,14 @@ MaterialManager::MaterialManager()
     shaderManager->AddShader("mesh_shader", this->mesh_shader_test);
 
     GraphicsPipelineData pipelineShadowShader = {};
-    pipelineShadowShader.IsShadowMap = true;
-    this->shadow_mapping_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_shadow_vertex_shader_path, pipelineShadowShader));
-    shaderManager->AddShader("shadow_mapping_shader", this->shadow_mapping_shader);
 
+    pipelineShadowShader.shadowMode = ShadowMappingMode::DIRECTIONAL_SHADOW;
+    pipelineShadowShader.renderPass = this->renderPassModule->dirShadowMappingRenderPass;
+    this->dir_shadow_mapping_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_shadow_vertex_shader_path, pipelineShadowShader));
+    shaderManager->AddShader("dir_shadow_mapping_shader", this->dir_shadow_mapping_shader);
+
+    pipelineShadowShader.shadowMode = ShadowMappingMode::OMNI_SHADOW;
+    pipelineShadowShader.renderPass = this->renderPassModule->omniShadowMappingRenderPass;
     this->omni_shadow_mapping_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_omni_shadow_vertex_shader_path, absolute_omni_shadow_frag_shader_path, pipelineShadowShader));
     shaderManager->AddShader("omni_shadow_mapping_shader", this->omni_shadow_mapping_shader);
 }
@@ -221,8 +227,8 @@ void MaterialManager::CleanLastResources()
     this->default_primitive_shader = nullptr;
     this->mesh_shader_test.reset();
     this->mesh_shader_test = nullptr;
-    this->shadow_mapping_shader.reset();
-    this->shadow_mapping_shader = nullptr;
+    this->dir_shadow_mapping_shader.reset();
+    this->dir_shadow_mapping_shader = nullptr;
 }
 
 void MaterialManager::UpdateUniforms()

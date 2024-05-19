@@ -10,15 +10,20 @@ class RenderPassModule
 private:
     DeviceModule* device_ptr;
 public:
+    static RenderPassModule* instance;
     VkRenderPass    renderPass;
-    VkRenderPass    shadowMappingRenderPass;
+    VkRenderPass    dirShadowMappingRenderPass;
+    VkRenderPass    omniShadowMappingRenderPass;
 
 public:
     RenderPassModule();
     ~RenderPassModule();
+
+    static RenderPassModule* getInstance();
     void cleanup();
     void createRenderPass(VkFormat swapchainFormat, VkFormat depthFormat, VkSampleCountFlagBits msaaSamples);
-    void createShadowRenderPass(VkFormat shadowFormat);
+    void createDirShadowRenderPass(VkFormat shadowFormat);
+    void createOmniShadowRenderPass(VkFormat shadowFormat, VkFormat shadowDepthFormat);
 };
 
 #endif

@@ -726,6 +726,9 @@
     <ClInclude Include="GraphicsPipeline\ShadowPipelineManager.h">
       <Filter>Kernel\GraphicsPipeline\headers</Filter>
     </ClInclude>
+    <ClInclude Include="GraphicsPipeline\ShadowMappingMode.h">
+      <Filter>Kernel\GraphicsPipeline\headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.txt" />

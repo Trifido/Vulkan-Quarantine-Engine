@@ -51,7 +51,7 @@ private:
     std::vector<uint32_t> lights_index;
     std::vector<uint32_t> light_tiles_bits;
 
-    std::shared_ptr<RenderPassModule> renderPassPtr = nullptr;
+    RenderPassModule* renderPassModule = nullptr;
     std::shared_ptr<ShaderModule> dir_shadow_map_shader = nullptr;
     std::shared_ptr<ShaderModule> omni_shadow_map_shader = nullptr;
 
@@ -81,7 +81,6 @@ public:
     static LightManager* getInstance();
     static void ResetInstance();
     LightManager();
-    void AddRenderPassModule(std::shared_ptr<RenderPassModule> renderPassModule);
     void AddDirShadowMapShader(std::shared_ptr<ShaderModule> shadow_mapping_shader);
     void AddOmniShadowMapShader(std::shared_ptr<ShaderModule> omni_shadow_mapping_shader);
     void CreateLight(LightType type, std::string name);
