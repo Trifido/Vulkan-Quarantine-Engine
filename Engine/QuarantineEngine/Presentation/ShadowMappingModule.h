@@ -14,6 +14,7 @@ class ShadowMappingModule : public TextureManagerModule
 {
 public:
     ShadowMappingMode shadowMode;
+    static VkCommandPool commandPool;
     uint32_t TextureSize;
     VkFormat shadowFormat;
     VkSampler depthSampler;
@@ -27,10 +28,12 @@ public:
     float depthBiasSlope = 1.75f;
 
     VkFramebuffer shadowFrameBuffer;
+    std::array<VkFramebuffer, 6> shadowFrameBuffers;
 
 private:
     void CreateDirectionalShadowMapResources(VkRenderPass& renderPass);
     void CreateOmniShadowMapResources(VkRenderPass& renderPass);
+    void PrepareFramebuffers(VkRenderPass& renderPass);
 
 public:
     ShadowMappingModule();

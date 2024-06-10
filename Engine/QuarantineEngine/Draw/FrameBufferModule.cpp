@@ -59,6 +59,36 @@ VkFramebuffer FramebufferModule::CreateShadowFramebuffer(VkRenderPass& renderPas
     return result;
 }
 
+std::array<VkFramebuffer, 6> FramebufferModule::CreateOmniShadowFramebuffer(VkRenderPass& renderPass, VkImageView& depthImageView, std::array<VkImageView, 6> imagesView, uint32_t textureSize, VkDevice& device)
+{
+    VkImageView attachments[2];
+    attachments[1] = depthImageView;
+
+    std::array<VkFramebuffer, 6> result;
+
+    // Create frame buffer
+    VkFramebufferCreateInfo framebufferInfo{};
+    framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    framebufferInfo.renderPass = renderPass;
+    framebufferInfo.attachmentCount = 2;
+    framebufferInfo.pAttachments = attachments;
+    framebufferInfo.width = textureSize;
+    framebufferInfo.height = textureSize;
+    framebufferInfo.layers = 1;
+
+    for (uint32_t i = 0; i < 6; i++)
+    {
+        attachments[0] = imagesView[i];
+
+        if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &result[i]) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to create shadow map framebuffer!");
+        }
+    }
+
+    return result;
+}
+
 void FramebufferModule::cleanup()
 {
     for (auto framebuffer : swapChainFramebuffers) {

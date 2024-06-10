@@ -143,7 +143,7 @@ void CommandPoolModule::setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t
     vkCmdEndRenderPass(commandBuffers[iCBuffer]);
 }
 
-void CommandPoolModule::setShadowRenderPass(VkRenderPass& renderPass, std::shared_ptr<Light> light, uint32_t iCBuffer)
+void CommandPoolModule::setDirectionalShadowRenderPass(VkRenderPass& renderPass, std::shared_ptr<Light> light, uint32_t iCBuffer)
 {
     uint32_t size = 0;
     VkFramebuffer frameBuffer = {};
@@ -209,6 +209,9 @@ void CommandPoolModule::setShadowRenderPass(VkRenderPass& renderPass, std::share
     vkCmdSetViewport(commandBuffers[iCBuffer], 0, 1, &viewport);
     vkCmdSetScissor(commandBuffers[iCBuffer], 0, 1, &scissor);
     vkCmdSetDepthBias(commandBuffers[iCBuffer], depthBiasConstant, 0.0f, depthBiasSlope);
+    vkCmdSetDepthTestEnable(commandBuffers[iCBuffer], true);
+    vkCmdSetDepthWriteEnable(commandBuffers[iCBuffer], true);
+    vkCmdSetFrontFace(commandBuffers[iCBuffer], VK_FRONT_FACE_CLOCKWISE);
 
     vkCmdBindPipeline(commandBuffers[iCBuffer], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
@@ -216,6 +219,107 @@ void CommandPoolModule::setShadowRenderPass(VkRenderPass& renderPass, std::share
     this->gameObjectManager->ShadowCommand(commandBuffers[iCBuffer], iCBuffer, pipelineLayout);
 
     vkCmdEndRenderPass(commandBuffers[iCBuffer]);
+}
+
+void CommandPoolModule::setOmniShadowRenderPass(VkRenderPass& renderPass, std::shared_ptr<Light> light, uint32_t iCBuffer)
+{
+    auto pointLight = std::dynamic_pointer_cast<PointLight, Light>(light);
+    if (pointLight == nullptr)
+        return;
+
+    uint32_t size = pointLight->shadowMappingPtr->TextureSize;
+    auto depthBiasConstant = pointLight->shadowMappingPtr->depthBiasConstant;
+    auto depthBiasSlope = pointLight->shadowMappingPtr->depthBiasSlope;
+
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = size;
+    viewport.height = size;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent.width = size;
+    scissor.extent.height = size;
+
+    vkCmdSetViewport(commandBuffers[iCBuffer], 0, 1, &viewport);
+    vkCmdSetScissor(commandBuffers[iCBuffer], 0, 1, &scissor);
+
+    vkCmdSetDepthBias(commandBuffers[iCBuffer], depthBiasConstant, 0.0f, depthBiasSlope);
+    vkCmdSetDepthTestEnable(commandBuffers[iCBuffer], true);
+    vkCmdSetDepthWriteEnable(commandBuffers[iCBuffer], true);
+    vkCmdSetFrontFace(commandBuffers[iCBuffer], VK_FRONT_FACE_CLOCKWISE);
+
+    for (uint32_t faceId = 0; faceId < 6; faceId++)
+    {
+        this->updateCubeMapFace(faceId, renderPass, pointLight, commandBuffers[iCBuffer], iCBuffer);
+    }
+}
+
+void CommandPoolModule::updateCubeMapFace(uint32_t faceIdx, VkRenderPass& renderPass, std::shared_ptr<PointLight> pointLight, VkCommandBuffer commandBuffer, uint32_t iCBuffer)
+{
+    VkClearValue clearValues[2];
+    clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+    clearValues[1].depthStencil = { 1.0f, 0 };
+
+    uint32_t size = pointLight->shadowMappingPtr->TextureSize;
+
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = renderPass;
+    renderPassInfo.framebuffer = pointLight->shadowMappingPtr->shadowFrameBuffers[faceIdx];
+    renderPassInfo.renderArea.offset = { 0, 0 };
+    renderPassInfo.renderArea.extent.width = size;
+    renderPassInfo.renderArea.extent.height = size;
+    renderPassInfo.clearValueCount = 2;
+    renderPassInfo.pClearValues = clearValues;
+
+    glm::mat4 viewMatrix = glm::mat4(1.0f);
+    switch (faceIdx)
+    {
+    case 0: // POSITIVE_X
+        viewMatrix = glm::rotate(viewMatrix, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        viewMatrix = glm::rotate(viewMatrix, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        break;
+    case 1:	// NEGATIVE_X
+        viewMatrix = glm::rotate(viewMatrix, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        viewMatrix = glm::rotate(viewMatrix, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        break;
+    case 2:	// POSITIVE_Y
+        viewMatrix = glm::rotate(viewMatrix, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        break;
+    case 3:	// NEGATIVE_Y
+        viewMatrix = glm::rotate(viewMatrix, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        break;
+    case 4:	// POSITIVE_Z
+        viewMatrix = glm::rotate(viewMatrix, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        break;
+    case 5:	// NEGATIVE_Z
+        viewMatrix = glm::rotate(viewMatrix, glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        break;
+    }
+
+    auto pipeline = pointLight->shadowMappingPtr->shadowPipelineModule->pipeline;
+    auto pipelineLayout = pointLight->shadowMappingPtr->shadowPipelineModule->pipelineLayout;
+    auto descriptorBuffer = pointLight->descriptorBuffer;
+
+    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    vkCmdPushConstants(
+        commandBuffer,
+        pipelineLayout,
+        VK_SHADER_STAGE_ALL,
+        0,
+        sizeof(glm::mat4),
+        &viewMatrix);
+
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, descriptorBuffer->getDescriptorSet(iCBuffer), 0, NULL);
+    this->gameObjectManager->ShadowCommand(commandBuffers[iCBuffer], iCBuffer, pipelineLayout);
+
+    vkCmdEndRenderPass(commandBuffer);
 }
 
 void CommandPoolModule::Render(FramebufferModule* framebufferModule)
@@ -234,21 +338,21 @@ void CommandPoolModule::Render(FramebufferModule* framebufferModule)
         auto itDirlight = this->lightManager->DirLights.begin();
         while (itDirlight != this->lightManager->DirLights.end())
         {
-            this->setShadowRenderPass(this->renderPassModule->dirShadowMappingRenderPass, *itDirlight, i);
+            this->setDirectionalShadowRenderPass(this->renderPassModule->dirShadowMappingRenderPass, *itDirlight, i);
             itDirlight++;
         }
 
         auto itSpotlight = this->lightManager->SpotLights.begin();
         while (itSpotlight != this->lightManager->SpotLights.end())
         {
-            this->setShadowRenderPass(this->renderPassModule->dirShadowMappingRenderPass, *itSpotlight, i);
+            this->setDirectionalShadowRenderPass(this->renderPassModule->dirShadowMappingRenderPass, *itSpotlight, i);
             itSpotlight++;
         }
 
         auto itPointlight = this->lightManager->PointLights.begin();
         while (itPointlight != this->lightManager->PointLights.end())
         {
-            this->setShadowRenderPass(this->renderPassModule->omniShadowMappingRenderPass, *itPointlight, i);
+            this->setOmniShadowRenderPass(this->renderPassModule->omniShadowMappingRenderPass, *itPointlight, i);
             itPointlight++;
         }
 

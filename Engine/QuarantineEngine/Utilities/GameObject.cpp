@@ -434,10 +434,6 @@ void GameObject::CreateDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_
 {
     if (this->isRenderEnable())
     {
-        vkCmdSetDepthTestEnable(commandBuffer, true);
-        vkCmdSetDepthWriteEnable(commandBuffer, true);
-        vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
-
         if (!this->isMeshShading)
         {
             VkDeviceSize offsets[] = { 0 };

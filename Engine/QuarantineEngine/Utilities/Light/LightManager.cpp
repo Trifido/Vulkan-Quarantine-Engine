@@ -73,7 +73,7 @@ void LightManager::CreateLight(LightType type, std::string name)
     {
         default:
         case LightType::POINT_LIGHT:
-            this->PointLights.push_back(std::make_shared<PointLight>(this->dir_shadow_map_shader, this->renderPassModule->dirShadowMappingRenderPass));
+            this->PointLights.push_back(std::make_shared<PointLight>(this->omni_shadow_map_shader, this->renderPassModule->omniShadowMappingRenderPass));
             this->AddLight(std::static_pointer_cast<Light>(this->PointLights.back()), name);
             break;
 

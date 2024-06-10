@@ -13,7 +13,6 @@ class PointLight : public Light
 {
 public:
     std::shared_ptr<ShadowMappingModule> shadowMappingPtr = nullptr;
-
     std::shared_ptr<UniformBufferObject> shadowMapUBO = nullptr;
     std::shared_ptr<DescriptorBuffer> descriptorBuffer = nullptr;
 
