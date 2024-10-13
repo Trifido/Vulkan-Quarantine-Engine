@@ -52,19 +52,22 @@ public:
     Camera() {};
     Camera(float width, float height);
     void CameraController(float deltaTime);
-    void EditorScroll();
-    void EditorRotate();
     float GetFOV() { return fov; }
     float* GetRawFOV() { return &fov; }
     float* GetRawNearPlane() { return &nearPlane; }
     float* GetRawFarPlane() { return &farPlane; }
     float* GetRawCameraPosition() { return &cameraPos[0]; }
     float* GetRawCameraFront() { return &cameraFront[0]; }
-    void CheckCameraAttributes(float* positionCamera, float* frontCamera, float fov, float nearPlane, float farPlane);
-    void InvertPitch(float heightPos);
-    void UpdateSize(VkExtent2D size);
-    void UpdateUBOCamera();
+    void UpdateViewportSize(VkExtent2D size);
+    void UpdateCamera();
     void CleanCameraUBO();
+
+private:
+    void CheckCameraAttributes(float* positionCamera, float* frontCamera, float fov, float nearPlane, float farPlane);
+    void EditorScroll();
+    void EditorRotate();
+    void InvertPitch(float heightPos);
+    void UpdateUBOCamera();
 };
 
 #endif // !CAMERA_H

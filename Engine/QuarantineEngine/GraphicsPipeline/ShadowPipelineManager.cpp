@@ -67,7 +67,7 @@ bool ShadowPipelineManager::Exists(std::string pipelineName)
     return true;
 }
 
-void ShadowPipelineManager::CleanShadowPipeline()
+void ShadowPipelineManager::CleanShadowPipelines()
 {
     for (auto gPipeline : this->_shadowPipelines)
     {
@@ -78,6 +78,11 @@ void ShadowPipelineManager::CleanShadowPipeline()
 void ShadowPipelineManager::RecreateShadowPipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout)
 {
     this->_shadowPipelines[shader.id].first->CompileShadowPipeline(shader.shaderStages, shader.vertexInputInfo, descriptorLayout);
+}
+
+void ShadowPipelineManager::CleanLastResources()
+{
+    this->_shadowPipelines.clear();
 }
 
 std::shared_ptr<ShadowPipelineModule> ShadowPipelineManager::RegisterNewShadowPipeline(ShaderModule& shader, VkDescriptorSetLayout descriptorLayout, GraphicsPipelineData pipelineData)

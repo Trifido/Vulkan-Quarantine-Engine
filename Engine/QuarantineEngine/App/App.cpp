@@ -490,9 +490,11 @@ void App::cleanUp()
 
     this->deviceModule->cleanup();
 
-    if (enableValidationLayers) {
+    if (enableValidationLayers)
+    {
         this->layerExtensionModule.DestroyDebugUtilsMessengerEXT(vulkanInstance.getInstance(), nullptr);
     }
+
     this->windowSurface.cleanUp(vulkanInstance.getInstance());
     this->vulkanInstance.destroyInstance();
 
@@ -515,7 +517,7 @@ void App::cleanUpSwapchain()
 
     //Limpiamos los VKPipelines, VkPipelineLayouts y shader del material
     graphicsPipelineManager->CleanGraphicsPipeline();
-    shadowPipelineManager->CleanShadowPipeline();
+    shadowPipelineManager->CleanShadowPipelines();
 
     swapchainModule->cleanup();
 }
@@ -583,8 +585,8 @@ void App::cleanManagers()
     this->depthBufferModule->ResetInstance();
     this->depthBufferModule = nullptr;
 
-    //this->shadowMappingModule->ResetInstance();
-    //this->shadowMappingModule = nullptr;
+    this->shadowPipelineManager->ResetInstance();
+    this->shadowPipelineManager = nullptr;
 
     this->physicsModule->ResetInstance();
     this->physicsModule = nullptr;
@@ -683,7 +685,8 @@ void App::recreateSwapchain()
     swapchainModule->createSwapChain(windowSurface.getSurface(), mainWindow.getWindow());
 
     //Actualizamos el formato de la cámara
-    this->cameraEditor->UpdateSize(swapchainModule->swapChainExtent);
+    this->cameraEditor->UpdateViewportSize(swapchainModule->swapChainExtent);
+    this->cameraEditor->UpdateCamera();
 
     //Recreamos el antialiasing module
     antialiasingModule->createColorResources();

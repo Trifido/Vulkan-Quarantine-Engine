@@ -33,8 +33,9 @@ public:
     std::shared_ptr<ShadowPipelineModule> GetPipeline(std::string pipelineName);
     std::shared_ptr<ShadowPipelineModule> RegisterNewShadowPipeline(ShaderModule& shader, VkDescriptorSetLayout descriptorLayout, GraphicsPipelineData pipelineData);
     bool Exists(std::string pipelineName);
-    void CleanShadowPipeline();
+    void CleanShadowPipelines();
     void RecreateShadowPipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout);
+    void CleanLastResources();
 };
 
 #endif // !SHADOW_PIPELINE_MANAGER_H
