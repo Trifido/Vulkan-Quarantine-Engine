@@ -11,9 +11,9 @@ private:
     DeviceModule* device_ptr;
 public:
     static RenderPassModule* instance;
-    VkRenderPass    renderPass;
-    VkRenderPass    dirShadowMappingRenderPass;
-    VkRenderPass    omniShadowMappingRenderPass;
+    std::shared_ptr<VkRenderPass>    renderPass;
+    std::shared_ptr<VkRenderPass>    dirShadowMappingRenderPass;
+    std::shared_ptr<VkRenderPass> omniShadowMappingRenderPass;
 
 public:
     RenderPassModule();

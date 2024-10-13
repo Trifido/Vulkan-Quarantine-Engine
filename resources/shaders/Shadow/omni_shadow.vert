@@ -15,12 +15,13 @@ layout(set = 0, binding = 0) uniform PointLightCameraUniform
 
 layout(std430, push_constant) uniform PushConstants
 {
+	mat4 model;
 	mat4 view;
 } constants;
 
 void main() 
 {
-    gl_Position = plData.projection * constants.view * plData.model * inPosition;
+    gl_Position = plData.projection * constants.view * constants.model * inPosition;
 
     outPosition = inPosition;	
 	outLightPosition = plData.lightPos.xyz; 

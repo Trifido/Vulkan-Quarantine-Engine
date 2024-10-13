@@ -91,6 +91,21 @@ void GameObjectManager::ShadowCommand(VkCommandBuffer& commandBuffer, uint32_t i
     }
 }
 
+
+void GameObjectManager::OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, glm::mat4 viewParameter, glm::vec3 lightPosition)
+{
+    for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
+    {
+        PCOmniShadowStruct shadowParameters = {};
+        shadowParameters.view = viewParameter;
+
+
+        shadowParameters.model = glm::translate(model.second->transform->GetModel(), -lightPosition);
+        model.second->SetViewOmniShadowParameter(shadowParameters);
+        model.second->drawShadowCommand(commandBuffer, idx, pipelineLayout, true);
+    }
+}
+
 void GameObjectManager::InitializePhysics()
 {
     for (auto model : this->_physicObjects)

@@ -83,11 +83,11 @@ bool GraphicsPipelineManager::Exists(std::string pipelineName)
     return true;
 }
 
-void GraphicsPipelineManager::RegisterDefaultRenderPass(VkRenderPass renderPass)
+void GraphicsPipelineManager::RegisterDefaultRenderPass(std::shared_ptr<VkRenderPass> renderPass)
 {
     if (this->defaultRenderPass != nullptr)
         this->defaultRenderPass.reset();
-    this->defaultRenderPass = std::make_shared<VkRenderPass>(renderPass);
+    this->defaultRenderPass = renderPass;
 }
 
 void GraphicsPipelineManager::CleanGraphicsPipeline()

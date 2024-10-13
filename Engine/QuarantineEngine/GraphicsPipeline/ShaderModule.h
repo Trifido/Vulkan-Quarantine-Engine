@@ -65,6 +65,7 @@ public:
     std::shared_ptr<GraphicsPipelineModule>         PipelineModule;
     std::shared_ptr<ComputePipelineModule>          ComputePipelineModule;
     std::shared_ptr<ShadowPipelineModule>           ShadowPipelineModule;
+    bool                                            IsShadowShader = false;
 
 public:
     ShaderModule();

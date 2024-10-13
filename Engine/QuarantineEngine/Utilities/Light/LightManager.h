@@ -90,6 +90,7 @@ public:
     void UpdateUBOLight();
     void CleanLightUBO();
     void CleanLastResources();
+    void CleanShadowMapResources();
     void SetCamera(Camera* camera_ptr);
 };
 

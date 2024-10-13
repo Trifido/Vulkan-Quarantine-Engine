@@ -18,6 +18,11 @@ void ShadowPipelineModule::SetShadowMappingMode(ShadowMappingMode shadowMode)
     this->shadowMode = shadowMode;
 }
 
+ShadowMappingMode ShadowPipelineModule::GetShadowMappingMode()
+{
+    return this->shadowMode;
+}
+
 void ShadowPipelineModule::CompileShadowPipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, VkPipelineVertexInputStateCreateInfo vertexInfo, VkDescriptorSetLayout descriptorLayout)
 {
     switch (this->shadowMode)
@@ -252,7 +257,7 @@ void ShadowPipelineModule::CompileOmniShadowPipeline(std::vector<VkPipelineShade
     VkPushConstantRange pushConstantInfo = { 0 };
     pushConstantInfo.stageFlags = VK_SHADER_STAGE_ALL;
     pushConstantInfo.offset = 0;
-    pushConstantInfo.size = sizeof(PushConstantStruct);
+    pushConstantInfo.size = sizeof(PCOmniShadowStruct);
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;

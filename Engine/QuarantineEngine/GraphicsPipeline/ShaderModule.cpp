@@ -89,6 +89,7 @@ void ShaderModule::createShadowShaderModule(const std::string& filename_compute)
     this->CreateDescriptorSetLayout();
     this->createShaderBindings();
     this->ShadowPipelineModule = this->shadowPipelineManager->RegisterNewShadowPipeline(*this, this->descriptorSetLayout, this->graphicsPipelineData);
+    this->IsShadowShader = true;
 }
 
 void ShaderModule::createShadowShaderModule(const std::string& filename_vertex, const std::string& filename_fragment)
@@ -101,6 +102,7 @@ void ShaderModule::createShadowShaderModule(const std::string& filename_vertex, 
     this->CreateDescriptorSetLayout();
     this->createShaderBindings();
     this->ShadowPipelineModule = this->shadowPipelineManager->RegisterNewShadowPipeline(*this, this->descriptorSetLayout, this->graphicsPipelineData);
+    this->IsShadowShader = true;
 }
 
 void ShaderModule::createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment)
@@ -194,7 +196,14 @@ void ShaderModule::cleanup()
 
 void ShaderModule::RecreatePipeline()
 {
-    this->graphicsPipelineManager->RecreateGraphicsPipeline(*this, this->descriptorSetLayout);
+    if (this->IsShadowShader)
+    {
+        this->shadowPipelineManager->RecreateShadowPipeline(*this, this->descriptorSetLayout);
+    }
+    else
+    {
+        this->graphicsPipelineManager->RecreateGraphicsPipeline(*this, this->descriptorSetLayout);
+    }
 }
 
 void ShaderModule::CleanLastResources()

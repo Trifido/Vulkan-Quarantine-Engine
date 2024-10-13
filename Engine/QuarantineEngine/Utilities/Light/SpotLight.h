@@ -19,7 +19,7 @@ public:
 
 public:
     SpotLight();
-    SpotLight(std::shared_ptr<ShaderModule> shaderModule, VkRenderPass& renderPass);
+    SpotLight(std::shared_ptr<ShaderModule> shaderModule, std::shared_ptr<VkRenderPass> renderPass);
     void UpdateUniform() override;
 };
 

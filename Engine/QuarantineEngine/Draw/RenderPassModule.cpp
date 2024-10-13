@@ -6,6 +6,10 @@ RenderPassModule* RenderPassModule::instance = nullptr;
 RenderPassModule::RenderPassModule()
 {
     device_ptr = DeviceModule::getInstance();
+
+    this->renderPass = std::make_shared<VkRenderPass>();
+    this->dirShadowMappingRenderPass = std::make_shared<VkRenderPass>();
+    this->omniShadowMappingRenderPass = std::make_shared<VkRenderPass>();
 }
 
 RenderPassModule::~RenderPassModule()
@@ -23,8 +27,9 @@ RenderPassModule* RenderPassModule::getInstance()
 
 void RenderPassModule::cleanup()
 {
-    vkDestroyRenderPass(device_ptr->device, renderPass, nullptr);
-    vkDestroyRenderPass(device_ptr->device, dirShadowMappingRenderPass, nullptr);
+    vkDestroyRenderPass(device_ptr->device, *renderPass, nullptr);
+    vkDestroyRenderPass(device_ptr->device, *dirShadowMappingRenderPass, nullptr);
+    vkDestroyRenderPass(device_ptr->device, *omniShadowMappingRenderPass, nullptr);
 }
 
 void RenderPassModule::createRenderPass(VkFormat swapchainFormat, VkFormat depthFormat, VkSampleCountFlagBits msaaSamples)
@@ -95,7 +100,7 @@ void RenderPassModule::createRenderPass(VkFormat swapchainFormat, VkFormat depth
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies = &dependency;
 
-    if (vkCreateRenderPass(device_ptr->device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
+    if (vkCreateRenderPass(device_ptr->device, &renderPassInfo, nullptr, renderPass.get()) != VK_SUCCESS) {
         throw std::runtime_error("failed to create render pass!");
     }
 }
@@ -149,7 +154,7 @@ void RenderPassModule::createDirShadowRenderPass(VkFormat shadowFormat)
     renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
     renderPassInfo.pDependencies = dependencies.data();
 
-    if (vkCreateRenderPass(device_ptr->device, &renderPassInfo, nullptr, &dirShadowMappingRenderPass) != VK_SUCCESS)
+    if (vkCreateRenderPass(device_ptr->device, &renderPassInfo, nullptr, dirShadowMappingRenderPass.get()) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create directional shadow render pass!");
     }
@@ -199,7 +204,7 @@ void RenderPassModule::createOmniShadowRenderPass(VkFormat shadowFormat, VkForma
     renderPassInfo.subpassCount = 1;
     renderPassInfo.pSubpasses = &subpass;
 
-    if (vkCreateRenderPass(device_ptr->device, &renderPassInfo, nullptr, &omniShadowMappingRenderPass) != VK_SUCCESS)
+    if (vkCreateRenderPass(device_ptr->device, &renderPassInfo, nullptr, omniShadowMappingRenderPass.get()) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create omni shadow render pass!");
     }

@@ -9,7 +9,7 @@
 
 struct GraphicsPipelineData
 {
-    VkRenderPass renderPass = VK_NULL_HANDLE;
+    std::shared_ptr<VkRenderPass> renderPass;
     VkPolygonMode polygonMode = VkPolygonMode::VK_POLYGON_MODE_FILL;
     VkPrimitiveTopology topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     uint32_t vertexBufferStride = sizeof(Vertex);

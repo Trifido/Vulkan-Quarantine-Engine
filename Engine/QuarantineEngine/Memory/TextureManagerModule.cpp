@@ -238,7 +238,18 @@ void TextureManagerModule::createCubeMapImage(uint32_t width, uint32_t height, V
 
 void TextureManagerModule::cleanup()
 {
-    vkDestroyImageView(deviceModule->device, imageView, nullptr);
-    vkDestroyImage(deviceModule->device, image, nullptr);
-    vkFreeMemory(deviceModule->device, deviceMemory, nullptr);
+    if (this->imageView != VK_NULL_HANDLE)
+    {
+        vkDestroyImageView(deviceModule->device, imageView, nullptr);
+    }
+
+    if (this->image != VK_NULL_HANDLE)
+    {
+        vkDestroyImage(deviceModule->device, image, nullptr);
+    }
+
+    if (this->deviceMemory != VK_NULL_HANDLE)
+    {
+        vkFreeMemory(deviceModule->device, deviceMemory, nullptr);
+    }
 }

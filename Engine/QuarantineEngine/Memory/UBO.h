@@ -101,6 +101,12 @@ struct PushConstantStruct
     glm::mat4 model;
 };
 
+struct PCOmniShadowStruct
+{
+    glm::mat4 model;
+    glm::mat4 view;
+};
+
 struct PushConstantViewStruct
 {
     glm::mat4 view;
@@ -111,7 +117,7 @@ struct DeltaTimeUniform
     float deltaTime;
 };
 
-struct OmnniShadowUniform
+struct OmniShadowUniform
 {
     glm::mat4 projection;
     glm::mat4 model;

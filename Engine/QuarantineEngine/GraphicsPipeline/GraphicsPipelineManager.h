@@ -35,7 +35,7 @@ public:
     void AddGraphicsPipeline(std::string& pipelineName, GraphicsPipelineModule gp);
     std::shared_ptr<GraphicsPipelineModule> RegisterNewGraphicsPipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout, GraphicsPipelineData pipelineData);
     bool Exists(std::string pipelineName);
-    void RegisterDefaultRenderPass(VkRenderPass renderPass);
+    void RegisterDefaultRenderPass(std::shared_ptr<VkRenderPass> renderPass);
     void CleanGraphicsPipeline();
     void RecreateGraphicsPipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout);
 };

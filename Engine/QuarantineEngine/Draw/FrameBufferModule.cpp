@@ -10,7 +10,7 @@ FramebufferModule::FramebufferModule()
     this->depthbufferModule = DepthBufferModule::getInstance();
 }
 
-void FramebufferModule::createFramebuffer(VkRenderPass& renderPass)
+void FramebufferModule::createFramebuffer(std::shared_ptr<VkRenderPass> renderPass)
 {
     size_t numSwapchainImageViews = swapchainModule->swapChainImageViews.size();
     swapChainFramebuffers.resize(numSwapchainImageViews);
@@ -25,7 +25,7 @@ void FramebufferModule::createFramebuffer(VkRenderPass& renderPass)
 
         VkFramebufferCreateInfo framebufferInfo{};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.renderPass = renderPass;
+        framebufferInfo.renderPass = *renderPass;
         framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
         framebufferInfo.pAttachments = attachments.data();
         framebufferInfo.width = swapchainModule->swapChainExtent.width;
@@ -38,14 +38,14 @@ void FramebufferModule::createFramebuffer(VkRenderPass& renderPass)
     }
 }
 
-VkFramebuffer FramebufferModule::CreateShadowFramebuffer(VkRenderPass& renderPass, VkImageView& imageView, uint32_t textureSize, VkDevice& device)
+VkFramebuffer FramebufferModule::CreateShadowFramebuffer(std::shared_ptr<VkRenderPass> renderPass, VkImageView& imageView, uint32_t textureSize, VkDevice& device)
 {
     VkFramebuffer result;
 
     // Create frame buffer
     VkFramebufferCreateInfo framebufferInfo{};
     framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebufferInfo.renderPass = renderPass;
+    framebufferInfo.renderPass = *renderPass;
     framebufferInfo.attachmentCount = 1;
     framebufferInfo.pAttachments = &imageView;
     framebufferInfo.width = textureSize;
@@ -59,7 +59,7 @@ VkFramebuffer FramebufferModule::CreateShadowFramebuffer(VkRenderPass& renderPas
     return result;
 }
 
-std::array<VkFramebuffer, 6> FramebufferModule::CreateOmniShadowFramebuffer(VkRenderPass& renderPass, VkImageView& depthImageView, std::array<VkImageView, 6> imagesView, uint32_t textureSize, VkDevice& device)
+std::array<VkFramebuffer, 6> FramebufferModule::CreateOmniShadowFramebuffer(std::shared_ptr<VkRenderPass> renderPass, VkImageView& depthImageView, std::array<VkImageView, 6> imagesView, uint32_t textureSize, VkDevice& device)
 {
     VkImageView attachments[2];
     attachments[1] = depthImageView;
@@ -69,7 +69,7 @@ std::array<VkFramebuffer, 6> FramebufferModule::CreateOmniShadowFramebuffer(VkRe
     // Create frame buffer
     VkFramebufferCreateInfo framebufferInfo{};
     framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebufferInfo.renderPass = renderPass;
+    framebufferInfo.renderPass = *renderPass;
     framebufferInfo.attachmentCount = 2;
     framebufferInfo.pAttachments = attachments;
     framebufferInfo.width = textureSize;

@@ -21,9 +21,9 @@ public:
     
 public:
     FramebufferModule();
-    void createFramebuffer(VkRenderPass& renderPass);
-    static VkFramebuffer CreateShadowFramebuffer(VkRenderPass& renderPass, VkImageView& imageView, uint32_t textureSize, VkDevice& device);
-    static std::array<VkFramebuffer, 6> CreateOmniShadowFramebuffer(VkRenderPass& renderPass, VkImageView& depthImageView, std::array<VkImageView, 6> imagesView, uint32_t textureSize, VkDevice& device);
+    void createFramebuffer(std::shared_ptr<VkRenderPass> renderPass);
+    static VkFramebuffer CreateShadowFramebuffer(std::shared_ptr<VkRenderPass> renderPass, VkImageView& imageView, uint32_t textureSize, VkDevice& device);
+    static std::array<VkFramebuffer, 6> CreateOmniShadowFramebuffer(std::shared_ptr<VkRenderPass> renderPass, VkImageView& depthImageView, std::array<VkImageView, 6> imagesView, uint32_t textureSize, VkDevice& device);
     void cleanup();
     //void cleanupShadowBuffer();
 };

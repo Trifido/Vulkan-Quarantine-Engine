@@ -17,8 +17,8 @@ public:
     static VkCommandPool commandPool;
     uint32_t TextureSize;
     VkFormat shadowFormat;
-    VkSampler depthSampler;
-    std::array<VkImageView, 6> createCubeMapImageViews;
+    VkSampler depthSampler = VK_NULL_HANDLE;
+    std::array<VkImageView, 6> createCubeMapImageViews = { VK_NULL_HANDLE };
     std::shared_ptr<ShadowPipelineModule> shadowPipelineModule = nullptr;
     std::shared_ptr<ShaderModule> shaderModule = nullptr;
     // Depth bias (and slope) are used to avoid shadowing artifacts
@@ -27,17 +27,19 @@ public:
     // Slope depth bias factor, applied depending on polygon's slope
     float depthBiasSlope = 1.75f;
 
-    VkFramebuffer shadowFrameBuffer;
-    std::array<VkFramebuffer, 6> shadowFrameBuffers;
+    VkFramebuffer shadowFrameBuffer = VK_NULL_HANDLE;
+    std::array<VkFramebuffer, 6> shadowFrameBuffers = { VK_NULL_HANDLE };
 
+    VkImage depthImage = VK_NULL_HANDLE;
+    VkDeviceMemory deviceDepthMemory = VK_NULL_HANDLE;
 private:
-    void CreateDirectionalShadowMapResources(VkRenderPass& renderPass);
-    void CreateOmniShadowMapResources(VkRenderPass& renderPass);
-    void PrepareFramebuffers(VkRenderPass& renderPass);
+    void CreateDirectionalShadowMapResources(std::shared_ptr<VkRenderPass> renderPass);
+    void CreateOmniShadowMapResources(std::shared_ptr<VkRenderPass> renderPass);
+    void PrepareFramebuffers(std::shared_ptr<VkRenderPass> renderPass);
 
 public:
     ShadowMappingModule();
-    ShadowMappingModule(std::shared_ptr<ShaderModule> shaderModule, VkRenderPass& renderPass, ShadowMappingMode mode);
+    ShadowMappingModule(std::shared_ptr<ShaderModule> shaderModule, std::shared_ptr<VkRenderPass> renderPass, ShadowMappingMode mode);
     void cleanup() override;
 };
 

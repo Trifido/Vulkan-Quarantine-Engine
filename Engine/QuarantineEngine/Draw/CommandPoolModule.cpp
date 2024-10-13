@@ -117,7 +117,7 @@ void CommandPoolModule::setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t
 
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = this->renderPassModule->renderPass;
+    renderPassInfo.renderPass = *(this->renderPassModule->renderPass);
     renderPassInfo.framebuffer = framebuffer;
     renderPassInfo.renderArea.offset = { 0, 0 };
     renderPassInfo.renderArea.extent = swapchainModule->swapChainExtent;
@@ -143,7 +143,7 @@ void CommandPoolModule::setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t
     vkCmdEndRenderPass(commandBuffers[iCBuffer]);
 }
 
-void CommandPoolModule::setDirectionalShadowRenderPass(VkRenderPass& renderPass, std::shared_ptr<Light> light, uint32_t iCBuffer)
+void CommandPoolModule::setDirectionalShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, std::shared_ptr<Light> light, uint32_t iCBuffer)
 {
     uint32_t size = 0;
     VkFramebuffer frameBuffer = {};
@@ -193,7 +193,7 @@ void CommandPoolModule::setDirectionalShadowRenderPass(VkRenderPass& renderPass,
 
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = renderPass;
+    renderPassInfo.renderPass = *renderPass;
     renderPassInfo.framebuffer = frameBuffer;
     renderPassInfo.renderArea.offset = { 0, 0 };
     renderPassInfo.renderArea.extent.width = size;
@@ -221,7 +221,7 @@ void CommandPoolModule::setDirectionalShadowRenderPass(VkRenderPass& renderPass,
     vkCmdEndRenderPass(commandBuffers[iCBuffer]);
 }
 
-void CommandPoolModule::setOmniShadowRenderPass(VkRenderPass& renderPass, std::shared_ptr<Light> light, uint32_t iCBuffer)
+void CommandPoolModule::setOmniShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, std::shared_ptr<Light> light, uint32_t iCBuffer)
 {
     auto pointLight = std::dynamic_pointer_cast<PointLight, Light>(light);
     if (pointLight == nullptr)
@@ -258,7 +258,7 @@ void CommandPoolModule::setOmniShadowRenderPass(VkRenderPass& renderPass, std::s
     }
 }
 
-void CommandPoolModule::updateCubeMapFace(uint32_t faceIdx, VkRenderPass& renderPass, std::shared_ptr<PointLight> pointLight, VkCommandBuffer commandBuffer, uint32_t iCBuffer)
+void CommandPoolModule::updateCubeMapFace(uint32_t faceIdx, std::shared_ptr<VkRenderPass> renderPass, std::shared_ptr<PointLight> pointLight, VkCommandBuffer commandBuffer, uint32_t iCBuffer)
 {
     VkClearValue clearValues[2];
     clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
@@ -268,7 +268,7 @@ void CommandPoolModule::updateCubeMapFace(uint32_t faceIdx, VkRenderPass& render
 
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = renderPass;
+    renderPassInfo.renderPass = *renderPass;
     renderPassInfo.framebuffer = pointLight->shadowMappingPtr->shadowFrameBuffers[faceIdx];
     renderPassInfo.renderArea.offset = { 0, 0 };
     renderPassInfo.renderArea.extent.width = size;
@@ -307,17 +307,18 @@ void CommandPoolModule::updateCubeMapFace(uint32_t faceIdx, VkRenderPass& render
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    vkCmdPushConstants(
-        commandBuffer,
-        pipelineLayout,
-        VK_SHADER_STAGE_ALL,
-        0,
-        sizeof(glm::mat4),
-        &viewMatrix);
+    //vkCmdPushConstants(
+    //    commandBuffer,
+    //    pipelineLayout,
+    //    VK_SHADER_STAGE_ALL,
+    //    0,
+    //    sizeof(glm::mat4),
+    //    &viewMatrix);
 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, descriptorBuffer->getDescriptorSet(iCBuffer), 0, NULL);
-    this->gameObjectManager->ShadowCommand(commandBuffers[iCBuffer], iCBuffer, pipelineLayout);
+
+    this->gameObjectManager->OmniShadowCommand(commandBuffers[iCBuffer], iCBuffer, pipelineLayout, viewMatrix, pointLight->transform->Position);
 
     vkCmdEndRenderPass(commandBuffer);
 }

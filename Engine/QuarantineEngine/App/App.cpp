@@ -90,7 +90,7 @@ void App::init_imgui()
     init_info.ImageCount = 3;
     init_info.MSAASamples = *deviceModule->getMsaaSamples();//VK_SAMPLE_COUNT_1_BIT;
 
-    ImGui_ImplVulkan_Init(&init_info, renderPassModule->renderPass);
+    ImGui_ImplVulkan_Init(&init_info, *(renderPassModule->renderPass));
 
     //execute a gpu command to upload imgui font textures
     VkCommandBuffer commandBuffer = beginSingleTimeCommands(deviceModule->device, commandPoolModule->getCommandPool());
@@ -271,15 +271,15 @@ void App::initVulkan()
 
     this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
     auto pointLight = this->lightManager->GetLight("PointLight1");
-    pointLight->transform->SetPosition(glm::vec3(-5.0f, 3.0f, 0.0f));
+    pointLight->transform->SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
     pointLight->diffuse = glm::vec3(0.0f, 0.0f, 0.7f);
     pointLight->specular = glm::vec3(0.0f, 0.0f, 0.7f);
     pointLight->SetDistanceEffect(100.0f);
 
-    this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
-    this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.6f);
-    this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.1f);
-    this->lightManager->GetLight("DirectionalLight0")->SetDistanceEffect(100.0f);
+    //this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
+    //this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.6f);
+    //this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.1f);
+    //this->lightManager->GetLight("DirectionalLight0")->SetDistanceEffect(100.0f);
 
     //this->lightManager->CreateLight(LightType::SPOT_LIGHT, "SpotLight0");
     //auto spotLight = this->lightManager->GetLight("SpotLight0");
@@ -474,6 +474,7 @@ void App::cleanUp()
     this->computePipelineManager->CleanComputePipeline();
     this->computeNodeManager->Cleanup();
     this->animationManager->Cleanup();
+    this->lightManager->CleanShadowMapResources();
 
     this->gameObjectManager->Cleanup();
     this->particleSystemManager->Cleanup();
@@ -691,9 +692,12 @@ void App::recreateSwapchain()
 
     //Recreamos el render pass
     renderPassModule->createRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
+    renderPassModule->createDirShadowRenderPass(VK_FORMAT_D32_SFLOAT);
+    renderPassModule->createOmniShadowRenderPass(VK_FORMAT_R32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT);
 
     //Recreamos los graphics pipeline de los materiales
     graphicsPipelineManager->RegisterDefaultRenderPass(renderPassModule->renderPass);
+
     shaderManager->RecreateShaderGraphicsPipelines();
     //materialManager->RecreateMaterials(renderPassModule);
 

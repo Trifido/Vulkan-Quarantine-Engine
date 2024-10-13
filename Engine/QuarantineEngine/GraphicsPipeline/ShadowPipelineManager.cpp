@@ -77,7 +77,6 @@ void ShadowPipelineManager::CleanShadowPipeline()
 
 void ShadowPipelineManager::RecreateShadowPipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout)
 {
-    this->_shadowPipelines[shader.id].first->renderPass = this->_shadowPipelines[shader.id].second;
     this->_shadowPipelines[shader.id].first->CompileShadowPipeline(shader.shaderStages, shader.vertexInputInfo, descriptorLayout);
 }
 
@@ -88,7 +87,7 @@ std::shared_ptr<ShadowPipelineModule> ShadowPipelineManager::RegisterNewShadowPi
     this->_shadowPipelines[shader.id].first->inputTopology = pipelineData.topology;
     this->_shadowPipelines[shader.id].first->lineWidth = pipelineData.lineWidth;
 
-    this->_shadowPipelines[shader.id].second = std::make_shared<VkRenderPass>(pipelineData.renderPass);
+    this->_shadowPipelines[shader.id].second = pipelineData.renderPass;
     this->_shadowPipelines[shader.id].first->renderPass = this->_shadowPipelines[shader.id].second;
 
     this->_shadowPipelines[shader.id].first->SetShadowMappingMode(pipelineData.shadowMode);

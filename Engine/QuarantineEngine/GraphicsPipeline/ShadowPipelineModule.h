@@ -25,6 +25,7 @@ public:
     ShadowPipelineModule();
     ~ShadowPipelineModule();
     void SetShadowMappingMode(ShadowMappingMode shadowMode);
+    ShadowMappingMode GetShadowMappingMode();
     void CompileShadowPipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, VkPipelineVertexInputStateCreateInfo vertexInfo, VkDescriptorSetLayout descriptorLayout) override;
     void cleanup(VkPipeline pipeline, VkPipelineLayout pipelineLayout);
 

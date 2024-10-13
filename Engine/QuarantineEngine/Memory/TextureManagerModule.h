@@ -13,12 +13,12 @@ class TextureManagerModule
 public:
     uint32_t        mipLevels = 1;
     DeviceModule*   deviceModule;
-    VkImageView     imageView;
+    VkImageView     imageView = { VK_NULL_HANDLE };
     static QueueModule* queueModule;
 protected:
-    VkImage         image;
-    VkDeviceMemory  deviceMemory;
-    VkCommandPool*  ptrCommandPool;
+    VkImage         image = { VK_NULL_HANDLE };
+    VkDeviceMemory  deviceMemory = { VK_NULL_HANDLE };
+    VkCommandPool*  ptrCommandPool = { VK_NULL_HANDLE };
     SwapChainModule* swapchainModule = nullptr;
 
 public:

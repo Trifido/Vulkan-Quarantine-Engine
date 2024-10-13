@@ -12,7 +12,7 @@ SpotLight::SpotLight() : Light()
     this->transform->SetOrientation(glm::vec3(90.0f, 0.0f, 0.0f));
 }
 
-SpotLight::SpotLight(std::shared_ptr<ShaderModule> shaderModule, VkRenderPass& renderPass)
+SpotLight::SpotLight(std::shared_ptr<ShaderModule> shaderModule, std::shared_ptr<VkRenderPass> renderPass)
 {
     auto size = sizeof(glm::mat4);
     this->shadowMappingPtr = std::make_shared<ShadowMappingModule>(shaderModule, renderPass, ShadowMappingMode::DIRECTIONAL_SHADOW);

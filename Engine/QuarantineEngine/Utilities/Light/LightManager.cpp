@@ -163,6 +163,22 @@ void LightManager::CleanLastResources()
     this->lightManagerUniform.reset();
 }
 
+void LightManager::CleanShadowMapResources()
+{
+    for (auto pLight : this->PointLights)
+    {
+        pLight->CleanShadowMapResources();
+    }
+    for (auto dLight : this->DirLights)
+    {
+        dLight->CleanShadowMapResources();
+    }
+    for (auto sLight : this->SpotLights)
+    {
+
+    }
+}
+
 void LightManager::SetCamera(Camera* camera_ptr)
 {
     this->camera = camera_ptr;

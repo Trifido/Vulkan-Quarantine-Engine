@@ -12,7 +12,7 @@ ShadowMappingModule::ShadowMappingModule()
     this->ptrCommandPool = &commandPool;
 }
 
-ShadowMappingModule::ShadowMappingModule(std::shared_ptr<ShaderModule> shaderModule, VkRenderPass& renderPass, ShadowMappingMode mode) : ShadowMappingModule()
+ShadowMappingModule::ShadowMappingModule(std::shared_ptr<ShaderModule> shaderModule, std::shared_ptr<VkRenderPass> renderPass, ShadowMappingMode mode) : ShadowMappingModule()
 {
     this->shaderModule = shaderModule;
     this->shadowPipelineModule = this->shaderModule->ShadowPipelineModule;
@@ -35,7 +35,7 @@ ShadowMappingModule::ShadowMappingModule(std::shared_ptr<ShaderModule> shaderMod
     }
 }
 
-void ShadowMappingModule::CreateDirectionalShadowMapResources(VkRenderPass& renderPass)
+void ShadowMappingModule::CreateDirectionalShadowMapResources(std::shared_ptr<VkRenderPass> renderPass)
 {
     this->createImage(this->TextureSize, this->TextureSize, this->shadowFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1);
     this->imageView = IMT::createImageView(this->deviceModule->device, this->image, this->shadowFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
@@ -62,7 +62,7 @@ void ShadowMappingModule::CreateDirectionalShadowMapResources(VkRenderPass& rend
     this->shadowFrameBuffer = FramebufferModule::CreateShadowFramebuffer(renderPass, this->imageView, this->TextureSize, this->deviceModule->device);
 }
 
-void ShadowMappingModule::CreateOmniShadowMapResources(VkRenderPass& renderPass)
+void ShadowMappingModule::CreateOmniShadowMapResources(std::shared_ptr<VkRenderPass> renderPass)
 {
     this->createCubeMapImage(this->TextureSize, this->TextureSize, this->shadowFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1);
 
@@ -72,7 +72,7 @@ void ShadowMappingModule::CreateOmniShadowMapResources(VkRenderPass& renderPass)
     subresourceRange.baseMipLevel = 0;
     subresourceRange.levelCount = 1;
     subresourceRange.layerCount = 6;
-    this->transitionMultiImagesLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
+    this->transitionMultiImagesLayout(this->image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
 
     VkSamplerCreateInfo samplerInfo{};
     samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -99,7 +99,7 @@ void ShadowMappingModule::CreateOmniShadowMapResources(VkRenderPass& renderPass)
     this->PrepareFramebuffers(renderPass);
 }
 
-void ShadowMappingModule::PrepareFramebuffers(VkRenderPass& renderPass)
+void ShadowMappingModule::PrepareFramebuffers(std::shared_ptr<VkRenderPass> renderPass)
 {
     // Color attachment
     VkImageCreateInfo imageCreateInfo = {};
@@ -118,17 +118,17 @@ void ShadowMappingModule::PrepareFramebuffers(VkRenderPass& renderPass)
     imageCreateInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
     imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    VkImageViewCreateInfo colorImageView = {};
-    colorImageView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    colorImageView.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    colorImageView.format = this->shadowFormat;
-    colorImageView.flags = 0;
-    colorImageView.subresourceRange = {};
-    colorImageView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    colorImageView.subresourceRange.baseMipLevel = 0;
-    colorImageView.subresourceRange.levelCount = 1;
-    colorImageView.subresourceRange.baseArrayLayer = 0;
-    colorImageView.subresourceRange.layerCount = 1;
+    ////VkImageViewCreateInfo colorImageView = {};
+    ////colorImageView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    ////colorImageView.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    ////colorImageView.format = this->shadowFormat;
+    ////colorImageView.flags = 0;
+    ////colorImageView.subresourceRange = {};
+    ////colorImageView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    ////colorImageView.subresourceRange.baseMipLevel = 0;
+    ////colorImageView.subresourceRange.levelCount = 1;
+    ////colorImageView.subresourceRange.baseArrayLayer = 0;
+    ////colorImageView.subresourceRange.layerCount = 1;
 
     // Depth stencil attachment
     imageCreateInfo.format = VK_FORMAT_D32_SFLOAT_S8_UINT;
@@ -146,33 +146,30 @@ void ShadowMappingModule::PrepareFramebuffers(VkRenderPass& renderPass)
     depthStencilView.subresourceRange.baseArrayLayer = 0;
     depthStencilView.subresourceRange.layerCount = 1;
 
-    VkImage depthImage;
     vkCreateImage(this->deviceModule->device, &imageCreateInfo, nullptr, &depthImage);
 
     VkMemoryRequirements memReqs;
     vkGetImageMemoryRequirements(this->deviceModule->device, depthImage, &memReqs);
 
-    VkDeviceMemory deviceMemory;
     VkMemoryAllocateInfo memAlloc {};
     memAlloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     memAlloc.allocationSize = memReqs.size;
     memAlloc.memoryTypeIndex = IMT::findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, deviceModule->physicalDevice);
-    vkAllocateMemory(this->deviceModule->device, &memAlloc, nullptr, &deviceMemory);
-    vkBindImageMemory(this->deviceModule->device, depthImage, deviceMemory, 0);
+    vkAllocateMemory(this->deviceModule->device, &memAlloc, nullptr, &deviceDepthMemory);
+    vkBindImageMemory(this->deviceModule->device, depthImage, deviceDepthMemory, 0);
 
     this->transitionImageLayout(depthImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
 
     depthStencilView.image = depthImage;
 
-    VkImageView depthView;
-    vkCreateImageView(this->deviceModule->device, &depthStencilView, nullptr, &depthView);
+    vkCreateImageView(this->deviceModule->device, &depthStencilView, nullptr, &imageView);
 
     VkImageView attachments[2];
-    attachments[1] = depthView;
+    attachments[1] = imageView;
 
     VkFramebufferCreateInfo fbufCreateInfo = {};
     fbufCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    fbufCreateInfo.renderPass = renderPass;
+    fbufCreateInfo.renderPass = *renderPass;
     fbufCreateInfo.attachmentCount = 2;
     fbufCreateInfo.pAttachments = attachments;
     fbufCreateInfo.width = this->TextureSize;
@@ -189,7 +186,23 @@ void ShadowMappingModule::PrepareFramebuffers(VkRenderPass& renderPass)
 void ShadowMappingModule::cleanup()
 {
     TextureManagerModule::cleanup();
-    vkDestroySampler(this->deviceModule->device, this->depthSampler, nullptr);
 
+    vkDestroySampler(this->deviceModule->device, this->depthSampler, nullptr);
     vkDestroyFramebuffer(this->deviceModule->device, this->shadowFrameBuffer, nullptr);
+
+    if (this->depthImage != VK_NULL_HANDLE)
+    {
+        vkDestroyImage(deviceModule->device, this->depthImage, nullptr);
+    }
+
+    if (this->deviceDepthMemory != VK_NULL_HANDLE)
+    {
+        vkFreeMemory(deviceModule->device, deviceDepthMemory, nullptr);
+    }
+
+    for (uint32_t i = 0; i < 6; i++)
+    {
+        vkDestroyImageView(deviceModule->device, this->createCubeMapImageViews[i], nullptr);
+        vkDestroyFramebuffer(this->deviceModule->device, this->shadowFrameBuffers[i], nullptr);
+    }
 }

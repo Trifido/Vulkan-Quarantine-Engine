@@ -10,7 +10,7 @@ DirectionalLight::DirectionalLight() : Light()
     this->transform->SetOrientation(glm::vec3(90.0f, 0.0f, 0.0f));
 }
 
-DirectionalLight::DirectionalLight(std::shared_ptr<ShaderModule> shaderModule, VkRenderPass& renderPass) : DirectionalLight()
+DirectionalLight::DirectionalLight(std::shared_ptr<ShaderModule> shaderModule, std::shared_ptr<VkRenderPass> renderPass) : DirectionalLight()
 {
     auto size = sizeof(glm::mat4);
     this->shadowMappingPtr = std::make_shared<ShadowMappingModule>(shaderModule, renderPass, ShadowMappingMode::DIRECTIONAL_SHADOW);
@@ -45,4 +45,20 @@ void DirectionalLight::UpdateUniform()
         memcpy(data, &viewproj, sizeof(glm::mat4));
         vkUnmapMemory(this->deviceModule->device, this->shadowMapUBO->uniformBuffersMemory[currentFrame]);
     }
+}
+
+void DirectionalLight::CleanShadowMapResources()
+{
+    for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        if (this->shadowMapUBO != nullptr)
+        {
+            vkDestroyBuffer(deviceModule->device, this->shadowMapUBO->uniformBuffers[i], nullptr);
+            vkFreeMemory(deviceModule->device, this->shadowMapUBO->uniformBuffersMemory[i], nullptr);
+        }
+    }
+
+    this->shadowMappingPtr->cleanup();
+    this->descriptorBuffer->Cleanup();
+    this->descriptorBuffer->CleanLastResources();
 }

@@ -18,8 +18,9 @@ public:
 
 public:
     PointLight();
-    PointLight(std::shared_ptr<ShaderModule> shaderModule, VkRenderPass& renderPass);
+    PointLight(std::shared_ptr<ShaderModule> shaderModule, std::shared_ptr<VkRenderPass> renderPass);
     void UpdateUniform() override;
+    void CleanShadowMapResources();
 };
 
 #endif
