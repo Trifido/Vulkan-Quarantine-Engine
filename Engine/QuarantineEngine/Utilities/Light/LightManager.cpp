@@ -281,8 +281,29 @@ void LightManager::ComputeLightsLUT()
 
 void LightManager::ComputeLightTiles()
 {
-    const uint32_t tile_x_count = swapChainModule->swapChainExtent.width / TILE_SIZE;
-    const uint32_t tile_y_count = swapChainModule->swapChainExtent.height / TILE_SIZE;
+    uint32_t tileXCount = swapChainModule->swapChainExtent.width / TILE_SIZE;
+    uint32_t tileYCount = swapChainModule->swapChainExtent.height / TILE_SIZE;
+
+    // Calculamos el número total de entradas de tiles
+    uint32_t tilesEntryCount = tileXCount * tileYCount * NUM_WORDS;
+    uint32_t newTileSize = TILE_SIZE;
+
+    // Si el número total de entradas de tiles excede el máximo, ajustamos dinámicamente el tamaño del tile
+    while (tilesEntryCount > MAX_NUM_TILES)
+    {
+        // Aumentamos el tamaño del tile para reducir el número total de tiles
+        newTileSize += 1;
+
+        // Recalculamos el número de tiles con el nuevo tamaño de tile
+        tileXCount = swapChainModule->swapChainExtent.width / newTileSize;
+        tileYCount = swapChainModule->swapChainExtent.height / newTileSize;
+
+        // Recalculamos el número total de entradas de tiles
+        tilesEntryCount = tileXCount * tileYCount * NUM_WORDS;
+    }
+
+    const uint32_t tile_x_count = tileXCount;
+    const uint32_t tile_y_count = tileYCount;
     const uint32_t tiles_entry_count = tile_x_count * tile_y_count * NUM_WORDS;
     const uint32_t buffer_size = tiles_entry_count * sizeof(uint32_t);
 

@@ -24,6 +24,15 @@ void PipelineModule::CompileShadowPipeline(std::vector<VkPipelineShaderStageCrea
 
 void PipelineModule::CleanPipelineData()
 {
-    vkDestroyPipeline(deviceModule->device, this->pipeline, nullptr);
-    vkDestroyPipelineLayout(deviceModule->device, this->pipelineLayout, nullptr);
+    if (this->pipeline != VK_NULL_HANDLE)
+    {
+        vkDestroyPipeline(deviceModule->device, this->pipeline, nullptr);
+        this->pipeline = VK_NULL_HANDLE;
+    }
+
+    if (this->pipelineLayout != VK_NULL_HANDLE)
+    {
+        vkDestroyPipelineLayout(deviceModule->device, this->pipelineLayout, nullptr);
+        this->pipelineLayout = VK_NULL_HANDLE;
+    }
 }

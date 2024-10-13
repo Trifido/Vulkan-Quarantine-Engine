@@ -12,8 +12,8 @@ protected:
     DeviceModule* deviceModule = nullptr;
 
 public:
-    VkPipeline pipeline;
-    VkPipelineLayout pipelineLayout;
+    VkPipeline pipeline = VK_NULL_HANDLE;
+    VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
 
     PipelineModule();
     ~PipelineModule();
