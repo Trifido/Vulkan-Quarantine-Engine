@@ -33,11 +33,11 @@ public:
     void AddGraphicsPipeline(const char* pipelineName, std::shared_ptr<GraphicsPipelineModule> gp_ptr);
     void AddGraphicsPipeline(std::string& pipelineName, std::shared_ptr<GraphicsPipelineModule> gp_ptr);
     void AddGraphicsPipeline(std::string& pipelineName, GraphicsPipelineModule gp);
-    std::shared_ptr<GraphicsPipelineModule> RegisterNewGraphicsPipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout, GraphicsPipelineData pipelineData);
+    std::shared_ptr<GraphicsPipelineModule> RegisterNewGraphicsPipeline(ShaderModule shader, std::vector<VkDescriptorSetLayout> descriptorLayouts, GraphicsPipelineData pipelineData);
     bool Exists(std::string pipelineName);
     void RegisterDefaultRenderPass(std::shared_ptr<VkRenderPass> renderPass);
     void CleanGraphicsPipeline();
-    void RecreateGraphicsPipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout);
+    void RecreateGraphicsPipeline(ShaderModule shader, std::vector<VkDescriptorSetLayout> descriptorLayouts);
 };
 
 #endif

@@ -1,5 +1,5 @@
-#include "PointLight.h"
-#include <SynchronizationModule.h>
+#include <PointLight.h>
+#include <numbers>
 
 PointLight::PointLight() : Light()
 {
@@ -8,14 +8,7 @@ PointLight::PointLight() : Light()
 
 PointLight::PointLight(std::shared_ptr<ShaderModule> shaderModule, std::shared_ptr<VkRenderPass> renderPass)
 {
-    auto size = sizeof(OmniShadowUniform);
-    this->shadowMappingPtr = std::make_shared<ShadowMappingModule>(shaderModule, renderPass, ShadowMappingMode::OMNI_SHADOW);
-
-    this->shadowMapUBO = std::make_shared<UniformBufferObject>();
-    this->shadowMapUBO->CreateUniformBuffer(size, MAX_FRAMES_IN_FLIGHT, *deviceModule);
-
-    this->descriptorBuffer = std::make_shared<DescriptorBuffer>(shaderModule);
-    this->descriptorBuffer->InitializeShadowMapDescritorSets(shaderModule, shadowMapUBO, size);
+    this->shadowMappingResourcesPtr = std::make_shared<OmniShadowResources>(renderPass);
 }
 
 void PointLight::UpdateUniform()
@@ -28,29 +21,12 @@ void PointLight::UpdateUniform()
     OmniShadowUniform omniParameters = {};
     omniParameters.lightPos = glm::vec4(this->transform->Position, 1.0f);
     omniParameters.model = glm::translate(glm::mat4(1.0f), glm::vec3(-omniParameters.lightPos.x, -omniParameters.lightPos.y, -omniParameters.lightPos.z));
-    omniParameters.projection = glm::perspective((float)(M_PI / 2.0), 1.0f, 0.01f, this->radius);
+    omniParameters.projection = glm::perspective((float)(std::numbers::pi / 2.0f), 1.0f, 0.01f, this->radius);
 
-    for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
-    {
-        void* data;
-        vkMapMemory(this->deviceModule->device, this->shadowMapUBO->uniformBuffersMemory[currentFrame], 0, sizeof(OmniShadowUniform), 0, &data);
-        memcpy(data, &omniParameters, sizeof(OmniShadowUniform));
-        vkUnmapMemory(this->deviceModule->device, this->shadowMapUBO->uniformBuffersMemory[currentFrame]);
-    }
+    this->shadowMappingResourcesPtr->UpdateUBOShadowMap(omniParameters);
 }
 
 void PointLight::CleanShadowMapResources()
 {
-    for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-    {
-        if (this->shadowMapUBO != nullptr)
-        {
-            vkDestroyBuffer(deviceModule->device, this->shadowMapUBO->uniformBuffers[i], nullptr);
-            vkFreeMemory(deviceModule->device, this->shadowMapUBO->uniformBuffersMemory[i], nullptr);
-        }
-    }
-
-    this->shadowMappingPtr->cleanup();
-    this->descriptorBuffer->Cleanup();
-    this->descriptorBuffer->CleanLastResources();
+    this->shadowMappingResourcesPtr->Cleanup();
 }

@@ -98,19 +98,19 @@ void GraphicsPipelineManager::CleanGraphicsPipeline()
     }
 }
 
-void GraphicsPipelineManager::RecreateGraphicsPipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout)
+void GraphicsPipelineManager::RecreateGraphicsPipeline(ShaderModule shader, std::vector<VkDescriptorSetLayout> descriptorLayouts)
 {
     this->_graphicsPipelines[shader.id]->renderPass = this->defaultRenderPass;
-    this->_graphicsPipelines[shader.id]->CompileGraphicsPipeline(shader.shaderStages, shader.vertexInputInfo, descriptorLayout);
+    this->_graphicsPipelines[shader.id]->CompileGraphicsPipeline(shader.shaderStages, shader.vertexInputInfo, descriptorLayouts);
 }
 
-std::shared_ptr<GraphicsPipelineModule> GraphicsPipelineManager::RegisterNewGraphicsPipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout, GraphicsPipelineData pipelineData)
+std::shared_ptr<GraphicsPipelineModule> GraphicsPipelineManager::RegisterNewGraphicsPipeline(ShaderModule shader, std::vector<VkDescriptorSetLayout> descriptorLayouts, GraphicsPipelineData pipelineData)
 {
     this->_graphicsPipelines[shader.id] = std::make_shared<GraphicsPipelineModule>();
     this->_graphicsPipelines[shader.id]->PoligonMode = pipelineData.polygonMode;
     this->_graphicsPipelines[shader.id]->inputTopology = pipelineData.topology;
     this->_graphicsPipelines[shader.id]->lineWidth = pipelineData.lineWidth;
     this->_graphicsPipelines[shader.id]->renderPass = this->defaultRenderPass;
-    this->_graphicsPipelines[shader.id]->CompileGraphicsPipeline(shader.shaderStages, shader.vertexInputInfo, descriptorLayout);
+    this->_graphicsPipelines[shader.id]->CompileGraphicsPipeline(shader.shaderStages, shader.vertexInputInfo, descriptorLayouts);
     return this->_graphicsPipelines[shader.id];
 }

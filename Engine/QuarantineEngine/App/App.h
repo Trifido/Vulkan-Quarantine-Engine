@@ -22,7 +22,7 @@
 #include "DepthBufferModule.h"
 #include "AntiAliasingModule.h"
 #include "RenderPassModule.h"
-#include "ShadowMappingModule.h"
+#include "OmniShadowResources.h"
 #include "Timer.h"
 
 //  Physics System

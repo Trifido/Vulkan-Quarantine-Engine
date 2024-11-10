@@ -66,10 +66,10 @@ void ComputePipelineManager::AddComputePipeline(std::string& pipelineName, Compu
     _computePipelines[pipelineName] = gp_ptr;
 }
 
-std::shared_ptr<ComputePipelineModule> ComputePipelineManager::RegisterNewComputePipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout)
+std::shared_ptr<ComputePipelineModule> ComputePipelineManager::RegisterNewComputePipeline(ShaderModule shader, std::vector<VkDescriptorSetLayout> descriptorLayouts)
 {
     this->_computePipelines[shader.id] = std::make_shared<ComputePipelineModule>();
-    this->_computePipelines[shader.id]->CompileComputePipeline(shader.shaderStages, descriptorLayout);
+    this->_computePipelines[shader.id]->CompileComputePipeline(shader.shaderStages, descriptorLayouts);
     return this->_computePipelines[shader.id];
 }
 
@@ -91,7 +91,7 @@ void ComputePipelineManager::CleanComputePipeline()
     }
 }
 
-void ComputePipelineManager::RecreateComputePipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout)
+void ComputePipelineManager::RecreateComputePipeline(ShaderModule shader, std::vector<VkDescriptorSetLayout> descriptorLayouts)
 {
-    this->_computePipelines[shader.id]->CompileComputePipeline(shader.shaderStages, descriptorLayout);
+    this->_computePipelines[shader.id]->CompileComputePipeline(shader.shaderStages, descriptorLayouts);
 }

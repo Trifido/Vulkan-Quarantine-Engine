@@ -41,6 +41,8 @@ LightManager::LightManager()
     this->lightBinSSBO->CreateSSBO(this->lightBinSSBOSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
 
     this->lightBuffer.reserve(this->MAX_NUM_LIGHT);
+
+    this->PointShadowDescritors = std::make_shared<PointShadowDescriptorsManager>();
 }
 
 void LightManager::AddDirShadowMapShader(std::shared_ptr<ShaderModule> shadow_mapping_shader)
@@ -50,7 +52,8 @@ void LightManager::AddDirShadowMapShader(std::shared_ptr<ShaderModule> shadow_ma
 
 void LightManager::AddOmniShadowMapShader(std::shared_ptr<ShaderModule> omni_shadow_mapping_shader)
 {
-    this->omni_shadow_map_shader = omni_shadow_mapping_shader;
+    this->OmniShadowShaderModule = omni_shadow_mapping_shader;
+    this->OmniShadowPipelineModule = this->OmniShadowShaderModule->ShadowPipelineModule;
 }
 
 LightManager* LightManager::getInstance()
@@ -73,8 +76,9 @@ void LightManager::CreateLight(LightType type, std::string name)
     {
         default:
         case LightType::POINT_LIGHT:
-            this->PointLights.push_back(std::make_shared<PointLight>(this->omni_shadow_map_shader, this->renderPassModule->omniShadowMappingRenderPass));
+            this->PointLights.push_back(std::make_shared<PointLight>(this->OmniShadowShaderModule, this->renderPassModule->omniShadowMappingRenderPass));
             this->AddLight(std::static_pointer_cast<Light>(this->PointLights.back()), name);
+            this->PointShadowDescritors->AddPointLightResources(this->PointLights.back()->shadowMappingResourcesPtr->shadowMapUBO);
             break;
 
         case LightType::DIRECTIONAL_LIGHT:
@@ -97,6 +101,11 @@ std::shared_ptr<Light> LightManager::GetLight(std::string name)
         return it->second;
 
     return nullptr;
+}
+
+void LightManager::InitializeShadowMaps()
+{
+    this->PointShadowDescritors->InitializeDescriptorSetLayouts(this->OmniShadowShaderModule);
 }
 
 void LightManager::UpdateUniform()
@@ -177,6 +186,8 @@ void LightManager::CleanShadowMapResources()
     {
 
     }
+
+    this->PointShadowDescritors->Clean();
 }
 
 void LightManager::SetCamera(Camera* camera_ptr)

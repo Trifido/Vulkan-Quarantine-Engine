@@ -31,10 +31,10 @@ public:
     static ShadowPipelineManager* getInstance();
     static void ResetInstance();
     std::shared_ptr<ShadowPipelineModule> GetPipeline(std::string pipelineName);
-    std::shared_ptr<ShadowPipelineModule> RegisterNewShadowPipeline(ShaderModule& shader, VkDescriptorSetLayout descriptorLayout, GraphicsPipelineData pipelineData);
+    std::shared_ptr<ShadowPipelineModule> RegisterNewShadowPipeline(ShaderModule& shader, std::vector<VkDescriptorSetLayout> descriptorLayouts, GraphicsPipelineData pipelineData);
     bool Exists(std::string pipelineName);
     void CleanShadowPipelines();
-    void RecreateShadowPipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout);
+    void RecreateShadowPipeline(ShaderModule shader, std::vector<VkDescriptorSetLayout> descriptorLayouts);
     void CleanLastResources();
 };
 

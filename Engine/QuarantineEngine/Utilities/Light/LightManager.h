@@ -14,6 +14,7 @@
 #include <PointLight.h>
 
 #include <DescriptorBuffer.h>
+#include <PointShadowDescriptorsManager.h>
 
 class DirectionalLight;
 class SpotLight;
@@ -53,7 +54,6 @@ private:
 
     RenderPassModule* renderPassModule = nullptr;
     std::shared_ptr<ShaderModule> dir_shadow_map_shader = nullptr;
-    std::shared_ptr<ShaderModule> omni_shadow_map_shader = nullptr;
 
 public:
     static LightManager* instance;
@@ -71,6 +71,10 @@ public:
     std::vector<std::shared_ptr<SpotLight>> SpotLights;
     std::vector<std::shared_ptr<PointLight>> PointLights;
 
+    std::shared_ptr<PointShadowDescriptorsManager> PointShadowDescritors;
+    std::shared_ptr<ShadowPipelineModule> OmniShadowPipelineModule = nullptr;
+    std::shared_ptr<ShaderModule> OmniShadowShaderModule = nullptr;
+
 private:
     void AddLight(std::shared_ptr<Light> light_ptr, std::string& name);
     void SortingLights();
@@ -85,6 +89,7 @@ public:
     void AddOmniShadowMapShader(std::shared_ptr<ShaderModule> omni_shadow_mapping_shader);
     void CreateLight(LightType type, std::string name);
     std::shared_ptr<Light> GetLight(std::string name);
+    void InitializeShadowMaps();
     void Update();
     void UpdateUniform();
     void UpdateUBOLight();

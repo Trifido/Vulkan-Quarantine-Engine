@@ -9,7 +9,7 @@
 #include "../Editor/EditorObjectManager.h"
 #include <GameObjectManager.h>
 #include <Compute/ComputeNodeManager.h>
-#include <ShadowMappingModule.h>
+#include <OmniShadowResources.h>
 #include <FrameBufferModule.h>
 
 class CommandPoolModule
@@ -36,8 +36,8 @@ public:
 private:
     void setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t iCBuffer);
     void setDirectionalShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, std::shared_ptr<Light> light, uint32_t iCBuffer);
-    void setOmniShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, std::shared_ptr<Light> light, uint32_t iCBuffer);
-    void updateCubeMapFace(uint32_t faceIdx, std::shared_ptr<VkRenderPass> renderPass, std::shared_ptr<PointLight> pointLight, VkCommandBuffer commandBuffer, uint32_t iCBuffer);
+    void setOmniShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, uint32_t idPointlight, uint32_t iCBuffer);
+    void updateCubeMapFace(uint32_t faceIdx, std::shared_ptr<VkRenderPass> renderPass, uint32_t idPointlight, VkCommandBuffer commandBuffer, uint32_t iCBuffer);
 public:
     CommandPoolModule();
     static CommandPoolModule* getInstance();

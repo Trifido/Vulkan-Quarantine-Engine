@@ -433,14 +433,17 @@
     <ClCompile Include="Utilities\Camera\FrustumComponent.cpp">
       <Filter>Kernel\Utilities\Camera\sources</Filter>
     </ClCompile>
-    <ClCompile Include="Presentation\ShadowMappingModule.cpp">
-      <Filter>Kernel\Presentation\sources</Filter>
-    </ClCompile>
     <ClCompile Include="GraphicsPipeline\ShadowPipelineModule.cpp">
       <Filter>Kernel\GraphicsPipeline\sources</Filter>
     </ClCompile>
     <ClCompile Include="GraphicsPipeline\ShadowPipelineManager.cpp">
       <Filter>Kernel\GraphicsPipeline\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Memory\PointShadowDescriptorsManager.cpp">
+      <Filter>Kernel\Memory\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Memory\OmniShadowResources.cpp">
+      <Filter>Kernel\Presentation\sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -717,9 +720,6 @@
     <ClInclude Include="Utilities\Camera\FrustumComponent.h">
       <Filter>Kernel\Utilities\Camera\headers</Filter>
     </ClInclude>
-    <ClInclude Include="Presentation\ShadowMappingModule.h">
-      <Filter>Kernel\Presentation\headers</Filter>
-    </ClInclude>
     <ClInclude Include="GraphicsPipeline\ShadowPipelineModule.h">
       <Filter>Kernel\GraphicsPipeline\headers</Filter>
     </ClInclude>
@@ -728,6 +728,12 @@
     </ClInclude>
     <ClInclude Include="GraphicsPipeline\ShadowMappingMode.h">
       <Filter>Kernel\GraphicsPipeline\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\PointShadowDescriptorsManager.h">
+      <Filter>Kernel\Memory\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\OmniShadowResources.h">
+      <Filter>Kernel\Presentation\headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

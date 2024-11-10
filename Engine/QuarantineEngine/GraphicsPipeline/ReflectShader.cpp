@@ -682,15 +682,15 @@ void ReflectShader::CheckDescriptorSet(DescriptorSetReflect& descripReflect, con
         descripReflect.bindings[i].set = obj.set;
         descripReflect.bindings[i].stage = descripReflect.stage;
 
-        auto bindingIdx = this->bindings.find(descripReflect.bindings[i].name);
+        auto bindingIdx = this->bindings[obj.set].find(descripReflect.bindings[i].name);
 
-        if (bindingIdx == this->bindings.end())
+        if (bindingIdx == this->bindings[obj.set].end())
         {
-            this->bindings[descripReflect.bindings[i].name] = descripReflect.bindings[i];
+            this->bindings[obj.set][descripReflect.bindings[i].name] = descripReflect.bindings[i];
         }
         else
         {
-            this->bindings[descripReflect.bindings[i].name].stage = (VkShaderStageFlagBits)(descripReflect.bindings[i].stage | this->bindings[descripReflect.bindings[i].name].stage);
+            this->bindings[obj.set][descripReflect.bindings[i].name].stage = (VkShaderStageFlagBits)(descripReflect.bindings[i].stage | this->bindings[obj.set][descripReflect.bindings[i].name].stage);
         }
     }
 }

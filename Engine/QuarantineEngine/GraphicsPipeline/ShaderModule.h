@@ -61,7 +61,7 @@ public:
     ReflectShader                                   reflectShader;
     std::vector<VkPipelineShaderStageCreateInfo>    shaderStages;
     VkPipelineVertexInputStateCreateInfo            vertexInputInfo{};
-    VkDescriptorSetLayout                           descriptorSetLayout;
+    std::vector<VkDescriptorSetLayout>              descriptorSetLayouts;
     std::shared_ptr<GraphicsPipelineModule>         PipelineModule;
     std::shared_ptr<ComputePipelineModule>          ComputePipelineModule;
     std::shared_ptr<ShadowPipelineModule>           ShadowPipelineModule;
@@ -87,7 +87,7 @@ public:
 private:
     VkPipelineShaderStageCreateInfo createShader(VkDevice& device, const std::string& filename, SHADER_TYPE shaderType);
     void CreateDescriptorSetLayout();
-    void createShaderBindings();
+    void CreateShaderBindings();
     void SetBindingDescription();
     void SetAttributeDescriptions(std::vector<VkVertexInputAttributeDescription>& attributeDescriptions);
 };

@@ -71,7 +71,7 @@ private:
     std::vector<std::string> nativesVariables;
 public:
     std::vector<InputVars> inputVariables;
-    std::unordered_map<std::string, DescriptorBindingReflect> bindings;
+    std::unordered_map<int, std::unordered_map<std::string, DescriptorBindingReflect>> bindings;
     std::vector<DescriptorSetReflect> descriptorSetReflect;
     bool isAnimationShader = false;
     bool isUBOMaterial = false;

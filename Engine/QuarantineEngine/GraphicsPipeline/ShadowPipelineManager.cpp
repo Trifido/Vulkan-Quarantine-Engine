@@ -75,9 +75,9 @@ void ShadowPipelineManager::CleanShadowPipelines()
     }
 }
 
-void ShadowPipelineManager::RecreateShadowPipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout)
+void ShadowPipelineManager::RecreateShadowPipeline(ShaderModule shader, std::vector<VkDescriptorSetLayout> descriptorLayouts)
 {
-    this->_shadowPipelines[shader.id].first->CompileShadowPipeline(shader.shaderStages, shader.vertexInputInfo, descriptorLayout);
+    this->_shadowPipelines[shader.id].first->CompileShadowPipeline(shader.shaderStages, shader.vertexInputInfo, descriptorLayouts);
 }
 
 void ShadowPipelineManager::CleanLastResources()
@@ -85,7 +85,7 @@ void ShadowPipelineManager::CleanLastResources()
     this->_shadowPipelines.clear();
 }
 
-std::shared_ptr<ShadowPipelineModule> ShadowPipelineManager::RegisterNewShadowPipeline(ShaderModule& shader, VkDescriptorSetLayout descriptorLayout, GraphicsPipelineData pipelineData)
+std::shared_ptr<ShadowPipelineModule> ShadowPipelineManager::RegisterNewShadowPipeline(ShaderModule& shader, std::vector<VkDescriptorSetLayout> descriptorLayouts, GraphicsPipelineData pipelineData)
 {
     this->_shadowPipelines[shader.id].first = std::make_shared<ShadowPipelineModule>();
     this->_shadowPipelines[shader.id].first->PoligonMode = pipelineData.polygonMode;
@@ -96,6 +96,6 @@ std::shared_ptr<ShadowPipelineModule> ShadowPipelineManager::RegisterNewShadowPi
     this->_shadowPipelines[shader.id].first->renderPass = this->_shadowPipelines[shader.id].second;
 
     this->_shadowPipelines[shader.id].first->SetShadowMappingMode(pipelineData.shadowMode);
-    this->_shadowPipelines[shader.id].first->CompileShadowPipeline(shader.shaderStages, shader.vertexInputInfo, descriptorLayout);
+    this->_shadowPipelines[shader.id].first->CompileShadowPipeline(shader.shaderStages, shader.vertexInputInfo, descriptorLayouts);
     return this->_shadowPipelines[shader.id].first;
 }

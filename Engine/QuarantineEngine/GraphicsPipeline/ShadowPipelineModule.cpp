@@ -23,7 +23,7 @@ ShadowMappingMode ShadowPipelineModule::GetShadowMappingMode()
     return this->shadowMode;
 }
 
-void ShadowPipelineModule::CompileShadowPipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, VkPipelineVertexInputStateCreateInfo vertexInfo, VkDescriptorSetLayout descriptorLayout)
+void ShadowPipelineModule::CompileShadowPipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, VkPipelineVertexInputStateCreateInfo vertexInfo, std::vector<VkDescriptorSetLayout> descriptorLayouts)
 {
     switch (this->shadowMode)
     {
@@ -31,15 +31,15 @@ void ShadowPipelineModule::CompileShadowPipeline(std::vector<VkPipelineShaderSta
         case ShadowMappingMode::NONE:
             break;
         case ShadowMappingMode::DIRECTIONAL_SHADOW:
-            this->CompileDirectionalShadowPipeline(shaderInfo, vertexInfo, descriptorLayout);
+            this->CompileDirectionalShadowPipeline(shaderInfo, vertexInfo, descriptorLayouts);
             break;
         case ShadowMappingMode::OMNI_SHADOW:
-            this->CompileOmniShadowPipeline(shaderInfo, vertexInfo, descriptorLayout);
+            this->CompileOmniShadowPipeline(shaderInfo, vertexInfo, descriptorLayouts);
             break;
     }
 }
 
-void ShadowPipelineModule::CompileDirectionalShadowPipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, VkPipelineVertexInputStateCreateInfo vertexInfo, VkDescriptorSetLayout descriptorLayout)
+void ShadowPipelineModule::CompileDirectionalShadowPipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, VkPipelineVertexInputStateCreateInfo vertexInfo, std::vector<VkDescriptorSetLayout> descriptorLayouts)
 {
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -129,8 +129,8 @@ void ShadowPipelineModule::CompileDirectionalShadowPipeline(std::vector<VkPipeli
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 1; // Number of descriptor sets
-    pipelineLayoutInfo.pSetLayouts = &descriptorLayout; // Ptr to descriptor set layout
+    pipelineLayoutInfo.setLayoutCount = descriptorLayouts.size(); // Number of descriptor sets
+    pipelineLayoutInfo.pSetLayouts = descriptorLayouts.data(); // Ptr to descriptor set layout
     pipelineLayoutInfo.pushConstantRangeCount = 1; // Optional
     pipelineLayoutInfo.pPushConstantRanges = &pushConstantInfo; // Optional
 
@@ -162,7 +162,7 @@ void ShadowPipelineModule::CompileDirectionalShadowPipeline(std::vector<VkPipeli
     }
 }
 
-void ShadowPipelineModule::CompileOmniShadowPipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, VkPipelineVertexInputStateCreateInfo vertexInfo, VkDescriptorSetLayout descriptorLayout)
+void ShadowPipelineModule::CompileOmniShadowPipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, VkPipelineVertexInputStateCreateInfo vertexInfo, std::vector<VkDescriptorSetLayout> descriptorLayouts)
 {
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -261,8 +261,8 @@ void ShadowPipelineModule::CompileOmniShadowPipeline(std::vector<VkPipelineShade
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 1; // Number of descriptor sets
-    pipelineLayoutInfo.pSetLayouts = &descriptorLayout; // Ptr to descriptor set layout
+    pipelineLayoutInfo.setLayoutCount = descriptorLayouts.size(); // Number of descriptor sets
+    pipelineLayoutInfo.pSetLayouts = descriptorLayouts.data(); // Ptr to descriptor set layout
     pipelineLayoutInfo.pushConstantRangeCount = 1; // Optional
     pipelineLayoutInfo.pPushConstantRanges = &pushConstantInfo; // Optional
 

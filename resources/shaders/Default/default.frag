@@ -100,6 +100,17 @@ layout(set = 0, binding = 8) uniform ScreenData
     vec2 resolution;
 } screenData;
 
+
+/*
+layout(set = 1, binding = 0) uniform ShadowMapData
+{
+    uint numShadows;
+    uint shadow_indices[];
+};
+
+layout(set = 1, binding = 1) uniform samplerCube shadowCubeMaps[10];
+*/
+
 //BLINN-PHONG LIGHT EQUATIONS
 vec3 ComputePointLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive);
 vec3 ComputeDirectionalLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive);

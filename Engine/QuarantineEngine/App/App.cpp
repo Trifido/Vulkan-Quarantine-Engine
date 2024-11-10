@@ -159,7 +159,8 @@ void App::initVulkan()
     GeometryComponent::deviceModule_ptr = this->deviceModule;
     TextureManagerModule::queueModule = this->queueModule;
     CustomTexture::commandPool = commandPoolModule->getCommandPool();
-    ShadowMappingModule::commandPool = commandPoolModule->getCommandPool();
+    OmniShadowResources::commandPool = commandPoolModule->getCommandPool();
+    OmniShadowResources::queueModule = this->queueModule;
 
     // INIT ------------------------- Mesh & Material -------------------------------
     this->shaderManager = ShaderManager::getInstance();
@@ -195,6 +196,7 @@ void App::initVulkan()
         absPath.erase(ind, substring.length());
     }
 
+    /**/
     const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
     //const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
 
@@ -212,6 +214,7 @@ void App::initVulkan()
     floor->transform->SetScale(glm::vec3(3.0f, 1.0f, 3.0f));
     floor->material->materialData.SetMaterialField("Diffuse", glm::vec3(0.0f, 0.0f, 0.3f));
     this->gameObjectManager->AddGameObject(floor, "floor");
+    
 
 //DEMO
 /*
@@ -321,6 +324,7 @@ void App::initVulkan()
     this->gameObjectManager->InitializePhysics();
     this->materialManager->InitializeMaterials();
     this->computeNodeManager->InitializeComputeNodes();
+    this->lightManager->InitializeShadowMaps();
 
     this->commandPoolModule->Render(&framebufferModule);
     this->synchronizationModule.createSyncObjects(swapchainModule->getNumSwapChainImages());
@@ -465,7 +469,7 @@ void App::cleanUp()
 {
     this->shaderManager->Clean();
 
-    //this->shadowMappingModule->cleanup();
+    //this->OmniShadowResources->cleanup();
     this->cleanUpSwapchain();
     //this->framebufferModule.cleanupShadowBuffer();
     this->swapchainModule->CleanScreenDataResources();

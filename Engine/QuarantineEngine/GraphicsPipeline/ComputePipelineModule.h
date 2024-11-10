@@ -10,7 +10,7 @@
 class ComputePipelineModule : public PipelineModule
 {
 public:
-    void CompileComputePipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, VkDescriptorSetLayout descriptorLayout);
+    void CompileComputePipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, std::vector<VkDescriptorSetLayout> descriptorLayouts);
     void cleanup(VkPipeline pipeline, VkPipelineLayout pipelineLayout);
 };
 

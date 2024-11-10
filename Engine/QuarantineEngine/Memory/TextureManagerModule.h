@@ -24,11 +24,7 @@ protected:
 public:
     TextureManagerModule();
     void transitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageAspectFlags aspectFlag);
-    void transitionMultiImagesLayout(VkImage newImage, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageSubresourceRange subresourceRange);
     void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, uint32_t mipLevels = 1, uint32_t arrayLayers = 1, VkSampleCountFlagBits numSamples = VK_SAMPLE_COUNT_1_BIT);
-    VkImage CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, uint32_t mipLevels = 1, uint32_t arrayLayers = 1, VkSampleCountFlagBits numSamples = VK_SAMPLE_COUNT_1_BIT);
-    void createCubeMapImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
-        VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkSampleCountFlagBits numSamples = VK_SAMPLE_COUNT_1_BIT);
     virtual void cleanup();
 };
 
