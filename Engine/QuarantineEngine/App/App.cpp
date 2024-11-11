@@ -206,13 +206,16 @@ void App::initVulkan()
     //model->transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
     //model->transform->SetOrientation(glm::vec3(-90.0f, 180.0f, 0.0f));
     model->material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
+    model->material->materialData.SetMaterialField("Specular", glm::vec3(0.5f, 0.5f, 0.5f));
     model->material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
     this->gameObjectManager->AddGameObject(model, "model");
 
     std::shared_ptr<GameObject> floor = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
     floor->transform->SetPosition(glm::vec3(0.0f, -0.10f, 0.0f));
     floor->transform->SetScale(glm::vec3(3.0f, 1.0f, 3.0f));
-    floor->material->materialData.SetMaterialField("Diffuse", glm::vec3(0.0f, 0.0f, 0.3f));
+    floor->material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.2f, 0.7f));
+    floor->material->materialData.SetMaterialField("Specular", glm::vec3(0.0f, 0.0f, 0.0f));
+    floor->material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
     this->gameObjectManager->AddGameObject(floor, "floor");
     
 
@@ -275,8 +278,8 @@ void App::initVulkan()
     this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
     auto pointLight = this->lightManager->GetLight("PointLight1");
     pointLight->transform->SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
-    pointLight->diffuse = glm::vec3(0.0f, 0.0f, 0.7f);
-    pointLight->specular = glm::vec3(0.0f, 0.0f, 0.7f);
+    pointLight->diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
+    pointLight->specular = glm::vec3(0.7f, 0.7f, 0.7f);
     pointLight->SetDistanceEffect(100.0f);
 
     //this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");

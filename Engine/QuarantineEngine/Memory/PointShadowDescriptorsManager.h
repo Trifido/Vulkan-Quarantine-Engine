@@ -30,12 +30,13 @@ private:
 
     // Render resources
     std::vector<VkDescriptorBufferInfo> renderBuffersInfo;
+    std::vector<VkDescriptorImageInfo> shadowPointsImageInfo;
     std::shared_ptr<UniformBufferObject> pointlightIdBuffer;
     VkDeviceSize sizePointlightIdBuffer;
 
     // ImageViews & Samplers
-    std::shared_ptr<VkImageView>    _imageViews[10];
-    std::shared_ptr<VkSampler>      _samplers[10];
+    std::vector<VkImageView>    _imageViews;
+    std::vector<VkSampler>      _samplers;
 
 public:
     VkDescriptorSet offscreenDescriptorSets[NUM_POINT_SHADOW_SETS][MAX_NUM_POINT_LIGHTS];
@@ -43,7 +44,7 @@ public:
 
 public:
     PointShadowDescriptorsManager();
-    void AddPointLightResources(std::shared_ptr<UniformBufferObject> shadowMapUBO);
+    void AddPointLightResources(std::shared_ptr<UniformBufferObject> shadowMapUBO, VkImageView imageView, VkSampler sampler);
     void InitializeDescriptorSetLayouts(std::shared_ptr<ShaderModule> offscreen_shader_ptr);
     void Clean();
 
@@ -53,6 +54,7 @@ private:
     void SetOffscreenDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize);
     void CreateRenderDescriptorPool();
     void CreateRenderDescriptorSet();
+    VkDescriptorSetLayout CreateRenderDescriptorSetLayout();
     void SetRenderDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize);
     void SetCubeMapDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding);
     VkDescriptorBufferInfo GetBufferInfo(VkBuffer buffer, VkDeviceSize bufferSize);

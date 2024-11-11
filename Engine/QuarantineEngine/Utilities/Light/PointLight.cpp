@@ -6,7 +6,7 @@ PointLight::PointLight() : Light()
     this->lightType = LightType::POINT_LIGHT;
 }
 
-PointLight::PointLight(std::shared_ptr<ShaderModule> shaderModule, std::shared_ptr<VkRenderPass> renderPass)
+PointLight::PointLight(std::shared_ptr<ShaderModule> shaderModule, std::shared_ptr<VkRenderPass> renderPass) : PointLight()
 {
     this->shadowMappingResourcesPtr = std::make_shared<OmniShadowResources>(renderPass);
 }

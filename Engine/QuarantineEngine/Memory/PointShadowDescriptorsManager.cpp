@@ -9,18 +9,24 @@ PointShadowDescriptorsManager::PointShadowDescriptorsManager()
     this->CreateRenderDescriptorPool();
 }
 
-void PointShadowDescriptorsManager::AddPointLightResources(std::shared_ptr<UniformBufferObject> shadowMapUBO)
+void PointShadowDescriptorsManager::AddPointLightResources(std::shared_ptr<UniformBufferObject> shadowMapUBO, VkImageView imageView, VkSampler sampler)
 {
-    this->shadowMapUBOs.push_back(shadowMapUBO);
-    this->_numPointLights++;
+    if (this->_numPointLights < MAX_NUM_POINT_LIGHTS)
+    {
+        this->shadowMapUBOs.push_back(shadowMapUBO);
+        this->_imageViews.push_back(imageView);
+        this->_samplers.push_back(sampler);
+        this->_numPointLights++;
+    }
 }
 
 void PointShadowDescriptorsManager::InitializeDescriptorSetLayouts(std::shared_ptr<ShaderModule> offscreen_shader_ptr)
 {
     this->offscreenDescriptorSetLayout = offscreen_shader_ptr->descriptorSetLayouts.at(0);
-    //this->renderDescriptorSetLayout = render_shader_ptr->descriptorSetLayouts.at(1);
+    this->renderDescriptorSetLayout = this->CreateRenderDescriptorSetLayout();
 
     this->CreateOffscreenDescriptorSet();
+    this->CreateRenderDescriptorSet();
 }
 
 void PointShadowDescriptorsManager::CreateOffscreenDescriptorPool()
@@ -45,15 +51,15 @@ void PointShadowDescriptorsManager::CreateOffscreenDescriptorPool()
 void PointShadowDescriptorsManager::CreateRenderDescriptorPool()
 {
     std::vector<VkDescriptorPoolSize> renderPoolSizes;
-    renderPoolSizes.resize(2);
+    renderPoolSizes.resize(1);
 
     // Point Light Uniform
-    renderPoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    renderPoolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) * MAX_NUM_POINT_LIGHTS;
+    //renderPoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    //renderPoolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) * MAX_NUM_POINT_LIGHTS;
 
     // Shadow Texture Samplers
-    renderPoolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    renderPoolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) * MAX_NUM_POINT_LIGHTS;
+    renderPoolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    renderPoolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) * MAX_NUM_POINT_LIGHTS;
 
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -106,12 +112,19 @@ void PointShadowDescriptorsManager::SetRenderDescriptorWrite(VkWriteDescriptorSe
 
 void PointShadowDescriptorsManager::SetCubeMapDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding)
 {
-    VkDescriptorImageInfo imageInfos[MAX_NUM_POINT_LIGHTS];
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < _numPointLights; ++i)
     {
-        imageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        imageInfos[i].imageView = *this->_imageViews[i]; // ImageView de cada cubemap
-        imageInfos[i].sampler = *this->_samplers[i]; // Sampler para cada cubemap
+        this->shadowPointsImageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        if (i < _numPointLights)
+        {
+            this->shadowPointsImageInfo[i].imageView = _imageViews[i]; // ImageView de cada cubemap
+            this->shadowPointsImageInfo[i].sampler = _samplers[i]; // Sampler para cada cubemap
+        }
+        else
+        {
+            this->shadowPointsImageInfo[i].imageView = VK_NULL_HANDLE; // ImageView de cada cubemap
+            this->shadowPointsImageInfo[i].sampler = VK_NULL_HANDLE; // Sampler para cada cubemap
+        }
     }
 
     descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -119,8 +132,8 @@ void PointShadowDescriptorsManager::SetCubeMapDescriptorWrite(VkWriteDescriptorS
     descriptorWrite.dstBinding = binding;
     descriptorWrite.dstArrayElement = 0;
     descriptorWrite.descriptorType = descriptorType;
-    descriptorWrite.descriptorCount = 10; // Número de cubemaps en el arreglo
-    descriptorWrite.pImageInfo = imageInfos;
+    descriptorWrite.descriptorCount = _numPointLights; // Número de cubemaps en el arreglo
+    descriptorWrite.pImageInfo = this->shadowPointsImageInfo.data();
 }
 
 void PointShadowDescriptorsManager::CreateRenderDescriptorSet()
@@ -132,6 +145,8 @@ void PointShadowDescriptorsManager::CreateRenderDescriptorSet()
     allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
     allocInfo.pSetLayouts = layouts.data();
 
+    this->shadowPointsImageInfo.resize(MAX_NUM_POINT_LIGHTS);
+
     if (vkAllocateDescriptorSets(deviceModule->device, &allocInfo, this->renderDescriptorSets) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to allocate descriptor sets!");
@@ -140,13 +155,46 @@ void PointShadowDescriptorsManager::CreateRenderDescriptorSet()
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
         std::vector<VkWriteDescriptorSet> descriptorWrites{};
-        descriptorWrites.resize(2);
+        descriptorWrites.resize(1);
 
-        this->SetRenderDescriptorWrite(descriptorWrites[0], this->renderDescriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, pointlightIdBuffer->uniformBuffers[i], sizePointlightIdBuffer);
-        this->SetCubeMapDescriptorWrite(descriptorWrites[1], this->renderDescriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1);
+        //this->SetRenderDescriptorWrite(descriptorWrites[0], this->renderDescriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, pointlightIdBuffer->uniformBuffers[i], sizePointlightIdBuffer);
+        this->SetCubeMapDescriptorWrite(descriptorWrites[0], this->renderDescriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0);
 
         vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
+}
+
+VkDescriptorSetLayout PointShadowDescriptorsManager::CreateRenderDescriptorSetLayout()
+{
+    VkDescriptorSetLayout resultLayout = {};
+
+    const uint32_t NUM_BINDINGS = 1;
+
+    std::vector<VkDescriptorSetLayoutBinding> bindings{};
+    bindings.resize(NUM_BINDINGS);
+
+    //bindings[0].binding = 0;
+    //bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    //bindings[0].descriptorCount = 1;
+    //bindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    //bindings[0].pImmutableSamplers = nullptr;
+
+    bindings[0].binding = 0;
+    bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    bindings[0].descriptorCount = 1;
+    bindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    bindings[0].pImmutableSamplers = nullptr;
+
+    VkDescriptorSetLayoutCreateInfo layoutInfo{};
+    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layoutInfo.bindingCount = static_cast<uint32_t>(NUM_BINDINGS);
+    layoutInfo.pBindings = bindings.data();
+
+    if (vkCreateDescriptorSetLayout(deviceModule->device, &layoutInfo, nullptr, &resultLayout) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create descriptor set layout!");
+    }
+
+    return resultLayout;
 }
 
 void PointShadowDescriptorsManager::CreateOffscreenDescriptorSet()
@@ -201,4 +249,9 @@ void PointShadowDescriptorsManager::Clean()
         this->renderDescriptorPool = VK_NULL_HANDLE;
     }
 
+    if (this->renderDescriptorSetLayout != VK_NULL_HANDLE)
+    {
+        vkDestroyDescriptorSetLayout(deviceModule->device, this->renderDescriptorSetLayout, nullptr);
+        this->renderDescriptorSetLayout = VK_NULL_HANDLE;
+    }
 }

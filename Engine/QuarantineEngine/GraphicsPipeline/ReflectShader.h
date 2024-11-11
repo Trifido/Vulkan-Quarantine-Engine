@@ -77,6 +77,7 @@ public:
     bool isUBOMaterial = false;
     bool isUboAnimation = false;
     bool isShaderReflected = false;
+    bool HasPointShadows = false;
     std::vector<std::string> materialUBOComponents;
     std::vector<std::string> animationUBOComponents;
     VkDeviceSize materialBufferSize = 0;
@@ -102,6 +103,7 @@ private:
     DescriptorBindingReflect GetDescriptorBinding(const SpvReflectDescriptorBinding& obj, bool write_set, const char* indent);
     void CheckUBOMaterial(SpvReflectDescriptorSet* set);
     void CheckUBOAnimation(SpvReflectDescriptorSet* set);
+    void CheckHasPointShadowCubemaps(SpvReflectDescriptorSet* set);
     void RemoveInputNativeVariables();
 public:
     ReflectShader();

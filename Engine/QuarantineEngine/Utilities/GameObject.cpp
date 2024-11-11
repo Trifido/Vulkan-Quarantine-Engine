@@ -409,10 +409,7 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx,
             vkCmdBindIndexBuffer(commandBuffer, this->mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
         }
 
-        if (this->material->HasDescriptorBuffer())
-        {
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, this->material->descriptor->getDescriptorSet(idx), 0, nullptr);
-        }
+        this->material->BindDescriptors(commandBuffer, idx);
 
         this->pushConstant.model = this->transform->GetModel();
         if (this->parent != nullptr)

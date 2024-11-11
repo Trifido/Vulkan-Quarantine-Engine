@@ -77,8 +77,6 @@ Light::Light()
     this->outerCutoff = 0.0f;
     this->uniform->radius = 1.0f;
     this->idxShadowMap = 0;
-
-    this->UpdateUniform();
 }
 
 void Light::UpdateUniform()

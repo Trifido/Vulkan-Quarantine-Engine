@@ -739,6 +739,20 @@ void ReflectShader::CheckUBOAnimation(SpvReflectDescriptorSet* set)
     }
 }
 
+void ReflectShader::CheckHasPointShadowCubemaps(SpvReflectDescriptorSet* set)
+{
+    for (int b = 0; b < set->binding_count && !this->HasPointShadows; b++)
+    {
+        if (set->bindings[b]->name != NULL)
+        {
+            if (strcmp(set->bindings[b]->name, "QE_PointShadowCubemaps") == 0)
+            {
+                this->HasPointShadows = true;
+            }
+        }
+    }
+}
+
 DescriptorBindingReflect ReflectShader::GetDescriptorBinding(const SpvReflectDescriptorBinding& obj, bool write_set, const char* indent)
 {
     DescriptorBindingReflect descriptor = DescriptorBindingReflect();
@@ -886,6 +900,7 @@ void ReflectShader::PerformReflect(VkShaderModuleCreateInfo createInfo)
         auto p_set = sets[index];
         this->CheckUBOMaterial(p_set);
         this->CheckUBOAnimation(p_set);
+        this->CheckHasPointShadowCubemaps(p_set);
         auto p_set2 = spvReflectGetDescriptorSet(&module, p_set->set, &result);
         assert(result == SPV_REFLECT_RESULT_SUCCESS);
         assert(p_set == p_set2);

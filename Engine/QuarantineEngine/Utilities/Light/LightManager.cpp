@@ -78,7 +78,9 @@ void LightManager::CreateLight(LightType type, std::string name)
         case LightType::POINT_LIGHT:
             this->PointLights.push_back(std::make_shared<PointLight>(this->OmniShadowShaderModule, this->renderPassModule->omniShadowMappingRenderPass));
             this->AddLight(std::static_pointer_cast<Light>(this->PointLights.back()), name);
-            this->PointShadowDescritors->AddPointLightResources(this->PointLights.back()->shadowMappingResourcesPtr->shadowMapUBO);
+            this->PointShadowDescritors->AddPointLightResources(this->PointLights.back()->shadowMappingResourcesPtr->shadowMapUBO,
+                this->PointLights.back()->shadowMappingResourcesPtr->CubemapImageView,
+                this->PointLights.back()->shadowMappingResourcesPtr->CubemapSampler);
             break;
 
         case LightType::DIRECTIONAL_LIGHT:
