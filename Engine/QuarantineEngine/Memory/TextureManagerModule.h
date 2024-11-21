@@ -14,9 +14,9 @@ public:
     uint32_t        mipLevels = 1;
     DeviceModule*   deviceModule;
     VkImageView     imageView = { VK_NULL_HANDLE };
+    VkImage         image = { VK_NULL_HANDLE };
     static QueueModule* queueModule;
 protected:
-    VkImage         image = { VK_NULL_HANDLE };
     VkDeviceMemory  deviceMemory = { VK_NULL_HANDLE };
     VkCommandPool*  ptrCommandPool = { VK_NULL_HANDLE };
     SwapChainModule* swapchainModule = nullptr;

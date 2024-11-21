@@ -167,6 +167,32 @@ void GameObject::drawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx,
     }
 }
 
+void GameObject::drawOmniShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, PCOmniShadowStruct shadowParameters)
+{
+    bool isAnimationPipeline = this->meshImportedType == ANIMATED_GEO;
+
+    if (isAnimationPipeline)
+    {
+        this->omniPushConstant = shadowParameters;
+        this->CreateDrawShadowCommand(commandBuffer, idx, pipelineLayout, this->animationComponent->animator, true);
+        for (auto child : childs)
+        {
+            child->omniPushConstant = shadowParameters;
+            child->CreateDrawShadowCommand(commandBuffer, idx, pipelineLayout, this->animationComponent->animator, true);
+        }
+    }
+    else
+    {
+        this->omniPushConstant = shadowParameters;
+        this->CreateDrawShadowCommand(commandBuffer, idx, pipelineLayout, nullptr, true);
+        for (auto child : childs)
+        {
+            child->omniPushConstant = shadowParameters;
+            child->CreateDrawShadowCommand(commandBuffer, idx, pipelineLayout, nullptr, true);
+        }
+    }
+}
+
 void GameObject::addMaterial(std::shared_ptr<Material> material_ptr)
 {
     if (material_ptr == nullptr)

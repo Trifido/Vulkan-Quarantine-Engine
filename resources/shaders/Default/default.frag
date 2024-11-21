@@ -1,5 +1,6 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
+#extension GL_EXT_nonuniform_qualifier : require
 
 #define POINT_LIGHT 0
 #define DIRECTIONAL_LIGHT 1
@@ -103,8 +104,7 @@ layout(set = 0, binding = 8) uniform ScreenData
     vec2 resolution;
 } screenData;
 
-layout(set = 1, binding = 0) uniform samplerCube QE_PointShadowCubemaps[];
-
+layout(set = 1, binding = 0) uniform samplerCube QE_PointShadowCubemaps[10];
 
 //BLINN-PHONG LIGHT EQUATIONS
 vec3 ComputePointLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive);
@@ -230,17 +230,8 @@ vec3 ComputePointLight(LightData light, vec3 normal, vec3 albedo, vec3 specular,
     vec3 result = diffuse + specularResult + emissive;
 
     vec3 lightVec = fs_in.FragPos - light.position;
-    float sampledDist = texture(QE_PointShadowCubemaps[0], lightVec).r;
+    float sampledDist = texture(QE_PointShadowCubemaps[light.idxShadowMap], lightVec).r;
     float shadow = (distance <= sampledDist + EPSILON) ? 1.0 : SHADOW_OPACITY;
-
-    if(distance <= sampledDist + EPSILON)
-    {
-        return result;
-    }
-    else
-    {
-        return vec3(sampledDist);
-    }
 
     return result * shadow;
 }

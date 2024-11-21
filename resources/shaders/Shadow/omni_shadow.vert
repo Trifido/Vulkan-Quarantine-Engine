@@ -9,20 +9,20 @@ layout (location = 1) out vec3 outLightPosition;
 layout(set = 0, binding = 0) uniform PointLightCameraUniform
 {
 	mat4 projection;
-	mat4 model;
 	vec4 lightPos;
 } plData;
 
 layout(std430, push_constant) uniform PushConstants
 {
 	mat4 model;
+	mat4 lightModel;
 	mat4 view;
 } constants;
 
 void main() 
 {
-    gl_Position = plData.projection * constants.view * constants.model * inPosition;
+    gl_Position = plData.projection * constants.view * constants.lightModel * inPosition;
 
-    outPosition = inPosition;	
+    outPosition = constants.model * inPosition;	
 	outLightPosition = plData.lightPos.xyz; 
 }

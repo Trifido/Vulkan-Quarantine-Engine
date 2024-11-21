@@ -38,6 +38,9 @@ private:
     std::vector<VkImageView>    _imageViews;
     std::vector<VkSampler>      _samplers;
 
+    VkImageView placeholderImageView;
+    VkSampler placeholderSampler;
+
 public:
     VkDescriptorSet offscreenDescriptorSets[NUM_POINT_SHADOW_SETS][MAX_NUM_POINT_LIGHTS];
     VkDescriptorSet renderDescriptorSets[NUM_POINT_SHADOW_SETS];
@@ -58,6 +61,7 @@ private:
     void SetRenderDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize);
     void SetCubeMapDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding);
     VkDescriptorBufferInfo GetBufferInfo(VkBuffer buffer, VkDeviceSize bufferSize);
+    void CreateCubemapPlaceHolder();
 };
 
 #endif // !POINT_SHADOW_DESCRIPTOR

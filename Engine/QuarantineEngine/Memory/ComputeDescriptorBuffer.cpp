@@ -9,7 +9,7 @@ ComputeDescriptorBuffer::ComputeDescriptorBuffer()
 
 ComputeDescriptorBuffer::ComputeDescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr) : ComputeDescriptorBuffer()
 {
-    this->numBinding = shader_ptr->reflectShader.bindings.size();
+    this->numBinding = shader_ptr->reflectShader.bindings.at(0).size();
     this->StartResources(shader_ptr);
 }
 

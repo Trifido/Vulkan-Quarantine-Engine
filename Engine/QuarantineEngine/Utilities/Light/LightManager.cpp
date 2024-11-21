@@ -77,6 +77,8 @@ void LightManager::CreateLight(LightType type, std::string name)
         default:
         case LightType::POINT_LIGHT:
             this->PointLights.push_back(std::make_shared<PointLight>(this->OmniShadowShaderModule, this->renderPassModule->omniShadowMappingRenderPass));
+            this->PointLights.back()->idxShadowMap = this->PointLights.size() - 1;
+
             this->AddLight(std::static_pointer_cast<Light>(this->PointLights.back()), name);
             this->PointShadowDescritors->AddPointLightResources(this->PointLights.back()->shadowMappingResourcesPtr->shadowMapUBO,
                 this->PointLights.back()->shadowMappingResourcesPtr->CubemapImageView,

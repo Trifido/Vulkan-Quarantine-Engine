@@ -17,11 +17,11 @@ void PointLight::UpdateUniform()
 
     this->uniform->position = this->transform->Position;
     this->uniform->radius = this->radius;
+    this->uniform->idxShadowMap = this->idxShadowMap;
 
     OmniShadowUniform omniParameters = {};
     omniParameters.lightPos = glm::vec4(this->transform->Position, 1.0f);
-    omniParameters.model = glm::translate(glm::mat4(1.0f), glm::vec3(-omniParameters.lightPos.x, -omniParameters.lightPos.y, -omniParameters.lightPos.z));
-    omniParameters.projection = glm::perspective((float)(std::numbers::pi / 2.0f), 1.0f, 0.01f, this->radius);
+    omniParameters.projection = glm::perspective((float)(std::numbers::pi * 0.5), 1.0f, 0.01f, this->radius);
 
     this->shadowMappingResourcesPtr->UpdateUBOShadowMap(omniParameters);
 }

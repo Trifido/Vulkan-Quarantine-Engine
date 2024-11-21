@@ -99,10 +99,13 @@ void GameObjectManager::OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32
         PCOmniShadowStruct shadowParameters = {};
         shadowParameters.view = viewParameter;
 
+        glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), -lightPosition);
+        glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), model.second->transform->Scale);
+        glm::mat4 rotationMatrix = glm::toMat4(model.second->transform->Orientation);
+        shadowParameters.lightModel = translationMatrix * rotationMatrix * scaleMatrix;
+        shadowParameters.model = model.second->transform->GetModel();
 
-        shadowParameters.model = glm::translate(model.second->transform->GetModel(), -lightPosition);
-        model.second->SetViewOmniShadowParameter(shadowParameters);
-        model.second->drawShadowCommand(commandBuffer, idx, pipelineLayout, true);
+        model.second->drawOmniShadowCommand(commandBuffer, idx, pipelineLayout, shadowParameters);
     }
 }
 

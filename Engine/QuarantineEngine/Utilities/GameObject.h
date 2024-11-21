@@ -70,6 +70,7 @@ public:
     void cleanup();
     virtual void drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
     virtual void drawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, bool isOmniShadow = false);
+    virtual void drawOmniShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, PCOmniShadowStruct shadowParameters);
     void addMaterial(std::shared_ptr<Material> material_ptr);
     void addPhysicBody(std::shared_ptr<PhysicBody> physicBody_ptr);
     void addCollider(std::shared_ptr<Collider> collider_ptr);

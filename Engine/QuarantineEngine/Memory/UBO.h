@@ -104,6 +104,7 @@ struct PushConstantStruct
 struct PCOmniShadowStruct
 {
     glm::mat4 model;
+    glm::mat4 lightModel;
     glm::mat4 view;
 };
 
@@ -120,7 +121,6 @@ struct DeltaTimeUniform
 struct OmniShadowUniform
 {
     glm::mat4 projection;
-    glm::mat4 model;
     glm::vec4 lightPos;
 };
 

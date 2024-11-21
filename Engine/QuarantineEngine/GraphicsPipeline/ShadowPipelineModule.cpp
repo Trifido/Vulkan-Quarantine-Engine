@@ -195,7 +195,7 @@ void ShadowPipelineModule::CompileOmniShadowPipeline(std::vector<VkPipelineShade
 
     rasterizer.polygonMode = this->PoligonMode;
     rasterizer.lineWidth = this->lineWidth;
-    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+    rasterizer.cullMode = VK_CULL_MODE_NONE;
     rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
     rasterizer.depthBiasEnable = VK_TRUE;

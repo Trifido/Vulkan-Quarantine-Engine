@@ -1,5 +1,6 @@
 #include "PointShadowDescriptorsManager.h"
 #include "SynchronizationModule.h"
+#include <TextureManager.h>
 
 PointShadowDescriptorsManager::PointShadowDescriptorsManager()
 {
@@ -22,6 +23,8 @@ void PointShadowDescriptorsManager::AddPointLightResources(std::shared_ptr<Unifo
 
 void PointShadowDescriptorsManager::InitializeDescriptorSetLayouts(std::shared_ptr<ShaderModule> offscreen_shader_ptr)
 {
+    this->CreateCubemapPlaceHolder();
+
     this->offscreenDescriptorSetLayout = offscreen_shader_ptr->descriptorSetLayouts.at(0);
     this->renderDescriptorSetLayout = this->CreateRenderDescriptorSetLayout();
 
@@ -82,6 +85,33 @@ VkDescriptorBufferInfo PointShadowDescriptorsManager::GetBufferInfo(VkBuffer buf
     return bufferInfo;
 }
 
+void PointShadowDescriptorsManager::CreateCubemapPlaceHolder()
+{
+    TextureManager* textureManager = TextureManager::getInstance();
+    auto emptyTexture = textureManager->GetTexture("NULL_TEXTURE");
+
+    VkSamplerCreateInfo samplerInfo = {};
+    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    samplerInfo.magFilter = VK_FILTER_LINEAR;
+    samplerInfo.minFilter = VK_FILTER_LINEAR;
+    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    vkCreateSampler(this->deviceModule->device, &samplerInfo, NULL, &placeholderSampler);
+
+    VkImageViewCreateInfo viewInfo = {};
+    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    viewInfo.image = emptyTexture->image; // Una textura 1x1 creada previamente
+    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+    viewInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    viewInfo.subresourceRange.baseMipLevel = 0;
+    viewInfo.subresourceRange.levelCount = 1;
+    viewInfo.subresourceRange.baseArrayLayer = 0;
+    viewInfo.subresourceRange.layerCount = 6;
+    vkCreateImageView(this->deviceModule->device, &viewInfo, NULL, &placeholderImageView);
+}
+
 void PointShadowDescriptorsManager::SetOffscreenDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize)
 {
     this->offscreenBuffersInfo[binding] = GetBufferInfo(buffer, bufferSize);
@@ -112,7 +142,7 @@ void PointShadowDescriptorsManager::SetRenderDescriptorWrite(VkWriteDescriptorSe
 
 void PointShadowDescriptorsManager::SetCubeMapDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding)
 {
-    for (int i = 0; i < _numPointLights; ++i)
+    for (uint32_t i = 0; i < MAX_NUM_POINT_LIGHTS; ++i)
     {
         this->shadowPointsImageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         if (i < _numPointLights)
@@ -122,8 +152,8 @@ void PointShadowDescriptorsManager::SetCubeMapDescriptorWrite(VkWriteDescriptorS
         }
         else
         {
-            this->shadowPointsImageInfo[i].imageView = VK_NULL_HANDLE; // ImageView de cada cubemap
-            this->shadowPointsImageInfo[i].sampler = VK_NULL_HANDLE; // Sampler para cada cubemap
+            this->shadowPointsImageInfo[i].imageView = placeholderImageView; // ImageView placeholder para cada cubemap
+            this->shadowPointsImageInfo[i].sampler = placeholderSampler; // Sampler placeholder para cada cubemap
         }
     }
 
@@ -132,7 +162,7 @@ void PointShadowDescriptorsManager::SetCubeMapDescriptorWrite(VkWriteDescriptorS
     descriptorWrite.dstBinding = binding;
     descriptorWrite.dstArrayElement = 0;
     descriptorWrite.descriptorType = descriptorType;
-    descriptorWrite.descriptorCount = _numPointLights; // Número de cubemaps en el arreglo
+    descriptorWrite.descriptorCount = MAX_NUM_POINT_LIGHTS; // Número de cubemaps en el arreglo
     descriptorWrite.pImageInfo = this->shadowPointsImageInfo.data();
 }
 
@@ -157,7 +187,6 @@ void PointShadowDescriptorsManager::CreateRenderDescriptorSet()
         std::vector<VkWriteDescriptorSet> descriptorWrites{};
         descriptorWrites.resize(1);
 
-        //this->SetRenderDescriptorWrite(descriptorWrites[0], this->renderDescriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, pointlightIdBuffer->uniformBuffers[i], sizePointlightIdBuffer);
         this->SetCubeMapDescriptorWrite(descriptorWrites[0], this->renderDescriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0);
 
         vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
@@ -170,27 +199,20 @@ VkDescriptorSetLayout PointShadowDescriptorsManager::CreateRenderDescriptorSetLa
 
     const uint32_t NUM_BINDINGS = 1;
 
-    std::vector<VkDescriptorSetLayoutBinding> bindings{};
-    bindings.resize(NUM_BINDINGS);
-
-    //bindings[0].binding = 0;
-    //bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    //bindings[0].descriptorCount = 1;
-    //bindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    //bindings[0].pImmutableSamplers = nullptr;
-
-    bindings[0].binding = 0;
-    bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    bindings[0].descriptorCount = 1;
-    bindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    bindings[0].pImmutableSamplers = nullptr;
+    VkDescriptorSetLayoutBinding binding{};
+    binding.binding = 0;
+    binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    binding.descriptorCount = MAX_NUM_POINT_LIGHTS;
+    binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    binding.pImmutableSamplers = nullptr;
 
     VkDescriptorSetLayoutCreateInfo layoutInfo{};
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layoutInfo.bindingCount = static_cast<uint32_t>(NUM_BINDINGS);
-    layoutInfo.pBindings = bindings.data();
+    layoutInfo.bindingCount = NUM_BINDINGS;
+    layoutInfo.pBindings = &binding;
 
-    if (vkCreateDescriptorSetLayout(deviceModule->device, &layoutInfo, nullptr, &resultLayout) != VK_SUCCESS) {
+    if (vkCreateDescriptorSetLayout(deviceModule->device, &layoutInfo, nullptr, &resultLayout) != VK_SUCCESS)
+    {
         throw std::runtime_error("failed to create descriptor set layout!");
     }
 
@@ -202,7 +224,7 @@ void PointShadowDescriptorsManager::CreateOffscreenDescriptorSet()
     VkDescriptorSetAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocInfo.descriptorPool = this->offscreenDescriptorPool;
-    allocInfo.descriptorSetCount = 1;// static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    allocInfo.descriptorSetCount = 1;
     allocInfo.pSetLayouts = &this->offscreenDescriptorSetLayout;
 
     std::vector<VkWriteDescriptorSet> descriptorWrites{};
@@ -218,8 +240,8 @@ void PointShadowDescriptorsManager::CreateOffscreenDescriptorSet()
                 throw std::runtime_error("failed to allocate descriptor sets!");
             }
 
-            this->SetOffscreenDescriptorWrite(descriptorWrites[npl], this->offscreenDescriptorSets[i][npl], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, npl, this->shadowMapUBOs[npl]->uniformBuffers[i], sizeof(OmniShadowUniform));
-            vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+            this->SetOffscreenDescriptorWrite(descriptorWrites[npl], this->offscreenDescriptorSets[i][npl], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, this->shadowMapUBOs[npl]->uniformBuffers[i], sizeof(OmniShadowUniform));
+            vkUpdateDescriptorSets(deviceModule->device, 1, &descriptorWrites[npl], 0, nullptr);
         }
     }
 }
@@ -253,5 +275,15 @@ void PointShadowDescriptorsManager::Clean()
     {
         vkDestroyDescriptorSetLayout(deviceModule->device, this->renderDescriptorSetLayout, nullptr);
         this->renderDescriptorSetLayout = VK_NULL_HANDLE;
+    }
+
+    if (this->placeholderSampler != VK_NULL_HANDLE)
+    {
+        vkDestroySampler(this->deviceModule->device, this->placeholderSampler, nullptr);
+    }
+
+    if (this->placeholderImageView != VK_NULL_HANDLE)
+    {
+        vkDestroyImageView(deviceModule->device, placeholderImageView, nullptr);
     }
 }

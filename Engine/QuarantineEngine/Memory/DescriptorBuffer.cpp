@@ -454,42 +454,6 @@ void DescriptorBuffer::InitializeDescriptorSets(std::shared_ptr<ShaderModule> sh
     }
 }
 
-//void DescriptorBuffer::InitializeShadowMapDescritorSets(std::shared_ptr<ShaderModule> shader_ptr, std::shared_ptr<UniformBufferObject> lightUniformBuffer, VkDeviceSize sizeBuffer)
-//{
-//    std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, shader_ptr->descriptorSetLayout);
-//    VkDescriptorSetAllocateInfo allocInfo{};
-//    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-//    allocInfo.descriptorPool = this->descriptorPool;
-//    allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-//    allocInfo.pSetLayouts = layouts.data();
-//
-//    descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
-//    if (vkAllocateDescriptorSets(deviceModule->device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
-//        throw std::runtime_error("failed to allocate descriptor sets!");
-//    }
-//
-//    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-//    {
-//        std::vector<VkWriteDescriptorSet> descriptorWrites{};
-//        descriptorWrites.resize(this->numBinding);
-//        this->buffersInfo.resize(this->numBinding);
-//        uint32_t idx = 0;
-//
-//        for (int idSet = 0; idSet < shader_ptr->reflectShader.bindings.size(); idSet++)
-//        {
-//            for (auto binding : shader_ptr->reflectShader.bindings[idSet])
-//            {
-//                if (binding.first == "LightCameraUniform" || binding.first == "PointLightCameraUniform")
-//                {
-//                    this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, lightUniformBuffer->uniformBuffers[i], sizeBuffer, i);
-//                    idx++;
-//                }
-//            }
-//        }
-//        vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-//    }
-//}
-
 void DescriptorBuffer::CleanDescriptorSetPool()
 {
     vkDestroyDescriptorPool(deviceModule->device, this->descriptorPool, nullptr);
