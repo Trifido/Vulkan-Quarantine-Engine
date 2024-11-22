@@ -1,6 +1,6 @@
 #include "PointShadowDescriptorsManager.h"
 #include "SynchronizationModule.h"
-#include <TextureManager.h>
+#include <OmniShadowResources.h>
 
 PointShadowDescriptorsManager::PointShadowDescriptorsManager()
 {
@@ -87,29 +87,25 @@ VkDescriptorBufferInfo PointShadowDescriptorsManager::GetBufferInfo(VkBuffer buf
 
 void PointShadowDescriptorsManager::CreateCubemapPlaceHolder()
 {
-    TextureManager* textureManager = TextureManager::getInstance();
-    auto emptyTexture = textureManager->GetTexture("NULL_TEXTURE");
+    this->placeholderImage = OmniShadowResources::AllocateCubemapImage(
+        deviceModule->device,
+        deviceModule->physicalDevice,
+        this->placeholderMemory,
+        1,
+        VK_FORMAT_R32_SFLOAT,
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        1);
 
-    VkSamplerCreateInfo samplerInfo = {};
-    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    samplerInfo.magFilter = VK_FILTER_LINEAR;
-    samplerInfo.minFilter = VK_FILTER_LINEAR;
-    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    vkCreateSampler(this->deviceModule->device, &samplerInfo, NULL, &placeholderSampler);
+    VkImageSubresourceRange subresourceRange = {};
+    subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    subresourceRange.baseMipLevel = 0;
+    subresourceRange.levelCount = 1;
+    subresourceRange.layerCount = 6;
+    OmniShadowResources::TransitionMultiImagesLayout(this->deviceModule->device, this->placeholderImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
 
-    VkImageViewCreateInfo viewInfo = {};
-    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    viewInfo.image = emptyTexture->image; // Una textura 1x1 creada previamente
-    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
-    viewInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
-    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    viewInfo.subresourceRange.baseMipLevel = 0;
-    viewInfo.subresourceRange.levelCount = 1;
-    viewInfo.subresourceRange.baseArrayLayer = 0;
-    viewInfo.subresourceRange.layerCount = 6;
-    vkCreateImageView(this->deviceModule->device, &viewInfo, NULL, &placeholderImageView);
+    this->placeholderSampler = OmniShadowResources::CreateCubemapSampler(this->deviceModule->device);
+    this->placeholderImageView = OmniShadowResources::CreateCubemapImageView(this->deviceModule->device, this->placeholderImage, VK_FORMAT_R32_SFLOAT, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 void PointShadowDescriptorsManager::SetOffscreenDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize)
@@ -284,6 +280,16 @@ void PointShadowDescriptorsManager::Clean()
 
     if (this->placeholderImageView != VK_NULL_HANDLE)
     {
-        vkDestroyImageView(deviceModule->device, placeholderImageView, nullptr);
+        vkDestroyImageView(deviceModule->device, this->placeholderImageView, nullptr);
+    }
+
+    if (this->placeholderImage != VK_NULL_HANDLE)
+    {
+        vkDestroyImage(deviceModule->device, this->placeholderImage, nullptr);
+    }
+
+    if (this->placeholderMemory != VK_NULL_HANDLE)
+    {
+        vkFreeMemory(deviceModule->device, this->placeholderMemory, nullptr);
     }
 }

@@ -38,8 +38,10 @@ private:
     std::vector<VkImageView>    _imageViews;
     std::vector<VkSampler>      _samplers;
 
-    VkImageView placeholderImageView;
-    VkSampler placeholderSampler;
+    VkDeviceMemory placeholderMemory = VK_NULL_HANDLE;
+    VkImage placeholderImage = VK_NULL_HANDLE;
+    VkImageView placeholderImageView = VK_NULL_HANDLE;
+    VkSampler placeholderSampler = VK_NULL_HANDLE;
 
 public:
     VkDescriptorSet offscreenDescriptorSets[NUM_POINT_SHADOW_SETS][MAX_NUM_POINT_LIGHTS];

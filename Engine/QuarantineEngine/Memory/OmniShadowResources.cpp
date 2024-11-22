@@ -83,14 +83,14 @@ VkImageView OmniShadowResources::CreateImageView(VkDevice device, VkImage image,
     return imageView;
 }
 
-VkImage OmniShadowResources::AllocateCubemapImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkSampleCountFlagBits numSamples)
+VkImage OmniShadowResources::AllocateCubemapImage(VkDevice device, VkPhysicalDevice physicalDevice, VkDeviceMemory& mapMemory, uint32_t pixelSize, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkSampleCountFlagBits numSamples)
 {
     VkImage result;
 
     VkImageCreateInfo imageInfo{};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     imageInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageInfo.extent = { width, height, 1 };
+    imageInfo.extent = { pixelSize, pixelSize, 1 };
     imageInfo.mipLevels = 1;
     imageInfo.arrayLayers = 6;
     imageInfo.format = format;
@@ -101,28 +101,28 @@ VkImage OmniShadowResources::AllocateCubemapImage(uint32_t width, uint32_t heigh
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     imageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 
-    if (vkCreateImage(deviceModule->device, &imageInfo, nullptr, &result) != VK_SUCCESS) {
+    if (vkCreateImage(device, &imageInfo, nullptr, &result) != VK_SUCCESS) {
         throw std::runtime_error("failed to create cube map image!");
     }
 
     VkMemoryRequirements memRequirements;
-    vkGetImageMemoryRequirements(deviceModule->device, result, &memRequirements);
+    vkGetImageMemoryRequirements(device, result, &memRequirements);
 
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = IMT::findMemoryType(memRequirements.memoryTypeBits, properties, deviceModule->physicalDevice);
+    allocInfo.memoryTypeIndex = IMT::findMemoryType(memRequirements.memoryTypeBits, properties, physicalDevice);
 
-    if (vkAllocateMemory(deviceModule->device, &allocInfo, nullptr, &cubemapMemory) != VK_SUCCESS) {
+    if (vkAllocateMemory(device, &allocInfo, nullptr, &mapMemory) != VK_SUCCESS) {
         throw std::runtime_error("failed to allocate cube map image memory!");
     }
 
-    vkBindImageMemory(deviceModule->device, result, cubemapMemory, 0);
+    vkBindImageMemory(device, result, mapMemory, 0);
 
     return result;
 }
 
-VkImageView OmniShadowResources::CreateCubemapImageView(VkDevice device, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels)
+VkImageView OmniShadowResources::CreateCubemapImageView(VkDevice device, VkImage& image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels)
 {
     VkImageView resultImageView = {};
 
@@ -139,7 +139,6 @@ VkImageView OmniShadowResources::CreateCubemapImageView(VkDevice device, VkImage
     viewInfo.subresourceRange.baseArrayLayer = 0;
     viewInfo.subresourceRange.layerCount = 6;
 
-    //VkImageView imageView;
     if (vkCreateImageView(device, &viewInfo, nullptr, &resultImageView) != VK_SUCCESS) {
         throw std::runtime_error("failed to create cubemap texture image view!");
     }
@@ -178,7 +177,7 @@ std::array<VkImageView, 6> OmniShadowResources::CreateCubemapFacesImageView(VkDe
     return shadowCubeMapFaceImageViews;
 }
 
-VkSampler OmniShadowResources::CreateCubemapSampler()
+VkSampler OmniShadowResources::CreateCubemapSampler(VkDevice device)
 {
     VkSampler resultSampler;
 
@@ -197,7 +196,7 @@ VkSampler OmniShadowResources::CreateCubemapSampler()
     samplerInfo.maxLod = 1.0f;
     samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 
-    if (vkCreateSampler(this->deviceModule->device, &samplerInfo, nullptr, &resultSampler))
+    if (vkCreateSampler(device, &samplerInfo, nullptr, &resultSampler))
     {
         throw std::runtime_error("failed to create omni shadow texture sampler!");
     }
@@ -205,9 +204,9 @@ VkSampler OmniShadowResources::CreateCubemapSampler()
     return resultSampler;
 }
 
-void OmniShadowResources::TransitionMultiImagesLayout(VkImage newImage, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageSubresourceRange subresourceRange)
+void OmniShadowResources::TransitionMultiImagesLayout(VkDevice device, VkImage& newImage, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageSubresourceRange subresourceRange)
 {
-    VkCommandBuffer commandBuffer = beginSingleTimeCommands(deviceModule->device, commandPool);
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands(device, commandPool);
     VkImageMemoryBarrier barrier{};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
     barrier.oldLayout = oldLayout;
@@ -263,22 +262,30 @@ void OmniShadowResources::TransitionMultiImagesLayout(VkImage newImage, VkImageL
         1, &barrier
     );
 
-    endSingleTimeCommands(deviceModule->device, queueModule->graphicsQueue, commandPool, commandBuffer);
+    endSingleTimeCommands(device, queueModule->graphicsQueue, commandPool, commandBuffer);
 }
 
 void OmniShadowResources::CreateOmniShadowMapResources(std::shared_ptr<VkRenderPass> renderPass)
 {
     //Cubemap images
-    this->cubemapImage = this->AllocateCubemapImage(this->TextureSize, this->TextureSize, this->shadowFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 1);
+    this->cubemapImage = this->AllocateCubemapImage(
+        deviceModule->device,
+        deviceModule->physicalDevice,
+        this->cubemapMemory,
+        this->TextureSize,
+        this->shadowFormat,
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        1);
 
     VkImageSubresourceRange subresourceRange = {};
     subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     subresourceRange.baseMipLevel = 0;
     subresourceRange.levelCount = 1;
     subresourceRange.layerCount = 6;
-    this->TransitionMultiImagesLayout(this->cubemapImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
+    this->TransitionMultiImagesLayout(this->deviceModule->device, this->cubemapImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
 
-    this->CubemapSampler = CreateCubemapSampler();
+    this->CubemapSampler = CreateCubemapSampler(this->deviceModule->device);
     this->CubemapImageView = this->CreateCubemapImageView(this->deviceModule->device, this->cubemapImage, this->shadowFormat, VK_IMAGE_ASPECT_COLOR_BIT);
     this->cubemapFacesImageViews = this->CreateCubemapFacesImageView(this->deviceModule->device, this->cubemapImage, this->shadowFormat, VK_IMAGE_ASPECT_COLOR_BIT);
 
@@ -292,7 +299,7 @@ void OmniShadowResources::CreateOmniShadowMapResources(std::shared_ptr<VkRenderP
     subresourceRangeDepth.levelCount = 1;
     subresourceRangeDepth.baseArrayLayer = 0;
     subresourceRangeDepth.layerCount = 1;
-    this->TransitionMultiImagesLayout(this->framebufferDepthImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, subresourceRangeDepth);
+    this->TransitionMultiImagesLayout(this->deviceModule->device, this->framebufferDepthImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, subresourceRangeDepth);
 
     this->framebufferDepthImageView = this->CreateImageView(this->deviceModule->device, this->framebufferDepthImage, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
 
