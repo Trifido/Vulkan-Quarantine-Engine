@@ -36,7 +36,7 @@ public:
 public:
     GraphicsPipelineModule();
     ~GraphicsPipelineModule();
-    void CompileGraphicsPipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, VkPipelineVertexInputStateCreateInfo vertexInfo, VkDescriptorSetLayout descriptorLayout);
+    void CompileGraphicsPipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, VkPipelineVertexInputStateCreateInfo vertexInfo, std::vector<VkDescriptorSetLayout> descriptorLayouts);
     void cleanup(VkPipeline pipeline, VkPipelineLayout pipelineLayout);
 
 private:

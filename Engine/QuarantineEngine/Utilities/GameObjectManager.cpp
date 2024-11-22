@@ -72,7 +72,7 @@ void GameObjectManager::ResetInstance()
 	instance = nullptr;
 }
 
-void GameObjectManager::DrawCommnad(VkCommandBuffer& commandBuffer, uint32_t idx)
+void GameObjectManager::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
     for (unsigned int idl = 0; idl < this->renderLayers->GetCount(); idl++)
     {
@@ -80,6 +80,32 @@ void GameObjectManager::DrawCommnad(VkCommandBuffer& commandBuffer, uint32_t idx
         {
             model.second->drawCommand(commandBuffer, idx);
         }
+    }
+}
+
+void GameObjectManager::ShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout)
+{
+    for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
+    {
+        model.second->drawShadowCommand(commandBuffer, idx, pipelineLayout);
+    }
+}
+
+
+void GameObjectManager::OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, glm::mat4 viewParameter, glm::vec3 lightPosition)
+{
+    for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
+    {
+        PCOmniShadowStruct shadowParameters = {};
+        shadowParameters.view = viewParameter;
+
+        glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), -lightPosition);
+        glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), model.second->transform->Scale);
+        glm::mat4 rotationMatrix = glm::toMat4(model.second->transform->Orientation);
+        shadowParameters.lightModel = translationMatrix * rotationMatrix * scaleMatrix;
+        shadowParameters.model = model.second->transform->GetModel();
+
+        model.second->drawOmniShadowCommand(commandBuffer, idx, pipelineLayout, shadowParameters);
     }
 }
 

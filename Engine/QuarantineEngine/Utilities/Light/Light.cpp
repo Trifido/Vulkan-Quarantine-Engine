@@ -65,6 +65,7 @@ AttenuationData ATTENUATION_TAB[12] = {
 
 Light::Light()
 {
+    this->deviceModule = DeviceModule::getInstance();
     this->transform = std::make_unique<Transform>();
     this->uniform = std::make_shared<LightUniform>();
 
@@ -76,8 +77,6 @@ Light::Light()
     this->outerCutoff = 0.0f;
     this->uniform->radius = 1.0f;
     this->idxShadowMap = 0;
-
-    this->UpdateUniform();
 }
 
 void Light::UpdateUniform()

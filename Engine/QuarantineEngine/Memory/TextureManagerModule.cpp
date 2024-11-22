@@ -67,16 +67,14 @@ TextureManagerModule::TextureManagerModule()
     swapchainModule = SwapChainModule::getInstance();
 }
 
-void TextureManagerModule::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, uint32_t newMipLevels, VkSampleCountFlagBits numSamples)
+void TextureManagerModule::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, uint32_t mipLevels, uint32_t arrayLayers, VkSampleCountFlagBits numSamples)
 {
     VkImageCreateInfo imageInfo{};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     imageInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageInfo.extent.width = width;
-    imageInfo.extent.height = height;
-    imageInfo.extent.depth = 1;
-    imageInfo.mipLevels = newMipLevels;
-    imageInfo.arrayLayers = 1;
+    imageInfo.extent = { width, height, 1 };
+    imageInfo.mipLevels = mipLevels;
+    imageInfo.arrayLayers = arrayLayers;
     imageInfo.format = format;
     imageInfo.tiling = tiling;
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -105,7 +103,18 @@ void TextureManagerModule::createImage(uint32_t width, uint32_t height, VkFormat
 
 void TextureManagerModule::cleanup()
 {
-    vkDestroyImageView(deviceModule->device, imageView, nullptr);
-    vkDestroyImage(deviceModule->device, image, nullptr);
-    vkFreeMemory(deviceModule->device, deviceMemory, nullptr);
+    if (this->imageView != VK_NULL_HANDLE)
+    {
+        vkDestroyImageView(deviceModule->device, imageView, nullptr);
+    }
+
+    if (this->image != VK_NULL_HANDLE)
+    {
+        vkDestroyImage(deviceModule->device, image, nullptr);
+    }
+
+    if (this->deviceMemory != VK_NULL_HANDLE)
+    {
+        vkFreeMemory(deviceModule->device, deviceMemory, nullptr);
+    }
 }

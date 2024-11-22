@@ -11,6 +11,8 @@
 #include <MaterialData.h>
 #include <Meshlet.h>
 
+class LightManager;
+
 class DescriptorBuffer
 {
 private:
@@ -53,6 +55,7 @@ public:
     DescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr);
     void SetMeshletBuffers(std::shared_ptr<Meshlet> meshlets_ptr);
     void InitializeDescriptorSets(std::shared_ptr<ShaderModule> shader_ptr);
+    //void InitializeShadowMapDescritorSets(std::shared_ptr<ShaderModule> shader_ptr, std::shared_ptr<UniformBufferObject> lightUniformBuffer, VkDeviceSize sizeBuffer);
     VkDescriptorSet* getDescriptorSet(size_t id) { return &descriptorSets.at(id); }
     void CleanLastResources();
     void Cleanup();

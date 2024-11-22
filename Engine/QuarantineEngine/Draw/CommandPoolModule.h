@@ -9,6 +9,8 @@
 #include "../Editor/EditorObjectManager.h"
 #include <GameObjectManager.h>
 #include <Compute/ComputeNodeManager.h>
+#include <OmniShadowResources.h>
+#include <FrameBufferModule.h>
 
 class CommandPoolModule
 {
@@ -20,6 +22,8 @@ private:
     GameObjectManager*              gameObjectManager;
     ComputeNodeManager*             computeNodeManager;
     CullingSceneManager*            cullingSceneManager;
+    LightManager*                   lightManager;
+    RenderPassModule*               renderPassModule;
 
     VkCommandPool                   commandPool;
     VkCommandPool                   computeCommandPool;
@@ -29,6 +33,11 @@ private:
 public:
     glm::vec3 ClearColor;
 
+private:
+    void setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t iCBuffer);
+    void setDirectionalShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, std::shared_ptr<Light> light, uint32_t iCBuffer);
+    void setOmniShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, uint32_t idPointlight, uint32_t iCBuffer);
+    void updateCubeMapFace(uint32_t faceIdx, std::shared_ptr<VkRenderPass> renderPass, uint32_t idPointlight, VkCommandBuffer commandBuffer, uint32_t iCBuffer);
 public:
     CommandPoolModule();
     static CommandPoolModule* getInstance();
@@ -45,7 +54,7 @@ public:
     void createCommandPool(VkSurfaceKHR& surface);
     void createCommandBuffers();
     void recreateCommandBuffers();
-    void Render(VkFramebuffer& swapChainFramebuffer, VkRenderPass& renderPass);
+    void Render(FramebufferModule* framebufferModule);
     void recordComputeCommandBuffer(VkCommandBuffer commandBuffer);
     void cleanup();
     void CleanLastResources();

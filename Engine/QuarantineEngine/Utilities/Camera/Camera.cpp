@@ -86,17 +86,7 @@ void Camera::CameraController(float deltaTime)
 
     if (this->isInputUpdated)
     {
-        view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-        projection = glm::perspective(glm::radians(fov), (float)WIDTH / (float)HEIGHT, nearPlane, farPlane);
-        projection[1][1] *= -1;
-        VP = projection * view;
-
-        this->UpdateUniform();
-        this->UpdateUBOCamera();
-
-        this->frustumComponent->ActivateComputeCulling(true);
-
-        this->isInputUpdated = false;
+        this->UpdateCamera();
     }
 }
 
@@ -212,10 +202,25 @@ void Camera::InvertPitch(float heightPos)
     this->UpdateUBOCamera();
 }
 
-void Camera::UpdateSize(VkExtent2D size)
+void Camera::UpdateViewportSize(VkExtent2D size)
 {
     this->WIDTH = size.width;
     this->HEIGHT = size.height;
+}
+
+void Camera::UpdateCamera()
+{
+    view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+    projection = glm::perspective(glm::radians(fov), (float)WIDTH / (float)HEIGHT, nearPlane, farPlane);
+    projection[1][1] *= -1;
+    VP = projection * view;
+
+    this->UpdateUniform();
+    this->UpdateUBOCamera();
+
+    this->frustumComponent->ActivateComputeCulling(true);
+
+    this->isInputUpdated = false;
 }
 
 void Camera::UpdateUniform()

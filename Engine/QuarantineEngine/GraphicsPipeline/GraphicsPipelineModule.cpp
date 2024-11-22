@@ -13,7 +13,7 @@ GraphicsPipelineModule::~GraphicsPipelineModule()
     this->antialiasingModule = nullptr;
 }
 
-void GraphicsPipelineModule::CompileGraphicsPipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, VkPipelineVertexInputStateCreateInfo vertexInfo, VkDescriptorSetLayout descriptorLayout)
+void GraphicsPipelineModule::CompileGraphicsPipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, VkPipelineVertexInputStateCreateInfo vertexInfo, std::vector<VkDescriptorSetLayout> descriptorLayouts)
 {
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -119,8 +119,8 @@ void GraphicsPipelineModule::CompileGraphicsPipeline(std::vector<VkPipelineShade
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 1; // Number of descriptor sets
-    pipelineLayoutInfo.pSetLayouts = &descriptorLayout; // Ptr to descriptor set layout
+    pipelineLayoutInfo.setLayoutCount = descriptorLayouts.size(); // Number of descriptor sets
+    pipelineLayoutInfo.pSetLayouts = descriptorLayouts.data(); // Ptr to descriptor set layout
     pipelineLayoutInfo.pushConstantRangeCount = 1; // Optional
     pipelineLayoutInfo.pPushConstantRanges = &pushConstantInfo; // Optional
 

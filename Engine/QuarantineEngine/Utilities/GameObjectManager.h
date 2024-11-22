@@ -26,7 +26,9 @@ public:
     std::shared_ptr<GameObject> GetGameObject(std::string name);
     static GameObjectManager* getInstance();
     static void ResetInstance();
-    void DrawCommnad(VkCommandBuffer& commandBuffer, uint32_t idx);
+    void DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
+    void ShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout);
+    void OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, glm::mat4 viewParameter, glm::vec3 lightPosition);
     void InitializePhysics();
     void UpdatePhysicTransforms();
     void Cleanup();

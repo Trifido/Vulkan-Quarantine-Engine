@@ -18,6 +18,7 @@ LightManager::LightManager()
 {
     this->deviceModule = DeviceModule::getInstance();
     this->swapChainModule = SwapChainModule::getInstance();
+    this->renderPassModule = RenderPassModule::getInstance();
 
     this->lightManagerUniform = std::make_shared<LightManagerUniform>();
     this->lightUBO = std::make_shared<UniformBufferObject>();
@@ -40,6 +41,19 @@ LightManager::LightManager()
     this->lightBinSSBO->CreateSSBO(this->lightBinSSBOSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
 
     this->lightBuffer.reserve(this->MAX_NUM_LIGHT);
+
+    this->PointShadowDescritors = std::make_shared<PointShadowDescriptorsManager>();
+}
+
+void LightManager::AddDirShadowMapShader(std::shared_ptr<ShaderModule> shadow_mapping_shader)
+{
+    this->dir_shadow_map_shader = shadow_mapping_shader;
+}
+
+void LightManager::AddOmniShadowMapShader(std::shared_ptr<ShaderModule> omni_shadow_mapping_shader)
+{
+    this->OmniShadowShaderModule = omni_shadow_mapping_shader;
+    this->OmniShadowPipelineModule = this->OmniShadowShaderModule->ShadowPipelineModule;
 }
 
 LightManager* LightManager::getInstance()
@@ -60,18 +74,26 @@ void LightManager::CreateLight(LightType type, std::string name)
 {
     switch (type)
     {
-    default:
-    case LightType::POINT_LIGHT:
-        this->AddLight(std::static_pointer_cast<Light>(std::make_shared<PointLight>()), name);
-        break;
+        default:
+        case LightType::POINT_LIGHT:
+            this->PointLights.push_back(std::make_shared<PointLight>(this->OmniShadowShaderModule, this->renderPassModule->omniShadowMappingRenderPass));
+            this->PointLights.back()->idxShadowMap = this->PointLights.size() - 1;
 
-    case LightType::DIRECTIONAL_LIGHT:
-        this->AddLight(std::static_pointer_cast<Light>(std::make_shared<DirectionalLight>()), name);
-        break;
+            this->AddLight(std::static_pointer_cast<Light>(this->PointLights.back()), name);
+            this->PointShadowDescritors->AddPointLightResources(this->PointLights.back()->shadowMappingResourcesPtr->shadowMapUBO,
+                this->PointLights.back()->shadowMappingResourcesPtr->CubemapImageView,
+                this->PointLights.back()->shadowMappingResourcesPtr->CubemapSampler);
+            break;
 
-    case LightType::SPOT_LIGHT:
-        this->AddLight(std::static_pointer_cast<Light>(std::make_shared<SpotLight>()), name);
-        break;
+        case LightType::DIRECTIONAL_LIGHT:
+            this->DirLights.push_back(std::make_shared<DirectionalLight>(this->dir_shadow_map_shader, this->renderPassModule->dirShadowMappingRenderPass));
+            this->AddLight(std::static_pointer_cast<Light>(this->DirLights.back()), name);
+            break;
+
+        case LightType::SPOT_LIGHT:
+            this->SpotLights.push_back(std::make_shared<SpotLight>(this->dir_shadow_map_shader, this->renderPassModule->dirShadowMappingRenderPass));
+            this->AddLight(std::static_pointer_cast<Light>(this->SpotLights.back()), name);
+            break;
     }
 }
 
@@ -83,6 +105,11 @@ std::shared_ptr<Light> LightManager::GetLight(std::string name)
         return it->second;
 
     return nullptr;
+}
+
+void LightManager::InitializeShadowMaps()
+{
+    this->PointShadowDescritors->InitializeDescriptorSetLayouts(this->OmniShadowShaderModule);
 }
 
 void LightManager::UpdateUniform()
@@ -149,12 +176,30 @@ void LightManager::CleanLastResources()
     this->lightManagerUniform.reset();
 }
 
+void LightManager::CleanShadowMapResources()
+{
+    for (auto pLight : this->PointLights)
+    {
+        pLight->CleanShadowMapResources();
+    }
+    for (auto dLight : this->DirLights)
+    {
+        dLight->CleanShadowMapResources();
+    }
+    for (auto sLight : this->SpotLights)
+    {
+
+    }
+
+    this->PointShadowDescritors->Clean();
+}
+
 void LightManager::SetCamera(Camera* camera_ptr)
 {
     this->camera = camera_ptr;
 }
 
-void LightManager::AddLight(std::shared_ptr<Light> light_ptr, std::string name)
+void LightManager::AddLight(std::shared_ptr<Light> light_ptr, std::string& name)
 {
     this->lightBuffer.push_back(*light_ptr->uniform);
 
@@ -164,7 +209,8 @@ void LightManager::AddLight(std::shared_ptr<Light> light_ptr, std::string name)
     }
     else
     {
-        this->_lights[name + "_1"] = light_ptr;
+        name += "_1";
+        this->_lights[name] = light_ptr;
     }
 
     this->currentNumLights++;
@@ -250,8 +296,31 @@ void LightManager::ComputeLightsLUT()
 
 void LightManager::ComputeLightTiles()
 {
-    const uint32_t tile_x_count = swapChainModule->swapChainExtent.width / TILE_SIZE;
-    const uint32_t tile_y_count = swapChainModule->swapChainExtent.height / TILE_SIZE;
+    uint32_t tileXCount = swapChainModule->swapChainExtent.width / swapChainModule->TILE_SIZE;
+    uint32_t tileYCount = swapChainModule->swapChainExtent.height / swapChainModule->TILE_SIZE;
+
+    // Calculamos el número total de entradas de tiles
+    uint32_t tilesEntryCount = tileXCount * tileYCount * NUM_WORDS;
+    uint32_t newTileSize = swapChainModule->TILE_SIZE;
+
+    // Si el número total de entradas de tiles excede el máximo, ajustamos dinámicamente el tamaño del tile
+    while (tilesEntryCount > MAX_NUM_TILES)
+    {
+        // Aumentamos el tamaño del tile para reducir el número total de tiles
+        newTileSize += 1;
+
+        // Recalculamos el número de tiles con el nuevo tamaño de tile
+        tileXCount = swapChainModule->swapChainExtent.width / newTileSize;
+        tileYCount = swapChainModule->swapChainExtent.height / newTileSize;
+
+        // Recalculamos el número total de entradas de tiles
+        tilesEntryCount = tileXCount * tileYCount * NUM_WORDS;
+    }
+
+    this->swapChainModule->UpdateTileSize(newTileSize);
+
+    const uint32_t tile_x_count = tileXCount;
+    const uint32_t tile_y_count = tileYCount;
     const uint32_t tiles_entry_count = tile_x_count * tile_y_count * NUM_WORDS;
     const uint32_t buffer_size = tiles_entry_count * sizeof(uint32_t);
 
@@ -259,7 +328,7 @@ void LightManager::ComputeLightTiles()
     this->light_tiles_bits.resize(tiles_entry_count, 0u);
 
     float near_z = *this->camera->GetRawNearPlane();
-    float tile_size_inv = 1.0f / TILE_SIZE;
+    float tile_size_inv = 1.0f / newTileSize;
 
     uint32_t tile_stride = tile_x_count * NUM_WORDS;
 

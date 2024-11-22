@@ -7,6 +7,18 @@
 #include <Light/Light.h>
 #include <Camera.h>
 #include <SwapChainModule.h>
+#include <ShaderModule.h>
+#include <RenderPassModule.h>
+#include <DirectionalLight.h>
+#include <SpotLight.h>
+#include <PointLight.h>
+
+#include <DescriptorBuffer.h>
+#include <PointShadowDescriptorsManager.h>
+
+class DirectionalLight;
+class SpotLight;
+class PointLight;
 
 struct LightMap
 {
@@ -23,7 +35,6 @@ class LightManager
 private:
     const size_t MAX_NUM_LIGHT = 64;
     const uint32_t BIN_SLICES = 16;
-    const uint32_t TILE_SIZE = 8;
     const uint32_t NUM_WORDS = (MAX_NUM_LIGHT + 31) / 32;
     const uint32_t MAX_NUM_TILES = 240 * 135;
 
@@ -40,6 +51,9 @@ private:
     std::vector<uint32_t> lights_index;
     std::vector<uint32_t> light_tiles_bits;
 
+    RenderPassModule* renderPassModule = nullptr;
+    std::shared_ptr<ShaderModule> dir_shadow_map_shader = nullptr;
+
 public:
     static LightManager* instance;
     std::shared_ptr<UniformBufferObject>    lightUBO = nullptr;
@@ -52,8 +66,16 @@ public:
     std::shared_ptr<UniformBufferObject>    lightBinSSBO = nullptr;
     VkDeviceSize                            lightBinSSBOSize;
 
+    std::vector<std::shared_ptr<DirectionalLight>> DirLights;
+    std::vector<std::shared_ptr<SpotLight>> SpotLights;
+    std::vector<std::shared_ptr<PointLight>> PointLights;
+
+    std::shared_ptr<PointShadowDescriptorsManager> PointShadowDescritors;
+    std::shared_ptr<ShadowPipelineModule> OmniShadowPipelineModule = nullptr;
+    std::shared_ptr<ShaderModule> OmniShadowShaderModule = nullptr;
+
 private:
-    void AddLight(std::shared_ptr<Light> light_ptr, std::string name);
+    void AddLight(std::shared_ptr<Light> light_ptr, std::string& name);
     void SortingLights();
     void ComputeLightsLUT();
     void ComputeLightTiles();
@@ -62,13 +84,17 @@ public:
     static LightManager* getInstance();
     static void ResetInstance();
     LightManager();
+    void AddDirShadowMapShader(std::shared_ptr<ShaderModule> shadow_mapping_shader);
+    void AddOmniShadowMapShader(std::shared_ptr<ShaderModule> omni_shadow_mapping_shader);
     void CreateLight(LightType type, std::string name);
     std::shared_ptr<Light> GetLight(std::string name);
+    void InitializeShadowMaps();
     void Update();
     void UpdateUniform();
     void UpdateUBOLight();
     void CleanLightUBO();
     void CleanLastResources();
+    void CleanShadowMapResources();
     void SetCamera(Camera* camera_ptr);
 };
 

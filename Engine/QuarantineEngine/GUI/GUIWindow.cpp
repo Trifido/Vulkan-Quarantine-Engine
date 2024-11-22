@@ -44,8 +44,10 @@ bool GUIWindow::init(bool fullScreen)
     }
     else
     {
-        this->width = 1280;
-        this->height = 720;
+        //this->width = 1280;
+        //this->height = 720;
+        this->width = 1410;
+        this->height = 775;
     }
     window = glfwCreateWindow(this->width, this->height, title.c_str(), monitor, NULL);
 

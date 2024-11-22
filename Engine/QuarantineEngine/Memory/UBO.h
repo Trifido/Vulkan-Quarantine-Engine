@@ -101,9 +101,27 @@ struct PushConstantStruct
     glm::mat4 model;
 };
 
+struct PCOmniShadowStruct
+{
+    glm::mat4 model;
+    glm::mat4 lightModel;
+    glm::mat4 view;
+};
+
+struct PushConstantViewStruct
+{
+    glm::mat4 view;
+};
+
 struct DeltaTimeUniform
 {
     float deltaTime;
+};
+
+struct OmniShadowUniform
+{
+    glm::mat4 projection;
+    glm::vec4 lightPos;
 };
 
 class UniformBufferObject

@@ -4,6 +4,7 @@ Material::Material()
 {
     this->materialData = {};
     this->layer = (unsigned int) RenderLayer::SOLID;
+    this->lightManager = LightManager::getInstance();
 }
 
 Material::Material(std::shared_ptr<ShaderModule> shader_ptr) : Material()
@@ -110,5 +111,18 @@ void Material::SetMeshShaderPipeline(bool value)
             this->descriptor = std::make_shared<DescriptorBuffer>(this->shader);
             this->materialData.InitializeUBOMaterial(this->shader);
         }
+    }
+}
+
+void Material::BindDescriptors(VkCommandBuffer& commandBuffer, uint32_t idx)
+{
+    if (this->HasDescriptorBuffer())
+    {
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->shader->PipelineModule->pipelineLayout, 0, 1, descriptor->getDescriptorSet(idx), 0, nullptr);
+    }
+
+    if (this->shader->reflectShader.HasPointShadows)
+    {
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->shader->PipelineModule->pipelineLayout, 1, 1, &lightManager->PointShadowDescritors->renderDescriptorSets[idx], 0, nullptr);
     }
 }

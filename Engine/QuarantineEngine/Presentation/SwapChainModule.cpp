@@ -25,6 +25,7 @@ void SwapChainModule::ResetInstance()
 SwapChainModule::SwapChainModule()
 {
     deviceModule = DeviceModule::getInstance();
+    this->currentTileSize = this->TILE_SIZE;
 }
 
 void SwapChainModule::createSwapChain(VkSurfaceKHR& surface, GLFWwindow* window)
@@ -145,12 +146,12 @@ VkExtent2D SwapChainModule::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& cap
 
 void SwapChainModule::UpdateScreenData()
 {
-    this->screenResolution = { this->swapChainExtent.width, this->swapChainExtent.height };
+    this->pixelTileSize = { this->swapChainExtent.width / this->currentTileSize, this->swapChainExtent.height / this->currentTileSize };
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {
         void* data;
         vkMapMemory(deviceModule->device, this->screenData->uniformBuffersMemory[currentFrame], 0, sizeof(glm::vec2), 0, &data);
-        memcpy(data, &this->screenResolution, sizeof(glm::vec2));
+        memcpy(data, &this->pixelTileSize, sizeof(glm::vec2));
         vkUnmapMemory(deviceModule->device, this->screenData->uniformBuffersMemory[currentFrame]);
     }
 }
@@ -171,4 +172,9 @@ void SwapChainModule::CleanScreenDataResources()
             vkFreeMemory(deviceModule->device, this->screenData->uniformBuffersMemory[i], nullptr);
         }
     }
+}
+
+void SwapChainModule::UpdateTileSize(float newTileSize)
+{
+    this->currentTileSize = newTileSize;
 }

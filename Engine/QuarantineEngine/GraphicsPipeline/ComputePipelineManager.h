@@ -31,10 +31,10 @@ public:
     void AddComputePipeline(const char* pipelineName, std::shared_ptr<ComputePipelineModule> gp_ptr);
     void AddComputePipeline(std::string& pipelineName, std::shared_ptr<ComputePipelineModule> gp_ptr);
     void AddComputePipeline(std::string& pipelineName, ComputePipelineModule gp);
-    std::shared_ptr<ComputePipelineModule> RegisterNewComputePipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout);
+    std::shared_ptr<ComputePipelineModule> RegisterNewComputePipeline(ShaderModule shader, std::vector<VkDescriptorSetLayout> descriptorLayouts);
     bool Exists(std::string pipelineName);
     void CleanComputePipeline();
-    void RecreateComputePipeline(ShaderModule shader, VkDescriptorSetLayout descriptorLayout);
+    void RecreateComputePipeline(ShaderModule shader, std::vector<VkDescriptorSetLayout> descriptorLayout);
 };
 
 #endif // !COMPUTE_PIPELINE_MANAGER_H

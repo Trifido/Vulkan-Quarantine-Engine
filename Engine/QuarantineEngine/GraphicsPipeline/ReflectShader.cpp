@@ -682,15 +682,15 @@ void ReflectShader::CheckDescriptorSet(DescriptorSetReflect& descripReflect, con
         descripReflect.bindings[i].set = obj.set;
         descripReflect.bindings[i].stage = descripReflect.stage;
 
-        auto bindingIdx = this->bindings.find(descripReflect.bindings[i].name);
+        auto bindingIdx = this->bindings[obj.set].find(descripReflect.bindings[i].name);
 
-        if (bindingIdx == this->bindings.end())
+        if (bindingIdx == this->bindings[obj.set].end())
         {
-            this->bindings[descripReflect.bindings[i].name] = descripReflect.bindings[i];
+            this->bindings[obj.set][descripReflect.bindings[i].name] = descripReflect.bindings[i];
         }
         else
         {
-            this->bindings[descripReflect.bindings[i].name].stage = (VkShaderStageFlagBits)(descripReflect.bindings[i].stage | this->bindings[descripReflect.bindings[i].name].stage);
+            this->bindings[obj.set][descripReflect.bindings[i].name].stage = (VkShaderStageFlagBits)(descripReflect.bindings[i].stage | this->bindings[obj.set][descripReflect.bindings[i].name].stage);
         }
     }
 }
@@ -734,6 +734,20 @@ void ReflectShader::CheckUBOAnimation(SpvReflectDescriptorSet* set)
                         animationUBOComponents.push_back(set->bindings[b]->block.members[m].name);
                     }
                 }
+            }
+        }
+    }
+}
+
+void ReflectShader::CheckHasPointShadowCubemaps(SpvReflectDescriptorSet* set)
+{
+    for (int b = 0; b < set->binding_count && !this->HasPointShadows; b++)
+    {
+        if (set->bindings[b]->name != NULL)
+        {
+            if (strcmp(set->bindings[b]->name, "QE_PointShadowCubemaps") == 0)
+            {
+                this->HasPointShadows = true;
             }
         }
     }
@@ -886,6 +900,7 @@ void ReflectShader::PerformReflect(VkShaderModuleCreateInfo createInfo)
         auto p_set = sets[index];
         this->CheckUBOMaterial(p_set);
         this->CheckUBOAnimation(p_set);
+        this->CheckHasPointShadowCubemaps(p_set);
         auto p_set2 = spvReflectGetDescriptorSet(&module, p_set->set, &result);
         assert(result == SPV_REFLECT_RESULT_SUCCESS);
         assert(p_set == p_set2);

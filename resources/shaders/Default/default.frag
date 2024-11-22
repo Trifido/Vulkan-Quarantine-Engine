@@ -1,11 +1,14 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
+#extension GL_EXT_nonuniform_qualifier : require
 
 #define POINT_LIGHT 0
 #define DIRECTIONAL_LIGHT 1
 #define SPOT_LIGHT 2
 
-#define TILE_SIZE 8
+#define EPSILON 0.15
+#define SHADOW_OPACITY 0.5
+
 #define NUM_BINS 16.0
 #define BIN_WIDTH ( 1.0 / NUM_BINS )
 #define MAX_NUM_LIGHTS 64
@@ -28,7 +31,7 @@ struct LightData
     float constant;
     vec3 specular;
     float linear;
-    vec3 spotDirection;
+    vec3 direction;
     float quadratic; 
     float cutoff;
     float outerCutoff;
@@ -97,8 +100,10 @@ layout(set = 0, binding = 7) uniform sampler2D texSampler[5];
 
 layout(set = 0, binding = 8) uniform ScreenData 
 {
-    vec2 resolution;
+    uvec2 pix_tile_size;
 } screenData;
+
+layout(set = 1, binding = 0) uniform samplerCube QE_PointShadowCubemaps[10];
 
 //BLINN-PHONG LIGHT EQUATIONS
 vec3 ComputePointLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive);
@@ -121,9 +126,8 @@ void main()
     uint min_light_id = bin_value & 0xFFFF;
     uint max_light_id = ( bin_value >> 16 ) & 0xFFFF;
 
-    uvec2 pix_tile_size = uvec2(screenData.resolution / TILE_SIZE);
-    uvec2 tile = uvec2(gl_FragCoord.xy / pix_tile_size);
-    uint stride = uint( NUM_WORDS ) * pix_tile_size.x;
+    uvec2 tile = uvec2(gl_FragCoord.xy / screenData.pix_tile_size);
+    uint stride = uint( NUM_WORDS ) * screenData.pix_tile_size.x;
     uint address = tile.y * stride + tile.x;
 
     vec3 normal = fs_in.Normal;
@@ -208,7 +212,7 @@ vec3 ComputeAmbientLight(vec3 diffuseColor)
 
 vec3 ComputePointLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive)
 {
-    float distance = length(light.position.xyz - fs_in.FragPos);
+    float distance = length(light.position - fs_in.FragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
     vec3 lightDir = normalize(light.position - fs_in.FragPos);
@@ -221,12 +225,18 @@ vec3 ComputePointLight(LightData light, vec3 normal, vec3 albedo, vec3 specular,
     float spec = pow(max(dot(normal, halfwayDir), 0.0), uboMaterial.Shininess);
     vec3 specularResult = spec * light.specular * specular * attenuation;
 
-    return diffuse + specularResult + emissive;
+    vec3 result = diffuse + specularResult + emissive;
+
+    vec3 lightVec = fs_in.FragPos - light.position;
+    float sampledDist = texture(QE_PointShadowCubemaps[light.idxShadowMap], lightVec).r;
+    float shadow = (distance <= sampledDist + EPSILON) ? 1.0 : SHADOW_OPACITY;
+
+    return result * shadow;
 }
 
 vec3 ComputeDirectionalLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive)
 {
-    vec3 lightDir = normalize(light.position);
+    vec3 lightDir = normalize(light.direction);
 
     float diff = max(dot(lightDir, normal), 0.0);
     vec3 diffuse = diff * light.diffuse * albedo;
@@ -242,12 +252,12 @@ vec3 ComputeDirectionalLight(LightData light, vec3 normal, vec3 albedo, vec3 spe
 
 vec3 ComputeSpotLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive)
 {
-    vec3 lightDir = normalize(light.position.xyz - fs_in.FragPos);
+    vec3 lightDir = normalize(light.position - fs_in.FragPos);
 
-    float distance = length(light.position.xyz - fs_in.FragPos);
+    float distance = length(light.position - fs_in.FragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
-    float theta = dot(lightDir, normalize(-light.spotDirection)); 
+    float theta = dot(lightDir, normalize(-light.direction)); 
     float epsilon = light.cutoff - light.outerCutoff;
     float intensity = clamp((theta - light.outerCutoff) / epsilon, 0.0, 1.0);
 

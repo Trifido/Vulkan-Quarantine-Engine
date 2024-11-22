@@ -22,6 +22,8 @@ public:
     glm::vec3 Rotation;
     glm::vec3 RadiansRotation;
     glm::vec3 Scale;
+    glm::vec3 UpVector;
+    glm::vec3 ForwardVector;
 
 public:
     Transform();

@@ -16,6 +16,7 @@ private:
 
     Camera*             cameraEditor;
     LightManager*       lightManager;
+    RenderPassModule*   renderPassModule;
 
     std::shared_ptr<ShaderModule> default_shader;
     std::shared_ptr<ShaderModule> default_primitive_shader;
@@ -24,6 +25,8 @@ private:
 
 public:
     static MaterialManager* instance;
+    std::shared_ptr<ShaderModule> dir_shadow_mapping_shader;
+    std::shared_ptr<ShaderModule> omni_shadow_mapping_shader;
 
 private:
     std::string CheckName(std::string nameMaterial);

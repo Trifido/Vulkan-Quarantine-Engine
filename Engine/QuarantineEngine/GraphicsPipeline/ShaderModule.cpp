@@ -7,19 +7,37 @@ ShaderModule::ShaderModule()
 {
     this->deviceModule = DeviceModule::getInstance();
     this->graphicsPipelineManager = GraphicsPipelineManager::getInstance();
+    this->shadowPipelineManager = ShadowPipelineManager::getInstance();
     this->computePipelineManager = ComputePipelineManager::getInstance();
     this->reflectShader = ReflectShader();
 }
 
-ShaderModule::ShaderModule(std::string computeShaderName) : ShaderModule()
+ShaderModule::ShaderModule(std::string shaderName, GraphicsPipelineData pipelineData) : ShaderModule()
 {
-    this->createShaderModule(computeShaderName);
+    this->graphicsPipelineData = pipelineData;
+
+    if (this->graphicsPipelineData.shadowMode != ShadowMappingMode::NONE)
+    {
+        this->createShadowShaderModule(shaderName);
+    }
+    else
+    {
+        this->createShaderModule(shaderName);
+    }
 }
 
 ShaderModule::ShaderModule(std::string vertexShaderName, std::string fragmentShaderName, GraphicsPipelineData pipelineData) : ShaderModule()
 {
     this->graphicsPipelineData = pipelineData;
-    this->createShaderModule(vertexShaderName, fragmentShaderName);
+
+    if (this->graphicsPipelineData.shadowMode != ShadowMappingMode::NONE)
+    {
+        this->createShadowShaderModule(vertexShaderName, fragmentShaderName);
+    }
+    else
+    {
+        this->createShaderModule(vertexShaderName, fragmentShaderName);
+    }
 }
 
 ShaderModule::ShaderModule(std::string firstShaderName, std::string secondShaderName, std::string thirdShaderName, GraphicsPipelineData pipelineData)
@@ -61,7 +79,30 @@ void ShaderModule::createShaderModule(const std::string& filename_compute)
     shaderStages.push_back(compShaderStageInfo);
 
     this->CreateDescriptorSetLayout();
-    this->ComputePipelineModule = this->computePipelineManager->RegisterNewComputePipeline(*this, this->descriptorSetLayout);
+    this->ComputePipelineModule = this->computePipelineManager->RegisterNewComputePipeline(*this, this->descriptorSetLayouts);
+}
+
+void ShaderModule::createShadowShaderModule(const std::string& filename_compute)
+{
+    this->vertShaderStageInfo = createShader(deviceModule->device, filename_compute, SHADER_TYPE::VERTEX_SHADER);
+    this->shaderStages.push_back(vertShaderStageInfo);
+    this->CreateDescriptorSetLayout();
+    this->CreateShaderBindings();
+    this->ShadowPipelineModule = this->shadowPipelineManager->RegisterNewShadowPipeline(*this, this->descriptorSetLayouts, this->graphicsPipelineData);
+    this->IsShadowShader = true;
+}
+
+void ShaderModule::createShadowShaderModule(const std::string& filename_vertex, const std::string& filename_fragment)
+{
+    vertShaderStageInfo = createShader(deviceModule->device, filename_vertex, SHADER_TYPE::VERTEX_SHADER);
+    fragShaderStageInfo = createShader(deviceModule->device, filename_fragment, SHADER_TYPE::FRAGMENT_SHADER);
+    shaderStages.push_back(vertShaderStageInfo);
+    shaderStages.push_back(fragShaderStageInfo);
+
+    this->CreateDescriptorSetLayout();
+    this->CreateShaderBindings();
+    this->ShadowPipelineModule = this->shadowPipelineManager->RegisterNewShadowPipeline(*this, this->descriptorSetLayouts, this->graphicsPipelineData);
+    this->IsShadowShader = true;
 }
 
 void ShaderModule::createShaderModule(const std::string& filename_vertex, const std::string& filename_fragment)
@@ -72,8 +113,8 @@ void ShaderModule::createShaderModule(const std::string& filename_vertex, const 
     shaderStages.push_back(fragShaderStageInfo);
 
     this->CreateDescriptorSetLayout();
-    this->createShaderBindings();
-    this->PipelineModule = this->graphicsPipelineManager->RegisterNewGraphicsPipeline(*this, this->descriptorSetLayout, this->graphicsPipelineData);
+    this->CreateShaderBindings();
+    this->PipelineModule = this->graphicsPipelineManager->RegisterNewGraphicsPipeline(*this, this->descriptorSetLayouts, this->graphicsPipelineData);
 }
 
 void ShaderModule::createShaderModule(const std::string& filename_vertex, const std::string& filename_geometry, const std::string& filename_fragment)
@@ -86,8 +127,8 @@ void ShaderModule::createShaderModule(const std::string& filename_vertex, const 
     shaderStages.push_back(fragShaderStageInfo);
 
     this->CreateDescriptorSetLayout();
-    this->createShaderBindings();
-    this->PipelineModule = this->graphicsPipelineManager->RegisterNewGraphicsPipeline(*this, this->descriptorSetLayout, this->graphicsPipelineData);
+    this->CreateShaderBindings();
+    this->PipelineModule = this->graphicsPipelineManager->RegisterNewGraphicsPipeline(*this, this->descriptorSetLayouts, this->graphicsPipelineData);
 }
 
 void ShaderModule::createMeshShaderModule(const std::string& filename_task, const std::string& filename_mesh, const std::string& filename_fragment)
@@ -106,16 +147,20 @@ void ShaderModule::createMeshShaderModule(const std::string& filename_task, cons
     shaderStages.push_back(fragShaderStageInfo);
 
     this->CreateDescriptorSetLayout();
-    this->createShaderBindings();
-    this->PipelineModule = this->graphicsPipelineManager->RegisterNewGraphicsPipeline(*this, this->descriptorSetLayout, this->graphicsPipelineData);
+    this->CreateShaderBindings();
+    this->PipelineModule = this->graphicsPipelineManager->RegisterNewGraphicsPipeline(*this, this->descriptorSetLayouts, this->graphicsPipelineData);
 }
 
 void ShaderModule::CleanDescriptorSetLayout()
 {
-    vkDestroyDescriptorSetLayout(deviceModule->device, this->descriptorSetLayout, nullptr);
+    for (uint32_t i = 0; i < this->descriptorSetLayouts.size(); i++)
+    {
+        vkDestroyDescriptorSetLayout(deviceModule->device, this->descriptorSetLayouts.at(i), nullptr);
+        this->descriptorSetLayouts.at(i) = VK_NULL_HANDLE;
+    }
 }
 
-void ShaderModule::createShaderBindings()
+void ShaderModule::CreateShaderBindings()
 {
     this->bindingDescription = std::make_shared<VkVertexInputBindingDescription>();
 
@@ -155,7 +200,14 @@ void ShaderModule::cleanup()
 
 void ShaderModule::RecreatePipeline()
 {
-    this->graphicsPipelineManager->RecreateGraphicsPipeline(*this, this->descriptorSetLayout);
+    if (this->IsShadowShader)
+    {
+        this->shadowPipelineManager->RecreateShadowPipeline(*this, this->descriptorSetLayouts);
+    }
+    else
+    {
+        this->graphicsPipelineManager->RecreateGraphicsPipeline(*this, this->descriptorSetLayouts);
+    }
 }
 
 void ShaderModule::CleanLastResources()
@@ -252,26 +304,31 @@ VkPipelineShaderStageCreateInfo ShaderModule::createShader(VkDevice& device, con
 
 void ShaderModule::CreateDescriptorSetLayout()
 {
-    std::vector<VkDescriptorSetLayoutBinding> bindings{};
+    this->descriptorSetLayouts.resize(this->reflectShader.bindings.size());
 
-    for (auto reflectLayotBinding : this->reflectShader.bindings)
+    for (int idSet = 0; idSet < this->reflectShader.bindings.size(); idSet++)
     {
-        VkDescriptorSetLayoutBinding layoutBinding = {};
-        layoutBinding.binding = reflectLayotBinding.second.binding;
-        layoutBinding.descriptorType = reflectLayotBinding.second.type;
-        layoutBinding.descriptorCount = reflectLayotBinding.second.arraySize;
-        layoutBinding.stageFlags = reflectLayotBinding.second.stage;
-        layoutBinding.pImmutableSamplers = nullptr;
-        bindings.push_back(layoutBinding);
-    }
+        std::vector<VkDescriptorSetLayoutBinding> bindings{};
 
-    VkDescriptorSetLayoutCreateInfo layoutInfo{};
-    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-    layoutInfo.pBindings = bindings.data();
+        for (auto reflectLayotBinding : this->reflectShader.bindings[idSet])
+        {
+            VkDescriptorSetLayoutBinding layoutBinding = {};
+            layoutBinding.binding = reflectLayotBinding.second.binding;
+            layoutBinding.descriptorType = reflectLayotBinding.second.type;
+            layoutBinding.descriptorCount = reflectLayotBinding.second.arraySize;
+            layoutBinding.stageFlags = reflectLayotBinding.second.stage;
+            layoutBinding.pImmutableSamplers = nullptr;
+            bindings.push_back(layoutBinding);
+        }
 
-    if (vkCreateDescriptorSetLayout(deviceModule->device, &layoutInfo, nullptr, &this->descriptorSetLayout) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create descriptor set layout!");
+        VkDescriptorSetLayoutCreateInfo layoutInfo{};
+        layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+        layoutInfo.pBindings = bindings.data();
+
+        if (vkCreateDescriptorSetLayout(deviceModule->device, &layoutInfo, nullptr, &this->descriptorSetLayouts.at(idSet)) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create descriptor set layout!");
+        }
     }
 }
 

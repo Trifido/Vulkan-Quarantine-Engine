@@ -22,6 +22,7 @@
 #include "DepthBufferModule.h"
 #include "AntiAliasingModule.h"
 #include "RenderPassModule.h"
+#include "OmniShadowResources.h"
 #include "Timer.h"
 
 //  Physics System
@@ -45,12 +46,13 @@
 
 // Keyboard controller
 #include "KeyboardController.h"
+
 #include <ShaderManager.h>
 #include <MaterialManager.h>
 #include <TextureManager.h>
 #include <GameObjectManager.h>
-//#include <Compute/ComputeNodeManager.h>
 #include <ComputePipelineManager.h>
+#include <ShadowPipelineManager.h>
 #include <Particles/ParticleSystemManager.h>
 
 const std::string MODEL_PATH = "../../resources/models/head/head.obj";
@@ -107,7 +109,6 @@ public:
     GUIWindow               mainWindow;
     bool                    framebufferResized = false;
 private:
-    uint32_t     imageIndex;
     VulkanInstance          vulkanInstance {};
     VulkanLayerAndExtension layerExtensionModule {};
     DeviceModule*           deviceModule {};
@@ -143,6 +144,7 @@ private:
     AnimationManager*   animationManager{};
     GraphicsPipelineManager* graphicsPipelineManager{};
     ComputePipelineManager* computePipelineManager{};
+    ShadowPipelineManager* shadowPipelineManager{};
     ParticleSystemManager* particleSystemManager{};
     CullingSceneManager* cullingSceneManager{};
 

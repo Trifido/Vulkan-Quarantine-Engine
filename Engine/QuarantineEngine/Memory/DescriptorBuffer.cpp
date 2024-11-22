@@ -9,7 +9,19 @@ DescriptorBuffer::DescriptorBuffer()
 
 DescriptorBuffer::DescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr) : DescriptorBuffer()
 {
-    this->numBinding = shader_ptr->reflectShader.bindings.size();
+    uint32_t size = shader_ptr->reflectShader.bindings.size();
+
+    for (int idSet = 0; idSet < shader_ptr->reflectShader.bindings.size(); idSet++)
+    {
+        for (auto binding : shader_ptr->reflectShader.bindings[idSet])
+        {
+            if (binding.second.set != 0)
+                continue;
+            this->numBinding++;
+        }
+    }
+
+    //this->numBinding = size;
 
     this->ubos["materialUBO"] = std::make_shared<UniformBufferObject>();
     this->StartResources(shader_ptr);
@@ -85,146 +97,164 @@ void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
     poolSizes.resize(this->numBinding);
     size_t idx = 0;
 
-    for (auto binding : shader_ptr->reflectShader.bindings)
+    for (int idSet = 0; idSet < shader_ptr->reflectShader.bindings.size(); idSet++)
     {
-        if (binding.first == "CameraUniform")
+        for (auto binding : shader_ptr->reflectShader.bindings[idSet])
         {
-            this->camera = CameraEditor::getInstance();
-            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-            idx++;
-        }
-        else if (binding.first == "ScreenData")
-        {
-            this->swapChainModule = SwapChainModule::getInstance();
-            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-            idx++;
-        }
-        else if (binding.first == "UniformManagerLight")
-        {
-            this->lightManager = LightManager::getInstance();
-            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-            idx++;
-        }
-        else if (binding.first == "UniformMaterial")
-        {
-            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-            idx++;
-        }
-        else if (binding.first == "UniformAnimation")
-        {
-            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-            idx++;
-        }
-        else if (binding.first == "UniformParticleTexture")
-        {
-            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-            idx++;
-        }
-        else if (binding.first == "Texture2DArray")
-        {
-            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-            idx++;
-        }
-        else if (binding.first == "Texture1")
-        {
-            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-            idx++;
-        }
-        else if (binding.first == "ParticleSSBO")
-        {
-            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+            if (binding.second.set != 0)
+                continue;
 
-            this->ssboData["ParticleSSBO"] = std::make_shared<UniformBufferObject>();
-            this->ssboSize["ParticleSSBO"] = VkDeviceSize();
+            if (binding.first == "CameraUniform")
+            {
+                this->camera = CameraEditor::getInstance();
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                idx++;
+            }
+            else if (binding.first == "LightCameraUniform")
+            {
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                idx++;
+            }
+            else if (binding.first == "PointLightCameraUniform")
+            {
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                idx++;
+            }
+            else if (binding.first == "ScreenData")
+            {
+                this->swapChainModule = SwapChainModule::getInstance();
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                idx++;
+            }
+            else if (binding.first == "UniformManagerLight")
+            {
+                this->lightManager = LightManager::getInstance();
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                idx++;
+            }
+            else if (binding.first == "UniformMaterial")
+            {
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                idx++;
+            }
+            else if (binding.first == "UniformAnimation")
+            {
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                idx++;
+            }
+            else if (binding.first == "UniformParticleTexture")
+            {
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                idx++;
+            }
+            else if (binding.first == "Texture2DArray")
+            {
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                idx++;
+            }
+            else if (binding.first == "Texture1")
+            {
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                idx++;
+            }
+            else if (binding.first == "ParticleSSBO")
+            {
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
-            this->numSSBOs++;
-            idx++;
-        }
-        else if (binding.first == "LightSSBO")
-        {
-            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                this->ssboData["ParticleSSBO"] = std::make_shared<UniformBufferObject>();
+                this->ssboSize["ParticleSSBO"] = VkDeviceSize();
 
-            this->ssboData["LightSSBO"] = std::make_shared<UniformBufferObject>();
-            this->ssboSize["LightSSBO"] = VkDeviceSize();
+                this->numSSBOs++;
+                idx++;
+            }
+            else if (binding.first == "LightSSBO")
+            {
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
-            this->numSSBOs++;
-            idx++;
-        }
-        else if (binding.first == "LightIndices")
-        {
-            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                this->ssboData["LightSSBO"] = std::make_shared<UniformBufferObject>();
+                this->ssboSize["LightSSBO"] = VkDeviceSize();
 
-            this->ssboData["LightIndices"] = std::make_shared<UniformBufferObject>();
-            this->ssboSize["LightIndices"] = VkDeviceSize();
+                this->numSSBOs++;
+                idx++;
+            }
+            else if (binding.first == "LightIndices")
+            {
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
-            this->numSSBOs++;
-            idx++;
-        }
-        else if (binding.first == "ZBins")
-        {
-            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                this->ssboData["LightIndices"] = std::make_shared<UniformBufferObject>();
+                this->ssboSize["LightIndices"] = VkDeviceSize();
 
-            this->ssboData["ZBins"] = std::make_shared<UniformBufferObject>();
-            this->ssboSize["ZBins"] = VkDeviceSize();
+                this->numSSBOs++;
+                idx++;
+            }
+            else if (binding.first == "ZBins")
+            {
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
-            this->numSSBOs++;
-            idx++;
-        }
-        else if (binding.first == "Tiles")
-        {
-            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                this->ssboData["ZBins"] = std::make_shared<UniformBufferObject>();
+                this->ssboSize["ZBins"] = VkDeviceSize();
 
-            this->ssboData["Tiles"] = std::make_shared<UniformBufferObject>();
-            this->ssboSize["Tiles"] = VkDeviceSize();
+                this->numSSBOs++;
+                idx++;
+            }
+            else if (binding.first == "Tiles")
+            {
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
-            this->numSSBOs++;
-            idx++;
-        }
-        else if (binding.first == "Meshlets")
-        {
-            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                this->ssboData["Tiles"] = std::make_shared<UniformBufferObject>();
+                this->ssboSize["Tiles"] = VkDeviceSize();
 
-            this->ssboData["Meshlets"] = std::make_shared<UniformBufferObject>();
-            this->ssboSize["Meshlets"] = VkDeviceSize();
+                this->numSSBOs++;
+                idx++;
+            }
+            else if (binding.first == "Meshlets")
+            {
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
-            this->numSSBOs++;
-            idx++;
-        }
-        else if (binding.first == "MeshletVertices")
-        {
-            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                this->ssboData["Meshlets"] = std::make_shared<UniformBufferObject>();
+                this->ssboSize["Meshlets"] = VkDeviceSize();
 
-            this->ssboData["MeshletVertices"] = std::make_shared<UniformBufferObject>();
-            this->ssboSize["MeshletVertices"] = VkDeviceSize();
+                this->numSSBOs++;
+                idx++;
+            }
+            else if (binding.first == "MeshletVertices")
+            {
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
-            this->numSSBOs++;
-            idx++;
-        }
-        else if (binding.first == "IndexBuffer")
-        {
-            poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-            poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                this->ssboData["MeshletVertices"] = std::make_shared<UniformBufferObject>();
+                this->ssboSize["MeshletVertices"] = VkDeviceSize();
 
-            this->ssboData["IndexBuffer"] = std::make_shared<UniformBufferObject>();
-            this->ssboSize["IndexBuffer"] = VkDeviceSize();
+                this->numSSBOs++;
+                idx++;
+            }
+            else if (binding.first == "IndexBuffer")
+            {
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
-            this->numSSBOs++;
-            idx++;
+                this->ssboData["IndexBuffer"] = std::make_shared<UniformBufferObject>();
+                this->ssboSize["IndexBuffer"] = VkDeviceSize();
+
+                this->numSSBOs++;
+                idx++;
+            }
         }
     }
 
@@ -270,118 +300,124 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
     this->buffersInfo.resize(this->numBinding);
     uint32_t idx = 0;
 
-    for (auto binding : shader_ptr->reflectShader.bindings)
+    for (int idSet = 0; idSet < shader_ptr->reflectShader.bindings.size(); idSet++)
     {
-        if (binding.first == "CameraUniform")
+        if (idSet > 0)
+            continue;
+
+        for (auto binding : shader_ptr->reflectShader.bindings[idSet])
         {
-            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->camera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform), frameIdx);
-            idx++;
-        }
-        if (binding.first == "ScreenData")
-        {
-            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->swapChainModule->screenData->uniformBuffers[frameIdx], sizeof(glm::vec2), frameIdx);
-            idx++;
-        }
-        else if (binding.first == "UniformManagerLight")
-        {
-            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->lightManager->lightUBO->uniformBuffers[frameIdx], sizeof(LightManagerUniform), frameIdx);
-            idx++;
-        }
-        else if (binding.first == "UniformMaterial")
-        {
-            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->ubos["materialUBO"]->uniformBuffers[frameIdx], this->uboSizes["materialUBO"], frameIdx);
-            idx++;
-        }
-        else if (binding.first == "UniformAnimation")
-        {
-            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->ubos["animationUBO"]->uniformBuffers[frameIdx], this->uboSizes["animationUBO"], frameIdx);
-            idx++;
-        }
-        else if (binding.first == "UniformParticleTexture")
-        {
-            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->ubos["particleSystemUBO"]->uniformBuffers[frameIdx], this->uboSizes["particleSystemUBO"], frameIdx);
-            idx++;
-        }
-        else if (binding.first == "Texture2DArray")
-        {
-            this->imageInfo.resize(textures->size());
-            for (uint32_t id = 0; id < textures->size(); ++id)
+            if (binding.first == "CameraUniform")
             {
-                this->imageInfo[id].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                this->imageInfo[id].imageView = textures->at(id)->imageView;
-                this->imageInfo[id].sampler = textures->at(id)->textureSampler;
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->camera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform), frameIdx);
+                idx++;
             }
+            else if (binding.first == "ScreenData")
+            {
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->swapChainModule->screenData->uniformBuffers[frameIdx], sizeof(glm::vec2), frameIdx);
+                idx++;
+            }
+            else if (binding.first == "UniformManagerLight")
+            {
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->lightManager->lightUBO->uniformBuffers[frameIdx], sizeof(LightManagerUniform), frameIdx);
+                idx++;
+            }
+            else if (binding.first == "UniformMaterial")
+            {
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->ubos["materialUBO"]->uniformBuffers[frameIdx], this->uboSizes["materialUBO"], frameIdx);
+                idx++;
+            }
+            else if (binding.first == "UniformAnimation")
+            {
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->ubos["animationUBO"]->uniformBuffers[frameIdx], this->uboSizes["animationUBO"], frameIdx);
+                idx++;
+            }
+            else if (binding.first == "UniformParticleTexture")
+            {
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->ubos["particleSystemUBO"]->uniformBuffers[frameIdx], this->uboSizes["particleSystemUBO"], frameIdx);
+                idx++;
+            }
+            else if (binding.first == "Texture2DArray")
+            {
+                this->imageInfo.resize(textures->size());
+                for (uint32_t id = 0; id < textures->size(); ++id)
+                {
+                    this->imageInfo[id].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                    this->imageInfo[id].imageView = textures->at(id)->imageView;
+                    this->imageInfo[id].sampler = textures->at(id)->textureSampler;
+                }
 
-            descriptorWrites[idx] = {};
-            descriptorWrites[idx].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrites[idx].dstBinding = binding.second.binding;
-            descriptorWrites[idx].dstArrayElement = 0;
-            descriptorWrites[idx].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            descriptorWrites[idx].descriptorCount = textures->size();
-            descriptorWrites[idx].pBufferInfo = VK_NULL_HANDLE;
-            descriptorWrites[idx].dstSet = descriptorSets[frameIdx];
-            descriptorWrites[idx].pImageInfo = this->imageInfo.data();
+                descriptorWrites[idx] = {};
+                descriptorWrites[idx].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                descriptorWrites[idx].dstBinding = binding.second.binding;
+                descriptorWrites[idx].dstArrayElement = 0;
+                descriptorWrites[idx].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                descriptorWrites[idx].descriptorCount = textures->size();
+                descriptorWrites[idx].pBufferInfo = VK_NULL_HANDLE;
+                descriptorWrites[idx].dstSet = descriptorSets[frameIdx];
+                descriptorWrites[idx].pImageInfo = this->imageInfo.data();
 
-            idx++;
-        }
-        else if (binding.first == "Texture1")
-        {
-            this->imageInfo.resize(1);
-            this->imageInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            this->imageInfo[0].imageView = textures->at(0)->imageView;
-            this->imageInfo[0].sampler = textures->at(0)->textureSampler;
+                idx++;
+            }
+            else if (binding.first == "Texture1")
+            {
+                this->imageInfo.resize(1);
+                this->imageInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                this->imageInfo[0].imageView = textures->at(0)->imageView;
+                this->imageInfo[0].sampler = textures->at(0)->textureSampler;
 
-            descriptorWrites[idx] = {};
-            descriptorWrites[idx].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrites[idx].dstBinding = binding.second.binding;
-            descriptorWrites[idx].dstArrayElement = 0;
-            descriptorWrites[idx].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            descriptorWrites[idx].descriptorCount = 1;
-            descriptorWrites[idx].pBufferInfo = VK_NULL_HANDLE;
-            descriptorWrites[idx].dstSet = descriptorSets[frameIdx];
-            descriptorWrites[idx].pImageInfo = this->imageInfo.data();
+                descriptorWrites[idx] = {};
+                descriptorWrites[idx].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                descriptorWrites[idx].dstBinding = binding.second.binding;
+                descriptorWrites[idx].dstArrayElement = 0;
+                descriptorWrites[idx].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                descriptorWrites[idx].descriptorCount = 1;
+                descriptorWrites[idx].pBufferInfo = VK_NULL_HANDLE;
+                descriptorWrites[idx].dstSet = descriptorSets[frameIdx];
+                descriptorWrites[idx].pImageInfo = this->imageInfo.data();
 
-            idx++;
-        }
-        else if (binding.first == "ParticleSSBO")
-        {
-            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssboData["ParticleSSBO"]->uniformBuffers[frameIdx], this->ssboSize["ParticleSSBO"], frameIdx);
-            idx++;
-        }
-        else if (binding.first == "LightSSBO")
-        {
-            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->lightManager->lightSSBO->uniformBuffers[frameIdx], this->lightManager->lightSSBOSize, frameIdx);
-            idx++;
-        }
-        else if (binding.first == "LightIndices")
-        {
-            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->lightManager->lightIndexSSBO->uniformBuffers[frameIdx], this->lightManager->lightIndexSSBOSize, frameIdx);
-            idx++;
-        }
-        else if (binding.first == "ZBins")
-        {
-            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->lightManager->lightBinSSBO->uniformBuffers[frameIdx], this->lightManager->lightBinSSBOSize, frameIdx);
-            idx++;
-        }
-        else if (binding.first == "Tiles")
-        {
-            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->lightManager->lightTilesSSBO->uniformBuffers[frameIdx], this->lightManager->lightTilesSSBOSize, frameIdx);
-            idx++;
-        }
-        else if (binding.first == "Meshlets")
-        {
-            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssboData["Meshlets"]->uniformBuffers[frameIdx], this->ssboSize["Meshlets"], frameIdx);
-            idx++;
-        }
-        else if (binding.first == "MeshletVertices")
-        {
-            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssboData["MeshletVertices"]->uniformBuffers[frameIdx], this->ssboSize["MeshletVertices"], frameIdx);
-            idx++;
-        }
-        else if (binding.first == "IndexBuffer")
-        {
-            this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssboData["IndexBuffer"]->uniformBuffers[frameIdx], this->ssboSize["IndexBuffer"], frameIdx);
-            idx++;
+                idx++;
+            }
+            else if (binding.first == "ParticleSSBO")
+            {
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssboData["ParticleSSBO"]->uniformBuffers[frameIdx], this->ssboSize["ParticleSSBO"], frameIdx);
+                idx++;
+            }
+            else if (binding.first == "LightSSBO")
+            {
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->lightManager->lightSSBO->uniformBuffers[frameIdx], this->lightManager->lightSSBOSize, frameIdx);
+                idx++;
+            }
+            else if (binding.first == "LightIndices")
+            {
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->lightManager->lightIndexSSBO->uniformBuffers[frameIdx], this->lightManager->lightIndexSSBOSize, frameIdx);
+                idx++;
+            }
+            else if (binding.first == "ZBins")
+            {
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->lightManager->lightBinSSBO->uniformBuffers[frameIdx], this->lightManager->lightBinSSBOSize, frameIdx);
+                idx++;
+            }
+            else if (binding.first == "Tiles")
+            {
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->lightManager->lightTilesSSBO->uniformBuffers[frameIdx], this->lightManager->lightTilesSSBOSize, frameIdx);
+                idx++;
+            }
+            else if (binding.first == "Meshlets")
+            {
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssboData["Meshlets"]->uniformBuffers[frameIdx], this->ssboSize["Meshlets"], frameIdx);
+                idx++;
+            }
+            else if (binding.first == "MeshletVertices")
+            {
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssboData["MeshletVertices"]->uniformBuffers[frameIdx], this->ssboSize["MeshletVertices"], frameIdx);
+                idx++;
+            }
+            else if (binding.first == "IndexBuffer")
+            {
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssboData["IndexBuffer"]->uniformBuffers[frameIdx], this->ssboSize["IndexBuffer"], frameIdx);
+                idx++;
+            }
         }
     }
 
@@ -390,7 +426,15 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
 
 void DescriptorBuffer::InitializeDescriptorSets(std::shared_ptr<ShaderModule> shader_ptr)
 {
-    std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, shader_ptr->descriptorSetLayout);
+    std::vector<VkDescriptorSetLayout> layouts;
+    for (uint32_t i = 0; i < shader_ptr->descriptorSetLayouts.size(); i++)
+    {
+        for (uint32_t f = 0; f < MAX_FRAMES_IN_FLIGHT; f++)
+        {
+            layouts.push_back(shader_ptr->descriptorSetLayouts.at(i));
+        }
+    }
+
     VkDescriptorSetAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocInfo.descriptorPool = this->descriptorPool;
@@ -402,7 +446,6 @@ void DescriptorBuffer::InitializeDescriptorSets(std::shared_ptr<ShaderModule> sh
         throw std::runtime_error("failed to allocate descriptor sets!");
     }
 
-    size_t numDescriptors = this->numBinding;
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
         std::vector<VkWriteDescriptorSet> descriptorWrites{};

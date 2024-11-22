@@ -12,13 +12,14 @@ protected:
     DeviceModule* deviceModule = nullptr;
 
 public:
-    VkPipeline pipeline;
-    VkPipelineLayout pipelineLayout;
+    VkPipeline pipeline = VK_NULL_HANDLE;
+    VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
 
     PipelineModule();
     ~PipelineModule();
-    virtual void CompileComputePipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, VkDescriptorSetLayout descriptorLayout);
-    virtual void CompileGraphicsPipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, VkPipelineVertexInputStateCreateInfo vertexInfo, VkDescriptorSetLayout descriptorLayout);
+    virtual void CompileComputePipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, std::vector<VkDescriptorSetLayout> descriptorLayouts);
+    virtual void CompileGraphicsPipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, VkPipelineVertexInputStateCreateInfo vertexInfo, std::vector<VkDescriptorSetLayout> descriptorLayouts);
+    virtual void CompileShadowPipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, VkPipelineVertexInputStateCreateInfo vertexInfo, std::vector<VkDescriptorSetLayout> descriptorLayouts);
     void CleanPipelineData();
 };
 

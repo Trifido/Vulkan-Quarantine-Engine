@@ -78,7 +78,7 @@ void ParticleSystem::createShaderStorageBuffers()
     this->computeNodeUpdateParticles->UseDependencyBuffer = true;
 }
 
-void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
+void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator)
 {
     auto pipelineModule = this->material->shader->PipelineModule;
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);

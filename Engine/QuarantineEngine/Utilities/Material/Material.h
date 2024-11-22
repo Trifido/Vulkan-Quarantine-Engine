@@ -10,6 +10,7 @@
 #include <ShaderModule.h>
 #include <MaterialData.h>
 #include <DescriptorBuffer.h>
+#include <LightManager.h>
 
 class Material : public GameComponent
 {
@@ -18,6 +19,7 @@ private:
     bool IsInitialized = false;
     bool hasDescriptorBuffer = false;
     bool isMeshShaderEnabled = false;
+    LightManager* lightManager;
 
 public:
     MaterialData materialData;
@@ -38,6 +40,7 @@ public:
     void UpdateUniformData();
     bool HasDescriptorBuffer() { return this->hasDescriptorBuffer; }
     void SetMeshShaderPipeline(bool value);
+    void BindDescriptors(VkCommandBuffer& commandBuffer, uint32_t idx);
 };
 
 #endif // !MATERIAL_H

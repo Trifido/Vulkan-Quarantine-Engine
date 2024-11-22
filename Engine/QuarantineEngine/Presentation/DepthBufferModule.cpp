@@ -30,7 +30,7 @@ void DepthBufferModule::createDepthResources(VkExtent2D& swapChainExtent, VkComm
     VkFormat depthFormat = findDepthFormat();
 
     createImage(swapChainExtent.width, swapChainExtent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1U, *antialiasingModule->msaaSamples);
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1U, 1U, *antialiasingModule->msaaSamples);
 
     imageView = IMT::createImageView(deviceModule->device, image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 
