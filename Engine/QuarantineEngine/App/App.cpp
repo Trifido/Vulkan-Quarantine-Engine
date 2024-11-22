@@ -197,21 +197,21 @@ void App::initVulkan()
     }
 
     /**/
-    const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
-   // const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
+    //const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
+    const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
 
     std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(absolute_path));
 
     //model->transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
     //model->transform->SetOrientation(glm::vec3(-90.0f, 180.0f, 0.0f));
-    model->transform->SetScale(glm::vec3(0.3f));
-    model->material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
-    model->material->materialData.SetMaterialField("Specular", glm::vec3(0.5f, 0.5f, 0.5f));
-    model->material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
+    model->transform->SetScale(glm::vec3(0.01f));
+    //model->material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
+    //model->material->materialData.SetMaterialField("Specular", glm::vec3(0.5f, 0.5f, 0.5f));
+    //model->material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
     this->gameObjectManager->AddGameObject(model, "model");
 
     std::shared_ptr<GameObject> floor = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
-    floor->transform->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    floor->transform->SetPosition(glm::vec3(0.0f, -0.01f, 0.0f));
     floor->transform->SetScale(glm::vec3(3.0f, 1.0f, 3.0f));
     floor->material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.2f, 0.7f));
     floor->material->materialData.SetMaterialField("Specular", glm::vec3(0.0f, 0.0f, 0.0f));
@@ -282,20 +282,19 @@ void App::initVulkan()
     pointLight->specular = glm::vec3(0.7f, 0.7f, 0.7f);
     pointLight->SetDistanceEffect(100.0f);
 
-    //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight2");
-    //auto pointLight2 = this->lightManager->GetLight("PointLight2");
-    //pointLight2->transform->SetPosition(glm::vec3(0.0f, 5.0f, 5.0f));
-    //pointLight2->diffuse = glm::vec3(0.3f, 0.3f, 0.7f);
-    //pointLight2->specular = glm::vec3(0.3f, 0.3f, 0.7f);
-    //pointLight2->SetDistanceEffect(100.0f);
+    this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight2");
+    auto pointLight2 = this->lightManager->GetLight("PointLight2");
+    pointLight2->transform->SetPosition(glm::vec3(0.0f, 5.0f, 5.0f));
+    pointLight2->diffuse = glm::vec3(0.3f, 0.3f, 0.7f);
+    pointLight2->specular = glm::vec3(0.3f, 0.3f, 0.7f);
+    pointLight2->SetDistanceEffect(100.0f);
 
-
-    //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight3");
-    //auto pointLight3 = this->lightManager->GetLight("PointLight3");
-    //pointLight3->transform->SetPosition(glm::vec3(5.0f, 5.0f, 0.0f));
-    //pointLight3->diffuse = glm::vec3(0.3f, 0.3f, 0.7f);
-    //pointLight3->specular = glm::vec3(0.3f, 0.3f, 0.7f);
-    //pointLight3->SetDistanceEffect(100.0f);
+    this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight3");
+    auto pointLight3 = this->lightManager->GetLight("PointLight3");
+    pointLight3->transform->SetPosition(glm::vec3(5.0f, 5.0f, 0.0f));
+    pointLight3->diffuse = glm::vec3(0.3f, 0.3f, 0.7f);
+    pointLight3->specular = glm::vec3(0.3f, 0.3f, 0.7f);
+    pointLight3->SetDistanceEffect(100.0f);
 
     //this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
     //this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.6f);

@@ -9,7 +9,6 @@
 #define EPSILON 0.15
 #define SHADOW_OPACITY 0.5
 
-#define TILE_SIZE 8
 #define NUM_BINS 16.0
 #define BIN_WIDTH ( 1.0 / NUM_BINS )
 #define MAX_NUM_LIGHTS 64
@@ -101,7 +100,7 @@ layout(set = 0, binding = 7) uniform sampler2D texSampler[5];
 
 layout(set = 0, binding = 8) uniform ScreenData 
 {
-    vec2 resolution;
+    uvec2 pix_tile_size;
 } screenData;
 
 layout(set = 1, binding = 0) uniform samplerCube QE_PointShadowCubemaps[10];
@@ -127,9 +126,8 @@ void main()
     uint min_light_id = bin_value & 0xFFFF;
     uint max_light_id = ( bin_value >> 16 ) & 0xFFFF;
 
-    uvec2 pix_tile_size = uvec2(screenData.resolution / TILE_SIZE);
-    uvec2 tile = uvec2(gl_FragCoord.xy / pix_tile_size);
-    uint stride = uint( NUM_WORDS ) * pix_tile_size.x;
+    uvec2 tile = uvec2(gl_FragCoord.xy / screenData.pix_tile_size);
+    uint stride = uint( NUM_WORDS ) * screenData.pix_tile_size.x;
     uint address = tile.y * stride + tile.x;
 
     vec3 normal = fs_in.Normal;

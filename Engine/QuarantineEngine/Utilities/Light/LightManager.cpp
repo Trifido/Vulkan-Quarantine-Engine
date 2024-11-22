@@ -296,12 +296,12 @@ void LightManager::ComputeLightsLUT()
 
 void LightManager::ComputeLightTiles()
 {
-    uint32_t tileXCount = swapChainModule->swapChainExtent.width / TILE_SIZE;
-    uint32_t tileYCount = swapChainModule->swapChainExtent.height / TILE_SIZE;
+    uint32_t tileXCount = swapChainModule->swapChainExtent.width / swapChainModule->TILE_SIZE;
+    uint32_t tileYCount = swapChainModule->swapChainExtent.height / swapChainModule->TILE_SIZE;
 
     // Calculamos el número total de entradas de tiles
     uint32_t tilesEntryCount = tileXCount * tileYCount * NUM_WORDS;
-    uint32_t newTileSize = TILE_SIZE;
+    uint32_t newTileSize = swapChainModule->TILE_SIZE;
 
     // Si el número total de entradas de tiles excede el máximo, ajustamos dinámicamente el tamaño del tile
     while (tilesEntryCount > MAX_NUM_TILES)
@@ -317,6 +317,8 @@ void LightManager::ComputeLightTiles()
         tilesEntryCount = tileXCount * tileYCount * NUM_WORDS;
     }
 
+    this->swapChainModule->UpdateTileSize(newTileSize);
+
     const uint32_t tile_x_count = tileXCount;
     const uint32_t tile_y_count = tileYCount;
     const uint32_t tiles_entry_count = tile_x_count * tile_y_count * NUM_WORDS;
@@ -326,7 +328,7 @@ void LightManager::ComputeLightTiles()
     this->light_tiles_bits.resize(tiles_entry_count, 0u);
 
     float near_z = *this->camera->GetRawNearPlane();
-    float tile_size_inv = 1.0f / TILE_SIZE;
+    float tile_size_inv = 1.0f / newTileSize;
 
     uint32_t tile_stride = tile_x_count * NUM_WORDS;
 

@@ -24,11 +24,14 @@ public:
     std::shared_ptr<UniformBufferObject> screenData = nullptr;
     uint32_t  currentImage = 0;
 
+    const uint32_t TILE_SIZE = 8;
+
 private:
     DeviceModule* deviceModule;
     VkSwapchainKHR swapChain;
     uint32_t numSwapChainImages;
-    glm::vec2 screenResolution;
+    glm::vec2 pixelTileSize;
+    float currentTileSize;
 
 public:
     static SwapChainModule* getInstance();
@@ -40,6 +43,7 @@ public:
     VkSwapchainKHR &getSwapchain() { return swapChain; }
     void InitializeScreenDataResources();
     void CleanScreenDataResources();
+    void UpdateTileSize(float newTileSize);
 private:
     VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
     VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
