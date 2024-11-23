@@ -460,18 +460,24 @@ void LightManager::Update()
 
     uint32_t currentFrame = SynchronizationModule::GetCurrentFrame();
 
-    void* data2;
-    size_t indexSize = this->lights_index.size() * sizeof(uint32_t);
+    if (!this->lights_index.empty())
+    {
+        void* data2;
+        size_t indexSize = this->lights_index.size() * sizeof(uint32_t);
 
-    vkMapMemory(this->deviceModule->device, this->lightIndexSSBO->uniformBuffersMemory[currentFrame], 0, indexSize, 0, &data2);
-    memcpy(data2, this->lights_index.data(), indexSize);
-    vkUnmapMemory(this->deviceModule->device, this->lightIndexSSBO->uniformBuffersMemory[currentFrame]);
+        vkMapMemory(this->deviceModule->device, this->lightIndexSSBO->uniformBuffersMemory[currentFrame], 0, indexSize, 0, &data2);
+        memcpy(data2, this->lights_index.data(), indexSize);
+        vkUnmapMemory(this->deviceModule->device, this->lightIndexSSBO->uniformBuffersMemory[currentFrame]);
+    }
 
-    void* data3;
-    size_t tilesSize = this->light_tiles_bits.size() * sizeof(uint32_t);
-    vkMapMemory(this->deviceModule->device, this->lightTilesSSBO->uniformBuffersMemory[currentFrame], 0, tilesSize, 0, &data3);
-    memcpy(data3, this->light_tiles_bits.data(), tilesSize);
-    vkUnmapMemory(this->deviceModule->device, this->lightTilesSSBO->uniformBuffersMemory[currentFrame]);
+    if (!this->light_tiles_bits.empty())
+    {
+        void* data3;
+        size_t tilesSize = this->light_tiles_bits.size() * sizeof(uint32_t);
+        vkMapMemory(this->deviceModule->device, this->lightTilesSSBO->uniformBuffersMemory[currentFrame], 0, tilesSize, 0, &data3);
+        memcpy(data3, this->light_tiles_bits.data(), tilesSize);
+        vkUnmapMemory(this->deviceModule->device, this->lightTilesSSBO->uniformBuffersMemory[currentFrame]);
+    }
 
     void* data4;
     vkMapMemory(this->deviceModule->device, this->lightBinSSBO->uniformBuffersMemory[currentFrame], 0, this->lightBinSSBOSize, 0, &data4);
