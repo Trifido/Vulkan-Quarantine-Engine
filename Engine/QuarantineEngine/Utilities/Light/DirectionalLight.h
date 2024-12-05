@@ -3,19 +3,15 @@
 #define DIRECTIONAL_LIGHT_H
 
 #include "Light.h"
-#include "OmniShadowResources.h"
+#include "CSMResources.h"
 #include <ShaderModule.h>
-#include <DescriptorBuffer.h>
 
 class DescriptorBuffer;
 
 class DirectionalLight : public Light
 {
 public:
-    //std::shared_ptr<OmniShadowResources> shadowMappingPtr = nullptr;
-
-    std::shared_ptr<UniformBufferObject> shadowMapUBO = nullptr;
-    //std::shared_ptr<DescriptorBuffer> descriptorBuffer = nullptr;
+    std::shared_ptr<CSMResources> shadowMappingResourcesPtr = nullptr;
 
 public:
     DirectionalLight();

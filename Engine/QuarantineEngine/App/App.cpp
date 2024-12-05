@@ -173,7 +173,7 @@ void App::initVulkan()
     this->computeNodeManager->InitializeComputeResources();
     this->particleSystemManager = ParticleSystemManager::getInstance();
 
-    this->lightManager->AddDirShadowMapShader(materialManager->dir_shadow_mapping_shader);
+    this->lightManager->AddDirShadowMapShader(materialManager->csm_shader);
     this->lightManager->AddOmniShadowMapShader(materialManager->omni_shadow_mapping_shader);
     this->lightManager->SetCamera(this->cameraEditor);
 
@@ -269,37 +269,38 @@ void App::initVulkan()
     // END -------------------------- Mesh & Material -------------------------------
 
     // INIT ------------------------- Lights ----------------------------------------
-    //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight0");
-    //this->lightManager->GetLight("PointLight0")->transform->SetPosition(glm::vec3(5.0f, 5.0f, 0.0f));
-    //this->lightManager->GetLight("PointLight0")->diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
-    //this->lightManager->GetLight("PointLight0")->specular = glm::vec3(0.7f, 0.7f, 0.7f);
-    //this->lightManager->GetLight("PointLight0")->SetDistanceEffect(10.0f);
+    // POINT LIGHTS
+    {
+        //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
+        //auto pointLight = this->lightManager->GetLight("PointLight1");
+        //pointLight->transform->SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
+        //pointLight->diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
+        //pointLight->specular = glm::vec3(0.7f, 0.7f, 0.7f);
+        //pointLight->SetDistanceEffect(100.0f);
 
-    this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
-    auto pointLight = this->lightManager->GetLight("PointLight1");
-    pointLight->transform->SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
-    pointLight->diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
-    pointLight->specular = glm::vec3(0.7f, 0.7f, 0.7f);
-    pointLight->SetDistanceEffect(100.0f);
+        //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight2");
+        //auto pointLight2 = this->lightManager->GetLight("PointLight2");
+        //pointLight2->transform->SetPosition(glm::vec3(0.0f, 5.0f, 5.0f));
+        //pointLight2->diffuse = glm::vec3(0.3f, 0.3f, 0.7f);
+        //pointLight2->specular = glm::vec3(0.3f, 0.3f, 0.7f);
+        //pointLight2->SetDistanceEffect(100.0f);
 
-    this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight2");
-    auto pointLight2 = this->lightManager->GetLight("PointLight2");
-    pointLight2->transform->SetPosition(glm::vec3(0.0f, 5.0f, 5.0f));
-    pointLight2->diffuse = glm::vec3(0.3f, 0.3f, 0.7f);
-    pointLight2->specular = glm::vec3(0.3f, 0.3f, 0.7f);
-    pointLight2->SetDistanceEffect(100.0f);
+        //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight3");
+        //auto pointLight3 = this->lightManager->GetLight("PointLight3");
+        //pointLight3->transform->SetPosition(glm::vec3(5.0f, 5.0f, 0.0f));
+        //pointLight3->diffuse = glm::vec3(0.3f, 0.3f, 0.7f);
+        //pointLight3->specular = glm::vec3(0.3f, 0.3f, 0.7f);
+        //pointLight3->SetDistanceEffect(100.0f);
+    }
 
-    this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight3");
-    auto pointLight3 = this->lightManager->GetLight("PointLight3");
-    pointLight3->transform->SetPosition(glm::vec3(5.0f, 5.0f, 0.0f));
-    pointLight3->diffuse = glm::vec3(0.3f, 0.3f, 0.7f);
-    pointLight3->specular = glm::vec3(0.3f, 0.3f, 0.7f);
-    pointLight3->SetDistanceEffect(100.0f);
+    // DIRECTIONAL LIGHTS
+    {
+        this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
+        this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.6f);
+        this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.1f);
+        this->lightManager->GetLight("DirectionalLight0")->SetDistanceEffect(100.0f);
+    }
 
-    //this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
-    //this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.6f);
-    //this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.1f);
-    //this->lightManager->GetLight("DirectionalLight0")->SetDistanceEffect(100.0f);
 
     //this->lightManager->CreateLight(LightType::SPOT_LIGHT, "SpotLight0");
     //auto spotLight = this->lightManager->GetLight("SpotLight0");

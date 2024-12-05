@@ -47,7 +47,8 @@ LightManager::LightManager()
 
 void LightManager::AddDirShadowMapShader(std::shared_ptr<ShaderModule> shadow_mapping_shader)
 {
-    this->dir_shadow_map_shader = shadow_mapping_shader;
+    this->CSMShaderModule = shadow_mapping_shader;
+    this->CSMPipelineModule = this->CSMShaderModule->ShadowPipelineModule;
 }
 
 void LightManager::AddOmniShadowMapShader(std::shared_ptr<ShaderModule> omni_shadow_mapping_shader)
@@ -86,12 +87,14 @@ void LightManager::CreateLight(LightType type, std::string name)
             break;
 
         case LightType::DIRECTIONAL_LIGHT:
-            this->DirLights.push_back(std::make_shared<DirectionalLight>(this->dir_shadow_map_shader, this->renderPassModule->dirShadowMappingRenderPass));
+            this->DirLights.push_back(std::make_shared<DirectionalLight>(this->CSMShaderModule, this->renderPassModule->dirShadowMappingRenderPass));
+            this->DirLights.back()->idxShadowMap = this->DirLights.size() - 1;
+
             this->AddLight(std::static_pointer_cast<Light>(this->DirLights.back()), name);
             break;
 
         case LightType::SPOT_LIGHT:
-            this->SpotLights.push_back(std::make_shared<SpotLight>(this->dir_shadow_map_shader, this->renderPassModule->dirShadowMappingRenderPass));
+            this->SpotLights.push_back(std::make_shared<SpotLight>(this->CSMShaderModule, this->renderPassModule->dirShadowMappingRenderPass));
             this->AddLight(std::static_pointer_cast<Light>(this->SpotLights.back()), name);
             break;
     }
