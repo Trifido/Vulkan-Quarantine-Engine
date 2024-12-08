@@ -55,7 +55,6 @@ public:
     std::shared_ptr<AnimationComponent> animationComponent = nullptr;
     std::shared_ptr<SkeletalComponent>  skeletalComponent = nullptr;
 
-    std::shared_ptr<GameObject>                 parent = nullptr;
     std::vector<std::shared_ptr<GameObject>>    childs;
 
 private:
@@ -76,11 +75,12 @@ public:
     void addCollider(std::shared_ptr<Collider> collider_ptr);
     void addAnimation(std::shared_ptr<Animation> animation_ptr);
     void InitializePhysics();
-    virtual bool IsValid();
+    virtual bool IsValidRender();
     void UpdatePhysicTransform();
     void SetViewOmniShadowParameter(PCOmniShadowStruct shadowConstantParameter);
 
 protected:
+    virtual bool IsValidGameObject();
     void InitializeComponents();
     void InitializeAnimationComponent();
     bool CreateChildsGameObject(std::string pathfile);

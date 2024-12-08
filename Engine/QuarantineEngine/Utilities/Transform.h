@@ -10,6 +10,8 @@
 class Transform : public GameComponent
 {
 private:
+    std::vector<std::shared_ptr<Transform>> childTransforms;
+    glm::mat4 parentModel;
     glm::mat4 model;
     glm::mat4 scale_mat;
     glm::mat4 rot_mat;
@@ -25,6 +27,10 @@ public:
     glm::vec3 UpVector;
     glm::vec3 ForwardVector;
 
+private:
+    void ReceiveNewParentModel(glm::mat4 parentModel);
+    void SendNewParentModel();
+
 public:
     Transform();
     Transform(glm::mat4 model);
@@ -35,6 +41,7 @@ public:
     void ResetTransform();
     const glm::mat4& GetModel();
     void SetModel(const glm::mat4& newModel);
+    void AddChild(std::shared_ptr<Transform> child);
 };
 
 #endif

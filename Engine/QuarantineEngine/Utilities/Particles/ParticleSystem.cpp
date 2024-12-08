@@ -93,10 +93,7 @@ void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t 
     }
 
     this->pushConstant.model = this->transform->GetModel();
-    if (this->parent != nullptr)
-    {
-        pushConstant.model = this->parent->transform->GetModel() * pushConstant.model;
-    }
+
     vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantStruct), &pushConstant);
 
     vkCmdDraw(commandBuffer, this->MaxNumParticles * 6, 1, 0, 0);
@@ -245,7 +242,7 @@ void ParticleSystem::drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
     this->CreateDrawCommand(commandBuffer, idx);
 }
 
-bool ParticleSystem::IsValid()
+bool ParticleSystem::IsValidRender()
 {
     return true;
 }

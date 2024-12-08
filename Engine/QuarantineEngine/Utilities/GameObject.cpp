@@ -116,8 +116,6 @@ void GameObject::cleanup()
             {
                 child->animationComponent->CleanLastResources();
             }
-
-            child->parent = nullptr;
         }
     }    
 }
@@ -300,7 +298,7 @@ void GameObject::InitializePhysics()
     }   
 }
 
-bool GameObject::IsValid()
+bool GameObject::IsValidRender()
 {
     if (this->transform == nullptr)
         return false;
@@ -315,6 +313,11 @@ bool GameObject::IsValid()
     }
 
     return false;
+}
+
+bool GameObject::IsValidGameObject()
+{
+    return this->transform != nullptr;
 }
 
 void GameObject::UpdatePhysicTransform()
@@ -348,17 +351,15 @@ bool GameObject::CreateChildsGameObject(std::string pathfile)
 
         glm::mat4 parentModel = this->transform->GetModel();
 
-        std::weak_ptr<GameObject> wp;
-
         for (size_t id = 0; id < data.size(); id++)
         {
             this->childs[id] = std::make_shared<GameObject>();
-            this->childs[id]->parent = std::make_shared<GameObject>(*this);
             this->childs[id]->mesh = std::make_shared<Mesh>(Mesh(data[id]));
             this->childs[id]->meshImportedType = this->meshImportedType;
             this->childs[id]->isMeshShading = this->isMeshShading;
             this->childs[id]->transform = std::make_shared<Transform>(Transform(parentModel * data[id].model));
             this->childs[id]->addMaterial(this->materialManager->GetMaterial(data[id].materialID));
+            this->transform->AddChild(this->childs[id]->transform);
         }
     }
     else
@@ -438,10 +439,6 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx,
         this->material->BindDescriptors(commandBuffer, idx);
 
         this->pushConstant.model = this->transform->GetModel();
-        if (this->parent != nullptr)
-        {
-            pushConstant.model = this->parent->transform->GetModel() * pushConstant.model;
-        }
 
         vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantStruct), &pushConstant);
 
@@ -478,10 +475,6 @@ void GameObject::CreateDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_
         }
 
         this->pushConstant.model = this->transform->GetModel();
-        if (this->parent != nullptr)
-        {
-            pushConstant.model = this->parent->transform->GetModel() * pushConstant.model;
-        }
 
         if (!isOmniShadow)
         {

@@ -69,7 +69,7 @@ public:
     void Update();
     void cleanup();
     void drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx) override;
-    bool IsValid() override;
+    bool IsValidRender() override;
 };
 
 #endif // !PARTICLE_SYSTEM_H

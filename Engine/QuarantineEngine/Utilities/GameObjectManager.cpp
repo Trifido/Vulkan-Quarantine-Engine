@@ -34,7 +34,7 @@ std::string GameObjectManager::CheckName(std::string nameGameObject)
 
 void GameObjectManager::AddGameObject(std::shared_ptr<GameObject> object_ptr, std::string name)
 {
-    if (object_ptr->IsValid())
+    if (object_ptr->IsValidRender())
     {
         name = CheckName(name);
 
@@ -90,7 +90,6 @@ void GameObjectManager::ShadowCommand(VkCommandBuffer& commandBuffer, uint32_t i
         model.second->drawShadowCommand(commandBuffer, idx, pipelineLayout);
     }
 }
-
 
 void GameObjectManager::OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, glm::mat4 viewParameter, glm::vec3 lightPosition)
 {
