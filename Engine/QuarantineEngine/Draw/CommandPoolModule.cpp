@@ -176,8 +176,6 @@ void CommandPoolModule::setDirectionalShadowRenderPass(std::shared_ptr<VkRenderP
     renderPassInfo.clearValueCount = 1;
     renderPassInfo.pClearValues = &clearValues;
 
-    vkCmdBeginRenderPass(commandBuffers[iCBuffer], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
     vkCmdSetViewport(commandBuffers[iCBuffer], 0, 1, &viewport);
     vkCmdSetScissor(commandBuffers[iCBuffer], 0, 1, &scissor);
     vkCmdSetDepthBias(commandBuffers[iCBuffer], depthBiasConstant, 0.0f, depthBiasSlope);
@@ -307,11 +305,9 @@ void CommandPoolModule::Render(FramebufferModule* framebufferModule)
             throw std::runtime_error("failed to begin recording command buffer!");
         }
 
-        auto itDirlight = this->lightManager->DirLights.begin();
-        while (itDirlight != this->lightManager->DirLights.end())
+        for (uint32_t idDirLight = 0; idDirLight < this->lightManager->DirLights.size(); idDirLight++)
         {
-            this->setDirectionalShadowRenderPass(this->renderPassModule->dirShadowMappingRenderPass, *itDirlight, i);
-            itDirlight++;
+            this->setDirectionalShadowRenderPass(this->renderPassModule->dirShadowMappingRenderPass, idDirLight, i);
         }
 
         //auto itSpotlight = this->lightManager->SpotLights.begin();
