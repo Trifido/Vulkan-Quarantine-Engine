@@ -87,7 +87,7 @@ void GameObjectManager::ShadowCommand(VkCommandBuffer& commandBuffer, uint32_t i
 {
     for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
     {
-        model.second->drawShadowCommand(commandBuffer, idx, pipelineLayout);
+        //model.second->drawShadowCommand(commandBuffer, idx, pipelineLayout);
     }
 }
 

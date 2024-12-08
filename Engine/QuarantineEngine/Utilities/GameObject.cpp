@@ -124,70 +124,26 @@ void GameObject::cleanup()
 void GameObject::drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
     bool isAnimationPipeline = this->meshImportedType == ANIMATED_GEO;
+    auto animatorPtr = isAnimationPipeline ? this->animationComponent->animator : nullptr;
 
-    if (isAnimationPipeline)
+    this->CreateDrawCommand(commandBuffer, idx, animatorPtr);
+    for (auto child : childs)
     {
-        this->CreateDrawCommand(commandBuffer, idx, this->animationComponent->animator);
-        for (auto child : childs)
-        {
-            child->CreateDrawCommand(commandBuffer, idx, this->animationComponent->animator);
-        }
-    }
-    else
-    {
-        this->CreateDrawCommand(commandBuffer, idx, nullptr);
-        for (auto child : childs)
-        {
-            child->CreateDrawCommand(commandBuffer, idx, nullptr);
-        }
-    }
-}
-
-void GameObject::drawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, bool isOmniShadow)
-{
-    bool isAnimationPipeline = this->meshImportedType == ANIMATED_GEO;
-
-    if (isAnimationPipeline)
-    {
-        this->CreateDrawShadowCommand(commandBuffer, idx, pipelineLayout, this->animationComponent->animator, isOmniShadow);
-        for (auto child : childs)
-        {
-            child->CreateDrawShadowCommand(commandBuffer, idx, pipelineLayout, this->animationComponent->animator, isOmniShadow);
-        }
-    }
-    else
-    {
-        this->CreateDrawShadowCommand(commandBuffer, idx, pipelineLayout, nullptr, isOmniShadow);
-        for (auto child : childs)
-        {
-            child->CreateDrawShadowCommand(commandBuffer, idx, pipelineLayout, nullptr, isOmniShadow);
-        }
+        child->CreateDrawCommand(commandBuffer, idx, animatorPtr);
     }
 }
 
 void GameObject::drawOmniShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, PCOmniShadowStruct shadowParameters)
 {
     bool isAnimationPipeline = this->meshImportedType == ANIMATED_GEO;
+    auto animatorPtr = isAnimationPipeline ? this->animationComponent->animator : nullptr;
 
-    if (isAnimationPipeline)
+    vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PCOmniShadowStruct), &shadowParameters);
+
+    this->CreateDrawShadowCommand(commandBuffer, idx, pipelineLayout, animatorPtr);
+    for (auto child : childs)
     {
-        this->omniPushConstant = shadowParameters;
-        this->CreateDrawShadowCommand(commandBuffer, idx, pipelineLayout, this->animationComponent->animator, true);
-        for (auto child : childs)
-        {
-            child->omniPushConstant = shadowParameters;
-            child->CreateDrawShadowCommand(commandBuffer, idx, pipelineLayout, this->animationComponent->animator, true);
-        }
-    }
-    else
-    {
-        this->omniPushConstant = shadowParameters;
-        this->CreateDrawShadowCommand(commandBuffer, idx, pipelineLayout, nullptr, true);
-        for (auto child : childs)
-        {
-            child->omniPushConstant = shadowParameters;
-            child->CreateDrawShadowCommand(commandBuffer, idx, pipelineLayout, nullptr, true);
-        }
+        child->CreateDrawShadowCommand(commandBuffer, idx, pipelineLayout, animatorPtr);
     }
 }
 
@@ -328,11 +284,6 @@ void GameObject::UpdatePhysicTransform()
     }
 }
 
-void GameObject::SetViewOmniShadowParameter(PCOmniShadowStruct shadowConstantParameter)
-{
-    this->omniPushConstant = shadowConstantParameter;
-}
-
 bool GameObject::CreateChildsGameObject(std::string pathfile)
 {
     MeshImporter importer = {};
@@ -438,9 +389,7 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx,
 
         this->material->BindDescriptors(commandBuffer, idx);
 
-        this->pushConstant.model = this->transform->GetModel();
-
-        vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantStruct), &pushConstant);
+        vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantStruct), &this->transform->GetModel());
 
         if (this->isMeshShading)
         {
@@ -454,7 +403,7 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx,
 }
 
 
-void GameObject::CreateDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, std::shared_ptr<Animator> animator_ptr, bool isOmniShadow)
+void GameObject::CreateDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, std::shared_ptr<Animator> animator_ptr)
 {
     if (this->isRenderEnable())
     {
@@ -472,17 +421,6 @@ void GameObject::CreateDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_
                 vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
             }
             vkCmdBindIndexBuffer(commandBuffer, this->mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-        }
-
-        this->pushConstant.model = this->transform->GetModel();
-
-        if (!isOmniShadow)
-        {
-            vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantStruct), &pushConstant);
-        }
-        else
-        {
-            vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PCOmniShadowStruct), &omniPushConstant);
         }
 
         if (this->isMeshShading)
