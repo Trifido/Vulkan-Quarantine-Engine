@@ -111,8 +111,8 @@ void DirectionalLight::UpdateCascades()
         glm::mat4 lightOrthoMatrix = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.0f, maxExtents.z - minExtents.z);
 
         // Store split distance and matrix in cascade
-        //cascades[i].splitDepth = (nearClip + splitDist * clipRange) * -1.0f;
-        //cascades[i].viewProjMatrix = lightOrthoMatrix * lightViewMatrix;
+        this->shadowMappingResourcesPtr->cascadeResources[i].splitDepth = (nearClip + splitDist * clipRange) * -1.0f;
+        this->shadowMappingResourcesPtr->cascadeResources[i].viewProjMatrix = lightOrthoMatrix * lightViewMatrix;
 
         lastSplitDist = cascadeSplits[i];
     }

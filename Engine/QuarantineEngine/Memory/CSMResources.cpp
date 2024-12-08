@@ -20,7 +20,6 @@ CSMResources::CSMResources()
 
 CSMResources::CSMResources(std::shared_ptr<VkRenderPass> renderPass) : CSMResources()
 {
-    this->shadowFormat = VK_FORMAT_R32_SFLOAT;
     this->CreateCSMResources(renderPass);
 }
 

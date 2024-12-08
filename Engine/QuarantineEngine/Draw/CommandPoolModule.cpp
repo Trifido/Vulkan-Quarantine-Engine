@@ -143,40 +143,13 @@ void CommandPoolModule::setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t
     vkCmdEndRenderPass(commandBuffers[iCBuffer]);
 }
 
-void CommandPoolModule::setDirectionalShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, std::shared_ptr<Light> light, uint32_t iCBuffer)
+void CommandPoolModule::setDirectionalShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, uint32_t idDirlight, uint32_t iCBuffer)
 {
-    uint32_t size = 0;
-    VkFramebuffer frameBuffer = {};
-    VkPipeline pipeline = {};
-    VkPipelineLayout pipelineLayout = {};
-    std::shared_ptr<DescriptorBuffer> descriptorBuffer = nullptr;
-    float depthBiasConstant = 0;
-    float depthBiasSlope = 0;
+    auto dirLight = this->lightManager->DirLights.at(idDirlight);
 
-    //auto dirLight = std::dynamic_pointer_cast<DirectionalLight, Light>(light);
-    //auto spotLight = std::dynamic_pointer_cast<SpotLight, Light>(light);
-    //auto pointLight = std::dynamic_pointer_cast<PointLight, Light>(light);
-
-    //if (dirLight != nullptr)
-    //{
-    //    size = dirLight->shadowMappingPtr->TextureSize;
-    //    frameBuffer = dirLight->shadowMappingPtr->shadowFrameBuffer;
-    //    depthBiasConstant = dirLight->shadowMappingPtr->depthBiasConstant;
-    //    depthBiasSlope = dirLight->shadowMappingPtr->depthBiasSlope;
-    //    pipeline = dirLight->shadowMappingPtr->shadowPipelineModule->pipeline;
-    //    pipelineLayout = dirLight->shadowMappingPtr->shadowPipelineModule->pipelineLayout;
-    //    descriptorBuffer = dirLight->descriptorBuffer;
-    //}
-    //if (spotLight != nullptr)
-    //{
-    //    size = spotLight->shadowMappingPtr->TextureSize;
-    //    frameBuffer = spotLight->shadowMappingPtr->shadowFrameBuffer;
-    //    depthBiasConstant = spotLight->shadowMappingPtr->depthBiasConstant;
-    //    depthBiasSlope = spotLight->shadowMappingPtr->depthBiasSlope;
-    //    pipeline = spotLight->shadowMappingPtr->shadowPipelineModule->pipeline;
-    //    pipelineLayout = spotLight->shadowMappingPtr->shadowPipelineModule->pipelineLayout;
-    //    descriptorBuffer = spotLight->descriptorBuffer;
-    //}
+    uint32_t size = dirLight->shadowMappingResourcesPtr->TextureSize;
+    auto depthBiasConstant = dirLight->shadowMappingResourcesPtr->DepthBiasConstant;
+    auto depthBiasSlope = dirLight->shadowMappingResourcesPtr->DepthBiasSlope;
 
     VkViewport viewport{};
     viewport.x = 0.0f;
@@ -194,7 +167,6 @@ void CommandPoolModule::setDirectionalShadowRenderPass(std::shared_ptr<VkRenderP
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassInfo.renderPass = *renderPass;
-    renderPassInfo.framebuffer = frameBuffer;
     renderPassInfo.renderArea.offset = { 0, 0 };
     renderPassInfo.renderArea.extent.width = size;
     renderPassInfo.renderArea.extent.height = size;
@@ -213,12 +185,22 @@ void CommandPoolModule::setDirectionalShadowRenderPass(std::shared_ptr<VkRenderP
     vkCmdSetDepthWriteEnable(commandBuffers[iCBuffer], true);
     vkCmdSetFrontFace(commandBuffers[iCBuffer], VK_FRONT_FACE_CLOCKWISE);
 
-    vkCmdBindPipeline(commandBuffers[iCBuffer], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+    auto pipeline = lightManager->CSMPipelineModule->pipeline;
+    auto pipelineLayout = lightManager->CSMPipelineModule->pipelineLayout;
 
-    vkCmdBindDescriptorSets(commandBuffers[iCBuffer], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, descriptorBuffer->getDescriptorSet(iCBuffer), 0, nullptr);
-    this->gameObjectManager->ShadowCommand(commandBuffers[iCBuffer], iCBuffer, pipelineLayout);
+    // One pass per cascade
+    for (uint32_t j = 0; j < CSMResources::SHADOW_MAP_CASCADE_COUNT; j++)
+    {
+        renderPassInfo.framebuffer = dirLight->shadowMappingResourcesPtr->cascadeResources[j].frameBuffer;
 
-    vkCmdEndRenderPass(commandBuffers[iCBuffer]);
+        vkCmdBeginRenderPass(commandBuffers[iCBuffer], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBindPipeline(commandBuffers[iCBuffer], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+
+        vkCmdBindDescriptorSets(commandBuffers[iCBuffer], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &lightManager->CSMDescritors->offscreenDescriptorSets[iCBuffer][idDirlight], 0, NULL);
+        this->gameObjectManager->ShadowCommand(commandBuffers[iCBuffer], iCBuffer, pipelineLayout);
+
+        vkCmdEndRenderPass(commandBuffers[iCBuffer]);
+    }
 }
 
 void CommandPoolModule::setOmniShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, uint32_t idPointlight, uint32_t iCBuffer)
@@ -304,15 +286,6 @@ void CommandPoolModule::updateCubeMapFace(uint32_t faceIdx, std::shared_ptr<VkRe
     auto pipelineLayout = lightManager->OmniShadowPipelineModule->pipelineLayout;
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-    //vkCmdPushConstants(
-    //    commandBuffer,
-    //    pipelineLayout,
-    //    VK_SHADER_STAGE_ALL,
-    //    0,
-    //    sizeof(glm::mat4),
-    //    &viewMatrix);
-
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &lightManager->PointShadowDescritors->offscreenDescriptorSets[iCBuffer][idPointlight], 0, NULL);
 
@@ -334,12 +307,12 @@ void CommandPoolModule::Render(FramebufferModule* framebufferModule)
             throw std::runtime_error("failed to begin recording command buffer!");
         }
 
-        //auto itDirlight = this->lightManager->DirLights.begin();
-        //while (itDirlight != this->lightManager->DirLights.end())
-        //{
-        //    this->setDirectionalShadowRenderPass(this->renderPassModule->dirShadowMappingRenderPass, *itDirlight, i);
-        //    itDirlight++;
-        //}
+        auto itDirlight = this->lightManager->DirLights.begin();
+        while (itDirlight != this->lightManager->DirLights.end())
+        {
+            this->setDirectionalShadowRenderPass(this->renderPassModule->dirShadowMappingRenderPass, *itDirlight, i);
+            itDirlight++;
+        }
 
         //auto itSpotlight = this->lightManager->SpotLights.begin();
         //while (itSpotlight != this->lightManager->SpotLights.end())
