@@ -10,14 +10,14 @@ CSMDescriptorsManager::CSMDescriptorsManager()
     this->CreateRenderDescriptorPool();
 }
 
-void CSMDescriptorsManager::AddPointLightResources(std::shared_ptr<UniformBufferObject> shadowMapUBO, VkImageView imageView, VkSampler sampler)
+void CSMDescriptorsManager::AddDirLightResources(std::shared_ptr<UniformBufferObject> shadowMapUBO, VkImageView imageView, VkSampler sampler)
 {
-    if (this->_numPointLights < MAX_NUM_DIR_LIGHTS)
+    if (this->_numDirLights < MAX_NUM_DIR_LIGHTS)
     {
         this->csmUBOs.push_back(shadowMapUBO);
         this->_imageViews.push_back(imageView);
         this->_samplers.push_back(sampler);
-        this->_numPointLights++;
+        this->_numDirLights++;
     }
 }
 
@@ -131,20 +131,20 @@ void CSMDescriptorsManager::SetRenderDescriptorWrite(VkWriteDescriptorSet& descr
     descriptorWrite.pBufferInfo = &this->renderBuffersInfo[binding];
 }
 
-void CSMDescriptorsManager::SetCubeMapDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding)
+void CSMDescriptorsManager::SetCSMDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding)
 {
     for (uint32_t i = 0; i < MAX_NUM_DIR_LIGHTS; ++i)
     {
-        this->shadowPointsImageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        if (i < _numPointLights)
+        this->renderDescriptorImageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        if (i < _numDirLights)
         {
-            this->shadowPointsImageInfo[i].imageView = _imageViews[i]; // ImageView de cada cubemap
-            this->shadowPointsImageInfo[i].sampler = _samplers[i]; // Sampler para cada cubemap
+            this->renderDescriptorImageInfo[i].imageView = _imageViews[i]; // ImageView de cada csm
+            this->renderDescriptorImageInfo[i].sampler = _samplers[i]; // Sampler para cada csm
         }
         else
         {
-            this->shadowPointsImageInfo[i].imageView = placeholderImageView; // ImageView placeholder para cada cubemap
-            this->shadowPointsImageInfo[i].sampler = placeholderSampler; // Sampler placeholder para cada cubemap
+            this->renderDescriptorImageInfo[i].imageView = placeholderImageView; // ImageView placeholder para cada csm
+            this->renderDescriptorImageInfo[i].sampler = placeholderSampler; // Sampler placeholder para cada csm
         }
     }
 
@@ -153,8 +153,8 @@ void CSMDescriptorsManager::SetCubeMapDescriptorWrite(VkWriteDescriptorSet& desc
     descriptorWrite.dstBinding = binding;
     descriptorWrite.dstArrayElement = 0;
     descriptorWrite.descriptorType = descriptorType;
-    descriptorWrite.descriptorCount = MAX_NUM_DIR_LIGHTS; // Número de cubemaps en el arreglo
-    descriptorWrite.pImageInfo = this->shadowPointsImageInfo.data();
+    descriptorWrite.descriptorCount = MAX_NUM_DIR_LIGHTS; // Número de descriptores en el array
+    descriptorWrite.pImageInfo = this->renderDescriptorImageInfo.data();
 }
 
 void CSMDescriptorsManager::CreateRenderDescriptorSet()
@@ -166,7 +166,7 @@ void CSMDescriptorsManager::CreateRenderDescriptorSet()
     allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
     allocInfo.pSetLayouts = layouts.data();
 
-    this->shadowPointsImageInfo.resize(MAX_NUM_DIR_LIGHTS);
+    this->renderDescriptorImageInfo.resize(MAX_NUM_DIR_LIGHTS);
 
     if (vkAllocateDescriptorSets(deviceModule->device, &allocInfo, this->renderDescriptorSets) != VK_SUCCESS)
     {
@@ -178,7 +178,7 @@ void CSMDescriptorsManager::CreateRenderDescriptorSet()
         std::vector<VkWriteDescriptorSet> descriptorWrites{};
         descriptorWrites.resize(1);
 
-        this->SetCubeMapDescriptorWrite(descriptorWrites[0], this->renderDescriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0);
+        this->SetCSMDescriptorWrite(descriptorWrites[0], this->renderDescriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0);
 
         vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
@@ -219,27 +219,28 @@ void CSMDescriptorsManager::CreateOffscreenDescriptorSet()
     allocInfo.pSetLayouts = &this->offscreenDescriptorSetLayout;
 
     std::vector<VkWriteDescriptorSet> descriptorWrites{};
-    descriptorWrites.resize(this->_numPointLights);
-    this->offscreenBuffersInfo.resize(this->_numPointLights);
+    descriptorWrites.resize(this->_numDirLights);
+    this->offscreenBuffersInfo.resize(this->_numDirLights);
 
-    for (uint32_t npl = 0; npl < this->_numPointLights; npl++)
+    for (uint32_t ndl = 0; ndl < this->_numDirLights; ndl++)
     {
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-            if (vkAllocateDescriptorSets(deviceModule->device, &allocInfo, &this->offscreenDescriptorSets[i][npl]) != VK_SUCCESS)
+            if (vkAllocateDescriptorSets(deviceModule->device, &allocInfo, &this->offscreenDescriptorSets[i][ndl]) != VK_SUCCESS)
             {
                 throw std::runtime_error("failed to allocate descriptor sets!");
             }
 
-            this->SetOffscreenDescriptorWrite(descriptorWrites[npl], this->offscreenDescriptorSets[i][npl], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, this->csmUBOs[npl]->uniformBuffers[i], sizeof(OmniShadowUniform));
-            vkUpdateDescriptorSets(deviceModule->device, 1, &descriptorWrites[npl], 0, nullptr);
+            this->SetOffscreenDescriptorWrite(descriptorWrites[ndl], this->offscreenDescriptorSets[i][ndl],
+                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, this->csmUBOs[ndl]->uniformBuffers[i], sizeof(OmniShadowUniform));
+            vkUpdateDescriptorSets(deviceModule->device, 1, &descriptorWrites[ndl], 0, nullptr);
         }
     }
 }
 
 void CSMDescriptorsManager::Clean()
 {
-    for (uint32_t npl = 0; npl < this->_numPointLights; npl++)
+    for (uint32_t npl = 0; npl < this->_numDirLights; npl++)
     {
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {

@@ -43,6 +43,7 @@ LightManager::LightManager()
     this->lightBuffer.reserve(this->MAX_NUM_LIGHT);
 
     this->PointShadowDescritors = std::make_shared<PointShadowDescriptorsManager>();
+    this->CSMDescritors = std::make_shared<CSMDescriptorsManager>();
 }
 
 void LightManager::AddDirShadowMapShader(std::shared_ptr<ShaderModule> shadow_mapping_shader)
@@ -77,7 +78,7 @@ void LightManager::CreateLight(LightType type, std::string name)
     {
         default:
         case LightType::POINT_LIGHT:
-            this->PointLights.push_back(std::make_shared<PointLight>(this->OmniShadowShaderModule, this->renderPassModule->omniShadowMappingRenderPass));
+            this->PointLights.push_back(std::make_shared<PointLight>(this->renderPassModule->omniShadowMappingRenderPass));
             this->PointLights.back()->idxShadowMap = this->PointLights.size() - 1;
 
             this->AddLight(std::static_pointer_cast<Light>(this->PointLights.back()), name);
@@ -87,10 +88,13 @@ void LightManager::CreateLight(LightType type, std::string name)
             break;
 
         case LightType::DIRECTIONAL_LIGHT:
-            this->DirLights.push_back(std::make_shared<DirectionalLight>(this->CSMShaderModule, this->renderPassModule->dirShadowMappingRenderPass));
+            this->DirLights.push_back(std::make_shared<DirectionalLight>(this->renderPassModule->dirShadowMappingRenderPass, this->camera));
             this->DirLights.back()->idxShadowMap = this->DirLights.size() - 1;
 
             this->AddLight(std::static_pointer_cast<Light>(this->DirLights.back()), name);
+            this->CSMDescritors->AddDirLightResources(this->DirLights.back()->shadowMappingResourcesPtr->shadowMapUBO,
+                this->DirLights.back()->shadowMappingResourcesPtr->CSMImageView,
+                this->DirLights.back()->shadowMappingResourcesPtr->CSMSampler);
             break;
 
         case LightType::SPOT_LIGHT:
@@ -113,6 +117,7 @@ std::shared_ptr<Light> LightManager::GetLight(std::string name)
 void LightManager::InitializeShadowMaps()
 {
     this->PointShadowDescritors->InitializeDescriptorSetLayouts(this->OmniShadowShaderModule);
+    this->CSMDescritors->InitializeDescriptorSetLayouts(this->CSMShaderModule);
 }
 
 void LightManager::UpdateUniform()
@@ -195,6 +200,7 @@ void LightManager::CleanShadowMapResources()
     }
 
     this->PointShadowDescritors->Clean();
+    this->CSMDescritors->Clean();
 }
 
 void LightManager::SetCamera(Camera* camera_ptr)

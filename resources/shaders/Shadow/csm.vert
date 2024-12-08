@@ -10,12 +10,12 @@ layout(push_constant) uniform PushConsts {
 	uint cascadeIndex;
 } pushConsts;
 
-layout (set = 0, binding = 0) uniform UBO {
-	mat4[SHADOW_MAP_CASCADE_COUNT] cascadeViewProjMat;
+layout (set = 0, binding = 0) uniform CSMUniform {
+	mat4[SHADOW_MAP_CASCADE_COUNT] cascadeViewProj;
 } ubo;
 
 void main()
 {
 	vec3 pos = inPos + pushConsts.position.xyz;
-	gl_Position =  ubo.cascadeViewProjMat[pushConsts.cascadeIndex] * vec4(pos, 1.0);
+	gl_Position =  ubo.cascadeViewProj[pushConsts.cascadeIndex] * vec4(pos, 1.0);
 }

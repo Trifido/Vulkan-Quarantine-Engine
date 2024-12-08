@@ -24,13 +24,13 @@ private:
     VkDescriptorPool                offscreenDescriptorPool;
 
     // Offscreen resources
-    uint32_t    _numPointLights = 0;
+    uint32_t    _numDirLights = 0;
     std::vector<std::shared_ptr<UniformBufferObject>> csmUBOs;
     std::vector<VkDescriptorBufferInfo> offscreenBuffersInfo;
 
     // Render resources
     std::vector<VkDescriptorBufferInfo> renderBuffersInfo;
-    std::vector<VkDescriptorImageInfo> csmImageInfo;
+    std::vector<VkDescriptorImageInfo> renderDescriptorImageInfo;
     std::shared_ptr<UniformBufferObject> dirLightIdBuffer;
     VkDeviceSize sizedirLightIdBuffer;
 
@@ -49,7 +49,7 @@ public:
 
 public:
     CSMDescriptorsManager();
-    void AddPointLightResources(std::shared_ptr<UniformBufferObject> shadowMapUBO, VkImageView imageView, VkSampler sampler);
+    void AddDirLightResources(std::shared_ptr<UniformBufferObject> shadowMapUBO, VkImageView imageView, VkSampler sampler);
     void InitializeDescriptorSetLayouts(std::shared_ptr<ShaderModule> offscreen_shader_ptr);
     void Clean();
 
@@ -61,7 +61,7 @@ private:
     void CreateRenderDescriptorSet();
     VkDescriptorSetLayout CreateRenderDescriptorSetLayout();
     void SetRenderDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize);
-    void SetCubeMapDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding);
+    void SetCSMDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding);
     VkDescriptorBufferInfo GetBufferInfo(VkBuffer buffer, VkDeviceSize bufferSize);
     void CreateCSMPlaceHolder();
 };

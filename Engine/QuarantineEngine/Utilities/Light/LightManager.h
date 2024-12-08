@@ -15,6 +15,7 @@
 
 #include <DescriptorBuffer.h>
 #include <PointShadowDescriptorsManager.h>
+#include <CSMDescriptorsManager.h>
 
 class DirectionalLight;
 class SpotLight;

@@ -40,7 +40,6 @@ VkImage CSMResources::AllocateImage(VkDevice device, VkPhysicalDevice physicalDe
     imageInfo.samples = numSamples;
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    imageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 
     if (vkCreateImage(device, &imageInfo, nullptr, &result) != VK_SUCCESS) {
         throw std::runtime_error("failed to create cube map image!");
@@ -151,13 +150,13 @@ void CSMResources::PrepareFramebuffer(std::shared_ptr<VkRenderPass> renderPass, 
     vkCreateFramebuffer(this->deviceModule->device, &fbufCreateInfo, nullptr, &this->cascadeResources[iCascade].frameBuffer);
 }
 
-void CSMResources::UpdateUBOShadowMap(OmniShadowUniform omniParameters)
+void CSMResources::UpdateUBOShadowMap(CSMUniform csmParameters)
 {
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {
         void* data;
-        vkMapMemory(this->deviceModule->device, this->shadowMapUBO->uniformBuffersMemory[currentFrame], 0, sizeof(OmniShadowUniform), 0, &data);
-        memcpy(data, &omniParameters, sizeof(OmniShadowUniform));
+        vkMapMemory(this->deviceModule->device, this->shadowMapUBO->uniformBuffersMemory[currentFrame], 0, sizeof(CSMUniform), 0, &data);
+        memcpy(data, &csmParameters, sizeof(CSMUniform));
         vkUnmapMemory(this->deviceModule->device, this->shadowMapUBO->uniformBuffersMemory[currentFrame]);
     }
 }

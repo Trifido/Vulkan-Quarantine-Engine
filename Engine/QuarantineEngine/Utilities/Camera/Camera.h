@@ -54,7 +54,9 @@ public:
     void CameraController(float deltaTime);
     float GetFOV() { return fov; }
     float* GetRawFOV() { return &fov; }
+    float GetNear() { return nearPlane; }
     float* GetRawNearPlane() { return &nearPlane; }
+    float GetFar() { return farPlane; }
     float* GetRawFarPlane() { return &farPlane; }
     float* GetRawCameraPosition() { return &cameraPos[0]; }
     float* GetRawCameraFront() { return &cameraFront[0]; }

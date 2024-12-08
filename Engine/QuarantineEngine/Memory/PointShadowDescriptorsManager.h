@@ -30,7 +30,7 @@ private:
 
     // Render resources
     std::vector<VkDescriptorBufferInfo> renderBuffersInfo;
-    std::vector<VkDescriptorImageInfo> shadowPointsImageInfo;
+    std::vector<VkDescriptorImageInfo> renderDescriptorImageInfo;
     std::shared_ptr<UniformBufferObject> pointlightIdBuffer;
     VkDeviceSize sizePointlightIdBuffer;
 

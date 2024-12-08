@@ -124,6 +124,13 @@ struct OmniShadowUniform
     glm::vec4 lightPos;
 };
 
+const int CSM_NUM = 4;
+
+struct CSMUniform
+{
+    glm::mat4 cascadeViewProj[CSM_NUM];
+};
+
 class UniformBufferObject
 {
 public:

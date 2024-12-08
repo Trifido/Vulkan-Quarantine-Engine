@@ -25,13 +25,12 @@ private:
     DeviceModule* deviceModule;
     SwapChainModule* swapchainModule = nullptr;
 
-    static const int SHADOW_MAP_CASCADE_COUNT = 4;
-
     // CSM image
     VkImage CSMImage = VK_NULL_HANDLE;
     VkDeviceMemory CSMImageMemory = { VK_NULL_HANDLE };
 
 public:
+    static const int SHADOW_MAP_CASCADE_COUNT = 4;
     static QueueModule* queueModule;
     static VkCommandPool commandPool;
     uint32_t TextureSize;
@@ -54,7 +53,7 @@ private:
 public:
     CSMResources();
     CSMResources(std::shared_ptr<VkRenderPass> renderPass);
-    void UpdateUBOShadowMap(OmniShadowUniform omniParameters);
+    void UpdateUBOShadowMap(CSMUniform csmParameters);
 
     static VkSampler CreateCSMSampler(VkDevice device);
     static VkImageView CreateImageView(VkDevice device, VkImage& image, VkFormat format, VkImageAspectFlags aspectFlags, int baseArrayLayer, int layerCount, uint32_t mipLevels = 1);
