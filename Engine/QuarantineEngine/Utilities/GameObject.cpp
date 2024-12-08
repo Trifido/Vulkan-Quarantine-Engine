@@ -16,8 +16,8 @@ void GameObject::InitializeResources()
 bool GameObject::isRenderEnable()
 {
     bool isRender = true;
-    isRender = isRender && this->material != nullptr;
-    isRender = isRender && this->mesh != nullptr;
+    isRender = isRender && this->_Material != nullptr;
+    isRender = isRender && this->_Mesh != nullptr;
     isRender = isRender && this->aabbculling->isGameObjectVisible;
 
     return isRender;
@@ -25,6 +25,7 @@ bool GameObject::isRenderEnable()
 
 GameObject::GameObject()
 {
+    this->childs.resize(0);
     this->InitializeResources();
     this->meshImportedType = MeshImportedType::NONE_GEO;
 
@@ -38,7 +39,7 @@ GameObject::GameObject(PRIMITIVE_TYPE type, bool isMeshShading)
 {
     this->InitializeResources();
     this->isMeshShading = isMeshShading;
-    this->mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh(type));
+    this->_Mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh(type));
     this->meshImportedType = MeshImportedType::PRIMITIVE_GEO;
 
     if (type != PRIMITIVE_TYPE::GRID_TYPE)
@@ -48,17 +49,17 @@ GameObject::GameObject(PRIMITIVE_TYPE type, bool isMeshShading)
             auto mat = this->materialManager->GetMaterial("defaultMeshPrimitiveMat");
             auto newMatInstance = mat->CreateMaterialInstance();
             this->materialManager->AddMaterial("defaultMeshPrimitiveMat", newMatInstance);
-            this->addMaterial(newMatInstance);
+            this->AddMaterial(newMatInstance);
         }
         else
         {
             auto mat = this->materialManager->GetMaterial("defaultPrimitiveMat");
             auto newMatInstance = mat->CreateMaterialInstance();
             this->materialManager->AddMaterial("defaultPrimitiveMat", newMatInstance);
-            this->addMaterial(newMatInstance);
+            this->AddMaterial(newMatInstance);
         }
 
-        this->material->InitializeMaterialDataUBO();
+        this->_Material->InitializeMaterialDataUBO();
     }
     else
     {
@@ -69,8 +70,8 @@ GameObject::GameObject(PRIMITIVE_TYPE type, bool isMeshShading)
 
     if (type != PRIMITIVE_TYPE::GRID_TYPE)
     {
-        auto downcastedPtr = std::dynamic_pointer_cast<PrimitiveMesh>(this->mesh);
-        this->aabbculling = this->cullingSceneManager->GenerateAABB(downcastedPtr->aabbData, this->transform);
+        auto downcastedPtr = std::dynamic_pointer_cast<PrimitiveMesh>(this->_Mesh);
+        this->aabbculling = this->cullingSceneManager->GenerateAABB(downcastedPtr->aabbData, this->_Transform);
     }
 
     this->vkCmdDrawMeshTasksEXT =
@@ -94,11 +95,11 @@ GameObject::GameObject(std::string meshPath, bool isMeshShading)
         (PFN_vkCmdDrawMeshTasksEXT)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksEXT");
 }
 
-void GameObject::cleanup()
+void GameObject::Cleanup()
 {
-    if (mesh != nullptr)
+    if (_Mesh != nullptr)
     {
-        mesh->cleanup();
+        _Mesh->cleanup();
     }
 
     if (this->animationComponent != nullptr)
@@ -110,7 +111,7 @@ void GameObject::cleanup()
     {
         for (auto& child : this->childs)
         {
-            child->mesh->cleanup();
+            child->_Mesh->cleanup();
 
             if (child->animationComponent != nullptr)
             {
@@ -120,20 +121,19 @@ void GameObject::cleanup()
     }    
 }
 
-
-void GameObject::drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
+void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
     bool isAnimationPipeline = this->meshImportedType == ANIMATED_GEO;
     auto animatorPtr = isAnimationPipeline ? this->animationComponent->animator : nullptr;
 
-    this->CreateDrawCommand(commandBuffer, idx, animatorPtr);
+    this->SetDrawCommand(commandBuffer, idx, animatorPtr);
     for (auto child : childs)
     {
-        child->CreateDrawCommand(commandBuffer, idx, animatorPtr);
+        child->SetDrawCommand(commandBuffer, idx, animatorPtr);
     }
 }
 
-void GameObject::drawOmniShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, PCOmniShadowStruct shadowParameters)
+void GameObject::CreateShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, PCOmniShadowStruct shadowParameters)
 {
     bool isAnimationPipeline = this->meshImportedType == ANIMATED_GEO;
     auto animatorPtr = isAnimationPipeline ? this->animationComponent->animator : nullptr;
@@ -147,30 +147,30 @@ void GameObject::drawOmniShadowCommand(VkCommandBuffer& commandBuffer, uint32_t 
     }
 }
 
-void GameObject::addMaterial(std::shared_ptr<Material> material_ptr)
+void GameObject::AddMaterial(std::shared_ptr<Material> material_ptr)
 {
     if (material_ptr == nullptr)
         return;
 
-    this->material = material_ptr;
+    this->_Material = material_ptr;
 
-    if (this->mesh != nullptr)
+    if (this->_Mesh != nullptr)
     {
-        this->material->bindingMesh(this->mesh);
+        this->_Material->bindingMesh(this->_Mesh);
     }
 }
 
-void GameObject::addPhysicBody(std::shared_ptr<PhysicBody> physicBody_ptr)
+void GameObject::AddPhysicBody(std::shared_ptr<PhysicBody> physicBody_ptr)
 {
     this->physicBody = physicBody_ptr;
 }
 
-void GameObject::addCollider(std::shared_ptr<Collider> collider_ptr)
+void GameObject::AddCollider(std::shared_ptr<Collider> collider_ptr)
 {
     this->collider = collider_ptr;
 }
 
-void GameObject::addAnimation(std::shared_ptr<Animation> animation_ptr)
+void GameObject::AddAnimation(std::shared_ptr<Animation> animation_ptr)
 {
     if (this->animationComponent == nullptr)
     {
@@ -188,18 +188,18 @@ void GameObject::addAnimation(std::shared_ptr<Animation> animation_ptr)
 
 void GameObject::InitializeComponents()
 {
-    if (this->transform == nullptr)
+    if (this->_Transform == nullptr)
     {
-        this->transform = std::make_shared<Transform>();
+        this->_Transform = std::make_shared<Transform>();
     }
 
-    if (this->mesh != nullptr)
+    if (this->_Mesh != nullptr)
     {
-        this->mesh->InitializeMesh();
+        this->_Mesh->InitializeMesh();
 
         if (this->isMeshShading)
         {
-            this->material->descriptor->SetMeshletBuffers(this->mesh->meshlets_ptr);
+            this->_Material->descriptor->SetMeshletBuffers(this->_Mesh->meshlets_ptr);
         }
     }
 
@@ -235,13 +235,13 @@ void GameObject::InitializeAnimationComponent()
         {
             for (int idChild = 0; idChild < this->childs.size(); idChild++)
             {
-                uint32_t numVertices = this->childs[idChild]->mesh->numVertices;
-                this->animationComponent->animator->SetVertexBufferInComputeNode(this->childs[idChild]->id, this->childs[idChild]->mesh->vertexBuffer, this->childs[idChild]->mesh->animationBuffer, numVertices);
+                uint32_t numVertices = this->childs[idChild]->_Mesh->numVertices;
+                this->animationComponent->animator->SetVertexBufferInComputeNode(this->childs[idChild]->id, this->childs[idChild]->_Mesh->vertexBuffer, this->childs[idChild]->_Mesh->animationBuffer, numVertices);
             }
         }
         else
         {
-            this->animationComponent->animator->SetVertexBufferInComputeNode(0, this->mesh->vertexBuffer, this->mesh->animationBuffer, this->mesh->numVertices);
+            this->animationComponent->animator->SetVertexBufferInComputeNode(0, this->_Mesh->vertexBuffer, this->_Mesh->animationBuffer, this->_Mesh->numVertices);
         }
     }
 }
@@ -250,21 +250,21 @@ void GameObject::InitializePhysics()
 {
     if (this->physicBody != nullptr && this->collider != nullptr)
     {
-        this->physicBody->Initialize(this->transform, this->collider);
+        this->physicBody->Initialize(this->_Transform, this->collider);
     }   
 }
 
 bool GameObject::IsValidRender()
 {
-    if (this->transform == nullptr)
+    if (this->_Transform == nullptr)
         return false;
 
-    if (this->mesh != nullptr && this->material != nullptr)
+    if (this->_Mesh != nullptr && this->_Material != nullptr)
         return true;
 
     for (auto child : childs)
     {
-        if (child->mesh != nullptr && child->material != nullptr)
+        if (child->_Mesh != nullptr && child->_Material != nullptr)
             return true;
     }
 
@@ -273,7 +273,7 @@ bool GameObject::IsValidRender()
 
 bool GameObject::IsValidGameObject()
 {
-    return this->transform != nullptr;
+    return this->_Transform != nullptr;
 }
 
 void GameObject::UpdatePhysicTransform()
@@ -297,27 +297,28 @@ bool GameObject::CreateChildsGameObject(std::string pathfile)
 
     if (data.size() > 1)
     {
-        this->transform = std::make_shared<Transform>();
+        this->_Transform = std::make_shared<Transform>();
         this->childs.resize(data.size());
 
-        glm::mat4 parentModel = this->transform->GetModel();
+        glm::mat4 parentModel = this->_Transform->GetModel();
 
         for (size_t id = 0; id < data.size(); id++)
         {
             this->childs[id] = std::make_shared<GameObject>();
-            this->childs[id]->mesh = std::make_shared<Mesh>(Mesh(data[id]));
+            this->childs[id]->_Mesh = std::make_shared<Mesh>(Mesh(data[id]));
             this->childs[id]->meshImportedType = this->meshImportedType;
             this->childs[id]->isMeshShading = this->isMeshShading;
-            this->childs[id]->transform = std::make_shared<Transform>(Transform(parentModel * data[id].model));
-            this->childs[id]->addMaterial(this->materialManager->GetMaterial(data[id].materialID));
-            this->transform->AddChild(this->childs[id]->transform);
+            this->childs[id]->_Transform = std::make_shared<Transform>(Transform(parentModel * data[id].model));
+            this->childs[id]->AddMaterial(this->materialManager->GetMaterial(data[id].materialID));
+            this->_Transform->AddChild(this->childs[id]->_Transform);
+            this->childs[id]->parent = this;
         }
     }
     else
     {
-        this->mesh = std::make_shared<Mesh>(Mesh(data[0]));
-        this->transform = std::make_shared<Transform>(Transform(data[0].model));
-        this->addMaterial(this->materialManager->GetMaterial(data[0].materialID));
+        this->_Mesh = std::make_shared<Mesh>(Mesh(data[0]));
+        this->_Transform = std::make_shared<Transform>(Transform(data[0].model));
+        this->AddMaterial(this->materialManager->GetMaterial(data[0].materialID));
     }
 
     if (this->meshImportedType == MeshImportedType::ANIMATED_GEO)
@@ -334,14 +335,14 @@ bool GameObject::CreateChildsGameObject(std::string pathfile)
             {
                 if (anim.m_Duration > 0.0f)
                 {
-                    this->addAnimation(std::make_shared<Animation>(anim));
+                    this->AddAnimation(std::make_shared<Animation>(anim));
                 }
             }
         }
     }
 
     std::pair<glm::vec3, glm::vec3> aabbData = importer.GetAABBData();
-    this->aabbculling = this->cullingSceneManager->GenerateAABB(aabbData, this->transform);
+    this->aabbculling = this->cullingSceneManager->GenerateAABB(aabbData, this->_Transform);
 
     for (unsigned int i = 0; i < childs.size(); i++)
     {
@@ -351,11 +352,11 @@ bool GameObject::CreateChildsGameObject(std::string pathfile)
     return true;
 }
 
-void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator_ptr)
+void GameObject::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator_ptr)
 {
     if (this->isRenderEnable())
     {
-        auto pipelineModule = this->material->shader->PipelineModule;
+        auto pipelineModule = this->_Material->shader->PipelineModule;
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
         vkCmdSetDepthTestEnable(commandBuffer, true);
@@ -381,15 +382,15 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx,
             }
             else
             {
-                VkBuffer vertexBuffers[] = { this->mesh->vertexBuffer };
+                VkBuffer vertexBuffers[] = { this->_Mesh->vertexBuffer };
                 vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
             }
-            vkCmdBindIndexBuffer(commandBuffer, this->mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+            vkCmdBindIndexBuffer(commandBuffer, this->_Mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
         }
 
-        this->material->BindDescriptors(commandBuffer, idx);
+        this->_Material->BindDescriptors(commandBuffer, idx);
 
-        vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantStruct), &this->transform->GetModel());
+        vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantStruct), &this->_Transform->GetModel());
 
         if (this->isMeshShading)
         {
@@ -397,7 +398,7 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx,
         }
         else
         {
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->mesh->indices.size()), 1, 0, 0, 0);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->_Mesh->indices.size()), 1, 0, 0, 0);
         }
     }
 }
@@ -417,10 +418,10 @@ void GameObject::CreateDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_
             }
             else
             {
-                VkBuffer vertexBuffers[] = { this->mesh->vertexBuffer };
+                VkBuffer vertexBuffers[] = { this->_Mesh->vertexBuffer };
                 vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
             }
-            vkCmdBindIndexBuffer(commandBuffer, this->mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+            vkCmdBindIndexBuffer(commandBuffer, this->_Mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
         }
 
         if (this->isMeshShading)
@@ -429,7 +430,7 @@ void GameObject::CreateDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_
         }
         else
         {
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->mesh->indices.size()), 1, 0, 0, 0);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->_Mesh->indices.size()), 1, 0, 0, 0);
         }
     }
 }

@@ -38,17 +38,17 @@ void GameObjectManager::AddGameObject(std::shared_ptr<GameObject> object_ptr, st
     {
         name = CheckName(name);
 
-        if (object_ptr->material == nullptr)
+        if (object_ptr->_Material == nullptr)
         {
             if (!object_ptr->childs.empty())
             {
-                unsigned int childLayer = object_ptr->childs[0]->material->layer;
+                unsigned int childLayer = object_ptr->childs[0]->_Material->layer;
                 this->_objects[childLayer][name] = object_ptr;
             }
         }
         else
         {
-            this->_objects[object_ptr->material->layer][name] = object_ptr;
+            this->_objects[object_ptr->_Material->layer][name] = object_ptr;
         }
 
         if (object_ptr->physicBody != nullptr)
@@ -78,7 +78,7 @@ void GameObjectManager::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx
     {
         for (auto model : this->_objects[this->renderLayers->GetLayer(idl)])
         {
-            model.second->drawCommand(commandBuffer, idx);
+            model.second->CreateDrawCommand(commandBuffer, idx);
         }
     }
 }
@@ -99,12 +99,12 @@ void GameObjectManager::OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32
         shadowParameters.view = viewParameter;
 
         glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), -lightPosition);
-        glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), model.second->transform->Scale);
-        glm::mat4 rotationMatrix = glm::toMat4(model.second->transform->Orientation);
+        glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), model.second->_Transform->Scale);
+        glm::mat4 rotationMatrix = glm::toMat4(model.second->_Transform->Orientation);
         shadowParameters.lightModel = translationMatrix * rotationMatrix * scaleMatrix;
-        shadowParameters.model = model.second->transform->GetModel();
+        shadowParameters.model = model.second->_Transform->GetModel();
 
-        model.second->drawOmniShadowCommand(commandBuffer, idx, pipelineLayout, shadowParameters);
+        model.second->CreateShadowCommand(commandBuffer, idx, pipelineLayout, shadowParameters);
     }
 }
 
@@ -130,7 +130,7 @@ void GameObjectManager::Cleanup()
     {
         for (auto model : this->_objects[this->renderLayers->GetLayer(idl)])
         {
-            model.second->cleanup();
+            model.second->Cleanup();
         }
     }
 }

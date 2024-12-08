@@ -35,7 +35,7 @@ void ParticleSystem::InitializeParticleSystem()
 
 void ParticleSystem::cleanup()
 {
-    GameObject::cleanup();
+    GameObject::Cleanup();
 }
 
 void ParticleSystem::InitializeMaterial()
@@ -44,20 +44,20 @@ void ParticleSystem::InitializeMaterial()
     auto newMatInstance = mat->CreateMaterialInstance();
     this->materialManager->AddMaterial("defaultParticlesMat", newMatInstance);
 
-    this->addMaterial(newMatInstance);
-    this->material->InitializeMaterialDataUBO();
-    this->material->descriptor->ssboData["ParticleSSBO"] = computeNodeUpdateParticles->computeDescriptor->ssboData[0];
-    this->material->descriptor->ssboSize["ParticleSSBO"] = computeNodeUpdateParticles->computeDescriptor->ssboSize[0];
+    this->AddMaterial(newMatInstance);
+    this->_Material->InitializeMaterialDataUBO();
+    this->_Material->descriptor->ssboData["ParticleSSBO"] = computeNodeUpdateParticles->computeDescriptor->ssboData[0];
+    this->_Material->descriptor->ssboSize["ParticleSSBO"] = computeNodeUpdateParticles->computeDescriptor->ssboSize[0];
 
-    this->material->descriptor->ubos["particleSystemUBO"] = std::make_shared<UniformBufferObject>();
-    this->material->descriptor->ubos["particleSystemUBO"]->CreateUniformBuffer(sizeof(ParticleTextureParamsUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
-    this->material->descriptor->uboSizes["particleSystemUBO"] = sizeof(ParticleTextureParamsUniform);
+    this->_Material->descriptor->ubos["particleSystemUBO"] = std::make_shared<UniformBufferObject>();
+    this->_Material->descriptor->ubos["particleSystemUBO"]->CreateUniformBuffer(sizeof(ParticleTextureParamsUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->_Material->descriptor->uboSizes["particleSystemUBO"] = sizeof(ParticleTextureParamsUniform);
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {
         void* data;
-        vkMapMemory(deviceModule->device, this->material->descriptor->ubos["particleSystemUBO"]->uniformBuffersMemory[currentFrame], 0, sizeof(ParticleTextureParamsUniform), 0, &data);
+        vkMapMemory(deviceModule->device, this->_Material->descriptor->ubos["particleSystemUBO"]->uniformBuffersMemory[currentFrame], 0, sizeof(ParticleTextureParamsUniform), 0, &data);
         memcpy(data, static_cast<const void*>(&this->particleTextureParams), sizeof(ParticleTextureParamsUniform));
-        vkUnmapMemory(deviceModule->device, this->material->descriptor->ubos["particleSystemUBO"]->uniformBuffersMemory[currentFrame]);
+        vkUnmapMemory(deviceModule->device, this->_Material->descriptor->ubos["particleSystemUBO"]->uniformBuffersMemory[currentFrame]);
     }
 }
 
@@ -78,21 +78,21 @@ void ParticleSystem::createShaderStorageBuffers()
     this->computeNodeUpdateParticles->UseDependencyBuffer = true;
 }
 
-void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator)
+void ParticleSystem::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator)
 {
-    auto pipelineModule = this->material->shader->PipelineModule;
+    auto pipelineModule = this->_Material->shader->PipelineModule;
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
     vkCmdSetDepthTestEnable(commandBuffer, true);
     vkCmdSetDepthWriteEnable(commandBuffer, false);
     vkCmdSetCullMode(commandBuffer, false);
 
-    if (this->material->HasDescriptorBuffer())
+    if (this->_Material->HasDescriptorBuffer())
     {
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, this->material->descriptor->getDescriptorSet(idx), 0, nullptr);
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, this->_Material->descriptor->getDescriptorSet(idx), 0, nullptr);
     }
 
-    vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantStruct), &this->transform->GetModel());
+    vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantStruct), &this->_Transform->GetModel());
 
     vkCmdDraw(commandBuffer, this->MaxNumParticles * 6, 1, 0, 0);
 }
@@ -227,7 +227,7 @@ void ParticleSystem::GenerateParticles()
 
 void ParticleSystem::AddParticleTexture(std::shared_ptr<CustomTexture> texture)
 {
-    this->material->materialData.texture_vector->at(0) = texture;
+    this->_Material->materialData.texture_vector->at(0) = texture;
 }
 
 void ParticleSystem::Update()
@@ -235,7 +235,7 @@ void ParticleSystem::Update()
     this->GenerateParticles();
 }
 
-void ParticleSystem::drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
+void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
     this->CreateDrawCommand(commandBuffer, idx);
 }
