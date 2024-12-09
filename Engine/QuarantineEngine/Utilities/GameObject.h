@@ -58,7 +58,7 @@ public:
 
 private:
     void InitializeResources();
-    bool isRenderEnable();
+    bool IsRenderEnable();
 
 public:
     GameObject();
@@ -67,7 +67,7 @@ public:
     inline std::string ID() const { return id; }
     void Cleanup();
     virtual void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
-    virtual void CreateShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, PCOmniShadowStruct shadowParameters);
+    virtual void CreateShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout);
     void AddMaterial(std::shared_ptr<Material> material_ptr);
     void AddPhysicBody(std::shared_ptr<PhysicBody> physicBody_ptr);
     void AddCollider(std::shared_ptr<Collider> collider_ptr);
@@ -82,7 +82,7 @@ protected:
     void InitializeAnimationComponent();
     bool CreateChildsGameObject(std::string pathfile);
     virtual void SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator_ptr = nullptr);
-    void CreateDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, std::shared_ptr<Animator> animator_ptr = nullptr);
+    void SetDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, std::shared_ptr<Animator> animator_ptr = nullptr);
 };
 
 #endif

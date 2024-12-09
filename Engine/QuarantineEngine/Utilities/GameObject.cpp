@@ -5,24 +5,6 @@
 #include "PrimitiveTypes.h"
 #include <AnimationImporter.h>
 
-void GameObject::InitializeResources()
-{
-    this->deviceModule = DeviceModule::getInstance();
-    this->queueModule = QueueModule::getInstance();
-    this->materialManager = MaterialManager::getInstance();
-    this->cullingSceneManager = CullingSceneManager::getInstance();
-}
-
-bool GameObject::isRenderEnable()
-{
-    bool isRender = true;
-    isRender = isRender && this->_Material != nullptr;
-    isRender = isRender && this->_Mesh != nullptr;
-    isRender = isRender && this->aabbculling->isGameObjectVisible;
-
-    return isRender;
-}
-
 GameObject::GameObject()
 {
     this->childs.resize(0);
@@ -95,6 +77,14 @@ GameObject::GameObject(std::string meshPath, bool isMeshShading)
         (PFN_vkCmdDrawMeshTasksEXT)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksEXT");
 }
 
+void GameObject::InitializeResources()
+{
+    this->deviceModule = DeviceModule::getInstance();
+    this->queueModule = QueueModule::getInstance();
+    this->materialManager = MaterialManager::getInstance();
+    this->cullingSceneManager = CullingSceneManager::getInstance();
+}
+
 void GameObject::Cleanup()
 {
     if (_Mesh != nullptr)
@@ -133,17 +123,15 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
     }
 }
 
-void GameObject::CreateShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, PCOmniShadowStruct shadowParameters)
+void GameObject::CreateShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout)
 {
     bool isAnimationPipeline = this->meshImportedType == ANIMATED_GEO;
     auto animatorPtr = isAnimationPipeline ? this->animationComponent->animator : nullptr;
 
-    vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PCOmniShadowStruct), &shadowParameters);
-
-    this->CreateDrawShadowCommand(commandBuffer, idx, pipelineLayout, animatorPtr);
+    this->SetDrawShadowCommand(commandBuffer, idx, pipelineLayout, animatorPtr);
     for (auto child : childs)
     {
-        child->CreateDrawShadowCommand(commandBuffer, idx, pipelineLayout, animatorPtr);
+        child->SetDrawShadowCommand(commandBuffer, idx, pipelineLayout, animatorPtr);
     }
 }
 
@@ -271,6 +259,16 @@ bool GameObject::IsValidRender()
     return false;
 }
 
+bool GameObject::IsRenderEnable()
+{
+    bool isRender = true;
+    isRender = isRender && this->_Material != nullptr;
+    isRender = isRender && this->_Mesh != nullptr;
+    isRender = isRender && this->aabbculling->isGameObjectVisible;
+
+    return isRender;
+}
+
 bool GameObject::IsValidGameObject()
 {
     return this->_Transform != nullptr;
@@ -354,7 +352,7 @@ bool GameObject::CreateChildsGameObject(std::string pathfile)
 
 void GameObject::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator_ptr)
 {
-    if (this->isRenderEnable())
+    if (this->IsRenderEnable())
     {
         auto pipelineModule = this->_Material->shader->PipelineModule;
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
@@ -403,10 +401,9 @@ void GameObject::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, st
     }
 }
 
-
-void GameObject::CreateDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, std::shared_ptr<Animator> animator_ptr)
+void GameObject::SetDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, std::shared_ptr<Animator> animator_ptr)
 {
-    if (this->isRenderEnable())
+    if (this->IsRenderEnable())
     {
         if (!this->isMeshShading)
         {

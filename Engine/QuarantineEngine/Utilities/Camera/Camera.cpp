@@ -45,6 +45,7 @@ Camera::Camera(float width, float height)
     if (degreeValue < 0) degreeValue += 180;
     this->yaw = (270 + (int)degreeValue) % 360;
 
+    this->UpdateCamera();
 }
 
 void Camera::CameraController(float deltaTime)
@@ -195,7 +196,6 @@ void Camera::InvertPitch(float heightPos)
     front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 
     cameraFront = glm::normalize(front);
-    //cameraUp = -cameraUp;
     view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
     this->UpdateUniform();
@@ -219,15 +219,13 @@ void Camera::UpdateCamera()
     this->UpdateUBOCamera();
 
     this->frustumComponent->ActivateComputeCulling(true);
-
-    this->isInputUpdated = false;
 }
 
 void Camera::UpdateUniform()
 {
     this->cameraUniform->projection = this->projection;
     this->cameraUniform->view = this->view;
-    this->cameraUniform->viewproj = this->projection * this->view;
+    this->cameraUniform->viewproj = this->VP;
     this->cameraUniform->position = glm::vec4(this->cameraPos, 1.0f);
 
     this->UpdateFrustumPlanes();
@@ -275,5 +273,15 @@ void Camera::CleanCameraUBO()
             vkFreeMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[i], nullptr);
         }
     }
+}
+
+bool Camera::IsModified()
+{
+    return this->isInputUpdated;
+}
+
+void Camera::ResetModifiedField()
+{
+    this->isInputUpdated = false;
 }
 

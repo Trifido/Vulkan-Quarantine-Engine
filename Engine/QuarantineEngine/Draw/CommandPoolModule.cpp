@@ -187,15 +187,15 @@ void CommandPoolModule::setDirectionalShadowRenderPass(std::shared_ptr<VkRenderP
     auto pipelineLayout = lightManager->CSMPipelineModule->pipelineLayout;
 
     // One pass per cascade
-    for (uint32_t j = 0; j < CSMResources::SHADOW_MAP_CASCADE_COUNT; j++)
+    for (uint32_t cascadeIndex = 0; cascadeIndex < CSMResources::SHADOW_MAP_CASCADE_COUNT; cascadeIndex++)
     {
-        renderPassInfo.framebuffer = dirLight->shadowMappingResourcesPtr->cascadeResources[j].frameBuffer;
+        renderPassInfo.framebuffer = dirLight->shadowMappingResourcesPtr->cascadeResources[cascadeIndex].frameBuffer;
 
         vkCmdBeginRenderPass(commandBuffers[iCBuffer], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline(commandBuffers[iCBuffer], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
         vkCmdBindDescriptorSets(commandBuffers[iCBuffer], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &lightManager->CSMDescritors->offscreenDescriptorSets[iCBuffer][idDirlight], 0, NULL);
-        this->gameObjectManager->ShadowCommand(commandBuffers[iCBuffer], iCBuffer, pipelineLayout);
+        this->gameObjectManager->CSMCommand(commandBuffers[iCBuffer], iCBuffer, pipelineLayout, cascadeIndex);
 
         vkCmdEndRenderPass(commandBuffers[iCBuffer]);
     }

@@ -96,6 +96,7 @@ public:
     void Update();
     void UpdateUniform();
     void UpdateUBOLight();
+    void UpdateCSMLights();
     void CleanLightUBO();
     void CleanLastResources();
     void CleanShadowMapResources();

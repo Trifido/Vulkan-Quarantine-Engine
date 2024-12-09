@@ -53,7 +53,7 @@ private:
 public:
     CSMResources();
     CSMResources(std::shared_ptr<VkRenderPass> renderPass);
-    void UpdateUBOShadowMap(CSMUniform csmParameters);
+    void UpdateUBOShadowMap();
 
     static VkSampler CreateCSMSampler(VkDevice device);
     static VkImageView CreateImageView(VkDevice device, VkImage& image, VkFormat format, VkImageAspectFlags aspectFlags, int baseArrayLayer, int layerCount, uint32_t mipLevels = 1);

@@ -83,6 +83,20 @@ void GameObjectManager::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx
     }
 }
 
+void GameObjectManager::CSMCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex)
+{
+    for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
+    {
+        PushConstantCSMStruct shadowParameters = {};
+        shadowParameters.position = glm::vec4(model.second->_Transform->Position, 0.0f);
+        shadowParameters.model = model.second->_Transform->GetModel();
+        shadowParameters.cascadeIndex = cascadeIndex;
+
+        vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantCSMStruct), &shadowParameters);
+        model.second->CreateShadowCommand(commandBuffer, idx, pipelineLayout);
+    }
+}
+
 void GameObjectManager::ShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout)
 {
     for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
@@ -95,7 +109,7 @@ void GameObjectManager::OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32
 {
     for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
     {
-        PCOmniShadowStruct shadowParameters = {};
+        PushConstantOmniShadowStruct shadowParameters = {};
         shadowParameters.view = viewParameter;
 
         glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), -lightPosition);
@@ -104,7 +118,8 @@ void GameObjectManager::OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32
         shadowParameters.lightModel = translationMatrix * rotationMatrix * scaleMatrix;
         shadowParameters.model = model.second->_Transform->GetModel();
 
-        model.second->CreateShadowCommand(commandBuffer, idx, pipelineLayout, shadowParameters);
+        vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantOmniShadowStruct), &shadowParameters);
+        model.second->CreateShadowCommand(commandBuffer, idx, pipelineLayout);
     }
 }
 

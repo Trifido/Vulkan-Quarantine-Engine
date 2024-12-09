@@ -152,6 +152,14 @@ void LightManager::UpdateUBOLight()
     }
 }
 
+void LightManager::UpdateCSMLights()
+{
+    for (auto light : this->DirLights)
+    {
+        light->UpdateUniform();
+    }
+}
+
 void LightManager::CleanLightUBO()
 {
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)

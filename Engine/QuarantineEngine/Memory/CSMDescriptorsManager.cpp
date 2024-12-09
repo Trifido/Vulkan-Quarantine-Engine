@@ -232,7 +232,7 @@ void CSMDescriptorsManager::CreateOffscreenDescriptorSet()
             }
 
             this->SetOffscreenDescriptorWrite(descriptorWrites[ndl], this->offscreenDescriptorSets[i][ndl],
-                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, this->csmUBOs[ndl]->uniformBuffers[i], sizeof(OmniShadowUniform));
+                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, this->csmUBOs[ndl]->uniformBuffers[i], sizeof(CSMUniform));
             vkUpdateDescriptorSets(deviceModule->device, 1, &descriptorWrites[ndl], 0, nullptr);
         }
     }

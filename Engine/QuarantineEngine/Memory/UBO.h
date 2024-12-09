@@ -101,11 +101,18 @@ struct PushConstantStruct
     glm::mat4 model;
 };
 
-struct PCOmniShadowStruct
+struct PushConstantOmniShadowStruct
 {
     glm::mat4 model;
     glm::mat4 lightModel;
     glm::mat4 view;
+};
+
+struct PushConstantCSMStruct
+{
+    glm::vec4 position;
+    glm::mat4 model;
+    uint32_t cascadeIndex;
 };
 
 struct PushConstantViewStruct

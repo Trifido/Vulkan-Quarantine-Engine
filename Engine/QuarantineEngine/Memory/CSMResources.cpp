@@ -15,7 +15,7 @@ CSMResources::CSMResources()
     this->swapchainModule = SwapChainModule::getInstance();
 
     this->shadowMapUBO = std::make_shared<UniformBufferObject>();
-    this->shadowMapUBO->CreateUniformBuffer(sizeof(OmniShadowUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->shadowMapUBO->CreateUniformBuffer(sizeof(CSMUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 }
 
 CSMResources::CSMResources(std::shared_ptr<VkRenderPass> renderPass) : CSMResources()
@@ -149,13 +149,20 @@ void CSMResources::PrepareFramebuffer(std::shared_ptr<VkRenderPass> renderPass, 
     vkCreateFramebuffer(this->deviceModule->device, &fbufCreateInfo, nullptr, &this->cascadeResources[iCascade].frameBuffer);
 }
 
-void CSMResources::UpdateUBOShadowMap(CSMUniform csmParameters)
+void CSMResources::UpdateUBOShadowMap()
 {
+    CSMUniform offscreenBufferData = {};
+
+    for (int i = 0; i < this->cascadeResources.size(); i++)
+    {
+        offscreenBufferData.cascadeViewProj[i] = this->cascadeResources[i].viewProjMatrix;
+    }
+
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {
         void* data;
         vkMapMemory(this->deviceModule->device, this->shadowMapUBO->uniformBuffersMemory[currentFrame], 0, sizeof(CSMUniform), 0, &data);
-        memcpy(data, &csmParameters, sizeof(CSMUniform));
+        memcpy(data, &offscreenBufferData, sizeof(CSMUniform));
         vkUnmapMemory(this->deviceModule->device, this->shadowMapUBO->uniformBuffersMemory[currentFrame]);
     }
 }
