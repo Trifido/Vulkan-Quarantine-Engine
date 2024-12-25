@@ -236,12 +236,12 @@ vec3 ComputePointLight(LightData light, vec3 normal, vec3 albedo, vec3 specular,
 
 vec3 ComputeDirectionalLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive)
 {
-    float diff = max(dot(light.direction, normal), 0.0);
+    float diff = max(dot(-light.direction, normal), 0.0);
     vec3 diffuse = diff * light.diffuse * albedo;
 
     vec3 view_dir = normalize(cameraData.position.xyz - fs_in.FragPos);
-    vec3 reflectDir = reflect(-light.direction, normal);
-    vec3 halfwayDir = normalize(light.direction + view_dir);  
+    vec3 reflectDir = reflect(light.direction, normal);
+    vec3 halfwayDir = normalize(-light.direction + view_dir);  
     float spec = pow(max(dot(normal, halfwayDir), 0.0), uboMaterial.Shininess);
     vec3 specularResult = spec * light.specular * specular;
 

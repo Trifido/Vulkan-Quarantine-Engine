@@ -110,7 +110,6 @@ struct PushConstantOmniShadowStruct
 
 struct PushConstantCSMStruct
 {
-    glm::vec4 position;
     glm::mat4 model;
     uint32_t cascadeIndex;
 };

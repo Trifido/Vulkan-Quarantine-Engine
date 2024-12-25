@@ -54,7 +54,8 @@ void DirectionalLight::UpdateCascades()
 
     // Calculate orthographic projection matrix for each cascade
     float lastSplitDist = 0.0;
-    for (uint32_t i = 0; i < CSMResources::SHADOW_MAP_CASCADE_COUNT; i++) {
+    for (uint32_t i = 0; i < CSMResources::SHADOW_MAP_CASCADE_COUNT; i++)
+    {
         float splitDist = cascadeSplits[i];
 
         glm::vec3 frustumCorners[8] = {
@@ -72,7 +73,7 @@ void DirectionalLight::UpdateCascades()
         glm::mat4 invCam = glm::inverse(camera->VP);
         for (uint32_t j = 0; j < 8; j++)
         {
-            glm::vec4 invCorner = invCam * glm::vec4(frustumCorners[j], 1.0f);
+            glm::vec4 invCorner = invCam * glm::vec4(frustumCorners[j], 1.0);
             frustumCorners[j] = invCorner / invCorner.w;
         }
 
@@ -103,8 +104,12 @@ void DirectionalLight::UpdateCascades()
         glm::vec3 minExtents = -maxExtents;
 
         glm::vec3 lightDir = this->transform->ForwardVector;
-        glm::mat4 lightViewMatrix = glm::lookAt(frustumCenter - lightDir * -minExtents.z, frustumCenter, glm::vec3(0.0f, 1.0f, 0.0f));
-        glm::mat4 lightOrthoMatrix = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.0f, maxExtents.z - minExtents.z);
+
+        glm::vec3 eye = this->transform->Position - lightDir * maxExtents.z;
+
+        glm::mat4 lightViewMatrix = glm::lookAt(eye, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        //glm::mat4 lightOrthoMatrix = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.0f, maxExtents.z - minExtents.z);
+        glm::mat4 lightOrthoMatrix = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, minExtents.z, maxExtents.z - minExtents.z);
 
         // Store split distance and matrix in cascade
         this->shadowMappingResourcesPtr->cascadeResources[i].splitDepth = (nearClip + splitDist * clipRange) * -1.0f;

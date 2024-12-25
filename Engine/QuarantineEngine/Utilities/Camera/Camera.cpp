@@ -165,20 +165,20 @@ void Camera::CheckCameraAttributes(float* positionCamera, float* frontCamera, fl
         lookAtEqual = false;
     if (!posEqual || !lookAtEqual || nfov != this->fov || nPlane != this->nearPlane || fPlane != this->farPlane)
     {
-        cameraPos.x = positionCamera[0];
-        cameraPos.y = positionCamera[1];
-        cameraPos.z = positionCamera[2];
-        cameraFront.x = frontCamera[0];
-        cameraFront.y = frontCamera[1];
-        cameraFront.z = frontCamera[2];
+        this->cameraPos.x = positionCamera[0];
+        this->cameraPos.y = positionCamera[1];
+        this->cameraPos.z = positionCamera[2];
+        this->cameraFront.x = frontCamera[0];
+        this->cameraFront.y = frontCamera[1];
+        this->cameraFront.z = frontCamera[2];
         this->fov = nfov;
         this->nearPlane = nPlane;
         this->farPlane = fPlane;
 
-        view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-        projection = glm::perspective(glm::radians(fov), (float)WIDTH / (float)HEIGHT, nearPlane, farPlane);
-        projection[1][1] *= -1;
-        VP = projection * view;
+        this->view = glm::lookAt(this->cameraPos, this->cameraPos + this->cameraFront, this->cameraUp);
+        this->projection = glm::perspective(glm::radians(fov), (float)this->WIDTH / (float)this->HEIGHT, this->nearPlane, this->farPlane);
+        this->projection[1][1] *= -1;
+        this->VP = this->projection * this->view;
 
         this->UpdateUniform();
         this->UpdateUBOCamera();
@@ -187,16 +187,16 @@ void Camera::CheckCameraAttributes(float* positionCamera, float* frontCamera, fl
 
 void Camera::InvertPitch(float heightPos)
 {
-    cameraPos.y = cameraPos.y + heightPos;
+    this->cameraPos.y = cameraPos.y + heightPos;
 
-    pitch = -pitch;
+    this->pitch = -this->pitch;
     glm::vec3 front;
-    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    front.y = sin(glm::radians(pitch));
-    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    front.x = cos(glm::radians(this->yaw)) * cos(glm::radians(this->pitch));
+    front.y = sin(glm::radians(this->pitch));
+    front.z = sin(glm::radians(this->yaw)) * cos(glm::radians(this->pitch));
 
-    cameraFront = glm::normalize(front);
-    view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+    this->cameraFront = glm::normalize(front);
+    this->view = glm::lookAt(this->cameraPos, this->cameraPos + this->cameraFront, this->cameraUp);
 
     this->UpdateUniform();
     this->UpdateUBOCamera();
@@ -210,10 +210,10 @@ void Camera::UpdateViewportSize(VkExtent2D size)
 
 void Camera::UpdateCamera()
 {
-    view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-    projection = glm::perspective(glm::radians(fov), (float)WIDTH / (float)HEIGHT, nearPlane, farPlane);
-    projection[1][1] *= -1;
-    VP = projection * view;
+    this->view = glm::lookAt(this->cameraPos, this->cameraPos + this->cameraFront, this->cameraUp);
+    this->projection = glm::perspective(glm::radians(fov), (float)this->WIDTH / (float)this->HEIGHT, this->nearPlane, this->farPlane);
+    this->projection[1][1] *= -1;
+    this->VP = this->projection * this->view;
 
     this->UpdateUniform();
     this->UpdateUBOCamera();

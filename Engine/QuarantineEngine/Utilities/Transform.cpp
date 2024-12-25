@@ -39,7 +39,7 @@ void Transform::SetOrientation(const glm::vec3& newRotation)
 
     glm::mat4 combined_rotation = rotation_z * rotation_y * rotation_x;
 
-    glm::vec3 baseForward(0.0f, 0.0f, -1.0f);
+    glm::vec3 baseForward(0.0f, 0.0f, 1.0f);
     this->ForwardVector = glm::normalize(combined_rotation * glm::vec4(baseForward, 0.0f));
     this->UpVector = combined_rotation * glm::vec4(this->UpVector, 0.0f);
 }

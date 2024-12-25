@@ -88,7 +88,6 @@ void GameObjectManager::CSMCommand(VkCommandBuffer& commandBuffer, uint32_t idx,
     for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
     {
         PushConstantCSMStruct shadowParameters = {};
-        shadowParameters.position = glm::vec4(model.second->_Transform->Position, 0.0f);
         shadowParameters.model = model.second->_Transform->GetModel();
         shadowParameters.cascadeIndex = cascadeIndex;
 
