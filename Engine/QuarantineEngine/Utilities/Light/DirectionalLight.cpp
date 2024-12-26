@@ -80,8 +80,8 @@ void DirectionalLight::UpdateCascades()
         for (uint32_t j = 0; j < 4; j++)
         {
             glm::vec3 dist = frustumCorners[j + 4] - frustumCorners[j];
-            frustumCorners[j + 4] = frustumCorners[j] + (dist * splitDist);
             frustumCorners[j] = frustumCorners[j] + (dist * lastSplitDist);
+            frustumCorners[j + 4] = frustumCorners[j] + (dist * splitDist);
         }
 
         // Get frustum center
@@ -105,9 +105,9 @@ void DirectionalLight::UpdateCascades()
 
         glm::vec3 lightDir = this->transform->ForwardVector;
 
-        glm::vec3 eye = this->transform->Position - lightDir * maxExtents.z;
+        glm::vec3 eye = frustumCenter - lightDir * maxExtents.z;
 
-        glm::mat4 lightViewMatrix = glm::lookAt(eye, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 lightViewMatrix = glm::lookAt(eye, frustumCenter, glm::vec3(0.0f, 1.0f, 0.0f));
         //glm::mat4 lightOrthoMatrix = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.0f, maxExtents.z - minExtents.z);
         glm::mat4 lightOrthoMatrix = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, minExtents.z, maxExtents.z - minExtents.z);
 
