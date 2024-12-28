@@ -55,7 +55,7 @@ public:
     CSMResources();
     CSMResources(std::shared_ptr<VkRenderPass> renderPass);
     void UpdateOffscreenUBOShadowMap();
-    void TransitionImageLayout(VkDevice device, VkImage& newImage, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageSubresourceRange subresourceRange);
+    static void TransitionImageLayout(VkDevice device, VkImage& newImage, VkImageLayout oldLayout, VkImageLayout newLayout);
 
     static VkSampler CreateCSMSampler(VkDevice device);
     static VkImageView CreateImageView(VkDevice device, VkImage& image, VkFormat format, VkImageAspectFlags aspectFlags, int baseArrayLayer, int layerCount, uint32_t mipLevels = 1);

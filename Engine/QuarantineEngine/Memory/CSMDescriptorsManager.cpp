@@ -35,8 +35,6 @@ void CSMDescriptorsManager::BindResources(std::shared_ptr<std::array<CascadeReso
 
 void CSMDescriptorsManager::UpdateResources(int currentFrame)
 {
-    //this->csmViewProjDataBufferSize = sizeof(glm::mat4) * CSM_NUM * this->csmResources.size();
-
     this->csmSplitDataResources.clear();
     this->csmViewProjDataResources.clear();
 
@@ -54,7 +52,7 @@ void CSMDescriptorsManager::UpdateResources(int currentFrame)
         {
             for (int j = 0; j < CSM_NUM; j++)
             {
-                this->csmSplitDataResources.push_back(-1);
+                this->csmSplitDataResources.push_back(0);
                 this->csmViewProjDataResources.push_back(glm::mat4(1.0f));
             }
         }
@@ -151,9 +149,9 @@ void CSMDescriptorsManager::CreateCSMPlaceHolder()
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         1);
 
-    int cascadeCount = 4;
+    CSMResources::TransitionImageLayout(deviceModule->device, this->placeholderImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
 
-    this->placeholderImageView = CSMResources::CreateImageView(this->deviceModule->device, this->placeholderImage, VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT, 0, cascadeCount);
+    this->placeholderImageView = CSMResources::CreateImageView(this->deviceModule->device, this->placeholderImage, VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT, 0, CSM_NUM);
     this->placeholderSampler = CSMResources::CreateCSMSampler(this->deviceModule->device);
 }
 
@@ -189,7 +187,7 @@ void CSMDescriptorsManager::SetCSMDescriptorWrite(VkWriteDescriptorSet& descript
 {
     for (uint32_t i = 0; i < MAX_NUM_DIR_LIGHTS; ++i)
     {
-        this->renderDescriptorImageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        this->renderDescriptorImageInfo[i].imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
         if (i < _numDirLights)
         {
             this->renderDescriptorImageInfo[i].imageView = _imageViews[i]; // ImageView de cada csm

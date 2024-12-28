@@ -125,12 +125,7 @@ void CSMResources::CreateCSMResources(std::shared_ptr<VkRenderPass> renderPass)
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         1);
 
-    //VkImageSubresourceRange subresourceRange = {};
-    //subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-    //subresourceRange.baseMipLevel = 0;
-    //subresourceRange.levelCount = 1;
-    //subresourceRange.layerCount = 4;
-    //this->TransitionImageLayout(deviceModule->device, this->CSMImage, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
+    this->TransitionImageLayout(deviceModule->device, this->CSMImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
     this->CSMImageView = this->CreateImageView(this->deviceModule->device, this->CSMImage, this->shadowFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 0, SHADOW_MAP_CASCADE_COUNT);
     this->CSMSampler = CreateCSMSampler(this->deviceModule->device);
@@ -175,41 +170,36 @@ void CSMResources::UpdateOffscreenUBOShadowMap()
     }
 }
 
-void CSMResources::TransitionImageLayout(VkDevice device, VkImage& newImage, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageSubresourceRange subresourceRange)
+void CSMResources::TransitionImageLayout(VkDevice device, VkImage& newImage, VkImageLayout oldLayout, VkImageLayout newLayout)
 {
     VkCommandBuffer commandBuffer = beginSingleTimeCommands(device, commandPool);
-    VkImageMemoryBarrier barrier{};
+
+    VkImageMemoryBarrier barrier = {};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    barrier.oldLayout = oldLayout;
-    barrier.newLayout = newLayout;
+    barrier.oldLayout = oldLayout; // Layout inicial
+    barrier.newLayout = newLayout; // Layout esperado
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.image = newImage;
-    barrier.subresourceRange = subresourceRange;
-    barrier.srcAccessMask = 0; // TODO
-    barrier.dstAccessMask = 0; // TODO
+    barrier.image = newImage; // Tu VkImage
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT; // Máscara de aspecto
+    barrier.subresourceRange.baseMipLevel = 0;
+    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = SHADOW_MAP_CASCADE_COUNT;
 
-    VkPipelineStageFlags sourceStage;
-    VkPipelineStageFlags destinationStage;
+    // Define los accesos para sincronización
+    barrier.srcAccessMask = 0; // No hay acceso previo
+    barrier.dstAccessMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT; // Acceso esperado en shaders
 
-    if (oldLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
-        barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-        sourceStage = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-        destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    }
-    else {
-        throw std::invalid_argument("unsupported layout transition!");
-    }
-
+    // Define las etapas del pipeline
     vkCmdPipelineBarrier(
         commandBuffer,
-        sourceStage, destinationStage,
-        0,
-        0, nullptr,
-        0, nullptr,
-        1, &barrier
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, // Etapa fuente
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, // Etapa destino
+        0, // Flags
+        0, nullptr, // Barreras de memoria
+        0, nullptr, // Barreras de buffer
+        1, &barrier // Barrera de imagen
     );
 
     endSingleTimeCommands(device, queueModule->graphicsQueue, commandPool, commandBuffer);
