@@ -308,6 +308,21 @@ void CSMDescriptorsManager::CreateOffscreenDescriptorSet()
 
 void CSMDescriptorsManager::Clean()
 {
+    for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        if (this->csmRenderSplitBuffer.uniformBuffers[i] != VK_NULL_HANDLE)
+        {
+            vkDestroyBuffer(deviceModule->device, this->csmRenderSplitBuffer.uniformBuffers[i], nullptr);
+            vkFreeMemory(deviceModule->device, this->csmRenderSplitBuffer.uniformBuffersMemory[i], nullptr);
+        }
+
+        if (this->csmRenderViewProjBuffer.uniformBuffers[i] != VK_NULL_HANDLE)
+        {
+            vkDestroyBuffer(deviceModule->device, this->csmRenderViewProjBuffer.uniformBuffers[i], nullptr);
+            vkFreeMemory(deviceModule->device, this->csmRenderViewProjBuffer.uniformBuffersMemory[i], nullptr);
+        }
+    }
+
     for (uint32_t npl = 0; npl < this->_numDirLights; npl++)
     {
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
