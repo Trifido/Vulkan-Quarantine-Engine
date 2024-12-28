@@ -160,7 +160,9 @@ void App::initVulkan()
     TextureManagerModule::queueModule = this->queueModule;
     CustomTexture::commandPool = commandPoolModule->getCommandPool();
     OmniShadowResources::commandPool = commandPoolModule->getCommandPool();
+    CSMResources::commandPool = commandPoolModule->getCommandPool();
     OmniShadowResources::queueModule = this->queueModule;
+    CSMResources::queueModule = this->queueModule;
 
     // INIT ------------------------- Mesh & Material -------------------------------
     this->shaderManager = ShaderManager::getInstance();
@@ -381,11 +383,6 @@ void App::mainLoop()
 
         // UPDATE LIGHT SYSTEM
         this->lightManager->Update();
-
-        if (this->cameraEditor->IsModified())
-        {
-            this->lightManager->UpdateCSMLights();
-        }
 
         if (ImGui::IsKeyDown('j') || ImGui::IsKeyDown('J'))
         {

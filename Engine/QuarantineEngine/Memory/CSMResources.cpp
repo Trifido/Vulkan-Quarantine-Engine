@@ -14,8 +14,9 @@ CSMResources::CSMResources()
     this->deviceModule = DeviceModule::getInstance();
     this->swapchainModule = SwapChainModule::getInstance();
 
-    this->shadowMapUBO = std::make_shared<UniformBufferObject>();
-    this->shadowMapUBO->CreateUniformBuffer(sizeof(CSMUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->CascadeResourcesPtr = std::make_shared<std::array<CascadeResource, SHADOW_MAP_CASCADE_COUNT>>();
+    this->OffscreenShadowMapUBO = std::make_shared<UniformBufferObject>();
+    this->OffscreenShadowMapUBO->CreateUniformBuffer(sizeof(CSMUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 }
 
 CSMResources::CSMResources(std::shared_ptr<VkRenderPass> renderPass) : CSMResources()
@@ -41,7 +42,7 @@ VkImage CSMResources::AllocateImage(VkDevice device, VkPhysicalDevice physicalDe
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
     if (vkCreateImage(device, &imageInfo, nullptr, &result) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create cube map image!");
+        throw std::runtime_error("failed to create cascade map image!");
     }
 
     VkMemoryRequirements memRequirements;
@@ -53,7 +54,7 @@ VkImage CSMResources::AllocateImage(VkDevice device, VkPhysicalDevice physicalDe
     allocInfo.memoryTypeIndex = IMT::findMemoryType(memRequirements.memoryTypeBits, properties, physicalDevice);
 
     if (vkAllocateMemory(device, &allocInfo, nullptr, &mapMemory) != VK_SUCCESS) {
-        throw std::runtime_error("failed to allocate cube map image memory!");
+        throw std::runtime_error("failed to allocate cascade map image memory!");
     }
 
     vkBindImageMemory(device, result, mapMemory, 0);
@@ -124,6 +125,13 @@ void CSMResources::CreateCSMResources(std::shared_ptr<VkRenderPass> renderPass)
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         1);
 
+    //VkImageSubresourceRange subresourceRange = {};
+    //subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+    //subresourceRange.baseMipLevel = 0;
+    //subresourceRange.levelCount = 1;
+    //subresourceRange.layerCount = 4;
+    //this->TransitionImageLayout(deviceModule->device, this->CSMImage, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
+
     this->CSMImageView = this->CreateImageView(this->deviceModule->device, this->CSMImage, this->shadowFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 0, SHADOW_MAP_CASCADE_COUNT);
     this->CSMSampler = CreateCSMSampler(this->deviceModule->device);
 
@@ -135,46 +143,86 @@ void CSMResources::CreateCSMResources(std::shared_ptr<VkRenderPass> renderPass)
 
 void CSMResources::PrepareFramebuffer(std::shared_ptr<VkRenderPass> renderPass, int iCascade)
 {
-    this->cascadeResources[iCascade].view = CreateImageView(this->deviceModule->device, this->CSMImage, this->shadowFormat, VK_IMAGE_ASPECT_DEPTH_BIT, iCascade, 1);
+    this->CascadeResourcesPtr->at(iCascade).view = CreateImageView(this->deviceModule->device, this->CSMImage, this->shadowFormat, VK_IMAGE_ASPECT_DEPTH_BIT, iCascade, 1);
 
     VkFramebufferCreateInfo fbufCreateInfo = {};
     fbufCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     fbufCreateInfo.renderPass = *renderPass;
     fbufCreateInfo.attachmentCount = 1;
-    fbufCreateInfo.pAttachments = &this->cascadeResources[iCascade].view;
+    fbufCreateInfo.pAttachments = &this->CascadeResourcesPtr->at(iCascade).view;
     fbufCreateInfo.width = this->TextureSize;
     fbufCreateInfo.height = this->TextureSize;
     fbufCreateInfo.layers = 1;
 
-    vkCreateFramebuffer(this->deviceModule->device, &fbufCreateInfo, nullptr, &this->cascadeResources[iCascade].frameBuffer);
+    vkCreateFramebuffer(this->deviceModule->device, &fbufCreateInfo, nullptr, &this->CascadeResourcesPtr->at(iCascade).frameBuffer);
 }
 
-void CSMResources::UpdateUBOShadowMap()
+void CSMResources::UpdateOffscreenUBOShadowMap()
 {
-    CSMUniform offscreenBufferData = {};
+    CSMUniform bufferData = {};
 
-    for (int i = 0; i < this->cascadeResources.size(); i++)
+    for (int i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
     {
-        offscreenBufferData.cascadeViewProj[i] = this->cascadeResources[i].viewProjMatrix;
+        bufferData.cascadeViewProj[i] = this->CascadeResourcesPtr->at(i).viewProjMatrix;
     }
 
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {
         void* data;
-        vkMapMemory(this->deviceModule->device, this->shadowMapUBO->uniformBuffersMemory[currentFrame], 0, sizeof(CSMUniform), 0, &data);
-        memcpy(data, &offscreenBufferData, sizeof(CSMUniform));
-        vkUnmapMemory(this->deviceModule->device, this->shadowMapUBO->uniformBuffersMemory[currentFrame]);
+        vkMapMemory(this->deviceModule->device, this->OffscreenShadowMapUBO->uniformBuffersMemory[currentFrame], 0, sizeof(CSMUniform), 0, &data);
+        memcpy(data, &bufferData, sizeof(CSMUniform));
+        vkUnmapMemory(this->deviceModule->device, this->OffscreenShadowMapUBO->uniformBuffersMemory[currentFrame]);
     }
+}
+
+void CSMResources::TransitionImageLayout(VkDevice device, VkImage& newImage, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageSubresourceRange subresourceRange)
+{
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands(device, commandPool);
+    VkImageMemoryBarrier barrier{};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.oldLayout = oldLayout;
+    barrier.newLayout = newLayout;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image = newImage;
+    barrier.subresourceRange = subresourceRange;
+    barrier.srcAccessMask = 0; // TODO
+    barrier.dstAccessMask = 0; // TODO
+
+    VkPipelineStageFlags sourceStage;
+    VkPipelineStageFlags destinationStage;
+
+    if (oldLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+        barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+        sourceStage = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    }
+    else {
+        throw std::invalid_argument("unsupported layout transition!");
+    }
+
+    vkCmdPipelineBarrier(
+        commandBuffer,
+        sourceStage, destinationStage,
+        0,
+        0, nullptr,
+        0, nullptr,
+        1, &barrier
+    );
+
+    endSingleTimeCommands(device, queueModule->graphicsQueue, commandPool, commandBuffer);
 }
 
 void CSMResources::Cleanup()
 {
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        if (this->shadowMapUBO != nullptr)
+        if (this->OffscreenShadowMapUBO != nullptr)
         {
-            vkDestroyBuffer(deviceModule->device, this->shadowMapUBO->uniformBuffers[i], nullptr);
-            vkFreeMemory(deviceModule->device, this->shadowMapUBO->uniformBuffersMemory[i], nullptr);
+            vkDestroyBuffer(deviceModule->device, this->OffscreenShadowMapUBO->uniformBuffers[i], nullptr);
+            vkFreeMemory(deviceModule->device, this->OffscreenShadowMapUBO->uniformBuffersMemory[i], nullptr);
         }
     }
 
@@ -197,6 +245,6 @@ void CSMResources::Cleanup()
   
     for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
     {
-        this->cascadeResources.at(i).destroy(deviceModule->device);
+        this->CascadeResourcesPtr->at(i).destroy(deviceModule->device);
     }
 }

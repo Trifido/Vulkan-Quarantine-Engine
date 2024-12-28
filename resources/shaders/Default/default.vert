@@ -8,6 +8,8 @@ layout(location = 3) in vec4 inTangent;
 
 layout(location = 0) out VS_OUT {
     vec3 FragPos;
+    vec3 Pos;
+    vec3 ViewPos;
     vec3 Normal;
     mat3 TBN;
     vec2 TexCoords;
@@ -29,6 +31,8 @@ layout(std430, push_constant) uniform PushConstants
 
 void main() {
     vs_out.FragPos = (constants.model * inPosition).xyz;
+    vs_out.Pos = inPosition.xyz;
+    vs_out.ViewPos = (cameraData.view * inPosition).xyz;
     vs_out.TexCoords = inTexCoord;
     vs_out.Normal = inNormal.xyz;
 

@@ -7,6 +7,8 @@
 #include <DeviceModule.h>
 #include <SwapChainModule.h>
 
+constexpr uint32_t  SHADOW_MAP_CASCADE_COUNT = 4;
+
 struct CascadeResource {
     VkFramebuffer frameBuffer;
     VkImageView view;
@@ -30,7 +32,6 @@ private:
     VkDeviceMemory CSMImageMemory = { VK_NULL_HANDLE };
 
 public:
-    static const int SHADOW_MAP_CASCADE_COUNT = 4;
     static QueueModule* queueModule;
     static VkCommandPool commandPool;
     uint32_t TextureSize;
@@ -40,8 +41,8 @@ public:
     float DepthBiasSlope = 1.75f;
 
 public:
-    std::shared_ptr<UniformBufferObject> shadowMapUBO = nullptr;
-    std::array<CascadeResource, SHADOW_MAP_CASCADE_COUNT> cascadeResources;
+    std::shared_ptr<UniformBufferObject> OffscreenShadowMapUBO = nullptr;
+    std::shared_ptr<std::array<CascadeResource, SHADOW_MAP_CASCADE_COUNT>> CascadeResourcesPtr;
 
     VkImageView CSMImageView = VK_NULL_HANDLE;
     VkSampler CSMSampler = VK_NULL_HANDLE;
@@ -53,7 +54,8 @@ private:
 public:
     CSMResources();
     CSMResources(std::shared_ptr<VkRenderPass> renderPass);
-    void UpdateUBOShadowMap();
+    void UpdateOffscreenUBOShadowMap();
+    void TransitionImageLayout(VkDevice device, VkImage& newImage, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageSubresourceRange subresourceRange);
 
     static VkSampler CreateCSMSampler(VkDevice device);
     static VkImageView CreateImageView(VkDevice device, VkImage& image, VkFormat format, VkImageAspectFlags aspectFlags, int baseArrayLayer, int layerCount, uint32_t mipLevels = 1);

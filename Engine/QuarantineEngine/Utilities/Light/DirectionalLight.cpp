@@ -25,13 +25,12 @@ void DirectionalLight::UpdateUniform()
     this->uniform->direction = this->transform->ForwardVector;
 
     this->UpdateCascades();
-    this->shadowMappingResourcesPtr->UpdateUBOShadowMap();
+    this->shadowMappingResourcesPtr->UpdateOffscreenUBOShadowMap();
 }
 
 void DirectionalLight::UpdateCascades()
 {
-    float cascadeSplits[CSMResources::SHADOW_MAP_CASCADE_COUNT];
-
+    float cascadeSplitPtr[SHADOW_MAP_CASCADE_COUNT];
     float nearClip = camera->GetNear();
     float farClip = camera->GetFar();
     float clipRange = farClip - nearClip;
@@ -44,19 +43,19 @@ void DirectionalLight::UpdateCascades()
 
     // Calculate split depths based on view camera frustum
     // Based on method presented in https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html
-    for (uint32_t i = 0; i < CSMResources::SHADOW_MAP_CASCADE_COUNT; i++) {
-        float p = (i + 1) / static_cast<float>(CSMResources::SHADOW_MAP_CASCADE_COUNT);
+    for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++) {
+        float p = (i + 1) / static_cast<float>(SHADOW_MAP_CASCADE_COUNT);
         float log = minZ * std::pow(ratio, p);
         float uniform = minZ + range * p;
         float d = this->cascadeSplitLambda * (log - uniform) + uniform;
-        cascadeSplits[i] = (d - nearClip) / clipRange;
+        cascadeSplitPtr[i] = (d - nearClip) / clipRange;
     }
 
     // Calculate orthographic projection matrix for each cascade
     float lastSplitDist = 0.0;
-    for (uint32_t i = 0; i < CSMResources::SHADOW_MAP_CASCADE_COUNT; i++)
+    for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
     {
-        float splitDist = cascadeSplits[i];
+        float splitDist = cascadeSplitPtr[i];
 
         glm::vec3 frustumCorners[8] = {
             glm::vec3(-1.0f,  1.0f, 0.0f),
@@ -112,10 +111,10 @@ void DirectionalLight::UpdateCascades()
         glm::mat4 lightOrthoMatrix = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, minExtents.z, maxExtents.z - minExtents.z);
 
         // Store split distance and matrix in cascade
-        this->shadowMappingResourcesPtr->cascadeResources[i].splitDepth = (nearClip + splitDist * clipRange) * -1.0f;
-        this->shadowMappingResourcesPtr->cascadeResources[i].viewProjMatrix = lightOrthoMatrix * lightViewMatrix;
+        this->shadowMappingResourcesPtr->CascadeResourcesPtr->at(i).splitDepth = (nearClip + splitDist * clipRange) * -1.0f;
+        this->shadowMappingResourcesPtr->CascadeResourcesPtr->at(i).viewProjMatrix = lightOrthoMatrix * lightViewMatrix;
 
-        lastSplitDist = cascadeSplits[i];
+        lastSplitDist = cascadeSplitPtr[i];
     }
 }
 

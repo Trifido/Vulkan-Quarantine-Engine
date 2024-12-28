@@ -6,6 +6,7 @@
 #include <vulkan/vulkan.h>
 #include <DeviceModule.h>
 #include <ShaderModule.h>
+#include <CSMResources.h>
 
 constexpr uint32_t                  NUM_CSM_SETS = 2;
 constexpr uint32_t                  NUM_CSM_PASSES = 2;
@@ -25,14 +26,21 @@ private:
 
     // Offscreen resources
     uint32_t    _numDirLights = 0;
-    std::vector<std::shared_ptr<UniformBufferObject>> csmUBOs;
+    std::vector<std::shared_ptr<UniformBufferObject>> csmOffscreenUBOs;
     std::vector<VkDescriptorBufferInfo> offscreenBuffersInfo;
 
     // Render resources
     std::vector<VkDescriptorBufferInfo> renderBuffersInfo;
     std::vector<VkDescriptorImageInfo> renderDescriptorImageInfo;
-    std::shared_ptr<UniformBufferObject> dirLightIdBuffer;
-    VkDeviceSize sizedirLightIdBuffer;
+    UniformBufferObject csmRenderSplitBuffer;
+    UniformBufferObject csmRenderViewProjBuffer;
+    VkDeviceSize csmSplitDataBufferSize;
+    VkDeviceSize csmViewProjDataBufferSize;
+
+    //Bound resources
+    std::vector<std::shared_ptr<std::array<CascadeResource, SHADOW_MAP_CASCADE_COUNT>> > csmResources;
+    std::vector<float> csmSplitDataResources;
+    std::vector<glm::mat4> csmViewProjDataResources;
 
     // ImageViews & Samplers
     std::vector<VkImageView>    _imageViews;
@@ -49,7 +57,9 @@ public:
 
 public:
     CSMDescriptorsManager();
-    void AddDirLightResources(std::shared_ptr<UniformBufferObject> shadowMapUBO, VkImageView imageView, VkSampler sampler);
+    void AddDirLightResources(std::shared_ptr<UniformBufferObject> offscreenShadowMapUBO, VkImageView imageView, VkSampler sampler);
+    void BindResources(std::shared_ptr<std::array<CascadeResource, SHADOW_MAP_CASCADE_COUNT>> resources);
+    void UpdateResources(int currentFrame);
     void InitializeDescriptorSetLayouts(std::shared_ptr<ShaderModule> offscreen_shader_ptr);
     void Clean();
 

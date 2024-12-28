@@ -1,6 +1,5 @@
 #include "CSMDescriptorsManager.h"
 #include "SynchronizationModule.h"
-#include <CSMResources.h>
 
 CSMDescriptorsManager::CSMDescriptorsManager()
 {
@@ -8,17 +7,68 @@ CSMDescriptorsManager::CSMDescriptorsManager()
 
     this->CreateOffscreenDescriptorPool();
     this->CreateRenderDescriptorPool();
+
+    this->csmRenderSplitBuffer = UniformBufferObject();
+    this->csmSplitDataBufferSize = sizeof(float) * CSM_NUM * MAX_NUM_DIR_LIGHTS;
+    this->csmRenderSplitBuffer.CreateUniformBuffer(this->csmSplitDataBufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+
+    this->csmRenderViewProjBuffer = UniformBufferObject();
+    this->csmViewProjDataBufferSize = sizeof(glm::mat4) * CSM_NUM * MAX_NUM_DIR_LIGHTS;
+    this->csmRenderViewProjBuffer.CreateSSBO(this->csmViewProjDataBufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
 }
 
-void CSMDescriptorsManager::AddDirLightResources(std::shared_ptr<UniformBufferObject> shadowMapUBO, VkImageView imageView, VkSampler sampler)
+void CSMDescriptorsManager::AddDirLightResources(std::shared_ptr<UniformBufferObject> offscreenShadowMapUBO, VkImageView imageView, VkSampler sampler)
 {
     if (this->_numDirLights < MAX_NUM_DIR_LIGHTS)
     {
-        this->csmUBOs.push_back(shadowMapUBO);
+        this->csmOffscreenUBOs.push_back(offscreenShadowMapUBO);
         this->_imageViews.push_back(imageView);
         this->_samplers.push_back(sampler);
         this->_numDirLights++;
     }
+}
+
+void CSMDescriptorsManager::BindResources(std::shared_ptr<std::array<CascadeResource, SHADOW_MAP_CASCADE_COUNT>> resources)
+{
+    this->csmResources.push_back(resources);
+}
+
+void CSMDescriptorsManager::UpdateResources(int currentFrame)
+{
+    //this->csmViewProjDataBufferSize = sizeof(glm::mat4) * CSM_NUM * this->csmResources.size();
+
+    this->csmSplitDataResources.clear();
+    this->csmViewProjDataResources.clear();
+
+    for (int i = 0; i < MAX_NUM_DIR_LIGHTS; i++)
+    {
+        if (i < this->csmResources.size())
+        {
+            for (int j = 0; j < CSM_NUM; j++)
+            {
+                this->csmSplitDataResources.push_back(this->csmResources[i]->at(j).splitDepth);
+                this->csmViewProjDataResources.push_back(this->csmResources[i]->at(j).viewProjMatrix);
+            }
+        }
+        else
+        {
+            for (int j = 0; j < CSM_NUM; j++)
+            {
+                this->csmSplitDataResources.push_back(-1);
+                this->csmViewProjDataResources.push_back(glm::mat4(1.0f));
+            }
+        }
+    }
+
+    void* data;
+    vkMapMemory(this->deviceModule->device, this->csmRenderSplitBuffer.uniformBuffersMemory[currentFrame], 0, this->csmSplitDataBufferSize, 0, &data);
+    memcpy(data, this->csmSplitDataResources.data(), this->csmSplitDataBufferSize);
+    vkUnmapMemory(this->deviceModule->device, this->csmRenderSplitBuffer.uniformBuffersMemory[currentFrame]);
+
+    void* dataViewProj;
+    vkMapMemory(this->deviceModule->device, this->csmRenderViewProjBuffer.uniformBuffersMemory[currentFrame], 0, this->csmViewProjDataBufferSize, 0, &dataViewProj);
+    memcpy(dataViewProj, this->csmViewProjDataResources.data(), this->csmViewProjDataBufferSize);
+    vkUnmapMemory(this->deviceModule->device, this->csmRenderViewProjBuffer.uniformBuffersMemory[currentFrame]);
 }
 
 void CSMDescriptorsManager::InitializeDescriptorSetLayouts(std::shared_ptr<ShaderModule> offscreen_shader_ptr)
@@ -54,15 +104,19 @@ void CSMDescriptorsManager::CreateOffscreenDescriptorPool()
 void CSMDescriptorsManager::CreateRenderDescriptorPool()
 {
     std::vector<VkDescriptorPoolSize> renderPoolSizes;
-    renderPoolSizes.resize(1);
-
-    // Point Light Uniform
-    //renderPoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    //renderPoolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) * MAX_NUM_POINT_LIGHTS;
+    renderPoolSizes.resize(3);
 
     // Shadow Texture Samplers
     renderPoolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     renderPoolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) * MAX_NUM_DIR_LIGHTS;
+
+    // CascadeSplits buffer
+    renderPoolSizes[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    renderPoolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+    // VIEWPROJ buffer
+    renderPoolSizes[2].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    renderPoolSizes[2].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -119,7 +173,7 @@ void CSMDescriptorsManager::SetOffscreenDescriptorWrite(VkWriteDescriptorSet& de
 
 void CSMDescriptorsManager::SetRenderDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize)
 {
-    this->renderBuffersInfo[binding] = GetBufferInfo(buffer, bufferSize);
+    this->renderBuffersInfo[binding - 1] = GetBufferInfo(buffer, bufferSize);
 
     descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     descriptorWrite.dstSet = descriptorSet;
@@ -128,7 +182,7 @@ void CSMDescriptorsManager::SetRenderDescriptorWrite(VkWriteDescriptorSet& descr
     descriptorWrite.descriptorType = descriptorType;
     descriptorWrite.descriptorCount = 1;
     descriptorWrite.pImageInfo = VK_NULL_HANDLE;
-    descriptorWrite.pBufferInfo = &this->renderBuffersInfo[binding];
+    descriptorWrite.pBufferInfo = &this->renderBuffersInfo[binding - 1];
 }
 
 void CSMDescriptorsManager::SetCSMDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding)
@@ -167,6 +221,7 @@ void CSMDescriptorsManager::CreateRenderDescriptorSet()
     allocInfo.pSetLayouts = layouts.data();
 
     this->renderDescriptorImageInfo.resize(MAX_NUM_DIR_LIGHTS);
+    this->renderBuffersInfo.resize(2);
 
     if (vkAllocateDescriptorSets(deviceModule->device, &allocInfo, this->renderDescriptorSets) != VK_SUCCESS)
     {
@@ -176,9 +231,11 @@ void CSMDescriptorsManager::CreateRenderDescriptorSet()
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
         std::vector<VkWriteDescriptorSet> descriptorWrites{};
-        descriptorWrites.resize(1);
+        descriptorWrites.resize(3);
 
         this->SetCSMDescriptorWrite(descriptorWrites[0], this->renderDescriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0);
+        this->SetRenderDescriptorWrite(descriptorWrites[1], this->renderDescriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, this->csmRenderSplitBuffer.uniformBuffers[i], this->csmSplitDataBufferSize);
+        this->SetRenderDescriptorWrite(descriptorWrites[2], this->renderDescriptorSets[i], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2, this->csmRenderViewProjBuffer.uniformBuffers[i], this->csmViewProjDataBufferSize);
 
         vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
@@ -188,19 +245,30 @@ VkDescriptorSetLayout CSMDescriptorsManager::CreateRenderDescriptorSetLayout()
 {
     VkDescriptorSetLayout resultLayout = {};
 
-    const uint32_t NUM_BINDINGS = 1;
+    std::array<VkDescriptorSetLayoutBinding, 3> layoutBindings{};
 
-    VkDescriptorSetLayoutBinding binding{};
-    binding.binding = 0;
-    binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    binding.descriptorCount = MAX_NUM_DIR_LIGHTS;
-    binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    binding.pImmutableSamplers = nullptr;
+    layoutBindings[0].binding = 0;
+    layoutBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    layoutBindings[0].descriptorCount = MAX_NUM_DIR_LIGHTS;
+    layoutBindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    layoutBindings[0].pImmutableSamplers = nullptr;
+
+    layoutBindings[1].binding = 1;
+    layoutBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    layoutBindings[1].descriptorCount = 1;
+    layoutBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    layoutBindings[1].pImmutableSamplers = nullptr;
+
+    layoutBindings[2].binding = 2;
+    layoutBindings[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    layoutBindings[2].descriptorCount = 1;
+    layoutBindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    layoutBindings[2].pImmutableSamplers = nullptr;
 
     VkDescriptorSetLayoutCreateInfo layoutInfo{};
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layoutInfo.bindingCount = NUM_BINDINGS;
-    layoutInfo.pBindings = &binding;
+    layoutInfo.bindingCount = layoutBindings.size();
+    layoutInfo.pBindings = layoutBindings.data();
 
     if (vkCreateDescriptorSetLayout(deviceModule->device, &layoutInfo, nullptr, &resultLayout) != VK_SUCCESS)
     {
@@ -232,7 +300,7 @@ void CSMDescriptorsManager::CreateOffscreenDescriptorSet()
             }
 
             this->SetOffscreenDescriptorWrite(descriptorWrites[ndl], this->offscreenDescriptorSets[i][ndl],
-                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, this->csmUBOs[ndl]->uniformBuffers[i], sizeof(CSMUniform));
+                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, this->csmOffscreenUBOs[ndl]->uniformBuffers[i], sizeof(CSMUniform));
             vkUpdateDescriptorSets(deviceModule->device, 1, &descriptorWrites[ndl], 0, nullptr);
         }
     }
@@ -247,6 +315,11 @@ void CSMDescriptorsManager::Clean()
             if (this->offscreenDescriptorSets[i][npl] != VK_NULL_HANDLE)
             {
                 this->offscreenDescriptorSets[i][npl] = VK_NULL_HANDLE;
+            }
+
+            if (this->renderDescriptorSets[i] != VK_NULL_HANDLE)
+            {
+                this->renderDescriptorSets[i] = VK_NULL_HANDLE;
             }
         }
     }

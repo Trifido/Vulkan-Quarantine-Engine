@@ -137,6 +137,11 @@ struct CSMUniform
     glm::mat4 cascadeViewProj[CSM_NUM];
 };
 
+struct CascadeSplitUniform
+{
+    float cascadeSplits[10][CSM_NUM];
+};
+
 class UniformBufferObject
 {
 public:

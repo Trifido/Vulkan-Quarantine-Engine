@@ -82,7 +82,8 @@ void LightManager::CreateLight(LightType type, std::string name)
             this->PointLights.back()->idxShadowMap = this->PointLights.size() - 1;
 
             this->AddLight(std::static_pointer_cast<Light>(this->PointLights.back()), name);
-            this->PointShadowDescritors->AddPointLightResources(this->PointLights.back()->shadowMappingResourcesPtr->shadowMapUBO,
+            this->PointShadowDescritors->AddPointLightResources(
+                this->PointLights.back()->shadowMappingResourcesPtr->shadowMapUBO,
                 this->PointLights.back()->shadowMappingResourcesPtr->CubemapImageView,
                 this->PointLights.back()->shadowMappingResourcesPtr->CubemapSampler);
             break;
@@ -92,9 +93,12 @@ void LightManager::CreateLight(LightType type, std::string name)
             this->DirLights.back()->idxShadowMap = this->DirLights.size() - 1;
 
             this->AddLight(std::static_pointer_cast<Light>(this->DirLights.back()), name);
-            this->CSMDescritors->AddDirLightResources(this->DirLights.back()->shadowMappingResourcesPtr->shadowMapUBO,
+            this->CSMDescritors->AddDirLightResources(
+                this->DirLights.back()->shadowMappingResourcesPtr->OffscreenShadowMapUBO,
                 this->DirLights.back()->shadowMappingResourcesPtr->CSMImageView,
                 this->DirLights.back()->shadowMappingResourcesPtr->CSMSampler);
+
+            this->CSMDescritors->BindResources(this->DirLights.back()->shadowMappingResourcesPtr->CascadeResourcesPtr);
             break;
 
         case LightType::SPOT_LIGHT:
@@ -500,4 +504,8 @@ void LightManager::Update()
     vkMapMemory(this->deviceModule->device, this->lightBinSSBO->uniformBuffersMemory[currentFrame], 0, this->lightBinSSBOSize, 0, &data4);
     memcpy(data4, this->lights_bin.data(), this->lightBinSSBOSize);
     vkUnmapMemory(this->deviceModule->device, this->lightBinSSBO->uniformBuffersMemory[currentFrame]);
+
+    this->UpdateCSMLights();
+
+    this->CSMDescritors->UpdateResources(currentFrame);
 }

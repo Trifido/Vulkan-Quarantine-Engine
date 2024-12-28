@@ -739,15 +739,19 @@ void ReflectShader::CheckUBOAnimation(SpvReflectDescriptorSet* set)
     }
 }
 
-void ReflectShader::CheckHasPointShadowCubemaps(SpvReflectDescriptorSet* set)
+void ReflectShader::CheckShadowMaps(SpvReflectDescriptorSet* set)
 {
-    for (int b = 0; b < set->binding_count && !this->HasPointShadows; b++)
+    for (int b = 0; b < set->binding_count; b++)
     {
         if (set->bindings[b]->name != NULL)
         {
             if (strcmp(set->bindings[b]->name, "QE_PointShadowCubemaps") == 0)
             {
                 this->HasPointShadows = true;
+            }
+            else if (strcmp(set->bindings[b]->name, "QE_DirectionalShadowmaps") == 0)
+            {
+                this->HasDirectionalShadows = true;
             }
         }
     }
@@ -900,7 +904,7 @@ void ReflectShader::PerformReflect(VkShaderModuleCreateInfo createInfo)
         auto p_set = sets[index];
         this->CheckUBOMaterial(p_set);
         this->CheckUBOAnimation(p_set);
-        this->CheckHasPointShadowCubemaps(p_set);
+        this->CheckShadowMaps(p_set);
         auto p_set2 = spvReflectGetDescriptorSet(&module, p_set->set, &result);
         assert(result == SPV_REFLECT_RESULT_SUCCESS);
         assert(p_set == p_set2);

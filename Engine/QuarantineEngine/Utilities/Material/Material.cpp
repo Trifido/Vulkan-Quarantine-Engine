@@ -125,4 +125,9 @@ void Material::BindDescriptors(VkCommandBuffer& commandBuffer, uint32_t idx)
     {
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->shader->PipelineModule->pipelineLayout, 1, 1, &lightManager->PointShadowDescritors->renderDescriptorSets[idx], 0, nullptr);
     }
+
+    if (this->shader->reflectShader.HasDirectionalShadows)
+    {
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->shader->PipelineModule->pipelineLayout, 2, 1, &lightManager->CSMDescritors->renderDescriptorSets[idx], 0, nullptr);
+    }
 }
