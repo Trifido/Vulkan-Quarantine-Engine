@@ -181,7 +181,9 @@ void CommandPoolModule::setDirectionalShadowRenderPass(std::shared_ptr<VkRenderP
     vkCmdSetDepthBias(commandBuffers[iCBuffer], depthBiasConstant, 0.0f, depthBiasSlope);
     vkCmdSetDepthTestEnable(commandBuffers[iCBuffer], true);
     vkCmdSetDepthWriteEnable(commandBuffers[iCBuffer], true);
+
     vkCmdSetFrontFace(commandBuffers[iCBuffer], VK_FRONT_FACE_CLOCKWISE);
+    vkCmdSetCullMode(commandBuffers[iCBuffer], VK_CULL_MODE_FRONT_BIT);
 
     auto pipeline = lightManager->CSMPipelineModule->pipeline;
     auto pipelineLayout = lightManager->CSMPipelineModule->pipelineLayout;

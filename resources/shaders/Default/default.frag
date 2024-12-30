@@ -289,7 +289,6 @@ vec3 ComputeDirectionalLight(LightData light, vec3 normal, vec3 albedo, vec3 spe
 
 	vec4 shadowCoord = (biasMat * QE_CascadeViewProj[viewProjIndex]) * vec4(fs_in.Pos, 1.0);
     float shadow = ComputeFilterPCF(shadowCoord / shadowCoord.w, light.idxShadowMap, cascadeIndex);
-    //float shadow = ComputeTextureProj(shadowCoord / shadowCoord.w, vec2(0.0), light.idxShadowMap, cascadeIndex);
 
     return result * shadow;
 }
@@ -327,7 +326,7 @@ float ComputeTextureProj(vec4 shadowCoord, vec2 offset, uint lightIdx, uint casc
 		float dist = texture(QE_DirectionalShadowmaps[lightIdx], vec3(shadowCoord.st + offset, cascadeIndex)).r;
 		if (shadowCoord.w > 0 && dist < shadowCoord.z - bias)
         {
-			shadow = dist;
+			shadow = SHADOW_OPACITY;
 		}
 	}
 	return shadow;
