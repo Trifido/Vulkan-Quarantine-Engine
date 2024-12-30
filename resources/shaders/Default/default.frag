@@ -25,7 +25,6 @@ const mat4 biasMat = mat4(
 
 layout(location = 0) in VS_OUT {
     vec3 FragPos;
-    vec3 Pos;
     vec3 ViewPos;
     vec3 Normal;
     mat3 TBN;
@@ -287,7 +286,7 @@ vec3 ComputeDirectionalLight(LightData light, vec3 normal, vec3 albedo, vec3 spe
 
     uint viewProjIndex = CSM_COUNT * light.idxShadowMap + cascadeIndex;
 
-	vec4 shadowCoord = (biasMat * QE_CascadeViewProj[viewProjIndex]) * vec4(fs_in.Pos, 1.0);
+	vec4 shadowCoord = (biasMat * QE_CascadeViewProj[viewProjIndex]) * vec4(fs_in.FragPos, 1.0);
     float shadow = ComputeFilterPCF(shadowCoord / shadowCoord.w, light.idxShadowMap, cascadeIndex);
 
     return result * shadow;
