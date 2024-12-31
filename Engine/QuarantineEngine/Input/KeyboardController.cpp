@@ -2,37 +2,11 @@
 #include <iostream>
 #include <imgui.h>
 
-KeyboardController* KeyboardController::instance = nullptr;
-
-
-KeyboardController* KeyboardController::getInstance()
-{
-	if (instance == NULL)
-		instance = new KeyboardController();
-
-	return instance;
-}
-
-void KeyboardController::ResetInstance()
-{
-    delete instance;
-    instance = nullptr;
-}
-
 void KeyboardController::ReadKeyboardEvents()
 {
     if (isEditorProfile)
     {
         ReadPolygonModeKeys();
-    }
-}
-
-void KeyboardController::cleanup()
-{
-    if (instance != NULL)
-    {
-        delete instance;
-        instance = NULL;
     }
 }
 

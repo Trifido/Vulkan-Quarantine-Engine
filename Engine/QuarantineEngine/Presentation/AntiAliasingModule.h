@@ -5,15 +5,17 @@
 #include <vulkan/vulkan.hpp>
 
 #include "TextureManagerModule.h"
+#include <QESingleton.h>
 
-class AntiAliasingModule : public TextureManagerModule
+class AntiAliasingModule : public TextureManagerModule, public QESingleton<AntiAliasingModule>
 {
+private:
+    friend class QESingleton<AntiAliasingModule>; // Permitir acceso al constructor
+
 public:
-    static AntiAliasingModule* instance;
     VkSampleCountFlagBits*  msaaSamples = nullptr;
+
 public:
-    static AntiAliasingModule* getInstance();
-    static void ResetInstance();
     AntiAliasingModule();
     void createColorResources();
     void CleanLastResources();

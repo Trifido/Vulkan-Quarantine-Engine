@@ -9,15 +9,12 @@
 #include "SwapChainTool.hpp"
 #include "QueueModule.h"
 #include "QueueFamiliesModule.h"
+#include "QESingleton.h"
 
-class DeviceModule
+class DeviceModule : public QESingleton<DeviceModule>
 {
-public:
-    VkDevice                            device;
-    VkPhysicalDevice                    physicalDevice;
-    QueueFamilyIndices                  queueIndices;
 private:
-    static DeviceModule*                instance;
+    friend class QESingleton<DeviceModule>; // Permitir acceso al constructor
     VkSampleCountFlagBits               msaaSamples = VK_SAMPLE_COUNT_1_BIT;
     VkPhysicalDeviceProperties          physicalDeviceProps;
     VkPhysicalDeviceFeatures            physicalDeviceFeatures{};
@@ -28,9 +25,11 @@ private:
     bool                                meshShader_supported;
 
 public:
-    static DeviceModule* getInstance();
-    static void ResetInstance();
+    VkDevice                            device;
+    VkPhysicalDevice                    physicalDevice;
+    QueueFamilyIndices                  queueIndices;
 
+public:
     void pickPhysicalDevice(const VkInstance &instance, VkSurfaceKHR& surface);
     void createLogicalDevice(VkSurfaceKHR& surface, QueueModule& queueModule);
     VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);

@@ -6,22 +6,6 @@
 #include "SwapChainTool.hpp"
 #include <SynchronizationModule.h>
 
-SwapChainModule* SwapChainModule::instance = nullptr;
-
-SwapChainModule* SwapChainModule::getInstance()
-{
-    if (instance == NULL)
-        instance = new SwapChainModule();
-
-    return instance;
-}
-
-void SwapChainModule::ResetInstance()
-{
-	delete instance;
-	instance = nullptr;
-}
-
 SwapChainModule::SwapChainModule()
 {
     deviceModule = DeviceModule::getInstance();

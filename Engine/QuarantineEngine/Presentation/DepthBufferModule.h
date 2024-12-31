@@ -11,16 +11,15 @@
 #include "TextureManagerModule.h"
 #include "SwapChainModule.h"
 #include "AntiAliasingModule.h"
+#include <QESingleton.h>
 
-class DepthBufferModule : public TextureManagerModule
+class DepthBufferModule : public TextureManagerModule, public QESingleton<DepthBufferModule>
 {
 private:
-    static DepthBufferModule* instance;
+    friend class QESingleton<DepthBufferModule>; // Permitir acceso al constructor
     AntiAliasingModule* antialiasingModule;
 
 public:
-    static DepthBufferModule* getInstance();
-    static void ResetInstance();
     DepthBufferModule();
     void createDepthResources(VkExtent2D& swapChainExtent, VkCommandPool& commandPool);
     VkFormat findDepthFormat();

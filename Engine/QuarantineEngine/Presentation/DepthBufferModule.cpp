@@ -1,21 +1,5 @@
 #include "DepthBufferModule.h"
 
-DepthBufferModule* DepthBufferModule::instance = nullptr;
-
-DepthBufferModule* DepthBufferModule::getInstance()
-{
-	if (instance == NULL)
-		instance = new DepthBufferModule();
-
-	return instance;
-}
-
-void DepthBufferModule::ResetInstance()
-{
-    delete instance;
-    instance = nullptr;
-}
-
 DepthBufferModule::DepthBufferModule()
 {
     deviceModule = DeviceModule::getInstance();

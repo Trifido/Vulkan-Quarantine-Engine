@@ -8,10 +8,12 @@
 #include <PlaneCollider.h>
 
 #include "btBulletDynamicsCommon.h"
-class PhysicsModule
+#include <QESingleton.h>
+
+class PhysicsModule : public QESingleton<PhysicsModule>
 {
 private:
-    static PhysicsModule* instance;
+    friend class QESingleton<PhysicsModule>; // Permitir acceso al constructor
 
     btDefaultCollisionConfiguration* collisionConfiguration;
     btCollisionDispatcher* dispatcher;
@@ -23,8 +25,6 @@ public:
     btAlignedObjectArray<btCollisionShape*> collisionShapes;
 
 public:
-    static PhysicsModule* getInstance();
-    static void ResetInstance();
     PhysicsModule();
 
     void AddRigidBody(btRigidBody* body);

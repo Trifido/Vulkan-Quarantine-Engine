@@ -1,7 +1,5 @@
 #include "AntiAliasingModule.h"
 
-AntiAliasingModule* AntiAliasingModule::instance = nullptr;
-
 void AntiAliasingModule::createColorResources()
 {
     VkFormat colorFormat = this->swapchainModule->swapChainImageFormat;
@@ -13,20 +11,6 @@ void AntiAliasingModule::createColorResources()
 void AntiAliasingModule::CleanLastResources()
 {
     this->msaaSamples = nullptr;
-}
-
-AntiAliasingModule* AntiAliasingModule::getInstance()
-{
-	if (instance == NULL)
-		instance = new AntiAliasingModule();
-
-	return instance;
-}
-
-void AntiAliasingModule::ResetInstance()
-{
-    delete instance;
-    instance = nullptr;
 }
 
 AntiAliasingModule::AntiAliasingModule()

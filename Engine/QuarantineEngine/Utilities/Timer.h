@@ -1,24 +1,25 @@
 #pragma once
-#include <UBO.h>
 
 #ifndef TIMER_H
 #define TIMER_H
 
-class Timer
+#include <UBO.h>
+#include <QESingleton.h>
+
+class Timer : public QESingleton<Timer>
 {
+private:
+    friend class QESingleton<Timer>; // Permitir acceso al constructor
+
 public:
     static float DeltaTime;
     float  lastFrame;
     float  currentFrame;
     uint32_t LimitFrameCounter;
     long long unsigned int FrameCounter;
-private:
-    static Timer* instance;
 
 public:
     Timer();
-    static Timer* getInstance();
-    static void ResetInstance();
     void UpdateDeltaTime();
 };
 
