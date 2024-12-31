@@ -2,8 +2,6 @@
 #include <iostream>
 #include <algorithm>
 
-RenderLayerModule* RenderLayerModule::instance = nullptr;
-
 void RenderLayerModule::AddLayer(RenderLayer newLayer)
 {
     enabledLayers.push_back(newLayer);
@@ -35,12 +33,4 @@ RenderLayerModule::RenderLayerModule()
     enabledLayers[3] = RenderLayer::UI;
     enabledLayers[4] = RenderLayer::DEBUG;
     enabledLayers[5] = RenderLayer::EDITOR;
-}
-
-RenderLayerModule* RenderLayerModule::getInstance()
-{
-    if (instance == NULL)
-        instance = new RenderLayerModule();
-
-    return instance;
 }

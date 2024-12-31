@@ -9,11 +9,10 @@
 class RenderLayerModule
 {
 private:
-    static RenderLayerModule* instance;
     std::vector<RenderLayer> enabledLayers;
+
 public:
     RenderLayerModule();
-    static RenderLayerModule* getInstance();
     void AddLayer(RenderLayer newLayer);
     unsigned int GetLayer(unsigned int idx);
     unsigned int GetCount();

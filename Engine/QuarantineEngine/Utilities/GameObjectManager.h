@@ -15,13 +15,13 @@ private:
     friend class QESingleton<GameObjectManager>; // Permitir acceso al constructor
     std::unordered_map<unsigned int, std::unordered_map<std::string, std::shared_ptr<GameObject>>> _objects;
     std::unordered_map<std::string, std::shared_ptr<GameObject>> _physicObjects;
-    RenderLayerModule* renderLayers = nullptr;
+    RenderLayerModule renderLayers;
 
 private:
     std::string CheckName(std::string nameGameObject);
 
 public:
-    GameObjectManager();
+    GameObjectManager() = default;
     void AddGameObject(std::shared_ptr<GameObject> object_ptr, std::string name);
     std::shared_ptr<GameObject> GetGameObject(std::string name);
     void DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);

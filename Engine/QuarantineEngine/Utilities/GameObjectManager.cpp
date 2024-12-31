@@ -1,29 +1,24 @@
 #include "GameObjectManager.h"
 #include <iostream>
 
-GameObjectManager::GameObjectManager()
-{
-    this->renderLayers = RenderLayerModule::getInstance();
-}
-
 std::string GameObjectManager::CheckName(std::string nameGameObject)
 {
     std::unordered_map<std::string, std::shared_ptr<GameObject>>::const_iterator got;
     std::string newName = nameGameObject;
     unsigned int id = 0;
 
-    for (unsigned int idl = 0; idl < this->renderLayers->GetCount(); idl++)
+    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
     {
         do
         {
-            got = this->_objects[this->renderLayers->GetLayer(idl)].find(newName);
+            got = this->_objects[this->renderLayers.GetLayer(idl)].find(newName);
 
-            if (got != this->_objects[this->renderLayers->GetLayer(idl)].end())
+            if (got != this->_objects[this->renderLayers.GetLayer(idl)].end())
             {
                 id++;
                 newName = nameGameObject + "_" + std::to_string(id);
             }
-        } while (got != this->_objects[this->renderLayers->GetLayer(idl)].end());
+        } while (got != this->_objects[this->renderLayers.GetLayer(idl)].end());
     }
 
     return newName;
@@ -57,9 +52,9 @@ void GameObjectManager::AddGameObject(std::shared_ptr<GameObject> object_ptr, st
 
 void GameObjectManager::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
-    for (unsigned int idl = 0; idl < this->renderLayers->GetCount(); idl++)
+    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
     {
-        for (auto model : this->_objects[this->renderLayers->GetLayer(idl)])
+        for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
         {
             model.second->CreateDrawCommand(commandBuffer, idx);
         }
@@ -123,9 +118,9 @@ void GameObjectManager::UpdatePhysicTransforms()
 
 void GameObjectManager::Cleanup()
 {
-    for (unsigned int idl = 0; idl < this->renderLayers->GetCount(); idl++)
+    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
     {
-        for (auto model : this->_objects[this->renderLayers->GetLayer(idl)])
+        for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
         {
             model.second->Cleanup();
         }
@@ -136,15 +131,13 @@ void GameObjectManager::CleanLastResources()
 {
     this->_objects.clear();
     this->_physicObjects.clear();
-    delete this->renderLayers;
-    this->renderLayers = nullptr;
 }
 
 std::shared_ptr<GameObject> GameObjectManager::GetGameObject(std::string name)
 {
-    for (unsigned int idl = 0; idl < this->renderLayers->GetCount(); idl++)
+    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
     {
-        unsigned int id = this->renderLayers->GetLayer(idl);
+        unsigned int id = this->renderLayers.GetLayer(idl);
         auto it = this->_objects[id].find(name);
 
         if (it != this->_objects[id].end())
