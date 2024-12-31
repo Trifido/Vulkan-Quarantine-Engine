@@ -100,7 +100,6 @@ void CommandPoolModule::recreateCommandBuffers()
     }
 }
 
-
 void CommandPoolModule::setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t iCBuffer)
 {
     VkViewport viewport{};

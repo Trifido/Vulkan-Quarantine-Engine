@@ -302,6 +302,13 @@ void App::initVulkan()
         dirlight->diffuse = glm::vec3(0.6f);
         dirlight->specular = glm::vec3(0.1f);
         dirlight->SetDistanceEffect(100.0f);
+
+        //this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight2");
+        //auto dirlight2 = this->lightManager->GetLight("DirectionalLight2");
+        //dirlight2->transform->SetOrientation(glm::vec3(45.0f, 0.0f, 0.0f));
+        //dirlight2->diffuse = glm::vec3(0.3f, 0.3f, 0.7f);
+        //dirlight2->specular = glm::vec3(0.3f, 0.3f, 0.7f);
+        //dirlight2->SetDistanceEffect(100.0f);
     }
 
 
