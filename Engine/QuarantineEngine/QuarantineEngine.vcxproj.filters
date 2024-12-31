@@ -443,7 +443,13 @@
       <Filter>Kernel\Memory\sources</Filter>
     </ClCompile>
     <ClCompile Include="Memory\OmniShadowResources.cpp">
-      <Filter>Kernel\Presentation\sources</Filter>
+      <Filter>Kernel\Memory\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Memory\CSMResources.cpp">
+      <Filter>Kernel\Memory\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Memory\CSMDescriptorsManager.cpp">
+      <Filter>Kernel\Memory\sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -733,7 +739,13 @@
       <Filter>Kernel\Memory\headers</Filter>
     </ClInclude>
     <ClInclude Include="Memory\OmniShadowResources.h">
-      <Filter>Kernel\Presentation\headers</Filter>
+      <Filter>Kernel\Memory\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\CSMResources.h">
+      <Filter>Kernel\Memory\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\CSMDescriptorsManager.h">
+      <Filter>Kernel\Memory\headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

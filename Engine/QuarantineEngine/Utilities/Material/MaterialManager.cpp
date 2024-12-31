@@ -42,7 +42,8 @@ MaterialManager::MaterialManager()
 
     const std::string absolute_default_vertex_shader_path = absPath + "/Default/default_vert.spv";
     const std::string absolute_default_frag_shader_path = absPath + "/Default/default_frag.spv";
-    const std::string absolute_shadow_vertex_shader_path = absPath + "/Shadow/shadow_vert.spv";
+    const std::string absolute_csm_vertex_shader_path = absPath + "/Shadow/csm_vert.spv";
+    const std::string absolute_csm_frag_shader_path = absPath + "/Shadow/csm_frag.spv";
     const std::string absolute_omni_shadow_vertex_shader_path = absPath + "/Shadow/omni_shadow_vert.spv";
     const std::string absolute_omni_shadow_frag_shader_path = absPath + "/Shadow/omni_shadow_frag.spv";
     const std::string absolute_particles_vert_shader_path = absPath + "/Particles/particles_vert.spv";
@@ -84,8 +85,8 @@ MaterialManager::MaterialManager()
 
     pipelineShadowShader.shadowMode = ShadowMappingMode::DIRECTIONAL_SHADOW;
     pipelineShadowShader.renderPass = this->renderPassModule->dirShadowMappingRenderPass;
-    this->dir_shadow_mapping_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_shadow_vertex_shader_path, pipelineShadowShader));
-    shaderManager->AddShader("dir_shadow_mapping_shader", this->dir_shadow_mapping_shader);
+    this->csm_shader = std::make_shared<ShaderModule>(ShaderModule(absolute_csm_vertex_shader_path, absolute_csm_frag_shader_path, pipelineShadowShader));
+    shaderManager->AddShader("csm_shader", this->csm_shader);
 
     pipelineShadowShader.shadowMode = ShadowMappingMode::OMNI_SHADOW;
     pipelineShadowShader.renderPass = this->renderPassModule->omniShadowMappingRenderPass;
@@ -227,8 +228,8 @@ void MaterialManager::CleanLastResources()
     this->default_primitive_shader = nullptr;
     this->mesh_shader_test.reset();
     this->mesh_shader_test = nullptr;
-    this->dir_shadow_mapping_shader.reset();
-    this->dir_shadow_mapping_shader = nullptr;
+    this->csm_shader.reset();
+    this->csm_shader = nullptr;
 }
 
 void MaterialManager::UpdateUniforms()

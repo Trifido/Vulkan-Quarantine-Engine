@@ -43,11 +43,13 @@ LightManager::LightManager()
     this->lightBuffer.reserve(this->MAX_NUM_LIGHT);
 
     this->PointShadowDescritors = std::make_shared<PointShadowDescriptorsManager>();
+    this->CSMDescritors = std::make_shared<CSMDescriptorsManager>();
 }
 
 void LightManager::AddDirShadowMapShader(std::shared_ptr<ShaderModule> shadow_mapping_shader)
 {
-    this->dir_shadow_map_shader = shadow_mapping_shader;
+    this->CSMShaderModule = shadow_mapping_shader;
+    this->CSMPipelineModule = this->CSMShaderModule->ShadowPipelineModule;
 }
 
 void LightManager::AddOmniShadowMapShader(std::shared_ptr<ShaderModule> omni_shadow_mapping_shader)
@@ -76,22 +78,31 @@ void LightManager::CreateLight(LightType type, std::string name)
     {
         default:
         case LightType::POINT_LIGHT:
-            this->PointLights.push_back(std::make_shared<PointLight>(this->OmniShadowShaderModule, this->renderPassModule->omniShadowMappingRenderPass));
+            this->PointLights.push_back(std::make_shared<PointLight>(this->renderPassModule->omniShadowMappingRenderPass));
             this->PointLights.back()->idxShadowMap = this->PointLights.size() - 1;
 
             this->AddLight(std::static_pointer_cast<Light>(this->PointLights.back()), name);
-            this->PointShadowDescritors->AddPointLightResources(this->PointLights.back()->shadowMappingResourcesPtr->shadowMapUBO,
+            this->PointShadowDescritors->AddPointLightResources(
+                this->PointLights.back()->shadowMappingResourcesPtr->shadowMapUBO,
                 this->PointLights.back()->shadowMappingResourcesPtr->CubemapImageView,
                 this->PointLights.back()->shadowMappingResourcesPtr->CubemapSampler);
             break;
 
         case LightType::DIRECTIONAL_LIGHT:
-            this->DirLights.push_back(std::make_shared<DirectionalLight>(this->dir_shadow_map_shader, this->renderPassModule->dirShadowMappingRenderPass));
+            this->DirLights.push_back(std::make_shared<DirectionalLight>(this->renderPassModule->dirShadowMappingRenderPass, this->camera));
+            this->DirLights.back()->idxShadowMap = this->DirLights.size() - 1;
+
             this->AddLight(std::static_pointer_cast<Light>(this->DirLights.back()), name);
+            this->CSMDescritors->AddDirLightResources(
+                this->DirLights.back()->shadowMappingResourcesPtr->OffscreenShadowMapUBO,
+                this->DirLights.back()->shadowMappingResourcesPtr->CSMImageView,
+                this->DirLights.back()->shadowMappingResourcesPtr->CSMSampler);
+
+            this->CSMDescritors->BindResources(this->DirLights.back()->shadowMappingResourcesPtr->CascadeResourcesPtr);
             break;
 
         case LightType::SPOT_LIGHT:
-            this->SpotLights.push_back(std::make_shared<SpotLight>(this->dir_shadow_map_shader, this->renderPassModule->dirShadowMappingRenderPass));
+            this->SpotLights.push_back(std::make_shared<SpotLight>(this->CSMShaderModule, this->renderPassModule->dirShadowMappingRenderPass));
             this->AddLight(std::static_pointer_cast<Light>(this->SpotLights.back()), name);
             break;
     }
@@ -110,6 +121,7 @@ std::shared_ptr<Light> LightManager::GetLight(std::string name)
 void LightManager::InitializeShadowMaps()
 {
     this->PointShadowDescritors->InitializeDescriptorSetLayouts(this->OmniShadowShaderModule);
+    this->CSMDescritors->InitializeDescriptorSetLayouts(this->CSMShaderModule);
 }
 
 void LightManager::UpdateUniform()
@@ -141,6 +153,14 @@ void LightManager::UpdateUBOLight()
         vkMapMemory(this->deviceModule->device, this->lightSSBO->uniformBuffersMemory[currentFrame], 0, this->lightSSBOSize, 0, &data2);
         memcpy(data2, this->lightBuffer.data(), this->lightSSBOSize);
         vkUnmapMemory(this->deviceModule->device, this->lightSSBO->uniformBuffersMemory[currentFrame]);
+    }
+}
+
+void LightManager::UpdateCSMLights()
+{
+    for (auto light : this->DirLights)
+    {
+        light->UpdateUniform();
     }
 }
 
@@ -192,6 +212,7 @@ void LightManager::CleanShadowMapResources()
     }
 
     this->PointShadowDescritors->Clean();
+    this->CSMDescritors->Clean();
 }
 
 void LightManager::SetCamera(Camera* camera_ptr)
@@ -460,21 +481,31 @@ void LightManager::Update()
 
     uint32_t currentFrame = SynchronizationModule::GetCurrentFrame();
 
-    void* data2;
-    size_t indexSize = this->lights_index.size() * sizeof(uint32_t);
+    if (!this->lights_index.empty())
+    {
+        void* data2;
+        size_t indexSize = this->lights_index.size() * sizeof(uint32_t);
 
-    vkMapMemory(this->deviceModule->device, this->lightIndexSSBO->uniformBuffersMemory[currentFrame], 0, indexSize, 0, &data2);
-    memcpy(data2, this->lights_index.data(), indexSize);
-    vkUnmapMemory(this->deviceModule->device, this->lightIndexSSBO->uniformBuffersMemory[currentFrame]);
+        vkMapMemory(this->deviceModule->device, this->lightIndexSSBO->uniformBuffersMemory[currentFrame], 0, indexSize, 0, &data2);
+        memcpy(data2, this->lights_index.data(), indexSize);
+        vkUnmapMemory(this->deviceModule->device, this->lightIndexSSBO->uniformBuffersMemory[currentFrame]);
+    }
 
-    void* data3;
-    size_t tilesSize = this->light_tiles_bits.size() * sizeof(uint32_t);
-    vkMapMemory(this->deviceModule->device, this->lightTilesSSBO->uniformBuffersMemory[currentFrame], 0, tilesSize, 0, &data3);
-    memcpy(data3, this->light_tiles_bits.data(), tilesSize);
-    vkUnmapMemory(this->deviceModule->device, this->lightTilesSSBO->uniformBuffersMemory[currentFrame]);
+    if (!this->light_tiles_bits.empty())
+    {
+        void* data3;
+        size_t tilesSize = this->light_tiles_bits.size() * sizeof(uint32_t);
+        vkMapMemory(this->deviceModule->device, this->lightTilesSSBO->uniformBuffersMemory[currentFrame], 0, tilesSize, 0, &data3);
+        memcpy(data3, this->light_tiles_bits.data(), tilesSize);
+        vkUnmapMemory(this->deviceModule->device, this->lightTilesSSBO->uniformBuffersMemory[currentFrame]);
+    }
 
     void* data4;
     vkMapMemory(this->deviceModule->device, this->lightBinSSBO->uniformBuffersMemory[currentFrame], 0, this->lightBinSSBOSize, 0, &data4);
     memcpy(data4, this->lights_bin.data(), this->lightBinSSBOSize);
     vkUnmapMemory(this->deviceModule->device, this->lightBinSSBO->uniformBuffersMemory[currentFrame]);
+
+    this->UpdateCSMLights();
+
+    this->CSMDescritors->UpdateResources(currentFrame);
 }

@@ -160,7 +160,9 @@ void App::initVulkan()
     TextureManagerModule::queueModule = this->queueModule;
     CustomTexture::commandPool = commandPoolModule->getCommandPool();
     OmniShadowResources::commandPool = commandPoolModule->getCommandPool();
+    CSMResources::commandPool = commandPoolModule->getCommandPool();
     OmniShadowResources::queueModule = this->queueModule;
+    CSMResources::queueModule = this->queueModule;
 
     // INIT ------------------------- Mesh & Material -------------------------------
     this->shaderManager = ShaderManager::getInstance();
@@ -173,7 +175,7 @@ void App::initVulkan()
     this->computeNodeManager->InitializeComputeResources();
     this->particleSystemManager = ParticleSystemManager::getInstance();
 
-    this->lightManager->AddDirShadowMapShader(materialManager->dir_shadow_mapping_shader);
+    this->lightManager->AddDirShadowMapShader(materialManager->csm_shader);
     this->lightManager->AddOmniShadowMapShader(materialManager->omni_shadow_mapping_shader);
     this->lightManager->SetCamera(this->cameraEditor);
 
@@ -204,18 +206,18 @@ void App::initVulkan()
 
     //model->transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
     //model->transform->SetOrientation(glm::vec3(-90.0f, 180.0f, 0.0f));
-    model->transform->SetScale(glm::vec3(0.01f));
-    //model->material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
-    //model->material->materialData.SetMaterialField("Specular", glm::vec3(0.5f, 0.5f, 0.5f));
-    //model->material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
+    model->_Transform->SetScale(glm::vec3(0.01f));
+    //model->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
+    //model->_Material->materialData.SetMaterialField("Specular", glm::vec3(0.5f, 0.5f, 0.5f));
+    //model->_Material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
     this->gameObjectManager->AddGameObject(model, "model");
 
     std::shared_ptr<GameObject> floor = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
-    floor->transform->SetPosition(glm::vec3(0.0f, -0.01f, 0.0f));
-    floor->transform->SetScale(glm::vec3(3.0f, 1.0f, 3.0f));
-    floor->material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.2f, 0.7f));
-    floor->material->materialData.SetMaterialField("Specular", glm::vec3(0.0f, 0.0f, 0.0f));
-    floor->material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
+    floor->_Transform->SetPosition(glm::vec3(0.0f, -0.01f, 0.0f));
+    floor->_Transform->SetScale(glm::vec3(3.0f, 1.0f, 3.0f));
+    floor->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.2f, 0.7f));
+    floor->_Material->materialData.SetMaterialField("Specular", glm::vec3(0.0f, 0.0f, 0.0f));
+    floor->_Material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
     this->gameObjectManager->AddGameObject(floor, "floor");
     
 
@@ -269,37 +271,46 @@ void App::initVulkan()
     // END -------------------------- Mesh & Material -------------------------------
 
     // INIT ------------------------- Lights ----------------------------------------
-    //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight0");
-    //this->lightManager->GetLight("PointLight0")->transform->SetPosition(glm::vec3(5.0f, 5.0f, 0.0f));
-    //this->lightManager->GetLight("PointLight0")->diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
-    //this->lightManager->GetLight("PointLight0")->specular = glm::vec3(0.7f, 0.7f, 0.7f);
-    //this->lightManager->GetLight("PointLight0")->SetDistanceEffect(10.0f);
+    // POINT LIGHTS
+    {
+        //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
+        //auto pointLight = this->lightManager->GetLight("PointLight1");
+        //pointLight->transform->SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
+        //pointLight->diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
+        //pointLight->specular = glm::vec3(0.7f, 0.7f, 0.7f);
+        //pointLight->SetDistanceEffect(100.0f);
 
-    this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
-    auto pointLight = this->lightManager->GetLight("PointLight1");
-    pointLight->transform->SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
-    pointLight->diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
-    pointLight->specular = glm::vec3(0.7f, 0.7f, 0.7f);
-    pointLight->SetDistanceEffect(100.0f);
+        //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight2");
+        //auto pointLight2 = this->lightManager->GetLight("PointLight2");
+        //pointLight2->transform->SetPosition(glm::vec3(0.0f, 5.0f, 5.0f));
+        //pointLight2->diffuse = glm::vec3(0.3f, 0.3f, 0.7f);
+        //pointLight2->specular = glm::vec3(0.3f, 0.3f, 0.7f);
+        //pointLight2->SetDistanceEffect(100.0f);
 
-    this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight2");
-    auto pointLight2 = this->lightManager->GetLight("PointLight2");
-    pointLight2->transform->SetPosition(glm::vec3(0.0f, 5.0f, 5.0f));
-    pointLight2->diffuse = glm::vec3(0.3f, 0.3f, 0.7f);
-    pointLight2->specular = glm::vec3(0.3f, 0.3f, 0.7f);
-    pointLight2->SetDistanceEffect(100.0f);
+        //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight3");
+        //auto pointLight3 = this->lightManager->GetLight("PointLight3");
+        //pointLight3->transform->SetPosition(glm::vec3(5.0f, 5.0f, 0.0f));
+        //pointLight3->diffuse = glm::vec3(0.3f, 0.3f, 0.7f);
+        //pointLight3->specular = glm::vec3(0.3f, 0.3f, 0.7f);
+        //pointLight3->SetDistanceEffect(100.0f);
+    }
 
-    this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight3");
-    auto pointLight3 = this->lightManager->GetLight("PointLight3");
-    pointLight3->transform->SetPosition(glm::vec3(5.0f, 5.0f, 0.0f));
-    pointLight3->diffuse = glm::vec3(0.3f, 0.3f, 0.7f);
-    pointLight3->specular = glm::vec3(0.3f, 0.3f, 0.7f);
-    pointLight3->SetDistanceEffect(100.0f);
+    // DIRECTIONAL LIGHTS
+    {
+        this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
+        auto dirlight = this->lightManager->GetLight("DirectionalLight0");
+        dirlight->diffuse = glm::vec3(0.6f);
+        dirlight->specular = glm::vec3(0.1f);
+        dirlight->SetDistanceEffect(100.0f);
 
-    //this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
-    //this->lightManager->GetLight("DirectionalLight0")->diffuse = glm::vec3(0.6f);
-    //this->lightManager->GetLight("DirectionalLight0")->specular = glm::vec3(0.1f);
-    //this->lightManager->GetLight("DirectionalLight0")->SetDistanceEffect(100.0f);
+        //this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight2");
+        //auto dirlight2 = this->lightManager->GetLight("DirectionalLight2");
+        //dirlight2->transform->SetOrientation(glm::vec3(45.0f, 0.0f, 0.0f));
+        //dirlight2->diffuse = glm::vec3(0.3f, 0.3f, 0.7f);
+        //dirlight2->specular = glm::vec3(0.3f, 0.3f, 0.7f);
+        //dirlight2->SetDistanceEffect(100.0f);
+    }
+
 
     //this->lightManager->CreateLight(LightType::SPOT_LIGHT, "SpotLight0");
     //auto spotLight = this->lightManager->GetLight("SpotLight0");
@@ -397,14 +408,14 @@ void App::mainLoop()
         if (ImGui::IsKeyDown('I'))
         {
             glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            newPos.y += 0.1f;
+            newPos.z += 0.1f;
             this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
             this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('K'))
         {
             glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            newPos.y -= 0.1f;
+            newPos.z -= 0.1f;
             this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
             this->lightManager->UpdateUniform();
         }
@@ -437,6 +448,7 @@ void App::mainLoop()
             this->drawFrame();
         }
 
+        this->cameraEditor->ResetModifiedField();
         /*
         {
             //imgui new frame

@@ -3,25 +3,26 @@
 #define DIRECTIONAL_LIGHT_H
 
 #include "Light.h"
-#include "OmniShadowResources.h"
-#include <ShaderModule.h>
-#include <DescriptorBuffer.h>
+#include "CSMResources.h"
+#include <Camera.h>
 
 class DescriptorBuffer;
 
 class DirectionalLight : public Light
 {
-public:
-    //std::shared_ptr<OmniShadowResources> shadowMappingPtr = nullptr;
+private:
+    float cascadeSplitLambda = 0.95f;
+    Camera* camera = nullptr;
 
-    std::shared_ptr<UniformBufferObject> shadowMapUBO = nullptr;
-    //std::shared_ptr<DescriptorBuffer> descriptorBuffer = nullptr;
+public:
+    std::shared_ptr<CSMResources> shadowMappingResourcesPtr = nullptr;
 
 public:
     DirectionalLight();
-    DirectionalLight(std::shared_ptr<ShaderModule> shaderModule, std::shared_ptr<VkRenderPass> renderPass);
+    DirectionalLight(std::shared_ptr<VkRenderPass> renderPass, Camera* camera);
     void UpdateUniform() override;
     void CleanShadowMapResources();
+    void UpdateCascades();
 };
 
 #endif

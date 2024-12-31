@@ -34,12 +34,12 @@ Grid::Grid()
     MaterialManager* instanceMaterialManager = MaterialManager::getInstance();
     std::string nameGrid = "editor:grid";
     instanceMaterialManager->AddMaterial(nameGrid, this->material_grid_ptr);
-    this->gridMesh->addMaterial(this->material_grid_ptr);
+    this->gridMesh->AddMaterial(this->material_grid_ptr);
 }
 
 void Grid::Draw(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
-    auto pipelineModule = this->gridMesh->material->shader->PipelineModule;
+    auto pipelineModule = this->gridMesh->_Material->shader->PipelineModule;
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
     vkCmdSetDepthTestEnable(commandBuffer, true);
@@ -47,12 +47,12 @@ void Grid::Draw(VkCommandBuffer& commandBuffer, uint32_t idx)
     vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
     vkCmdSetCullMode(commandBuffer, false);
 
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, this->gridMesh->material->descriptor->getDescriptorSet(idx), 0, nullptr);
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, this->gridMesh->_Material->descriptor->getDescriptorSet(idx), 0, nullptr);
 
     vkCmdDraw(commandBuffer, 6, 1, 0, 0);
 }
 
 void Grid::Clean()
 {
-    this->gridMesh->cleanup();
+    this->gridMesh->Cleanup();
 }

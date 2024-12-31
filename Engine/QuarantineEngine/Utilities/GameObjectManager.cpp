@@ -34,21 +34,21 @@ std::string GameObjectManager::CheckName(std::string nameGameObject)
 
 void GameObjectManager::AddGameObject(std::shared_ptr<GameObject> object_ptr, std::string name)
 {
-    if (object_ptr->IsValid())
+    if (object_ptr->IsValidRender())
     {
         name = CheckName(name);
 
-        if (object_ptr->material == nullptr)
+        if (object_ptr->_Material == nullptr)
         {
             if (!object_ptr->childs.empty())
             {
-                unsigned int childLayer = object_ptr->childs[0]->material->layer;
+                unsigned int childLayer = object_ptr->childs[0]->_Material->layer;
                 this->_objects[childLayer][name] = object_ptr;
             }
         }
         else
         {
-            this->_objects[object_ptr->material->layer][name] = object_ptr;
+            this->_objects[object_ptr->_Material->layer][name] = object_ptr;
         }
 
         if (object_ptr->physicBody != nullptr)
@@ -78,8 +78,21 @@ void GameObjectManager::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx
     {
         for (auto model : this->_objects[this->renderLayers->GetLayer(idl)])
         {
-            model.second->drawCommand(commandBuffer, idx);
+            model.second->CreateDrawCommand(commandBuffer, idx);
         }
+    }
+}
+
+void GameObjectManager::CSMCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex)
+{
+    for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
+    {
+        PushConstantCSMStruct shadowParameters = {};
+        shadowParameters.model = model.second->_Transform->GetModel();
+        shadowParameters.cascadeIndex = cascadeIndex;
+
+        vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantCSMStruct), &shadowParameters);
+        model.second->CreateShadowCommand(commandBuffer, idx, pipelineLayout);
     }
 }
 
@@ -87,25 +100,25 @@ void GameObjectManager::ShadowCommand(VkCommandBuffer& commandBuffer, uint32_t i
 {
     for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
     {
-        model.second->drawShadowCommand(commandBuffer, idx, pipelineLayout);
+        //model.second->drawShadowCommand(commandBuffer, idx, pipelineLayout);
     }
 }
-
 
 void GameObjectManager::OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, glm::mat4 viewParameter, glm::vec3 lightPosition)
 {
     for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
     {
-        PCOmniShadowStruct shadowParameters = {};
+        PushConstantOmniShadowStruct shadowParameters = {};
         shadowParameters.view = viewParameter;
 
         glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), -lightPosition);
-        glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), model.second->transform->Scale);
-        glm::mat4 rotationMatrix = glm::toMat4(model.second->transform->Orientation);
+        glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), model.second->_Transform->Scale);
+        glm::mat4 rotationMatrix = glm::toMat4(model.second->_Transform->Orientation);
         shadowParameters.lightModel = translationMatrix * rotationMatrix * scaleMatrix;
-        shadowParameters.model = model.second->transform->GetModel();
+        shadowParameters.model = model.second->_Transform->GetModel();
 
-        model.second->drawOmniShadowCommand(commandBuffer, idx, pipelineLayout, shadowParameters);
+        vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantOmniShadowStruct), &shadowParameters);
+        model.second->CreateShadowCommand(commandBuffer, idx, pipelineLayout);
     }
 }
 
@@ -131,7 +144,7 @@ void GameObjectManager::Cleanup()
     {
         for (auto model : this->_objects[this->renderLayers->GetLayer(idl)])
         {
-            model.second->cleanup();
+            model.second->Cleanup();
         }
     }
 }

@@ -6,6 +6,8 @@
 #define DIRECTIONAL_LIGHT 1
 #define SPOT_LIGHT 2
 
+#define CSM_COUNT 4
+
 #define EPSILON 0.15
 #define SHADOW_OPACITY 0.5
 
@@ -14,8 +16,16 @@
 #define MAX_NUM_LIGHTS 64
 #define NUM_WORDS ( ( MAX_NUM_LIGHTS + 31 ) / 32 )
 
+const mat4 biasMat = mat4( 
+	0.5, 0.0, 0.0, 0.0,
+	0.0, 0.5, 0.0, 0.0,
+	0.0, 0.0, 1.0, 0.0,
+	0.5, 0.5, 0.0, 1.0 
+);
+
 layout(location = 0) in VS_OUT {
     vec3 FragPos;
+    vec3 ViewPos;
     vec3 Normal;
     mat3 TBN;
     vec2 TexCoords;
@@ -105,14 +115,30 @@ layout(set = 0, binding = 8) uniform ScreenData
 
 layout(set = 1, binding = 0) uniform samplerCube QE_PointShadowCubemaps[10];
 
+layout(set = 2, binding = 0) uniform sampler2DArray QE_DirectionalShadowmaps[10];
+
+layout (set = 2, binding = 1) uniform UniformCSM
+{
+    vec4 Splits[10];
+} QE_Cascade;
+
+layout (set = 2, binding = 2) readonly buffer cascadeViewProjs
+{
+    mat4 QE_CascadeViewProj[];
+};
+
 //BLINN-PHONG LIGHT EQUATIONS
 vec3 ComputePointLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive);
 vec3 ComputeDirectionalLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive);
 vec3 ComputeSpotLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive);
 vec3 ComputeAmbientLight(vec3 diffuseColor);
+
 vec3 GetAlbedoColor();
 vec3 GetSpecularColor();
 vec3 GetEmissiveColor();
+
+float ComputeTextureProj(vec4 shadowCoord, vec2 offset, uint lightIdx, uint cascadeIndex);
+float ComputeFilterPCF(vec4 sc, uint lightIdx, uint cascadeIndex);
 
 void main()
 {
@@ -236,18 +262,34 @@ vec3 ComputePointLight(LightData light, vec3 normal, vec3 albedo, vec3 specular,
 
 vec3 ComputeDirectionalLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive)
 {
-    vec3 lightDir = normalize(light.direction);
-
-    float diff = max(dot(lightDir, normal), 0.0);
+    float diff = max(dot(-light.direction, normal), 0.0);
     vec3 diffuse = diff * light.diffuse * albedo;
 
     vec3 view_dir = normalize(cameraData.position.xyz - fs_in.FragPos);
-    vec3 reflectDir = reflect(-lightDir, normal);
-    vec3 halfwayDir = normalize(lightDir + view_dir);  
+    vec3 reflectDir = reflect(light.direction, normal);
+    vec3 halfwayDir = normalize(-light.direction + view_dir);  
     float spec = pow(max(dot(normal, halfwayDir), 0.0), uboMaterial.Shininess);
     vec3 specularResult = spec * light.specular * specular;
 
-    return diffuse + specularResult + emissive;
+    vec3 result = diffuse + specularResult + emissive;
+
+    // Get cascade index for the current fragment's view position
+	uint cascadeIndex = 0;
+	for (uint i = 0; i < CSM_COUNT - 1; ++i)
+    {
+        vec4 cascadeSplit = QE_Cascade.Splits[light.idxShadowMap];
+		if (fs_in.ViewPos.z < cascadeSplit[i])
+        {	
+			cascadeIndex = i + 1;
+		}
+	}
+
+    uint viewProjIndex = CSM_COUNT * light.idxShadowMap + cascadeIndex;
+
+	vec4 shadowCoord = (biasMat * QE_CascadeViewProj[viewProjIndex]) * vec4(fs_in.FragPos, 1.0);
+    float shadow = ComputeFilterPCF(shadowCoord / shadowCoord.w, light.idxShadowMap, cascadeIndex);
+
+    return result * shadow;
 }
 
 vec3 ComputeSpotLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive)
@@ -271,4 +313,44 @@ vec3 ComputeSpotLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, 
     vec3 specularResult = spec * light.specular * specular * intensity * attenuation;
 
     return diffuseResult + specularResult + emissive;
+}
+
+float ComputeTextureProj(vec4 shadowCoord, vec2 offset, uint lightIdx, uint cascadeIndex)
+{
+	float shadow = 1.0;
+	float bias = 0.005;
+
+	if (shadowCoord.z > -1.0 && shadowCoord.z < 1.0)
+    {
+		float dist = texture(QE_DirectionalShadowmaps[lightIdx], vec3(shadowCoord.st + offset, cascadeIndex)).r;
+		if (shadowCoord.w > 0 && dist < shadowCoord.z - bias)
+        {
+			shadow = SHADOW_OPACITY;
+		}
+	}
+	return shadow;
+
+}
+
+float ComputeFilterPCF(vec4 sc, uint lightIdx, uint cascadeIndex)
+{
+	ivec2 texDim = textureSize(QE_DirectionalShadowmaps[lightIdx], 0).xy;
+	float scale = 1.5;
+	float dx = scale * 1.0 / float(texDim.x);
+	float dy = scale * 1.0 / float(texDim.y);
+
+	float shadowFactor = 0.0;
+	int count = 0;
+	int range = 1;
+	
+	for (int x = -range; x <= range; x++)
+	{
+		for (int y = -range; y <= range; y++)
+		{
+			shadowFactor += ComputeTextureProj(sc, vec2(dx*x, dy*y), lightIdx, cascadeIndex);
+			count++;
+		}
+	}
+
+	return shadowFactor / count;
 }

@@ -43,49 +43,46 @@ protected:
     MaterialManager*    materialManager = nullptr;
     AnimationManager*   animationManager = nullptr;
     MeshImportedType    meshImportedType;
-    PushConstantStruct  pushConstant;
-    PCOmniShadowStruct  omniPushConstant;
 
 public:
-    std::shared_ptr<GeometryComponent>  mesh = nullptr;
-    std::shared_ptr<Transform>          transform = nullptr;
-    std::shared_ptr<Material>           material = nullptr;
+    std::shared_ptr<GeometryComponent>  _Mesh = nullptr;
+    std::shared_ptr<Transform>          _Transform = nullptr;
+    std::shared_ptr<Material>           _Material = nullptr;
     std::shared_ptr<PhysicBody>         physicBody = nullptr;
     std::shared_ptr<Collider>           collider = nullptr;
     std::shared_ptr<AnimationComponent> animationComponent = nullptr;
     std::shared_ptr<SkeletalComponent>  skeletalComponent = nullptr;
 
-    std::shared_ptr<GameObject>                 parent = nullptr;
     std::vector<std::shared_ptr<GameObject>>    childs;
+    GameObject*     parent = nullptr;
 
 private:
     void InitializeResources();
-    bool isRenderEnable();
+    bool IsRenderEnable();
 
 public:
     GameObject();
     GameObject(PRIMITIVE_TYPE type, bool isMeshShading = false);
     GameObject(std::string meshPath, bool isMeshShading = false);
     inline std::string ID() const { return id; }
-    void cleanup();
-    virtual void drawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
-    virtual void drawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, bool isOmniShadow = false);
-    virtual void drawOmniShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, PCOmniShadowStruct shadowParameters);
-    void addMaterial(std::shared_ptr<Material> material_ptr);
-    void addPhysicBody(std::shared_ptr<PhysicBody> physicBody_ptr);
-    void addCollider(std::shared_ptr<Collider> collider_ptr);
-    void addAnimation(std::shared_ptr<Animation> animation_ptr);
+    void Cleanup();
+    virtual void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
+    virtual void CreateShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout);
+    void AddMaterial(std::shared_ptr<Material> material_ptr);
+    void AddPhysicBody(std::shared_ptr<PhysicBody> physicBody_ptr);
+    void AddCollider(std::shared_ptr<Collider> collider_ptr);
+    void AddAnimation(std::shared_ptr<Animation> animation_ptr);
     void InitializePhysics();
-    virtual bool IsValid();
+    virtual bool IsValidRender();
     void UpdatePhysicTransform();
-    void SetViewOmniShadowParameter(PCOmniShadowStruct shadowConstantParameter);
 
 protected:
+    virtual bool IsValidGameObject();
     void InitializeComponents();
     void InitializeAnimationComponent();
     bool CreateChildsGameObject(std::string pathfile);
-    virtual void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator_ptr = nullptr);
-    void CreateDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, std::shared_ptr<Animator> animator_ptr = nullptr, bool isOmniShadow = false);
+    virtual void SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator_ptr = nullptr);
+    void SetDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, std::shared_ptr<Animator> animator_ptr = nullptr);
 };
 
 #endif

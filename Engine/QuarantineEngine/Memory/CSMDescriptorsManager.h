@@ -1,21 +1,22 @@
 #pragma once
 
-#ifndef POINT_SHADOW_DESCRIPTOR
-#define POINT_SHADOW_DESCRIPTOR
+#ifndef CSM_DESCRIPTOR
+#define CSM_DESCRIPTOR
 
 #include <vulkan/vulkan.h>
 #include <DeviceModule.h>
 #include <ShaderModule.h>
+#include <CSMResources.h>
 
-constexpr uint32_t                  NUM_POINT_SHADOW_SETS = 2;
-constexpr uint32_t                  NUM_POINT_SHADOW_PASSES = 2;
-constexpr uint32_t                  MAX_NUM_POINT_LIGHTS = 10;
+constexpr uint32_t                  NUM_CSM_SETS = 2;
+constexpr uint32_t                  NUM_CSM_PASSES = 2;
+constexpr uint32_t                  MAX_NUM_DIR_LIGHTS = 10;
 
-class PointShadowDescriptorsManager
+class CSMDescriptorsManager
 {
 private:
     DeviceModule*                   deviceModule = nullptr;
-    VkPipelineLayout                pipelineLayout[NUM_POINT_SHADOW_PASSES];
+    VkPipelineLayout                pipelineLayout[NUM_CSM_PASSES];
 
     VkDescriptorSetLayout           renderDescriptorSetLayout;
     VkDescriptorSetLayout           offscreenDescriptorSetLayout;
@@ -24,15 +25,22 @@ private:
     VkDescriptorPool                offscreenDescriptorPool;
 
     // Offscreen resources
-    uint32_t    _numPointLights = 0;
-    std::vector<std::shared_ptr<UniformBufferObject>> shadowMapUBOs;
+    uint32_t    _numDirLights = 0;
+    std::vector<std::shared_ptr<UniformBufferObject>> csmOffscreenUBOs;
     std::vector<VkDescriptorBufferInfo> offscreenBuffersInfo;
 
     // Render resources
     std::vector<VkDescriptorBufferInfo> renderBuffersInfo;
     std::vector<VkDescriptorImageInfo> renderDescriptorImageInfo;
-    std::shared_ptr<UniformBufferObject> pointlightIdBuffer;
-    VkDeviceSize sizePointlightIdBuffer;
+    UniformBufferObject csmRenderSplitBuffer;
+    UniformBufferObject csmRenderViewProjBuffer;
+    VkDeviceSize csmSplitDataBufferSize;
+    VkDeviceSize csmViewProjDataBufferSize;
+
+    //Bound resources
+    std::vector<std::shared_ptr<std::array<CascadeResource, SHADOW_MAP_CASCADE_COUNT>> > csmResources;
+    std::vector<float> csmSplitDataResources;
+    std::vector<glm::mat4> csmViewProjDataResources;
 
     // ImageViews & Samplers
     std::vector<VkImageView>    _imageViews;
@@ -44,12 +52,14 @@ private:
     VkSampler placeholderSampler = VK_NULL_HANDLE;
 
 public:
-    VkDescriptorSet offscreenDescriptorSets[NUM_POINT_SHADOW_SETS][MAX_NUM_POINT_LIGHTS];
-    VkDescriptorSet renderDescriptorSets[NUM_POINT_SHADOW_SETS];
+    VkDescriptorSet offscreenDescriptorSets[NUM_CSM_SETS][MAX_NUM_DIR_LIGHTS];
+    VkDescriptorSet renderDescriptorSets[NUM_CSM_SETS];
 
 public:
-    PointShadowDescriptorsManager();
-    void AddPointLightResources(std::shared_ptr<UniformBufferObject> shadowMapUBO, VkImageView imageView, VkSampler sampler);
+    CSMDescriptorsManager();
+    void AddDirLightResources(std::shared_ptr<UniformBufferObject> offscreenShadowMapUBO, VkImageView imageView, VkSampler sampler);
+    void BindResources(std::shared_ptr<std::array<CascadeResource, SHADOW_MAP_CASCADE_COUNT>> resources);
+    void UpdateResources(int currentFrame);
     void InitializeDescriptorSetLayouts(std::shared_ptr<ShaderModule> offscreen_shader_ptr);
     void Clean();
 
@@ -61,10 +71,10 @@ private:
     void CreateRenderDescriptorSet();
     VkDescriptorSetLayout CreateRenderDescriptorSetLayout();
     void SetRenderDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize);
-    void SetCubeMapDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding);
+    void SetCSMDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding);
     VkDescriptorBufferInfo GetBufferInfo(VkBuffer buffer, VkDeviceSize bufferSize);
-    void CreateCubemapPlaceHolder();
+    void CreateCSMPlaceHolder();
 };
 
-#endif // !POINT_SHADOW_DESCRIPTOR
+#endif // !CSM_DESCRIPTOR
 

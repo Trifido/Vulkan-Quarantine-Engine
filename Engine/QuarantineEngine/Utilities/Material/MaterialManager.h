@@ -25,7 +25,7 @@ private:
 
 public:
     static MaterialManager* instance;
-    std::shared_ptr<ShaderModule> dir_shadow_mapping_shader;
+    std::shared_ptr<ShaderModule> csm_shader;
     std::shared_ptr<ShaderModule> omni_shadow_mapping_shader;
 
 private:

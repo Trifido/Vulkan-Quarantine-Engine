@@ -125,7 +125,7 @@ void ShadowPipelineModule::CompileDirectionalShadowPipeline(std::vector<VkPipeli
     VkPushConstantRange pushConstantInfo = { 0 };
     pushConstantInfo.stageFlags = VK_SHADER_STAGE_ALL;
     pushConstantInfo.offset = 0;
-    pushConstantInfo.size = sizeof(PushConstantStruct);
+    pushConstantInfo.size = sizeof(PushConstantCSMStruct);
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -257,7 +257,7 @@ void ShadowPipelineModule::CompileOmniShadowPipeline(std::vector<VkPipelineShade
     VkPushConstantRange pushConstantInfo = { 0 };
     pushConstantInfo.stageFlags = VK_SHADER_STAGE_ALL;
     pushConstantInfo.offset = 0;
-    pushConstantInfo.size = sizeof(PCOmniShadowStruct);
+    pushConstantInfo.size = sizeof(PushConstantOmniShadowStruct);
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;

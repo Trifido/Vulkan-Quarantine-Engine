@@ -29,7 +29,7 @@ std::string ParticleSystemManager::CheckName(std::string nameParticleSystem)
 
 void ParticleSystemManager::AddParticleSystem(std::shared_ptr<ParticleSystem> object_ptr, std::string name)
 {
-    if (object_ptr->IsValid())
+    if (object_ptr->IsValidRender())
     {
         name = CheckName(name);
 

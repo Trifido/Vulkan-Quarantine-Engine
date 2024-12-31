@@ -4,7 +4,6 @@
 
 #include <Light.h>
 #include <OmniShadowResources.h>
-#include <ShaderModule.h>
 
 class DescriptorBuffer;
 
@@ -15,7 +14,7 @@ public:
 
 public:
     PointLight();
-    PointLight(std::shared_ptr<ShaderModule> shaderModule, std::shared_ptr<VkRenderPass> renderPass);
+    PointLight(std::shared_ptr<VkRenderPass> renderPass);
     void UpdateUniform() override;
     void CleanShadowMapResources();
 };

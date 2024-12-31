@@ -49,18 +49,22 @@ protected:
     void UpdateFrustumPlanes();
 
 public:
-    Camera() {};
+    Camera();
     Camera(float width, float height);
     void CameraController(float deltaTime);
     float GetFOV() { return fov; }
     float* GetRawFOV() { return &fov; }
+    float GetNear() { return nearPlane; }
     float* GetRawNearPlane() { return &nearPlane; }
+    float GetFar() { return farPlane; }
     float* GetRawFarPlane() { return &farPlane; }
     float* GetRawCameraPosition() { return &cameraPos[0]; }
     float* GetRawCameraFront() { return &cameraFront[0]; }
     void UpdateViewportSize(VkExtent2D size);
     void UpdateCamera();
     void CleanCameraUBO();
+    bool IsModified();
+    void ResetModifiedField();
 
 private:
     void CheckCameraAttributes(float* positionCamera, float* frontCamera, float fov, float nearPlane, float farPlane);

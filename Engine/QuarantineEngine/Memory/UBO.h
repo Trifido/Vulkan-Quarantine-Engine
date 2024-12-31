@@ -101,11 +101,17 @@ struct PushConstantStruct
     glm::mat4 model;
 };
 
-struct PCOmniShadowStruct
+struct PushConstantOmniShadowStruct
 {
     glm::mat4 model;
     glm::mat4 lightModel;
     glm::mat4 view;
+};
+
+struct PushConstantCSMStruct
+{
+    glm::mat4 model;
+    uint32_t cascadeIndex;
 };
 
 struct PushConstantViewStruct
@@ -122,6 +128,18 @@ struct OmniShadowUniform
 {
     glm::mat4 projection;
     glm::vec4 lightPos;
+};
+
+const int CSM_NUM = 4;
+
+struct CSMUniform
+{
+    glm::mat4 cascadeViewProj[CSM_NUM];
+};
+
+struct CascadeSplitUniform
+{
+    float cascadeSplits[10][CSM_NUM];
 };
 
 class UniformBufferObject

@@ -10,16 +10,11 @@ DirectionalLight::DirectionalLight() : Light()
     this->transform->SetOrientation(glm::vec3(90.0f, 0.0f, 0.0f));
 }
 
-DirectionalLight::DirectionalLight(std::shared_ptr<ShaderModule> shaderModule, std::shared_ptr<VkRenderPass> renderPass) : DirectionalLight()
+DirectionalLight::DirectionalLight(std::shared_ptr<VkRenderPass> renderPass, Camera* camera) : DirectionalLight()
 {
+    this->camera = camera;
     auto size = sizeof(glm::mat4);
-    //this->shadowMappingPtr = std::make_shared<OmniShadowResources>(shaderModule, renderPass, ShadowMappingMode::DIRECTIONAL_SHADOW);
-
-    this->shadowMapUBO = std::make_shared<UniformBufferObject>();
-    this->shadowMapUBO->CreateUniformBuffer(size, MAX_FRAMES_IN_FLIGHT, *deviceModule);
-
-    //this->descriptorBuffer = std::make_shared<DescriptorBuffer>(shaderModule);
-    //this->descriptorBuffer->InitializeShadowMapDescritorSets(shaderModule, shadowMapUBO, size);
+    this->shadowMappingResourcesPtr = std::make_shared<CSMResources>(renderPass);
 }
 
 void DirectionalLight::UpdateUniform()
@@ -27,38 +22,102 @@ void DirectionalLight::UpdateUniform()
     Light::UpdateUniform();
 
     this->uniform->position = this->transform->Position;
-    this->uniform->direction = this->transform->Rotation;
+    this->uniform->direction = this->transform->ForwardVector;
 
-    glm::mat4 clip = glm::mat4(1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, -1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 0.5f, 0.0f,
-        0.0f, 0.0f, 0.5f, 1.0f);
+    this->UpdateCascades();
+    this->shadowMappingResourcesPtr->UpdateOffscreenUBOShadowMap();
+}
 
-    glm::mat4 lightview = glm::lookAt(this->transform->Position, this->transform->ForwardVector, this->transform->UpVector);
-    glm::mat4 lightProjection = clip * glm::ortho(-10.f, 10.f, -10.f, 10.f, 0.01f, this->radius);
-    glm::mat4 viewproj = lightProjection * lightview;
+void DirectionalLight::UpdateCascades()
+{
+    float cascadeSplitPtr[SHADOW_MAP_CASCADE_COUNT];
+    float nearClip = camera->GetNear();
+    float farClip = camera->GetFar();
+    float clipRange = farClip - nearClip;
 
-    for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
+    float minZ = nearClip;
+    float maxZ = nearClip + clipRange;
+
+    float range = maxZ - minZ;
+    float ratio = maxZ / minZ;
+
+    // Calculate split depths based on view camera frustum
+    // Based on method presented in https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html
+    for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++) {
+        float p = (i + 1) / static_cast<float>(SHADOW_MAP_CASCADE_COUNT);
+        float log = minZ * std::pow(ratio, p);
+        float uniform = minZ + range * p;
+        float d = this->cascadeSplitLambda * (log - uniform) + uniform;
+        cascadeSplitPtr[i] = (d - nearClip) / clipRange;
+    }
+
+    // Calculate orthographic projection matrix for each cascade
+    float lastSplitDist = 0.0;
+    for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
     {
-        void* data;
-        vkMapMemory(this->deviceModule->device, this->shadowMapUBO->uniformBuffersMemory[currentFrame], 0, sizeof(glm::mat4), 0, &data);
-        memcpy(data, &viewproj, sizeof(glm::mat4));
-        vkUnmapMemory(this->deviceModule->device, this->shadowMapUBO->uniformBuffersMemory[currentFrame]);
+        float splitDist = cascadeSplitPtr[i];
+
+        glm::vec3 frustumCorners[8] = {
+            glm::vec3(-1.0f,  1.0f, 0.0f),
+            glm::vec3(1.0f,  1.0f, 0.0f),
+            glm::vec3(1.0f, -1.0f, 0.0f),
+            glm::vec3(-1.0f, -1.0f, 0.0f),
+            glm::vec3(-1.0f,  1.0f,  1.0f),
+            glm::vec3(1.0f,  1.0f,  1.0f),
+            glm::vec3(1.0f, -1.0f,  1.0f),
+            glm::vec3(-1.0f, -1.0f,  1.0f),
+        };
+
+        // Project frustum corners into world space
+        glm::mat4 invCam = glm::inverse(camera->VP);
+        for (uint32_t j = 0; j < 8; j++)
+        {
+            glm::vec4 invCorner = invCam * glm::vec4(frustumCorners[j], 1.0);
+            frustumCorners[j] = invCorner / invCorner.w;
+        }
+
+        for (uint32_t j = 0; j < 4; j++)
+        {
+            glm::vec3 dist = frustumCorners[j + 4] - frustumCorners[j];
+            frustumCorners[j] = frustumCorners[j] + (dist * lastSplitDist);
+            frustumCorners[j + 4] = frustumCorners[j] + (dist * splitDist);
+        }
+
+        // Get frustum center
+        glm::vec3 frustumCenter = glm::vec3(0.0f);
+        for (uint32_t j = 0; j < 8; j++)
+        {
+            frustumCenter += frustumCorners[j];
+        }
+        frustumCenter /= 8.0f;
+
+        float radius = 0.0f;
+        for (uint32_t j = 0; j < 8; j++)
+        {
+            float distance = glm::length(frustumCorners[j] - frustumCenter);
+            radius = glm::max(radius, distance);
+        }
+        radius = std::ceil(radius * 16.0f) / 16.0f;
+
+        glm::vec3 maxExtents = glm::vec3(radius);
+        glm::vec3 minExtents = -maxExtents;
+
+        glm::vec3 lightDir = this->transform->ForwardVector;
+
+        glm::vec3 eye = frustumCenter - lightDir * maxExtents.z;
+
+        glm::mat4 lightViewMatrix = glm::lookAt(eye, frustumCenter, glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 lightOrthoMatrix = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, minExtents.z, maxExtents.z - minExtents.z);
+
+        // Store split distance and matrix in cascade
+        this->shadowMappingResourcesPtr->CascadeResourcesPtr->at(i).splitDepth = (nearClip + splitDist * clipRange) * -1.0f;
+        this->shadowMappingResourcesPtr->CascadeResourcesPtr->at(i).viewProjMatrix = lightOrthoMatrix * lightViewMatrix;
+
+        lastSplitDist = cascadeSplitPtr[i];
     }
 }
 
 void DirectionalLight::CleanShadowMapResources()
 {
-    for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-    {
-        if (this->shadowMapUBO != nullptr)
-        {
-            vkDestroyBuffer(deviceModule->device, this->shadowMapUBO->uniformBuffers[i], nullptr);
-            vkFreeMemory(deviceModule->device, this->shadowMapUBO->uniformBuffersMemory[i], nullptr);
-        }
-    }
-
-    //this->shadowMappingPtr->cleanup();
-    //this->descriptorBuffer->Cleanup();
-    //this->descriptorBuffer->CleanLastResources();
+    this->shadowMappingResourcesPtr->Cleanup();
 }

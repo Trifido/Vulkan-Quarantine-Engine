@@ -15,6 +15,7 @@
 
 #include <DescriptorBuffer.h>
 #include <PointShadowDescriptorsManager.h>
+#include <CSMDescriptorsManager.h>
 
 class DirectionalLight;
 class SpotLight;
@@ -52,7 +53,6 @@ private:
     std::vector<uint32_t> light_tiles_bits;
 
     RenderPassModule* renderPassModule = nullptr;
-    std::shared_ptr<ShaderModule> dir_shadow_map_shader = nullptr;
 
 public:
     static LightManager* instance;
@@ -71,7 +71,11 @@ public:
     std::vector<std::shared_ptr<PointLight>> PointLights;
 
     std::shared_ptr<PointShadowDescriptorsManager> PointShadowDescritors;
+    std::shared_ptr<CSMDescriptorsManager> CSMDescritors;
+    std::shared_ptr<ShadowPipelineModule> CSMPipelineModule = nullptr;
     std::shared_ptr<ShadowPipelineModule> OmniShadowPipelineModule = nullptr;
+
+    std::shared_ptr<ShaderModule> CSMShaderModule = nullptr;
     std::shared_ptr<ShaderModule> OmniShadowShaderModule = nullptr;
 
 private:
@@ -92,6 +96,7 @@ public:
     void Update();
     void UpdateUniform();
     void UpdateUBOLight();
+    void UpdateCSMLights();
     void CleanLightUBO();
     void CleanLastResources();
     void CleanShadowMapResources();
