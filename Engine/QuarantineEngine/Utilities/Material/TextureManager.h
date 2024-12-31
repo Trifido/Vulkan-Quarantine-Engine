@@ -5,20 +5,19 @@
 
 #include <CustomTexture.h>
 #include <unordered_map>
+#include <QESingleton.h>
 
-class TextureManager
+class TextureManager : public QESingleton<TextureManager>
 {
 private:
+    friend class QESingleton<TextureManager>; // Permitir acceso al constructor
     std::unordered_map<std::string, std::shared_ptr<CustomTexture>> _textures;
-    static TextureManager* instance;
 
 private:
     std::string CheckName(std::string textureName);
 
 public:
     TextureManager();
-    static TextureManager* getInstance();
-    static void ResetInstance();
     std::shared_ptr<CustomTexture> GetTexture(std::string nameTexture);
     std::string AddTexture(std::string textureName, std::shared_ptr<CustomTexture> texture_ptr);
     std::string AddTexture(std::string textureName, CustomTexture texture);

@@ -4,21 +4,18 @@
 #define SHADER_MANAGER_H
 
 #include <ShaderModule.h>
+#include <QESingleton.h>
 
-class ShaderManager
+class ShaderManager : public QESingleton<ShaderManager>
 {
 private:
+    friend class QESingleton<ShaderManager>; // Permitir acceso al constructor
     std::unordered_map<std::string, std::shared_ptr<ShaderModule>> _shaders;
-
-public:
-    static ShaderManager* instance;
 
 private:
     std::string CheckName(std::string nameMaterial);
 
 public:
-    static ShaderManager* getInstance();
-    static void ResetInstance();
     std::shared_ptr<ShaderModule> GetShader(std::string nameMaterial);
     void AddShader(std::string shaderName, std::shared_ptr<ShaderModule> shader_ptr);
     void AddShader(std::string shaderName, ShaderModule shader);

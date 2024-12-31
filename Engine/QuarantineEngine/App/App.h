@@ -54,6 +54,7 @@
 #include <ComputePipelineManager.h>
 #include <ShadowPipelineManager.h>
 #include <Particles/ParticleSystemManager.h>
+#include <AtmosphereSystem.h>
 
 const std::string MODEL_PATH = "../../resources/models/head/head.obj";
 const std::string TEXTURE_WALL_NORMAL_PATH = "../../resources/textures/wall/brickwall_normal.jpg";
@@ -147,6 +148,7 @@ private:
     ShadowPipelineManager* shadowPipelineManager{};
     ParticleSystemManager* particleSystemManager{};
     CullingSceneManager* cullingSceneManager{};
+    AtmosphereSystem*   atmosphereSystem{};
 
     KeyboardController* keyboard_ptr {};
 

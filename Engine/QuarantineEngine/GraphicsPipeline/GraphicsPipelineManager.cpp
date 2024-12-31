@@ -1,8 +1,6 @@
 #include "GraphicsPipelineManager.h"
 #include <iostream>
 
-GraphicsPipelineManager* GraphicsPipelineManager::instance = nullptr;
-
 std::string GraphicsPipelineManager::CheckName(std::string namePipeline)
 {
 	std::unordered_map<std::string, std::shared_ptr<GraphicsPipelineModule>>::const_iterator got;
@@ -22,20 +20,6 @@ std::string GraphicsPipelineManager::CheckName(std::string namePipeline)
 	} while (got != _graphicsPipelines.end());
 
 	return newName;
-}
-
-GraphicsPipelineManager* GraphicsPipelineManager::getInstance()
-{
-    if (instance == NULL)
-        instance = new GraphicsPipelineManager();
-
-    return instance;
-}
-
-void GraphicsPipelineManager::ResetInstance()
-{
-	delete instance;
-	instance = nullptr;
 }
 
 std::shared_ptr<GraphicsPipelineModule> GraphicsPipelineManager::GetPipeline(std::string namePipeline)

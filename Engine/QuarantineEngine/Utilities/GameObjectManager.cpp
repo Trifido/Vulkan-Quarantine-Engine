@@ -1,8 +1,5 @@
 #include "GameObjectManager.h"
-
 #include <iostream>
-
-GameObjectManager* GameObjectManager::instance = nullptr;
 
 GameObjectManager::GameObjectManager()
 {
@@ -56,20 +53,6 @@ void GameObjectManager::AddGameObject(std::shared_ptr<GameObject> object_ptr, st
             this->_physicObjects[name] = object_ptr;
         }
     }
-}
-
-GameObjectManager* GameObjectManager::getInstance()
-{
-    if (instance == NULL)
-        instance = new GameObjectManager();
-
-    return instance;
-}
-
-void GameObjectManager::ResetInstance()
-{
-	delete instance;
-	instance = nullptr;
 }
 
 void GameObjectManager::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)

@@ -2,8 +2,6 @@
 #include "ShaderModule.h"
 #include <iostream>
 
-ShadowPipelineManager* ShadowPipelineManager::instance = nullptr;
-
 ShadowPipelineManager::ShadowPipelineManager()
 {
     this->_shadowPipelines.reserve(8);
@@ -28,20 +26,6 @@ std::string ShadowPipelineManager::CheckName(std::string namePipeline)
     } while (got != _shadowPipelines.end());
 
     return newName;
-}
-
-ShadowPipelineManager* ShadowPipelineManager::getInstance()
-{
-    if (instance == NULL)
-        instance = new ShadowPipelineManager();
-
-    return instance;
-}
-
-void ShadowPipelineManager::ResetInstance()
-{
-    delete instance;
-    instance = nullptr;
 }
 
 std::shared_ptr<ShadowPipelineModule> ShadowPipelineManager::GetPipeline(std::string namePipeline)

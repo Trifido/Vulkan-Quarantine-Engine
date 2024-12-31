@@ -2,8 +2,6 @@
 #include <ShaderManager.h>
 #include <filesystem>
 
-ComputeNodeManager* ComputeNodeManager::instance = nullptr;
-
 std::string ComputeNodeManager::CheckName(std::string nameComputeNode)
 {
     std::unordered_map<std::string, std::shared_ptr<ComputeNode>>::const_iterator got;
@@ -23,24 +21,6 @@ std::string ComputeNodeManager::CheckName(std::string nameComputeNode)
     } while (got != _computeNodes.end());
 
     return newName;
-}
-
-ComputeNodeManager::ComputeNodeManager()
-{
-}
-
-ComputeNodeManager* ComputeNodeManager::getInstance()
-{
-    if (instance == NULL)
-        instance = new ComputeNodeManager();
-
-    return instance;
-}
-
-void ComputeNodeManager::ResetInstance()
-{
-    delete instance;
-    instance = nullptr;
 }
 
 void ComputeNodeManager::InitializeComputeResources()

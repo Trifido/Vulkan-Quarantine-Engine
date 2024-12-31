@@ -8,10 +8,12 @@
 #include <Material/TextureManager.h>
 #include <GraphicsPipelineModule.h>
 #include <RenderPassModule.h>
+#include <QESingleton.h>
 
-class MaterialManager
+class MaterialManager : public QESingleton<MaterialManager>
 {
 private:
+    friend class QESingleton<MaterialManager>; // Permitir acceso al constructor
     std::unordered_map<std::string, std::shared_ptr<Material>> _materials;
 
     Camera*             cameraEditor;
@@ -24,7 +26,6 @@ private:
     std::shared_ptr<ShaderModule> mesh_shader_test;
 
 public:
-    static MaterialManager* instance;
     std::shared_ptr<ShaderModule> csm_shader;
     std::shared_ptr<ShaderModule> omni_shadow_mapping_shader;
 
@@ -34,8 +35,6 @@ private:
 public:
     MaterialManager();
     void InitializeMaterialManager();
-    static MaterialManager* getInstance();
-    static void ResetInstance();
     std::shared_ptr<Material> GetMaterial(std::string nameMaterial);
     void AddMaterial(const char* nameMaterial, std::shared_ptr<Material> mat_ptr);
     void AddMaterial(std::string& nameMaterial, std::shared_ptr<Material> mat_ptr);

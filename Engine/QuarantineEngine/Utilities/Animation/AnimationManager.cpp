@@ -1,7 +1,5 @@
 #include "AnimationManager.h"
 
-AnimationManager* AnimationManager::instance = nullptr;
-
 std::string AnimationManager::CheckName(std::string nameGameObject)
 {
     std::unordered_map<std::string, std::shared_ptr<AnimationComponent>>::const_iterator got;
@@ -20,20 +18,6 @@ std::string AnimationManager::CheckName(std::string nameGameObject)
     } while (got != _animationComponents.end());
 
     return newName;
-}
-
-AnimationManager* AnimationManager::getInstance()
-{
-    if (instance == NULL)
-        instance = new AnimationManager();
-
-    return instance;
-}
-
-void AnimationManager::ResetInstance()
-{
-	delete instance;
-	instance = nullptr;
 }
 
 std::shared_ptr<AnimationComponent> AnimationManager::GetAnimationComponent(std::string nameGameObject)

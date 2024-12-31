@@ -6,29 +6,26 @@
 #include <unordered_map>
 #include <memory>
 #include <string>
-
 #include <vulkan/vulkan.h>
 #include <GraphicsPipelineModule.h>
 #include <GraphicsPipelineData.h>
+#include <QESingleton.h>
 
 class GraphicsPipelineModule;
 class ShaderModule;
 
-class GraphicsPipelineManager
+class GraphicsPipelineManager : public QESingleton<GraphicsPipelineManager>
+
 {
 private:
+    friend class QESingleton<GraphicsPipelineManager>; // Permitir acceso al constructor
     std::unordered_map<std::string, std::shared_ptr<GraphicsPipelineModule>> _graphicsPipelines;
     std::shared_ptr<VkRenderPass> defaultRenderPass = nullptr;
-
-public:
-    static GraphicsPipelineManager* instance;
 
 private:
     std::string CheckName(std::string pipelineName);
 
 public:
-    static GraphicsPipelineManager* getInstance();
-    static void ResetInstance();
     std::shared_ptr<GraphicsPipelineModule> GetPipeline(std::string pipelineName);
     void AddGraphicsPipeline(const char* pipelineName, std::shared_ptr<GraphicsPipelineModule> gp_ptr);
     void AddGraphicsPipeline(std::string& pipelineName, std::shared_ptr<GraphicsPipelineModule> gp_ptr);

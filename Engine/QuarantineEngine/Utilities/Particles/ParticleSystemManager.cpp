@@ -1,7 +1,5 @@
 #include "ParticleSystemManager.h"
 
-ParticleSystemManager* ParticleSystemManager::instance = nullptr;
-
 ParticleSystemManager::ParticleSystemManager()
 {
     this->gameObjectManager = GameObjectManager::getInstance();
@@ -46,20 +44,6 @@ std::shared_ptr<ParticleSystem> ParticleSystemManager::GetParticleSystem(std::st
         return it->second;
 
     return nullptr;
-}
-
-ParticleSystemManager* ParticleSystemManager::getInstance()
-{
-    if (instance == NULL)
-        instance = new ParticleSystemManager();
-
-    return instance;
-}
-
-void ParticleSystemManager::ResetInstance()
-{
-    delete instance;
-    instance = nullptr;
 }
 
 void ParticleSystemManager::Cleanup()

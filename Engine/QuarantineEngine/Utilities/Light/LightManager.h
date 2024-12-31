@@ -17,6 +17,8 @@
 #include <PointShadowDescriptorsManager.h>
 #include <CSMDescriptorsManager.h>
 
+#include <QESingleton.h>
+
 class DirectionalLight;
 class SpotLight;
 class PointLight;
@@ -31,9 +33,11 @@ struct LightMap
 
 bool compareDistance(const LightMap& a, const LightMap& b);
 
-class LightManager
+class LightManager : public QESingleton<LightManager>
 {
 private:
+    friend class QESingleton<LightManager>; // Permitir acceso al constructor
+
     const size_t MAX_NUM_LIGHT = 64;
     const uint32_t BIN_SLICES = 16;
     const uint32_t NUM_WORDS = (MAX_NUM_LIGHT + 31) / 32;
@@ -55,7 +59,6 @@ private:
     RenderPassModule* renderPassModule = nullptr;
 
 public:
-    static LightManager* instance;
     std::shared_ptr<UniformBufferObject>    lightUBO = nullptr;
     std::shared_ptr<UniformBufferObject>    lightSSBO = nullptr;
     VkDeviceSize                            lightSSBOSize;
@@ -85,8 +88,6 @@ private:
     void ComputeLightTiles();
 
 public:
-    static LightManager* getInstance();
-    static void ResetInstance();
     LightManager();
     void AddDirShadowMapShader(std::shared_ptr<ShaderModule> shadow_mapping_shader);
     void AddOmniShadowMapShader(std::shared_ptr<ShaderModule> omni_shadow_mapping_shader);

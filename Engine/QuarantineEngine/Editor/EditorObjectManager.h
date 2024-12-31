@@ -7,19 +7,17 @@
 #include <memory>
 #include "EditorObject.h"
 #include <vulkan/vulkan.hpp>
+#include <QESingleton.h>
 
-class EditorObjectManager
+class EditorObjectManager : public QESingleton<EditorObjectManager>
 {
 private:
+    friend class QESingleton<EditorObjectManager>; // Permitir acceso al constructor
     std::unordered_map<std::string, std::shared_ptr<EditorObject>> _objects;
-public:
-    static EditorObjectManager* instance;
 
 public:
     void AddEditorObject(std::shared_ptr<EditorObject> object_ptr, std::string name);
     std::shared_ptr<EditorObject> GetObject(std::string name);
-    static EditorObjectManager* getInstance();
-    static void ResetInstance();
     void DrawCommnad(VkCommandBuffer& commandBuffer, uint32_t idx);
     void Cleanup();
     void CleanLastResources();

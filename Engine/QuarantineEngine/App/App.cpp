@@ -182,7 +182,7 @@ void App::initVulkan()
     this->cullingSceneManager = CullingSceneManager::getInstance();
     this->cullingSceneManager->InitializeCullingSceneResources();
     this->cullingSceneManager->AddCameraFrustum(this->cameraEditor->frustumComponent);
-    this->cullingSceneManager->isDebugEnable = false;
+    this->cullingSceneManager->DebugMode = false;
 
     // Inicializamos los componentes del editorW
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
@@ -273,12 +273,12 @@ void App::initVulkan()
     // INIT ------------------------- Lights ----------------------------------------
     // POINT LIGHTS
     {
-        this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
-        auto pointLight = this->lightManager->GetLight("PointLight1");
-        pointLight->transform->SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
-        pointLight->diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
-        pointLight->specular = glm::vec3(0.7f, 0.7f, 0.7f);
-        pointLight->SetDistanceEffect(100.0f);
+        //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
+        //auto pointLight = this->lightManager->GetLight("PointLight1");
+        //pointLight->transform->SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
+        //pointLight->diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
+        //pointLight->specular = glm::vec3(0.7f, 0.7f, 0.7f);
+        //pointLight->SetDistanceEffect(100.0f);
 
         //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight2");
         //auto pointLight2 = this->lightManager->GetLight("PointLight2");
@@ -297,11 +297,11 @@ void App::initVulkan()
 
     // DIRECTIONAL LIGHTS
     {
-        //this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
-        //auto dirlight = this->lightManager->GetLight("DirectionalLight0");
-        //dirlight->diffuse = glm::vec3(0.6f);
-        //dirlight->specular = glm::vec3(0.1f);
-        //dirlight->SetDistanceEffect(100.0f);
+        this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
+        auto dirlight = this->lightManager->GetLight("DirectionalLight0");
+        dirlight->diffuse = glm::vec3(0.6f);
+        dirlight->specular = glm::vec3(0.1f);
+        dirlight->SetDistanceEffect(100.0f);
 
         //this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight2");
         //auto dirlight2 = this->lightManager->GetLight("DirectionalLight2");

@@ -6,8 +6,6 @@
 #include <backends/imgui_impl_vulkan.h>
 #include <SynchronizationModule.h>
 
-CommandPoolModule* CommandPoolModule::instance = nullptr;
-
 CommandPoolModule::CommandPoolModule()
 {
     deviceModule = DeviceModule::getInstance();
@@ -19,22 +17,9 @@ CommandPoolModule::CommandPoolModule()
     cullingSceneManager = CullingSceneManager::getInstance();
     lightManager = LightManager::getInstance();
     renderPassModule = RenderPassModule::getInstance();
+    atmosphereSystem = AtmosphereSystem::getInstance();
 
     this->ClearColor = glm::vec3(0.1f);
-}
-
-CommandPoolModule* CommandPoolModule::getInstance()
-{
-    if (instance == NULL)
-        instance = new CommandPoolModule();
-
-    return instance;
-}
-
-void CommandPoolModule::ResetInstance()
-{
-    delete instance;
-    instance = nullptr;
 }
 
 void CommandPoolModule::createCommandPool(VkSurfaceKHR& surface)

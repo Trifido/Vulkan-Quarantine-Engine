@@ -1,7 +1,5 @@
 #include <TextureManager.h>
 
-TextureManager* TextureManager::instance = nullptr;
-
 TextureManager::TextureManager()
 {
     this->AddTexture("NULL_TEXTURE", CustomTexture());
@@ -26,20 +24,6 @@ std::string TextureManager::CheckName(std::string textureName)
     } while (got != _textures.end());
 
     return newName;
-}
-
-TextureManager* TextureManager::getInstance()
-{
-    if (instance == NULL)
-        instance = new TextureManager();
-
-    return instance;
-}
-
-void TextureManager::ResetInstance()
-{
-	delete instance;
-	instance = nullptr;
 }
 
 std::shared_ptr<CustomTexture> TextureManager::GetTexture(std::string nameTexture)
