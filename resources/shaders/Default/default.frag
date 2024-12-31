@@ -15,6 +15,7 @@
 #define BIN_WIDTH ( 1.0 / NUM_BINS )
 #define MAX_NUM_LIGHTS 64
 #define NUM_WORDS ( ( MAX_NUM_LIGHTS + 31 ) / 32 )
+#define FAR_PLANE 500.0;
 
 const mat4 biasMat = mat4( 
 	0.5, 0.0, 0.0, 0.0,
@@ -22,6 +23,15 @@ const mat4 biasMat = mat4(
 	0.0, 0.0, 1.0, 0.0,
 	0.5, 0.5, 0.0, 1.0 
 );
+
+vec3 sampleOffsetDirections[20] = vec3[]
+(
+   vec3( 1,  1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1,  1,  1), 
+   vec3( 1,  1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1,  1, -1),
+   vec3( 1,  1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1,  1,  0),
+   vec3( 1,  0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1,  0, -1),
+   vec3( 0,  1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0,  1, -1)
+); 
 
 layout(location = 0) in VS_OUT {
     vec3 FragPos;
@@ -137,15 +147,16 @@ vec3 GetAlbedoColor();
 vec3 GetSpecularColor();
 vec3 GetEmissiveColor();
 
-float ComputeTextureProj(vec4 shadowCoord, vec2 offset, uint lightIdx, uint cascadeIndex);
-float ComputeFilterPCF(vec4 sc, uint lightIdx, uint cascadeIndex);
+float ComputeCSMTextureProj(vec4 shadowCoord, vec2 offset, uint lightIdx, uint cascadeIndex);
+float ComputeCSMFilterPCF(vec4 sc, uint lightIdx, uint cascadeIndex);
+float ComputeCubeMapPCF(uint lightIdx, vec3 lightVec, float distance);
 
 void main()
 {
     vec4 pos_camera_space = cameraData.view * vec4(fs_in.FragPos, 1.0);
-    float z_light_far = 500.0;
+    float z_far = FAR_PLANE;
     float z_near = 0.1;
-    float linear_d = (-pos_camera_space.z - z_near) / (z_light_far - z_near);
+    float linear_d = (-pos_camera_space.z - z_near) / (z_far - z_near);
     int bin_index = int( linear_d / BIN_WIDTH );
     uint bin_value = bins[ bin_index ];
 
@@ -238,10 +249,11 @@ vec3 ComputeAmbientLight(vec3 diffuseColor)
 
 vec3 ComputePointLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive)
 {
-    float distance = length(light.position - fs_in.FragPos);
+    vec3 lightDirVector = light.position - fs_in.FragPos;
+    float distance = length(lightDirVector);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
-    vec3 lightDir = normalize(light.position - fs_in.FragPos);
+    vec3 lightDir = normalize(lightDirVector);
     float diff = max(dot(lightDir, normal), 0.0);
     vec3 diffuse = diff * light.diffuse * albedo * attenuation;
 
@@ -253,9 +265,7 @@ vec3 ComputePointLight(LightData light, vec3 normal, vec3 albedo, vec3 specular,
 
     vec3 result = diffuse + specularResult + emissive;
 
-    vec3 lightVec = fs_in.FragPos - light.position;
-    float sampledDist = texture(QE_PointShadowCubemaps[light.idxShadowMap], lightVec).r;
-    float shadow = (distance <= sampledDist + EPSILON) ? 1.0 : SHADOW_OPACITY;
+    float shadow = ComputeCubeMapPCF(light.idxShadowMap, -lightDirVector, distance);
 
     return result * shadow;
 }
@@ -287,7 +297,7 @@ vec3 ComputeDirectionalLight(LightData light, vec3 normal, vec3 albedo, vec3 spe
     uint viewProjIndex = CSM_COUNT * light.idxShadowMap + cascadeIndex;
 
 	vec4 shadowCoord = (biasMat * QE_CascadeViewProj[viewProjIndex]) * vec4(fs_in.FragPos, 1.0);
-    float shadow = ComputeFilterPCF(shadowCoord / shadowCoord.w, light.idxShadowMap, cascadeIndex);
+    float shadow = ComputeCSMFilterPCF(shadowCoord / shadowCoord.w, light.idxShadowMap, cascadeIndex);
 
     return result * shadow;
 }
@@ -315,7 +325,7 @@ vec3 ComputeSpotLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, 
     return diffuseResult + specularResult + emissive;
 }
 
-float ComputeTextureProj(vec4 shadowCoord, vec2 offset, uint lightIdx, uint cascadeIndex)
+float ComputeCSMTextureProj(vec4 shadowCoord, vec2 offset, uint lightIdx, uint cascadeIndex)
 {
 	float shadow = 1.0;
 	float bias = 0.005;
@@ -332,7 +342,7 @@ float ComputeTextureProj(vec4 shadowCoord, vec2 offset, uint lightIdx, uint casc
 
 }
 
-float ComputeFilterPCF(vec4 sc, uint lightIdx, uint cascadeIndex)
+float ComputeCSMFilterPCF(vec4 sc, uint lightIdx, uint cascadeIndex)
 {
 	ivec2 texDim = textureSize(QE_DirectionalShadowmaps[lightIdx], 0).xy;
 	float scale = 1.5;
@@ -347,10 +357,36 @@ float ComputeFilterPCF(vec4 sc, uint lightIdx, uint cascadeIndex)
 	{
 		for (int y = -range; y <= range; y++)
 		{
-			shadowFactor += ComputeTextureProj(sc, vec2(dx*x, dy*y), lightIdx, cascadeIndex);
+			shadowFactor += ComputeCSMTextureProj(sc, vec2(dx*x, dy*y), lightIdx, cascadeIndex);
 			count++;
 		}
 	}
 
 	return shadowFactor / count;
+}
+
+float ComputeCubeMapPCF(uint lightIdx, vec3 lightVec, float distance)
+{
+    float shadow = 0.0;
+    float bias   = 0.15;
+    int samples  = 20;
+    float z_far = FAR_PLANE;
+    float viewDistance = length(cameraData.position.xyz - fs_in.FragPos);
+    float diskRadius = (1.0 + (viewDistance / z_far)) / 25.0;
+
+    float currentDepth = length(lightVec);
+
+    for(int i = 0; i < samples; ++i)
+    {
+        float sampledDist = texture(QE_PointShadowCubemaps[lightIdx], lightVec + sampleOffsetDirections[i] * diskRadius).r;
+
+        if(distance <= sampledDist + EPSILON)
+        {
+            shadow += SHADOW_OPACITY;
+        }
+    }
+
+    shadow /= float(samples);
+
+    return shadow;
 }
