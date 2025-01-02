@@ -28,12 +28,9 @@ void AtmosphereSystem::InitializeResources()
     const std::string absolute_skybox_cubemap_vert_shader_path = absPath + "/Atmosphere/skybox_cubemap_vert.spv";
     const std::string absolute_skybox_cubemap_frag_shader_path = absPath + "/Atmosphere/skybox_cubemap_frag.spv";
 
-    GraphicsPipelineData pipelineData = {};
-    pipelineData.vertexBufferStride = sizeof(glm::vec4);
-
     auto shaderManager = ShaderManager::getInstance();
     this->skybox_cubemap_shader = std::make_shared<ShaderModule>(
-        ShaderModule(absolute_skybox_cubemap_vert_shader_path, absolute_skybox_cubemap_frag_shader_path, pipelineData)
+        ShaderModule(absolute_skybox_cubemap_vert_shader_path, absolute_skybox_cubemap_frag_shader_path)
     );
     shaderManager->AddShader("skybox_cubemap", this->skybox_cubemap_shader);
 
@@ -56,11 +53,11 @@ void AtmosphereSystem::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
         auto pipelineModule = this->skybox_cubemap_shader->PipelineModule;
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
-        vkCmdSetDepthTestEnable(commandBuffer, true);
-        vkCmdSetDepthWriteEnable(commandBuffer, true);
+        vkCmdSetDepthTestEnable(commandBuffer, false);
+        vkCmdSetDepthWriteEnable(commandBuffer, false);
 
-        vkCmdSetCullMode(commandBuffer, true);
-        vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
+        vkCmdSetCullMode(commandBuffer, VK_CULL_MODE_BACK_BIT);
+        vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_COUNTER_CLOCKWISE);
 
         VkDeviceSize offsets[] = { 0 };
         VkBuffer vertexBuffers[] = { this->_Mesh->vertexBuffer };

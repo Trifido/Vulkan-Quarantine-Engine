@@ -13,7 +13,7 @@ private:
 
     DeviceModule* device_ptr;
     std::shared_ptr<ShaderModule> skybox_cubemap_shader;
-    std::shared_ptr<GeometryComponent>  _Mesh = nullptr;
+    std::shared_ptr<GeometryComponent> _Mesh = nullptr;
     glm::mat4 model = glm::mat4(1.0f);
 
 public:

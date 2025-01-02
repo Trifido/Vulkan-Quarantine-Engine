@@ -12,9 +12,9 @@ private:
     friend class QESingleton<RenderPassModule>; // Permitir acceso al constructor
     DeviceModule* device_ptr;
 public:
-    std::shared_ptr<VkRenderPass>    renderPass;
-    std::shared_ptr<VkRenderPass>    dirShadowMappingRenderPass;
-    std::shared_ptr<VkRenderPass> omniShadowMappingRenderPass;
+    std::shared_ptr<VkRenderPass>   renderPass;
+    std::shared_ptr<VkRenderPass>   dirShadowMappingRenderPass;
+    std::shared_ptr<VkRenderPass>   omniShadowMappingRenderPass;
 
 public:
     RenderPassModule();

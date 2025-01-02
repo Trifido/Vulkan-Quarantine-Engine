@@ -117,6 +117,7 @@ void CommandPoolModule::setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t
     vkCmdSetViewport(commandBuffers[iCBuffer], 0, 1, &viewport);
     vkCmdSetScissor(commandBuffers[iCBuffer], 0, 1, &scissor);
 
+    this->atmosphereSystem->DrawCommand(commandBuffers[iCBuffer], iCBuffer);
     this->gameObjectManager->DrawCommand(commandBuffers[iCBuffer], iCBuffer);
     this->editorManager->DrawCommnad(commandBuffers[iCBuffer], iCBuffer);
     this->cullingSceneManager->DrawDebug(commandBuffers[iCBuffer], iCBuffer);
