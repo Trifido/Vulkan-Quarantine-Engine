@@ -306,10 +306,18 @@ void ShaderModule::CreateDescriptorSetLayout()
 {
     this->descriptorSetLayouts.resize(this->reflectShader.bindings.size());
 
-    for (int idSet = 0; idSet < this->reflectShader.bindings.size(); idSet++)
-    {
-        std::vector<VkDescriptorSetLayoutBinding> bindings{};
+    int idSet = 0;
+    int countSet = 0;
 
+    while(countSet < this->reflectShader.bindings.size())
+    {
+        if (this->reflectShader.bindings.find(idSet) == this->reflectShader.bindings.end())
+        {
+            idSet++;
+            continue;
+        }
+
+        std::vector<VkDescriptorSetLayoutBinding> bindings{};
         for (auto reflectLayotBinding : this->reflectShader.bindings[idSet])
         {
             VkDescriptorSetLayoutBinding layoutBinding = {};
@@ -326,9 +334,11 @@ void ShaderModule::CreateDescriptorSetLayout()
         layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
         layoutInfo.pBindings = bindings.data();
 
-        if (vkCreateDescriptorSetLayout(deviceModule->device, &layoutInfo, nullptr, &this->descriptorSetLayouts.at(idSet)) != VK_SUCCESS) {
+        if (vkCreateDescriptorSetLayout(deviceModule->device, &layoutInfo, nullptr, &this->descriptorSetLayouts.at(countSet)) != VK_SUCCESS) {
             throw std::runtime_error("failed to create descriptor set layout!");
         }
+        countSet++;
+        idSet++;
     }
 }
 

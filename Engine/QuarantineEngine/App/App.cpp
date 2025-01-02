@@ -184,7 +184,10 @@ void App::initVulkan()
     this->cullingSceneManager->AddCameraFrustum(this->cameraEditor->frustumComponent);
     this->cullingSceneManager->DebugMode = false;
 
-    // Inicializamos los componentes del editorW
+    this->atmosphereSystem = AtmosphereSystem::getInstance();
+    this->atmosphereSystem->InitializeResources();
+
+    // Inicializamos los componentes del editor
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
     this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
     grid_ptr->IsRenderable = true;
@@ -509,6 +512,7 @@ void App::cleanUp()
     this->animationManager->Cleanup();
     this->lightManager->CleanShadowMapResources();
 
+    this->atmosphereSystem->Cleanup();
     this->gameObjectManager->Cleanup();
     this->particleSystemManager->Cleanup();
     this->editorManager->Cleanup();
@@ -572,6 +576,10 @@ void App::cleanManagers()
     this->animationManager->ResetInstance();
     this->animationManager = nullptr;
 
+    this->atmosphereSystem->CleanLastResources();
+    this->atmosphereSystem->ResetInstance();
+    this->atmosphereSystem = nullptr;
+
     this->gameObjectManager->CleanLastResources();
     this->gameObjectManager->ResetInstance();
     this->gameObjectManager = nullptr;
@@ -581,7 +589,7 @@ void App::cleanManagers()
 
     this->particleSystemManager->CleanLastResources();
     this->particleSystemManager->ResetInstance();
-    this->gameObjectManager = nullptr;
+    this->particleSystemManager = nullptr;
 
     this->textureManager->CleanLastResources();
     this->textureManager->ResetInstance();
