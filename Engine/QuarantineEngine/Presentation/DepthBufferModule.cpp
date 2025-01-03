@@ -16,9 +16,16 @@ void DepthBufferModule::createDepthResources(VkExtent2D& swapChainExtent, VkComm
     createImage(swapChainExtent.width, swapChainExtent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 1U, 1U, *antialiasingModule->msaaSamples);
 
-    imageView = IMT::createImageView(deviceModule->device, image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+    imageView = IMT::createImageView(deviceModule->device, image, VK_IMAGE_VIEW_TYPE_2D, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 
-    transitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_ASPECT_DEPTH_BIT);
+    VkImageSubresourceRange range = {};
+    range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+    range.baseMipLevel = 0;
+    range.levelCount = mipLevels;
+    range.baseArrayLayer = 0;
+    range.layerCount = 1;
+
+    transitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, range);
 }
 
 VkFormat DepthBufferModule::findDepthFormat()

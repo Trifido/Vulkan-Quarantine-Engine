@@ -3,7 +3,7 @@
 
 QueueModule* TextureManagerModule::queueModule;
 
-void TextureManagerModule::transitionImageLayout(VkImage newImage, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageAspectFlags aspectFlag)
+void TextureManagerModule::transitionImageLayout(VkImage newImage, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageSubresourceRange range)
 {
     VkCommandBuffer commandBuffer = beginSingleTimeCommands(deviceModule->device, *ptrCommandPool);
     VkImageMemoryBarrier barrier{};
@@ -13,11 +13,7 @@ void TextureManagerModule::transitionImageLayout(VkImage newImage, VkImageLayout
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.image = newImage;
-    barrier.subresourceRange.aspectMask = aspectFlag;// VK_IMAGE_ASPECT_COLOR_BIT | VK_IMAGE_ASPECT_DEPTH_BIT;
-    barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = mipLevels;
-    barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount = 1;
+    barrier.subresourceRange = range;
     barrier.srcAccessMask = 0; // TODO
     barrier.dstAccessMask = 0; // TODO
 
@@ -81,6 +77,11 @@ void TextureManagerModule::createImage(uint32_t width, uint32_t height, VkFormat
     imageInfo.usage = usage;
     imageInfo.samples = numSamples;
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    if (arrayLayers == 6)
+    {
+        imageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+    }
 
     if (vkCreateImage(deviceModule->device, &imageInfo, nullptr, &image) != VK_SUCCESS) {
         throw std::runtime_error("failed to create image!");

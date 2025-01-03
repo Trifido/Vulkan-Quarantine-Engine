@@ -186,6 +186,8 @@ void App::initVulkan()
 
     this->atmosphereSystem = AtmosphereSystem::getInstance();
     this->atmosphereSystem->InitializeResources();
+    this->atmosphereSystem->SetCamera(this->cameraEditor);
+    this->atmosphereSystem->AddSkyboxTexture(TEXTURE_SKYBOX_PATH);
 
     // Inicializamos los componentes del editor
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();

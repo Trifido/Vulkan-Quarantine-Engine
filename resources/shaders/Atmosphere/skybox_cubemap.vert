@@ -20,16 +20,11 @@ layout(set = 0, binding = 0) uniform CameraUniform
     vec4 frustumPlanes[6];
 } cameraData;
 
-layout(std430, push_constant) uniform PushConstants
-{
-    mat4 model;
-} constants;
-
 void main() {
     QE_out.UVW = inPosition.xyz;
     // Convert cubemap coordinates into Vulkan coordinate space
-	QE_out.UVW.xy *= -1.0;
+	QE_out.UVW.z *= -1.0;
 
-    mat4 viewMat = mat4(mat3(constants.model));
+    mat4 viewMat = mat4(mat3(cameraData.view));
     gl_Position = cameraData.proj * viewMat * inPosition;
 }

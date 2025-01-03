@@ -13,7 +13,7 @@ void ImageViewModule::createImageViews(SwapChainModule& swapChainModule)
 
     for (size_t i = 0; i < swapChainModule.getNumSwapChainImages(); i++)
     {
-        swapChainImageViews[i] = IMT::createImageView(deviceModule->device, swapChainModule.swapChainImages[i], swapChainModule.swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
+        swapChainImageViews[i] = IMT::createImageView(deviceModule->device, swapChainModule.swapChainImages[i], VK_IMAGE_VIEW_TYPE_2D, swapChainModule.swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
     }
 }
 

@@ -300,12 +300,9 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
     this->buffersInfo.resize(this->numBinding);
     uint32_t idx = 0;
 
-    for (int idSet = 0; idSet < shader_ptr->reflectShader.bindings.size(); idSet++)
+    if (!shader_ptr->reflectShader.bindings[0].empty())
     {
-        if (idSet > 0)
-            continue;
-
-        for (auto binding : shader_ptr->reflectShader.bindings[idSet])
+        for (auto binding : shader_ptr->reflectShader.bindings[0])
         {
             if (binding.first == "CameraUniform")
             {
