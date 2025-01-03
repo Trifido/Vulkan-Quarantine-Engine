@@ -185,6 +185,22 @@ void AtmosphereSystem::Cleanup()
 {
     this->_Mesh->cleanup();
     this->_Mesh = nullptr;
+
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        if (this->descriptorSets[i] != VK_NULL_HANDLE)
+        {
+            this->descriptorSets[i] = VK_NULL_HANDLE;
+        }
+    }
+
+    if (this->descriptorPool != VK_NULL_HANDLE)
+    {
+        vkDestroyDescriptorPool(deviceModule->device, this->descriptorPool, nullptr);
+        this->descriptorPool = VK_NULL_HANDLE;
+    }
+
+    this->skyboxTexture->cleanup();
 }
 
 void AtmosphereSystem::CleanLastResources()
