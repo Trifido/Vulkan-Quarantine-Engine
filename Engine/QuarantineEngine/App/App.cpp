@@ -185,9 +185,9 @@ void App::initVulkan()
     this->cullingSceneManager->DebugMode = false;
 
     this->atmosphereSystem = AtmosphereSystem::getInstance();
-    this->atmosphereSystem->InitializeResources();
+    this->atmosphereSystem->SetUpResources(AtmosphereSystem::SPHERICALMAP);
     this->atmosphereSystem->SetCamera(this->cameraEditor);
-    this->atmosphereSystem->AddSkyboxResources(TEXTURE_SKYBOX_PATH_FACES);
+    this->atmosphereSystem->AddTextureResources(TEXTURE_SPHERICAL_MAP_PATH);
 
     // Inicializamos los componentes del editor
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();

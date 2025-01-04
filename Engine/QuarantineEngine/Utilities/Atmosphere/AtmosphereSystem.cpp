@@ -7,6 +7,7 @@
 
 AtmosphereSystem::AtmosphereSystem()
 {
+    this->environmentType = ENVIRONMENT_TYPE::NONEMAP;
     this->deviceModule = DeviceModule::getInstance();
 }
 
@@ -15,48 +16,55 @@ AtmosphereSystem::~AtmosphereSystem()
     this->deviceModule = nullptr;
 }
 
-void AtmosphereSystem::AddSkyboxResources(std::string texturePath)
+void AtmosphereSystem::AddTextureResources(std::string texturePath)
 {
-    const std::string path = this->GetAbsolutePath(texturePath);
+    const std::string path = this->GetAbsolutePath("../../resources/textures", texturePath);
 
-    this->skyboxTexture = std::make_shared<CustomTexture>(path, TEXTURE_TYPE::CUBEMAP_TYPE);
+    TEXTURE_TYPE textureType = (this->environmentType == ENVIRONMENT_TYPE::CUBEMAP) ? TEXTURE_TYPE::CUBEMAP_TYPE : TEXTURE_TYPE::DIFFUSE_TYPE;
+
+    this->environmentTexture = std::make_shared<CustomTexture>(path, textureType);
     this->CreateDescriptorSet();
 }
 
-void AtmosphereSystem::AddSkyboxResources(vector<string> texturePaths)
+void AtmosphereSystem::AddTextureResources(vector<string> texturePaths)
 {
     assert(texturePaths.size() == 6);
 
     for (size_t i = 0; i < texturePaths.size(); i++)
     {
-        texturePaths[i] = this->GetAbsolutePath(texturePaths[i]);
+        texturePaths[i] = this->GetAbsolutePath("../../resources/textures", texturePaths[i]);
     }
 
-    this->skyboxTexture = std::make_shared<CustomTexture>(texturePaths);
+    this->environmentTexture = std::make_shared<CustomTexture>(texturePaths);
     this->CreateDescriptorSet();
 }
 
-void AtmosphereSystem::InitializeResources()
+void AtmosphereSystem::SetUpResources(ENVIRONMENT_TYPE type)
 {
-    auto absPath = std::filesystem::absolute("../../resources/shaders").generic_string();
+    if (this->environmentType == type) return;
 
-    std::string substring = "/Engine";
-    std::size_t ind = absPath.find(substring);
+    this->Cleanup();
+    this->CleanLastResources();
 
-    if (ind != std::string::npos) {
-        absPath.erase(ind, substring.length());
-    }
+    this->environmentType = type;
 
-    const std::string absolute_skybox_cubemap_vert_shader_path = absPath + "/Atmosphere/skybox_cubemap_vert.spv";
-    const std::string absolute_skybox_cubemap_frag_shader_path = absPath + "/Atmosphere/skybox_cubemap_frag.spv";
+    const string absolute_sky_vert_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[type]);
+    const string absolute_sky_frag_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[type + 2]);
 
     auto shaderManager = ShaderManager::getInstance();
-    this->skybox_cubemap_shader = std::make_shared<ShaderModule>(
-        ShaderModule(absolute_skybox_cubemap_vert_shader_path, absolute_skybox_cubemap_frag_shader_path)
+    this->environment_shader = std::make_shared<ShaderModule>(
+        ShaderModule(absolute_sky_vert_shader_path, absolute_sky_frag_shader_path)
     );
-    shaderManager->AddShader("skybox_cubemap", this->skybox_cubemap_shader);
+    shaderManager->AddShader("environment_map", this->environment_shader);
 
-    this->_Mesh = std::make_shared<PrimitiveMesh>(PRIMITIVE_TYPE::CUBE_TYPE);
+    if (this->environmentType == ENVIRONMENT_TYPE::CUBEMAP)
+    {
+        this->_Mesh = std::make_shared<PrimitiveMesh>(PRIMITIVE_TYPE::CUBE_TYPE);
+    }
+    else
+    {
+        this->_Mesh = std::make_shared<PrimitiveMesh>(PRIMITIVE_TYPE::SPHERE_TYPE);
+    }
     this->_Mesh->InitializeMesh();
 
     this->CreateDescriptorPool();
@@ -91,11 +99,11 @@ void AtmosphereSystem::CreateDescriptorPool()
 void AtmosphereSystem::CreateDescriptorSet()
 {
     std::vector<VkDescriptorSetLayout> layouts;
-    for (uint32_t i = 0; i < this->skybox_cubemap_shader->descriptorSetLayouts.size(); i++)
+    for (uint32_t i = 0; i < this->environment_shader->descriptorSetLayouts.size(); i++)
     {
         for (uint32_t f = 0; f < MAX_FRAMES_IN_FLIGHT; f++)
         {
-            layouts.push_back(this->skybox_cubemap_shader->descriptorSetLayouts.at(i));
+            layouts.push_back(this->environment_shader->descriptorSetLayouts.at(i));
         }
     }
 
@@ -117,7 +125,7 @@ void AtmosphereSystem::CreateDescriptorSet()
         descriptorWrites.resize(2);
 
         this->SetDescriptorWrite(descriptorWrites[0], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, this->camera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform));
-        this->SetCubeMapDescriptorWrite(descriptorWrites[1], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1);
+        this->SetSamplerDescriptorWrite(descriptorWrites[1], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1);
 
         vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
@@ -146,11 +154,11 @@ void AtmosphereSystem::SetDescriptorWrite(VkWriteDescriptorSet& descriptorWrite,
     descriptorWrite.pBufferInfo = &this->buffersInfo;
 }
 
-void AtmosphereSystem::SetCubeMapDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding)
+void AtmosphereSystem::SetSamplerDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding)
 {
     this->imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    this->imageInfo.imageView = this->skyboxTexture->imageView; // ImageView del cubemap
-    this->imageInfo.sampler = this->skyboxTexture->textureSampler; // Sampler para el cubemap
+    this->imageInfo.imageView = this->environmentTexture->imageView; // ImageView del cubemap
+    this->imageInfo.sampler = this->environmentTexture->textureSampler; // Sampler para el cubemap
 
     descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     descriptorWrite.dstSet = descriptorSet;
@@ -161,9 +169,9 @@ void AtmosphereSystem::SetCubeMapDescriptorWrite(VkWriteDescriptorSet& descripto
     descriptorWrite.pImageInfo = &this->imageInfo;
 }
 
-string AtmosphereSystem::GetAbsolutePath(string relativePath)
+string AtmosphereSystem::GetAbsolutePath(string relativePath, string filename)
 {
-    auto absPath = std::filesystem::absolute("../../resources/textures").generic_string();
+    auto absPath = std::filesystem::absolute(relativePath).generic_string();
 
     std::string substring = "/Engine";
     std::size_t ind = absPath.find(substring);
@@ -172,14 +180,14 @@ string AtmosphereSystem::GetAbsolutePath(string relativePath)
         absPath.erase(ind, substring.length());
     }
 
-    return absPath + "/" + relativePath;
+    return absPath + "/" + filename;
 }
 
 void AtmosphereSystem::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t frameIdx)
 {
     if (this->_Mesh != nullptr)
     {
-        auto pipelineModule = this->skybox_cubemap_shader->PipelineModule;
+        auto pipelineModule = this->environment_shader->PipelineModule;
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
         vkCmdSetDepthTestEnable(commandBuffer, false);
@@ -193,7 +201,7 @@ void AtmosphereSystem::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t fram
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
         vkCmdBindIndexBuffer(commandBuffer, this->_Mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->skybox_cubemap_shader->PipelineModule->pipelineLayout, 0, 1, &descriptorSets.at(frameIdx), 0, nullptr);
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->environment_shader->PipelineModule->pipelineLayout, 0, 1, &descriptorSets.at(frameIdx), 0, nullptr);
 
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->_Mesh->indices.size()), 1, 0, 0, 0);
     }
@@ -201,14 +209,20 @@ void AtmosphereSystem::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t fram
 
 void AtmosphereSystem::Cleanup()
 {
-    this->_Mesh->cleanup();
-    this->_Mesh = nullptr;
-
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    if (_Mesh != nullptr)
     {
-        if (this->descriptorSets[i] != VK_NULL_HANDLE)
+        this->_Mesh->cleanup();
+        this->_Mesh = nullptr;
+    }
+
+    if (!this->descriptorSets.empty())
+    {
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-            this->descriptorSets[i] = VK_NULL_HANDLE;
+            if (this->descriptorSets[i] != VK_NULL_HANDLE)
+            {
+                this->descriptorSets[i] = VK_NULL_HANDLE;
+            }
         }
     }
 
@@ -218,11 +232,18 @@ void AtmosphereSystem::Cleanup()
         this->descriptorPool = VK_NULL_HANDLE;
     }
 
-    this->skyboxTexture->cleanup();
+    if (this->environmentTexture != nullptr)
+    {
+        this->environmentTexture->cleanup();
+        this->environmentTexture = nullptr;
+    }
 }
 
 void AtmosphereSystem::CleanLastResources()
 {
-    this->skybox_cubemap_shader.reset();
-    this->skybox_cubemap_shader = nullptr;
+    if (this->environment_shader != nullptr)
+    {
+        this->environment_shader.reset();
+        this->environment_shader = nullptr;
+    }
 }
