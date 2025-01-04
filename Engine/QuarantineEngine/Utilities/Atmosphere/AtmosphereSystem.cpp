@@ -15,20 +15,24 @@ AtmosphereSystem::~AtmosphereSystem()
     this->deviceModule = nullptr;
 }
 
-void AtmosphereSystem::AddSkyboxTexture(std::string texturePath)
+void AtmosphereSystem::AddSkyboxResources(std::string texturePath)
 {
-    auto absPath = std::filesystem::absolute("../../resources/textures").generic_string();
-
-    std::string substring = "/Engine";
-    std::size_t ind = absPath.find(substring);
-
-    if (ind != std::string::npos) {
-        absPath.erase(ind, substring.length());
-    }
-
-    const std::string path = absPath + "/" + texturePath;
+    const std::string path = this->GetAbsolutePath(texturePath);
 
     this->skyboxTexture = std::make_shared<CustomTexture>(path, TEXTURE_TYPE::CUBEMAP_TYPE);
+    this->CreateDescriptorSet();
+}
+
+void AtmosphereSystem::AddSkyboxResources(vector<string> texturePaths)
+{
+    assert(texturePaths.size() == 6);
+
+    for (size_t i = 0; i < texturePaths.size(); i++)
+    {
+        texturePaths[i] = this->GetAbsolutePath(texturePaths[i]);
+    }
+
+    this->skyboxTexture = std::make_shared<CustomTexture>(texturePaths);
     this->CreateDescriptorSet();
 }
 
@@ -155,6 +159,20 @@ void AtmosphereSystem::SetCubeMapDescriptorWrite(VkWriteDescriptorSet& descripto
     descriptorWrite.descriptorType = descriptorType;
     descriptorWrite.descriptorCount = 1;
     descriptorWrite.pImageInfo = &this->imageInfo;
+}
+
+string AtmosphereSystem::GetAbsolutePath(string relativePath)
+{
+    auto absPath = std::filesystem::absolute("../../resources/textures").generic_string();
+
+    std::string substring = "/Engine";
+    std::size_t ind = absPath.find(substring);
+
+    if (ind != std::string::npos) {
+        absPath.erase(ind, substring.length());
+    }
+
+    return absPath + "/" + relativePath;
 }
 
 void AtmosphereSystem::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t frameIdx)

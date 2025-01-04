@@ -60,7 +60,6 @@ private:
     void CreateRenderDescriptorPool();
     void CreateRenderDescriptorSet();
     VkDescriptorSetLayout CreateRenderDescriptorSetLayout();
-    void SetRenderDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize);
     void SetCubeMapDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding);
     VkDescriptorBufferInfo GetBufferInfo(VkBuffer buffer, VkDeviceSize bufferSize);
     void CreateCubemapPlaceHolder();

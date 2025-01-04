@@ -8,6 +8,8 @@
 #include <Camera.h>
 #include <QESingleton.h>
 
+using namespace std;
+
 class AtmosphereSystem : public QESingleton<AtmosphereSystem>
 {
 private:
@@ -16,15 +18,15 @@ private:
     DeviceModule* deviceModule;
     Camera* camera = nullptr;
 
-    std::shared_ptr<ShaderModule> skybox_cubemap_shader;
-    std::shared_ptr<GeometryComponent> _Mesh = nullptr;
+    shared_ptr<ShaderModule> skybox_cubemap_shader;
+    shared_ptr<GeometryComponent> _Mesh = nullptr;
 
     // Descriptor set
-    std::vector<VkDescriptorSet> descriptorSets;
+    vector<VkDescriptorSet> descriptorSets;
     VkDescriptorPool descriptorPool;
 
     // Cubemap resources
-    std::shared_ptr<CustomTexture> skyboxTexture = nullptr;
+    shared_ptr<CustomTexture> skyboxTexture = nullptr;
 
     VkDescriptorBufferInfo buffersInfo;
     VkDescriptorImageInfo imageInfo;
@@ -37,11 +39,13 @@ private:
 
     void SetCubeMapDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding);
 
+    string GetAbsolutePath(string relativePath);
 public:
     AtmosphereSystem();
     ~AtmosphereSystem();
 
-    void AddSkyboxTexture(std::string texturePath);
+    void AddSkyboxResources(string texturePath);
+    void AddSkyboxResources(vector<string> texturePaths);
     void InitializeResources();
     void SetCamera(Camera* cameraPtr);
     void DrawCommand(VkCommandBuffer& commandBuffer, uint32_t frameIdx);

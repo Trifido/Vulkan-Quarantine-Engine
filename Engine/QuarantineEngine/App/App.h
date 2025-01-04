@@ -56,6 +56,8 @@
 #include <Particles/ParticleSystemManager.h>
 #include <AtmosphereSystem.h>
 
+using namespace std;
+
 const std::string MODEL_PATH = "../../resources/models/head/head.obj";
 const std::string TEXTURE_WALL_NORMAL_PATH = "../../resources/textures/wall/brickwall_normal.jpg";
 const std::string MODEL_HOUSE_PATH = "../../resources/models/vikingRoom/viking_room.obj";
@@ -74,7 +76,8 @@ const std::string TEXTURE_BUMP_PATH = "../../resources/models/head/bump.png";
 const std::string TEXTURE_WALL_PATH = "../../resources/textures/wall/brickwall.jpg";
 const std::string TEXTURE_TEST_PATH = "../../resources/textures/test.png";
 const std::string TEXTURE_HOUSE_PATH = "../../resources/textures/viking_room.png";
-const std::string TEXTURE_SKYBOX_PATH = "cubemaps_skybox.png";
+const std::string TEXTURE_SKYBOX_PATH = "skybox/HDRIHaven.jpg";
+const vector<std::string> TEXTURE_SKYBOX_PATH_FACES = { "skybox/right.jpg", "skybox/left.jpg", "skybox/top.jpg", "skybox/bottom.jpg", "skybox/front.jpg", "skybox/back.jpg"};
 
 const std::string TEXTURE_CONTAINER_PATH = "../../resources/textures/container2.png";
 const std::string TEXTURE_CONTAINERSPEC_PATH = "../../resources/textures/container2_specular.png";
