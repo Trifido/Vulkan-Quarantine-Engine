@@ -35,7 +35,7 @@ public:
     void createCubemapTextureImage(string path = NULL);
     void createCubemapTextureImage(vector<string> paths);
     void createTextureRawImage(aiTexel* rawData, unsigned int width, unsigned int height);
-    void createTextureImageView();
+    void createTextureImageView(VkFormat imageFormat);
     void createTextureSampler();
     void createCubemapTextureSampler();
     void cleanup();

@@ -185,9 +185,9 @@ void App::initVulkan()
     this->cullingSceneManager->DebugMode = false;
 
     this->atmosphereSystem = AtmosphereSystem::getInstance();
-    this->atmosphereSystem->SetUpResources(AtmosphereSystem::SPHERICALMAP);
-    this->atmosphereSystem->SetCamera(this->cameraEditor);
-    this->atmosphereSystem->AddTextureResources(TEXTURE_SPHERICAL_MAP_PATH);
+    this->atmosphereSystem->InitializeAtmosphere(AtmosphereSystem::CUBEMAP, TEXTURE_SKYBOX_PATH_FACES.data(), TEXTURE_SKYBOX_PATH_FACES.size(), this->cameraEditor);
+    //this->atmosphereSystem->InitializeAtmosphere(AtmosphereSystem::SPHERICALMAP, &TEXTURE_SPHERICAL_MAP_PATH, 1, this->cameraEditor);
+    //this->atmosphereSystem->InitializeAtmosphere(AtmosphereSystem::CUBEMAP, &TEXTURE_SKYBOX_PATH, 1, this->cameraEditor);
 
     // Inicializamos los componentes del editor
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
@@ -278,12 +278,12 @@ void App::initVulkan()
     // INIT ------------------------- Lights ----------------------------------------
     // POINT LIGHTS
     {
-        this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
-        auto pointLight = this->lightManager->GetLight("PointLight1");
-        pointLight->transform->SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
-        pointLight->diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
-        pointLight->specular = glm::vec3(0.7f, 0.7f, 0.7f);
-        pointLight->SetDistanceEffect(100.0f);
+        //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
+        //auto pointLight = this->lightManager->GetLight("PointLight1");
+        //pointLight->transform->SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
+        //pointLight->diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
+        //pointLight->specular = glm::vec3(0.7f, 0.7f, 0.7f);
+        //pointLight->SetDistanceEffect(100.0f);
 
         //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight2");
         //auto pointLight2 = this->lightManager->GetLight("PointLight2");

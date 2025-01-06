@@ -296,6 +296,7 @@ void CustomTexture::createTextureImage(std::string path)
     mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
 
     VkDeviceSize imageSize = texWidth * texHeight * 4;
+    VkFormat imageFormat = stbi_is_hdr(path.c_str()) ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_SRGB;
 
     if (!pixels) {
         throw std::runtime_error("failed to load texture image!");
@@ -313,7 +314,7 @@ void CustomTexture::createTextureImage(std::string path)
 
     stbi_image_free(pixels);
 
-    createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+    createImage(texWidth, texHeight, imageFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mipLevels, 1, VK_SAMPLE_COUNT_1_BIT);
 
     copyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), mipLevels);
@@ -321,9 +322,9 @@ void CustomTexture::createTextureImage(std::string path)
     vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
     vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
 
-    generateMipmaps(image, VK_FORMAT_R8G8B8A8_SRGB, texWidth, texHeight, mipLevels);
+    generateMipmaps(image, imageFormat, texWidth, texHeight, mipLevels);
 
-    this->createTextureImageView();
+    this->createTextureImageView(imageFormat);
     this->createTextureSampler();
 }
 
@@ -343,6 +344,7 @@ void CustomTexture::createCubemapTextureImage(std::string path)
         pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     }
 
+    VkFormat imageFormat = stbi_is_hdr(path.c_str()) ? VK_FORMAT_R32G32B32A32_SFLOAT : VK_FORMAT_R8G8B8A8_SRGB;
     uint32_t cubemapSize = texWidth / 4;
     mipLevels = 1;
 
@@ -364,7 +366,7 @@ void CustomTexture::createCubemapTextureImage(std::string path)
 
     stbi_image_free(pixels);
 
-    createImage(cubemapSize, cubemapSize, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+    createImage(cubemapSize, cubemapSize, imageFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mipLevels, 6, VK_SAMPLE_COUNT_1_BIT);
 
     copyBufferToCubemapImage(stagingBuffer, image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), mipLevels);
@@ -380,7 +382,7 @@ void CustomTexture::createCubemapTextureImage(std::string path)
     vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
     vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
 
-    this->createTextureImageView();
+    this->createTextureImageView(imageFormat);
     this->createCubemapTextureSampler();
 }
 
@@ -408,7 +410,8 @@ void CustomTexture::createCubemapTextureImage(vector<string> paths)
             throw std::runtime_error("failed to load texture image!");
         }
     }
-
+    
+    VkFormat imageFormat = stbi_is_hdr(paths[0].c_str()) ? VK_FORMAT_R32G32B32A32_SFLOAT : VK_FORMAT_R8G8B8A8_SRGB;
     mipLevels = 1;
 
     VkDeviceSize stagingBufferSize = texWidth * texHeight * 4 * 6;
@@ -431,7 +434,7 @@ void CustomTexture::createCubemapTextureImage(vector<string> paths)
         offset += imageSize;
     }
 
-    createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+    createImage(texWidth, texHeight, imageFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mipLevels, 6, VK_SAMPLE_COUNT_1_BIT);
 
     copyBufferImagesToCubemapImage(stagingBuffer, image, static_cast<uint32_t>(texWidth), imageSize, mipLevels);
@@ -447,7 +450,7 @@ void CustomTexture::createCubemapTextureImage(vector<string> paths)
     vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
     vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
 
-    this->createTextureImageView();
+    this->createTextureImageView(imageFormat);
     this->createCubemapTextureSampler();
 }
 
@@ -492,15 +495,15 @@ void CustomTexture::createTextureRawImage(aiTexel* rawData, unsigned int width, 
 
     generateMipmaps(image, VK_FORMAT_R8G8B8A8_SRGB, texWidth, texHeight, mipLevels);
 
-    this->createTextureImageView();
+    this->createTextureImageView(VK_FORMAT_R8G8B8A8_SRGB);
     this->createTextureSampler();
 }
 
-void CustomTexture::createTextureImageView()
+void CustomTexture::createTextureImageView(VkFormat imageFormat)
 {
     VkImageViewType viewType = (this->type == TEXTURE_TYPE::CUBEMAP_TYPE) ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D;
     uint32_t layerCount = (this->type == TEXTURE_TYPE::CUBEMAP_TYPE) ? 6 : 1;
-    imageView = IMT::createImageView(deviceModule->device, image, viewType, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, layerCount);
+    imageView = IMT::createImageView(deviceModule->device, image, viewType, imageFormat, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, layerCount);
 }
 
 void CustomTexture::createTextureSampler()

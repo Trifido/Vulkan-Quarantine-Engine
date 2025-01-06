@@ -7,7 +7,7 @@
 
 AtmosphereSystem::AtmosphereSystem()
 {
-    this->environmentType = ENVIRONMENT_TYPE::NONEMAP;
+    this->environmentType = ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY;
     this->deviceModule = DeviceModule::getInstance();
 }
 
@@ -16,40 +16,45 @@ AtmosphereSystem::~AtmosphereSystem()
     this->deviceModule = nullptr;
 }
 
-void AtmosphereSystem::AddTextureResources(std::string texturePath)
+void AtmosphereSystem::AddTextureResources(const string* texturePaths, uint32_t numTextures)
 {
-    const std::string path = this->GetAbsolutePath("../../resources/textures", texturePath);
-
     TEXTURE_TYPE textureType = (this->environmentType == ENVIRONMENT_TYPE::CUBEMAP) ? TEXTURE_TYPE::CUBEMAP_TYPE : TEXTURE_TYPE::DIFFUSE_TYPE;
 
-    this->environmentTexture = std::make_shared<CustomTexture>(path, textureType);
-    this->CreateDescriptorSet();
-}
-
-void AtmosphereSystem::AddTextureResources(vector<string> texturePaths)
-{
-    assert(texturePaths.size() == 6);
-
-    for (size_t i = 0; i < texturePaths.size(); i++)
+    vector<string> resultPaths;
+    for (size_t i = 0; i < numTextures; i++)
     {
-        texturePaths[i] = this->GetAbsolutePath("../../resources/textures", texturePaths[i]);
+        resultPaths.push_back(this->GetAbsolutePath("../../resources/textures", texturePaths[i]));
     }
 
-    this->environmentTexture = std::make_shared<CustomTexture>(texturePaths);
+    switch (numTextures)
+    {
+    default:
+    case 0:
+        break;
+    case 1:
+        this->environmentTexture = std::make_shared<CustomTexture>(resultPaths[0], textureType);
+        break;
+    case 6:
+        this->environmentTexture = std::make_shared<CustomTexture>(resultPaths);
+        break;
+    }
     this->CreateDescriptorSet();
 }
 
-void AtmosphereSystem::SetUpResources(ENVIRONMENT_TYPE type)
+void AtmosphereSystem::InitializeAtmosphere(Camera* cameraPtr)
 {
-    if (this->environmentType == type) return;
+    this->SetUpResources(cameraPtr);
+}
 
+void AtmosphereSystem::SetUpResources(Camera* cameraPtr)
+{
     this->Cleanup();
     this->CleanLastResources();
 
-    this->environmentType = type;
+    this->camera = cameraPtr;
 
-    const string absolute_sky_vert_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[type]);
-    const string absolute_sky_frag_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[type + 2]);
+    const string absolute_sky_vert_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[this->environmentType]);
+    const string absolute_sky_frag_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[this->environmentType + 2]);
 
     auto shaderManager = ShaderManager::getInstance();
     this->environment_shader = std::make_shared<ShaderModule>(
@@ -57,17 +62,34 @@ void AtmosphereSystem::SetUpResources(ENVIRONMENT_TYPE type)
     );
     shaderManager->AddShader("environment_map", this->environment_shader);
 
-    if (this->environmentType == ENVIRONMENT_TYPE::CUBEMAP)
+    switch (this->environmentType)
     {
+    default:
+    case ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY:
+        this->_Mesh = std::make_shared<PrimitiveMesh>(PRIMITIVE_TYPE::QUAD_TYPE);
+        break;
+    case ENVIRONMENT_TYPE::CUBEMAP:
         this->_Mesh = std::make_shared<PrimitiveMesh>(PRIMITIVE_TYPE::CUBE_TYPE);
-    }
-    else
-    {
+        break;
+    case ENVIRONMENT_TYPE::SPHERICALMAP:
         this->_Mesh = std::make_shared<PrimitiveMesh>(PRIMITIVE_TYPE::SPHERE_TYPE);
+        break;
     }
+
     this->_Mesh->InitializeMesh();
+}
+
+void AtmosphereSystem::InitializeAtmosphere(ENVIRONMENT_TYPE type, const string* texturePaths, uint32_t numTextures, Camera* cameraPtr)
+{
+    if (this->environmentType == type) return;
+
+    this->environmentType = type;
+
+    this->SetUpResources(cameraPtr);
 
     this->CreateDescriptorPool();
+
+    this->AddTextureResources(texturePaths, numTextures);
 }
 
 void AtmosphereSystem::SetCamera(Camera* cameraPtr)

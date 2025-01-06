@@ -15,7 +15,7 @@ class AtmosphereSystem : public QESingleton<AtmosphereSystem>
 public:
     enum ENVIRONMENT_TYPE
     {
-        NONEMAP = -1,
+        PHYSICALLY_BASED_SKY = -1,
         CUBEMAP = 0,
         SPHERICALMAP = 1,
     };
@@ -54,20 +54,19 @@ private:
 private:
     void CreateDescriptorPool();
     void CreateDescriptorSet();
+    string GetAbsolutePath(string relativePath, string filename);
     VkDescriptorBufferInfo GetBufferInfo(VkBuffer buffer, VkDeviceSize bufferSize);
     void SetDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize);
-
     void SetSamplerDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding);
-
-    string GetAbsolutePath(string relativePath, string filename);
+    void SetUpResources(Camera* cameraPtr);
 
 public:
     AtmosphereSystem();
     ~AtmosphereSystem();
 
-    void AddTextureResources(string texturePath);
-    void AddTextureResources(vector<string> texturePaths);
-    void SetUpResources(ENVIRONMENT_TYPE type);
+    void AddTextureResources(const string* texturePaths, uint32_t numTextures);
+    void InitializeAtmosphere(Camera* cameraPtr);
+    void InitializeAtmosphere(ENVIRONMENT_TYPE type, const string* texturePaths, uint32_t numTextures, Camera* cameraPtr);
     void SetCamera(Camera* cameraPtr);
     void DrawCommand(VkCommandBuffer& commandBuffer, uint32_t frameIdx);
     void Cleanup();

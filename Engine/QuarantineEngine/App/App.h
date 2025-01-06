@@ -78,7 +78,7 @@ const string TEXTURE_TEST_PATH = "../../resources/textures/test.png";
 const string TEXTURE_HOUSE_PATH = "../../resources/textures/viking_room.png";
 const string TEXTURE_SKYBOX_PATH = "skybox/HDRIHaven.jpg";
 const vector<string> TEXTURE_SKYBOX_PATH_FACES = { "skybox/right.jpg", "skybox/left.jpg", "skybox/top.jpg", "skybox/bottom.jpg", "skybox/front.jpg", "skybox/back.jpg" };
-const string TEXTURE_SPHERICAL_MAP_PATH = "skybox/spherical.jpg";
+const string TEXTURE_SPHERICAL_MAP_PATH = "skybox/klippad_dawn_1_4k.hdr";
 
 const string TEXTURE_CONTAINER_PATH = "../../resources/textures/container2.png";
 const string TEXTURE_CONTAINERSPEC_PATH = "../../resources/textures/container2_specular.png";
