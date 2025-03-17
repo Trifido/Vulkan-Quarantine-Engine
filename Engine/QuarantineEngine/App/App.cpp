@@ -185,9 +185,10 @@ void App::initVulkan()
     this->cullingSceneManager->DebugMode = false;
 
     this->atmosphereSystem = AtmosphereSystem::getInstance();
-    this->atmosphereSystem->InitializeAtmosphere(AtmosphereSystem::CUBEMAP, TEXTURE_SKYBOX_PATH_FACES.data(), TEXTURE_SKYBOX_PATH_FACES.size(), this->cameraEditor);
+    //this->atmosphereSystem->InitializeAtmosphere(this->cameraEditor);
+    //this->atmosphereSystem->InitializeAtmosphere(AtmosphereSystem::CUBEMAP, TEXTURE_SKYBOX_PATH_FACES.data(), TEXTURE_SKYBOX_PATH_FACES.size(), this->cameraEditor);
     //this->atmosphereSystem->InitializeAtmosphere(AtmosphereSystem::SPHERICALMAP, &TEXTURE_SPHERICAL_MAP_PATH, 1, this->cameraEditor);
-    //this->atmosphereSystem->InitializeAtmosphere(AtmosphereSystem::CUBEMAP, &TEXTURE_SKYBOX_PATH, 1, this->cameraEditor);
+    this->atmosphereSystem->InitializeAtmosphere(this->cameraEditor);
 
     // Inicializamos los componentes del editor
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
@@ -203,7 +204,7 @@ void App::initVulkan()
         absPath.erase(ind, substring.length());
     }
 
-    /**/
+    /*
     //const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
     const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
 
@@ -224,7 +225,7 @@ void App::initVulkan()
     floor->_Material->materialData.SetMaterialField("Specular", glm::vec3(0.0f, 0.0f, 0.0f));
     floor->_Material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
     this->gameObjectManager->AddGameObject(floor, "floor");
-    
+    */
 
 //DEMO
 /*

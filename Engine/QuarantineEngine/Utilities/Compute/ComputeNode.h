@@ -14,7 +14,7 @@ class ComputeNode : public GameComponent
 private:
     DeviceModule*                               deviceModule = nullptr;
     std::shared_ptr<ShaderModule>               computeShader = nullptr;
-
+    uint32_t widthImage, heightImage;
 public:
     std::shared_ptr<ComputeDescriptorBuffer>    computeDescriptor = nullptr;
     uint32_t NElements = 0;
@@ -29,6 +29,7 @@ public:
     void FillComputeBuffer(size_t numElements, unsigned long long elementType, void* data);
     void FillComputeBuffer(uint32_t ssboIndex, VkBuffer buffer, uint32_t bufferSize);
     void InitializeComputeNode();
+    void InitializeOutputTextureComputeNode(uint32_t width, uint32_t height);
     void DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t currentFrame);
     void UpdateComputeDescriptor();
 };

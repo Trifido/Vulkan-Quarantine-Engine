@@ -6,7 +6,9 @@
 #include <ShaderModule.h>
 #include <CustomTexture.h>
 #include <Camera.h>
+#include <LightManager.h>
 #include <QESingleton.h>
+#include <Compute/ComputeNodeManager.h>
 
 using namespace std;
 
@@ -15,9 +17,9 @@ class AtmosphereSystem : public QESingleton<AtmosphereSystem>
 public:
     enum ENVIRONMENT_TYPE
     {
-        PHYSICALLY_BASED_SKY = -1,
         CUBEMAP = 0,
         SPHERICALMAP = 1,
+        PHYSICALLY_BASED_SKY = 2,
     };
 
 private:
@@ -25,6 +27,8 @@ private:
 
     DeviceModule* deviceModule;
     Camera* camera = nullptr;
+    LightManager* lightManager = nullptr;
+    ComputeNodeManager* computeNodeManager;
 
     // Environment type
     ENVIRONMENT_TYPE environmentType;
@@ -33,10 +37,16 @@ private:
     const vector<string> shaderPaths = {
         "Atmosphere/skybox_cubemap_vert.spv",
         "Atmosphere/sky_spherical_map_vert.spv",
+        //"Atmosphere/atmosphere_vert.spv",
         "Atmosphere/skybox_cubemap_frag.spv",
         "Atmosphere/sky_spherical_map_frag.spv",
+        //"Atmosphere/atmosphere_frag.spv",
     };
+
     shared_ptr<ShaderModule> environment_shader;
+
+    shared_ptr<ComputeNode> TLUT_ComputeNode;
+    shared_ptr<ComputeNode> MSLUT_ComputeNode;
 
     // Mesh
     shared_ptr<GeometryComponent> _Mesh = nullptr;

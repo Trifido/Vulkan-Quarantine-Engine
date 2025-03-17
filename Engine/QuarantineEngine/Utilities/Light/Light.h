@@ -10,7 +10,8 @@ enum LightType
     POINT_LIGHT,
     DIRECTIONAL_LIGHT,
     SPOT_LIGHT,
-    AREA_LIGHT
+    AREA_LIGHT,
+    SUN_LIGHT
 };
 
 struct AttenuationData

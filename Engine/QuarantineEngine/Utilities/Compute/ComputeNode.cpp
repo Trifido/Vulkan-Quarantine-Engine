@@ -5,6 +5,7 @@
 ComputeNode::ComputeNode()
 {
     this->deviceModule = DeviceModule::getInstance();
+    this->widthImage = this->heightImage = 0;
 }
 
 ComputeNode::ComputeNode(std::string computeShaderPath) : ComputeNode(std::make_shared<ShaderModule>(computeShaderPath))
@@ -54,6 +55,22 @@ void ComputeNode::InitializeComputeNode()
     this->computeDescriptor->InitializeDescriptorSets(this->computeShader);
 }
 
+void ComputeNode::InitializeOutputTextureComputeNode(uint32_t width, uint32_t height)
+{
+    this->widthImage = width;
+    this->heightImage = height;
+    this->computeDescriptor->outputTexture = std::make_shared<CustomTexture>();
+    this->computeDescriptor->outputTexture->createImage(width, height, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+    VkImageSubresourceRange subresourceRange = {};
+    subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    subresourceRange.baseMipLevel = 0;
+    subresourceRange.levelCount = 1;
+    subresourceRange.layerCount = 1;
+    this->computeDescriptor->outputTexture->createTextureImageView(VK_FORMAT_R16G16B16A16_SFLOAT);
+    this->computeDescriptor->outputTexture->transitionImageLayout(this->computeDescriptor->outputTexture->image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, subresourceRange);
+}
+
 void ComputeNode::cleanup()
 {
     this->computeDescriptor->Cleanup();
@@ -87,8 +104,15 @@ void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, this->computeShader->ComputePipelineModule->pipeline);
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, this->computeShader->ComputePipelineModule->pipelineLayout, 0, 1, &computeDescriptor->descriptorSets[currentFrame], 0, 0);
 
-    uint32_t groupX = (this->NElements < 256) ? this->NElements : ceil(float(this->NElements) / 256.0f);
-    vkCmdDispatch(commandBuffer, groupX, 1, 1);
+    if (this->widthImage == 0 || this->heightImage == 0)
+    {
+        uint32_t groupX = (this->NElements < 256) ? this->NElements : ceil(float(this->NElements) / 256.0f);
+        vkCmdDispatch(commandBuffer, groupX, 1, 1);
+    }
+    else
+    {
+        vkCmdDispatch(commandBuffer, this->widthImage/NElements, this->heightImage/NElements, 1);
+    }
 }
 
 void ComputeNode::UpdateComputeDescriptor()

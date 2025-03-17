@@ -9,6 +9,7 @@ AtmosphereSystem::AtmosphereSystem()
 {
     this->environmentType = ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY;
     this->deviceModule = DeviceModule::getInstance();
+    this->lightManager = LightManager::getInstance();
 }
 
 AtmosphereSystem::~AtmosphereSystem()
@@ -44,6 +45,11 @@ void AtmosphereSystem::AddTextureResources(const string* texturePaths, uint32_t 
 void AtmosphereSystem::InitializeAtmosphere(Camera* cameraPtr)
 {
     this->SetUpResources(cameraPtr);
+    if (this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY)
+    {
+        this->CreateDescriptorPool();
+        this->CreateDescriptorSet();
+    }
 }
 
 void AtmosphereSystem::SetUpResources(Camera* cameraPtr)
@@ -53,14 +59,32 @@ void AtmosphereSystem::SetUpResources(Camera* cameraPtr)
 
     this->camera = cameraPtr;
 
-    const string absolute_sky_vert_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[this->environmentType]);
-    const string absolute_sky_frag_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[this->environmentType + 2]);
-
     auto shaderManager = ShaderManager::getInstance();
-    this->environment_shader = std::make_shared<ShaderModule>(
-        ShaderModule(absolute_sky_vert_shader_path, absolute_sky_frag_shader_path)
-    );
-    shaderManager->AddShader("environment_map", this->environment_shader);
+
+    if (this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY)
+    {
+        const string absolute_sky_vert_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[this->environmentType]);
+        const string absolute_sky_frag_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[this->environmentType + (shaderPaths.size() * 0.5f)]);
+
+        this->environment_shader = std::make_shared<ShaderModule>(
+            ShaderModule(absolute_sky_vert_shader_path, absolute_sky_frag_shader_path)
+        );
+        shaderManager->AddShader("environment_map", this->environment_shader);
+    }
+    else
+    {
+        this->computeNodeManager = ComputeNodeManager::getInstance();
+        this->TLUT_ComputeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("transmittance_lut"));
+        this->TLUT_ComputeNode->NElements = 16;
+        this->TLUT_ComputeNode->InitializeOutputTextureComputeNode(256, 64);
+        this->computeNodeManager->AddComputeNode("transmittance_lut", this->TLUT_ComputeNode);
+
+        this->MSLUT_ComputeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("multi_scattering_lut"));
+        this->MSLUT_ComputeNode->NElements = 16;
+        this->MSLUT_ComputeNode->InitializeOutputTextureComputeNode(32, 32);
+        this->MSLUT_ComputeNode->computeDescriptor->inputTexture = this->TLUT_ComputeNode->computeDescriptor->outputTexture;
+        this->computeNodeManager->AddComputeNode("multi_scattering_lut", this->MSLUT_ComputeNode);
+    }
 
     switch (this->environmentType)
     {
@@ -100,11 +124,17 @@ void AtmosphereSystem::SetCamera(Camera* cameraPtr)
 void AtmosphereSystem::CreateDescriptorPool()
 {
     std::vector<VkDescriptorPoolSize> poolSizes;
-    poolSizes.resize(2);
+
+    int numPool = (this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY) ? 2 : 1;
+    poolSizes.resize(numPool);
     poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     poolSizes[0].descriptorCount = 1;
-    poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    poolSizes[1].descriptorCount = 1;
+
+    if (this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY)
+    {
+        poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        poolSizes[1].descriptorCount = 1;
+    }
 
     VkDescriptorPoolCreateInfo poolInfo = {};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -141,13 +171,18 @@ void AtmosphereSystem::CreateDescriptorSet()
         throw std::runtime_error("failed to allocate descriptor sets!");
     }
 
+    int numWrites = (this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY) ? 2 : 1;
     for (size_t frameIdx = 0; frameIdx < MAX_FRAMES_IN_FLIGHT; frameIdx++)
     {
         std::vector<VkWriteDescriptorSet> descriptorWrites;
-        descriptorWrites.resize(2);
+        descriptorWrites.resize(numWrites);
 
         this->SetDescriptorWrite(descriptorWrites[0], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, this->camera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform));
-        this->SetSamplerDescriptorWrite(descriptorWrites[1], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1);
+
+        if (this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY)
+        {
+            this->SetSamplerDescriptorWrite(descriptorWrites[1], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1);
+        }
 
         vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
@@ -207,7 +242,7 @@ string AtmosphereSystem::GetAbsolutePath(string relativePath, string filename)
 
 void AtmosphereSystem::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t frameIdx)
 {
-    if (this->_Mesh != nullptr)
+    if (this->_Mesh != nullptr && this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY)
     {
         auto pipelineModule = this->environment_shader->PipelineModule;
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
@@ -223,7 +258,10 @@ void AtmosphereSystem::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t fram
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
         vkCmdBindIndexBuffer(commandBuffer, this->_Mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->environment_shader->PipelineModule->pipelineLayout, 0, 1, &descriptorSets.at(frameIdx), 0, nullptr);
+        if (!this->descriptorSets.empty())
+        {
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->environment_shader->PipelineModule->pipelineLayout, 0, 1, &descriptorSets.at(frameIdx), 0, nullptr);
+        }
 
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->_Mesh->indices.size()), 1, 0, 0, 0);
     }

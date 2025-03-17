@@ -275,7 +275,7 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
             {
                 this->inputImageInfo = {};
 
-                this->inputImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                this->inputImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
                 this->inputImageInfo.imageView = inputTexture->imageView;
                 this->inputImageInfo.sampler = inputTexture->textureSampler;
 
@@ -283,7 +283,7 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
                 descriptorWrites[idx].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
                 descriptorWrites[idx].dstBinding = binding.second.binding;
                 descriptorWrites[idx].dstArrayElement = 0;
-                descriptorWrites[idx].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                descriptorWrites[idx].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
                 descriptorWrites[idx].descriptorCount = 1;
                 descriptorWrites[idx].pBufferInfo = VK_NULL_HANDLE;
                 descriptorWrites[idx].dstSet = descriptorSets[frameIdx];
@@ -295,7 +295,7 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
             {
                 this->outputImageInfo = {};
 
-                this->outputImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                this->outputImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
                 this->outputImageInfo.imageView = outputTexture->imageView;
                 this->outputImageInfo.sampler = outputTexture->textureSampler;
 
@@ -303,7 +303,7 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
                 descriptorWrites[idx].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
                 descriptorWrites[idx].dstBinding = binding.second.binding;
                 descriptorWrites[idx].dstArrayElement = 0;
-                descriptorWrites[idx].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                descriptorWrites[idx].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
                 descriptorWrites[idx].descriptorCount = 1;
                 descriptorWrites[idx].pBufferInfo = VK_NULL_HANDLE;
                 descriptorWrites[idx].dstSet = descriptorSets[frameIdx];
