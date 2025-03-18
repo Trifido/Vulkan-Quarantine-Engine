@@ -176,7 +176,7 @@ void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 lumTotal, out vec3 fms)
                 }
             }
             
-            fms += lumFactor;//*invSamples;
+            fms += lumFactor*invSamples;
             lumTotal += lum*invSamples;
         }
     }
@@ -188,7 +188,7 @@ void main() {
    
     float sunCosTheta = mix(-1.0, 1.0, uv.x);
     float sunTheta = safeAcos(sunCosTheta);
-    float height = mix(groundRadiusMM, atmosphereRadiusMM, max(uv.y, 1e-6));
+    float height = mix(groundRadiusMM, atmosphereRadiusMM, max(uv.y, 0.00001));
     
     vec3 pos = vec3(0.0, height, 0.0); 
     vec3 sunDir = normalize(vec3(0.0, sunCosTheta, -sin(sunTheta)));

@@ -15,6 +15,7 @@ private:
     uint32_t            numBinding = 0;
     std::vector<VkDescriptorBufferInfo> buffersInfo;
     VkDescriptorImageInfo inputImageInfo;
+    VkDescriptorImageInfo inputImageInfo_2;
     VkDescriptorImageInfo outputImageInfo;
     std::shared_ptr<DeltaTimeUniform> deltaTimeUniform;
 
@@ -22,7 +23,7 @@ private:
 
 public:
     std::vector<VkDescriptorSet>    descriptorSets;
-    std::shared_ptr<CustomTexture>  inputTexture = nullptr;
+    std::vector<std::shared_ptr<CustomTexture>>  inputTextures = {};
     std::shared_ptr<CustomTexture>  outputTexture = nullptr;
 
     std::vector<std::shared_ptr<UniformBufferObject>>    ssboData;

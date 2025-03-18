@@ -21,24 +21,20 @@ const vec3 ozoneAbsorptionBase = vec3(0.650, 1.881, .085);
 const float sunTransmittanceSteps = 40.0;
 
 // 🔹 Intersección Rayo-Esfera (Optimizado)
-float rayIntersectSphere(vec3 ro, vec3 rd, float radius) {
+float rayIntersectSphere(vec3 ro, vec3 rd, float rad) {
     float b = dot(ro, rd);
-    float c = dot(ro, ro) - radius * radius;
-    float delta = b * b - c;
-    if (delta < 0.0) return -1.0; // No hay intersección
-
-    float sqrtDelta = sqrt(delta);
-    float t1 = -b - sqrtDelta;
-    float t2 = -b + sqrtDelta;
-
-    if (t1 > 0.0) return t1; // Primer impacto
-    if (t2 > 0.0) return t2; // Segundo impacto (si el origen está dentro)
-    return -1.0; // No hay intersección válida
+    float c = dot(ro, ro) - rad*rad;
+    if (c > 0.0f && b > 0.0) return -1.0;
+    float discr = b*b - c;
+    if (discr < 0.0) return -1.0;
+    // Special case: inside sphere, use far discriminant
+    if (discr > b*b) return (-b + sqrt(discr));
+    return -b - sqrt(discr);
 }
 
 // 🔹 Obtiene los coeficientes de dispersión y absorción
 void getScatteringValues(vec3 pos, out vec3 rayleighScattering, out float mieScattering, out vec3 extinction) {
-    float altitudeKM = (length(pos) - groundRadiusMM) * 1000.0;
+    float altitudeKM = (length(pos) - groundRadiusMM) * 100.0;
     float rayleighDensity = exp(-altitudeKM / 8.0);
     float mieDensity = exp(-altitudeKM / 1.2);
 
@@ -60,7 +56,7 @@ vec3 getSunTransmittance(vec3 pos, vec3 sunDir) {
     }
 
     float atmoDist = rayIntersectSphere(pos, sunDir, atmosphereRadiusMM);
-    if (atmoDist < 0.0) return vec3(1.0); // No hay intersección con la atmósfera
+    //if (atmoDist < 0.0) return vec3(1.0); // No hay intersección con la atmósfera
 
     float t = 0.0;
     vec3 transmittance = vec3(1.0);
@@ -81,15 +77,19 @@ vec3 getSunTransmittance(vec3 pos, vec3 sunDir) {
     return transmittance;
 }
 
+float safeacos(const float x) {
+    return acos(clamp(x, -1.0, 1.0));
+}
+
 // 🔹 Shader principal
 void main() {
     ivec2 texel = ivec2(gl_GlobalInvocationID.xy);
     vec2 uv = vec2(texel) / vec2(imageSize(OutputImage));
-
+    
     // 🔸 Convertimos UV en parámetros físicos
-    float heightMM = mix(groundRadiusMM, atmosphereRadiusMM, uv.y); // Altura en megametros
     float sunCosTheta = mix(-1.0, 1.0, uv.x); // De -1 (horizonte) a 1 (cenit)
-    float sunTheta = acos(sunCosTheta);
+    float sunTheta = safeacos(sunCosTheta);
+    float heightMM = mix(groundRadiusMM, atmosphereRadiusMM, uv.y); // Altura en megametros
     
     vec3 pos = vec3(0.0, heightMM, 0.0); // Posición en la atmósfera
     vec3 sunDir = normalize(vec3(0.0, sunCosTheta, -sin(sunTheta))); // Dirección del sol

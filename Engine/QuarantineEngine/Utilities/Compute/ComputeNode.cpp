@@ -62,12 +62,13 @@ void ComputeNode::InitializeOutputTextureComputeNode(uint32_t width, uint32_t he
     this->computeDescriptor->outputTexture = std::make_shared<CustomTexture>();
     this->computeDescriptor->outputTexture->createImage(width, height, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
+    this->computeDescriptor->outputTexture->createTextureImageView(VK_FORMAT_R16G16B16A16_SFLOAT);
+
     VkImageSubresourceRange subresourceRange = {};
     subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     subresourceRange.baseMipLevel = 0;
     subresourceRange.levelCount = 1;
     subresourceRange.layerCount = 1;
-    this->computeDescriptor->outputTexture->createTextureImageView(VK_FORMAT_R16G16B16A16_SFLOAT);
     this->computeDescriptor->outputTexture->transitionImageLayout(this->computeDescriptor->outputTexture->image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, subresourceRange);
 }
 
@@ -111,6 +112,22 @@ void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
     }
     else
     {
+        auto outputTexture = this->computeDescriptor->outputTexture;
+
+        VkImageSubresourceRange subresourceRange = {};
+        subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        subresourceRange.baseMipLevel = 0;
+        subresourceRange.levelCount = 1;
+        subresourceRange.layerCount = 1;
+
+        if (outputTexture->currentLayout != VK_IMAGE_LAYOUT_GENERAL)
+        {
+            if (outputTexture->currentLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                outputTexture->transitionImageLayout(outputTexture->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, subresourceRange);
+            else
+                outputTexture->transitionImageLayout(outputTexture->image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, subresourceRange);
+        }
+
         vkCmdDispatch(commandBuffer, this->widthImage/NElements, this->heightImage/NElements, 1);
     }
 }

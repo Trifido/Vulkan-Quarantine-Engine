@@ -45,11 +45,8 @@ void AtmosphereSystem::AddTextureResources(const string* texturePaths, uint32_t 
 void AtmosphereSystem::InitializeAtmosphere(Camera* cameraPtr)
 {
     this->SetUpResources(cameraPtr);
-    if (this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY)
-    {
-        this->CreateDescriptorPool();
-        this->CreateDescriptorSet();
-    }
+    this->CreateDescriptorPool();
+    this->CreateDescriptorSet();
 }
 
 void AtmosphereSystem::SetUpResources(Camera* cameraPtr)
@@ -61,17 +58,15 @@ void AtmosphereSystem::SetUpResources(Camera* cameraPtr)
 
     auto shaderManager = ShaderManager::getInstance();
 
-    if (this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY)
-    {
-        const string absolute_sky_vert_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[this->environmentType]);
-        const string absolute_sky_frag_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[this->environmentType + (shaderPaths.size() * 0.5f)]);
+    const string absolute_sky_vert_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[this->environmentType]);
+    const string absolute_sky_frag_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[this->environmentType + (shaderPaths.size() * 0.5f)]);
 
-        this->environment_shader = std::make_shared<ShaderModule>(
-            ShaderModule(absolute_sky_vert_shader_path, absolute_sky_frag_shader_path)
-        );
-        shaderManager->AddShader("environment_map", this->environment_shader);
-    }
-    else
+    this->environment_shader = std::make_shared<ShaderModule>(
+        ShaderModule(absolute_sky_vert_shader_path, absolute_sky_frag_shader_path)
+    );
+    shaderManager->AddShader("environment_map", this->environment_shader);
+
+    if (this->environmentType == ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY)
     {
         this->computeNodeManager = ComputeNodeManager::getInstance();
         this->TLUT_ComputeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("transmittance_lut"));
@@ -82,8 +77,15 @@ void AtmosphereSystem::SetUpResources(Camera* cameraPtr)
         this->MSLUT_ComputeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("multi_scattering_lut"));
         this->MSLUT_ComputeNode->NElements = 16;
         this->MSLUT_ComputeNode->InitializeOutputTextureComputeNode(32, 32);
-        this->MSLUT_ComputeNode->computeDescriptor->inputTexture = this->TLUT_ComputeNode->computeDescriptor->outputTexture;
+        this->MSLUT_ComputeNode->computeDescriptor->inputTextures.push_back(this->TLUT_ComputeNode->computeDescriptor->outputTexture);
         this->computeNodeManager->AddComputeNode("multi_scattering_lut", this->MSLUT_ComputeNode);
+
+        this->SVLUT_ComputeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("sky_view_lut"));
+        this->SVLUT_ComputeNode->NElements = 16;
+        this->SVLUT_ComputeNode->InitializeOutputTextureComputeNode(200, 200);
+        this->SVLUT_ComputeNode->computeDescriptor->inputTextures.push_back(this->TLUT_ComputeNode->computeDescriptor->outputTexture);
+        this->SVLUT_ComputeNode->computeDescriptor->inputTextures.push_back(this->MSLUT_ComputeNode->computeDescriptor->outputTexture);
+        this->computeNodeManager->AddComputeNode("sky_view_lut", this->SVLUT_ComputeNode);
     }
 
     switch (this->environmentType)
@@ -171,17 +173,23 @@ void AtmosphereSystem::CreateDescriptorSet()
         throw std::runtime_error("failed to allocate descriptor sets!");
     }
 
-    int numWrites = (this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY) ? 2 : 1;
+    int numWrites = (this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY) ? 2 : 3;
     for (size_t frameIdx = 0; frameIdx < MAX_FRAMES_IN_FLIGHT; frameIdx++)
     {
         std::vector<VkWriteDescriptorSet> descriptorWrites;
         descriptorWrites.resize(numWrites);
 
-        this->SetDescriptorWrite(descriptorWrites[0], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, this->camera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform));
 
         if (this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY)
         {
-            this->SetSamplerDescriptorWrite(descriptorWrites[1], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1);
+            this->SetDescriptorWrite(descriptorWrites[0], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, this->camera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform));
+            this->SetSamplerDescriptorWrite(descriptorWrites[1], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, this->environmentTexture, this->imageInfo_1);
+        }
+        else
+        {
+            this->SetSamplerDescriptorWrite(descriptorWrites[0], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, this->TLUT_ComputeNode->computeDescriptor->outputTexture, this->imageInfo_1);
+            this->SetSamplerDescriptorWrite(descriptorWrites[1], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, this->SVLUT_ComputeNode->computeDescriptor->outputTexture, this->imageInfo_2);
+            this->SetDescriptorWrite(descriptorWrites[2], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, this->camera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform));
         }
 
         vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
@@ -211,11 +219,11 @@ void AtmosphereSystem::SetDescriptorWrite(VkWriteDescriptorSet& descriptorWrite,
     descriptorWrite.pBufferInfo = &this->buffersInfo;
 }
 
-void AtmosphereSystem::SetSamplerDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding)
+void AtmosphereSystem::SetSamplerDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding, std::shared_ptr<CustomTexture> texture, VkDescriptorImageInfo& imageInfo)
 {
-    this->imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    this->imageInfo.imageView = this->environmentTexture->imageView; // ImageView del cubemap
-    this->imageInfo.sampler = this->environmentTexture->textureSampler; // Sampler para el cubemap
+    imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    imageInfo.imageView = texture->imageView; // ImageView del cubemap
+    imageInfo.sampler = texture->textureSampler; // Sampler para el cubemap
 
     descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     descriptorWrite.dstSet = descriptorSet;
@@ -223,7 +231,7 @@ void AtmosphereSystem::SetSamplerDescriptorWrite(VkWriteDescriptorSet& descripto
     descriptorWrite.dstArrayElement = 0;
     descriptorWrite.descriptorType = descriptorType;
     descriptorWrite.descriptorCount = 1;
-    descriptorWrite.pImageInfo = &this->imageInfo;
+    descriptorWrite.pImageInfo = &imageInfo;
 }
 
 string AtmosphereSystem::GetAbsolutePath(string relativePath, string filename)
@@ -242,29 +250,44 @@ string AtmosphereSystem::GetAbsolutePath(string relativePath, string filename)
 
 void AtmosphereSystem::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t frameIdx)
 {
-    if (this->_Mesh != nullptr && this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY)
+    auto textureTLUT = this->TLUT_ComputeNode->computeDescriptor->outputTexture;
+    auto textureSVLUT = this->SVLUT_ComputeNode->computeDescriptor->outputTexture;
+
+    VkImageSubresourceRange subresourceRange = {};
+    subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    subresourceRange.baseMipLevel = 0;
+    subresourceRange.levelCount = 1;
+    subresourceRange.layerCount = 1;
+
+    if (textureTLUT->currentLayout == VK_IMAGE_LAYOUT_GENERAL)
     {
-        auto pipelineModule = this->environment_shader->PipelineModule;
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
-
-        vkCmdSetDepthTestEnable(commandBuffer, false);
-        vkCmdSetDepthWriteEnable(commandBuffer, false);
-
-        vkCmdSetCullMode(commandBuffer, VK_CULL_MODE_NONE);
-        vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_COUNTER_CLOCKWISE);
-
-        VkDeviceSize offsets[] = { 0 };
-        VkBuffer vertexBuffers[] = { this->_Mesh->vertexBuffer };
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-        vkCmdBindIndexBuffer(commandBuffer, this->_Mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-
-        if (!this->descriptorSets.empty())
-        {
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->environment_shader->PipelineModule->pipelineLayout, 0, 1, &descriptorSets.at(frameIdx), 0, nullptr);
-        }
-
-        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->_Mesh->indices.size()), 1, 0, 0, 0);
+        textureTLUT->transitionImageLayout(textureTLUT->image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
     }
+    if (textureSVLUT->currentLayout == VK_IMAGE_LAYOUT_GENERAL)
+    {
+        textureSVLUT->transitionImageLayout(textureSVLUT->image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
+    }
+
+    auto pipelineModule = this->environment_shader->PipelineModule;
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
+
+    vkCmdSetDepthTestEnable(commandBuffer, false);
+    vkCmdSetDepthWriteEnable(commandBuffer, false);
+
+    vkCmdSetCullMode(commandBuffer, VK_CULL_MODE_NONE);
+    vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_COUNTER_CLOCKWISE);
+
+    VkDeviceSize offsets[] = { 0 };
+    VkBuffer vertexBuffers[] = { this->_Mesh->vertexBuffer };
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+    vkCmdBindIndexBuffer(commandBuffer, this->_Mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+
+    if (!this->descriptorSets.empty())
+    {
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->environment_shader->PipelineModule->pipelineLayout, 0, 1, &descriptorSets.at(frameIdx), 0, nullptr);
+    }
+
+    vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->_Mesh->indices.size()), 1, 0, 0, 0);
 }
 
 void AtmosphereSystem::Cleanup()

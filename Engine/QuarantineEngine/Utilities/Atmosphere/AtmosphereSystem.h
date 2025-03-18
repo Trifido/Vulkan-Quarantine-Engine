@@ -37,16 +37,17 @@ private:
     const vector<string> shaderPaths = {
         "Atmosphere/skybox_cubemap_vert.spv",
         "Atmosphere/sky_spherical_map_vert.spv",
-        //"Atmosphere/atmosphere_vert.spv",
+        "Atmosphere/atmosphere_vert.spv",
         "Atmosphere/skybox_cubemap_frag.spv",
         "Atmosphere/sky_spherical_map_frag.spv",
-        //"Atmosphere/atmosphere_frag.spv",
+        "Atmosphere/atmosphere_frag.spv",
     };
 
     shared_ptr<ShaderModule> environment_shader;
 
     shared_ptr<ComputeNode> TLUT_ComputeNode;
     shared_ptr<ComputeNode> MSLUT_ComputeNode;
+    shared_ptr<ComputeNode> SVLUT_ComputeNode;
 
     // Mesh
     shared_ptr<GeometryComponent> _Mesh = nullptr;
@@ -59,7 +60,8 @@ private:
     shared_ptr<CustomTexture> environmentTexture = nullptr;
 
     VkDescriptorBufferInfo buffersInfo;
-    VkDescriptorImageInfo imageInfo;
+    VkDescriptorImageInfo imageInfo_1;
+    VkDescriptorImageInfo imageInfo_2;
 
 private:
     void CreateDescriptorPool();
@@ -67,7 +69,7 @@ private:
     string GetAbsolutePath(string relativePath, string filename);
     VkDescriptorBufferInfo GetBufferInfo(VkBuffer buffer, VkDeviceSize bufferSize);
     void SetDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize);
-    void SetSamplerDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding);
+    void SetSamplerDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding, std::shared_ptr<CustomTexture> texture, VkDescriptorImageInfo& imageInfo);
     void SetUpResources(Camera* cameraPtr);
 
 public:
