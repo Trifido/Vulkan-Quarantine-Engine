@@ -2,202 +2,213 @@
 
 layout(local_size_x = 16, local_size_y = 16) in;
 
-layout(rgba16f, binding = 0) uniform image2D InputImage;
-layout(rgba16f, binding = 1) uniform image2D OutputImage;
+layout(binding = 0, rgba16f) uniform image2D InputImage;
+layout(binding = 1,rgba16f) uniform image2D OutputImage;
 
-const vec2 msLUTRes = vec2(32.0, 32.0);
 const float PI = 3.14159265358;
-const float mulScattSteps = 20.0;
-const int sqrtSamples = 8;
-
-const vec3 groundAlbedo = vec3(0.2);
 
 // Unidades en Megametros (MM)
-const float groundRadiusMM = 6.360;
-const float atmosphereRadiusMM = 6.460;
+const float PlanetRadius = 6.360;
+const float AtmosphereRadius = 6.460;
 
 // Coeficientes de dispersión y absorción por MM
 const vec3 rayleighScatteringBase = vec3(5.802, 13.558, 33.1);
-const float rayleighAbsorptionBase = 0.0;
 const float mieScatteringBase = 3.996;
 const float mieAbsorptionBase = 4.4;
-const vec3 ozoneAbsorptionBase = vec3(0.650, 1.881, .085);
+const float asymmetryMie = 0.8;
+float  hDensityRayleigh = 8;
+float  hDensityMie  = 1.2;
+const vec3 ozoneAbsorptionBase = vec3(0.650, 1.881, 0.085);
+float  ozoneCenterHeight = 25;
+float  ozoneThickness   = 30;
 
-float safeAcos(float x) 
+float  sunIntensity = 10;
+vec3 TerrainAlbedo = vec3(0.1);
+
+//Ray marching parameters
+int DIR_SAMPLE_COUNT     = 64;
+int RAY_MARCH_STEP_COUNT = 256;
+
+vec3 getTransmittance(float h, float theta)
 {
-    return acos(clamp(x, -1.0, 1.0));
+    ivec2 textureSize = imageSize(InputImage);
+    float u = h / (AtmosphereRadius - PlanetRadius);
+    float v = 0.5 + 0.5 * sin(theta);
+    ivec2 pixelCoords = ivec2(u * float(textureSize.x - 1), v * float(textureSize.y - 1));
+
+    return imageLoad(InputImage, pixelCoords).rgb;
 }
 
-vec3 getSphericalDir(float theta, float phi)
+bool findClosestIntersectionWithSphere(vec3 o, vec3 d, const float R, out float t)
 {
-     float cosPhi = cos(phi);
-     float sinPhi = sin(phi);
-     float cosTheta = cos(theta);
-     float sinTheta = sin(theta);
-     return vec3(sinPhi*sinTheta, cosPhi, sinPhi*cosTheta);
+    float A = dot(d, d);
+    float B = 2.0 * dot(o, d);
+    float C = dot(o, o) - R * R;
+    float delta = B * B - 4.0 * A * C;
+    if(delta < 0.0)
+        return false;
+    t = (-B + (C <= 0.0 ? sqrt(delta) : -sqrt(delta))) / (2.0 * A);
+    return (C <= 0.0) || (B <= 0.0);
 }
 
-// 🔹 Intersección Rayo-Esfera (Optimizado)
-float rayIntersectSphere(vec3 ro, vec3 rd, float radius) 
+bool hasIntersectionWithSphere(vec3 o, vec3 d, float R)
 {
-    float b = dot(ro, rd);
-    float c = dot(ro, ro) - radius * radius;
-    float delta = b * b - c;
-    if (delta < 0.0) return -1.0; // No hay intersección
-
-    float sqrtDelta = sqrt(delta);
-    float t1 = -b - sqrtDelta;
-    float t2 = -b + sqrtDelta;
-
-    if (t1 > 0.0) return t1; // Primer impacto
-    if (t2 > 0.0) return t2; // Segundo impacto (si el origen está dentro)
-    return -1.0; // No hay intersección válida
+    float A = dot(d, d);
+    float B = 2.0 * dot(o, d);
+    float C = dot(o, o) - R * R;
+    float delta = B * B - 4.0 * A * C;
+    return (delta >= 0.0) && ((C <= 0.0) || (B <= 0.0));
 }
 
-float getMiePhase(float cosTheta) 
+vec3 evalPhaseFunction(float h, float u)
 {
-    const float g = 0.8;
-    const float scale = 3.0/(8.0*PI);
-    
-    float num = (1.0-g*g)*(1.0+cosTheta*cosTheta);
-    float denom = (2.0+g*g)*pow((1.0 + g*g - 2.0*g*cosTheta), 1.5);
-    
-    return scale*num/denom;
+    vec3 sRayleigh = rayleighScatteringBase * exp(-h / hDensityRayleigh);
+    float sMie = mieScatteringBase * exp(-h / hDensityMie);
+    vec3 s = sRayleigh + sMie;
+
+    float g = asymmetryMie, g2 = g * g, u2 = u * u;
+    float pRayleigh = 3.0 / (16.0 * PI) * (1.0 + u2);
+
+    float m = 1.0 + g2 - 2.0 * g * u;
+    float pMie = 3.0 / (8.0 * PI) * (1.0 - g2) * (1.0 + u2) / ((2.0 + g2) * m * sqrt(m));
+
+    vec3 result;
+    result.x = s.x > 0.0 ? (pRayleigh * sRayleigh.x + pMie * sMie) / s.x : 0.0;
+    result.y = s.y > 0.0 ? (pRayleigh * sRayleigh.y + pMie * sMie) / s.y : 0.0;
+    result.z = s.z > 0.0 ? (pRayleigh * sRayleigh.z + pMie * sMie) / s.z : 0.0;
+    return result;
 }
 
-float getRayleighPhase(float cosTheta) 
+void getSigmaST(float h, out vec3 sigmaS, out vec3 sigmaT)
 {
-    const float k = 3.0/(16.0*PI);
-    return k*(1.0+cosTheta*cosTheta);
+    vec3 rayleigh = rayleighScatteringBase * exp(-h / hDensityRayleigh);
+
+    float mieDensity = exp(-h / hDensityMie);
+    float mieS = mieScatteringBase * mieDensity;
+    float mieT = (mieScatteringBase + mieAbsorptionBase) * mieDensity;
+
+    vec3 ozone = ozoneAbsorptionBase * max(0.0, 1.0 - 0.5 * abs(h - ozoneCenterHeight) / ozoneThickness);
+
+    sigmaS = rayleigh + mieS;
+    sigmaT = rayleigh + mieT + ozone;
 }
 
-void getScatteringValues(vec3 pos, out vec3 rayleighScattering, out float mieScattering, out vec3 extinction) 
+vec3 uniformOnUnitSphere(float u1, float u2)
 {
-    float altitudeKM = (length(pos)-groundRadiusMM)*1000.0;
-    // Note: Paper gets these switched up.
-    float rayleighDensity = exp(-altitudeKM/8.0);
-    float mieDensity = exp(-altitudeKM/1.2);
-    
-    rayleighScattering = rayleighScatteringBase*rayleighDensity;
-    float rayleighAbsorption = rayleighAbsorptionBase*rayleighDensity;
-    
-    mieScattering = mieScatteringBase*mieDensity;
-    float mieAbsorption = mieAbsorptionBase*mieDensity;
-    
-    vec3 ozoneAbsorption = ozoneAbsorptionBase*max(0.0, 1.0 - abs(altitudeKM-25.0)/15.0);
-    
-    extinction = rayleighScattering + rayleighAbsorption + mieScattering + mieAbsorption + ozoneAbsorption;
+    float z   = 1.0 - 2.0 * u1;
+    float r   = sqrt(max(0.0, 1.0 - z * z));
+    float phi = 2.0 * PI * u2;
+    return vec3(r * cos(phi), r * sin(phi), z);
 }
 
-vec3 getValFromTLUT(vec3 pos, vec3 sunDir)
+void integrate(
+    vec3 worldOri, vec3 worldDir, float sunTheta, vec3 toSunDir, out vec3 innerL2, out vec3 innerF)
 {
-    float height = length(pos);
-    vec3 up = pos / height;
-    float sunCosZenithAngle = dot(sunDir, up);
-    vec2 bufferRes = vec2(imageSize(InputImage));
-    
-    vec2 uv = vec2(
-        bufferRes.x * clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0),
-        bufferRes.y * max(0.0, min(1.0, (height - groundRadiusMM) / (atmosphereRadiusMM - groundRadiusMM)))
-    );
-    uv /= bufferRes;
-    
-    ivec2 texelCoords = ivec2(uv * bufferRes);
-    return imageLoad(InputImage, texelCoords).rgb;
-}
+    float u = dot(worldDir, toSunDir);
 
-void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 lumTotal, out vec3 fms) 
-{
-    lumTotal = vec3(0.0);
-    fms = vec3(0.0);
-    
-    float invSamples = 1.0/float(sqrtSamples*sqrtSamples);
-    for (int i = 0; i < sqrtSamples; i++) {
-        for (int j = 0; j < sqrtSamples; j++) {
-            // This integral is symmetric about theta = 0 (or theta = PI), so we
-            // only need to integrate from zero to PI, not zero to 2*PI.
-            float theta = PI * (float(i) + 0.5) / float(sqrtSamples);
-            float phi = safeAcos(clamp(1.0 - 2.0 * (float(j) + 0.5) / float(sqrtSamples), -1.0, 1.0));
-            vec3 rayDir = getSphericalDir(theta, phi);
-            
-            float atmoDist = rayIntersectSphere(pos, rayDir, atmosphereRadiusMM);
-            float groundDist = rayIntersectSphere(pos, rayDir, groundRadiusMM);
-            float tMax = atmoDist;
-            if (groundDist > 0.0) {
-                tMax = groundDist;
-            }
-            
-            float cosTheta = dot(rayDir, sunDir);
-    
-            float miePhaseValue = getMiePhase(cosTheta);
-            float rayleighPhaseValue = getRayleighPhase(-cosTheta);
-            
-            vec3 lum = vec3(0.0), lumFactor = vec3(0.0), transmittance = vec3(1.0);
-            float t = 0.0;
-            for (float stepI = 0.0; stepI < mulScattSteps; stepI += 1.0) {
-                float newT = ((stepI + 0.3)/mulScattSteps)*tMax;
-                float dt = newT - t;
-                t = newT;
-
-                vec3 newPos = pos + t*rayDir;
-
-                vec3 rayleighScattering, extinction;
-                float mieScattering;
-                getScatteringValues(newPos, rayleighScattering, mieScattering, extinction);
-
-                vec3 sampleTransmittance = exp(-dt*extinction);
-                
-                // Integrate within each segment.
-                vec3 scatteringNoPhase = rayleighScattering + mieScattering;
-                vec3 scatteringF = (scatteringNoPhase - scatteringNoPhase * sampleTransmittance) / extinction;
-                lumFactor += transmittance*scatteringF;
-                
-                // This is slightly different from the paper, but I think the paper has a mistake?
-                // In equation (6), I think S(x,w_s) should be S(x-tv,w_s).
-                vec3 sunTransmittance = getValFromTLUT(newPos, sunDir);
-
-                vec3 rayleighInScattering = rayleighScattering*rayleighPhaseValue;
-                float mieInScattering = mieScattering*miePhaseValue;
-                vec3 inScattering = (rayleighInScattering + mieInScattering)*sunTransmittance;
-
-                // Integrated scattering within path segment.
-                vec3 scatteringIntegral = (inScattering - inScattering * sampleTransmittance) / extinction;
-
-                lum += scatteringIntegral*transmittance;
-                transmittance *= sampleTransmittance;
-            }
-            
-            if (groundDist > 0.0) 
-            {
-                vec3 hitPos = pos + groundDist*rayDir;
-                if (dot(pos, sunDir) > 0.0) {
-                    hitPos = normalize(hitPos)*groundRadiusMM;
-                    lum += transmittance*groundAlbedo*getValFromTLUT(hitPos, sunDir);
-                }
-            }
-            
-            fms += lumFactor*invSamples;
-            lumTotal += lum*invSamples;
-        }
+    float endT = 0.0;
+    bool groundInct = findClosestIntersectionWithSphere(worldOri, worldDir, PlanetRadius, endT);
+    if(!groundInct)
+    {
+        findClosestIntersectionWithSphere(worldOri, worldDir, AtmosphereRadius, endT);
     }
+
+    float dt = endT / RAY_MARCH_STEP_COUNT;
+    float halfDt = 0.5 * dt;
+    float t = 0.0;
+
+    vec3 sumSigmaT = vec3(0.0, 0.0, 0.0);
+
+    vec3 sumL2 = vec3(0.0, 0.0, 0.0), sumF = vec3(0.0, 0.0, 0.0);
+    for(int i = 0; i < RAY_MARCH_STEP_COUNT; ++i)
+    {
+        float midT = t + halfDt;
+        t += dt;
+
+        vec3 worldPos = worldOri + midT * worldDir;
+        float h = length(worldPos) - PlanetRadius;
+
+        vec3 sigmaS, sigmaT;
+        getSigmaST(h, sigmaS, sigmaT);
+
+        vec3 deltaSumSigmaT = dt * sigmaT;
+        vec3 transmittance = exp(-sumSigmaT - 0.5 * deltaSumSigmaT);
+
+        if(!hasIntersectionWithSphere(worldPos, toSunDir, PlanetRadius))
+        {
+            vec3 rho = evalPhaseFunction(h, u);
+            vec3 sunTransmittance = getTransmittance(h, sunTheta);
+
+            sumL2 += dt * transmittance * sunTransmittance * sigmaS * rho * sunIntensity;
+        }
+
+        sumF      += dt * transmittance * sigmaS;
+        sumSigmaT += deltaSumSigmaT;
+    }
+
+    if(groundInct)
+    {
+        vec3 transmittance = exp(-sumSigmaT);
+        vec3 sunTransmittance = getTransmittance(0.0, sunTheta);
+        sumL2 += transmittance * sunTransmittance * max(0, toSunDir.y) * sunIntensity * (TerrainAlbedo / PI);
+    }
+
+    innerL2 = sumL2;
+    innerF  = sumF;
 }
 
-void main() {
-    ivec2 texel = ivec2(gl_GlobalInvocationID.xy);
-    vec2 uv = vec2(texel) / vec2(imageSize(OutputImage));
-   
-    float sunCosTheta = mix(-1.0, 1.0, uv.x);
-    float sunTheta = safeAcos(sunCosTheta);
-    float height = mix(groundRadiusMM, atmosphereRadiusMM, max(uv.y, 0.00001));
+vec2 hash(uint seed) {
+    seed = (seed ^ 61) ^ (seed >> 16);
+    seed *= 9;
+    seed = seed ^ (seed >> 4);
+    seed *= 0x27d4eb2d;
+    seed = seed ^ (seed >> 15);
     
-    vec3 pos = vec3(0.0, height, 0.0); 
-    vec3 sunDir = normalize(vec3(0.0, sunCosTheta, -sin(sunTheta)));
+    float x = float(seed & 0xFFFF) / float(0xFFFF); // Aleatorio en [0,1]
+    float y = float((seed >> 16) & 0xFFFF) / float(0xFFFF);
     
-    vec3 lum, f_ms;
-    getMulScattValues(pos, sunDir, lum, f_ms);
-    
-    // Equation 10 from the paper.
-    vec3 psi = lum / (1.0 - f_ms); 
+    return vec2(x, y);
+}
 
-    imageStore(OutputImage, texel, vec4(psi, 1.0));
+vec3 ComputeM(float h, float sunTheta, uint baseSeed)
+{
+    vec3 worldOri = { 0.0, h + PlanetRadius, 0.0 };
+    vec3 toSunDir = { cos(sunTheta), sin(sunTheta), 0.0 };
+
+    vec3 sumL2 = vec3(0.0, 0.0, 0.0);
+    vec3 sumF = vec3(0.0, 0.0, 0.0);
+    for(int i = 0; i < DIR_SAMPLE_COUNT; ++i)
+    {
+        vec2 rawSample = hash(baseSeed + uint(i));
+        vec3 worldDir = uniformOnUnitSphere(rawSample.x, rawSample.y);
+
+        vec3 innerL2, innerF;
+        integrate(worldOri, worldDir, sunTheta, toSunDir, innerL2, innerF);
+
+        // phase function is canceled by pdf
+        sumL2 += innerL2;
+        sumF  += innerF;
+    }
+
+    vec3 l2 = sumL2 / DIR_SAMPLE_COUNT;
+    vec3 f  = sumF  / DIR_SAMPLE_COUNT;
+    return l2 / (1 - f);
+}
+
+void main() 
+{
+    uvec3 threadIdx = gl_GlobalInvocationID;
+    vec2 dimensions = vec2(imageSize(OutputImage));
+
+    if (threadIdx.x >= dimensions.x || threadIdx.y >= dimensions.y)
+        return;
+    
+    uint seed = gl_GlobalInvocationID.x;
+    float sinSunTheta = mix(-1.0, 1.0, (threadIdx.y + 0.5) / dimensions.y);
+    float sunTheta = asin(sinSunTheta);
+
+    float h = mix(0.0, AtmosphereRadius - PlanetRadius, (threadIdx.x + 0.5) / dimensions.x);
+
+    // 🔸 Almacenar en la LUT
+    imageStore(OutputImage, ivec2(threadIdx), vec4(ComputeM(h, sunTheta, seed), 1.0));
 }

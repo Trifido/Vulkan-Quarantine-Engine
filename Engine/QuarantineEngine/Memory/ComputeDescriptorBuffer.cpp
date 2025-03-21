@@ -1,6 +1,7 @@
 #include "ComputeDescriptorBuffer.h"
 #include "SynchronizationModule.h"
 #include "Timer.h"
+#include <CameraEditor.h>
 
 ComputeDescriptorBuffer::ComputeDescriptorBuffer()
 {
@@ -28,6 +29,13 @@ void ComputeDescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shade
                 poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
                 poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
                 this->_numSSBOs++;
+                idx++;
+            }
+            else if(binding.first == "CameraUniform")
+            {
+                this->camera = CameraEditor::getInstance();
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
                 idx++;
             }
             else if (binding.first == "InputBoneSSBO")
@@ -242,6 +250,12 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
                 }
             }
 
+            if (binding.first == "CameraUniform")
+            {
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->camera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform), frameIdx);
+                idx++;
+            }
+
             if (binding.first == "UniformDeltaTime")
             {
                 this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->ubos["UniformDeltaTime"]->uniformBuffers[frameIdx], this->uboSizes["UniformDeltaTime"], frameIdx);
@@ -441,6 +455,8 @@ void ComputeDescriptorBuffer::Cleanup()
         this->outputTexture.reset();
         this->outputTexture = nullptr;
     }
+
+    this->camera = nullptr;
 
     this->deltaTimeUniform.reset();
     this->deltaTimeUniform = nullptr;

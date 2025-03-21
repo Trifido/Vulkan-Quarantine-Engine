@@ -1,17 +1,21 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout(location = 0) in vec4 inPosition;
-layout(location = 1) in vec4 inNormal;
-layout(location = 2) in vec2 inTexCoord;
-layout(location = 3) in vec4 inTangent;
-
 layout(location = 0) out VS_OUT 
 {
     vec2 TexCoords;
 } QE_out;
 
 void main() {
-    QE_out.TexCoords = inPosition.xy * 0.5 + 0.5; // Convertir de [-1,1] a [0,1]
-    gl_Position = vec4(inPosition.xy, 0.0, 1.0);
+    // Obtener el ID del vértice
+    int vertexID = gl_VertexIndex;
+
+    // Calcular coordenadas UV en el rango [0,1]
+    QE_out.TexCoords = vec2((vertexID << 1) & 2, vertexID & 2);
+
+    // Convertir UVs a Clip Space
+    gl_Position = vec4(QE_out.TexCoords * 2.0 - 1.0, 0.0, 1.0);
+
+    // CORRECCIÓN PARA VULKAN: invertir Y
+    gl_Position.y = -gl_Position.y;
 }

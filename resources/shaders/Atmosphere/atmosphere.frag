@@ -136,8 +136,16 @@ void main()
 {
 	vec2 fragCoord = gl_FragCoord.xy;
     vec3 sunDir = getSunDir();
-    
-    vec3 camDir = normalize(vec3(0.0, 0.27, -1.0));
+
+    vec4 ndc = vec4(QE_in.TexCoords * 2.0 - 1.0, 1.0, 1.0); // (x,y) en [-1,1], z=1 para dirección
+    mat4 invProj = inverse(cameraData.proj);
+    mat4 invView = inverse(cameraData.view);
+    vec4 viewDir = invProj * ndc;  // Convertir a espacio de cámara
+    viewDir /= viewDir.w;          // Hacer homogéneo
+
+    vec3 camDir = normalize((invView * vec4(viewDir.xyz, 0.0)).xyz); // Pasar a espacio mundial
+
+    //vec3 camDir = normalize(vec3(0.0, 0.27, -1.0));
     float camFOVWidth = PI/3.5;
     float camWidthScale = 2.0*tan(camFOVWidth/2.0);
 	vec2 iResolution = vec2(1080, 720);
@@ -145,8 +153,15 @@ void main()
     
     vec3 camRight = normalize(cross(camDir, vec3(0.0, 1.0, 0.0)));
     vec3 camUp = normalize(cross(camRight, camDir));
+
+    // Convertir dirección a coordenadas esféricas
+    float phi = atan(camDir.z, camDir.x);
+    float u = phi / (2.0 * 3.14159265359);
     
-    vec2 xy = 2.0 * (fragCoord.xy / iResolution.xy) - 1.0;
+    float theta = asin(camDir.y);
+    float v = 0.5 + 0.5 * sign(theta) * sqrt(abs(theta) / (3.14159265359 / 2.0));
+    
+    vec2 xy = vec2(u, v);
     vec3 rayDir = normalize(camDir + camRight*xy.x*camWidthScale + camUp*xy.y*camHeightScale);
     
     vec3 lum = getValFromSkyLUT(rayDir, sunDir);

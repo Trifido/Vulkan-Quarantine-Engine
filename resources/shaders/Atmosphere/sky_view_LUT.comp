@@ -6,163 +6,149 @@ layout(binding = 0, rgba16f) uniform image2D InputImage;
 layout(binding = 1, rgba16f) uniform image2D InputImage_2;
 layout(binding = 2, rgba16f) uniform image2D OutputImage;
 
-const int numScatteringSteps = 32;
+layout(set = 0, binding = 3) uniform CameraUniform
+{
+	mat4 view;
+	mat4 proj;
+	mat4 viewproj;
+    vec4 position;
+    vec4 frustumPlanes[6];
+} cameraData;
+
 const float PI = 3.14159265358;
 
+const int numScatteringSteps = 32;
 // Unidades en Megametros (MM)
-const float groundRadiusMM = 6.360;
-const float atmosphereRadiusMM = 6.460;
+const float PlanetRadius = 6.360;
+const float AtmosphereRadius = 6.460;
 
 // Coeficientes de dispersión y absorción por MM
 const vec3 rayleighScatteringBase = vec3(5.802, 13.558, 33.1);
-const float rayleighAbsorptionBase = 0.0;
 const float mieScatteringBase = 3.996;
 const float mieAbsorptionBase = 4.4;
-const vec3 ozoneAbsorptionBase = vec3(0.650, 1.881, .085);
+const float asymmetryMie = 0.8;
+float  hDensityRayleigh = 8;
+float  hDensityMie  = 1.2;
+const vec3 ozoneAbsorptionBase = vec3(0.650, 1.881, 0.085);
+float  ozoneCenterHeight = 25;
+float  ozoneThickness   = 30;
 
-float getMiePhase(float cosTheta) 
+
+int RAY_MARCH_STEP_COUNT = 256;
+
+bool EnableMultiScattering = true;
+
+//SUN
+const vec3 SunIntensity = vec3(10.0, 10.0, 10.0);
+const float sunRadX = 0.0;
+const float sunRadY = -2.024582;
+
+vec3 getTransmittance(float h, float theta)
 {
-    const float g = 0.8;
-    const float scale = 3.0/(8.0*PI);
-    
-    float num = (1.0-g*g)*(1.0+cosTheta*cosTheta);
-    float denom = (2.0+g*g)*pow((1.0 + g*g - 2.0*g*cosTheta), 1.5);
-    
-    return scale*num/denom;
+    ivec2 textureSize = imageSize(InputImage);
+    float u = h / (AtmosphereRadius - PlanetRadius);
+    float v = 0.5 + 0.5 * sin(theta);
+    ivec2 pixelCoords = ivec2(u * float(textureSize.x - 1), v * float(textureSize.y - 1));
+
+    return imageLoad(InputImage, pixelCoords).rgb;
 }
 
-float getRayleighPhase(float cosTheta) 
+void getSigmaST(float h, out vec3 sigmaS, out vec3 sigmaT)
 {
-    const float k = 3.0/(16.0*PI);
-    return k*(1.0+cosTheta*cosTheta);
+    vec3 rayleigh = rayleighScatteringBase * exp(-h / hDensityRayleigh);
+
+    float mieDensity = exp(-h / hDensityMie);
+    float mieS = mieScatteringBase * mieDensity;
+    float mieT = (mieScatteringBase + mieAbsorptionBase) * mieDensity;
+
+    vec3 ozone = ozoneAbsorptionBase * max(0.0, 1.0 - 0.5 * abs(h - ozoneCenterHeight) / ozoneThickness);
+
+    sigmaS = rayleigh + mieS;
+    sigmaT = rayleigh + mieT + ozone;
 }
 
-float safeAcos(float x) 
+bool hasIntersectionWithSphere(vec3 o, vec3 d, float R)
 {
-    return acos(clamp(x, -1.0, 1.0));
+    float A = dot(d, d);
+    float B = 2.0 * dot(o, d);
+    float C = dot(o, o) - R * R;
+    float delta = B * B - 4.0 * A * C;
+    return (delta >= 0.0) && ((C <= 0.0) || (B <= 0.0));
 }
 
-// 🔹 Intersección Rayo-Esfera (Optimizado)
-float rayIntersectSphere(vec3 ro, vec3 rd, float radius) 
+bool findClosestIntersectionWithCircle(
+    vec2 o, vec2 d, float R, out float t)
 {
-    float b = dot(ro, rd);
-    float c = dot(ro, ro) - radius * radius;
-    float delta = b * b - c;
-    if (delta < 0.0) return -1.0; // No hay intersección
-
-    float sqrtDelta = sqrt(delta);
-    float t1 = -b - sqrtDelta;
-    float t2 = -b + sqrtDelta;
-
-    if (t1 > 0.0) return t1; // Primer impacto
-    if (t2 > 0.0) return t2; // Segundo impacto (si el origen está dentro)
-    return -1.0; // No hay intersección válida
+    float A = dot(d, d);
+    float B = 2 * dot(o, d);
+    float C = dot(o, o) - R * R;
+    float delta = B * B - 4 * A * C;
+    if(delta < 0)
+        return false;
+    t = (-B + (C <= 0 ? sqrt(delta) : -sqrt(delta))) / (2 * A);
+    return (C <= 0) || (B <= 0);
 }
 
-vec3 getValFromTLUT(vec3 pos, vec3 sunDir)
+vec3 evalPhaseFunction(float h, float u)
 {
-    float height = length(pos);
-    vec3 up = pos / height;
-    float sunCosZenithAngle = dot(sunDir, up);
-    vec2 bufferRes = vec2(imageSize(InputImage));
-    
-    vec2 uv = vec2(
-        bufferRes.x * clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0),
-        bufferRes.y * max(0.0, min(1.0, (height - groundRadiusMM) / (atmosphereRadiusMM - groundRadiusMM)))
-    );
-    uv /= bufferRes;
-    
-    ivec2 texelCoords = ivec2(uv * bufferRes);
-    return imageLoad(InputImage, texelCoords).rgb;
+    vec3 sRayleigh = rayleighScatteringBase * exp(-h / hDensityRayleigh);
+    float sMie = mieScatteringBase * exp(-h / hDensityMie);
+    vec3 s = sRayleigh + sMie;
+
+    float g = asymmetryMie, g2 = g * g, u2 = u * u;
+    float pRayleigh = 3.0 / (16.0 * PI) * (1.0 + u2);
+
+    float m = 1.0 + g2 - 2.0 * g * u;
+    float pMie = 3.0 / (8.0 * PI) * (1.0 - g2) * (1.0 + u2) / ((2.0 + g2) * m * sqrt(m));
+
+    vec3 result;
+    result.x = s.x > 0.0 ? (pRayleigh * sRayleigh.x + pMie * sMie) / s.x : 0.0;
+    result.y = s.y > 0.0 ? (pRayleigh * sRayleigh.y + pMie * sMie) / s.y : 0.0;
+    result.z = s.z > 0.0 ? (pRayleigh * sRayleigh.z + pMie * sMie) / s.z : 0.0;
+    return result;
 }
 
-vec3 getValFromMultiScattLUT(vec3 pos, vec3 sunDir)
+void marchStep(
+    float phaseU, vec3 ori, vec3 dir, float thisT, float nextT,
+    inout vec3 sumSigmaT, inout vec3 inScattering)
 {
-    float height = length(pos);
-    vec3 up = pos / height;
-	float sunCosZenithAngle = dot(sunDir, up);
-    vec2 bufferRes = vec2(imageSize(InputImage));
-    
-    vec2 uv = vec2(
-        bufferRes.x * clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0),
-        bufferRes.y * max(0.0, min(1.0, (height - groundRadiusMM) / (atmosphereRadiusMM - groundRadiusMM)))
-    );
-    uv /= bufferRes;
-    ivec2 texelCoords = ivec2(uv * bufferRes);
-    return imageLoad(InputImage_2, texelCoords).rgb;
-}
+    float  midT = 0.5 * (thisT + nextT);
+    vec3 posR = vec3(0, ori.y + PlanetRadius, 0) + dir * midT;
+    float  h    = length(posR) - PlanetRadius;
 
-void getScatteringValues(vec3 pos, out vec3 rayleighScattering, out float mieScattering, out vec3 extinction) 
-{
-    float altitudeKM = (length(pos)-groundRadiusMM)*1000.0;
-    // Note: Paper gets these switched up.
-    float rayleighDensity = exp(-altitudeKM/8.0);
-    float mieDensity = exp(-altitudeKM/1.2);
-    
-    rayleighScattering = rayleighScatteringBase*rayleighDensity;
-    float rayleighAbsorption = rayleighAbsorptionBase*rayleighDensity;
-    
-    mieScattering = mieScatteringBase*mieDensity;
-    float mieAbsorption = mieAbsorptionBase*mieDensity;
-    
-    vec3 ozoneAbsorption = ozoneAbsorptionBase*max(0.0, 1.0 - abs(altitudeKM-25.0)/15.0);
-    
-    extinction = rayleighScattering + rayleighAbsorption + mieScattering + mieAbsorption + ozoneAbsorption;
-}
+    vec3 sigmaS, sigmaT;
+    getSigmaST(h, sigmaS, sigmaT);
 
-vec3 raymarchScattering(vec3 pos, vec3 rayDir, vec3 sunDir, float tMax) {
-    float cosTheta = dot(rayDir, sunDir);
-    float miePhaseValue = getMiePhase(cosTheta);
-    float rayleighPhaseValue = getRayleighPhase(-cosTheta);
-    
-    vec3 lum = vec3(0.0);
-    vec3 transmittance = vec3(1.0);
-    float t = 0.0;
-    
-    for (int i = 0; i < numScatteringSteps; i++)
+    vec3 deltaSumSigmaT = (nextT - thisT) * sigmaT;
+    vec3 eyeTrans = exp(-sumSigmaT - 0.5 * deltaSumSigmaT);
+
+    vec3 SunDirection = vec3(cos(sunRadX) * cos(sunRadY), sin(sunRadY), sin(sunRadX) * cos(sunRadY));
+    SunDirection = normalize(SunDirection);
+
+    float sunTheta = PI / 2.0 - acos(dot(-SunDirection, normalize(posR)));
+
+    if(!hasIntersectionWithSphere(
+        posR, -SunDirection, PlanetRadius))
     {
-        float newT = ((float(i) + 0.3) / float(numScatteringSteps)) * tMax;
-        float dt = newT - t;
-        t = newT;
-        
-        vec3 newPos = pos + t * rayDir;
-        
-        vec3 rayleighScattering, extinction;
-        float mieScattering;
-        getScatteringValues(newPos, rayleighScattering, mieScattering, extinction);
-        
-        vec3 sampleTransmittance = exp(-dt * extinction);
-        vec3 sunTransmittance = getValFromTLUT(newPos, sunDir);
-        vec3 psiMS = getValFromMultiScattLUT(newPos, sunDir);
-        
-        vec3 rayleighInScattering = rayleighScattering * (rayleighPhaseValue * sunTransmittance + psiMS);
-        vec3 mieInScattering = mieScattering * (miePhaseValue * sunTransmittance + psiMS);
-        vec3 inScattering = rayleighInScattering + mieInScattering;
-        
-        vec3 scatteringIntegral = (inScattering - inScattering * sampleTransmittance) / extinction;
-        lum += scatteringIntegral * transmittance;
-        
-        transmittance *= sampleTransmittance;
+        vec3 rho = evalPhaseFunction(h, phaseU);
+        vec3 sunTrans = getTransmittance(h, sunTheta);
+
+        inScattering += (nextT - thisT) * eyeTrans * sigmaS * rho * sunTrans;
     }
-    return lum;
-}
 
-const vec3 viewPos = vec3(0.0, groundRadiusMM + 0.0002, 0.0);
+    if(EnableMultiScattering)
+    {
+        ivec2 textureSize = imageSize(InputImage_2);
+        float tx = h / (AtmosphereRadius - PlanetRadius);
+        float ty = 0.5 + 0.5 * sin(sunTheta);
 
-float getSunAltitude(float time)
-{
-    const float periodSec = 120.0;
-    const float halfPeriod = periodSec / 2.0;
-    const float sunriseShift = 0.1;
-    float cyclePoint = (1.0 - abs((mod(time,periodSec)-halfPeriod)/halfPeriod));
-    cyclePoint = (cyclePoint*(1.0+sunriseShift))-sunriseShift;
-    return (0.5*PI)*cyclePoint;
-}
+        ivec2 pixelCoords = ivec2(tx * float(textureSize.x - 1), ty * float(textureSize.y - 1));
+        vec3 ms = imageLoad(InputImage_2, pixelCoords).rgb;
 
-vec3 getSunDir()
-{
-    float altitude = getSunAltitude(10.5);
-    return normalize(vec3(0.0, sin(altitude), -cos(altitude)));
+        inScattering += (nextT - thisT) * eyeTrans * sigmaS * ms;
+    }
+
+    sumSigmaT += deltaSumSigmaT;
 }
 
 void main() {
@@ -174,25 +160,44 @@ void main() {
     }
     
     vec2 uv = vec2(texelCoord) / vec2(resolution);
-    
-    float azimuthAngle = (uv.x - 0.5) * 2.0 * PI;
-    float adjV = (uv.y < 0.5) ? -(1.0 - 2.0 * uv.y) * (1.0 - 2.0 * uv.y) : (2.0 * uv.y - 1.0) * (2.0 * uv.y - 1.0);
-    
-    float height = length(viewPos);
-    vec3 up = viewPos / height;
-    float horizonAngle = safeAcos(sqrt(height * height - groundRadiusMM * groundRadiusMM) / height) - 0.5 * PI;
-    float altitudeAngle = adjV * 0.5 * PI - horizonAngle;
-    
-    float cosAltitude = cos(altitudeAngle);
-    vec3 rayDir = vec3(cosAltitude * sin(azimuthAngle), sin(altitudeAngle), -cosAltitude * cos(azimuthAngle));
-    
-    float sunAltitude = (0.5 * PI) - acos(dot(getSunDir(), up));
-    vec3 sunDir = vec3(0.0, sin(sunAltitude), -cos(sunAltitude));
-    
-    float atmoDist = rayIntersectSphere(viewPos, rayDir, atmosphereRadiusMM);
-    float groundDist = rayIntersectSphere(viewPos, rayDir, groundRadiusMM);
-    float tMax = (groundDist < 0.0) ? atmoDist : groundDist;
-    
-    vec3 lum = raymarchScattering(viewPos, rayDir, sunDir, tMax);
-    imageStore(OutputImage, texelCoord, vec4(lum, 1.0));
+
+    float phi = 2 * PI * uv.x;
+    float vm = 2 * uv.y - 1;
+    float theta = sign(vm) * (PI / 2) * vm * vm;
+    float sinTheta = sin(theta), cosTheta = cos(theta);
+
+    vec3 ori = cameraData.position.xyz;
+    vec3 dir = vec3(cos(phi) * cosTheta, sinTheta, sin(phi) * cosTheta);
+
+    vec2 planetOri = vec2(0, ori.y + PlanetRadius);
+    vec2 planetDir = vec2(cosTheta, sinTheta);
+
+    // find end point
+    float endT = 0;
+    if(!findClosestIntersectionWithCircle(planetOri, planetDir, PlanetRadius, endT))
+    {
+        findClosestIntersectionWithCircle(planetOri, planetDir, AtmosphereRadius, endT);
+    }
+
+    vec3 SunDirection = vec3(cos(sunRadX) * cos(sunRadY), sin(sunRadY), sin(sunRadX) * cos(sunRadY));
+    SunDirection = normalize(SunDirection);
+    // phase function input
+
+    float phaseU = dot(SunDirection, -dir);
+
+    // ray march
+
+    float t = 0;
+    vec3 inScatter = vec3(0, 0, 0);
+    vec3 sumSigmaT = vec3(0, 0, 0);
+
+    float dt = (endT - t) / RAY_MARCH_STEP_COUNT;
+    for(int i = 0; i < RAY_MARCH_STEP_COUNT; ++i)
+    {
+        float nextT = t + dt;
+        marchStep(phaseU, ori, dir, t, nextT, sumSigmaT, inScatter);
+        t = nextT;
+    }
+
+    imageStore(OutputImage, texelCoord, vec4(inScatter * SunIntensity, 1.0));
 }

@@ -5,6 +5,7 @@
 
 #include "ShaderModule.h"
 #include "CustomTexture.h"
+#include "Camera.h"
 #include "UBO.h"
 
 class ComputeDescriptorBuffer
@@ -18,6 +19,7 @@ private:
     VkDescriptorImageInfo inputImageInfo_2;
     VkDescriptorImageInfo outputImageInfo;
     std::shared_ptr<DeltaTimeUniform> deltaTimeUniform;
+    Camera* camera = nullptr;
 
     uint32_t _numSSBOs = 0;
 
