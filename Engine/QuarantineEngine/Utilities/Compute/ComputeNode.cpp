@@ -119,7 +119,7 @@ void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
 
     if (this->widthImage == 0 || this->heightImage == 0)
     {
-        uint32_t groupX = (this->NElements < 256) ? this->NElements : ceil(float(this->NElements) / 256.0f);
+        uint32_t groupX = (this->NElements < 256) ? this->NElements : CEIL_DIV(this->NElements, 256.0f);
         vkCmdDispatch(commandBuffer, groupX, 1, 1);
     }
     else
