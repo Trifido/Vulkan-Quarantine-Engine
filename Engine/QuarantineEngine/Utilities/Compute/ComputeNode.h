@@ -9,6 +9,8 @@
 #include "ShaderModule.h"
 #include <string>
 
+#define CEIL_DIV(x, y) (((x) + (y) - 1) / (y))
+
 class ComputeNode : public GameComponent
 {
 private:

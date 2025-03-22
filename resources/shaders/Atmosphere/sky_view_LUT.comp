@@ -152,10 +152,14 @@ void marchStep(
 }
 
 void main() {
+
+    uvec3 threadIdx = gl_GlobalInvocationID;
+    vec2 dimensions = imageSize(OutputImage);
+
     ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
     ivec2 resolution = imageSize(OutputImage);
     
-    if (texelCoord.x >= resolution.x || texelCoord.y >= resolution.y) {
+    if (threadIdx.x >= dimensions.x || threadIdx.y >= dimensions.y) {
         return;
     }
     

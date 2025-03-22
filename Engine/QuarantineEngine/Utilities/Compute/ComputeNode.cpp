@@ -140,7 +140,7 @@ void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
                 outputTexture->transitionImageLayout(outputTexture->image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, subresourceRange);
         }
 
-        vkCmdDispatch(commandBuffer, this->widthImage/NElements, this->heightImage/NElements, 1);
+        vkCmdDispatch(commandBuffer, CEIL_DIV(this->widthImage, NElements), CEIL_DIV(this->heightImage, NElements), 1);
     }
 }
 

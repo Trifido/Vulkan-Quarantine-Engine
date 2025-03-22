@@ -85,7 +85,7 @@ void AtmosphereSystem::SetUpResources(Camera* cameraPtr)
 
         this->SVLUT_ComputeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("sky_view_lut"));
         this->SVLUT_ComputeNode->NElements = 16;
-        this->SVLUT_ComputeNode->InitializeOutputTextureComputeNode(200, 200);
+        this->SVLUT_ComputeNode->InitializeOutputTextureComputeNode(200, 100);
         this->SVLUT_ComputeNode->computeDescriptor->inputTextures.push_back(this->TLUT_ComputeNode->computeDescriptor->outputTexture);
         this->SVLUT_ComputeNode->computeDescriptor->inputTextures.push_back(this->MSLUT_ComputeNode->computeDescriptor->outputTexture);
         this->computeNodeManager->AddComputeNode("sky_view_lut", this->SVLUT_ComputeNode);

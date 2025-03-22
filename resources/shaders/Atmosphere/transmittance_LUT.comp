@@ -3,100 +3,76 @@
 layout(local_size_x = 16, local_size_y = 16) in;
 layout(rgba16f, binding = 0) uniform image2D OutputImage;
 
+#define STEP_COUNT 1000
 const float PI = 3.14159265358;
 
 // Unidades en Megametros (MM)
-const float groundRadiusMM = 6.360;
-const float atmosphereRadiusMM = 6.460;
+const float PlanetRadius = 6.360;
+const float AtmosphereRadius = 6.460;
 
 // Coeficientes de dispersión y absorción por MM
 const vec3 rayleighScatteringBase = vec3(5.802, 13.558, 33.1);
-const float rayleighAbsorptionBase = 0.0;
+float  hDensityRayleigh = 8;
 
 const float mieScatteringBase = 3.996;
 const float mieAbsorptionBase = 4.4;
+float hDensityMie  = 1.2;
 
-const vec3 ozoneAbsorptionBase = vec3(0.650, 1.881, .085);
+const vec3 ozoneAbsorptionBase = vec3(0.650, 1.881, 0.085);
+float  ozoneCenterHeight = 25;
+float  ozoneThickness   = 30;
 
-const float sunTransmittanceSteps = 40.0;
-
-// 🔹 Intersección Rayo-Esfera (Optimizado)
-float rayIntersectSphere(vec3 ro, vec3 rd, float rad) {
-    float b = dot(ro, rd);
-    float c = dot(ro, ro) - rad*rad;
-    if (c > 0.0f && b > 0.0) return -1.0;
-    float discr = b*b - c;
-    if (discr < 0.0) return -1.0;
-    // Special case: inside sphere, use far discriminant
-    if (discr > b*b) return (-b + sqrt(discr));
-    return -b - sqrt(discr);
+bool findClosestIntersectionWithCircle(
+    vec2 o, vec2 d, float R, out float t)
+{
+    float A = dot(d, d);
+    float B = 2 * dot(o, d);
+    float C = dot(o, o) - R * R;
+    float delta = B * B - 4 * A * C;
+    if(delta < 0)
+        return false;
+    t = (-B + (C <= 0 ? sqrt(delta) : -sqrt(delta))) / (2 * A);
+    return (C <= 0) || (B <= 0);
 }
 
-// 🔹 Obtiene los coeficientes de dispersión y absorción
-void getScatteringValues(vec3 pos, out vec3 rayleighScattering, out float mieScattering, out vec3 extinction) {
-    float altitudeKM = (length(pos) - groundRadiusMM) * 100.0;
-    float rayleighDensity = exp(-altitudeKM / 8.0);
-    float mieDensity = exp(-altitudeKM / 1.2);
-
-    rayleighScattering = rayleighScatteringBase * rayleighDensity;
-    float rayleighAbsorption = rayleighAbsorptionBase * rayleighDensity;
-
-    mieScattering = mieScatteringBase * mieDensity;
-    float mieAbsorption = mieAbsorptionBase * mieDensity;
-
-    vec3 ozoneAbsorption = ozoneAbsorptionBase * max(0.0, 1.0 - abs(altitudeKM - 25.0) / 15.0);
-
-    extinction = rayleighScattering + rayleighAbsorption + mieScattering + mieAbsorption + ozoneAbsorption;
+vec3 getSigmaT(float h)
+{
+    vec3 rayleigh = rayleighScatteringBase * exp(-h / hDensityRayleigh);
+    float mie = (mieScatteringBase + mieAbsorptionBase) * exp(-h / hDensityMie);
+    vec3 ozone = ozoneAbsorptionBase * max(0.0, 1 - 0.5 * abs(h - ozoneCenterHeight) / ozoneThickness);
+    return rayleigh + mie + ozone;
 }
 
-// 🔹 Calcula la transmitancia de la luz solar a través de la atmósfera
-vec3 getSunTransmittance(vec3 pos, vec3 sunDir) {
-    if (rayIntersectSphere(pos, sunDir, groundRadiusMM) > 0.0) {
-        return vec3(0.0); // El rayo golpea el suelo
+void main() 
+{
+    uvec3 threadIdx = gl_GlobalInvocationID;
+    vec2 dimensions = vec2(imageSize(OutputImage));
+
+    if (threadIdx.x >= dimensions.x || threadIdx.y >= dimensions.y)
+        return;
+
+    float theta = asin(mix(-1.0, 1.0, (threadIdx.y + 0.5) / dimensions.y));
+    float h = mix(0.0, AtmosphereRadius - PlanetRadius, (threadIdx.x + 0.5) / dimensions.x);
+
+    vec2 o = vec2(0, PlanetRadius + h);
+    vec2 d = vec2(cos(theta), sin(theta));
+    
+    float t = 0;
+    if(!findClosestIntersectionWithCircle(o, d, PlanetRadius, t))
+        findClosestIntersectionWithCircle(o, d, AtmosphereRadius, t);
+
+    vec2 end = o + t * d;
+
+    vec3 sum;
+    for(int i = 0; i < STEP_COUNT; ++i)
+    {
+        vec2 pi = mix(o, end, (i + 0.5) / STEP_COUNT);
+        float hi = length(pi) - PlanetRadius;
+        vec3 sigma = getSigmaT(hi);
+        sum += sigma;
     }
 
-    float atmoDist = rayIntersectSphere(pos, sunDir, atmosphereRadiusMM);
-    //if (atmoDist < 0.0) return vec3(1.0); // No hay intersección con la atmósfera
-
-    float t = 0.0;
-    vec3 transmittance = vec3(1.0);
-
-    for (float i = 0.0; i < sunTransmittanceSteps; i += 1.0) {
-        float newT = ((i + 0.3) / sunTransmittanceSteps) * atmoDist;
-        float dt = newT - t;
-        t = newT;
-
-        vec3 newPos = pos + t * sunDir;
-
-        vec3 rayleighScattering, extinction;
-        float mieScattering;
-        getScatteringValues(newPos, rayleighScattering, mieScattering, extinction);
-
-        transmittance *= exp(-dt * extinction);
-    }
-    return transmittance;
-}
-
-float safeacos(const float x) {
-    return acos(clamp(x, -1.0, 1.0));
-}
-
-// 🔹 Shader principal
-void main() {
-    ivec2 texel = ivec2(gl_GlobalInvocationID.xy);
-    vec2 uv = vec2(texel) / vec2(imageSize(OutputImage));
+    vec3 result = exp(-sum * (t / STEP_COUNT));
     
-    // 🔸 Convertimos UV en parámetros físicos
-    float sunCosTheta = mix(-1.0, 1.0, uv.x); // De -1 (horizonte) a 1 (cenit)
-    float sunTheta = safeacos(sunCosTheta);
-    float heightMM = mix(groundRadiusMM, atmosphereRadiusMM, uv.y); // Altura en megametros
-    
-    vec3 pos = vec3(0.0, heightMM, 0.0); // Posición en la atmósfera
-    vec3 sunDir = normalize(vec3(0.0, sunCosTheta, -sin(sunTheta))); // Dirección del sol
-
-    // 🔸 Calculamos la transmitancia usando el método de integración
-    vec3 transmittance = getSunTransmittance(pos, sunDir);
-    
-    // 🔸 Almacenar en la LUT
-    imageStore(OutputImage, texel, vec4(transmittance, 1.0));
+    imageStore(OutputImage, ivec2(threadIdx), vec4(result, 1.0));
 }
