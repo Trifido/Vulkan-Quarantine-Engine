@@ -26,11 +26,13 @@ private:
     void copyBufferToCubemapImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t mipLevels);
     void copyBufferImagesToCubemapImage(VkBuffer buffer, VkImage image, uint32_t textureWidth, VkDeviceSize faceTextureSize, uint32_t mipLevels);
     void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
+    int GetChannelCount(VkFormat format);
 public:
     CustomTexture();
     CustomTexture(string path, TEXTURE_TYPE type);
     CustomTexture(vector<string> path);
     CustomTexture(aiTexel* data, unsigned int width, unsigned int height, TEXTURE_TYPE type);
+    CustomTexture(unsigned int width, unsigned int height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, TEXTURE_TYPE type);
     void createTextureImage(string path = NULL);
     void createCubemapTextureImage(string path = NULL);
     void createCubemapTextureImage(vector<string> paths);

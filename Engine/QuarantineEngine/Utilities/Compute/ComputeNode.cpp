@@ -59,10 +59,12 @@ void ComputeNode::InitializeOutputTextureComputeNode(uint32_t width, uint32_t he
 {
     this->widthImage = width;
     this->heightImage = height;
-    this->computeDescriptor->outputTexture = std::make_shared<CustomTexture>();
-    this->computeDescriptor->outputTexture->createImage(width, height, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-    this->computeDescriptor->outputTexture->createTextureImageView(VK_FORMAT_R16G16B16A16_SFLOAT);
+    this->computeDescriptor->outputTexture = std::make_shared<CustomTexture>(
+        width, height, VK_FORMAT_R16G16B16A16_SFLOAT,
+        VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        TEXTURE_TYPE::COMPUTE_TYPE
+    );
 
     VkImageSubresourceRange subresourceRange = {};
     subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -74,9 +76,19 @@ void ComputeNode::InitializeOutputTextureComputeNode(uint32_t width, uint32_t he
 
 void ComputeNode::cleanup()
 {
-    this->computeDescriptor->Cleanup();
-    this->computeShader.reset();
-    this->computeShader = nullptr;
+    if (this->computeDescriptor != nullptr)
+    {
+        this->computeDescriptor->Cleanup();
+        this->computeDescriptor.reset();
+        this->computeDescriptor = nullptr;
+    }
+
+    if (this->computeShader != nullptr)
+    {
+        this->computeShader.reset();
+        this->computeShader = nullptr;
+    }
+
     this->NElements = 0;
 }
 

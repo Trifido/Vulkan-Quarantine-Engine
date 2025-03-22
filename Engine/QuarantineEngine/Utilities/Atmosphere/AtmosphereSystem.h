@@ -22,6 +22,7 @@ public:
         PHYSICALLY_BASED_SKY = 2,
     };
 
+    bool IsInitialized = false;
 private:
     friend class QESingleton<AtmosphereSystem>; // Permitir acceso al constructor
 
@@ -29,6 +30,8 @@ private:
     Camera* camera = nullptr;
     LightManager* lightManager = nullptr;
     ComputeNodeManager* computeNodeManager;
+
+    std::shared_ptr<CustomTexture> outputTexture;
 
     // Environment type
     ENVIRONMENT_TYPE environmentType;

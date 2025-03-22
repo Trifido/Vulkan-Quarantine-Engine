@@ -47,6 +47,8 @@ void AtmosphereSystem::InitializeAtmosphere(Camera* cameraPtr)
     this->SetUpResources(cameraPtr);
     this->CreateDescriptorPool();
     this->CreateDescriptorSet();
+
+    this->IsInitialized = true;
 }
 
 void AtmosphereSystem::SetUpResources(Camera* cameraPtr)
@@ -69,6 +71,7 @@ void AtmosphereSystem::SetUpResources(Camera* cameraPtr)
     if (this->environmentType == ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY)
     {
         this->computeNodeManager = ComputeNodeManager::getInstance();
+
         this->TLUT_ComputeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("transmittance_lut"));
         this->TLUT_ComputeNode->NElements = 16;
         this->TLUT_ComputeNode->InitializeOutputTextureComputeNode(256, 64);
@@ -116,6 +119,8 @@ void AtmosphereSystem::InitializeAtmosphere(ENVIRONMENT_TYPE type, const string*
     this->CreateDescriptorPool();
 
     this->AddTextureResources(texturePaths, numTextures);
+
+    this->IsInitialized = true;
 }
 
 void AtmosphereSystem::SetCamera(Camera* cameraPtr)
@@ -250,22 +255,28 @@ string AtmosphereSystem::GetAbsolutePath(string relativePath, string filename)
 
 void AtmosphereSystem::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t frameIdx)
 {
-    auto textureTLUT = this->TLUT_ComputeNode->computeDescriptor->outputTexture;
-    auto textureSVLUT = this->SVLUT_ComputeNode->computeDescriptor->outputTexture;
+    if (!this->IsInitialized)
+        return;
 
-    VkImageSubresourceRange subresourceRange = {};
-    subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    subresourceRange.baseMipLevel = 0;
-    subresourceRange.levelCount = 1;
-    subresourceRange.layerCount = 1;
+    if (this->TLUT_ComputeNode != nullptr && this->SVLUT_ComputeNode != nullptr)
+    {
+        auto textureTLUT = this->TLUT_ComputeNode->computeDescriptor->outputTexture;
+        auto textureSVLUT = this->SVLUT_ComputeNode->computeDescriptor->outputTexture;
 
-    if (textureTLUT->currentLayout == VK_IMAGE_LAYOUT_GENERAL)
-    {
-        textureTLUT->transitionImageLayout(textureTLUT->image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
-    }
-    if (textureSVLUT->currentLayout == VK_IMAGE_LAYOUT_GENERAL)
-    {
-        textureSVLUT->transitionImageLayout(textureSVLUT->image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
+        VkImageSubresourceRange subresourceRange = {};
+        subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        subresourceRange.baseMipLevel = 0;
+        subresourceRange.levelCount = 1;
+        subresourceRange.layerCount = 1;
+
+        if (textureTLUT->currentLayout == VK_IMAGE_LAYOUT_GENERAL)
+        {
+            textureTLUT->transitionImageLayout(textureTLUT->image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
+        }
+        if (textureSVLUT->currentLayout == VK_IMAGE_LAYOUT_GENERAL)
+        {
+            textureSVLUT->transitionImageLayout(textureSVLUT->image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
+        }
     }
 
     auto pipelineModule = this->environment_shader->PipelineModule;
@@ -307,6 +318,7 @@ void AtmosphereSystem::Cleanup()
                 this->descriptorSets[i] = VK_NULL_HANDLE;
             }
         }
+        this->descriptorSets.clear();
     }
 
     if (this->descriptorPool != VK_NULL_HANDLE)

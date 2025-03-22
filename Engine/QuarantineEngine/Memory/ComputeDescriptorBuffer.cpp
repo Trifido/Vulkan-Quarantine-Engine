@@ -403,11 +403,15 @@ void ComputeDescriptorBuffer::UpdateUBODeltaTime()
 
 void ComputeDescriptorBuffer::Cleanup()
 {
-    vkDestroyDescriptorPool(deviceModule->device, this->descriptorPool, nullptr);
-
     if (!this->descriptorSets.empty())
     {
         this->descriptorSets.clear();
+    }
+
+    if (this->descriptorPool != VK_NULL_HANDLE)
+    {
+        vkDestroyDescriptorPool(deviceModule->device, this->descriptorPool, nullptr);
+        this->descriptorPool = VK_NULL_HANDLE;
     }
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
@@ -440,11 +444,11 @@ void ComputeDescriptorBuffer::Cleanup()
 
     if (!this->inputTextures.empty())
     {
-        for (auto texture : this->inputTextures)
+        for (int i = 0; i < this->inputTextures.size(); i++)
         {
-            texture->cleanup();
-            texture.reset();
-            texture = nullptr;
+            this->inputTextures[i]->cleanup();
+            this->inputTextures[i].reset();
+            this->inputTextures[i] = nullptr;
         }
         inputTextures.clear();
     }

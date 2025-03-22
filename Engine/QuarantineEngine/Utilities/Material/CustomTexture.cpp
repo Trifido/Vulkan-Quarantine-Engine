@@ -4,6 +4,7 @@
 
 #include "BufferManageModule.h"
 #include "SyncTool.h"
+#include <unordered_map>
 
 VkCommandPool CustomTexture::commandPool;
 
@@ -259,7 +260,7 @@ CustomTexture::CustomTexture(std::string path, TEXTURE_TYPE type)
     {
         this->createCubemapTextureImage(path);
     }
-    else
+    else if (type == TEXTURE_TYPE::COMPUTE_TYPE)
     {
         this->createTextureImage(path);
     }
@@ -275,6 +276,56 @@ CustomTexture::CustomTexture(aiTexel* data, unsigned int width, unsigned int hei
 {
     this->type = type;
     this->createTextureRawImage(data, width, height);
+}
+
+int CustomTexture::GetChannelCount(VkFormat format) {
+    static const std::unordered_map<VkFormat, int> formatChannels = {
+        {VK_FORMAT_R8_UNORM, 1}, {VK_FORMAT_R8_SNORM, 1}, {VK_FORMAT_R8_UINT, 1}, {VK_FORMAT_R8_SINT, 1},
+        {VK_FORMAT_R16_UNORM, 1}, {VK_FORMAT_R16_SNORM, 1}, {VK_FORMAT_R16_UINT, 1}, {VK_FORMAT_R16_SINT, 1}, {VK_FORMAT_R16_SFLOAT, 1},
+        {VK_FORMAT_R32_UINT, 1}, {VK_FORMAT_R32_SINT, 1}, {VK_FORMAT_R32_SFLOAT, 1},
+
+        {VK_FORMAT_R8G8_UNORM, 2}, {VK_FORMAT_R8G8_SNORM, 2}, {VK_FORMAT_R8G8_UINT, 2}, {VK_FORMAT_R8G8_SINT, 2},
+        {VK_FORMAT_R16G16_UNORM, 2}, {VK_FORMAT_R16G16_SNORM, 2}, {VK_FORMAT_R16G16_UINT, 2}, {VK_FORMAT_R16G16_SINT, 2}, {VK_FORMAT_R16G16_SFLOAT, 2},
+        {VK_FORMAT_R32G32_UINT, 2}, {VK_FORMAT_R32G32_SINT, 2}, {VK_FORMAT_R32G32_SFLOAT, 2},
+
+        {VK_FORMAT_R8G8B8_UNORM, 3}, {VK_FORMAT_R8G8B8_SNORM, 3}, {VK_FORMAT_R8G8B8_UINT, 3}, {VK_FORMAT_R8G8B8_SINT, 3},
+        {VK_FORMAT_R16G16B16_UNORM, 3}, {VK_FORMAT_R16G16B16_SNORM, 3}, {VK_FORMAT_R16G16B16_UINT, 3}, {VK_FORMAT_R16G16B16_SINT, 3}, {VK_FORMAT_R16G16B16_SFLOAT, 3},
+        {VK_FORMAT_R32G32B32_UINT, 3}, {VK_FORMAT_R32G32B32_SINT, 3}, {VK_FORMAT_R32G32B32_SFLOAT, 3},
+
+        {VK_FORMAT_R8G8B8A8_UNORM, 4}, {VK_FORMAT_R8G8B8A8_SNORM, 4}, {VK_FORMAT_R8G8B8A8_UINT, 4}, {VK_FORMAT_R8G8B8A8_SINT, 4},
+        {VK_FORMAT_R16G16B16A16_UNORM, 4}, {VK_FORMAT_R16G16B16A16_SNORM, 4}, {VK_FORMAT_R16G16B16A16_UINT, 4}, {VK_FORMAT_R16G16B16A16_SINT, 4}, {VK_FORMAT_R16G16B16A16_SFLOAT, 4},
+        {VK_FORMAT_R32G32B32A32_UINT, 4}, {VK_FORMAT_R32G32B32A32_SINT, 4}, {VK_FORMAT_R32G32B32A32_SFLOAT, 4},
+
+        {VK_FORMAT_D16_UNORM, 1}, {VK_FORMAT_X8_D24_UNORM_PACK32, 1}, {VK_FORMAT_D32_SFLOAT, 1},
+        {VK_FORMAT_S8_UINT, 1}, {VK_FORMAT_D24_UNORM_S8_UINT, 2}, {VK_FORMAT_D32_SFLOAT_S8_UINT, 2}
+    };
+
+    auto it = formatChannels.find(format);
+    return (it != formatChannels.end()) ? it->second : 0; // Devuelve 0 si el formato es desconocido
+}
+
+CustomTexture::CustomTexture(unsigned int width, unsigned int height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, TEXTURE_TYPE type)
+{
+    ptrCommandPool = &commandPool;
+    this->type = type;
+    this->texHeight = height;
+    this->texWidth = width;
+    this->texChannels = this->GetChannelCount(format);
+
+    VkImageUsageFlags usageFlag;
+
+    if (type == TEXTURE_TYPE::COMPUTE_TYPE)
+    {
+        usageFlag = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    }
+    else
+    {
+        usageFlag = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    }
+
+    this->createImage(width, height, format, tiling, usageFlag, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    this->createTextureImageView(format);
+    this->createTextureSampler();
 }
 
 void CustomTexture::createTextureImage(std::string path)
@@ -564,8 +615,27 @@ void CustomTexture::createCubemapTextureSampler()
 
 void CustomTexture::cleanup()
 {
-    vkDestroySampler(deviceModule->device, textureSampler, nullptr);
-    vkDestroyImageView(deviceModule->device, imageView, nullptr);
-    vkDestroyImage(deviceModule->device, image, nullptr);
-    vkFreeMemory(deviceModule->device, deviceMemory, nullptr);
+    if (textureSampler != VK_NULL_HANDLE)
+    {
+        vkDestroySampler(deviceModule->device, textureSampler, nullptr);
+        textureSampler = VK_NULL_HANDLE;
+    }
+
+    if (imageView != VK_NULL_HANDLE)
+    {
+        vkDestroyImageView(deviceModule->device, imageView, nullptr);
+        imageView = VK_NULL_HANDLE;
+    }
+
+    if (image != VK_NULL_HANDLE)
+    {
+        vkDestroyImage(deviceModule->device, image, nullptr);
+        image = VK_NULL_HANDLE;
+    }
+
+    if (deviceMemory != VK_NULL_HANDLE)
+    {
+        vkFreeMemory(deviceModule->device, deviceMemory, nullptr);
+        deviceMemory = VK_NULL_HANDLE;
+    }
 }
