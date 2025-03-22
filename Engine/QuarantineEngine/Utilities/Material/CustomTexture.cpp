@@ -260,7 +260,7 @@ CustomTexture::CustomTexture(std::string path, TEXTURE_TYPE type)
     {
         this->createCubemapTextureImage(path);
     }
-    else if (type == TEXTURE_TYPE::COMPUTE_TYPE)
+    else
     {
         this->createTextureImage(path);
     }
