@@ -55,13 +55,13 @@ void ComputeNode::InitializeComputeNode()
     this->computeDescriptor->InitializeDescriptorSets(this->computeShader);
 }
 
-void ComputeNode::InitializeOutputTextureComputeNode(uint32_t width, uint32_t height)
+void ComputeNode::InitializeOutputTextureComputeNode(uint32_t width, uint32_t height, VkFormat format)
 {
     this->widthImage = width;
     this->heightImage = height;
 
     this->computeDescriptor->outputTexture = std::make_shared<CustomTexture>(
-        width, height, VK_FORMAT_R16G16B16A16_SFLOAT,
+        width, height, format,
         VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         TEXTURE_TYPE::COMPUTE_TYPE
     );

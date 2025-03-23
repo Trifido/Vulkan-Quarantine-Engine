@@ -31,7 +31,7 @@ public:
     void FillComputeBuffer(size_t numElements, unsigned long long elementType, void* data);
     void FillComputeBuffer(uint32_t ssboIndex, VkBuffer buffer, uint32_t bufferSize);
     void InitializeComputeNode();
-    void InitializeOutputTextureComputeNode(uint32_t width, uint32_t height);
+    void InitializeOutputTextureComputeNode(uint32_t width, uint32_t height, VkFormat format);
     void DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t currentFrame);
     void UpdateComputeDescriptor();
 };

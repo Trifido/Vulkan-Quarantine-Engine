@@ -74,18 +74,18 @@ void AtmosphereSystem::SetUpResources(Camera* cameraPtr)
 
         this->TLUT_ComputeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("transmittance_lut"));
         this->TLUT_ComputeNode->NElements = 16;
-        this->TLUT_ComputeNode->InitializeOutputTextureComputeNode(256, 64);
+        this->TLUT_ComputeNode->InitializeOutputTextureComputeNode(256, 64, VK_FORMAT_R16G16B16A16_SFLOAT);
         this->computeNodeManager->AddComputeNode("transmittance_lut", this->TLUT_ComputeNode);
 
         this->MSLUT_ComputeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("multi_scattering_lut"));
         this->MSLUT_ComputeNode->NElements = 16;
-        this->MSLUT_ComputeNode->InitializeOutputTextureComputeNode(32, 32);
+        this->MSLUT_ComputeNode->InitializeOutputTextureComputeNode(32, 32, VK_FORMAT_R16G16B16A16_SFLOAT);
         this->MSLUT_ComputeNode->computeDescriptor->inputTextures.push_back(this->TLUT_ComputeNode->computeDescriptor->outputTexture);
         this->computeNodeManager->AddComputeNode("multi_scattering_lut", this->MSLUT_ComputeNode);
 
         this->SVLUT_ComputeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("sky_view_lut"));
         this->SVLUT_ComputeNode->NElements = 16;
-        this->SVLUT_ComputeNode->InitializeOutputTextureComputeNode(200, 100);
+        this->SVLUT_ComputeNode->InitializeOutputTextureComputeNode(200, 100, VK_FORMAT_R32G32B32A32_SFLOAT);
         this->SVLUT_ComputeNode->computeDescriptor->inputTextures.push_back(this->TLUT_ComputeNode->computeDescriptor->outputTexture);
         this->SVLUT_ComputeNode->computeDescriptor->inputTextures.push_back(this->MSLUT_ComputeNode->computeDescriptor->outputTexture);
         this->computeNodeManager->AddComputeNode("sky_view_lut", this->SVLUT_ComputeNode);
