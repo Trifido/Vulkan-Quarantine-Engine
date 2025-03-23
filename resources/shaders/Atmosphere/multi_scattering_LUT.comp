@@ -8,8 +8,8 @@ layout(binding = 1,rgba16f) uniform image2D OutputImage;
 #define MULT_SCATT_STEPS 20.0
 
 // Unidades en Megametros (MM)
-const float PlanetRadius = 6360.0;
-const float AtmosphereRadius = 6460.0;
+const float PlanetRadius = 6.360;
+const float AtmosphereRadius = 6.460;
 
 const vec3 groundAlbedo = vec3(0.3);
 
@@ -45,10 +45,11 @@ float rayIntersectSphere(vec3 ro, vec3 rd, float rad)
 }
 
 // Rayleight & Mie parameters
-const vec3 rayleighScatteringBase = vec3(5.802, 13.558, 33.1) * 1e-3;
-const vec3 mieExtinctionBase = vec3(0.0044);
+const vec3 rayleighScatteringBase = vec3(5.802, 13.558, 33.1);
+const float mieScatteringBase = 3.996;
+const float mieExtinctionBase = 4.4;
 const float rayleighAbsorptionBase = 0.0;
-const vec3 ozoneAbsorptionBase = vec3(0.000650, 0.001881, 0.000085);
+const vec3 ozoneAbsorptionBase = vec3(0.650, 1.881, 0.085);
 
 float getMiePhase(float cosTheta)
 {
@@ -72,16 +73,15 @@ void getScatteringValues(vec3 pos,
                          out float mieScattering,
                          out vec3 extinction) 
 {
-    float altitudeKM = (length(pos)-PlanetRadius);
-    // Note: Paper gets these switched up.
+    float altitudeKM = (length(pos)-PlanetRadius) * 1000.0;
     float rayleighDensity = exp(-altitudeKM/8.0);
     float mieDensity = exp(-altitudeKM/1.2);
     
     rayleighScattering = rayleighScatteringBase * rayleighDensity;
     float rayleighAbsorption = rayleighAbsorptionBase * rayleighDensity;
     
-    mieScattering = mieExtinctionBase.x * mieDensity;
-    float mieAbsorption = mieExtinctionBase.x * mieDensity;
+    mieScattering = mieScatteringBase * mieDensity;
+    float mieAbsorption = mieExtinctionBase * mieDensity;
     
     vec3 ozoneAbsorption = ozoneAbsorptionBase * max(0.0, 1.0 - abs(altitudeKM-25.0)/15.0);
     
