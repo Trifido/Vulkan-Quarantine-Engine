@@ -1,11 +1,6 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout(location = 0) in VS_OUT 
-{
-    vec2 TexCoords;
-} QE_in;
-
 layout(binding = 0) uniform sampler2D InputImage;
 layout(binding = 1) uniform sampler2D InputImage_2;
 
@@ -119,25 +114,24 @@ vec3 sunWithBloom(vec3 rayDir, vec3 sunDir)
     return vec3(gaussianBloom+invBloom);
 }
 
-vec3 sunDir = normalize(vec3(0.0, -0.2, -0.5));
+vec3 sunDir = normalize(vec3(0.0, 0.001, -0.5));
 
 void main()
 {
     vec2 iResolution = screenResolution.data;
     vec3 viewPos = cameraData.position.xyz * 1e-6;
-    viewPos.y += PlanetRadius;
+    viewPos.y += PlanetRadius;//+ 0.0002;
 
-    vec3 camDir = normalize(-cameraData.view[2].xyz);
-    float camFOVWidth = PI / 3.5;
+    vec3 camDir = normalize(cameraData.view[2].xyz);
+    float camFOVWidth = 0.785398;
     float camWidthScale = 2.0 * tan(camFOVWidth / 2.0);
     float camHeightScale = camWidthScale * iResolution.y / iResolution.x;
 
-    //vec3 camUp = normalize(cameraData.view[1].xyz);   // Dirección "arriba" de la cámara
-    //vec3 camRight = normalize(cameraData.view[0].xyz); // Dirección "derecha" de la cámara
     vec3 camRight = normalize(cross(camDir, vec3(0.0, 1.0, 0.0)));
     vec3 camUp = cross(camRight, camDir);
 
     vec2 xy = (gl_FragCoord.xy / iResolution.xy) * 2.0 - 1.0;
+    xy.x = -xy.x;
     
     vec3 rayDir = normalize(camDir + camRight * xy.x * camWidthScale + camUp * xy.y * camHeightScale);
     
@@ -159,13 +153,9 @@ void main()
             sunLum *= getValFromTLUT(viewPos, sunDir);
         }
     }
+
     lum += sunLum;
-    // 
-    // Tonemapping and gamma. Super ad-hoc, probably a better way to do this.
-    lum *= 0.2;
-    
-    lum = pow(lum, vec3(1.3));
-    lum /= (smoothstep(0.0, 0.2, clamp(sunDir.y, 0.0, 1.0))*2.0 + 0.15);
+    lum *= 100.0;
     lum = jodieReinhardTonemap(lum);
     lum = pow(lum, vec3(1.0/2.2));
     

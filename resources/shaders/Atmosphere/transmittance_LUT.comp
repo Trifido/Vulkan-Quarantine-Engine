@@ -101,7 +101,7 @@ void main()
 {
     vec2 dimensions = vec2(imageSize(OutputImage));
 
-    if (gl_GlobalInvocationID.x >= dimensions.x || gl_GlobalInvocationID.y >= dimensions.y)
+    if (gl_GlobalInvocationID.x >= (dimensions.x + 1.5) || gl_GlobalInvocationID.y >= (dimensions.y + 1.5))
         return;
 
     float r, mu;

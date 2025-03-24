@@ -182,7 +182,7 @@ void main()
     uvec3 threadIdx = gl_GlobalInvocationID;
     vec2 dimensions = vec2(imageSize(OutputImage));
 
-    if (threadIdx.x >= dimensions.x || threadIdx.y >= dimensions.y)
+    if (threadIdx.x >= (dimensions.x+1.5) || threadIdx.y >= (dimensions.y+1.5))
         return;
 
     vec2 uv = (gl_GlobalInvocationID.xy + vec2(0.5)) / dimensions;
