@@ -30,8 +30,10 @@ private:
     Camera* camera = nullptr;
     LightManager* lightManager = nullptr;
     ComputeNodeManager* computeNodeManager;
+    SwapChainModule* swapChainModule;
 
     std::shared_ptr<CustomTexture> outputTexture;
+    std::shared_ptr<UniformBufferObject> resolutionUBO = nullptr;
 
     // Environment type
     ENVIRONMENT_TYPE environmentType;
@@ -62,7 +64,7 @@ private:
     // Cubemap resources
     shared_ptr<CustomTexture> environmentTexture = nullptr;
 
-    VkDescriptorBufferInfo buffersInfo;
+    std::vector<VkDescriptorBufferInfo> buffersInfo;
     VkDescriptorImageInfo imageInfo_1;
     VkDescriptorImageInfo imageInfo_2;
 
@@ -71,7 +73,7 @@ private:
     void CreateDescriptorSet();
     string GetAbsolutePath(string relativePath, string filename);
     VkDescriptorBufferInfo GetBufferInfo(VkBuffer buffer, VkDeviceSize bufferSize);
-    void SetDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize);
+    void SetDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, uint32_t idBuffer, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize);
     void SetSamplerDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding, std::shared_ptr<CustomTexture> texture, VkDescriptorImageInfo& imageInfo);
     void SetUpResources(Camera* cameraPtr);
 
@@ -86,6 +88,7 @@ public:
     void DrawCommand(VkCommandBuffer& commandBuffer, uint32_t frameIdx);
     void Cleanup();
     void CleanLastResources();
+    void UpdateAtmopshereResolution();
 };
 
 #endif // !ATMOSPHERE_SYSTEM_H

@@ -732,6 +732,9 @@ void App::recreateSwapchain()
     this->cameraEditor->UpdateViewportSize(swapchainModule->swapChainExtent);
     this->cameraEditor->UpdateCamera();
 
+    //Actualizamos la resolución de la atmosfera
+    this->atmosphereSystem->UpdateAtmopshereResolution();
+
     //Recreamos el antialiasing module
     antialiasingModule->createColorResources();
     //Recreamos el depth buffer module

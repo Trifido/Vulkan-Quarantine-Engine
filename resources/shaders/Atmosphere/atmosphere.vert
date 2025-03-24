@@ -15,7 +15,4 @@ void main() {
 
     // Convertir UVs a Clip Space
     gl_Position = vec4(QE_out.TexCoords * 2.0 - 1.0, 0.0, 1.0);
-
-    // CORRECCIÓN PARA VULKAN: invertir Y
-    gl_Position.y = -gl_Position.y;
 }

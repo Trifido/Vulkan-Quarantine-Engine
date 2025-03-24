@@ -18,15 +18,18 @@ layout(set = 0, binding = 2) uniform CameraUniform
     vec4 frustumPlanes[6];
 } cameraData;
 
+layout(set = 0, binding = 3) uniform ScreenResolution
+{
+	vec2 data;
+} screenResolution;
+
 layout(location = 0) out vec4 outColor;
 
 const float PI = 3.14159265358;
 
 // Unidades en Megametros (MM)
-const float groundRadiusMM = 6.360;
-const float atmosphereRadiusMM = 6.460;
-
-const vec3 viewPos = vec3(0.0, groundRadiusMM + 0.0002, 0.0);
+const float PlanetRadius = 6.360;
+const float AtmosphereRadius = 6.460;
 
 float safeAcos(float x) 
 {
@@ -58,21 +61,20 @@ vec3 getValFromTLUT(vec3 pos, vec3 sunDir)
     
     vec2 uv = vec2(
         tLUTRes.x * clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0),
-        tLUTRes.y * max(0.0, min(1.0, (height - groundRadiusMM) / (atmosphereRadiusMM - groundRadiusMM)))
+        tLUTRes.y * max(0.0, min(1.0, (height - PlanetRadius) / (AtmosphereRadius - PlanetRadius)))
     );
     uv /= tLUTRes;
     
-    ivec2 texelCoords = ivec2(uv * tLUTRes);
-    return texture(InputImage, texelCoords).rgb;
+    return texture(InputImage, uv).rgb;
 }
 
-const vec2 skyLUTRes = vec2(200.0, 200.0);
-vec3 getValFromSkyLUT(vec3 rayDir, vec3 sunDir)
+const vec2 skyLUTRes = vec2(200.0, 100.0);
+vec3 getValFromSkyLUT(vec3 viewPos, vec3 rayDir, vec3 sunDir)
 {
     float height = length(viewPos);
     vec3 up = viewPos / height;
     
-    float horizonAngle = safeAcos(sqrt(height * height - groundRadiusMM * groundRadiusMM) / height);
+    float horizonAngle = safeAcos(sqrt(height * height - PlanetRadius * PlanetRadius) / height);
     float altitudeAngle = horizonAngle - acos(dot(rayDir, up)); // Between -PI/2 and PI/2
     float azimuthAngle; // Between 0 and 2*PI
     if (abs(altitudeAngle) > (0.5*PI - 0.0001)) {
@@ -91,7 +93,7 @@ vec3 getValFromSkyLUT(vec3 rayDir, vec3 sunDir)
     // Non-linear mapping of altitude angle. See Section 5.3 of the paper.
     float v = 0.5 + 0.5*sign(altitudeAngle)*sqrt(abs(altitudeAngle)*2.0/PI);
     vec2 uv = vec2(azimuthAngle / (2.0*PI), v);
-    uv /= skyLUTRes;
+
     return texture(InputImage_2, uv).rgb;
 }
 
@@ -103,7 +105,8 @@ vec3 jodieReinhardTonemap(vec3 c)
     return mix(c / (l + 1.0), tc, tc);
 }
 
-vec3 sunWithBloom(vec3 rayDir, vec3 sunDir) {
+vec3 sunWithBloom(vec3 rayDir, vec3 sunDir)
+{
     const float sunSolidAngle = 0.53*PI/180.0;
     const float minSunCosTheta = cos(sunSolidAngle);
 
@@ -116,78 +119,55 @@ vec3 sunWithBloom(vec3 rayDir, vec3 sunDir) {
     return vec3(gaussianBloom+invBloom);
 }
 
-float getSunAltitude(float time)
-{
-    const float periodSec = 120.0;
-    const float halfPeriod = periodSec / 2.0;
-    const float sunriseShift = 0.1;
-    float cyclePoint = (1.0 - abs((mod(time,periodSec)-halfPeriod)/halfPeriod));
-    cyclePoint = (cyclePoint*(1.0+sunriseShift))-sunriseShift;
-    return (0.5*PI)*cyclePoint;
-}
-
-vec3 getSunDir()
-{
-    float altitude = getSunAltitude(10.5);
-    return normalize(vec3(0.0, sin(altitude), -cos(altitude)));
-}
+vec3 sunDir = normalize(vec3(0.0, -0.2, -0.5));
 
 void main()
 {
-	vec2 fragCoord = gl_FragCoord.xy;
-    vec3 sunDir = getSunDir();
+    vec2 iResolution = screenResolution.data;
+    vec3 viewPos = cameraData.position.xyz * 1e-6;
+    viewPos.y += PlanetRadius;
 
-    vec4 ndc = vec4(QE_in.TexCoords * 2.0 - 1.0, 1.0, 1.0); // (x,y) en [-1,1], z=1 para dirección
-    mat4 invProj = inverse(cameraData.proj);
-    mat4 invView = inverse(cameraData.view);
-    vec4 viewDir = invProj * ndc;  // Convertir a espacio de cámara
-    viewDir /= viewDir.w;          // Hacer homogéneo
+    vec3 camDir = normalize(-cameraData.view[2].xyz);
+    float camFOVWidth = PI / 3.5;
+    float camWidthScale = 2.0 * tan(camFOVWidth / 2.0);
+    float camHeightScale = camWidthScale * iResolution.y / iResolution.x;
 
-    vec3 camDir = normalize((invView * vec4(viewDir.xyz, 0.0)).xyz); // Pasar a espacio mundial
-
-    //vec3 camDir = normalize(vec3(0.0, 0.27, -1.0));
-    float camFOVWidth = PI/3.5;
-    float camWidthScale = 2.0*tan(camFOVWidth/2.0);
-	vec2 iResolution = vec2(1080, 720);
-    float camHeightScale = camWidthScale*iResolution.y/iResolution.x;
-    
+    //vec3 camUp = normalize(cameraData.view[1].xyz);   // Dirección "arriba" de la cámara
+    //vec3 camRight = normalize(cameraData.view[0].xyz); // Dirección "derecha" de la cámara
     vec3 camRight = normalize(cross(camDir, vec3(0.0, 1.0, 0.0)));
-    vec3 camUp = normalize(cross(camRight, camDir));
+    vec3 camUp = cross(camRight, camDir);
 
-    // Convertir dirección a coordenadas esféricas
-    float phi = atan(camDir.z, camDir.x);
-    float u = phi / (2.0 * 3.14159265359);
+    vec2 xy = (gl_FragCoord.xy / iResolution.xy) * 2.0 - 1.0;
     
-    float theta = asin(camDir.y);
-    float v = 0.5 + 0.5 * sign(theta) * sqrt(abs(theta) / (3.14159265359 / 2.0));
+    vec3 rayDir = normalize(camDir + camRight * xy.x * camWidthScale + camUp * xy.y * camHeightScale);
     
-    vec2 xy = vec2(u, v);
-    vec3 rayDir = normalize(camDir + camRight*xy.x*camWidthScale + camUp*xy.y*camHeightScale);
-    
-    vec3 lum = getValFromSkyLUT(rayDir, sunDir);
+    vec3 lum = getValFromSkyLUT(viewPos, rayDir, sunDir);
 
     // Bloom should be added at the end, but this is subtle and works well.
     vec3 sunLum = sunWithBloom(rayDir, sunDir);
     // Use smoothstep to limit the effect, so it drops off to actual zero.
     sunLum = smoothstep(0.002, 1.0, sunLum);
-    if (length(sunLum) > 0.0) {
-        if (rayIntersectSphere(viewPos, rayDir, groundRadiusMM) >= 0.0) {
+    if (length(sunLum) > 0.0) 
+    {
+        if (rayIntersectSphere(viewPos, rayDir, PlanetRadius) >= 0.0)
+        {
             sunLum *= 0.0;
-        } else {
+        } 
+        else 
+        {
             // If the sun value is applied to this pixel, we need to calculate the transmittance to obscure it.
             sunLum *= getValFromTLUT(viewPos, sunDir);
         }
     }
     lum += sunLum;
-    
+    // 
     // Tonemapping and gamma. Super ad-hoc, probably a better way to do this.
-    lum *= 20.0;
+    lum *= 0.2;
+    
     lum = pow(lum, vec3(1.3));
     lum /= (smoothstep(0.0, 0.2, clamp(sunDir.y, 0.0, 1.0))*2.0 + 0.15);
-    
     lum = jodieReinhardTonemap(lum);
-    
     lum = pow(lum, vec3(1.0/2.2));
     
-    outColor = vec4(lum,1.0);
+    outColor = vec4(lum, 1.0);
 }
