@@ -138,7 +138,7 @@ void main()
     vec3 camUp = cross(camRight, camDir);
 
     vec2 xy = (gl_FragCoord.xy / iResolution.xy) * 2.0 - 1.0;
-    xy.x = -xy.x;
+    xy.x= -xy.x;
     
     vec3 rayDirView = normalize(vec3(xy.x * camWidthScale, (xy.y + 0.01) * camHeightScale, 1.0));
     mat4 viewToWorld = inverse(cameraData.view);
@@ -151,7 +151,7 @@ void main()
     vec3 sunLum = sunWithBloom(rayDir, sunDir);
     // Use smoothstep to limit the effect, so it drops off to actual zero.
     sunLum = smoothstep(0.002, 1.0, sunLum);
-    if (length(sunLum) > 0.0) 
+    if (length(sunLum) < 0.0) 
     {
         if (rayIntersectSphere(viewPos, rayDir, PlanetRadius) >= 0.0)
         {

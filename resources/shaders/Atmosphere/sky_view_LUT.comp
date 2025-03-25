@@ -224,12 +224,12 @@ void main()
     float u = clamp(gl_GlobalInvocationID.x, 0.0, dimensions.x-1.0)/dimensions.x;
     float v = clamp(gl_GlobalInvocationID.y, 0.0, dimensions.y-1.0)/dimensions.y;
 
-    vec2 uv = vec2(u, 1.0 - v);
+    vec2 uv = vec2(u, v);
 
     float azimuthAngle = (uv.x - 0.5) * 2.0 * PI;
     // Non-linear mapping of altitude. See Section 5.3 of the paper.
     float adjV;
-    if (uv.y < 0.5)
+    if (uv.y > 0.5)
     {
 		float coord = 1.0 - 2.0 * uv.y;
 		adjV = -coord * coord;

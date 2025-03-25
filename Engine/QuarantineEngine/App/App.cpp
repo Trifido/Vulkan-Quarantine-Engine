@@ -204,7 +204,7 @@ void App::initVulkan()
         absPath.erase(ind, substring.length());
     }
 
-    /*
+    /**/
     //const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
     const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
 
@@ -225,7 +225,7 @@ void App::initVulkan()
     floor->_Material->materialData.SetMaterialField("Specular", glm::vec3(0.0f, 0.0f, 0.0f));
     floor->_Material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
     this->gameObjectManager->AddGameObject(floor, "floor");
-    */
+    /**/
 
 //DEMO
 /*
@@ -402,17 +402,19 @@ void App::mainLoop()
 
         if (ImGui::IsKeyDown('j') || ImGui::IsKeyDown('J'))
         {
-            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            newPos.x += 0.1f;
-            this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
-            this->lightManager->UpdateUniform();
+            this->atmosphereSystem->Sun.Direction.z -= 0.001f;
+            //glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
+            //newPos.x += 0.1f;
+            //this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
+            //this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('l') || ImGui::IsKeyDown('L'))
         {
-            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            newPos.x -= 0.1f;
-            this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
-            this->lightManager->UpdateUniform();
+            this->atmosphereSystem->Sun.Direction.z += 0.001f;
+            //glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
+            //newPos.x -= 0.1f;
+            //this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
+            //this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('I'))
         {
