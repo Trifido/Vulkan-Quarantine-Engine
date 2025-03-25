@@ -23,6 +23,8 @@ public:
     };
 
     bool IsInitialized = false;
+
+    SunUniform Sun;
 private:
     friend class QESingleton<AtmosphereSystem>; // Permitir acceso al constructor
 
@@ -34,6 +36,7 @@ private:
 
     std::shared_ptr<CustomTexture> outputTexture;
     std::shared_ptr<UniformBufferObject> resolutionUBO = nullptr;
+    std::shared_ptr<UniformBufferObject> sunUBO = nullptr;
 
     // Environment type
     ENVIRONMENT_TYPE environmentType;
@@ -88,6 +91,7 @@ public:
     void DrawCommand(VkCommandBuffer& commandBuffer, uint32_t frameIdx);
     void Cleanup();
     void CleanLastResources();
+    void UpdateSun();
     void UpdateAtmopshereResolution();
 };
 

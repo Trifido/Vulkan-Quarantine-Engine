@@ -129,6 +129,12 @@ struct DeltaTimeUniform
     float deltaTime;
 };
 
+struct SunUniform
+{
+    glm::vec3 Direction;
+    float Intensity;
+};
+
 struct OmniShadowUniform
 {
     glm::mat4 projection;

@@ -397,6 +397,9 @@ void App::mainLoop()
         // UPDATE LIGHT SYSTEM
         this->lightManager->Update();
 
+        // UPDATE ATMOSPHERE
+        this->atmosphereSystem->UpdateSun();
+
         if (ImGui::IsKeyDown('j') || ImGui::IsKeyDown('J'))
         {
             glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
@@ -413,17 +416,19 @@ void App::mainLoop()
         }
         if (ImGui::IsKeyDown('I'))
         {
-            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            newPos.z += 0.1f;
-            this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
-            this->lightManager->UpdateUniform();
+            this->atmosphereSystem->Sun.Direction.y += 0.001f;
+            //glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
+            //newPos.z += 0.1f;
+            //this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
+            //this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('K'))
         {
-            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            newPos.z -= 0.1f;
-            this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
-            this->lightManager->UpdateUniform();
+            this->atmosphereSystem->Sun.Direction.y -= 0.001f;
+            //glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
+            //newPos.z -= 0.1f;
+            //this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
+            //this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('1'))
         {

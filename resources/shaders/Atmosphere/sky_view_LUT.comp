@@ -15,6 +15,12 @@ layout(set = 0, binding = 3) uniform CameraUniform
     vec4 frustumPlanes[6];
 } cameraData;
 
+layout(set = 0, binding = 4) uniform SunUniform
+{
+	vec3 direction;
+    float intensity;
+}  sunData;
+
 // Math resources
 const float PI = 3.14159265358;
 
@@ -235,7 +241,9 @@ void main()
 	}
 
     vec3 viewPos = cameraData.position.xyz * 1e-6;
-    viewPos.y += PlanetRadius;// + 0.0002;
+    viewPos.y += PlanetRadius;
+    viewPos.y = max(PlanetRadius + 1e-6, viewPos.y);
+
     float height = length(viewPos);
     
     float horizonAngle = safeacos(sqrt(height * height - PlanetRadius * PlanetRadius) / height) - 0.5 * PI;
@@ -243,10 +251,10 @@ void main()
     float cosAltitude = cos(altitudeAngle);
 
     vec3 rayDir = vec3(cosAltitude * sin(azimuthAngle), sin(altitudeAngle), -cosAltitude * cos(azimuthAngle));
-    vec3 sunDir = normalize(vec3(0.0, 0.001, -0.5));
+    vec3 sunDir = normalize(sunData.direction);
 
     vec3 up = viewPos / height;
-    float sunAltitude = (0.5*PI) - acos(dot(sunDir, up));
+    float sunAltitude = (0.5 * PI) - acos(dot(sunDir, up));
     vec3 resultSunDir = vec3(0.0, sin(sunAltitude), -cos(sunAltitude));
     
     const int numScatteringSteps = 16;

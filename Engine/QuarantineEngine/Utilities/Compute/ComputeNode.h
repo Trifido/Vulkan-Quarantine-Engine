@@ -21,6 +21,8 @@ public:
     std::shared_ptr<ComputeDescriptorBuffer>    computeDescriptor = nullptr;
     uint32_t NElements = 0;
     bool UseDependencyBuffer = false;
+    bool OnDemandCompute = false;
+    bool Compute = true;
 
 public:
     ComputeNode();
@@ -34,6 +36,8 @@ public:
     void InitializeOutputTextureComputeNode(uint32_t width, uint32_t height, VkFormat format);
     void DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t currentFrame);
     void UpdateComputeDescriptor();
+private:
+    void UpdateOutputTextureState();
 };
 
 #endif // !COMPUTE_NODE_H

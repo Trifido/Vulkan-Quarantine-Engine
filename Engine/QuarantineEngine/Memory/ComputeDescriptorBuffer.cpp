@@ -31,9 +31,15 @@ void ComputeDescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shade
                 this->_numSSBOs++;
                 idx++;
             }
-            else if(binding.first == "CameraUniform")
+            else if (binding.first == "CameraUniform")
             {
                 this->camera = CameraEditor::getInstance();
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                idx++;
+            }
+            else if (binding.first == "SunUniform")
+            {
                 poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                 poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
                 idx++;
@@ -253,6 +259,12 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
             if (binding.first == "CameraUniform")
             {
                 this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->camera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform), frameIdx);
+                idx++;
+            }
+
+            if (binding.first == "SunUniform")
+            {
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->ubos["SunUniform"]->uniformBuffers[frameIdx], sizeof(SunUniform), frameIdx);
                 idx++;
             }
 

@@ -111,6 +111,12 @@ void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
                 poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
                 idx++;
             }
+            else if (binding.first == "SunUniform")
+            {
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                idx++;
+            }
             else if (binding.first == "LightCameraUniform")
             {
                 poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;

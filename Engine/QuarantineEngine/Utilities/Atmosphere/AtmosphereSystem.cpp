@@ -11,6 +11,9 @@ AtmosphereSystem::AtmosphereSystem()
     this->deviceModule = DeviceModule::getInstance();
     this->lightManager = LightManager::getInstance();
     this->swapChainModule = SwapChainModule::getInstance();
+
+    this->Sun.Direction = glm::normalize(glm::vec3(0.0, 0.001, -0.5));
+    this->Sun.Intensity = 100.0f;
 }
 
 AtmosphereSystem::~AtmosphereSystem()
@@ -46,6 +49,7 @@ void AtmosphereSystem::AddTextureResources(const string* texturePaths, uint32_t 
 void AtmosphereSystem::InitializeAtmosphere(Camera* cameraPtr)
 {
     this->SetUpResources(cameraPtr);
+    this->UpdateSun();
     this->CreateDescriptorPool();
     this->CreateDescriptorSet();
 
@@ -77,25 +81,35 @@ void AtmosphereSystem::SetUpResources(Camera* cameraPtr)
         this->resolutionUBO = std::make_shared<UniformBufferObject>();
         this->resolutionUBO->CreateUniformBuffer(sizeof(ScreenResolutionUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 
+        this->sunUBO = std::make_shared<UniformBufferObject>();
+        this->sunUBO->CreateUniformBuffer(sizeof(SunUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+
         this->UpdateAtmopshereResolution();
         this->computeNodeManager = ComputeNodeManager::getInstance();
 
         this->TLUT_ComputeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("transmittance_lut"));
+        //this->TLUT_ComputeNode->OnDemandCompute = true;
+        this->TLUT_ComputeNode->Compute = true;
         this->TLUT_ComputeNode->NElements = 16;
         this->TLUT_ComputeNode->InitializeOutputTextureComputeNode(256, 64, VK_FORMAT_R32G32B32A32_SFLOAT);
         this->computeNodeManager->AddComputeNode("transmittance_lut", this->TLUT_ComputeNode);
 
         this->MSLUT_ComputeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("multi_scattering_lut"));
+        //this->MSLUT_ComputeNode->OnDemandCompute = true;
+        this->MSLUT_ComputeNode->Compute = true;
         this->MSLUT_ComputeNode->NElements = 16;
         this->MSLUT_ComputeNode->InitializeOutputTextureComputeNode(32, 32, VK_FORMAT_R32G32B32A32_SFLOAT);
         this->MSLUT_ComputeNode->computeDescriptor->inputTextures.push_back(this->TLUT_ComputeNode->computeDescriptor->outputTexture);
         this->computeNodeManager->AddComputeNode("multi_scattering_lut", this->MSLUT_ComputeNode);
 
         this->SVLUT_ComputeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("sky_view_lut"));
+        //this->SVLUT_ComputeNode->OnDemandCompute = true;
+        this->SVLUT_ComputeNode->Compute = true;
         this->SVLUT_ComputeNode->NElements = 16;
         this->SVLUT_ComputeNode->InitializeOutputTextureComputeNode(200, 100, VK_FORMAT_R32G32B32A32_SFLOAT);
         this->SVLUT_ComputeNode->computeDescriptor->inputTextures.push_back(this->TLUT_ComputeNode->computeDescriptor->outputTexture);
         this->SVLUT_ComputeNode->computeDescriptor->inputTextures.push_back(this->MSLUT_ComputeNode->computeDescriptor->outputTexture);
+        this->SVLUT_ComputeNode->computeDescriptor->ubos["SunUniform"] = this->sunUBO;
         this->computeNodeManager->AddComputeNode("sky_view_lut", this->SVLUT_ComputeNode);
     }
 
@@ -186,8 +200,8 @@ void AtmosphereSystem::CreateDescriptorSet()
         throw std::runtime_error("failed to allocate descriptor sets!");
     }
 
-    int numWrites = (this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY) ? 2 : 4;
-    int numBuffers = (this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY) ? 1 : 2;
+    int numWrites = (this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY) ? 2 : 5;
+    int numBuffers = (this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY) ? 1 : 3;
     this->buffersInfo.resize(numBuffers);
 
     for (size_t frameIdx = 0; frameIdx < MAX_FRAMES_IN_FLIGHT; frameIdx++)
@@ -207,6 +221,7 @@ void AtmosphereSystem::CreateDescriptorSet()
             this->SetSamplerDescriptorWrite(descriptorWrites[1], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, this->SVLUT_ComputeNode->computeDescriptor->outputTexture, this->imageInfo_2);
             this->SetDescriptorWrite(descriptorWrites[2], this->descriptorSets[frameIdx], 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, this->camera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform));
             this->SetDescriptorWrite(descriptorWrites[3], this->descriptorSets[frameIdx], 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3, this->resolutionUBO->uniformBuffers[frameIdx], sizeof(ScreenResolutionUniform));
+            this->SetDescriptorWrite(descriptorWrites[4], this->descriptorSets[frameIdx], 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4, this->sunUBO->uniformBuffers[frameIdx], sizeof(SunUniform));
         }
 
         vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
@@ -312,7 +327,6 @@ void AtmosphereSystem::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t fram
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
         vkCmdBindIndexBuffer(commandBuffer, this->_Mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->_Mesh->indices.size()), 1, 0, 0, 0);
     }
     else
@@ -369,6 +383,22 @@ void AtmosphereSystem::CleanLastResources()
     {
         this->environment_shader.reset();
         this->environment_shader = nullptr;
+    }
+}
+
+void AtmosphereSystem::UpdateSun()
+{
+    if (this->environmentType == ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY)
+    {
+        for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
+        {
+            void* data;
+            vkMapMemory(deviceModule->device, this->sunUBO->uniformBuffersMemory[currentFrame], 0, sizeof(SunUniform), 0, &data);
+            memcpy(data, &Sun, sizeof(SunUniform));
+            vkUnmapMemory(deviceModule->device, this->sunUBO->uniformBuffersMemory[currentFrame]);
+        }
+
+        this->SVLUT_ComputeNode->Compute = true;
     }
 }
 

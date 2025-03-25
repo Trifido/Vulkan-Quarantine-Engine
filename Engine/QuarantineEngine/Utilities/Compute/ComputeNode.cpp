@@ -100,6 +100,14 @@ void ComputeNode::InitializeComputeBuffer(uint32_t idBuffer, uint32_t bufferSize
 
 void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t currentFrame)
 {
+    if (this->OnDemandCompute && !this->Compute)
+    {
+        this->UpdateOutputTextureState();
+        return;
+    }
+
+    this->Compute = false;
+
     if (this->UseDependencyBuffer)
     {
         VkBufferMemoryBarrier bufferBarrier = {};
@@ -124,21 +132,7 @@ void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
     }
     else
     {
-        auto outputTexture = this->computeDescriptor->outputTexture;
-
-        VkImageSubresourceRange subresourceRange = {};
-        subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        subresourceRange.baseMipLevel = 0;
-        subresourceRange.levelCount = 1;
-        subresourceRange.layerCount = 1;
-
-        if (outputTexture->currentLayout != VK_IMAGE_LAYOUT_GENERAL)
-        {
-            if (outputTexture->currentLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-                outputTexture->transitionImageLayout(outputTexture->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, subresourceRange);
-            else
-                outputTexture->transitionImageLayout(outputTexture->image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, subresourceRange);
-        }
+        this->UpdateOutputTextureState();
 
         vkCmdDispatch(commandBuffer, CEIL_DIV(this->widthImage, NElements), CEIL_DIV(this->heightImage, NElements), 1);
     }
@@ -147,4 +141,26 @@ void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
 void ComputeNode::UpdateComputeDescriptor()
 {
     this->computeDescriptor->UpdateUBODeltaTime();
+}
+
+void ComputeNode::UpdateOutputTextureState()
+{
+    auto outputTexture = this->computeDescriptor->outputTexture;
+
+    if (outputTexture == nullptr)
+        return;
+
+    VkImageSubresourceRange subresourceRange = {};
+    subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    subresourceRange.baseMipLevel = 0;
+    subresourceRange.levelCount = 1;
+    subresourceRange.layerCount = 1;
+
+    if (outputTexture->currentLayout != VK_IMAGE_LAYOUT_GENERAL)
+    {
+        if (outputTexture->currentLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+            outputTexture->transitionImageLayout(outputTexture->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, subresourceRange);
+        else
+            outputTexture->transitionImageLayout(outputTexture->image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, subresourceRange);
+    }
 }

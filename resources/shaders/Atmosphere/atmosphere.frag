@@ -18,6 +18,12 @@ layout(set = 0, binding = 3) uniform ScreenResolution
 	vec2 data;
 } screenResolution;
 
+layout(set = 0, binding = 4) uniform SunUniform
+{
+	vec3 direction;
+    float intensity;
+}  sunData;
+
 layout(location = 0) out vec4 outColor;
 
 const float PI = 3.14159265358;
@@ -114,26 +120,30 @@ vec3 sunWithBloom(vec3 rayDir, vec3 sunDir)
     return vec3(gaussianBloom+invBloom);
 }
 
-vec3 sunDir = normalize(vec3(0.0, 0.001, -0.5));
-
 void main()
 {
+    vec3 sunDir = normalize(sunData.direction);
     vec2 iResolution = screenResolution.data;
     vec3 viewPos = cameraData.position.xyz * 1e-6;
-    viewPos.y += PlanetRadius;//+ 0.0002;
+    viewPos.y += PlanetRadius;
+    viewPos.y = max(PlanetRadius + 1e-6, viewPos.y);
 
     vec3 camDir = normalize(cameraData.view[2].xyz);
     float camFOVWidth = 0.785398;
     float camWidthScale = 2.0 * tan(camFOVWidth / 2.0);
     float camHeightScale = camWidthScale * iResolution.y / iResolution.x;
 
-    vec3 camRight = normalize(cross(camDir, vec3(0.0, 1.0, 0.0)));
+    vec3 upVector = vec3(0.0, 1.0, 0.0);
+    vec3 camRight = normalize(cross(camDir, upVector));
     vec3 camUp = cross(camRight, camDir);
 
     vec2 xy = (gl_FragCoord.xy / iResolution.xy) * 2.0 - 1.0;
     xy.x = -xy.x;
     
-    vec3 rayDir = normalize(camDir + camRight * xy.x * camWidthScale + camUp * xy.y * camHeightScale);
+    vec3 rayDirView = normalize(vec3(xy.x * camWidthScale, (xy.y + 0.01) * camHeightScale, 1.0));
+    mat4 viewToWorld = inverse(cameraData.view);
+    // Convertir la dirección del rayo a espacio mundial
+    vec3 rayDir = normalize((viewToWorld * vec4(rayDirView, 0.0)).xyz);
     
     vec3 lum = getValFromSkyLUT(viewPos, rayDir, sunDir);
 
@@ -155,7 +165,7 @@ void main()
     }
 
     lum += sunLum;
-    lum *= 100.0;
+    lum *= sunData.intensity;
     lum = jodieReinhardTonemap(lum);
     lum = pow(lum, vec3(1.0/2.2));
     
