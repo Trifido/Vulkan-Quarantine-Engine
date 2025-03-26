@@ -12,7 +12,7 @@ AtmosphereSystem::AtmosphereSystem()
     this->lightManager = LightManager::getInstance();
     this->swapChainModule = SwapChainModule::getInstance();
 
-    this->Sun.Direction = glm::normalize(glm::vec3(0.0, -0.95, 0.65));
+    this->Sun.Direction = glm::normalize(glm::vec3(0.0, -0.1, 0.1));
     this->Sun.Intensity = 100.0f;
 }
 
@@ -106,7 +106,7 @@ void AtmosphereSystem::SetUpResources(Camera* cameraPtr)
         this->SVLUT_ComputeNode->OnDemandCompute = true;
         this->SVLUT_ComputeNode->Compute = true;
         this->SVLUT_ComputeNode->NElements = 16;
-        this->SVLUT_ComputeNode->InitializeOutputTextureComputeNode(200, 100, VK_FORMAT_R32G32B32A32_SFLOAT);
+        this->SVLUT_ComputeNode->InitializeOutputTextureComputeNode(640.0, 360, VK_FORMAT_R32G32B32A32_SFLOAT);
         this->SVLUT_ComputeNode->computeDescriptor->inputTextures.push_back(this->TLUT_ComputeNode->computeDescriptor->outputTexture);
         this->SVLUT_ComputeNode->computeDescriptor->inputTextures.push_back(this->MSLUT_ComputeNode->computeDescriptor->outputTexture);
         this->SVLUT_ComputeNode->computeDescriptor->ubos["SunUniform"] = this->sunUBO;

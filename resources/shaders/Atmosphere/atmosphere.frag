@@ -69,7 +69,7 @@ vec3 getValFromTLUT(vec3 pos, vec3 sunDir)
     return texture(InputImage, uv).rgb;
 }
 
-const vec2 skyLUTRes = vec2(200.0, 100.0);
+const vec2 skyLUTRes = vec2(640.0, 360.0);
 vec3 getValFromSkyLUT(vec3 viewPos, vec3 rayDir, vec3 sunDir)
 {
     float height = length(viewPos);
@@ -151,9 +151,9 @@ void main()
     vec3 sunLum = sunWithBloom(rayDir, sunDir);
     // Use smoothstep to limit the effect, so it drops off to actual zero.
     sunLum = smoothstep(0.002, 1.0, sunLum);
-    if (length(sunLum) < 0.0) 
+    if (length(sunLum) > 0.0) 
     {
-        if (rayIntersectSphere(viewPos, rayDir, PlanetRadius) >= 0.0)
+        if (rayIntersectSphere(viewPos, rayDir, PlanetRadius) < 0.0)
         {
             sunLum *= 0.0;
         } 
@@ -166,6 +166,7 @@ void main()
 
     lum += sunLum;
     lum *= sunData.intensity;
+
     lum = jodieReinhardTonemap(lum);
     lum = pow(lum, vec3(1.0/2.2));
     
