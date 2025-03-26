@@ -92,7 +92,7 @@ vec3 getValFromTLUT(vec3 pos, vec3 sunDir)
 {
     float height = length(pos);
     vec3 up = pos / height;
-    float sunCosZenithAngle = dot(sunDir, up);
+    float sunCosZenithAngle = dot(sunDir, -up);
 
     vec2 tLUTRes = vec2(imageSize(InputImage)); // Tamaño real de la imagen en píxeles
     vec2 uv = vec2(tLUTRes.x * clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0),

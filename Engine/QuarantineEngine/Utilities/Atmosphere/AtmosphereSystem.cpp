@@ -12,7 +12,7 @@ AtmosphereSystem::AtmosphereSystem()
     this->lightManager = LightManager::getInstance();
     this->swapChainModule = SwapChainModule::getInstance();
 
-    this->Sun.Direction = glm::normalize(glm::vec3(0.7, -0.95, 0.65));
+    this->Sun.Direction = glm::normalize(glm::vec3(0.0, -0.95, 0.65));
     this->Sun.Intensity = 100.0f;
 }
 
@@ -88,14 +88,14 @@ void AtmosphereSystem::SetUpResources(Camera* cameraPtr)
         this->computeNodeManager = ComputeNodeManager::getInstance();
 
         this->TLUT_ComputeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("transmittance_lut"));
-        //this->TLUT_ComputeNode->OnDemandCompute = true;
+        this->TLUT_ComputeNode->OnDemandCompute = true;
         this->TLUT_ComputeNode->Compute = true;
         this->TLUT_ComputeNode->NElements = 16;
         this->TLUT_ComputeNode->InitializeOutputTextureComputeNode(256, 64, VK_FORMAT_R32G32B32A32_SFLOAT);
         this->computeNodeManager->AddComputeNode("transmittance_lut", this->TLUT_ComputeNode);
 
         this->MSLUT_ComputeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("multi_scattering_lut"));
-        //this->MSLUT_ComputeNode->OnDemandCompute = true;
+        this->MSLUT_ComputeNode->OnDemandCompute = true;
         this->MSLUT_ComputeNode->Compute = true;
         this->MSLUT_ComputeNode->NElements = 16;
         this->MSLUT_ComputeNode->InitializeOutputTextureComputeNode(32, 32, VK_FORMAT_R32G32B32A32_SFLOAT);
@@ -103,7 +103,7 @@ void AtmosphereSystem::SetUpResources(Camera* cameraPtr)
         this->computeNodeManager->AddComputeNode("multi_scattering_lut", this->MSLUT_ComputeNode);
 
         this->SVLUT_ComputeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("sky_view_lut"));
-        //this->SVLUT_ComputeNode->OnDemandCompute = true;
+        this->SVLUT_ComputeNode->OnDemandCompute = true;
         this->SVLUT_ComputeNode->Compute = true;
         this->SVLUT_ComputeNode->NElements = 16;
         this->SVLUT_ComputeNode->InitializeOutputTextureComputeNode(200, 100, VK_FORMAT_R32G32B32A32_SFLOAT);
