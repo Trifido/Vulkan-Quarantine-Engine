@@ -54,17 +54,16 @@ float rayIntersectSphere(vec3 ro, vec3 rd, float radius)
 }
 
 const vec2 tLUTRes = vec2(256.0, 64.0);
-vec3 getValFromTLUT(vec3 pos, vec3 sunDir)
+vec3 getValFromTLUT(vec3 viewPos, vec3 sunDir)
 {
-    float height = length(pos);
-    vec3 up = pos / height;
-    float sunCosZenithAngle = dot(sunDir, -up);
+    float height = length(viewPos);
+    vec3 up = viewPos / height;
+    float sunCosZenithAngle = dot(sunDir, up);
     
     vec2 uv = vec2(
-        tLUTRes.x * clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0),
-        tLUTRes.y * max(0.0, min(1.0, (height - PlanetRadius) / (AtmosphereRadius - PlanetRadius)))
-    );
-    uv /= tLUTRes;
+        tLUTRes.x * clamp((height - PlanetRadius)/(AtmosphereRadius - PlanetRadius),0.0,1.0),
+        tLUTRes.y * clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0)
+    ) / tLUTRes;
     
     return texture(InputImage, uv).rgb;
 }
@@ -113,7 +112,7 @@ vec3 sunWithBloom(vec3 rayDir, vec3 sunDir)
 
     float cosTheta = dot(rayDir, sunDir);
     if (cosTheta >= minSunCosTheta) return vec3(1.0);
-    
+
     float offset = minSunCosTheta - cosTheta;
     float gaussianBloom = exp(-offset*50000.0)*0.5;
     float invBloom = 1.0/(0.02 + offset*300.0)*0.01;
@@ -124,9 +123,9 @@ void main()
 {
     vec3 sunDir = normalize(sunData.direction);
     vec2 iResolution = screenResolution.data;
-    vec3 viewPos = cameraData.position.xyz * 1e-6;
+    vec3 viewPos = cameraData.position.xyz * 1e-6; 
     viewPos.y += PlanetRadius;
-    viewPos.y = max(PlanetRadius + 1e-6, viewPos.y);
+    viewPos.y = max(PlanetRadius, viewPos.y);
 
     vec3 camDir = normalize(cameraData.view[2].xyz);
     float camFOVWidth = 0.785398;
@@ -140,7 +139,7 @@ void main()
     vec2 xy = (gl_FragCoord.xy / iResolution.xy) * 2.0 - 1.0;
     xy.x= -xy.x;
     
-    vec3 rayDirView = normalize(vec3(xy.x * camWidthScale, (xy.y + 0.01) * camHeightScale, 1.0));
+    vec3 rayDirView = normalize(vec3(xy.x * camWidthScale, xy.y * camHeightScale, 1.0));
     mat4 viewToWorld = inverse(cameraData.view);
     // Convertir la dirección del rayo a espacio mundial
     vec3 rayDir = normalize((viewToWorld * vec4(rayDirView, 0.0)).xyz);
@@ -148,10 +147,10 @@ void main()
     vec3 lum = getValFromSkyLUT(viewPos, rayDir, sunDir);
 
     // Bloom should be added at the end, but this is subtle and works well.
+
     vec3 sunLum = sunWithBloom(rayDir, sunDir);
-    // Use smoothstep to limit the effect, so it drops off to actual zero.
     sunLum = smoothstep(0.002, 1.0, sunLum);
-    if (length(sunLum) > 0.0) 
+    if (length(sunLum) > 0.0)
     {
         if (rayIntersectSphere(viewPos, rayDir, PlanetRadius) < 0.0)
         {
@@ -166,9 +165,6 @@ void main()
 
     lum += sunLum;
     lum *= sunData.intensity;
-
     lum = jodieReinhardTonemap(lum);
-    lum = pow(lum, vec3(1.0/2.2));
-    
     outColor = vec4(lum, 1.0);
 }

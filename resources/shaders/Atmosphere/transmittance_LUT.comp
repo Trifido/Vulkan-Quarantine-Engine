@@ -3,98 +3,84 @@
 layout(local_size_x = 16, local_size_y = 16) in;
 layout(binding = 0, rgba32f) uniform image2D OutputImage;
 
-#define STEP_COUNT 500
+#define STEP_COUNT 40
 // Unidades en Megametros (MM)
-const float PlanetRadius = 6360;
-const float AtmosphereRadius = 6460;
+const float PlanetRadius = 6.360;
+const float AtmosphereRadius = 6.460;
 
-// Coeficientes de dispersión y absorción por MM
-const vec3 rayleighScatteringBase = vec3(5.802, 13.558, 33.1) * 1e-3;
-const vec3 mieExtinctionBase = vec3(0.0044);
+// Rayleight & Mie parameters
+const vec3 rayleighScatteringBase = vec3(5.802, 13.558, 33.1);
+const float mieScatteringBase = 3.996;
+const float mieExtinctionBase = 4.4;
+const float rayleighAbsorptionBase = 0.0;
+const vec3 ozoneAbsorptionBase = vec3(0.650, 1.881, 0.085);
 
 const float kHeightR = 8.0; // scale height for rayleigh 
 const float kHeightM = 1.2; // scale height for mie
 
-const vec3 ozoneAbsorptionBase = vec3(0.000650, 0.001881, 0.000085);
-
-float ClampCosine(float mu)
+float safeacos(const float x)
 {
-    return clamp(mu, -1.0, 1.0);
+    return acos(clamp(x, -1.0, 1.0));
 }
 
-float ClampDistance(float d)
+// From https://gamedev.stackexchange.com/questions/96459/fast-ray-sphere-collision-code.
+float rayIntersectSphere(vec3 ro, vec3 rd, float rad)
 {
-    return max(d, 0.0);
+    float b = dot(ro, rd);
+    float c = dot(ro, ro) - rad*rad;
+    if (c > 0.0f && b > 0.0) return -1.0;
+    float discr = b*b - c;
+    if (discr < 0.0) return -1.0;
+    // Special case: inside sphere, use far discriminant
+    if (discr > b*b) return (-b + sqrt(discr));
+    return -b - sqrt(discr);
 }
 
-float SafeSqrt(float a)
+void getScatteringValues(vec3 pos, 
+                         out vec3 rayleighScattering, 
+                         out float mieScattering,
+                         out vec3 extinction) 
 {
-    return sqrt(max(a, 0.0));
+    float altitudeKM = (length(pos)-PlanetRadius) * 1000.0;
+    float rayleighDensity = exp(-altitudeKM/8.0);
+    float mieDensity = exp(-altitudeKM/1.2);
+    
+    rayleighScattering = rayleighScatteringBase * rayleighDensity;
+    float rayleighAbsorption = rayleighAbsorptionBase * rayleighDensity;
+    
+    mieScattering = mieScatteringBase * mieDensity;
+    float mieAbsorption = mieExtinctionBase * mieDensity;
+    
+    vec3 ozoneAbsorption = ozoneAbsorptionBase * max(0.0, 1.0 - abs(altitudeKM-25.0)/15.0);
+    
+    extinction = rayleighScattering + rayleighAbsorption + mieScattering + mieAbsorption + ozoneAbsorption;
 }
 
-float DistanceToTopAtmosphereBoundary(float r, float mu)
+vec3 getSunTransmittance(vec3 pos, vec3 sunDir) 
 {
-    float discriminant = r*r*(mu*mu - 1.0) + AtmosphereRadius * AtmosphereRadius;
-    return ClampDistance(-r * mu + SafeSqrt(discriminant));
-}
-
-void GetRMuFromTransmittanceTextureUv_new17(in vec2 uv, out float r, out float mu)
-{
-    float H = sqrt(AtmosphereRadius * AtmosphereRadius - PlanetRadius * PlanetRadius);
-    float x_mu = uv.x;
-    float x_r = uv.y;
-    float rho = H * x_r;
-    r = sqrt(rho * rho + PlanetRadius * PlanetRadius);
-    float d_min = AtmosphereRadius - r;
-    float d_max = rho + H;
-    float d = d_min + x_mu * (d_max - d_min);
-    mu = d <= 0.0 ? float(1.0) : (H * H - rho * rho - d * d) / (2.0 * r * d);
-    mu = ClampCosine(mu);
-}
-
-// total optical length of rayleigh and mie
-float ComputeOpticalLengthToTopAtmosphereBoundary(float h_scale, float r, float mu)
-{
-    float dx = DistanceToTopAtmosphereBoundary(r, mu) / float(STEP_COUNT);
-    float result = 0.0;
-    for (int i = 0; i <= STEP_COUNT; ++i)
+    if (rayIntersectSphere(pos, sunDir, PlanetRadius) > 0.0)
     {
-        float d_i = float(i) * dx;
-        float r_i = sqrt(d_i * d_i + 2.0 * r * mu * d_i + r * r);
-        float y_i = clamp(exp(-(r_i - PlanetRadius) / h_scale), 0.0, 1.0);
-        result += y_i * dx;
+        return vec3(0.0);
     }
-    return result;
-}
 
-float ComputeOpticalLengthToTopAtmosphereBoundary_O3(float r, float mu)
-{
-    float dx = DistanceToTopAtmosphereBoundary(r, mu) / float(STEP_COUNT);
-    float result = 0.0;
-    for (int i = 0; i <= STEP_COUNT; ++i) 
-    {
-        float d_i = float(i) * dx;
-        float r_i = sqrt(d_i * d_i + 2.0 * r * mu * d_i + r * r);
-        float height = r_i - PlanetRadius;
-        float linear_term = 0.0, constant_term = 0.0;
-        // 2 Ozone layers
-        linear_term = height < 25.0 ? 0.066667 : -0.066667;
-        constant_term = height < 25.0 ? -0.66667 : 2.666667;
-        float y_i = linear_term * height + constant_term;
-        y_i = clamp(y_i, 0.0, 1.0);
-        result += y_i * dx;
+    float atmoDist = rayIntersectSphere(pos, sunDir, AtmosphereRadius);
+    float t = 0.0;
+
+    vec3 transmittance = vec3(1.0);
+    for (float i = 0.0; i < STEP_COUNT; i += 1.0) {
+        float newT = ((i + 0.3)/STEP_COUNT)*atmoDist;
+        float dt = newT - t;
+        t = newT;
+
+        vec3 newPos = pos + t*sunDir;
+
+        vec3 rayleighScattering, extinction;
+        float mieScattering;
+        getScatteringValues(newPos, rayleighScattering, mieScattering, extinction);
+
+        transmittance *= exp(-dt*extinction);
     }
-    return result;
-}
-
-vec3 ComputeTransmittanceToTopAtmosphereBoundary(float r, float mu) {
-    vec3 attenuation_rayleigh = rayleighScatteringBase * ComputeOpticalLengthToTopAtmosphereBoundary(kHeightR, r, mu);
-    vec3 attenuation_mie = mieExtinctionBase * ComputeOpticalLengthToTopAtmosphereBoundary(kHeightM, r, mu);
-    vec3 attenuation_total = attenuation_rayleigh + attenuation_mie;
-
-    attenuation_total += ozoneAbsorptionBase * ComputeOpticalLengthToTopAtmosphereBoundary_O3(r, mu);
-
-    return exp(-attenuation_total);
+    return transmittance;
 }
 
 void main() 
@@ -104,11 +90,16 @@ void main()
     if (gl_GlobalInvocationID.x >= (dimensions.x + 1.5) || gl_GlobalInvocationID.y >= (dimensions.y + 1.5))
         return;
 
-    float r, mu;
-    vec2 uv = (gl_GlobalInvocationID.xy + vec2(0.5)) / dimensions;
+    float u = clamp(gl_GlobalInvocationID.x, 0.0, dimensions.x-1.0)/dimensions.x;
+    float v = clamp(gl_GlobalInvocationID.y, 0.0, dimensions.y-1.0)/dimensions.y;
 
-    GetRMuFromTransmittanceTextureUv_new17(uv, r, mu);
-    vec3 result = ComputeTransmittanceToTopAtmosphereBoundary(r, mu);
-    
+    float sunCosTheta = 2.0*u - 1.0;
+    float sunTheta = safeacos(sunCosTheta);
+    float height = mix(PlanetRadius, AtmosphereRadius, v);
+
+    vec3 pos = vec3(0.0, height, 0.0);
+    vec3 sunDir = normalize(vec3(0.0, sunCosTheta, -sin(sunTheta)));
+    vec3 result = getSunTransmittance(pos, sunDir);
+
     imageStore(OutputImage, ivec2(gl_GlobalInvocationID.xy), vec4(result, 1.0));
 }
