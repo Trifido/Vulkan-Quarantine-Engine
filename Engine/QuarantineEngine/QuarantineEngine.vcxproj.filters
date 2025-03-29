@@ -80,9 +80,6 @@
     <Filter Include="Kernel\Utilities\headers">
       <UniqueIdentifier>{9e0eb4c6-cf73-4868-a004-e8ff098416fd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Kernel\Utilities\sources">
-      <UniqueIdentifier>{24fcc2b6-6ba6-47eb-af5f-946158765a42}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Input">
       <UniqueIdentifier>{5ece5c4b-5470-443d-8622-c4f880cf2143}</UniqueIdentifier>
     </Filter>
@@ -173,6 +170,15 @@
     <Filter Include="Kernel\Utilities\Atmosphere">
       <UniqueIdentifier>{229c21bb-841c-4c13-8255-aad3d642bdc6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Kernel\Utilities\General">
+      <UniqueIdentifier>{ef281905-2613-46b7-abf2-dd45e1e55987}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Utilities\General\sources">
+      <UniqueIdentifier>{3827b1a9-23e2-41a5-a04b-d54678521289}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Utilities\General\headers">
+      <UniqueIdentifier>{0af7f900-ab0d-4d44-a70b-febb46c086d0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -234,15 +240,6 @@
     </ClCompile>
     <ClCompile Include="App\App.cpp">
       <Filter>App</Filter>
-    </ClCompile>
-    <ClCompile Include="Utilities\GameObject.cpp">
-      <Filter>Kernel\Utilities\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="Utilities\GameComponent.cpp">
-      <Filter>Kernel\Utilities\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="Utilities\Transform.cpp">
-      <Filter>Kernel\Utilities\sources</Filter>
     </ClCompile>
     <ClCompile Include="SetUp\QueueModule.cpp">
       <Filter>Kernel\SetUp\sources</Filter>
@@ -346,9 +343,6 @@
     <ClCompile Include="Editor\Grid.cpp">
       <Filter>Kernel\Editor\sources</Filter>
     </ClCompile>
-    <ClCompile Include="Utilities\GameObjectManager.cpp">
-      <Filter>Kernel\Utilities\sources</Filter>
-    </ClCompile>
     <ClCompile Include="Utilities\Animation\AnimationImporter.cpp">
       <Filter>Kernel\Utilities\Animation\sources</Filter>
     </ClCompile>
@@ -397,9 +391,6 @@
     <ClCompile Include="GraphicsPipeline\ReflectShader.cpp">
       <Filter>Kernel\GraphicsPipeline\sources</Filter>
     </ClCompile>
-    <ClCompile Include="Utilities\Numbered.cpp">
-      <Filter>Kernel\Utilities\sources</Filter>
-    </ClCompile>
     <ClCompile Include="GraphicsPipeline\PipelineModule.cpp">
       <Filter>Kernel\GraphicsPipeline\sources</Filter>
     </ClCompile>
@@ -411,9 +402,6 @@
     </ClCompile>
     <ClCompile Include="Memory\ComputeDescriptorBuffer.cpp">
       <Filter>Kernel\Memory\sources</Filter>
-    </ClCompile>
-    <ClCompile Include="Utilities\Timer.cpp">
-      <Filter>Kernel\Utilities\sources</Filter>
     </ClCompile>
     <ClCompile Include="Utilities\Particles\ParticleSystemManager.cpp">
       <Filter>Kernel\Utilities\Particles\sources</Filter>
@@ -456,6 +444,24 @@
     </ClCompile>
     <ClCompile Include="Utilities\Atmosphere\AtmosphereSystem.cpp">
       <Filter>Kernel\Utilities\Atmosphere</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\General\GameComponent.cpp">
+      <Filter>Kernel\Utilities\General\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\General\GameObject.cpp">
+      <Filter>Kernel\Utilities\General\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\General\GameObjectManager.cpp">
+      <Filter>Kernel\Utilities\General\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\General\Numbered.cpp">
+      <Filter>Kernel\Utilities\General\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\General\Timer.cpp">
+      <Filter>Kernel\Utilities\General\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\General\Transform.cpp">
+      <Filter>Kernel\Utilities\General\sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -760,6 +766,24 @@
     </ClInclude>
     <ClInclude Include="Templates\QESingleton.h">
       <Filter>Kernel\SetUp</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\General\GameComponent.h">
+      <Filter>Kernel\Utilities\General\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\General\GameObject.h">
+      <Filter>Kernel\Utilities\General\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\General\GameObjectManager.h">
+      <Filter>Kernel\Utilities\General\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\General\Numbered.h">
+      <Filter>Kernel\Utilities\General\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\General\Timer.h">
+      <Filter>Kernel\Utilities\General\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\General\Transform.h">
+      <Filter>Kernel\Utilities\General\headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
