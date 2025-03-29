@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <CameraDto.h>
+#include <AtmosphereDto.h>
 
 fs::path QEProjectManager::CURRENT_PROJECT_PATH;
 fs::path QEProjectManager::CURRENT_DEFAULT_SCENE_PATH;
@@ -76,6 +77,13 @@ bool QEProjectManager::CreateScene(const std::string& sceneName)
                 file.write(reinterpret_cast<const char*>(&camera.nearPlane), sizeof(float));
                 file.write(reinterpret_cast<const char*>(&camera.farPlane), sizeof(float));
                 file.write(reinterpret_cast<const char*>(&camera.fov), sizeof(float));
+
+                AtmosphereDto atmosphere;
+                file.write(reinterpret_cast<const char*>(&atmosphere.hasAtmosphere), sizeof(bool));
+                file.write(reinterpret_cast<const char*>(&atmosphere.environmentType), sizeof(int));
+                file.write(reinterpret_cast<const char*>(&atmosphere.sunDirection), sizeof(glm::vec3));
+                file.write(reinterpret_cast<const char*>(&atmosphere.sunIntensity), sizeof(float));
+
                 file.close();
                 return true;
             }

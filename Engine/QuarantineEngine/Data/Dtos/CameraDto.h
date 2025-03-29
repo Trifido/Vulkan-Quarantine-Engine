@@ -1,4 +1,8 @@
 #pragma once
+
+#ifndef CAMERA_DTO_H
+#define CAMERA_DTO_H
+
 #include <glm/glm.hpp>
 
 struct CameraDto
@@ -30,3 +34,5 @@ struct CameraDto
         this->fov = fov;
     }
 };
+
+#endif // !CAMERA_DTO_H

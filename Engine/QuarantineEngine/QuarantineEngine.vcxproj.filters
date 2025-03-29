@@ -797,6 +797,9 @@
     <ClInclude Include="Data\Dtos\CameraDto.h">
       <Filter>Kernel\Data\Dtos</Filter>
     </ClInclude>
+    <ClInclude Include="Data\Dtos\AtmosphereDto.h">
+      <Filter>Kernel\Data\Dtos</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.txt" />

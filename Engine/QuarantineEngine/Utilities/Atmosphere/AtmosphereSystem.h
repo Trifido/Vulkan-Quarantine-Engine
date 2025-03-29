@@ -9,6 +9,7 @@
 #include <LightManager.h>
 #include <QESingleton.h>
 #include <Compute/ComputeNodeManager.h>
+#include <AtmosphereDto.h>
 
 using namespace std;
 
@@ -84,6 +85,7 @@ public:
     AtmosphereSystem();
     ~AtmosphereSystem();
 
+    void LoadAtmosphereDto(AtmosphereDto atmosphereDto, Camera* cameraPtr);
     void AddTextureResources(const string* texturePaths, uint32_t numTextures);
     void InitializeAtmosphere(Camera* cameraPtr);
     void InitializeAtmosphere(ENVIRONMENT_TYPE type, const string* texturePaths, uint32_t numTextures, Camera* cameraPtr);

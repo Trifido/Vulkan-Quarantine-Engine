@@ -18,6 +18,9 @@ bool QEScene::InitScene(fs::path filename)
     // Leer los datos de la cámara
     file.read(reinterpret_cast<char*>(&cameraEditor), sizeof(CameraDto));
 
+    // Leer los datos de la atmósfera
+    file.read(reinterpret_cast<char*>(&atmosphere), sizeof(AtmosphereDto));
+
     file.close();
     std::cout << "Archivo leído correctamente: " << filename << std::endl;
 }

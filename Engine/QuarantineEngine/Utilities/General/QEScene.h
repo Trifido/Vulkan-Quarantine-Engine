@@ -6,12 +6,14 @@
 #include <GameObject.h>
 
 #include <filesystem>
+#include <AtmosphereDto.h>
 namespace fs = std::filesystem;
 class QEScene
 {
 public:
     std::string sceneName;
     CameraDto cameraEditor;
+    AtmosphereDto atmosphere;
     std::vector<GameObject> m_GameObjects;
 
 public:

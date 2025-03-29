@@ -150,9 +150,6 @@ void App::initVulkan()
     //Creamos el frame buffer
     framebufferModule.createFramebuffer(renderPassModule->renderPass);
 
-    //Añadimos el camera editor
-    this->cameraEditor = CameraEditor::getInstance(this->mainWindow.width, this->mainWindow.height, this->scene.cameraEditor);
-
     //Añadimos requisitos para los geometryComponent
     BufferManageModule::commandPool = this->commandPoolModule->getCommandPool();
     BufferManageModule::computeCommandPool = this->commandPoolModule->getComputeCommandPool();
@@ -177,6 +174,9 @@ void App::initVulkan()
     this->computeNodeManager->InitializeComputeResources();
     this->particleSystemManager = ParticleSystemManager::getInstance();
 
+    // Load Scene
+    this->loadScene(this->scene);
+
     this->lightManager->AddDirShadowMapShader(materialManager->csm_shader);
     this->lightManager->AddOmniShadowMapShader(materialManager->omni_shadow_mapping_shader);
     this->lightManager->SetCamera(this->cameraEditor);
@@ -185,12 +185,6 @@ void App::initVulkan()
     this->cullingSceneManager->InitializeCullingSceneResources();
     this->cullingSceneManager->AddCameraFrustum(this->cameraEditor->frustumComponent);
     this->cullingSceneManager->DebugMode = false;
-
-    this->atmosphereSystem = AtmosphereSystem::getInstance();
-    //this->atmosphereSystem->InitializeAtmosphere(this->cameraEditor);
-    //this->atmosphereSystem->InitializeAtmosphere(AtmosphereSystem::CUBEMAP, TEXTURE_SKYBOX_PATH_FACES.data(), TEXTURE_SKYBOX_PATH_FACES.size(), this->cameraEditor);
-    //this->atmosphereSystem->InitializeAtmosphere(AtmosphereSystem::SPHERICALMAP, &TEXTURE_SPHERICAL_MAP_PATH, 1, this->cameraEditor);
-    this->atmosphereSystem->InitializeAtmosphere(this->cameraEditor);
 
     // Inicializamos los componentes del editor
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
@@ -368,6 +362,16 @@ void App::initVulkan()
     this->synchronizationModule.createSyncObjects(swapchainModule->getNumSwapChainImages());
 
     init_imgui();
+}
+
+void App::loadScene(QEScene scene)
+{
+    //Inicializamos el camera editor
+    this->cameraEditor = CameraEditor::getInstance(this->mainWindow.width, this->mainWindow.height, this->scene.cameraEditor);
+
+    //Inicializamos el atmophere system
+    this->atmosphereSystem = AtmosphereSystem::getInstance();
+    this->atmosphereSystem->LoadAtmosphereDto(this->scene.atmosphere, this->cameraEditor);
 }
 
 void App::mainLoop()

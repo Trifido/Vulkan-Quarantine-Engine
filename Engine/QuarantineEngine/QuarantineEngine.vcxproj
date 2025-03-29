@@ -276,6 +276,7 @@
     <ClInclude Include="..\Linking\imgui\imgui.h" />
     <ClInclude Include="..\Linking\imgui\imgui_internal.h" />
     <ClInclude Include="App\App.h" />
+    <ClInclude Include="Data\Dtos\AtmosphereDto.h" />
     <ClInclude Include="Data\Dtos\CameraDto.h" />
     <ClInclude Include="Data\QEProjectManager.h" />
     <ClInclude Include="Data\QESceneExporter.h" />

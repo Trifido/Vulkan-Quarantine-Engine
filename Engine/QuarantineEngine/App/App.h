@@ -102,6 +102,7 @@ public:
     void init_imgui();
 private:
     void initVulkan();
+    void loadScene(QEScene scene);
     void mainLoop();
     void computeFrame();
     void drawFrame();  

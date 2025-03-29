@@ -21,6 +21,27 @@ AtmosphereSystem::~AtmosphereSystem()
     this->deviceModule = nullptr;
 }
 
+void AtmosphereSystem::LoadAtmosphereDto(AtmosphereDto atmosphereDto, Camera* cameraPtr)
+{
+    this->Sun.Direction = glm::normalize(atmosphereDto.sunDirection);
+    this->Sun.Intensity = atmosphereDto.sunIntensity;
+    this->environmentType = static_cast<ENVIRONMENT_TYPE>(atmosphereDto.environmentType);
+    this->IsInitialized = atmosphereDto.hasAtmosphere;
+
+    switch (this->environmentType)
+    {
+    case ENVIRONMENT_TYPE::CUBEMAP:
+        this->InitializeAtmosphere(this->environmentType, nullptr, 0, cameraPtr);
+    case ENVIRONMENT_TYPE::SPHERICALMAP:
+        this->InitializeAtmosphere(this->environmentType, nullptr, 0, cameraPtr);
+        break;
+    default:
+    case ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY:
+        this->InitializeAtmosphere(cameraPtr);
+        break;
+    }
+}
+
 void AtmosphereSystem::AddTextureResources(const string* texturePaths, uint32_t numTextures)
 {
     TEXTURE_TYPE textureType = (this->environmentType == ENVIRONMENT_TYPE::CUBEMAP) ? TEXTURE_TYPE::CUBEMAP_TYPE : TEXTURE_TYPE::DIFFUSE_TYPE;
@@ -52,8 +73,6 @@ void AtmosphereSystem::InitializeAtmosphere(Camera* cameraPtr)
     this->UpdateSun();
     this->CreateDescriptorPool();
     this->CreateDescriptorSet();
-
-    this->IsInitialized = true;
 }
 
 void AtmosphereSystem::SetUpResources(Camera* cameraPtr)
@@ -141,8 +160,6 @@ void AtmosphereSystem::InitializeAtmosphere(ENVIRONMENT_TYPE type, const string*
     this->CreateDescriptorPool();
 
     this->AddTextureResources(texturePaths, numTextures);
-
-    this->IsInitialized = true;
 }
 
 void AtmosphereSystem::SetCamera(Camera* cameraPtr)
