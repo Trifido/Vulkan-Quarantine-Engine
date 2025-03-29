@@ -12,10 +12,7 @@ AtmosphereSystem::AtmosphereSystem()
     this->lightManager = LightManager::getInstance();
     this->swapChainModule = SwapChainModule::getInstance();
 
-    //this->Sun.Direction = glm::normalize(glm::vec3(0.0, -0.1, 0.1));
-    const float PI = 3.14159265358f;
-    float value = PI / 24.0f;
-    this->Sun.Direction = glm::normalize(glm::vec3(0.0, glm::sin(value), -glm::cos(value)));
+    this->Sun.Direction = glm::normalize(glm::vec3(0.0, -0.1, 0.1));
     this->Sun.Intensity = 100.0f;
 }
 
