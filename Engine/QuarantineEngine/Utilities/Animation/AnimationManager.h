@@ -5,22 +5,19 @@
 
 #include <Animation/AnimationComponent.h>
 #include <GameObject.h>
+#include <QESingleton.h>
 
-class AnimationManager
+class AnimationManager : public QESingleton<AnimationManager>
 {
 private:
+    friend class QESingleton<AnimationManager>; // Permitir acceso al constructor
     std::unordered_map<std::string, std::shared_ptr<AnimationComponent>> _animationComponents;
     size_t numAnimationComponents = 0;
-
-public:
-    static AnimationManager* instance;
 
 private:
     std::string CheckName(std::string nameGameObject);
 
 public:
-    static AnimationManager* getInstance();
-    static void ResetInstance();
     std::shared_ptr<AnimationComponent> GetAnimationComponent(std::string nameGameObject);
     void AddAnimationComponent(std::string nameGameObject, std::shared_ptr<AnimationComponent> animationComponent);
     void AddAnimationComponent(std::string nameGameObject, AnimationComponent animationComponent);

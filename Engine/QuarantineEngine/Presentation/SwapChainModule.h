@@ -10,12 +10,13 @@
 
 #include "DeviceModule.h"
 #include <UBO.h>
+#include <QESingleton.h>
 
-class SwapChainModule
+class SwapChainModule : public QESingleton<SwapChainModule>
 {
+private:
+    friend class QESingleton<SwapChainModule>; // Permitir acceso al constructor
 public:
-    static SwapChainModule* instance;
-
     std::vector<VkImage> swapChainImages;
     std::vector<VkImageView> swapChainImageViews;
 
@@ -34,8 +35,6 @@ private:
     float currentTileSize;
 
 public:
-    static SwapChainModule* getInstance();
-    static void ResetInstance();
     SwapChainModule();
     void createSwapChain(VkSurfaceKHR& surface, GLFWwindow* window);
     void cleanup();

@@ -6,30 +6,26 @@
 #include <unordered_map>
 #include <memory>
 #include <string>
-
 #include <vulkan/vulkan.h>
 #include <ShadowPipelineModule.h>
 #include <GraphicsPipelineData.h>
+#include <QESingleton.h>
 
 class ShaderModule;
 
 typedef std::unordered_map<std::string, std::pair<std::shared_ptr<ShadowPipelineModule>, std::shared_ptr<VkRenderPass>>> ShadowResourcesMap;
 
-class ShadowPipelineManager
+class ShadowPipelineManager : public QESingleton<ShadowPipelineManager>
 {
 private:
+    friend class QESingleton<ShadowPipelineManager>; // Permitir acceso al constructor
     ShadowResourcesMap _shadowPipelines;
-
-public:
-    static ShadowPipelineManager* instance;
 
 private:
     std::string CheckName(std::string pipelineName);
 
 public:
     ShadowPipelineManager();
-    static ShadowPipelineManager* getInstance();
-    static void ResetInstance();
     std::shared_ptr<ShadowPipelineModule> GetPipeline(std::string pipelineName);
     std::shared_ptr<ShadowPipelineModule> RegisterNewShadowPipeline(ShaderModule& shader, std::vector<VkDescriptorSetLayout> descriptorLayouts, GraphicsPipelineData pipelineData);
     bool Exists(std::string pipelineName);

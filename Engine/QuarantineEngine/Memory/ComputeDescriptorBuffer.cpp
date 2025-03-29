@@ -1,6 +1,7 @@
 #include "ComputeDescriptorBuffer.h"
 #include "SynchronizationModule.h"
 #include "Timer.h"
+#include <CameraEditor.h>
 
 ComputeDescriptorBuffer::ComputeDescriptorBuffer()
 {
@@ -30,6 +31,19 @@ void ComputeDescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shade
                 this->_numSSBOs++;
                 idx++;
             }
+            else if (binding.first == "CameraUniform")
+            {
+                this->camera = CameraEditor::getInstance();
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                idx++;
+            }
+            else if (binding.first == "SunUniform")
+            {
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                idx++;
+            }
             else if (binding.first == "InputBoneSSBO")
             {
                 poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
@@ -56,6 +70,12 @@ void ComputeDescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shade
                 this->deltaTimeUniform = std::make_shared<DeltaTimeUniform>();
             }
             else if (binding.first == "InputImage")
+            {
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                idx++;
+            }
+            else if (binding.first == "InputImage_2")
             {
                 poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
                 poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
@@ -236,6 +256,18 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
                 }
             }
 
+            if (binding.first == "CameraUniform")
+            {
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->camera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform), frameIdx);
+                idx++;
+            }
+
+            if (binding.first == "SunUniform")
+            {
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->ubos["SunUniform"]->uniformBuffers[frameIdx], sizeof(SunUniform), frameIdx);
+                idx++;
+            }
+
             if (binding.first == "UniformDeltaTime")
             {
                 this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->ubos["UniformDeltaTime"]->uniformBuffers[frameIdx], this->uboSizes["UniformDeltaTime"], frameIdx);
@@ -275,15 +307,15 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
             {
                 this->inputImageInfo = {};
 
-                this->inputImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                this->inputImageInfo.imageView = inputTexture->imageView;
-                this->inputImageInfo.sampler = inputTexture->textureSampler;
+                this->inputImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+                this->inputImageInfo.imageView = inputTextures.at(0)->imageView;
+                this->inputImageInfo.sampler = inputTextures.at(0)->textureSampler;
 
                 descriptorWrites[idx] = {};
                 descriptorWrites[idx].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
                 descriptorWrites[idx].dstBinding = binding.second.binding;
                 descriptorWrites[idx].dstArrayElement = 0;
-                descriptorWrites[idx].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                descriptorWrites[idx].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
                 descriptorWrites[idx].descriptorCount = 1;
                 descriptorWrites[idx].pBufferInfo = VK_NULL_HANDLE;
                 descriptorWrites[idx].dstSet = descriptorSets[frameIdx];
@@ -291,11 +323,31 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
 
                 idx++;
             }
+            else if (binding.first == "InputImage_2")
+            {
+                this->inputImageInfo_2 = {};
+
+                this->inputImageInfo_2.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+                this->inputImageInfo_2.imageView = inputTextures.at(1)->imageView;
+                this->inputImageInfo_2.sampler = inputTextures.at(1)->textureSampler;
+
+                descriptorWrites[idx] = {};
+                descriptorWrites[idx].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                descriptorWrites[idx].dstBinding = binding.second.binding;
+                descriptorWrites[idx].dstArrayElement = 0;
+                descriptorWrites[idx].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+                descriptorWrites[idx].descriptorCount = 1;
+                descriptorWrites[idx].pBufferInfo = VK_NULL_HANDLE;
+                descriptorWrites[idx].dstSet = descriptorSets[frameIdx];
+                descriptorWrites[idx].pImageInfo = &inputImageInfo_2;
+
+                idx++;
+            }
             else if (binding.first == "OutputImage")
             {
                 this->outputImageInfo = {};
 
-                this->outputImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                this->outputImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
                 this->outputImageInfo.imageView = outputTexture->imageView;
                 this->outputImageInfo.sampler = outputTexture->textureSampler;
 
@@ -303,7 +355,7 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
                 descriptorWrites[idx].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
                 descriptorWrites[idx].dstBinding = binding.second.binding;
                 descriptorWrites[idx].dstArrayElement = 0;
-                descriptorWrites[idx].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                descriptorWrites[idx].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
                 descriptorWrites[idx].descriptorCount = 1;
                 descriptorWrites[idx].pBufferInfo = VK_NULL_HANDLE;
                 descriptorWrites[idx].dstSet = descriptorSets[frameIdx];
@@ -363,11 +415,15 @@ void ComputeDescriptorBuffer::UpdateUBODeltaTime()
 
 void ComputeDescriptorBuffer::Cleanup()
 {
-    vkDestroyDescriptorPool(deviceModule->device, this->descriptorPool, nullptr);
-
     if (!this->descriptorSets.empty())
     {
         this->descriptorSets.clear();
+    }
+
+    if (this->descriptorPool != VK_NULL_HANDLE)
+    {
+        vkDestroyDescriptorPool(deviceModule->device, this->descriptorPool, nullptr);
+        this->descriptorPool = VK_NULL_HANDLE;
     }
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
@@ -398,11 +454,15 @@ void ComputeDescriptorBuffer::Cleanup()
 
     this->ssboData.clear();
 
-    if (this->inputTexture != nullptr)
+    if (!this->inputTextures.empty())
     {
-        this->inputTexture->cleanup();
-        this->inputTexture.reset();
-        this->inputTexture = nullptr;
+        for (int i = 0; i < this->inputTextures.size(); i++)
+        {
+            this->inputTextures[i]->cleanup();
+            this->inputTextures[i].reset();
+            this->inputTextures[i] = nullptr;
+        }
+        inputTextures.clear();
     }
 
     if (this->outputTexture != nullptr)
@@ -411,6 +471,8 @@ void ComputeDescriptorBuffer::Cleanup()
         this->outputTexture.reset();
         this->outputTexture = nullptr;
     }
+
+    this->camera = nullptr;
 
     this->deltaTimeUniform.reset();
     this->deltaTimeUniform = nullptr;

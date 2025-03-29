@@ -4,8 +4,6 @@
 #include <set>
 #include "QueueFamiliesModule.h"
 
-DeviceModule* DeviceModule::instance = nullptr;
-
 VkSampleCountFlagBits DeviceModule::getMaxUsableSampleCount()
 {
     VkPhysicalDeviceProperties physicalDeviceProperties;
@@ -49,20 +47,6 @@ void DeviceModule::pickPhysicalDevice(const VkInstance &newInstance, VkSurfaceKH
     }
 
     this->InitializeMeshShaderExtension();
-}
-
-DeviceModule* DeviceModule::getInstance()
-{
-    if (instance == nullptr)
-        instance = new DeviceModule();
-
-    return instance;
-}
-
-void DeviceModule::ResetInstance()
-{
-    delete instance;
-    instance = nullptr;
 }
 
 void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& nQueueModule)
@@ -169,12 +153,7 @@ void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& nQueu
 void DeviceModule::cleanup()
 {
     vkDestroyDevice(device, nullptr);
-
-    if (instance != NULL)
-    {
-        delete instance;
-        instance = NULL;
-    }
+    this->ResetInstance();
 }
 
 VkFormat DeviceModule::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)

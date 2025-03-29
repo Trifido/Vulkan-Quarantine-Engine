@@ -1,7 +1,5 @@
 #include "ShaderManager.h"
 
-ShaderManager* ShaderManager::instance = nullptr;
-
 std::string ShaderManager::CheckName(std::string nameMaterial)
 {
     std::unordered_map<std::string, std::shared_ptr<ShaderModule>>::const_iterator got;
@@ -21,20 +19,6 @@ std::string ShaderManager::CheckName(std::string nameMaterial)
     } while (got != _shaders.end());
 
     return newName;
-}
-
-ShaderManager* ShaderManager::getInstance()
-{
-    if (instance == NULL)
-        instance = new ShaderManager();
-
-    return instance;
-}
-
-void ShaderManager::ResetInstance()
-{
-    delete instance;
-    instance = nullptr;
 }
 
 std::shared_ptr<ShaderModule> ShaderManager::GetShader(std::string shaderName)

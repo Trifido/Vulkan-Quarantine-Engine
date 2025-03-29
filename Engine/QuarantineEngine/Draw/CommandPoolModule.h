@@ -11,11 +11,13 @@
 #include <Compute/ComputeNodeManager.h>
 #include <OmniShadowResources.h>
 #include <FrameBufferModule.h>
+#include <AtmosphereSystem.h>
+#include <QESingleton.h>
 
-class CommandPoolModule
+class CommandPoolModule : public QESingleton<CommandPoolModule>
 {
 private:
-    static CommandPoolModule*       instance;
+    friend class QESingleton<CommandPoolModule>; // Permitir acceso al constructor
     DeviceModule*                   deviceModule;
     SwapChainModule*                swapchainModule;
     EditorObjectManager*            editorManager;
@@ -24,6 +26,7 @@ private:
     CullingSceneManager*            cullingSceneManager;
     LightManager*                   lightManager;
     RenderPassModule*               renderPassModule;
+    AtmosphereSystem*               atmosphereSystem;
 
     VkCommandPool                   commandPool;
     VkCommandPool                   computeCommandPool;
@@ -40,8 +43,6 @@ private:
     void updateCubeMapFace(uint32_t faceIdx, std::shared_ptr<VkRenderPass> renderPass, uint32_t idPointlight, VkCommandBuffer commandBuffer, uint32_t iCBuffer);
 public:
     CommandPoolModule();
-    static CommandPoolModule* getInstance();
-    static void ResetInstance();
 
     VkCommandPool&                  getCommandPool() { return this->commandPool; }
     VkCommandPool&                  getComputeCommandPool() { return this->computeCommandPool; }

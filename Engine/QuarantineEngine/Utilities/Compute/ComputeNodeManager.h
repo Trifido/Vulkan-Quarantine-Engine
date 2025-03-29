@@ -6,22 +6,19 @@
 #include <unordered_map>
 #include <memory>
 #include "ComputeNode.h"
+#include "QESingleton.h"
 
-class ComputeNodeManager
+class ComputeNodeManager : public QESingleton<ComputeNodeManager>
 {
 private:
+    friend class QESingleton<ComputeNodeManager>; // Permitir acceso al constructor
     std::unordered_map<std::string, std::shared_ptr<ComputeNode>> _computeNodes;
-
-public:
-    static ComputeNodeManager* instance;
 
 private:
     std::string CheckName(std::string nameComputeNode);
 
 public:
-    ComputeNodeManager();
-    static ComputeNodeManager* getInstance();
-    void ResetInstance();
+    ComputeNodeManager() = default;
     void InitializeComputeResources();
     void InitializeComputeNodes();
     void AddComputeNode(std::string& nameComputeNode, ComputeNode mat);

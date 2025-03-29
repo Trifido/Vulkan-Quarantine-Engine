@@ -8,13 +8,15 @@
 #include <memory>
 #include <Particles/ParticleSystem.h>
 #include <GameObjectManager.h>
+#include <QESingleton.h>
 
-class ParticleSystemManager
+class ParticleSystemManager : public QESingleton<ParticleSystemManager>
 {
 private:
+    friend class QESingleton<ParticleSystemManager>; // Permitir acceso al constructor
     std::unordered_map<std::string, std::shared_ptr<ParticleSystem>> _particleSystems;
+
 public:
-    static ParticleSystemManager* instance;
     GameObjectManager* gameObjectManager;
 
 private:
@@ -24,8 +26,6 @@ public:
     ParticleSystemManager();
     void AddParticleSystem(std::shared_ptr<ParticleSystem> object_ptr, std::string name);
     std::shared_ptr<ParticleSystem> GetParticleSystem(std::string name);
-    static ParticleSystemManager* getInstance();
-    static void ResetInstance();
     void Cleanup();
     void CleanLastResources();
     void UpdateParticleSystems();

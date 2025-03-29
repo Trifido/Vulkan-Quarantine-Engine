@@ -1,8 +1,6 @@
 #include "RenderPassModule.h"
 #include <array>
 
-RenderPassModule* RenderPassModule::instance = nullptr;
-
 RenderPassModule::RenderPassModule()
 {
     device_ptr = DeviceModule::getInstance();
@@ -15,14 +13,6 @@ RenderPassModule::RenderPassModule()
 RenderPassModule::~RenderPassModule()
 {
     device_ptr = nullptr;
-}
-
-RenderPassModule* RenderPassModule::getInstance()
-{
-    if (instance == NULL)
-        instance = new RenderPassModule();
-
-    return instance;
 }
 
 void RenderPassModule::cleanup()

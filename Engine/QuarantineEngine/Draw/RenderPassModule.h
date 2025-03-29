@@ -4,22 +4,22 @@
 
 #include "DepthBufferModule.h"
 #include "AntiAliasingModule.h"
+#include <QESingleton.h>
 
-class RenderPassModule
+class RenderPassModule : public QESingleton<RenderPassModule>
 {
 private:
+    friend class QESingleton<RenderPassModule>; // Permitir acceso al constructor
     DeviceModule* device_ptr;
 public:
-    static RenderPassModule* instance;
-    std::shared_ptr<VkRenderPass>    renderPass;
-    std::shared_ptr<VkRenderPass>    dirShadowMappingRenderPass;
-    std::shared_ptr<VkRenderPass> omniShadowMappingRenderPass;
+    std::shared_ptr<VkRenderPass>   renderPass;
+    std::shared_ptr<VkRenderPass>   dirShadowMappingRenderPass;
+    std::shared_ptr<VkRenderPass>   omniShadowMappingRenderPass;
 
 public:
     RenderPassModule();
     ~RenderPassModule();
 
-    static RenderPassModule* getInstance();
     void cleanup();
     void createRenderPass(VkFormat swapchainFormat, VkFormat depthFormat, VkSampleCountFlagBits msaaSamples);
     void createDirShadowRenderPass(VkFormat shadowFormat);

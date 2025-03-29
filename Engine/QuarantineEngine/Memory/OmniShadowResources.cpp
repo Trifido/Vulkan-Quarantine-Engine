@@ -285,7 +285,7 @@ void OmniShadowResources::CreateOmniShadowMapResources(std::shared_ptr<VkRenderP
     subresourceRange.layerCount = 6;
     this->TransitionMultiImagesLayout(this->deviceModule->device, this->cubemapImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
 
-    this->CubemapSampler = CreateCubemapSampler(this->deviceModule->device);
+    this->CubemapSampler = this->CreateCubemapSampler(this->deviceModule->device);
     this->CubemapImageView = this->CreateCubemapImageView(this->deviceModule->device, this->cubemapImage, this->shadowFormat, VK_IMAGE_ASPECT_COLOR_BIT);
     this->cubemapFacesImageViews = this->CreateCubemapFacesImageView(this->deviceModule->device, this->cubemapImage, this->shadowFormat, VK_IMAGE_ASPECT_COLOR_BIT);
 

@@ -12,8 +12,6 @@ bool compareDistance(const LightMap& a, const LightMap& b)
     return a.projected_z < b.projected_z;
 }
 
-LightManager* LightManager::instance = nullptr;
-
 LightManager::LightManager()
 {
     this->deviceModule = DeviceModule::getInstance();
@@ -56,20 +54,6 @@ void LightManager::AddOmniShadowMapShader(std::shared_ptr<ShaderModule> omni_sha
 {
     this->OmniShadowShaderModule = omni_shadow_mapping_shader;
     this->OmniShadowPipelineModule = this->OmniShadowShaderModule->ShadowPipelineModule;
-}
-
-LightManager* LightManager::getInstance()
-{
-    if (instance == NULL)
-        instance = new LightManager();
-
-    return instance;
-}
-
-void LightManager::ResetInstance()
-{
-	delete instance;
-	instance = nullptr;
 }
 
 void LightManager::CreateLight(LightType type, std::string name)

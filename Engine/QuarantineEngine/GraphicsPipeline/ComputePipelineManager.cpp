@@ -1,8 +1,6 @@
 #include "ComputePipelineManager.h"
 #include <iostream>
 
-ComputePipelineManager* ComputePipelineManager::instance = nullptr;
-
 std::string ComputePipelineManager::CheckName(std::string pipelineName)
 {
     std::unordered_map<std::string, std::shared_ptr<ComputePipelineModule>>::const_iterator got;
@@ -22,19 +20,6 @@ std::string ComputePipelineManager::CheckName(std::string pipelineName)
     } while (got != _computePipelines.end());
 
     return newName;
-}
-
-ComputePipelineManager* ComputePipelineManager::getInstance()
-{
-    if (instance == NULL)
-        instance = new ComputePipelineManager();
-    return instance;
-}
-
-void ComputePipelineManager::ResetInstance()
-{
-    delete instance;
-    instance = nullptr;
 }
 
 std::shared_ptr<ComputePipelineModule> ComputePipelineManager::GetPipeline(std::string pipelineName)

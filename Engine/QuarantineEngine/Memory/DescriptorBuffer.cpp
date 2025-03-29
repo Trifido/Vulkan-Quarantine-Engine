@@ -111,6 +111,12 @@ void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
                 poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
                 idx++;
             }
+            else if (binding.first == "SunUniform")
+            {
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                idx++;
+            }
             else if (binding.first == "LightCameraUniform")
             {
                 poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -300,12 +306,9 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
     this->buffersInfo.resize(this->numBinding);
     uint32_t idx = 0;
 
-    for (int idSet = 0; idSet < shader_ptr->reflectShader.bindings.size(); idSet++)
+    if (!shader_ptr->reflectShader.bindings[0].empty())
     {
-        if (idSet > 0)
-            continue;
-
-        for (auto binding : shader_ptr->reflectShader.bindings[idSet])
+        for (auto binding : shader_ptr->reflectShader.bindings[0])
         {
             if (binding.first == "CameraUniform")
             {

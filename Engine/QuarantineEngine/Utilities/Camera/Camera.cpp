@@ -21,7 +21,7 @@ Camera::Camera(float width, float height)
     this->frustumComponent = std::make_shared<FrustumComponent>();
 
     this->cameraFront = glm::vec3(1.0f, 0.0f, 0.0f);
-    this->cameraPos = glm::vec3(-10.0f, 0.0f, 0.0f);
+    this->cameraPos = glm::vec3(-10.0f, 5.0f, 0.0f);
     this->WIDTH = width;
     this->HEIGHT = height;
     this->lastX = WIDTH / 2.0f;

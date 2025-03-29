@@ -9,16 +9,20 @@
 #include "ShaderModule.h"
 #include <string>
 
+#define CEIL_DIV(x, y) (((x) + (y) - 1) / (y))
+
 class ComputeNode : public GameComponent
 {
 private:
     DeviceModule*                               deviceModule = nullptr;
     std::shared_ptr<ShaderModule>               computeShader = nullptr;
-
+    uint32_t widthImage, heightImage;
 public:
     std::shared_ptr<ComputeDescriptorBuffer>    computeDescriptor = nullptr;
     uint32_t NElements = 0;
     bool UseDependencyBuffer = false;
+    bool OnDemandCompute = false;
+    bool Compute = true;
 
 public:
     ComputeNode();
@@ -29,8 +33,11 @@ public:
     void FillComputeBuffer(size_t numElements, unsigned long long elementType, void* data);
     void FillComputeBuffer(uint32_t ssboIndex, VkBuffer buffer, uint32_t bufferSize);
     void InitializeComputeNode();
+    void InitializeOutputTextureComputeNode(uint32_t width, uint32_t height, VkFormat format);
     void DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t currentFrame);
     void UpdateComputeDescriptor();
+private:
+    void UpdateOutputTextureState();
 };
 
 #endif // !COMPUTE_NODE_H

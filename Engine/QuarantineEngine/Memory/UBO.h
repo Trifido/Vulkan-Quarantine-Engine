@@ -37,6 +37,11 @@ struct CameraUniform
     alignas(16) glm::vec4 frustumPlanes[6];
 };
 
+struct ScreenResolutionUniform
+{
+    glm::vec2 resolution;
+};
+
 struct MaterialUniform
 {
     glm::vec4 Diffuse;
@@ -122,6 +127,12 @@ struct PushConstantViewStruct
 struct DeltaTimeUniform
 {
     float deltaTime;
+};
+
+struct SunUniform
+{
+    glm::vec3 Direction;
+    float Intensity;
 };
 
 struct OmniShadowUniform

@@ -6,22 +6,6 @@
 #include "SwapChainTool.hpp"
 #include <SynchronizationModule.h>
 
-SwapChainModule* SwapChainModule::instance = nullptr;
-
-SwapChainModule* SwapChainModule::getInstance()
-{
-    if (instance == NULL)
-        instance = new SwapChainModule();
-
-    return instance;
-}
-
-void SwapChainModule::ResetInstance()
-{
-	delete instance;
-	instance = nullptr;
-}
-
 SwapChainModule::SwapChainModule()
 {
     deviceModule = DeviceModule::getInstance();
@@ -86,7 +70,7 @@ void SwapChainModule::createSwapChain(VkSurfaceKHR& surface, GLFWwindow* window)
 
     for (size_t i = 0; i < this->numSwapChainImages; i++)
     {
-        swapChainImageViews[i] = IMT::createImageView(deviceModule->device, this->swapChainImages[i], this->swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
+        swapChainImageViews[i] = IMT::createImageView(deviceModule->device, this->swapChainImages[i], VK_IMAGE_VIEW_TYPE_2D, this->swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
     }
 
     this->UpdateScreenData();

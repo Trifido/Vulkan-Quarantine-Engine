@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <list>
+#include <QESingleton.h>
 
 class IObserver {
 public:
@@ -21,18 +22,15 @@ public:
     virtual void Notify(__int8 keyNum) = 0;
 };
 
-class KeyboardController : IKeyboardController
+class KeyboardController : IKeyboardController, public QESingleton<KeyboardController>
 {
 private:
-    static KeyboardController* instance;
+    friend class QESingleton<KeyboardController>; // Permitir acceso al constructor
     bool isEditorProfile = true;
     std::list<IObserver*> list_observer_;
 
 public:
-    static KeyboardController* getInstance();
-    static void ResetInstance();
     void ReadKeyboardEvents();
-    void cleanup();
     void CleanLastResources();
 
     virtual ~KeyboardController();

@@ -5,6 +5,7 @@
 
 #include "ShaderModule.h"
 #include "CustomTexture.h"
+#include "Camera.h"
 #include "UBO.h"
 
 class ComputeDescriptorBuffer
@@ -15,14 +16,17 @@ private:
     uint32_t            numBinding = 0;
     std::vector<VkDescriptorBufferInfo> buffersInfo;
     VkDescriptorImageInfo inputImageInfo;
+    VkDescriptorImageInfo inputImageInfo_2;
     VkDescriptorImageInfo outputImageInfo;
     std::shared_ptr<DeltaTimeUniform> deltaTimeUniform;
+    std::shared_ptr<SunUniform> sunUniform;
+    Camera* camera = nullptr;
 
     uint32_t _numSSBOs = 0;
 
 public:
     std::vector<VkDescriptorSet>    descriptorSets;
-    std::shared_ptr<CustomTexture>  inputTexture = nullptr;
+    std::vector<std::shared_ptr<CustomTexture>>  inputTextures = {};
     std::shared_ptr<CustomTexture>  outputTexture = nullptr;
 
     std::vector<std::shared_ptr<UniformBufferObject>>    ssboData;

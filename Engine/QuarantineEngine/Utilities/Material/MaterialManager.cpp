@@ -4,8 +4,6 @@
 #include <filesystem>
 #include <Vertex.h>
 
-MaterialManager* MaterialManager::instance = nullptr;
-
 std::string MaterialManager::CheckName(std::string nameMaterial)
 {
     std::unordered_map<std::string, std::shared_ptr<Material>>::const_iterator got;
@@ -103,20 +101,6 @@ void MaterialManager::InitializeMaterialManager()
         this->AddMaterial("defaultParticlesMat", std::make_shared<Material>(Material(this->default_particles_shader)));
         this->_materials["defaultParticlesMat"]->layer = (int)RenderLayer::PARTICLES;
     }
-}
-
-MaterialManager* MaterialManager::getInstance()
-{
-    if (instance == NULL)
-        instance = new MaterialManager();
-
-    return instance;
-}
-
-void MaterialManager::ResetInstance()
-{
-    delete instance;
-    instance = nullptr;
 }
 
 std::shared_ptr<Material> MaterialManager::GetMaterial(std::string nameMaterial)

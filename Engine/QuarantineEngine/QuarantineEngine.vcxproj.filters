@@ -170,6 +170,9 @@
     <Filter Include="Kernel\Utilities\Camera\sources">
       <UniqueIdentifier>{ecb8f644-0dda-4680-856e-df6fd7f62528}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Kernel\Utilities\Atmosphere">
+      <UniqueIdentifier>{229c21bb-841c-4c13-8255-aad3d642bdc6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -451,6 +454,9 @@
     <ClCompile Include="Memory\CSMDescriptorsManager.cpp">
       <Filter>Kernel\Memory\sources</Filter>
     </ClCompile>
+    <ClCompile Include="Utilities\Atmosphere\AtmosphereSystem.cpp">
+      <Filter>Kernel\Utilities\Atmosphere</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SetUp\DeviceModule.h">
@@ -704,7 +710,6 @@
     <ClInclude Include="Utilities\Timer.h">
       <Filter>Kernel\Utilities\headers</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsPipeline\GraphicsPipelineData.h" />
     <ClInclude Include="Utilities\Particles\ParticleSystemManager.h">
       <Filter>Kernel\Utilities\Particles\headers</Filter>
     </ClInclude>
@@ -746,6 +751,15 @@
     </ClInclude>
     <ClInclude Include="Memory\CSMDescriptorsManager.h">
       <Filter>Kernel\Memory\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Atmosphere\AtmosphereSystem.h">
+      <Filter>Kernel\Utilities\Atmosphere</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsPipeline\GraphicsPipelineData.h">
+      <Filter>Kernel\GraphicsPipeline\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Templates\QESingleton.h">
+      <Filter>Kernel\SetUp</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

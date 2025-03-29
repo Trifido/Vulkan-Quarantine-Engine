@@ -5,6 +5,7 @@
 ComputeNode::ComputeNode()
 {
     this->deviceModule = DeviceModule::getInstance();
+    this->widthImage = this->heightImage = 0;
 }
 
 ComputeNode::ComputeNode(std::string computeShaderPath) : ComputeNode(std::make_shared<ShaderModule>(computeShaderPath))
@@ -54,11 +55,40 @@ void ComputeNode::InitializeComputeNode()
     this->computeDescriptor->InitializeDescriptorSets(this->computeShader);
 }
 
+void ComputeNode::InitializeOutputTextureComputeNode(uint32_t width, uint32_t height, VkFormat format)
+{
+    this->widthImage = width;
+    this->heightImage = height;
+
+    this->computeDescriptor->outputTexture = std::make_shared<CustomTexture>(
+        width, height, format,
+        VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        TEXTURE_TYPE::COMPUTE_TYPE
+    );
+
+    VkImageSubresourceRange subresourceRange = {};
+    subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    subresourceRange.baseMipLevel = 0;
+    subresourceRange.levelCount = 1;
+    subresourceRange.layerCount = 1;
+    this->computeDescriptor->outputTexture->transitionImageLayout(this->computeDescriptor->outputTexture->image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, subresourceRange);
+}
+
 void ComputeNode::cleanup()
 {
-    this->computeDescriptor->Cleanup();
-    this->computeShader.reset();
-    this->computeShader = nullptr;
+    if (this->computeDescriptor != nullptr)
+    {
+        this->computeDescriptor->Cleanup();
+        this->computeDescriptor.reset();
+        this->computeDescriptor = nullptr;
+    }
+
+    if (this->computeShader != nullptr)
+    {
+        this->computeShader.reset();
+        this->computeShader = nullptr;
+    }
+
     this->NElements = 0;
 }
 
@@ -70,6 +100,14 @@ void ComputeNode::InitializeComputeBuffer(uint32_t idBuffer, uint32_t bufferSize
 
 void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t currentFrame)
 {
+    if (this->OnDemandCompute && !this->Compute)
+    {
+        this->UpdateOutputTextureState();
+        return;
+    }
+
+    this->Compute = false;
+
     if (this->UseDependencyBuffer)
     {
         VkBufferMemoryBarrier bufferBarrier = {};
@@ -87,11 +125,42 @@ void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, this->computeShader->ComputePipelineModule->pipeline);
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, this->computeShader->ComputePipelineModule->pipelineLayout, 0, 1, &computeDescriptor->descriptorSets[currentFrame], 0, 0);
 
-    uint32_t groupX = (this->NElements < 256) ? this->NElements : ceil(float(this->NElements) / 256.0f);
-    vkCmdDispatch(commandBuffer, groupX, 1, 1);
+    if (this->widthImage == 0 || this->heightImage == 0)
+    {
+        uint32_t groupX = (this->NElements < 256) ? this->NElements : CEIL_DIV(this->NElements, 256.0f);
+        vkCmdDispatch(commandBuffer, groupX, 1, 1);
+    }
+    else
+    {
+        this->UpdateOutputTextureState();
+
+        vkCmdDispatch(commandBuffer, CEIL_DIV(this->widthImage, NElements), CEIL_DIV(this->heightImage, NElements), 1);
+    }
 }
 
 void ComputeNode::UpdateComputeDescriptor()
 {
     this->computeDescriptor->UpdateUBODeltaTime();
+}
+
+void ComputeNode::UpdateOutputTextureState()
+{
+    auto outputTexture = this->computeDescriptor->outputTexture;
+
+    if (outputTexture == nullptr)
+        return;
+
+    VkImageSubresourceRange subresourceRange = {};
+    subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    subresourceRange.baseMipLevel = 0;
+    subresourceRange.levelCount = 1;
+    subresourceRange.layerCount = 1;
+
+    if (outputTexture->currentLayout != VK_IMAGE_LAYOUT_GENERAL)
+    {
+        if (outputTexture->currentLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+            outputTexture->transitionImageLayout(outputTexture->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, subresourceRange);
+        else
+            outputTexture->transitionImageLayout(outputTexture->image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, subresourceRange);
+    }
 }

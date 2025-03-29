@@ -182,9 +182,15 @@ void App::initVulkan()
     this->cullingSceneManager = CullingSceneManager::getInstance();
     this->cullingSceneManager->InitializeCullingSceneResources();
     this->cullingSceneManager->AddCameraFrustum(this->cameraEditor->frustumComponent);
-    this->cullingSceneManager->isDebugEnable = false;
+    this->cullingSceneManager->DebugMode = false;
 
-    // Inicializamos los componentes del editorW
+    this->atmosphereSystem = AtmosphereSystem::getInstance();
+    //this->atmosphereSystem->InitializeAtmosphere(this->cameraEditor);
+    //this->atmosphereSystem->InitializeAtmosphere(AtmosphereSystem::CUBEMAP, TEXTURE_SKYBOX_PATH_FACES.data(), TEXTURE_SKYBOX_PATH_FACES.size(), this->cameraEditor);
+    //this->atmosphereSystem->InitializeAtmosphere(AtmosphereSystem::SPHERICALMAP, &TEXTURE_SPHERICAL_MAP_PATH, 1, this->cameraEditor);
+    this->atmosphereSystem->InitializeAtmosphere(this->cameraEditor);
+
+    // Inicializamos los componentes del editor
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
     this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
     grid_ptr->IsRenderable = true;
@@ -198,7 +204,7 @@ void App::initVulkan()
         absPath.erase(ind, substring.length());
     }
 
-    /**/
+    /*
     //const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
     const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
 
@@ -219,66 +225,64 @@ void App::initVulkan()
     floor->_Material->materialData.SetMaterialField("Specular", glm::vec3(0.0f, 0.0f, 0.0f));
     floor->_Material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
     this->gameObjectManager->AddGameObject(floor, "floor");
-    
+    /**/
 
-//DEMO
+//DEMOD
 /*
     //Creamos la textura
-    textureManager->AddTexture("diffuse_brick", CustomTexture(TEXTURE_WALL_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
-    textureManager->AddTexture("normal_brick", CustomTexture(TEXTURE_WALL_NORMAL_PATH, TEXTURE_TYPE::NORMAL_TYPE));
-    textureManager->AddTexture("test", CustomTexture(TEXTURE_TEST_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
+    //textureManager->AddTexture("diffuse_brick", CustomTexture(TEXTURE_WALL_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
+    //textureManager->AddTexture("normal_brick", CustomTexture(TEXTURE_WALL_NORMAL_PATH, TEXTURE_TYPE::NORMAL_TYPE));
+    //textureManager->AddTexture("test", CustomTexture(TEXTURE_TEST_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
 
     std::shared_ptr<GameObject> cube = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
-    cube->transform->SetPosition(glm::vec3(0.0f, 10.0f, 0.0f));
-    cube->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 65.0f));
+    cube->_Transform->SetPosition(glm::vec3(0.0f, 10.0f, 0.0f));
+    cube->_Transform->SetOrientation(glm::vec3(0.0f, 0.0f, 65.0f));
 
     std::shared_ptr<GameObject> plano = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
-    plano->transform->SetOrientation(glm::vec3(0.0f, 0.0f, 45.0f));
-    plano->transform->SetPosition(glm::vec3(0.0f, 3.0f, 0.0f));
-    plano->transform->SetScale(glm::vec3(5.0f, 1.0f, 5.0f));
+    plano->_Transform->SetOrientation(glm::vec3(0.0f, 0.0f, 45.0f));
+    plano->_Transform->SetPosition(glm::vec3(0.0f, 3.0f, 0.0f));
+    plano->_Transform->SetScale(glm::vec3(5.0f, 1.0f, 5.0f));
 
     std::shared_ptr<GameObject> floor = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
-    floor->transform->SetPosition(glm::vec3(0.0f, -0.10f, 0.0f));
-    floor->transform->SetScale(glm::vec3(50.0f, 1.0f, 50.0f));
+    floor->_Transform->SetPosition(glm::vec3(0.0f, -0.10f, 0.0f));
+    floor->_Transform->SetScale(glm::vec3(50.0f, 1.0f, 50.0f));
 
     //Creamos el shader module para el material
-    std::shared_ptr<ShaderModule> shader_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
-    shader_ptr->createShaderBindings();
-    this->shaderManager->AddShader("shader", shader_ptr);
+    //std::shared_ptr<ShaderModule> shader_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
+    //shader_ptr->createShaderBindings();
+    //this->shaderManager->AddShader("shader", shader_ptr);
 
-    //Creamos el material
-    std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(Material(this->shaderManager->GetShader("shader"), renderPassModule->renderPass));
-    mat_ptr->AddNullTexture(textureManager->GetTexture("NULL"));
-    mat_ptr->AddTexture(textureManager->GetTexture("diffuse_brick"));
-    mat_ptr->AddTexture(textureManager->GetTexture("normal_brick"));
+    ////Creamos el material
+    //std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(Material(this->shaderManager->GetShader("shader"), renderPassModule->renderPass));
+    //mat_ptr->AddNullTexture(textureManager->GetTexture("NULL"));
+    //mat_ptr->AddTexture(textureManager->GetTexture("diffuse_brick"));
+    //mat_ptr->AddTexture(textureManager->GetTexture("normal_brick"));
 
-    std::shared_ptr<Material> mat_ptr2 = std::make_shared<Material>(Material(this->shaderManager->GetShader("shader"), renderPassModule->renderPass));
-    mat_ptr2->AddNullTexture(textureManager->GetTexture("NULL"));
-    mat_ptr2->AddTexture(textureManager->GetTexture("test"));
+    //std::shared_ptr<Material> mat_ptr2 = std::make_shared<Material>(Material(this->shaderManager->GetShader("shader"), renderPassModule->renderPass));
+    //mat_ptr2->AddNullTexture(textureManager->GetTexture("NULL"));
+    //mat_ptr2->AddTexture(textureManager->GetTexture("test"));
 
-    materialManager->AddMaterial("mat", mat_ptr);
-    materialManager->AddMaterial("mat2", mat_ptr2);
+    //materialManager->AddMaterial("mat", mat_ptr);
+    //materialManager->AddMaterial("mat2", mat_ptr2);
 
     //Linkamos el material al gameobject
-    cube->addMaterial(materialManager->GetMaterial("mat"));
-    plano->addMaterial(materialManager->GetMaterial("mat"));
-    floor->addMaterial(materialManager->GetMaterial("mat2"));
+    //cube->AddMaterial(materialManager->GetMaterial("mat"));
+    //plano->AddMaterial(materialManager->GetMaterial("mat"));
+    //floor->AddMaterial(materialManager->GetMaterial("mat2"));
 
-    this->gameObjectManager->AddGameObject(cube, "cube");
-    this->gameObjectManager->AddGameObject(plano, "planoInclinado");
-    this->gameObjectManager->AddGameObject(floor, "floor");
-*/
+    
+/**/
     // END -------------------------- Mesh & Material -------------------------------
 
     // INIT ------------------------- Lights ----------------------------------------
     // POINT LIGHTS
     {
-        this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
-        auto pointLight = this->lightManager->GetLight("PointLight1");
-        pointLight->transform->SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
-        pointLight->diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
-        pointLight->specular = glm::vec3(0.7f, 0.7f, 0.7f);
-        pointLight->SetDistanceEffect(100.0f);
+        //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
+        //auto pointLight = this->lightManager->GetLight("PointLight1");
+        //pointLight->transform->SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
+        //pointLight->diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
+        //pointLight->specular = glm::vec3(0.7f, 0.7f, 0.7f);
+        //pointLight->SetDistanceEffect(100.0f);
 
         //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight2");
         //auto pointLight2 = this->lightManager->GetLight("PointLight2");
@@ -297,11 +301,11 @@ void App::initVulkan()
 
     // DIRECTIONAL LIGHTS
     {
-        //this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
-        //auto dirlight = this->lightManager->GetLight("DirectionalLight0");
-        //dirlight->diffuse = glm::vec3(0.6f);
-        //dirlight->specular = glm::vec3(0.1f);
-        //dirlight->SetDistanceEffect(100.0f);
+        this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
+        auto dirlight = this->lightManager->GetLight("DirectionalLight0");
+        dirlight->diffuse = glm::vec3(0.6f);
+        dirlight->specular = glm::vec3(0.1f);
+        dirlight->SetDistanceEffect(100.0f);
 
         //this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight2");
         //auto dirlight2 = this->lightManager->GetLight("DirectionalLight2");
@@ -329,22 +333,26 @@ void App::initVulkan()
     /*
     std::shared_ptr<PhysicBody> rigidBody = std::make_shared<PhysicBody>(PhysicBody(PhysicBodyType::RIGID_BODY));
     rigidBody->Mass = 10.0f;// 0.001f;
-    cube->addPhysicBody(rigidBody);
+    cube->AddPhysicBody(rigidBody);
     std::shared_ptr<BoxCollider> boxCollider = std::make_shared<BoxCollider>();
-    cube->addCollider(boxCollider);
+    cube->AddCollider(boxCollider);
 
     std::shared_ptr<PhysicBody> staticBody = std::make_shared<PhysicBody>();
-    plano->addPhysicBody(staticBody);
+    plano->AddPhysicBody(staticBody);
     std::shared_ptr<PlaneCollider> planeCollider = std::make_shared<PlaneCollider>();
     planeCollider->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
-    plano->addCollider(planeCollider);
+    plano->AddCollider(planeCollider);
 
     std::shared_ptr<PhysicBody> staticBody2 = std::make_shared<PhysicBody>();
-    floor->addPhysicBody(staticBody2);
+    floor->AddPhysicBody(staticBody2);
     std::shared_ptr<PlaneCollider> planeCollider2 = std::make_shared<PlaneCollider>();
     planeCollider2->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
-    floor->addCollider(planeCollider2);
-    */
+    floor->AddCollider(planeCollider2);
+
+    this->gameObjectManager->AddGameObject(cube, "cube");
+    this->gameObjectManager->AddGameObject(plano, "planoInclinado");
+    this->gameObjectManager->AddGameObject(floor, "floor");
+    /**/
 
     // Initialize Managers
     this->animationManager->InitializeAnimations();
@@ -391,33 +399,40 @@ void App::mainLoop()
         // UPDATE LIGHT SYSTEM
         this->lightManager->Update();
 
+        // UPDATE ATMOSPHERE
+        this->atmosphereSystem->UpdateSun();
+
         if (ImGui::IsKeyDown('j') || ImGui::IsKeyDown('J'))
         {
-            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            newPos.x += 0.1f;
-            this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
-            this->lightManager->UpdateUniform();
+            this->atmosphereSystem->Sun.Direction.x -= 0.001f;
+            //glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
+            //newPos.x += 0.1f;
+            //this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
+            //this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('l') || ImGui::IsKeyDown('L'))
         {
-            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            newPos.x -= 0.1f;
-            this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
-            this->lightManager->UpdateUniform();
+            this->atmosphereSystem->Sun.Direction.x += 0.001f;
+            //glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
+            //newPos.x -= 0.1f;
+            //this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
+            //this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('I'))
         {
-            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            newPos.z += 0.1f;
-            this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
-            this->lightManager->UpdateUniform();
+            this->atmosphereSystem->Sun.Direction.y += 0.001f;
+            //glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
+            //newPos.z += 0.1f;
+            //this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
+            //this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('K'))
         {
-            glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            newPos.z -= 0.1f;
-            this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
-            this->lightManager->UpdateUniform();
+            this->atmosphereSystem->Sun.Direction.y -= 0.001f;
+            //glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
+            //newPos.z -= 0.1f;
+            //this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
+            //this->lightManager->UpdateUniform();
         }
         if (ImGui::IsKeyDown('1'))
         {
@@ -509,6 +524,7 @@ void App::cleanUp()
     this->animationManager->Cleanup();
     this->lightManager->CleanShadowMapResources();
 
+    this->atmosphereSystem->Cleanup();
     this->gameObjectManager->Cleanup();
     this->particleSystemManager->Cleanup();
     this->editorManager->Cleanup();
@@ -572,6 +588,10 @@ void App::cleanManagers()
     this->animationManager->ResetInstance();
     this->animationManager = nullptr;
 
+    this->atmosphereSystem->CleanLastResources();
+    this->atmosphereSystem->ResetInstance();
+    this->atmosphereSystem = nullptr;
+
     this->gameObjectManager->CleanLastResources();
     this->gameObjectManager->ResetInstance();
     this->gameObjectManager = nullptr;
@@ -581,7 +601,7 @@ void App::cleanManagers()
 
     this->particleSystemManager->CleanLastResources();
     this->particleSystemManager->ResetInstance();
-    this->gameObjectManager = nullptr;
+    this->particleSystemManager = nullptr;
 
     this->textureManager->CleanLastResources();
     this->textureManager->ResetInstance();
@@ -720,6 +740,9 @@ void App::recreateSwapchain()
     //Actualizamos el formato de la cámara
     this->cameraEditor->UpdateViewportSize(swapchainModule->swapChainExtent);
     this->cameraEditor->UpdateCamera();
+
+    //Actualizamos la resolución de la atmosfera
+    this->atmosphereSystem->UpdateAtmopshereResolution();
 
     //Recreamos el antialiasing module
     antialiasingModule->createColorResources();

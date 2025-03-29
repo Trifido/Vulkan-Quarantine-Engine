@@ -2,22 +2,6 @@
 #include <MaterialManager.h>
 #include <filesystem>
 
-CullingSceneManager* CullingSceneManager::instance = nullptr;
-
-CullingSceneManager* CullingSceneManager::getInstance()
-{
-    if (instance == NULL)
-        instance = new CullingSceneManager();
-
-    return instance;
-}
-
-void CullingSceneManager::ResetInstance()
-{
-    delete instance;
-    instance = nullptr;
-}
-
 void CullingSceneManager::AddCameraFrustum(std::shared_ptr<FrustumComponent> frustum)
 {
     this->cameraFrustum = frustum;
@@ -89,7 +73,7 @@ void CullingSceneManager::CleanUp()
 
 void CullingSceneManager::DrawDebug(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
-    if (this->isDebugEnable)
+    if (this->DebugMode)
     {
         auto pipelineModule = this->shader_aabb_ptr->PipelineModule;
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);

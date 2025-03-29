@@ -1,22 +1,6 @@
 #include "PhysicsModule.h"
 #include <iostream>
 
-PhysicsModule* PhysicsModule::instance = nullptr;
-
-PhysicsModule* PhysicsModule::getInstance()
-{
-    if (instance == NULL)
-        instance = new PhysicsModule();
-
-    return instance;
-}
-
-void PhysicsModule::ResetInstance()
-{
-    delete instance;
-    instance = nullptr;
-}
-
 PhysicsModule::PhysicsModule()
 {
     this->collisionConfiguration = new btDefaultCollisionConfiguration();

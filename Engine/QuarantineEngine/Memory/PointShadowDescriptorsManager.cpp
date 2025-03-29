@@ -56,10 +56,6 @@ void PointShadowDescriptorsManager::CreateRenderDescriptorPool()
     std::vector<VkDescriptorPoolSize> renderPoolSizes;
     renderPoolSizes.resize(1);
 
-    // Point Light Uniform
-    //renderPoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    //renderPoolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) * MAX_NUM_POINT_LIGHTS;
-
     // Shadow Texture Samplers
     renderPoolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     renderPoolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) * MAX_NUM_POINT_LIGHTS;
@@ -120,20 +116,6 @@ void PointShadowDescriptorsManager::SetOffscreenDescriptorWrite(VkWriteDescripto
     descriptorWrite.descriptorCount = 1;
     descriptorWrite.pImageInfo = VK_NULL_HANDLE;
     descriptorWrite.pBufferInfo = &this->offscreenBuffersInfo[binding];
-}
-
-void PointShadowDescriptorsManager::SetRenderDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize)
-{
-    this->renderBuffersInfo[binding] = GetBufferInfo(buffer, bufferSize);
-
-    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptorWrite.dstSet = descriptorSet;
-    descriptorWrite.dstBinding = binding;
-    descriptorWrite.dstArrayElement = 0;
-    descriptorWrite.descriptorType = descriptorType;
-    descriptorWrite.descriptorCount = 1;
-    descriptorWrite.pImageInfo = VK_NULL_HANDLE;
-    descriptorWrite.pBufferInfo = &this->renderBuffersInfo[binding];
 }
 
 void PointShadowDescriptorsManager::SetCubeMapDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding)
