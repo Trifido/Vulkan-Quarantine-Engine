@@ -29,8 +29,10 @@ App::~App()
 
 }
 
-void App::run()
+void App::run(QEScene scene)
 {
+    this->scene = scene;
+
     initWindow();
     initVulkan();
     mainLoop();
@@ -149,7 +151,7 @@ void App::initVulkan()
     framebufferModule.createFramebuffer(renderPassModule->renderPass);
 
     //Añadimos el camera editor
-    this->cameraEditor = CameraEditor::getInstance();
+    this->cameraEditor = CameraEditor::getInstance(this->mainWindow.width, this->mainWindow.height, this->scene.cameraEditor);
 
     //Añadimos requisitos para los geometryComponent
     BufferManageModule::commandPool = this->commandPoolModule->getCommandPool();

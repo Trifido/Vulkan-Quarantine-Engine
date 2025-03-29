@@ -10,6 +10,8 @@
 #include <vulkan/vulkan.hpp>
 
 #include "App.h"
+#include <QEProjectManager.h>
+#include <QEScene.h>
 #include <stdio.h>
 #define FULL_SCREEN false
 
@@ -41,7 +43,10 @@ static bool                     g_SwapChainRebuild = false;
 
 int main(int, char**)
 {
+    bool result = QEProjectManager::CreateQEProject("QEExample");
+    QEScene scene{};
+    QEProjectManager::InitializeDefaultQEScene(scene);
     App app;
-    app.run();
+    app.run(scene);
     return 0;
 }

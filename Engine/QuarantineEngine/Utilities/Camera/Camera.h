@@ -11,6 +11,7 @@
 #include <memory>
 #include "UBO.h"
 #include <FrustumComponent.h>
+#include <CameraDto.h>
 
 class Camera
 {
@@ -50,7 +51,8 @@ protected:
 
 public:
     Camera();
-    Camera(float width, float height);
+    Camera(const float width, const float height, const CameraDto& cameraDto = CameraDto());
+    CameraDto CreateCameraDto();
     void CameraController(float deltaTime);
     float GetFOV() { return fov; }
     float* GetRawFOV() { return &fov; }

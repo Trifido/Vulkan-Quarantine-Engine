@@ -2,15 +2,15 @@
 
 CameraEditor* CameraEditor::instance = nullptr;
 
-CameraEditor::CameraEditor(float width, float height) : Camera(width, height)
+CameraEditor::CameraEditor(float width, float height, CameraDto cameraDto) : Camera(width, height, cameraDto)
 {
     
 }
 
-CameraEditor* CameraEditor::getInstance(float width, float height)
+CameraEditor* CameraEditor::getInstance(float width, float height, CameraDto cameraDto)
 {
     if (instance == NULL)
-        instance = new CameraEditor(width, height);
+        instance = new CameraEditor(width, height, cameraDto);
 
     return instance;
 }

@@ -77,9 +77,6 @@
     <Filter Include="GUI\sources">
       <UniqueIdentifier>{33f771b8-d83a-4ee8-9d4c-ce65ede56e8a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Kernel\Utilities\headers">
-      <UniqueIdentifier>{9e0eb4c6-cf73-4868-a004-e8ff098416fd}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Input">
       <UniqueIdentifier>{5ece5c4b-5470-443d-8622-c4f880cf2143}</UniqueIdentifier>
     </Filter>
@@ -178,6 +175,18 @@
     </Filter>
     <Filter Include="Kernel\Utilities\General\headers">
       <UniqueIdentifier>{0af7f900-ab0d-4d44-a70b-febb46c086d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Data">
+      <UniqueIdentifier>{9ddee231-ae19-44df-8499-7bef7a549e3d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Data\headers">
+      <UniqueIdentifier>{860c4044-ecc5-4f13-a211-8b1f3c950ca4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Data\sources">
+      <UniqueIdentifier>{310a78e1-29ac-42ee-bf51-ee6ee2665de6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Kernel\Data\Dtos">
+      <UniqueIdentifier>{04db5ccc-97f0-49df-8a57-0b7ab5cf1223}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -463,6 +472,15 @@
     <ClCompile Include="Utilities\General\Transform.cpp">
       <Filter>Kernel\Utilities\General\sources</Filter>
     </ClCompile>
+    <ClCompile Include="Utilities\General\QEScene.cpp">
+      <Filter>Kernel\Utilities\General\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Data\QESceneExporter.cpp">
+      <Filter>Kernel\Data\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Data\QEProjectManager.cpp">
+      <Filter>Kernel\Data\sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SetUp\DeviceModule.h">
@@ -533,15 +551,6 @@
     </ClInclude>
     <ClInclude Include="App\App.h">
       <Filter>App</Filter>
-    </ClInclude>
-    <ClInclude Include="Utilities\GameObject.h">
-      <Filter>Kernel\Utilities\headers</Filter>
-    </ClInclude>
-    <ClInclude Include="Utilities\GameComponent.h">
-      <Filter>Kernel\Utilities\headers</Filter>
-    </ClInclude>
-    <ClInclude Include="Utilities\Transform.h">
-      <Filter>Kernel\Utilities\headers</Filter>
     </ClInclude>
     <ClInclude Include="Draw\SyncTool.h">
       <Filter>Kernel\Draw\headers</Filter>
@@ -641,9 +650,6 @@
     <ClInclude Include="Editor\Grid.h">
       <Filter>Kernel\Editor\headers</Filter>
     </ClInclude>
-    <ClInclude Include="Utilities\GameObjectManager.h">
-      <Filter>Kernel\Utilities\headers</Filter>
-    </ClInclude>
     <ClInclude Include="Utilities\Animation\AnimationImporter.h">
       <Filter>Kernel\Utilities\Animation\headers</Filter>
     </ClInclude>
@@ -698,9 +704,6 @@
     <ClInclude Include="GraphicsPipeline\ReflectShader.h">
       <Filter>Kernel\GraphicsPipeline\headers</Filter>
     </ClInclude>
-    <ClInclude Include="Utilities\Numbered.h">
-      <Filter>Kernel\Utilities\headers</Filter>
-    </ClInclude>
     <ClInclude Include="GraphicsPipeline\PipelineModule.h">
       <Filter>Kernel\GraphicsPipeline\headers</Filter>
     </ClInclude>
@@ -712,9 +715,6 @@
     </ClInclude>
     <ClInclude Include="Memory\ComputeDescriptorBuffer.h">
       <Filter>Kernel\Memory\headers</Filter>
-    </ClInclude>
-    <ClInclude Include="Utilities\Timer.h">
-      <Filter>Kernel\Utilities\headers</Filter>
     </ClInclude>
     <ClInclude Include="Utilities\Particles\ParticleSystemManager.h">
       <Filter>Kernel\Utilities\Particles\headers</Filter>
@@ -784,6 +784,18 @@
     </ClInclude>
     <ClInclude Include="Utilities\General\Transform.h">
       <Filter>Kernel\Utilities\General\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\General\QEScene.h">
+      <Filter>Kernel\Utilities\General\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Data\QESceneExporter.h">
+      <Filter>Kernel\Data\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Data\QEProjectManager.h">
+      <Filter>Kernel\Data\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Data\Dtos\CameraDto.h">
+      <Filter>Kernel\Data\Dtos</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

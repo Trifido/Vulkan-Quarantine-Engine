@@ -1,5 +1,6 @@
 #include "Camera.h"
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <SynchronizationModule.h>
 
 float glm_vec3_dot(glm::vec3 a, glm::vec3 b) {
@@ -14,26 +15,30 @@ float glm_vec3_norm(glm::vec3 v) {
     return sqrtf(glm_vec3_norm2(v));
 }
 
-Camera::Camera(float width, float height)
+Camera::Camera(const float width, const float height, const CameraDto& cameraDto)
 {
     this->deviceModule = DeviceModule::getInstance();
 
     this->frustumComponent = std::make_shared<FrustumComponent>();
 
-    this->cameraFront = glm::vec3(1.0f, 0.0f, 0.0f);
-    this->cameraPos = glm::vec3(-10.0f, 5.0f, 0.0f);
+    this->cameraFront = cameraDto.front;
+    this->cameraPos = cameraDto.position;
+    this->cameraUp = cameraDto.up;
+    this->nearPlane = cameraDto.nearPlane;
+    this->farPlane = cameraDto.farPlane;
+    this->fov = cameraDto.fov;
+
     this->WIDTH = width;
     this->HEIGHT = height;
+
     this->lastX = WIDTH / 2.0f;
     this->lastY = HEIGHT / 2.0f;
-    this->nearPlane = 0.1f;
-    this->farPlane = 500.0f;
-    this->view = projection = VP = glm::mat4(1.0);
+
     this->cameraUniform = std::make_shared<CameraUniform>();
     this->cameraUBO = std::make_shared<UniformBufferObject>();
     this->cameraUBO->CreateUniformBuffer(sizeof(CameraUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
-    this->UpdateUniform();
-    this->UpdateUBOCamera();
+
+    this->UpdateCamera();
 
     float value = asin(-cameraFront.y);
     float degreeValue = glm::degrees(value);
@@ -44,8 +49,15 @@ Camera::Camera(float width, float height)
     degreeValue = glm::degrees(value);
     if (degreeValue < 0) degreeValue += 180;
     this->yaw = (270 + (int)degreeValue) % 360;
+}
 
-    this->UpdateCamera();
+CameraDto Camera::CreateCameraDto()
+{
+    return
+    {
+        cameraPos, cameraFront,cameraUp,
+        nearPlane, farPlane, fov
+    };
 }
 
 void Camera::CameraController(float deltaTime)

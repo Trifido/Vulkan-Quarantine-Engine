@@ -10,8 +10,8 @@ public:
     static CameraEditor* instance;
 
 public:
-    CameraEditor(float width, float height);
-    static CameraEditor* getInstance(float width = 1280.0f, float height = 720.0f);
+    CameraEditor(float width, float height, CameraDto cameraDto);
+    static CameraEditor* getInstance(float width = 1280.0f, float height = 720.0f, CameraDto cameraDto = CameraDto());
 };
 
 #endif
