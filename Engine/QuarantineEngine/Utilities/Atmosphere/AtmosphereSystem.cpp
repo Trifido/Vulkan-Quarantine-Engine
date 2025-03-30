@@ -32,6 +32,7 @@ void AtmosphereSystem::LoadAtmosphereDto(AtmosphereDto atmosphereDto, Camera* ca
     {
     case ENVIRONMENT_TYPE::CUBEMAP:
         this->InitializeAtmosphere(this->environmentType, nullptr, 0, cameraPtr);
+        break;
     case ENVIRONMENT_TYPE::SPHERICALMAP:
         this->InitializeAtmosphere(this->environmentType, nullptr, 0, cameraPtr);
         break;
@@ -40,6 +41,14 @@ void AtmosphereSystem::LoadAtmosphereDto(AtmosphereDto atmosphereDto, Camera* ca
         this->InitializeAtmosphere(cameraPtr);
         break;
     }
+}
+
+AtmosphereDto AtmosphereSystem::CreateAtmosphereDto()
+{
+    return
+    {
+        this->IsInitialized, this->environmentType, this->Sun.Direction, this->Sun.Intensity
+    };
 }
 
 void AtmosphereSystem::AddTextureResources(const string* texturePaths, uint32_t numTextures)

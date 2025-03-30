@@ -53,7 +53,8 @@ bool QEProjectManager::CreateScene(const std::string& sceneName)
 
     if (fs::exists(scenePath))
     {
-        CURRENT_DEFAULT_SCENE_PATH = scenePath / (sceneName + ".qescene");
+        std::string filename = sceneName + ".qescene";
+        CURRENT_DEFAULT_SCENE_PATH = scenePath / filename;
 
         if (!fs::exists(CURRENT_DEFAULT_SCENE_PATH))
         {
@@ -66,9 +67,9 @@ bool QEProjectManager::CreateScene(const std::string& sceneName)
 
             if (file.is_open())
             {
-                size_t sceneNameLength = sceneName.length();
+                size_t sceneNameLength = filename.length();
                 file.write(reinterpret_cast<const char*>(&sceneNameLength), sizeof(sceneNameLength));
-                file.write(sceneName.c_str(), sceneNameLength);
+                file.write(filename.c_str(), sceneNameLength);
 
                 CameraDto camera;
                 file.write(reinterpret_cast<const char*>(&camera.position), sizeof(glm::vec3));
@@ -101,4 +102,28 @@ bool QEProjectManager::InitializeDefaultQEScene(QEScene& scene)
     }
 
     return false;
+}
+
+bool QEProjectManager::SaveQEScene(const QEScene& scene)
+{
+    std::string filename = scene.sceneName;
+    fs::path scenePath = CURRENT_PROJECT_PATH / SCENE_FOLDER / filename;
+
+    std::ofstream file(scenePath, std::ios::binary | std::ios::trunc);
+
+    if (!file.is_open()) {
+        std::cerr << "Error al guardar la escena:" << scene.sceneName << std::endl;
+        return false;
+    }
+
+    size_t sceneNameLength = scene.sceneName.length();
+    file.write(reinterpret_cast<const char*>(&sceneNameLength), sizeof(sceneNameLength));
+    file.write(scene.sceneName.c_str(), sceneNameLength);
+
+    file.write(reinterpret_cast<const char*>(&scene.cameraEditor), sizeof(CameraDto));
+    file.write(reinterpret_cast<const char*>(&scene.atmosphere), sizeof(AtmosphereDto));
+
+    file.close();
+
+    return true;
 }

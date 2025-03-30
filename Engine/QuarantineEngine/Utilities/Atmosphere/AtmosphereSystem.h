@@ -86,6 +86,7 @@ public:
     ~AtmosphereSystem();
 
     void LoadAtmosphereDto(AtmosphereDto atmosphereDto, Camera* cameraPtr);
+    AtmosphereDto CreateAtmosphereDto();
     void AddTextureResources(const string* texturePaths, uint32_t numTextures);
     void InitializeAtmosphere(Camera* cameraPtr);
     void InitializeAtmosphere(ENVIRONMENT_TYPE type, const string* texturePaths, uint32_t numTextures, Camera* cameraPtr);

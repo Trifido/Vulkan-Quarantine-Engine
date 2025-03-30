@@ -52,6 +52,7 @@ protected:
 public:
     Camera();
     Camera(const float width, const float height, const CameraDto& cameraDto = CameraDto());
+    bool LoadCameraDto(const float width, const float height, const CameraDto& cameraDto);
     CameraDto CreateCameraDto();
     void CameraController(float deltaTime);
     float GetFOV() { return fov; }

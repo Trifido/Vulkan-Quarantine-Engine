@@ -9,6 +9,8 @@ bool QEScene::InitScene(fs::path filename)
         return false;
     }
 
+    this->scenePath = filename.parent_path();
+
     // Leer el nombre de la escena
     size_t sceneNameLength;
     file.read(reinterpret_cast<char*>(&sceneNameLength), sizeof(sceneNameLength));
@@ -23,4 +25,28 @@ bool QEScene::InitScene(fs::path filename)
 
     file.close();
     std::cout << "Archivo leído correctamente: " << filename << std::endl;
+}
+
+bool QEScene::SaveScene()
+{
+    std::string filename = this->sceneName;
+    fs::path filePath = this->scenePath / filename;
+
+    std::ofstream file(filePath, std::ios::binary | std::ios::trunc);
+
+    if (!file.is_open()) {
+        std::cerr << "Error al guardar la escena:" << this->sceneName << std::endl;
+        return false;
+    }
+
+    size_t sceneNameLength = this->sceneName.length();
+    file.write(reinterpret_cast<const char*>(&sceneNameLength), sizeof(sceneNameLength));
+    file.write(this->sceneName.c_str(), sceneNameLength);
+
+    file.write(reinterpret_cast<const char*>(&this->cameraEditor), sizeof(CameraDto));
+    file.write(reinterpret_cast<const char*>(&this->atmosphere), sizeof(AtmosphereDto));
+
+    file.close();
+
+    return true;
 }

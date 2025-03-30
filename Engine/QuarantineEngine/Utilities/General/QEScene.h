@@ -10,6 +10,8 @@
 namespace fs = std::filesystem;
 class QEScene
 {
+private:
+    fs::path scenePath;
 public:
     std::string sceneName;
     CameraDto cameraEditor;
@@ -18,6 +20,7 @@ public:
 
 public:
     bool InitScene(fs::path filename);
+    bool SaveScene();
     //QEScene();
     //~QEScene();
 

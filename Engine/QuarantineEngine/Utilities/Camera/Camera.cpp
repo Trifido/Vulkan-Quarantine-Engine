@@ -21,6 +21,15 @@ Camera::Camera(const float width, const float height, const CameraDto& cameraDto
 
     this->frustumComponent = std::make_shared<FrustumComponent>();
 
+    this->cameraUniform = std::make_shared<CameraUniform>();
+    this->cameraUBO = std::make_shared<UniformBufferObject>();
+    this->cameraUBO->CreateUniformBuffer(sizeof(CameraUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+
+    this->LoadCameraDto(width, height, cameraDto);
+}
+
+bool Camera::LoadCameraDto(const float width, const float height, const CameraDto& cameraDto)
+{
     this->cameraFront = cameraDto.front;
     this->cameraPos = cameraDto.position;
     this->cameraUp = cameraDto.up;
@@ -34,12 +43,8 @@ Camera::Camera(const float width, const float height, const CameraDto& cameraDto
     this->lastX = WIDTH / 2.0f;
     this->lastY = HEIGHT / 2.0f;
 
-    this->cameraUniform = std::make_shared<CameraUniform>();
-    this->cameraUBO = std::make_shared<UniformBufferObject>();
-    this->cameraUBO->CreateUniformBuffer(sizeof(CameraUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
-
     this->UpdateCamera();
-
+    
     float value = asin(-cameraFront.y);
     float degreeValue = glm::degrees(value);
     if (degreeValue < 0) degreeValue += 180;
@@ -49,6 +54,8 @@ Camera::Camera(const float width, const float height, const CameraDto& cameraDto
     degreeValue = glm::degrees(value);
     if (degreeValue < 0) degreeValue += 180;
     this->yaw = (270 + (int)degreeValue) % 360;
+
+    return true;
 }
 
 CameraDto Camera::CreateCameraDto()
@@ -122,44 +129,42 @@ void Camera::EditorRotate()
 {
     if (ImGui::GetIO().KeyShift && ImGui::IsMouseDown(1))
     {
+        ImGuiIO& io = ImGui::GetIO();
+
         if (firstMouse)
         {
-            lastX = ImGui::GetIO().MousePos.x;
-            lastY = ImGui::GetIO().MousePos.y;
+            lastX = io.MousePos.x;
+            lastY = io.MousePos.y;
             firstMouse = false;
+            return;
         }
-        else
-        {
-            float xoffset = ImGui::GetIO().MousePos.x - lastX;
-            float yoffset = lastY - ImGui::GetIO().MousePos.y; // reversed since y-coordinates go from bottom to top
-            lastX = ImGui::GetIO().MousePos.x;
-            lastY = ImGui::GetIO().MousePos.y;
+        
+        float xoffset = io.MousePos.x - lastX;
+        float yoffset = lastY - io.MousePos.y; // reversed since y-coordinates go from bottom to top
+        lastX = io.MousePos.x;
+        lastY = io.MousePos.y;
 
-            float sensitivity = 0.1f; // change this value to your liking
-            xoffset *= sensitivity;
-            yoffset *= sensitivity;
+        float sensitivity = 0.1f; // change this value to your liking
+        xoffset *= sensitivity;
+        yoffset *= sensitivity;
 
-            yaw += xoffset;
-            pitch += yoffset;
+        yaw += xoffset;
+        pitch += yoffset;
 
-            // make sure that when pitch is out of bounds, screen doesn't get flipped
-            if (pitch > 89.0f)
-                pitch = 89.0f;
-            if (pitch < -89.0f)
-                pitch = -89.0f;
+        // make sure that when pitch is out of bounds, screen doesn't get flipped
+        pitch = glm::clamp(pitch, -89.0f, 89.0f);
 
-            float yawDegrees = glm::radians(yaw);
-            float pitchDegrees = glm::radians(pitch);
+        float yawDegrees = glm::radians(yaw);
+        float pitchDegrees = glm::radians(pitch);
 
-            glm::vec3 front;
-            front.x = cos(yawDegrees) * cos(pitchDegrees);
-            front.y = sin(pitchDegrees);
-            front.z = sin(yawDegrees) * cos(pitchDegrees);
+        glm::vec3 front;
+        front.x = cos(yawDegrees) * cos(pitchDegrees);
+        front.y = sin(pitchDegrees);
+        front.z = sin(yawDegrees) * cos(pitchDegrees);
 
-            cameraFront = glm::normalize(front);
+        cameraFront = glm::normalize(front);
 
-            this->isInputUpdated = true;
-        }
+        this->isInputUpdated = true;
     }
     else
     {
