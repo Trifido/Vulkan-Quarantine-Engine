@@ -78,6 +78,8 @@ bool QEProjectManager::CreateScene(const std::string& sceneName)
                 file.write(reinterpret_cast<const char*>(&camera.nearPlane), sizeof(float));
                 file.write(reinterpret_cast<const char*>(&camera.farPlane), sizeof(float));
                 file.write(reinterpret_cast<const char*>(&camera.fov), sizeof(float));
+                file.write(reinterpret_cast<const char*>(&camera.pitchSaved), sizeof(float));
+                file.write(reinterpret_cast<const char*>(&camera.yawSaved), sizeof(float));
 
                 AtmosphereDto atmosphere;
                 file.write(reinterpret_cast<const char*>(&atmosphere.hasAtmosphere), sizeof(bool));

@@ -45,15 +45,8 @@ bool Camera::LoadCameraDto(const float width, const float height, const CameraDt
 
     this->UpdateCamera();
     
-    float value = asin(-cameraFront.y);
-    float degreeValue = glm::degrees(value);
-    if (degreeValue < 0) degreeValue += 180;
-    this->pitch = -degreeValue;
-
-    value = atan2(cameraFront.x, cameraFront.z);
-    degreeValue = glm::degrees(value);
-    if (degreeValue < 0) degreeValue += 180;
-    this->yaw = (270 + (int)degreeValue) % 360;
+    this->pitch = cameraDto.pitchSaved;
+    this->yaw = cameraDto.yawSaved;
 
     return true;
 }
@@ -62,8 +55,9 @@ CameraDto Camera::CreateCameraDto()
 {
     return
     {
-        cameraPos, cameraFront,cameraUp,
-        nearPlane, farPlane, fov
+        cameraPos, cameraFront, cameraUp,
+        nearPlane, farPlane, fov,
+        pitch, yaw
     };
 }
 
