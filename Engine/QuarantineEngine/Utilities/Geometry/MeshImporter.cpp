@@ -1,4 +1,9 @@
 #include "MeshImporter.h"
+#include <fstream>
+#include <filesystem>
+#include <assimp/Exporter.hpp>
+
+namespace fs = std::filesystem;
 
 MeshImporter::MeshImporter()
 {
@@ -7,20 +12,10 @@ MeshImporter::MeshImporter()
 
 void MeshImporter::CheckPaths(std::string path)
 {
-    this->fileExtension = path.substr(path.size() - 3, path.size());
+    fs::path filePath = filesystem::path(path);
+    this->fileExtension = filePath.extension().string();
 
-    this->meshPath = path.substr(0, path.find_last_of('/'));
-
-    if (this->fileExtension == "fbx")
-    {
-        std::size_t pos = path.find("/source");
-        this->texturePath = path.substr(0, pos);
-        this->texturePath += "/textures/";
-    }
-    else
-    {
-        this->texturePath = this->meshPath + "/";
-    }
+    this->texturePath = filePath.parent_path().parent_path().string() + "/textures/";
 }
 
 void MeshImporter::RecreateNormals(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices)
@@ -482,4 +477,158 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
 std::pair<glm::vec3, glm::vec3> MeshImporter::GetAABBData()
 {
     return std::pair<glm::vec3, glm::vec3>(this->aabbMin, this->aabbMax);
+}
+
+std::string MeshImporter::GetTextureTypeName(aiTextureType type)
+{
+    switch (type) {
+    case aiTextureType_DIFFUSE:
+    case aiTextureType_BASE_COLOR:     return "Diffuse"; // Unifica BASE_COLOR con Diffuse
+    case aiTextureType_SPECULAR:       return "Specular";
+    case aiTextureType_AMBIENT:        return "Ambient";
+    case aiTextureType_EMISSIVE:
+    case aiTextureType_EMISSION_COLOR: return "Emissive"; // Unifica EMISSION_COLOR con Emissive
+    case aiTextureType_HEIGHT:         return "Height";
+    case aiTextureType_NORMALS:
+    case aiTextureType_NORMAL_CAMERA:  return "Normals"; // Unifica NORMAL_CAMERA con Normals
+    case aiTextureType_SHININESS:
+    case aiTextureType_DIFFUSE_ROUGHNESS: return "Roughness"; // Unifica Roughness y Shininess
+    case aiTextureType_OPACITY:        return "Opacity";
+    case aiTextureType_DISPLACEMENT:   return "Displacement";
+    case aiTextureType_LIGHTMAP:       return "Lightmap";
+    case aiTextureType_REFLECTION:     return "Reflection";
+    case aiTextureType_METALNESS:      return "Metalness";
+    case aiTextureType_AMBIENT_OCCLUSION: return "AO";
+    default: return "Unknown";
+    }
+}
+
+void MeshImporter::SaveTextureToFile(const aiTexture* texture, const std::string& outputPath)
+{
+    if (filesystem::exists(outputPath))
+    {
+        return;
+    }
+
+    std::ofstream outFile(outputPath, std::ios::binary);
+    if (outFile)
+    {
+        outFile.write(reinterpret_cast<const char*>(texture->pcData), texture->mWidth);
+        outFile.close();
+        std::cout << "Saved texture: " << outputPath << std::endl;
+    }
+}
+
+void MeshImporter::CopyTextureFile(const std::string& sourcePath, const std::string& destPath)
+{
+    if (filesystem::exists(destPath))
+    {
+        return;
+    }
+
+    try
+    {
+        filesystem::copy(sourcePath, destPath, filesystem::copy_options::overwrite_existing);
+        std::cout << "Copied texture: " << destPath << std::endl;
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << "Failed to copy texture: " << e.what() << std::endl;
+    }
+}
+
+void MeshImporter::ExtractAndUpdateTextures(aiScene* scene, const std::string& outputTextureFolder, const std::string& modelDirectory)
+{
+    std::vector<aiTextureType> textureTypes = {
+        aiTextureType_DIFFUSE, aiTextureType_SPECULAR, aiTextureType_NORMALS,
+        aiTextureType_EMISSIVE, aiTextureType_HEIGHT, aiTextureType_AMBIENT,
+        aiTextureType_SHININESS, aiTextureType_OPACITY, aiTextureType_DISPLACEMENT,
+        aiTextureType_LIGHTMAP, aiTextureType_REFLECTION, aiTextureType_BASE_COLOR,
+        aiTextureType_METALNESS, aiTextureType_DIFFUSE_ROUGHNESS, aiTextureType_AMBIENT_OCCLUSION
+    };
+
+    for (unsigned int i = 0; i < scene->mNumMaterials; i++) {
+        aiMaterial* material = scene->mMaterials[i];
+
+        for (aiTextureType type : textureTypes)
+        {
+            aiString texturePath;
+
+            unsigned int index = 0;
+
+            while (material->GetTexture(type, index, &texturePath) == AI_SUCCESS)
+            {
+                ++index;
+                std::string originalFilename = texturePath.C_Str();
+                std::string newTexturePath;
+
+                if (originalFilename[0] == '*')
+                {  // Textura embebida
+                    int textureIndex = std::stoi(originalFilename.substr(1));
+                    aiTexture* embeddedTexture = scene->mTextures[textureIndex];
+
+                    std::string extension = (embeddedTexture->mHeight == 0) ? ".jpg" : ".png";
+                    std::string filename = std::string(embeddedTexture->mFilename.C_Str());
+                    newTexturePath = outputTextureFolder + "/" + filename;
+
+                    if (filename.empty())
+                    {
+                        std::string textureTypeName = GetTextureTypeName(type);
+                        newTexturePath = outputTextureFolder + "/Texture_" + textureTypeName + "_" + std::to_string(i) + extension;
+                    }
+
+                    SaveTextureToFile(embeddedTexture, newTexturePath);
+                }
+                else
+                {  // Textura externa
+                    std::string sourceTexturePath = modelDirectory + "/" + originalFilename;
+                    newTexturePath = outputTextureFolder + "/" + originalFilename;
+                    CopyTextureFile(sourceTexturePath, newTexturePath);
+                }
+
+                // Actualizamos la referencia en el material
+                string parentFolder = filesystem::path(outputTextureFolder).filename().string();
+                string finalPath = "../" + parentFolder + "/" + filesystem::path(newTexturePath).filename().string();
+                aiString newPath(finalPath);
+                material->AddProperty(&newPath, AI_MATKEY_TEXTURE(type, 0));
+            }
+        }
+    }
+}
+
+bool MeshImporter::LoadAndExportModel(const std::string& inputPath, const std::string& outputMeshPath, const std::string& outputTexturePath)
+{
+    unsigned int flags = aiProcess_EmbedTextures | aiProcess_Triangulate | aiProcess_GenNormals;
+    Assimp::Importer importer;
+    const aiScene* scene = importer.ReadFile(inputPath, flags);
+
+    if (!scene) {
+        std::cerr << "Error al cargar el modelo: " << importer.GetErrorString() << std::endl;
+        return false;
+    }
+
+    // Comprobar si tiene materiales y texturas
+    if (scene->HasMaterials())
+    {
+        std::cout << "El modelo tiene " << scene->mNumMaterials << " materiales." << std::endl;
+
+        ExtractAndUpdateTextures(const_cast<aiScene*>(scene), outputTexturePath, filesystem::path(inputPath).parent_path().string());
+    }
+
+    // Comprobar si tiene animaciones
+    if (scene->HasAnimations()) {
+        std::cout << "El modelo tiene " << scene->mNumAnimations << " animaciones." << std::endl;
+    }
+
+    // Exportar a glTF 2.0
+    Assimp::Exporter exporter;
+
+    if (exporter.Export(scene, "gltf2", outputMeshPath) != AI_SUCCESS)
+    {
+        std::cerr << "Error al exportar a glTF: " << exporter.GetErrorString() << std::endl;
+        return false;
+    }
+
+    std::cout << "Exportación exitosa: " << outputMeshPath << std::endl;
+    return true;
 }

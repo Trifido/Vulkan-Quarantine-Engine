@@ -38,7 +38,6 @@ class MeshImporter
 private:
     const aiScene* scene;
     MaterialManager* materialManager;
-    std::string meshPath;
     std::string texturePath;
     std::string fileExtension;
     std::unordered_map<std::string, BoneInfo> m_BoneInfoMap;
@@ -73,6 +72,14 @@ public:
     size_t& GetBoneCount() { return numBones; }
     inline bool HasAnimation() { return hasAnimation; }
     std::pair<glm::vec3, glm::vec3> GetAABBData();
+
+private:
+    static std::string GetTextureTypeName(aiTextureType type);
+    static void SaveTextureToFile(const aiTexture* texture, const std::string& outputPath);
+    static void CopyTextureFile(const std::string& sourcePath, const std::string& destPath);
+    static void ExtractAndUpdateTextures(aiScene* scene, const std::string& outputTextureFolder, const std::string& modelDirectory);
+public:
+    static bool LoadAndExportModel(const std::string& inputPath, const std::string& outputMeshPath, const std::string& outputTexturePath);
 };
 
 #endif // !MESH_H

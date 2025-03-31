@@ -201,19 +201,23 @@ void App::initVulkan()
     }
 
     /**/
-    const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
+    //const std::string absolute_path = absPath + "/cyber_warrior/scene.gltf";
+    //const std::string absolute_path = absPath + "/drone/mech_drone.glb";
+    //const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
     //const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
 
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(absolute_path));
+    //std::filesystem::path path = "C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/golem/Meshes/scene.gltf";
+    std::filesystem::path path = "C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf";
+    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(path.string()));
 
     //model->transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
     //model->transform->SetOrientation(glm::vec3(-90.0f, 180.0f, 0.0f));
-    //model->_Transform->SetScale(glm::vec3(0.01f));
-    model->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
-    model->_Material->materialData.SetMaterialField("Specular", glm::vec3(0.5f, 0.5f, 0.5f));
-    model->_Material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
+    model->_Transform->SetScale(glm::vec3(0.01f));
+    //model->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
+    //model->_Material->materialData.SetMaterialField("Specular", glm::vec3(0.5f, 0.5f, 0.5f));
+    //model->_Material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
     this->gameObjectManager->AddGameObject(model, "model");
-
+    /*
     std::shared_ptr<GameObject> floor = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
     floor->_Transform->SetPosition(glm::vec3(0.0f, -0.01f, 0.0f));
     floor->_Transform->SetScale(glm::vec3(3.0f, 1.0f, 3.0f));

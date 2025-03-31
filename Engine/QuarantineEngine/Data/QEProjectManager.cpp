@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <CameraDto.h>
 #include <AtmosphereDto.h>
+#include <MeshImporter.h>
 
 fs::path QEProjectManager::CURRENT_PROJECT_PATH;
 fs::path QEProjectManager::CURRENT_DEFAULT_SCENE_PATH;
@@ -23,6 +24,10 @@ bool QEProjectManager::CreateQEProject(const std::string& projectName)
         CreateFolder(PROJECTS_FOLDER_PATH, projectName),
         // Create scene folder
         CreateFolder(projectPath, SCENE_FOLDER),
+        // Create assets folder
+        CreateFolder(projectPath, ASSETS_FOLDER),
+        // Create mesh folder
+        CreateFolder(projectPath, ASSETS_FOLDER + "/" + MODELS_FOLDER),
         // Create scene
         CreateScene("default")
     };
@@ -94,6 +99,32 @@ bool QEProjectManager::CreateScene(const std::string& sceneName)
     }
 
     return false;
+}
+
+bool QEProjectManager::ImportMeshFile(/*const fs::path& meshFilePath*/)
+{
+    fs::path inputFile = "C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Raptoid/scene.gltf";
+    if (!fs::exists(inputFile))
+    {
+        std::cerr << "Error al abrir el archivo: " << inputFile << std::endl;
+        return false;
+    }
+
+    string filename = inputFile.filename().string();
+
+    fs::path folderName = inputFile.parent_path().filename();
+    fs::path modelFolderPath = CURRENT_PROJECT_PATH / ASSETS_FOLDER / MODELS_FOLDER / folderName;
+
+    CreateFolder(CURRENT_PROJECT_PATH / ASSETS_FOLDER / MODELS_FOLDER, folderName.string());
+    CreateFolder(modelFolderPath, MESH_FOLDER);
+    CreateFolder(modelFolderPath, TEXTURE_FOLDER);
+
+    fs::path outputTextureFolderPath = modelFolderPath / TEXTURE_FOLDER;
+    fs::path outputMeshPath = modelFolderPath / MESH_FOLDER / filename;
+
+    outputMeshPath.replace_extension(".gltf");
+
+    return MeshImporter::LoadAndExportModel(inputFile.string(), outputMeshPath.string(), outputTextureFolderPath.string());
 }
 
 bool QEProjectManager::InitializeDefaultQEScene(QEScene& scene)

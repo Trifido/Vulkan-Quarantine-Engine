@@ -510,8 +510,8 @@ void CustomTexture::createTextureRawImage(aiTexel* rawData, unsigned int width, 
     ptrCommandPool = &commandPool;
     //stbi_uc* pixels;
 
-    this->texHeight = height;
-    this->texWidth = width;
+    this->texHeight = (height > 0) ? height : 1;
+    this->texWidth = (width > 0) ? width : 1;
     this->texChannels = 4;
     //pixels = rawData-;
 

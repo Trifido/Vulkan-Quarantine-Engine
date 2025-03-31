@@ -475,9 +475,6 @@
     <ClCompile Include="Utilities\General\QEScene.cpp">
       <Filter>Kernel\Utilities\General\sources</Filter>
     </ClCompile>
-    <ClCompile Include="Data\QESceneExporter.cpp">
-      <Filter>Kernel\Data\sources</Filter>
-    </ClCompile>
     <ClCompile Include="Data\QEProjectManager.cpp">
       <Filter>Kernel\Data\sources</Filter>
     </ClCompile>
@@ -787,9 +784,6 @@
     </ClInclude>
     <ClInclude Include="Utilities\General\QEScene.h">
       <Filter>Kernel\Utilities\General\headers</Filter>
-    </ClInclude>
-    <ClInclude Include="Data\QESceneExporter.h">
-      <Filter>Kernel\Data\headers</Filter>
     </ClInclude>
     <ClInclude Include="Data\QEProjectManager.h">
       <Filter>Kernel\Data\headers</Filter>

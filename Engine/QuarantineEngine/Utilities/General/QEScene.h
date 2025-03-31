@@ -21,13 +21,6 @@ public:
 public:
     bool InitScene(fs::path filename);
     bool SaveScene();
-    //QEScene();
-    //~QEScene();
-
-    //void Init();
-    //void Update();
-    //void Render();
-    //void Destroy();
 };
 
 #endif // !QESCENE_H

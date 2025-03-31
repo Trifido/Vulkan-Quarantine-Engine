@@ -180,7 +180,6 @@
     <ClCompile Include="..\Linking\imgui\imgui_widgets.cpp" />
     <ClCompile Include="App\App.cpp" />
     <ClCompile Include="Data\QEProjectManager.cpp" />
-    <ClCompile Include="Data\QESceneExporter.cpp" />
     <ClCompile Include="Draw\CommandPoolModule.cpp" />
     <ClCompile Include="Draw\FrameBufferModule.cpp" />
     <ClCompile Include="Draw\RenderPassModule.cpp" />
@@ -279,7 +278,6 @@
     <ClInclude Include="Data\Dtos\AtmosphereDto.h" />
     <ClInclude Include="Data\Dtos\CameraDto.h" />
     <ClInclude Include="Data\QEProjectManager.h" />
-    <ClInclude Include="Data\QESceneExporter.h" />
     <ClInclude Include="Draw\CommandPoolModule.h" />
     <ClInclude Include="Draw\FrameBufferModule.h" />
     <ClInclude Include="Draw\RenderPassModule.h" />

@@ -131,42 +131,34 @@ std::string MaterialData::GetTexture(const aiScene* scene, aiMaterial* mat, aiTe
     aiString str;
     mat->Get(AI_MATKEY_TEXTURE(type, 0), str);
 
-    if (auto texture = scene->GetEmbeddedTexture(str.C_Str()))
+    aiReturn texFound = mat->GetTexture(type, 0, &str);
+
+    if (texFound == AI_SUCCESS)
     {
-        std::string finalName = this->textureManager->AddTexture(texture->mFilename.C_Str(), CustomTexture(texture->pcData, texture->mWidth, texture->mHeight, textureType));
-        this->currentTextures.insert(texture->mFilename.C_Str());
+        std::string filePath = std::string(str.C_Str());
+        std::string finalName;
+        std::size_t pos = 0;
+        if (this->fileExtension == "fbx")
+        {
+            pos = filePath.find("\\");
+            finalName = filePath.substr(pos + 1, filePath.size());
+        }
+        else
+        {
+            finalName = filePath;
+        }
+
+        filePath = this->texturePath + finalName;
+
+        if (this->currentTextures.find(str.C_Str()) == this->currentTextures.end())
+        {
+            finalName = this->textureManager->AddTexture(finalName, CustomTexture(filePath, textureType));
+            this->currentTextures.insert(str.C_Str());
+        }
+
         return finalName;
     }
-    else {
-        aiReturn texFound = AI_SUCCESS;
-        texFound = mat->GetTexture(type, 0, &str);
 
-        if (texFound == AI_SUCCESS)
-        {
-            std::string filePath = std::string(str.C_Str());
-            std::string finalName;
-            std::size_t pos = 0;
-            if (this->fileExtension == "fbx")
-            {
-                pos = filePath.find("\\");
-                finalName = filePath.substr(pos + 1, filePath.size());
-            }
-            else
-            {
-                finalName = filePath;
-            }
-
-            filePath = this->texturePath + finalName;
-
-            if (this->currentTextures.find(str.C_Str()) == this->currentTextures.end())
-            {
-                finalName = this->textureManager->AddTexture(finalName, CustomTexture(filePath, textureType));
-                this->currentTextures.insert(str.C_Str());
-            }
-
-            return finalName;
-        }
-    }
     return "";
 }
 

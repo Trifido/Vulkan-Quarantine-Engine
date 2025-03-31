@@ -46,6 +46,7 @@ int main(int, char**)
     bool result = QEProjectManager::CreateQEProject("QEExample");
     QEScene scene{};
     QEProjectManager::InitializeDefaultQEScene(scene);
+    QEProjectManager::ImportMeshFile();
     App app;
     app.run(scene);
     return 0;

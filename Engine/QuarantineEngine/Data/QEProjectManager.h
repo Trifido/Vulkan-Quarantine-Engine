@@ -8,6 +8,10 @@
 
 const static std::string PROJECTS_FOLDER_PATH = "../../QEProjects";
 const static std::string SCENE_FOLDER = "QEScenes";
+const static std::string ASSETS_FOLDER = "QEAssets";
+const static std::string MODELS_FOLDER = "QEModels";
+const static std::string MESH_FOLDER = "Meshes";
+const static std::string TEXTURE_FOLDER = "Textures";
 
 namespace fs = std::filesystem;
 class QEProjectManager
@@ -19,6 +23,7 @@ public:
     static bool CreateQEProject(const std::string& projectName);
     static bool CreateFolder(const fs::path& projectPath, const std::string& folderName);
     static bool CreateScene(const std::string& sceneName = "DefaultScene");
+    static bool ImportMeshFile(/*const fs::path& meshFilePath*/);
 
     static bool InitializeDefaultQEScene(QEScene& scene);
     static bool SaveQEScene(const QEScene& scene);
