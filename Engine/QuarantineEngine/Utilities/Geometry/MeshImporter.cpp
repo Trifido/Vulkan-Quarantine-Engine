@@ -2,6 +2,8 @@
 #include <fstream>
 #include <filesystem>
 #include <assimp/Exporter.hpp>
+#include <assimp/postprocess.h>
+#include <assimp/config.h>
 
 namespace fs = std::filesystem;
 
@@ -596,6 +598,39 @@ void MeshImporter::ExtractAndUpdateTextures(aiScene* scene, const std::string& o
     }
 }
 
+void MeshImporter::RemoveOnlyEmbeddedTextures(aiScene* scene)
+{
+    if (!scene->mTextures || scene->mNumTextures == 0) return;
+
+    std::vector<aiTexture*> texturesToKeep;
+
+    for (unsigned int i = 0; i < scene->mNumTextures; i++) {
+        aiTexture* texture = scene->mTextures[i];
+
+        // Las texturas embebidas tienen nombres que empiezan con '*'
+        if (texture->mFilename.length > 0 && texture->mFilename.C_Str()[0] != '*') {
+            texturesToKeep.push_back(texture); // Conservar las externas
+        }
+        else {
+            delete texture; // Eliminar embebida
+        }
+    }
+
+    // Actualizar la escena con solo las texturas externas
+    if (!texturesToKeep.empty()) {
+        scene->mNumTextures = static_cast<unsigned int>(texturesToKeep.size());
+        scene->mTextures = new aiTexture * [scene->mNumTextures];
+
+        for (size_t i = 0; i < texturesToKeep.size(); i++) {
+            scene->mTextures[i] = texturesToKeep[i];
+        }
+    }
+    else {
+        scene->mNumTextures = 0;
+        scene->mTextures = nullptr;
+    }
+}
+
 bool MeshImporter::LoadAndExportModel(const std::string& inputPath, const std::string& outputMeshPath, const std::string& outputTexturePath)
 {
     unsigned int flags = aiProcess_EmbedTextures | aiProcess_Triangulate | aiProcess_GenNormals;
@@ -623,7 +658,11 @@ bool MeshImporter::LoadAndExportModel(const std::string& inputPath, const std::s
     // Exportar a glTF 2.0
     Assimp::Exporter exporter;
 
-    if (exporter.Export(scene, "gltf2", outputMeshPath) != AI_SUCCESS)
+    aiScene* editableScene = new aiScene();
+    aiCopyScene(scene, &editableScene);
+    RemoveOnlyEmbeddedTextures(editableScene);
+
+    if (exporter.Export(editableScene, "gltf2", outputMeshPath) != AI_SUCCESS)
     {
         std::cerr << "Error al exportar a glTF: " << exporter.GetErrorString() << std::endl;
         return false;
