@@ -360,6 +360,7 @@ MigrationBackup/
 .external/
 .resources/ 
 .resources/models/
+.QEProjects/
 #*.bat
 #*.spv
 *.gltf
