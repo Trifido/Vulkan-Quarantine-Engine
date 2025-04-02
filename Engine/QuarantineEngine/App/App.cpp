@@ -204,15 +204,18 @@ void App::initVulkan()
         absPath.erase(ind, substring.length());
     }
 
-    /*
+    /**/
     //const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
     const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
 
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(absolute_path));
+
+    //std::filesystem::path path = "C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/golem/Meshes/scene.gltf";
+    std::filesystem::path path = "C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/swat/Meshes/scene.gltf";
+    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(path.string()));
 
     //model->transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
     //model->transform->SetOrientation(glm::vec3(-90.0f, 180.0f, 0.0f));
-    model->_Transform->SetScale(glm::vec3(0.01f));
+    //model->_Transform->SetScale(glm::vec3(0.01f));
     //model->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
     //model->_Material->materialData.SetMaterialField("Specular", glm::vec3(0.5f, 0.5f, 0.5f));
     //model->_Material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
