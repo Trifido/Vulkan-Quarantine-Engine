@@ -2,7 +2,7 @@
 
 Numbered::Numbered()
 {
-    CreateGameObjectID(12);
+    CreateGameObjectID(ID_LENGTH);
 }
 
 void Numbered::CreateGameObjectID(size_t length)

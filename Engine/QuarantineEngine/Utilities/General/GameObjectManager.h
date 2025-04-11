@@ -8,6 +8,7 @@
 #include "GameObject.h"
 #include "RenderLayerModule.h"
 #include "QESingleton.h"
+#include <fstream>
 
 class GameObjectManager : public QESingleton<GameObjectManager>
 {
@@ -32,6 +33,9 @@ public:
     void UpdatePhysicTransforms();
     void Cleanup();
     void CleanLastResources();
+    std::vector<GameObjectDto> GetGameObjectDtos(std::ifstream& file);
+    void SaveGameObjects(std::ofstream& file);
+    void LoadGameObjectDtos(std::vector<GameObjectDto>& gameObjectDtos);
 };
 
 #endif

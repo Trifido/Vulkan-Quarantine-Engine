@@ -3,10 +3,12 @@
 #define QE_SCENE_H
 
 #include <vector>
-#include <GameObject.h>
 
 #include <filesystem>
 #include <AtmosphereDto.h>
+#include <CameraDto.h>
+#include <GameObjectDto.h>
+
 namespace fs = std::filesystem;
 class QEScene
 {
@@ -16,7 +18,7 @@ public:
     std::string sceneName;
     CameraDto cameraEditor;
     AtmosphereDto atmosphere;
-    std::vector<GameObject> m_GameObjects;
+    std::vector<GameObjectDto> gameObjectDtos;
 
 public:
     bool InitScene(fs::path filename);

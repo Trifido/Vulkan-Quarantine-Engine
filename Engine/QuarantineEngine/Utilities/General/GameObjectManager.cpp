@@ -1,5 +1,6 @@
 #include "GameObjectManager.h"
 #include <iostream>
+#include <GameObjectDto.h>
 
 std::string GameObjectManager::CheckName(std::string nameGameObject)
 {
@@ -145,4 +146,85 @@ std::shared_ptr<GameObject> GameObjectManager::GetGameObject(std::string name)
     }
 
     return nullptr;
+}
+
+void GameObjectManager::SaveGameObjects(std::ofstream& file)
+{
+    std::vector<GameObjectDto> gameObjectDtos;
+    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
+    {
+        unsigned int id = this->renderLayers.GetLayer(idl);
+        for (auto model : this->_objects[id])
+        {
+            GameObjectDto gameObjectDto(model.second->ID(), model.first, model.second->_Transform->GetModel(),model.second->_meshImportedType, model.second->MeshFilePath);
+            gameObjectDtos.push_back(gameObjectDto);
+        }
+    }
+
+    int numGameObjects = gameObjectDtos.size();
+    file.write(reinterpret_cast<const char*>(&numGameObjects), sizeof(int));
+
+    size_t idLength = sizeof(char) * Numbered::ID_LENGTH;
+    size_t nameLength;
+    for (int i = 0; i < gameObjectDtos.size(); i++)
+    {
+        file.write(reinterpret_cast<const char*>(&idLength), sizeof(idLength));
+        file.write(gameObjectDtos[i].Id.c_str(), idLength);
+
+        nameLength = gameObjectDtos[i].Name.length();
+        file.write(reinterpret_cast<const char*>(&nameLength), sizeof(nameLength));
+        file.write(gameObjectDtos[i].Name.c_str(), nameLength);
+
+        file.write(reinterpret_cast<const char*>(&gameObjectDtos[i].WorldTransform), sizeof(glm::mat4));
+
+        file.write(reinterpret_cast<const char*>(&gameObjectDtos[i].MeshImportedType), sizeof(int));
+
+        size_t meshPathLength = gameObjectDtos[i].MeshPath.length();
+        file.write(reinterpret_cast<const char*>(&meshPathLength), sizeof(meshPathLength));
+        file.write(gameObjectDtos[i].MeshPath.c_str(), meshPathLength);
+    }
+}
+
+void GameObjectManager::LoadGameObjectDtos(std::vector<GameObjectDto>& gameObjectDtos)
+{
+    // Cargar los GameObjects
+    for (size_t i = 0; i < gameObjectDtos.size(); i++)
+    {
+        std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>(gameObjectDtos[i]);
+        this->AddGameObject(gameObject, gameObjectDtos[i].Name);
+    }
+}
+
+
+std::vector<GameObjectDto> GameObjectManager::GetGameObjectDtos(std::ifstream& file)
+{
+    // Leer los GameObjects
+    int numGameObjects;
+    file.read(reinterpret_cast<char*>(&numGameObjects), sizeof(int));
+
+    size_t idLength;
+    size_t meshPathLength;
+    size_t nameLength;
+
+    std::vector<GameObjectDto> gameObjectDtos(numGameObjects);
+    for (int i = 0; i < numGameObjects; i++)
+    {
+        file.read(reinterpret_cast<char*>(&idLength), sizeof(idLength));
+        gameObjectDtos[i].Id.resize(idLength);
+        file.read(&gameObjectDtos[i].Id[0], idLength);
+
+        file.read(reinterpret_cast<char*>(&nameLength), sizeof(nameLength));
+        gameObjectDtos[i].Id.resize(nameLength);
+        file.read(&gameObjectDtos[i].Name[0], nameLength);
+
+        file.read(reinterpret_cast<char*>(&gameObjectDtos[i].WorldTransform), sizeof(glm::mat4));
+
+        file.read(reinterpret_cast<char*>(&gameObjectDtos[i].MeshImportedType), sizeof(int));
+
+        file.read(reinterpret_cast<char*>(&meshPathLength), sizeof(meshPathLength));
+        gameObjectDtos[i].MeshPath.resize(meshPathLength);
+        file.read(&gameObjectDtos[i].MeshPath[0], meshPathLength);
+    }
+
+    return gameObjectDtos;
 }

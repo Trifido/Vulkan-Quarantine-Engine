@@ -14,18 +14,9 @@
 #include <SkeletalComponent.h>
 #include <Numbered.h>
 #include <AABBObject.h>
+#include <GameObjectDto.h>
 
 typedef class GameObject GameObject;
-
-enum MeshImportedType
-{
-    COMMON_GEO,
-    EDITOR_GEO,
-    PRIMITIVE_GEO,
-    ANIMATED_GEO,
-    NONE_GEO
-};
-
 
 class GameObject : Numbered
 {
@@ -42,10 +33,11 @@ protected:
     QueueModule*        queueModule = nullptr;
     MaterialManager*    materialManager = nullptr;
     AnimationManager*   animationManager = nullptr;
-    MeshImportedType    meshImportedType;
 
 public:
     std::shared_ptr<GeometryComponent>  _Mesh = nullptr;
+    MeshImportedType                    _meshImportedType;
+    std::string                         MeshFilePath;
     std::shared_ptr<Transform>          _Transform = nullptr;
     std::shared_ptr<Material>           _Material = nullptr;
     std::shared_ptr<PhysicBody>         physicBody = nullptr;
@@ -64,6 +56,7 @@ public:
     GameObject();
     GameObject(PRIMITIVE_TYPE type, bool isMeshShading = false);
     GameObject(std::string meshPath, bool isMeshShading = false);
+    GameObject(const GameObjectDto& gameObjectDto);
     inline std::string ID() const { return id; }
     void Cleanup();
     virtual void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);

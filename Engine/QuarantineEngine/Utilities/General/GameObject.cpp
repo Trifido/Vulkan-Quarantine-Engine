@@ -9,7 +9,7 @@ GameObject::GameObject()
 {
     this->childs.resize(0);
     this->InitializeResources();
-    this->meshImportedType = MeshImportedType::NONE_GEO;
+    this->_meshImportedType = MeshImportedType::NONE_GEO;
 
     this->InitializeComponents();
 
@@ -22,7 +22,7 @@ GameObject::GameObject(PRIMITIVE_TYPE type, bool isMeshShading)
     this->InitializeResources();
     this->isMeshShading = isMeshShading;
     this->_Mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh(type));
-    this->meshImportedType = MeshImportedType::PRIMITIVE_GEO;
+    this->_meshImportedType = MeshImportedType::PRIMITIVE_GEO;
 
     if (type != PRIMITIVE_TYPE::GRID_TYPE)
     {
@@ -45,7 +45,7 @@ GameObject::GameObject(PRIMITIVE_TYPE type, bool isMeshShading)
     }
     else
     {
-        this->meshImportedType = MeshImportedType::EDITOR_GEO;
+        this->_meshImportedType = MeshImportedType::EDITOR_GEO;
     }
 
     this->InitializeComponents();
@@ -65,6 +65,7 @@ GameObject::GameObject(std::string meshPath, bool isMeshShading)
     this->InitializeResources();
     this->isMeshShading = isMeshShading;
 
+    this->MeshFilePath = meshPath;
     bool loadResult = this->CreateChildsGameObject(meshPath);
 
     if (loadResult)
@@ -72,6 +73,27 @@ GameObject::GameObject(std::string meshPath, bool isMeshShading)
         this->InitializeComponents();
         this->InitializeAnimationComponent();
     }
+
+    this->vkCmdDrawMeshTasksEXT =
+        (PFN_vkCmdDrawMeshTasksEXT)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksEXT");
+}
+
+GameObject::GameObject(const GameObjectDto& gameObjectDto) : Numbered(gameObjectDto.Id)
+{
+    this->InitializeResources();
+    this->isMeshShading = false;
+
+    this->MeshFilePath = gameObjectDto.MeshPath;
+    bool loadResult = this->CreateChildsGameObject(this->MeshFilePath);
+
+    if (loadResult)
+    {
+        this->InitializeComponents();
+        this->InitializeAnimationComponent();
+    }
+
+    this->_meshImportedType = static_cast<MeshImportedType>(gameObjectDto.MeshImportedType);
+    this->_Transform->SetModel(gameObjectDto.WorldTransform);
 
     this->vkCmdDrawMeshTasksEXT =
         (PFN_vkCmdDrawMeshTasksEXT)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksEXT");
@@ -113,7 +135,7 @@ void GameObject::Cleanup()
 
 void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
-    bool isAnimationPipeline = this->meshImportedType == ANIMATED_GEO;
+    bool isAnimationPipeline = this->_meshImportedType == ANIMATED_GEO;
     auto animatorPtr = isAnimationPipeline ? this->animationComponent->animator : nullptr;
 
     this->SetDrawCommand(commandBuffer, idx, animatorPtr);
@@ -125,7 +147,7 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 
 void GameObject::CreateShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout)
 {
-    bool isAnimationPipeline = this->meshImportedType == ANIMATED_GEO;
+    bool isAnimationPipeline = this->_meshImportedType == ANIMATED_GEO;
     auto animatorPtr = isAnimationPipeline ? this->animationComponent->animator : nullptr;
 
     this->SetDrawShadowCommand(commandBuffer, idx, pipelineLayout, animatorPtr);
@@ -291,7 +313,7 @@ bool GameObject::CreateChildsGameObject(std::string pathfile)
     if (data.empty())
         return false;
 
-    this->meshImportedType = importer.HasAnimation() ? MeshImportedType::ANIMATED_GEO : MeshImportedType::COMMON_GEO;
+    this->_meshImportedType = importer.HasAnimation() ? MeshImportedType::ANIMATED_GEO : MeshImportedType::COMMON_GEO;
 
     if (data.size() > 1)
     {
@@ -304,7 +326,7 @@ bool GameObject::CreateChildsGameObject(std::string pathfile)
         {
             this->childs[id] = std::make_shared<GameObject>();
             this->childs[id]->_Mesh = std::make_shared<Mesh>(Mesh(data[id]));
-            this->childs[id]->meshImportedType = this->meshImportedType;
+            this->childs[id]->_meshImportedType = this->_meshImportedType;
             this->childs[id]->isMeshShading = this->isMeshShading;
             this->childs[id]->_Transform = std::make_shared<Transform>(Transform(parentModel * data[id].model));
             this->childs[id]->AddMaterial(this->materialManager->GetMaterial(data[id].materialID));
@@ -319,7 +341,7 @@ bool GameObject::CreateChildsGameObject(std::string pathfile)
         this->AddMaterial(this->materialManager->GetMaterial(data[0].materialID));
     }
 
-    if (this->meshImportedType == MeshImportedType::ANIMATED_GEO)
+    if (this->_meshImportedType == MeshImportedType::ANIMATED_GEO)
     {
         skeletalComponent = std::make_shared<SkeletalComponent>();
         skeletalComponent->numBones = importer.GetBoneCount();
@@ -360,7 +382,7 @@ void GameObject::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, st
         vkCmdSetDepthTestEnable(commandBuffer, true);
         vkCmdSetDepthWriteEnable(commandBuffer, true);
 
-        if (this->meshImportedType == EDITOR_GEO)
+        if (this->_meshImportedType == EDITOR_GEO)
         {
             vkCmdSetCullMode(commandBuffer, false);
         }

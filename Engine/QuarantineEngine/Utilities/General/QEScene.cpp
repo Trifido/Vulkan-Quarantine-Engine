@@ -1,10 +1,14 @@
 #include "QEScene.h"
 #include <fstream>
+#include <iostream>
+#include <GameObjectManager.h>
 
 bool QEScene::InitScene(fs::path filename)
 {
+    auto gameObjectManager = GameObjectManager::getInstance();
     std::ifstream file(filename, std::ios::binary);
-    if (!file.is_open()) {
+    if (!file.is_open())
+    {
         std::cerr << "Error al abrir la escena" << filename << std::endl;
         return false;
     }
@@ -23,18 +27,24 @@ bool QEScene::InitScene(fs::path filename)
     // Leer los datos de la atmósfera
     file.read(reinterpret_cast<char*>(&atmosphere), sizeof(AtmosphereDto));
 
+    // Leer los GameObjects
+    this->gameObjectDtos = gameObjectManager->GetGameObjectDtos(file);
+
     file.close();
     std::cout << "Archivo leído correctamente: " << filename << std::endl;
 }
 
 bool QEScene::SaveScene()
 {
+    auto gameObjectManager = GameObjectManager::getInstance();
+
     std::string filename = this->sceneName;
     fs::path filePath = this->scenePath / filename;
 
     std::ofstream file(filePath, std::ios::binary | std::ios::trunc);
 
-    if (!file.is_open()) {
+    if (!file.is_open())
+    {
         std::cerr << "Error al guardar la escena:" << this->sceneName << std::endl;
         return false;
     }
@@ -45,6 +55,9 @@ bool QEScene::SaveScene()
 
     file.write(reinterpret_cast<const char*>(&this->cameraEditor), sizeof(CameraDto));
     file.write(reinterpret_cast<const char*>(&this->atmosphere), sizeof(AtmosphereDto));
+
+    // Guardar los GameObjects
+    gameObjectManager->SaveGameObjects(file);
 
     file.close();
 

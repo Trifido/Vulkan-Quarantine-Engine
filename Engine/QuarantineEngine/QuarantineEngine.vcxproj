@@ -277,6 +277,7 @@
     <ClInclude Include="App\App.h" />
     <ClInclude Include="Data\Dtos\AtmosphereDto.h" />
     <ClInclude Include="Data\Dtos\CameraDto.h" />
+    <ClInclude Include="Data\Dtos\GameObjectDto.h" />
     <ClInclude Include="Data\QEProjectManager.h" />
     <ClInclude Include="Draw\CommandPoolModule.h" />
     <ClInclude Include="Draw\FrameBufferModule.h" />
@@ -350,6 +351,7 @@
     <ClInclude Include="Utilities\General\Transform.h" />
     <ClInclude Include="Utilities\Geometry\GeometryComponent.h" />
     <ClInclude Include="Utilities\Geometry\Mesh.h" />
+    <ClInclude Include="Utilities\Geometry\MeshImportedType.h" />
     <ClInclude Include="Utilities\Geometry\MeshImporter.h" />
     <ClInclude Include="Utilities\Geometry\Meshlet.h" />
     <ClInclude Include="Utilities\Geometry\PrimitiveMesh.h" />

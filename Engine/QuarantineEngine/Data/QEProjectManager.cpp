@@ -92,6 +92,9 @@ bool QEProjectManager::CreateScene(const std::string& sceneName)
                 file.write(reinterpret_cast<const char*>(&atmosphere.sunDirection), sizeof(glm::vec3));
                 file.write(reinterpret_cast<const char*>(&atmosphere.sunIntensity), sizeof(float));
 
+                int numGameObjects = 0;
+                file.write(reinterpret_cast<const char*>(&numGameObjects), sizeof(int));
+
                 file.close();
                 return true;
             }
@@ -135,28 +138,4 @@ bool QEProjectManager::InitializeDefaultQEScene(QEScene& scene)
     }
 
     return false;
-}
-
-bool QEProjectManager::SaveQEScene(const QEScene& scene)
-{
-    std::string filename = scene.sceneName;
-    fs::path scenePath = CURRENT_PROJECT_PATH / SCENE_FOLDER / filename;
-
-    std::ofstream file(scenePath, std::ios::binary | std::ios::trunc);
-
-    if (!file.is_open()) {
-        std::cerr << "Error al guardar la escena:" << scene.sceneName << std::endl;
-        return false;
-    }
-
-    size_t sceneNameLength = scene.sceneName.length();
-    file.write(reinterpret_cast<const char*>(&sceneNameLength), sizeof(sceneNameLength));
-    file.write(scene.sceneName.c_str(), sceneNameLength);
-
-    file.write(reinterpret_cast<const char*>(&scene.cameraEditor), sizeof(CameraDto));
-    file.write(reinterpret_cast<const char*>(&scene.atmosphere), sizeof(AtmosphereDto));
-
-    file.close();
-
-    return true;
 }

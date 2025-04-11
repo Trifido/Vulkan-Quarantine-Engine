@@ -794,6 +794,12 @@
     <ClInclude Include="Data\Dtos\AtmosphereDto.h">
       <Filter>Kernel\Data\Dtos</Filter>
     </ClInclude>
+    <ClInclude Include="Data\Dtos\GameObjectDto.h">
+      <Filter>Kernel\Data\Dtos</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Geometry\MeshImportedType.h">
+      <Filter>Kernel\Utilities\Geometry\headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.txt" />

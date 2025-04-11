@@ -26,7 +26,6 @@ public:
     static bool ImportMeshFile(/*const fs::path& meshFilePath*/);
 
     static bool InitializeDefaultQEScene(QEScene& scene);
-    static bool SaveQEScene(const QEScene& scene);
 };
 
 #endif // !QE_PROJECT_MANAGER

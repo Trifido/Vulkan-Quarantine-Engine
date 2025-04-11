@@ -14,10 +14,10 @@ private:
     std::unordered_map<std::string, std::shared_ptr<CustomTexture>> _textures;
 
 private:
+    TextureManager();
     std::string CheckName(std::string textureName);
 
 public:
-    TextureManager();
     std::shared_ptr<CustomTexture> GetTexture(std::string nameTexture);
     std::string AddTexture(std::string textureName, std::shared_ptr<CustomTexture> texture_ptr);
     std::string AddTexture(std::string textureName, CustomTexture texture);
