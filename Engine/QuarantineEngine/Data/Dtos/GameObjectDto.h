@@ -14,6 +14,7 @@ struct GameObjectDto
     std::string Name;
     glm::mat4 WorldTransform;
     int MeshImportedType;
+    int MeshPrimitiveType;
     std::string MeshPath;
 
     GameObjectDto()
@@ -21,16 +22,18 @@ struct GameObjectDto
         Name{},
         WorldTransform(glm::mat4(1.0f)),
         MeshImportedType(NONE_GEO),
+        MeshPrimitiveType(-1),
         MeshPath{}
     {
     }
 
-    GameObjectDto(std::string id, std::string name, glm::mat4 worldTransform, int meshImportedType, std::string meshPath)
+    GameObjectDto(std::string id, std::string name, glm::mat4 worldTransform, int meshImportedType, int meshPrimitiveType, std::string meshPath)
     {
         this->Id = id;
         this->Name = name;
         this->WorldTransform = worldTransform;
         this->MeshImportedType = meshImportedType;
+        this->MeshPrimitiveType = meshPrimitiveType;
         this->MeshPath = meshPath;
     }
 };

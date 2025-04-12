@@ -156,7 +156,13 @@ void GameObjectManager::SaveGameObjects(std::ofstream& file)
         unsigned int id = this->renderLayers.GetLayer(idl);
         for (auto model : this->_objects[id])
         {
-            GameObjectDto gameObjectDto(model.second->ID(), model.first, model.second->_Transform->GetModel(),model.second->_meshImportedType, model.second->MeshFilePath);
+            GameObjectDto gameObjectDto(
+                model.second->ID(),
+                model.first,
+                model.second->_Transform->GetModel(),
+                model.second->_meshImportedType,
+                model.second->_primitiveMeshType,
+                model.second->MeshFilePath);
             gameObjectDtos.push_back(gameObjectDto);
         }
     }
@@ -179,6 +185,8 @@ void GameObjectManager::SaveGameObjects(std::ofstream& file)
 
         file.write(reinterpret_cast<const char*>(&gameObjectDtos[i].MeshImportedType), sizeof(int));
 
+        file.write(reinterpret_cast<const char*>(&gameObjectDtos[i].MeshPrimitiveType), sizeof(int));
+
         size_t meshPathLength = gameObjectDtos[i].MeshPath.length();
         file.write(reinterpret_cast<const char*>(&meshPathLength), sizeof(meshPathLength));
         file.write(gameObjectDtos[i].MeshPath.c_str(), meshPathLength);
@@ -187,7 +195,7 @@ void GameObjectManager::SaveGameObjects(std::ofstream& file)
 
 void GameObjectManager::LoadGameObjectDtos(std::vector<GameObjectDto>& gameObjectDtos)
 {
-    // Cargar los GameObjects
+    // Load the GameObjects
     for (size_t i = 0; i < gameObjectDtos.size(); i++)
     {
         std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>(gameObjectDtos[i]);
@@ -195,10 +203,9 @@ void GameObjectManager::LoadGameObjectDtos(std::vector<GameObjectDto>& gameObjec
     }
 }
 
-
 std::vector<GameObjectDto> GameObjectManager::GetGameObjectDtos(std::ifstream& file)
 {
-    // Leer los GameObjects
+    // Read the game objects
     int numGameObjects;
     file.read(reinterpret_cast<char*>(&numGameObjects), sizeof(int));
 
@@ -220,6 +227,8 @@ std::vector<GameObjectDto> GameObjectManager::GetGameObjectDtos(std::ifstream& f
         file.read(reinterpret_cast<char*>(&gameObjectDtos[i].WorldTransform), sizeof(glm::mat4));
 
         file.read(reinterpret_cast<char*>(&gameObjectDtos[i].MeshImportedType), sizeof(int));
+
+        file.read(reinterpret_cast<char*>(&gameObjectDtos[i].MeshPrimitiveType), sizeof(int));
 
         file.read(reinterpret_cast<char*>(&meshPathLength), sizeof(meshPathLength));
         gameObjectDtos[i].MeshPath.resize(meshPathLength);

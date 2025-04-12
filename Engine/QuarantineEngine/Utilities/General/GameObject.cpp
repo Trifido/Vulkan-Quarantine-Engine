@@ -19,84 +19,35 @@ GameObject::GameObject()
 
 GameObject::GameObject(PRIMITIVE_TYPE type, bool isMeshShading)
 {
-    this->InitializeResources();
-    this->isMeshShading = isMeshShading;
-    this->_Mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh(type));
-    this->_meshImportedType = MeshImportedType::PRIMITIVE_GEO;
-
-    if (type != PRIMITIVE_TYPE::GRID_TYPE)
-    {
-        if (this->isMeshShading)
-        {
-            auto mat = this->materialManager->GetMaterial("defaultMeshPrimitiveMat");
-            auto newMatInstance = mat->CreateMaterialInstance();
-            this->materialManager->AddMaterial("defaultMeshPrimitiveMat", newMatInstance);
-            this->AddMaterial(newMatInstance);
-        }
-        else
-        {
-            auto mat = this->materialManager->GetMaterial("defaultPrimitiveMat");
-            auto newMatInstance = mat->CreateMaterialInstance();
-            this->materialManager->AddMaterial("defaultPrimitiveMat", newMatInstance);
-            this->AddMaterial(newMatInstance);
-        }
-
-        this->_Material->InitializeMaterialDataUBO();
-    }
-    else
-    {
-        this->_meshImportedType = MeshImportedType::EDITOR_GEO;
-    }
-
-    this->InitializeComponents();
-
-    if (type != PRIMITIVE_TYPE::GRID_TYPE)
-    {
-        auto downcastedPtr = std::dynamic_pointer_cast<PrimitiveMesh>(this->_Mesh);
-        this->aabbculling = this->cullingSceneManager->GenerateAABB(downcastedPtr->aabbData, this->_Transform);
-    }
-
-    this->vkCmdDrawMeshTasksEXT =
-        (PFN_vkCmdDrawMeshTasksEXT)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksEXT");
+    this->InitializeGameObject(type, isMeshShading);
 }
 
 GameObject::GameObject(std::string meshPath, bool isMeshShading)
 {
-    this->InitializeResources();
-    this->isMeshShading = isMeshShading;
-
-    this->MeshFilePath = meshPath;
-    bool loadResult = this->CreateChildsGameObject(meshPath);
-
-    if (loadResult)
-    {
-        this->InitializeComponents();
-        this->InitializeAnimationComponent();
-    }
-
-    this->vkCmdDrawMeshTasksEXT =
-        (PFN_vkCmdDrawMeshTasksEXT)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksEXT");
+    this->InitializeGameObject(meshPath, isMeshShading);
 }
 
 GameObject::GameObject(const GameObjectDto& gameObjectDto) : Numbered(gameObjectDto.Id)
 {
-    this->InitializeResources();
-    this->isMeshShading = false;
+    PRIMITIVE_TYPE primitiveType = static_cast<PRIMITIVE_TYPE>(gameObjectDto.MeshPrimitiveType);
+    MeshImportedType meshType = static_cast<MeshImportedType>(gameObjectDto.MeshImportedType);
 
-    this->MeshFilePath = gameObjectDto.MeshPath;
-    bool loadResult = this->CreateChildsGameObject(this->MeshFilePath);
-
-    if (loadResult)
+    if (meshType == MeshImportedType::PRIMITIVE_GEO && primitiveType != PRIMITIVE_TYPE::NONE_TYPE)
     {
-        this->InitializeComponents();
-        this->InitializeAnimationComponent();
+        this->InitializeGameObject(primitiveType);
+    }
+    else if (meshType != MeshImportedType::PRIMITIVE_GEO)
+    {
+        this->InitializeGameObject(gameObjectDto.MeshPath);
+    }
+    else
+    {
+        return;
     }
 
     this->_meshImportedType = static_cast<MeshImportedType>(gameObjectDto.MeshImportedType);
     this->_Transform->SetModel(gameObjectDto.WorldTransform);
 
-    this->vkCmdDrawMeshTasksEXT =
-        (PFN_vkCmdDrawMeshTasksEXT)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksEXT");
 }
 
 void GameObject::InitializeResources()
@@ -289,6 +240,68 @@ bool GameObject::IsRenderEnable()
     isRender = isRender && this->aabbculling->isGameObjectVisible;
 
     return isRender;
+}
+
+void GameObject::InitializeGameObject(std::string meshPath, bool isMeshShading)
+{
+    this->InitializeResources();
+    this->isMeshShading = isMeshShading;
+
+    this->MeshFilePath = meshPath;
+    bool loadResult = this->CreateChildsGameObject(meshPath);
+
+    if (loadResult)
+    {
+        this->InitializeComponents();
+        this->InitializeAnimationComponent();
+    }
+
+    this->vkCmdDrawMeshTasksEXT =
+        (PFN_vkCmdDrawMeshTasksEXT)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksEXT");
+}
+
+void GameObject::InitializeGameObject(PRIMITIVE_TYPE type, bool isMeshShading)
+{
+    this->InitializeResources();
+    this->isMeshShading = isMeshShading;
+    this->_primitiveMeshType = type;
+    this->_Mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh(type));
+    this->_meshImportedType = MeshImportedType::PRIMITIVE_GEO;
+
+    if (type != PRIMITIVE_TYPE::GRID_TYPE)
+    {
+        if (this->isMeshShading)
+        {
+            auto mat = this->materialManager->GetMaterial("defaultMeshPrimitiveMat");
+            auto newMatInstance = mat->CreateMaterialInstance();
+            this->materialManager->AddMaterial("defaultMeshPrimitiveMat", newMatInstance);
+            this->AddMaterial(newMatInstance);
+        }
+        else
+        {
+            auto mat = this->materialManager->GetMaterial("defaultPrimitiveMat");
+            auto newMatInstance = mat->CreateMaterialInstance();
+            this->materialManager->AddMaterial("defaultPrimitiveMat", newMatInstance);
+            this->AddMaterial(newMatInstance);
+        }
+
+        this->_Material->InitializeMaterialDataUBO();
+    }
+    else
+    {
+        this->_meshImportedType = MeshImportedType::EDITOR_GEO;
+    }
+
+    this->InitializeComponents();
+
+    if (type != PRIMITIVE_TYPE::GRID_TYPE)
+    {
+        auto downcastedPtr = std::dynamic_pointer_cast<PrimitiveMesh>(this->_Mesh);
+        this->aabbculling = this->cullingSceneManager->GenerateAABB(downcastedPtr->aabbData, this->_Transform);
+    }
+
+    this->vkCmdDrawMeshTasksEXT =
+        (PFN_vkCmdDrawMeshTasksEXT)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksEXT");
 }
 
 bool GameObject::IsValidGameObject()

@@ -37,6 +37,7 @@ protected:
 public:
     std::shared_ptr<GeometryComponent>  _Mesh = nullptr;
     MeshImportedType                    _meshImportedType;
+    PRIMITIVE_TYPE                      _primitiveMeshType;
     std::string                         MeshFilePath;
     std::shared_ptr<Transform>          _Transform = nullptr;
     std::shared_ptr<Material>           _Material = nullptr;
@@ -51,6 +52,8 @@ public:
 private:
     void InitializeResources();
     bool IsRenderEnable();
+    void InitializeGameObject(std::string meshPath, bool isMeshShading = false);
+    void InitializeGameObject(PRIMITIVE_TYPE type, bool isMeshShading = false);
 
 public:
     GameObject();
