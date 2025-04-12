@@ -92,6 +92,80 @@ void LightManager::CreateLight(LightType type, std::string name)
     }
 }
 
+void LightManager::LoadLightDtos(const std::vector<LightDto>& lightDtos)
+{
+    for (const auto& lightDto : lightDtos)
+    {
+        this->CreateLight(lightDto.lightType, lightDto.name);
+
+        auto light = this->GetLight(lightDto.name);
+        if (light)
+        {
+            light->transform->SetModel(lightDto.worldTransform);
+            light->diffuse = lightDto.diffuse;
+            light->specular = lightDto.specular;
+            light->SetDistanceEffect(lightDto.radius);
+            light->cutOff = lightDto.cutOff;
+            light->outerCutoff = lightDto.outerCutoff;
+        }
+    }
+}
+
+std::vector<LightDto> LightManager::GetLightDtos(std::ifstream& file)
+{
+    std::vector<LightDto> lightDtos;
+
+    int numLights;
+    file.read(reinterpret_cast<char*>(&numLights), sizeof(int));
+
+    for (int i = 0; i < numLights; i++)
+    {
+        LightDto lightDto;
+
+        int nameLength;
+        file.read(reinterpret_cast<char*>(&nameLength), sizeof(int));
+        lightDto.name.resize(nameLength);
+        file.read(&lightDto.name[0], nameLength);
+
+        file.read(reinterpret_cast<char*>(&lightDto.lightType), sizeof(LightType));
+        file.read(reinterpret_cast<char*>(&lightDto.radius), sizeof(float));
+        file.read(reinterpret_cast<char*>(&lightDto.worldTransform), sizeof(glm::mat4));
+        file.read(reinterpret_cast<char*>(&lightDto.diffuse), sizeof(glm::vec3));
+        file.read(reinterpret_cast<char*>(&lightDto.specular), sizeof(glm::vec3));
+        file.read(reinterpret_cast<char*>(&lightDto.cutOff), sizeof(float));
+        file.read(reinterpret_cast<char*>(&lightDto.outerCutoff), sizeof(float));
+
+        lightDtos.push_back(lightDto);
+    }
+
+    return lightDtos;
+}
+
+void LightManager::SaveLights(std::ofstream& file)
+{
+    int numLights = this->_lights.size();
+    file.write(reinterpret_cast<const char*>(&numLights), sizeof(int));
+
+    for (auto& it : this->_lights)
+    {
+        auto light = it.second;
+
+        std::string name = it.first;
+        int nameLength = name.length();
+        file.write(reinterpret_cast<const char*>(&nameLength), sizeof(int));
+        file.write(name.c_str(), nameLength);
+        file.write(reinterpret_cast<const char*>(&light->lightType), sizeof(LightType));
+
+        float radius = light->GetDistanceEffect();
+        file.write(reinterpret_cast<const char*>(&radius), sizeof(float));
+        file.write(reinterpret_cast<const char*>(&light->transform->GetModel()), sizeof(glm::mat4));
+        file.write(reinterpret_cast<const char*>(&light->diffuse), sizeof(glm::vec3));
+        file.write(reinterpret_cast<const char*>(&light->specular), sizeof(glm::vec3));
+        file.write(reinterpret_cast<const char*>(&light->cutOff), sizeof(float));
+        file.write(reinterpret_cast<const char*>(&light->outerCutoff), sizeof(float));
+    }
+}
+
 std::shared_ptr<Light> LightManager::GetLight(std::string name)
 {
     auto it =_lights.find(name);

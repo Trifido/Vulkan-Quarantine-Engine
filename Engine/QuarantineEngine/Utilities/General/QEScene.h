@@ -8,6 +8,7 @@
 #include <AtmosphereDto.h>
 #include <CameraDto.h>
 #include <GameObjectDto.h>
+#include <LightDto.h>
 
 namespace fs = std::filesystem;
 class QEScene
@@ -19,6 +20,7 @@ public:
     CameraDto cameraEditor;
     AtmosphereDto atmosphere;
     std::vector<GameObjectDto> gameObjectDtos;
+    std::vector<LightDto> lightDtos;
 
 public:
     bool InitScene(fs::path filename);

@@ -2,10 +2,12 @@
 #include <fstream>
 #include <iostream>
 #include <GameObjectManager.h>
+#include <LightManager.h>
 
 bool QEScene::InitScene(fs::path filename)
 {
     auto gameObjectManager = GameObjectManager::getInstance();
+
     std::ifstream file(filename, std::ios::binary);
     if (!file.is_open())
     {
@@ -15,20 +17,23 @@ bool QEScene::InitScene(fs::path filename)
 
     this->scenePath = filename.parent_path();
 
-    // Leer el nombre de la escena
+    // Read scene name length and name
     size_t sceneNameLength;
     file.read(reinterpret_cast<char*>(&sceneNameLength), sizeof(sceneNameLength));
     sceneName.resize(sceneNameLength);
     file.read(&sceneName[0], sceneNameLength);
 
-    // Leer los datos de la cámara
+    // Read camera dto
     file.read(reinterpret_cast<char*>(&cameraEditor), sizeof(CameraDto));
 
-    // Leer los datos de la atmósfera
+    // Read atmosphere dto
     file.read(reinterpret_cast<char*>(&atmosphere), sizeof(AtmosphereDto));
 
-    // Leer los GameObjects
+    // Read game objects dtos
     this->gameObjectDtos = gameObjectManager->GetGameObjectDtos(file);
+
+    // Read lights dtos
+    this->lightDtos = LightManager::GetLightDtos(file);
 
     file.close();
     std::cout << "Archivo leído correctamente: " << filename << std::endl;
@@ -37,6 +42,7 @@ bool QEScene::InitScene(fs::path filename)
 bool QEScene::SaveScene()
 {
     auto gameObjectManager = GameObjectManager::getInstance();
+    auto lightManager = LightManager::getInstance();
 
     std::string filename = this->sceneName;
     fs::path filePath = this->scenePath / filename;
@@ -56,8 +62,11 @@ bool QEScene::SaveScene()
     file.write(reinterpret_cast<const char*>(&this->cameraEditor), sizeof(CameraDto));
     file.write(reinterpret_cast<const char*>(&this->atmosphere), sizeof(AtmosphereDto));
 
-    // Guardar los GameObjects
+    // Save game objects dtos
     gameObjectManager->SaveGameObjects(file);
+
+    // Save lights dtos
+    lightManager->SaveLights(file);
 
     file.close();
 

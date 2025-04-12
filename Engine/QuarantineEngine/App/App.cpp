@@ -177,10 +177,6 @@ void App::initVulkan()
     // Load Scene
     this->loadScene(this->scene);
 
-    this->lightManager->AddDirShadowMapShader(materialManager->csm_shader);
-    this->lightManager->AddOmniShadowMapShader(materialManager->omni_shadow_mapping_shader);
-    this->lightManager->SetCamera(this->cameraEditor);
-
     this->cullingSceneManager = CullingSceneManager::getInstance();
     this->cullingSceneManager->InitializeCullingSceneResources();
     this->cullingSceneManager->AddCameraFrustum(this->cameraEditor->frustumComponent);
@@ -380,6 +376,13 @@ void App::loadScene(QEScene scene)
 
     // Initialize the game object manager & the game objects
     this->gameObjectManager->LoadGameObjectDtos(this->scene.gameObjectDtos);
+
+    // Initialize the light manager & the lights
+    this->lightManager->AddDirShadowMapShader(materialManager->csm_shader);
+    this->lightManager->AddOmniShadowMapShader(materialManager->omni_shadow_mapping_shader);
+    this->lightManager->SetCamera(this->cameraEditor);
+
+    this->lightManager->LoadLightDtos(this->scene.lightDtos);
 }
 
 void App::mainLoop()

@@ -4,15 +4,7 @@
 
 #include "Transform.h"
 #include "DeviceModule.h"
-
-enum LightType
-{
-    POINT_LIGHT,
-    DIRECTIONAL_LIGHT,
-    SPOT_LIGHT,
-    AREA_LIGHT,
-    SUN_LIGHT
-};
+#include <LightType.h>
 
 struct AttenuationData
 {
@@ -46,6 +38,7 @@ public:
     Light();
     virtual void UpdateUniform();
     void SetDistanceEffect(float radiusEffect);
+    float GetDistanceEffect() { return this->radius; }
 };
 
 #endif

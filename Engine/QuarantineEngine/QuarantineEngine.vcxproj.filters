@@ -800,6 +800,12 @@
     <ClInclude Include="Utilities\Geometry\MeshImportedType.h">
       <Filter>Kernel\Utilities\Geometry\headers</Filter>
     </ClInclude>
+    <ClInclude Include="Data\Dtos\LightDto.h">
+      <Filter>Kernel\Data\Dtos</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Light\LightType.h">
+      <Filter>Kernel\Utilities\Light\headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.txt" />

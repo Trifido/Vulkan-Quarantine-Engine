@@ -278,6 +278,7 @@
     <ClInclude Include="Data\Dtos\AtmosphereDto.h" />
     <ClInclude Include="Data\Dtos\CameraDto.h" />
     <ClInclude Include="Data\Dtos\GameObjectDto.h" />
+    <ClInclude Include="Data\Dtos\LightDto.h" />
     <ClInclude Include="Data\QEProjectManager.h" />
     <ClInclude Include="Draw\CommandPoolModule.h" />
     <ClInclude Include="Draw\FrameBufferModule.h" />
@@ -361,6 +362,7 @@
     <ClInclude Include="Utilities\Light\DirectionalLight.h" />
     <ClInclude Include="Utilities\Light\Light.h" />
     <ClInclude Include="Utilities\Light\LightManager.h" />
+    <ClInclude Include="Utilities\Light\LightType.h" />
     <ClInclude Include="Utilities\Light\PointLight.h" />
     <ClInclude Include="Utilities\Light\SpotLight.h" />
     <ClInclude Include="Utilities\Material\CustomTexture.h" />

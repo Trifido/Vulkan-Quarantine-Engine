@@ -95,6 +95,9 @@ bool QEProjectManager::CreateScene(const std::string& sceneName)
                 int numGameObjects = 0;
                 file.write(reinterpret_cast<const char*>(&numGameObjects), sizeof(int));
 
+                int numLights = 0;
+                file.write(reinterpret_cast<const char*>(&numLights), sizeof(int));
+
                 file.close();
                 return true;
             }
