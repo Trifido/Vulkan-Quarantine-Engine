@@ -97,7 +97,7 @@ void Material::CleanLastResources()
 
 void Material::InitializeMaterialDataUBO()
 {
-    if (this->hasDescriptorBuffer)
+    if (this->hasDescriptorBuffer && !this->IsInitialized)
     {
         this->materialData.InitializeUBOMaterial(this->shader);
         this->descriptor->ubos["materialUBO"] = this->materialData.materialUBO;
@@ -234,49 +234,17 @@ std::string Material::SaveMaterialFile()
 
         // Texture paths
         int zeroLength = 0;
-        if (materialData.diffuseTexture != nullptr)
-        {
-            materialData.diffuseTexture->SaveTexturePath(file);
-        }
-        else
-        {
-            file.write(reinterpret_cast<const char*>(&zeroLength), sizeof(int));
-        }
 
-        if (materialData.normalTexture != nullptr)
+        for (int i = 0; i < materialData.texture_vector->size(); i++)
         {
-            materialData.normalTexture->SaveTexturePath(file);
-        }
-        else
-        {
-            file.write(reinterpret_cast<const char*>(&zeroLength), sizeof(int));
-        }
-
-        if (materialData.specularTexture != nullptr)
-        {
-            materialData.specularTexture->SaveTexturePath(file);
-        }
-        else
-        {
-            file.write(reinterpret_cast<const char*>(&zeroLength), sizeof(int));
-        }
-
-        if (materialData.emissiveTexture != nullptr)
-        {
-            materialData.emissiveTexture->SaveTexturePath(file);
-        }
-        else
-        {
-            file.write(reinterpret_cast<const char*>(&zeroLength), sizeof(int));
-        }
-
-        if (materialData.heightTexture != nullptr)
-        {
-            materialData.heightTexture->SaveTexturePath(file);
-        }
-        else
-        {
-            file.write(reinterpret_cast<const char*>(&zeroLength), sizeof(int));
+            if (materialData.texture_vector->at(i) != nullptr)
+            {
+                materialData.texture_vector->at(i)->SaveTexturePath(file);
+            }
+            else
+            {
+                file.write(reinterpret_cast<const char*>(&zeroLength), sizeof(int));
+            }
         }
 
         file.close();

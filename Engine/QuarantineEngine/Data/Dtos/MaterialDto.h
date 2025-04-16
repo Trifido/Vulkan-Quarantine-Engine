@@ -4,6 +4,9 @@
 
 #include <glm/glm.hpp>
 #include <string>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 struct MaterialDto
 {
@@ -33,6 +36,30 @@ struct MaterialDto
     std::string heightTexturePath = "NULL_TEXTURE";
 
     MaterialDto() = default;
+
+    void UpdateTexturePaths(fs::path filepath)
+    {
+        if (diffuseTexturePath != "NULL_TEXTURE")
+        {
+            diffuseTexturePath = (filepath / diffuseTexturePath).string();
+        }
+        if (normalTexturePath != "NULL_TEXTURE")
+        {
+            normalTexturePath = (filepath / normalTexturePath).string();
+        }
+        if (specularTexturePath != "NULL_TEXTURE")
+        {
+            specularTexturePath = (filepath / specularTexturePath).string();
+        }
+        if (emissiveTexturePath != "NULL_TEXTURE")
+        {
+            emissiveTexturePath = (filepath / emissiveTexturePath).string();
+        }
+        if (heightTexturePath != "NULL_TEXTURE")
+        {
+            heightTexturePath = (filepath / heightTexturePath).string();
+        }
+    }
 };
 
 #endif

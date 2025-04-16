@@ -49,6 +49,7 @@ public:
     void UpdateUniforms();
     void InitializeMaterials();
     static std::vector<MaterialDto> GetMaterialDtos(std::ifstream& file);
+    static MaterialDto ReadQEMaterial(std::ifstream& file);
     void LoadMaterialDtos(std::vector<MaterialDto>& materialDtos);
     void SaveMaterials(std::ofstream& file);
 };

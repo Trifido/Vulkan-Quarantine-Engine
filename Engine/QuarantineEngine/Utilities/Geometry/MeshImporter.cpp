@@ -1,16 +1,14 @@
 #include "MeshImporter.h"
 #include <fstream>
-#include <filesystem>
 #include <assimp/Exporter.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/config.h>
 #include <unordered_set>
 
-namespace fs = std::filesystem;
-
 MeshImporter::MeshImporter()
 {
     this->materialManager = MaterialManager::getInstance();
+    this->shaderManager = ShaderManager::getInstance();
 }
 
 void MeshImporter::CheckPaths(std::string path)
@@ -213,6 +211,8 @@ void MeshImporter::RecreateTangents(std::vector<Vertex>& vertices, std::vector<u
 
 std::vector<MeshData> MeshImporter::LoadMesh(std::string path)
 {
+    fs::path filepath = fs::path(path);
+    fs::path matpath = filepath.parent_path().parent_path() / "Materials";
     std::vector<MeshData> meshes;
     Assimp::Importer importer;
     (void)importer.SetPropertyInteger(AI_CONFIG_PP_LBW_MAX_WEIGHTS, 4);
@@ -237,12 +237,12 @@ std::vector<MeshData> MeshImporter::LoadMesh(std::string path)
     this->aabbMin = glm::vec3(std::numeric_limits<float>::infinity());
 
     glm::mat4 parentTransform = glm::mat4(1.0f);
-    ProcessNode(scene->mRootNode, scene, parentTransform, meshes);
+    ProcessNode(scene->mRootNode, scene, parentTransform, meshes, matpath);
 
     return meshes;
 }
 
-void MeshImporter::ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, std::vector<MeshData>& meshes)
+void MeshImporter::ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, std::vector<MeshData>& meshes, const fs::path& matpath)
 {
     glm::mat4 localTransform = this->GetGLMMatrix(node->mTransformation);
     glm::mat4 currentTransform = glm::identity<glm::mat4>();
@@ -254,7 +254,7 @@ void MeshImporter::ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 par
         result.name = scene->mMeshes[node->mMeshes[i]]->mName.C_Str();
         result.model = currentTransform;
 
-        this->ProcessMaterial(scene->mMeshes[node->mMeshes[i]], scene, result);
+        this->ProcessMaterial(scene->mMeshes[node->mMeshes[i]], scene, result, matpath);
 
         meshes.push_back(result);
     }
@@ -262,7 +262,7 @@ void MeshImporter::ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 par
     // then do the same for each of its children
     for (unsigned int i = 0; i < node->mNumChildren; i++)
     {
-        this->ProcessNode(node->mChildren[i], scene, currentTransform, meshes);
+        this->ProcessNode(node->mChildren[i], scene, currentTransform, meshes, matpath);
     }
 }
 
@@ -429,7 +429,7 @@ glm::mat4 MeshImporter::GetGLMMatrix(aiMatrix4x4 transform)
     return result;
 }
 
-void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData& meshData)
+void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData& meshData, const fs::path& matpath)
 {
     if (mesh->mMaterialIndex < 0)
         return;
@@ -448,29 +448,40 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
     if (ret != AI_SUCCESS) rawName = "";//Failed to find material name so makes var empty
 
     std::string materialName = rawName.C_Str();
-
+    std::shared_ptr<Material> mat_ptr;
     if (!materialManager->Exists(materialName))
     {
-        if (this->EnableMeshShaderMaterials)
+        fs::path materialPath = matpath / (materialName + ".qemat");
+
+        std::ifstream matfile(materialPath, std::ios::binary);
+        if (!matfile.is_open())
         {
-            materialManager->CreateMeshShaderMaterial(materialName); 
+            std::cerr << "Error al abrir el material " << materialPath << std::endl;
         }
         else
         {
-            materialManager->CreateMaterial(materialName);
+            MaterialDto matDto = MaterialManager::ReadQEMaterial(matfile);
+            matfile.close();
+
+            auto shader = shaderManager->GetShader(matDto.ShaderPath);
+            if (shader == nullptr)
+            {
+                std::cerr << "Error: Shader not found for material " << materialName << std::endl;
+                return;
+            }
+
+            matDto.UpdateTexturePaths(matpath);
+
+            std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(Material(shader, matDto));
+            materialManager->AddMaterial(mat_ptr);
         }
-
-        std::shared_ptr<Material> mat = materialManager->GetMaterial(materialName);
-
-        //Import material atributes
-        mat->materialData.ImportAssimpMaterial(material);
-
-        //Import textures
-        mat->materialData.ImportAssimpTexture(scene, material, this->fileExtension, this->texturePath);
-
-        //Initialize uniform buffer objects
-        mat->InitializeMaterialDataUBO();
     }
+    else
+    {
+        mat_ptr = materialManager->GetMaterial(materialName);
+    }
+
+    mat_ptr->InitializeMaterialDataUBO();
 
     meshData.materialID = materialName;
 
@@ -656,7 +667,7 @@ void MeshImporter::ExtractAndUpdateMaterials(aiScene* scene, const std::string& 
                 std::string materialPathStr = materialPath.string();
                 int materialPathLength = materialPathStr.length();
                 file.write(reinterpret_cast<const char*>(&materialPathLength), sizeof(int));
-                file.write(reinterpret_cast<const char*>(&materialPathStr), materialPathLength);
+                file.write(reinterpret_cast<const char*>(&materialPathStr[0]), materialPathLength);
 
                 // Shader
                 std::string shaderPath = "default";
@@ -715,16 +726,18 @@ void MeshImporter::ExtractAndUpdateMaterials(aiScene* scene, const std::string& 
                 }
 
                 // 1. Guardar el número real de texturas encontradas
-                file.write(reinterpret_cast<const char*>(&validTextureCount), sizeof(int));
+                //file.write(reinterpret_cast<const char*>(&validTextureCount), sizeof(int));
 
-                // 2. Guardar cada textura (longitud + path si existe)
+                // Guardar cada textura (longitud + path si existe)
                 for (const std::string& path : finalPaths)
                 {
                     int length = path.length();
                     file.write(reinterpret_cast<const char*>(&length), sizeof(int));
 
                     if (length > 0)
-                        file.write(path.data(), length);
+                    {
+                        file.write(reinterpret_cast<const char*>(&path[0]), length);
+                    }
                 }
 
                 file.close();
