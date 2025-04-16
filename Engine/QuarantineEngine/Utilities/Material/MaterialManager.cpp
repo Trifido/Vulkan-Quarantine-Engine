@@ -302,7 +302,7 @@ MaterialDto MaterialManager::ReadQEMaterial(std::ifstream& matfile)
     int emissiveLength;
     int heightLength;
 
-    MaterialDto materialDto;
+    MaterialDto materialDto {};
 
     matfile.read(reinterpret_cast<char*>(&nameLength), sizeof(nameLength));
     materialDto.Name.resize(nameLength);
@@ -379,8 +379,7 @@ void MaterialManager::LoadMaterialDtos(std::vector<MaterialDto>& materialDtos)
 
         if (!this->Exists(it.Name))
         {
-            std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(Material(shader, it));
-            this->AddMaterial(mat_ptr);
+            this->AddMaterial(std::make_shared<Material>(Material(shader, it)));
         }
     }
 }

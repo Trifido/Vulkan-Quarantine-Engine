@@ -472,7 +472,7 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
 
             matDto.UpdateTexturePaths(matpath);
 
-            std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(Material(shader, matDto));
+            mat_ptr = std::make_shared<Material>(Material(shader, matDto));
             materialManager->AddMaterial(mat_ptr);
         }
     }
@@ -619,8 +619,8 @@ void MeshImporter::ExtractAndUpdateMaterials(aiScene* scene, const std::string& 
         { aiTextureType_BASE_COLOR, aiTextureType_DIFFUSE, aiTextureType_AMBIENT }, // Diffuse
         { aiTextureType_NORMALS, aiTextureType_HEIGHT },                            // Normal
         { aiTextureType_SPECULAR, aiTextureType_REFLECTION },                       // Specular
-        { aiTextureType_HEIGHT, aiTextureType_DISPLACEMENT },                       // Height
-        { aiTextureType_EMISSIVE, aiTextureType_OPACITY }                           // Emissive
+        { aiTextureType_EMISSIVE, aiTextureType_OPACITY },                          // Emissive
+        { aiTextureType_HEIGHT, aiTextureType_DISPLACEMENT }                        // Height
     };
 
     for (unsigned int i = 0; i < scene->mNumMaterials; i++)
@@ -646,7 +646,8 @@ void MeshImporter::ExtractAndUpdateMaterials(aiScene* scene, const std::string& 
         std::string filename = materialName + ".qemat";
         fs::path materialPath = fs::path(outputMaterialPath) / filename;
 
-        if (!fs::exists(materialPath))
+        bool existPath = fs::exists(materialPath);
+        if (!existPath)
         {
             MaterialData matData;
 

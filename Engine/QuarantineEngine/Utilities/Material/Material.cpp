@@ -63,11 +63,11 @@ Material::Material(std::shared_ptr<ShaderModule> shader_ptr, const MaterialDto& 
     {
         if (texturePath.first != "NULL_TEXTURE")
         {
-            this->materialData.AddTexture(std::make_shared<CustomTexture>(texturePath.first, texturePath.second));
+            this->materialData.AddTexture(texturePath.first, std::make_shared<CustomTexture>(texturePath.first, texturePath.second));
         }
         else
         {
-            this->materialData.AddTexture(std::make_shared<CustomTexture>("", TEXTURE_TYPE::NULL_TYPE));
+            this->materialData.AddTexture("NULL_TEXTURE", std::make_shared<CustomTexture>("", TEXTURE_TYPE::NULL_TYPE));
         }
     }
 }
@@ -237,9 +237,10 @@ std::string Material::SaveMaterialFile()
 
         for (int i = 0; i < materialData.texture_vector->size(); i++)
         {
-            if (materialData.texture_vector->at(i) != nullptr)
+            auto texture = materialData.Textures[(TEXTURE_TYPE)i];
+            if (texture != nullptr && texture->type != TEXTURE_TYPE::NULL_TYPE)
             {
-                materialData.texture_vector->at(i)->SaveTexturePath(file);
+                texture->SaveTexturePath(file);
             }
             else
             {

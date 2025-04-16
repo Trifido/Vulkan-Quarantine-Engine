@@ -43,17 +43,8 @@ public:
     glm::vec4 Reflective;
 
     static const int TOTAL_NUM_TEXTURES = 5;
-    std::shared_ptr<CustomTexture> diffuseTexture = nullptr;
-    std::shared_ptr<CustomTexture> normalTexture = nullptr;
-    std::shared_ptr<CustomTexture> specularTexture = nullptr;
-    std::shared_ptr<CustomTexture> emissiveTexture = nullptr;
-    std::shared_ptr<CustomTexture> heightTexture = nullptr;
-
-    int idxDiffuse;
-    int idxNormal;
-    int idxSpecular;
-    int idxHeight;
-    int idxEmissive;
+    std::unordered_map<TEXTURE_TYPE, std::shared_ptr<CustomTexture>> Textures;
+    std::unordered_map<TEXTURE_TYPE, int> IDTextures;
 
     std::shared_ptr<UniformBufferObject> materialUBO = nullptr;
     VkDeviceSize materialUniformSize = 0;
@@ -68,7 +59,7 @@ private:
     void UpdateMaterialData(std::string materialField, char* value);
 public:
     MaterialData();
-    void AddTexture(std::shared_ptr<CustomTexture> texture);
+    void AddTexture(std::string textureName, std::shared_ptr<CustomTexture> texture);
     void ImportAssimpMaterial(aiMaterial* material);
     void ImportAssimpTexture(const aiScene* scene, aiMaterial* material, std::string fileExtension, std::string texturePath);
     void InitializeUBOMaterial(std::shared_ptr<ShaderModule> shader_ptr);
