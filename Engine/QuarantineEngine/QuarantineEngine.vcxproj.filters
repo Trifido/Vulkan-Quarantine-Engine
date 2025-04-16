@@ -806,6 +806,9 @@
     <ClInclude Include="Utilities\Light\LightType.h">
       <Filter>Kernel\Utilities\Light\headers</Filter>
     </ClInclude>
+    <ClInclude Include="Data\Dtos\MaterialDto.h">
+      <Filter>Kernel\Data\Dtos</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.txt" />

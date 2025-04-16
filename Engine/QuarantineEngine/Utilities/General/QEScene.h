@@ -8,6 +8,7 @@
 #include <AtmosphereDto.h>
 #include <CameraDto.h>
 #include <GameObjectDto.h>
+#include <MaterialDto.h>
 #include <LightDto.h>
 
 namespace fs = std::filesystem;
@@ -20,6 +21,7 @@ public:
     CameraDto cameraEditor;
     AtmosphereDto atmosphere;
     std::vector<GameObjectDto> gameObjectDtos;
+    std::vector<MaterialDto> materialDtos;
     std::vector<LightDto> lightDtos;
 
 public:

@@ -31,15 +31,15 @@ std::shared_ptr<ShaderModule> ShaderManager::GetShader(std::string shaderName)
     return _shaders[shaderName];
 }
 
-void ShaderManager::AddShader(std::string shaderName, std::shared_ptr<ShaderModule> shader_ptr)
+void ShaderManager::AddShader(std::shared_ptr<ShaderModule> shader_ptr)
 {
-    std::string name = CheckName(shaderName);
+    std::string name = CheckName(shader_ptr->shaderNameID);
     _shaders[name] = shader_ptr;
 }
 
-void ShaderManager::AddShader(std::string shaderName, ShaderModule shader)
+void ShaderManager::AddShader(ShaderModule shader)
 {
-    std::string name = CheckName(shaderName);
+    std::string name = CheckName(shader.shaderNameID);
     _shaders[name] = std::make_shared<ShaderModule>(shader);
 }
 

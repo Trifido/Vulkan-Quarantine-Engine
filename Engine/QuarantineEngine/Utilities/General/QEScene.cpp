@@ -29,6 +29,9 @@ bool QEScene::InitScene(fs::path filename)
     // Read atmosphere dto
     file.read(reinterpret_cast<char*>(&atmosphere), sizeof(AtmosphereDto));
 
+    // Read material dtos
+    this->materialDtos = MaterialManager::GetMaterialDtos(file);
+
     // Read game objects dtos
     this->gameObjectDtos = gameObjectManager->GetGameObjectDtos(file);
 
@@ -42,6 +45,7 @@ bool QEScene::InitScene(fs::path filename)
 bool QEScene::SaveScene()
 {
     auto gameObjectManager = GameObjectManager::getInstance();
+    auto materialManager = MaterialManager::getInstance();
     auto lightManager = LightManager::getInstance();
 
     std::string filename = this->sceneName;
@@ -61,6 +65,9 @@ bool QEScene::SaveScene()
 
     file.write(reinterpret_cast<const char*>(&this->cameraEditor), sizeof(CameraDto));
     file.write(reinterpret_cast<const char*>(&this->atmosphere), sizeof(AtmosphereDto));
+
+    //Save material dtos
+    materialManager->SaveMaterials(file);
 
     // Save game objects dtos
     gameObjectManager->SaveGameObjects(file);

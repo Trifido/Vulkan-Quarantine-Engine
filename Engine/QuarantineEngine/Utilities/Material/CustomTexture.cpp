@@ -6,6 +6,7 @@
 #include "SyncTool.h"
 #include <unordered_map>
 
+
 VkCommandPool CustomTexture::commandPool;
 
 void CustomTexture::copyBufferToImage(VkBuffer buffer, VkImage nImage, uint32_t width, uint32_t height, uint32_t mipLevels)
@@ -255,6 +256,7 @@ CustomTexture::CustomTexture()
 CustomTexture::CustomTexture(std::string path, TEXTURE_TYPE type)
 {
     this->type = type;
+    this->texturePaths.push_back(path);
 
     if (type == TEXTURE_TYPE::CUBEMAP_TYPE)
     {
@@ -268,6 +270,7 @@ CustomTexture::CustomTexture(std::string path, TEXTURE_TYPE type)
 
 CustomTexture::CustomTexture(vector<string> path)
 {
+    this->texturePaths = path;
     this->type = TEXTURE_TYPE::CUBEMAP_TYPE;
     this->createCubemapTextureImage(path);
 }
@@ -637,5 +640,19 @@ void CustomTexture::cleanup()
     {
         vkFreeMemory(deviceModule->device, deviceMemory, nullptr);
         deviceMemory = VK_NULL_HANDLE;
+    }
+}
+
+void CustomTexture::SaveTexturePath(std::ofstream& file)
+{
+    for (int i = 0; i < texturePaths.size(); i++)
+    {
+        std::string texturePath = texturePaths.at(i);
+        int texturePathLength = texturePath.length();
+        if (texturePathLength > 0)
+        {
+            file.write(reinterpret_cast<const char*>(&texturePathLength), sizeof(int));
+            file.write(reinterpret_cast<const char*>(texturePath.c_str()), texturePathLength);
+        }
     }
 }

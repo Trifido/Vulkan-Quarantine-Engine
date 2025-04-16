@@ -60,7 +60,6 @@ public:
     std::shared_ptr <std::vector<std::shared_ptr<CustomTexture>>> texture_vector = nullptr;
 
 private:
-    void AddTexture(std::shared_ptr<CustomTexture> texture);
     std::shared_ptr<CustomTexture> findTextureByType(TEXTURE_TYPE newtype);
     std::string GetTexture(const aiScene* scene, aiMaterial* mat, aiTextureType type, TEXTURE_TYPE textureType);
     void fillEmptyTextures();
@@ -69,6 +68,7 @@ private:
     void UpdateMaterialData(std::string materialField, char* value);
 public:
     MaterialData();
+    void AddTexture(std::shared_ptr<CustomTexture> texture);
     void ImportAssimpMaterial(aiMaterial* material);
     void ImportAssimpTexture(const aiScene* scene, aiMaterial* material, std::string fileExtension, std::string texturePath);
     void InitializeUBOMaterial(std::shared_ptr<ShaderModule> shader_ptr);

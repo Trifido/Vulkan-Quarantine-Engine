@@ -13,7 +13,7 @@
 class GameObjectManager : public QESingleton<GameObjectManager>
 {
 private:
-    friend class QESingleton<GameObjectManager>; // Permitir acceso al constructor
+    friend class QESingleton<GameObjectManager>;
     std::unordered_map<unsigned int, std::unordered_map<std::string, std::shared_ptr<GameObject>>> _objects;
     std::unordered_map<std::string, std::shared_ptr<GameObject>> _physicObjects;
     RenderLayerModule renderLayers;

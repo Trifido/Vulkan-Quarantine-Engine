@@ -279,6 +279,7 @@
     <ClInclude Include="Data\Dtos\CameraDto.h" />
     <ClInclude Include="Data\Dtos\GameObjectDto.h" />
     <ClInclude Include="Data\Dtos\LightDto.h" />
+    <ClInclude Include="Data\Dtos\MaterialDto.h" />
     <ClInclude Include="Data\QEProjectManager.h" />
     <ClInclude Include="Draw\CommandPoolModule.h" />
     <ClInclude Include="Draw\FrameBufferModule.h" />

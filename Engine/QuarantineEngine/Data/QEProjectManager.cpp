@@ -28,6 +28,8 @@ bool QEProjectManager::CreateQEProject(const std::string& projectName)
         CreateFolder(projectPath, ASSETS_FOLDER),
         // Create mesh folder
         CreateFolder(projectPath, ASSETS_FOLDER + "/" + MODELS_FOLDER),
+        // Create materials folder
+        CreateFolder(projectPath, ASSETS_FOLDER + "/" + MATERIALS_FOLDER),
         // Create scene
         CreateScene("default")
     };
@@ -92,6 +94,9 @@ bool QEProjectManager::CreateScene(const std::string& sceneName)
                 file.write(reinterpret_cast<const char*>(&atmosphere.sunDirection), sizeof(glm::vec3));
                 file.write(reinterpret_cast<const char*>(&atmosphere.sunIntensity), sizeof(float));
 
+                int numMaterials = 0;
+                file.write(reinterpret_cast<const char*>(&numMaterials), sizeof(int));
+
                 int numGameObjects = 0;
                 file.write(reinterpret_cast<const char*>(&numGameObjects), sizeof(int));
 
@@ -107,9 +112,8 @@ bool QEProjectManager::CreateScene(const std::string& sceneName)
     return false;
 }
 
-bool QEProjectManager::ImportMeshFile(/*const fs::path& meshFilePath*/)
+bool QEProjectManager::ImportMeshFile(const fs::path& inputFile)
 {
-    fs::path inputFile = "C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Raptoid/scene.gltf";
     if (!fs::exists(inputFile))
     {
         std::cerr << "Error al abrir el archivo: " << inputFile << std::endl;
@@ -124,13 +128,25 @@ bool QEProjectManager::ImportMeshFile(/*const fs::path& meshFilePath*/)
     CreateFolder(CURRENT_PROJECT_PATH / ASSETS_FOLDER / MODELS_FOLDER, folderName.string());
     CreateFolder(modelFolderPath, MESH_FOLDER);
     CreateFolder(modelFolderPath, TEXTURE_FOLDER);
+    CreateFolder(modelFolderPath, MATERIAL_FOLDER);
 
+    fs::path outputMaterialFolderPath = modelFolderPath / MATERIAL_FOLDER;
     fs::path outputTextureFolderPath = modelFolderPath / TEXTURE_FOLDER;
     fs::path outputMeshPath = modelFolderPath / MESH_FOLDER / filename;
 
     outputMeshPath.replace_extension(".gltf");
 
-    return MeshImporter::LoadAndExportModel(inputFile.string(), outputMeshPath.string(), outputTextureFolderPath.string());
+    return MeshImporter::LoadAndExportModel(
+        inputFile.string(),
+        outputMeshPath.string(),
+        outputMaterialFolderPath.string(),
+        outputTextureFolderPath.string()
+    );
+}
+
+fs::path QEProjectManager::GetMaterialFolderPath()
+{
+    return fs::path(CURRENT_PROJECT_PATH / ASSETS_FOLDER / MATERIALS_FOLDER);
 }
 
 bool QEProjectManager::InitializeDefaultQEScene(QEScene& scene)

@@ -100,9 +100,9 @@ void AtmosphereSystem::SetUpResources(Camera* cameraPtr)
     pipelineData.HasVertexData = this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY;
 
     this->environment_shader = std::make_shared<ShaderModule>(
-        ShaderModule(absolute_sky_vert_shader_path, absolute_sky_frag_shader_path, pipelineData)
+        ShaderModule("environment_map", absolute_sky_vert_shader_path, absolute_sky_frag_shader_path, pipelineData)
     );
-    shaderManager->AddShader("environment_map", this->environment_shader);
+    shaderManager->AddShader(this->environment_shader);
 
     if (this->environmentType == ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY)
     {

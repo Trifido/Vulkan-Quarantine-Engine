@@ -47,7 +47,6 @@ GameObject::GameObject(const GameObjectDto& gameObjectDto) : Numbered(gameObject
 
     this->_meshImportedType = static_cast<MeshImportedType>(gameObjectDto.MeshImportedType);
     this->_Transform->SetModel(gameObjectDto.WorldTransform);
-
 }
 
 void GameObject::InitializeResources()
@@ -274,14 +273,14 @@ void GameObject::InitializeGameObject(PRIMITIVE_TYPE type, bool isMeshShading)
         {
             auto mat = this->materialManager->GetMaterial("defaultMeshPrimitiveMat");
             auto newMatInstance = mat->CreateMaterialInstance();
-            this->materialManager->AddMaterial("defaultMeshPrimitiveMat", newMatInstance);
+            this->materialManager->AddMaterial(newMatInstance);
             this->AddMaterial(newMatInstance);
         }
         else
         {
             auto mat = this->materialManager->GetMaterial("defaultPrimitiveMat");
             auto newMatInstance = mat->CreateMaterialInstance();
-            this->materialManager->AddMaterial("defaultPrimitiveMat", newMatInstance);
+            this->materialManager->AddMaterial(newMatInstance);
             this->AddMaterial(newMatInstance);
         }
 

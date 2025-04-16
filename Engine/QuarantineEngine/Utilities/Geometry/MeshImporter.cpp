@@ -4,6 +4,7 @@
 #include <assimp/Exporter.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/config.h>
+#include <unordered_set>
 
 namespace fs = std::filesystem;
 
@@ -244,7 +245,7 @@ std::vector<MeshData> MeshImporter::LoadMesh(std::string path)
 void MeshImporter::ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, std::vector<MeshData>& meshes)
 {
     glm::mat4 localTransform = this->GetGLMMatrix(node->mTransformation);
-    glm::mat4 currentTransform = glm::identity<glm::mat4>();// localTransform* parentTransform;
+    glm::mat4 currentTransform = glm::identity<glm::mat4>();
 
     // process all the node's meshes (if any)
     for (unsigned int i = 0; i < node->mNumMeshes; i++)
@@ -456,7 +457,7 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
         }
         else
         {
-            materialManager->CreateMaterial(materialName, this->hasAnimation);
+            materialManager->CreateMaterial(materialName);
         }
 
         std::shared_ptr<Material> mat = materialManager->GetMaterial(materialName);
@@ -549,7 +550,8 @@ void MeshImporter::ExtractAndUpdateTextures(aiScene* scene, const std::string& o
         aiTextureType_METALNESS, aiTextureType_DIFFUSE_ROUGHNESS, aiTextureType_AMBIENT_OCCLUSION
     };
 
-    for (unsigned int i = 0; i < scene->mNumMaterials; i++) {
+    for (unsigned int i = 0; i < scene->mNumMaterials; i++)
+    {
         aiMaterial* material = scene->mMaterials[i];
 
         for (aiTextureType type : textureTypes)
@@ -598,6 +600,139 @@ void MeshImporter::ExtractAndUpdateTextures(aiScene* scene, const std::string& o
     }
 }
 
+void MeshImporter::ExtractAndUpdateMaterials(aiScene* scene, const std::string& outputTextureFolder, const std::string& outputMaterialPath, const std::string& modelDirectory)
+{
+    auto matManager = MaterialManager::getInstance();
+
+    std::vector<std::vector<aiTextureType>> textureSlots = {
+        { aiTextureType_BASE_COLOR, aiTextureType_DIFFUSE, aiTextureType_AMBIENT }, // Diffuse
+        { aiTextureType_NORMALS, aiTextureType_HEIGHT },                            // Normal
+        { aiTextureType_SPECULAR, aiTextureType_REFLECTION },                       // Specular
+        { aiTextureType_HEIGHT, aiTextureType_DISPLACEMENT },                       // Height
+        { aiTextureType_EMISSIVE, aiTextureType_OPACITY }                           // Emissive
+    };
+
+    for (unsigned int i = 0; i < scene->mNumMaterials; i++)
+    {
+        aiMaterial* material = scene->mMaterials[i];
+
+        aiReturn ret;
+        aiString rawName;
+
+        ret = material->Get(AI_MATKEY_NAME, rawName);
+        if (ret != AI_SUCCESS)
+        {
+            continue;
+        }
+
+        //Check if material name exist & rename it
+        std::string materialName = matManager->CheckName(rawName.C_Str());
+        aiString newName(materialName);
+
+        // Modify the material name
+        material->AddProperty(&newName, AI_MATKEY_NAME);
+
+        std::string filename = materialName + ".qemat";
+        fs::path materialPath = fs::path(outputMaterialPath) / filename;
+
+        if (!fs::exists(materialPath))
+        {
+            MaterialData matData;
+
+            std::ofstream file(materialPath, std::ios::binary);
+            if (!file)
+            {
+                std::cerr << "Error al abrir " << filename <<  " para escritura.\n";
+            }
+
+            if (file.is_open())
+            {
+                // Name
+                int materialNameLength = materialName.length();
+                file.write(reinterpret_cast<const char*>(&materialNameLength), sizeof(int));
+                file.write(reinterpret_cast<const char*>(&materialName[0]), materialName.size());
+
+                // Material file path
+                std::string materialPathStr = materialPath.string();
+                int materialPathLength = materialPathStr.length();
+                file.write(reinterpret_cast<const char*>(&materialPathLength), sizeof(int));
+                file.write(reinterpret_cast<const char*>(&materialPathStr), materialPathLength);
+
+                // Shader
+                std::string shaderPath = "default";
+                int shaderPathLength = shaderPath.length();
+                file.write(reinterpret_cast<const char*>(&shaderPathLength), sizeof(int));
+                file.write(reinterpret_cast<const char*>(&shaderPath[0]), shaderPath.size());
+
+                // Render layer
+                int renderLayer = 1;
+                file.write(reinterpret_cast<const char*>(&renderLayer), sizeof(int));
+
+                // Material data
+                matData.ImportAssimpMaterial(material);
+
+                file.write(reinterpret_cast<const char*>(&matData.Opacity), sizeof(float));
+                file.write(reinterpret_cast<const char*>(&matData.BumpScaling), sizeof(float));
+                file.write(reinterpret_cast<const char*>(&matData.Shininess), sizeof(float));
+                file.write(reinterpret_cast<const char*>(&matData.Reflectivity), sizeof(float));
+                file.write(reinterpret_cast<const char*>(&matData.Shininess_Strength), sizeof(float));
+                file.write(reinterpret_cast<const char*>(&matData.Refractivity), sizeof(float));
+
+                file.write(reinterpret_cast<const char*>(&matData.Diffuse), sizeof(glm::vec4));
+                file.write(reinterpret_cast<const char*>(&matData.Ambient), sizeof(glm::vec4));
+                file.write(reinterpret_cast<const char*>(&matData.Specular), sizeof(glm::vec4));
+                file.write(reinterpret_cast<const char*>(&matData.Emissive), sizeof(glm::vec4));
+                file.write(reinterpret_cast<const char*>(&matData.Transparent), sizeof(glm::vec4));
+                file.write(reinterpret_cast<const char*>(&matData.Reflective), sizeof(glm::vec4));
+
+                // Textures
+                std::vector<std::string> finalPaths;
+                int validTextureCount = 0;
+
+                for (const auto& fallbackList : textureSlots)
+                {
+                    aiString texPath;
+                    bool found = false;
+
+                    for (aiTextureType type : fallbackList)
+                    {
+                        if (material->GetTexture(type, 0, &texPath) == AI_SUCCESS)
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (found)
+                    {
+                        finalPaths.push_back(texPath.C_Str());
+                        validTextureCount++;
+                    }
+                    else
+                    {
+                        finalPaths.push_back(""); // No hay textura
+                    }
+                }
+
+                // 1. Guardar el número real de texturas encontradas
+                file.write(reinterpret_cast<const char*>(&validTextureCount), sizeof(int));
+
+                // 2. Guardar cada textura (longitud + path si existe)
+                for (const std::string& path : finalPaths)
+                {
+                    int length = path.length();
+                    file.write(reinterpret_cast<const char*>(&length), sizeof(int));
+
+                    if (length > 0)
+                        file.write(path.data(), length);
+                }
+
+                file.close();
+            }
+        }
+    }
+}
+
 void MeshImporter::RemoveOnlyEmbeddedTextures(aiScene* scene)
 {
     if (!scene->mTextures || scene->mNumTextures == 0) return;
@@ -631,7 +766,7 @@ void MeshImporter::RemoveOnlyEmbeddedTextures(aiScene* scene)
     }
 }
 
-bool MeshImporter::LoadAndExportModel(const std::string& inputPath, const std::string& outputMeshPath, const std::string& outputTexturePath)
+bool MeshImporter::LoadAndExportModel(const std::string& inputPath, const std::string& outputMeshPath, const std::string& outputMaterialPath, const std::string& outputTexturePath)
 {
     unsigned int flags = aiProcess_EmbedTextures | aiProcess_Triangulate | aiProcess_GenNormals;
     Assimp::Importer importer;
@@ -647,7 +782,11 @@ bool MeshImporter::LoadAndExportModel(const std::string& inputPath, const std::s
     {
         std::cout << "El modelo tiene " << scene->mNumMaterials << " materiales." << std::endl;
 
-        ExtractAndUpdateTextures(const_cast<aiScene*>(scene), outputTexturePath, filesystem::path(inputPath).parent_path().string());
+        std::string modelDirectory = filesystem::path(inputPath).parent_path().string();
+
+        ExtractAndUpdateTextures(const_cast<aiScene*>(scene), outputTexturePath, modelDirectory);
+
+        ExtractAndUpdateMaterials(const_cast<aiScene*>(scene), outputTexturePath, outputMaterialPath, modelDirectory);
     }
 
     // Comprobar si tiene animaciones
