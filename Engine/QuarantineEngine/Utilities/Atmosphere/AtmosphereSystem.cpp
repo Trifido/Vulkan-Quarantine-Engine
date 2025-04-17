@@ -27,7 +27,7 @@ void AtmosphereSystem::LoadAtmosphereDto(AtmosphereDto atmosphereDto, Camera* ca
         this->lightManager->CreateLight(LightType::SUN_LIGHT, this->SUN_NAME);
         this->sunLight = std::static_pointer_cast<SunLight>(this->lightManager->GetLight(SUN_NAME));
     }
-    this->sunLight->SetParameters(glm::normalize(atmosphereDto.sunDirection), atmosphereDto.sunIntensity);
+    this->sunLight->SetLightDirection(atmosphereDto.sunDirection);
 
     this->environmentType = static_cast<ENVIRONMENT_TYPE>(atmosphereDto.environmentType);
     this->IsInitialized = atmosphereDto.hasAtmosphere;

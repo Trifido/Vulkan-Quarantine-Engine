@@ -11,6 +11,7 @@ SunLight::SunLight(std::shared_ptr<VkRenderPass> renderPass, Camera* camera) :
     this->sunUBO = std::make_shared<UniformBufferObject>();
     this->sunUBO->CreateUniformBuffer(sizeof(SunUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 
+    this->baseIntensity = 100.0f;
     this->diffuse = glm::vec3(0.6f);
     this->specular = glm::vec3(0.1f);
     this->SetDistanceEffect(100.0f);
@@ -29,9 +30,18 @@ void SunLight::UpdateSun()
     }
 }
 
-void SunLight::SetParameters(glm::vec3 dir, float intensity)
+void SunLight::SetLightDirection(glm::vec3 dir)
 {
-    this->transform->ForwardVector = dir;
-    uniformData.Direction = dir;
-    uniformData.Intensity = intensity;
+    this->transform->ForwardVector = glm::normalize(dir);
+    this->uniformData.Direction = this->transform->ForwardVector;
+
+    float elevation = -glm::clamp(this->transform->ForwardVector.y, -1.0f, 1.0f);
+    float colorIntensity = glm::clamp(elevation, 0.0f, 1.0f);
+    this->uniformData.Intensity = this->baseIntensity * colorIntensity;
+
+    glm::vec3 sunsetColor = glm::vec3(1.0f, 0.4f, 0.2f); 
+    glm::vec3 dayColor = glm::vec3(1.0f, 1.0f, 0.9f);
+
+    this->diffuse = glm::mix(sunsetColor, dayColor, colorIntensity) * colorIntensity;
+    this->specular = glm::vec3(0.1f) * this->diffuse * colorIntensity;
 }

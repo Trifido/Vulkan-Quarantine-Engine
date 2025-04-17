@@ -442,25 +442,25 @@ void App::mainLoop()
         {
             glm::vec3 newDir = sunLight->transform->ForwardVector;
             newDir.x += 0.001f;
-            sunLight->SetParameters(newDir, sunLight->uniformData.Intensity);
+            sunLight->SetLightDirection(newDir);
         }
         if (ImGui::IsKeyDown('l') || ImGui::IsKeyDown('L'))
         {
             glm::vec3 newDir = sunLight->transform->ForwardVector;
             newDir.x -= 0.001f;
-            sunLight->SetParameters(newDir, sunLight->uniformData.Intensity);
+            sunLight->SetLightDirection(newDir);
         }
         if (ImGui::IsKeyDown('I'))
         {
             glm::vec3 newDir = sunLight->transform->ForwardVector;
-            newDir.z += 0.001f;
-            sunLight->SetParameters(newDir, sunLight->uniformData.Intensity);
+            newDir.y += 0.001f;
+            sunLight->SetLightDirection(newDir);
         }
         if (ImGui::IsKeyDown('K'))
         {
             glm::vec3 newDir = sunLight->transform->ForwardVector;
-            newDir.z -= 0.001f;
-            sunLight->SetParameters(newDir, sunLight->uniformData.Intensity);
+            newDir.y -= 0.001f;
+            sunLight->SetLightDirection(newDir);
         }
         if (ImGui::IsKeyDown('1'))
         {
