@@ -16,6 +16,7 @@ struct GameObjectDto
     int MeshImportedType;
     int MeshPrimitiveType;
     std::string MeshPath;
+    std::string BindMaterialName;
 
     GameObjectDto()
         : Id{},
@@ -23,11 +24,12 @@ struct GameObjectDto
         WorldTransform(glm::mat4(1.0f)),
         MeshImportedType(NONE_GEO),
         MeshPrimitiveType(-1),
-        MeshPath{}
+        MeshPath{},
+        BindMaterialName{}
     {
     }
 
-    GameObjectDto(std::string id, std::string name, glm::mat4 worldTransform, int meshImportedType, int meshPrimitiveType, std::string meshPath)
+    GameObjectDto(std::string id, std::string name, glm::mat4 worldTransform, int meshImportedType, int meshPrimitiveType, std::string meshPath, std::string materialName)
     {
         this->Id = id;
         this->Name = name;
@@ -35,6 +37,7 @@ struct GameObjectDto
         this->MeshImportedType = meshImportedType;
         this->MeshPrimitiveType = meshPrimitiveType;
         this->MeshPath = meshPath;
+        this->BindMaterialName = materialName;
     }
 };
 #pragma pack()

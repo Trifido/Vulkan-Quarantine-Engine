@@ -32,6 +32,8 @@ GameObject::GameObject(const GameObjectDto& gameObjectDto) : Numbered(gameObject
     PRIMITIVE_TYPE primitiveType = static_cast<PRIMITIVE_TYPE>(gameObjectDto.MeshPrimitiveType);
     MeshImportedType meshType = static_cast<MeshImportedType>(gameObjectDto.MeshImportedType);
 
+    this->bindMaterialName = gameObjectDto.BindMaterialName;
+
     if (meshType == MeshImportedType::PRIMITIVE_GEO && primitiveType != PRIMITIVE_TYPE::NONE_TYPE)
     {
         this->InitializeGameObject(primitiveType);
@@ -113,6 +115,7 @@ void GameObject::AddMaterial(std::shared_ptr<Material> material_ptr)
         return;
 
     this->_Material = material_ptr;
+    this->bindMaterialName = material_ptr->Name;
 
     if (this->_Mesh != nullptr)
     {
@@ -269,19 +272,24 @@ void GameObject::InitializeGameObject(PRIMITIVE_TYPE type, bool isMeshShading)
 
     if (type != PRIMITIVE_TYPE::GRID_TYPE)
     {
-        if (this->isMeshShading)
+        this->_Material = this->materialManager->GetMaterial(this->bindMaterialName);
+
+        if (this->_Material == nullptr)
         {
-            auto mat = this->materialManager->GetMaterial("defaultMeshPrimitiveMat");
-            auto newMatInstance = mat->CreateMaterialInstance();
-            this->materialManager->AddMaterial(newMatInstance);
-            this->AddMaterial(newMatInstance);
-        }
-        else
-        {
-            auto mat = this->materialManager->GetMaterial("defaultPrimitiveMat");
-            auto newMatInstance = mat->CreateMaterialInstance();
-            this->materialManager->AddMaterial(newMatInstance);
-            this->AddMaterial(newMatInstance);
+            if (this->isMeshShading)
+            {
+                auto mat = this->materialManager->GetMaterial("defaultMeshPrimitiveMat");
+                auto newMatInstance = mat->CreateMaterialInstance();
+                this->materialManager->AddMaterial(newMatInstance);
+                this->AddMaterial(newMatInstance);
+            }
+            else
+            {
+                auto mat = this->materialManager->GetMaterial("defaultPrimitiveMat");
+                auto newMatInstance = mat->CreateMaterialInstance();
+                this->materialManager->AddMaterial(newMatInstance);
+                this->AddMaterial(newMatInstance);
+            }
         }
 
         this->_Material->InitializeMaterialDataUBO();
@@ -350,7 +358,11 @@ bool GameObject::CreateChildsGameObject(std::string pathfile)
     {
         this->_Mesh = std::make_shared<Mesh>(Mesh(data[0]));
         this->_Transform = std::make_shared<Transform>(Transform(data[0].model));
-        this->AddMaterial(this->materialManager->GetMaterial(data[0].materialID));
+        this->_Material = this->materialManager->GetMaterial(this->bindMaterialName);
+        if (this->_Material == nullptr)
+        {
+            this->AddMaterial(this->materialManager->GetMaterial(data[0].materialID));
+        }
     }
 
     if (this->_meshImportedType == MeshImportedType::ANIMATED_GEO)

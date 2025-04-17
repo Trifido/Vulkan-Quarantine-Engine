@@ -27,6 +27,7 @@ private:
     PFN_vkCmdDrawMeshTasksEXT vkCmdDrawMeshTasksEXT = nullptr;
     CullingSceneManager* cullingSceneManager = nullptr;
     std::shared_ptr<AABBObject> aabbculling = nullptr;
+    std::string bindMaterialName = "NULL_MATERIAL";
 
 protected:
     DeviceModule*       deviceModule = nullptr;

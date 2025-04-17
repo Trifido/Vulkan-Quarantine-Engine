@@ -74,7 +74,8 @@ Material::Material(std::shared_ptr<ShaderModule> shader_ptr, const MaterialDto& 
 
 std::shared_ptr<Material> Material::CreateMaterialInstance()
 {
-    std::shared_ptr<Material> mat_instance = std::make_shared<Material>(this->Name, this->shader);
+    std::string instanceName = "QEMatInst_" + this->Name;
+    std::shared_ptr<Material> mat_instance = std::make_shared<Material>(instanceName, this->shader);
     mat_instance->layer = this->layer;
     return mat_instance;
 }

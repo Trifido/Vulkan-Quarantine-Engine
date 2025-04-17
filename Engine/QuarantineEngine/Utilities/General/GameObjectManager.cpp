@@ -156,13 +156,20 @@ void GameObjectManager::SaveGameObjects(std::ofstream& file)
         unsigned int id = this->renderLayers.GetLayer(idl);
         for (auto model : this->_objects[id])
         {
+            std::string matPath = "NULL_MATERIAL";
+            if (model.second->_Material != nullptr)
+            {
+                matPath = model.second->_Material->Name;
+            }
+
             GameObjectDto gameObjectDto(
                 model.second->ID(),
                 model.first,
                 model.second->_Transform->GetModel(),
                 model.second->_meshImportedType,
                 model.second->_primitiveMeshType,
-                model.second->MeshFilePath);
+                model.second->MeshFilePath,
+                matPath);
             gameObjectDtos.push_back(gameObjectDto);
         }
     }
@@ -190,6 +197,15 @@ void GameObjectManager::SaveGameObjects(std::ofstream& file)
         size_t meshPathLength = gameObjectDtos[i].MeshPath.length();
         file.write(reinterpret_cast<const char*>(&meshPathLength), sizeof(meshPathLength));
         file.write(gameObjectDtos[i].MeshPath.c_str(), meshPathLength);
+
+
+        size_t matPathLength = gameObjectDtos[i].BindMaterialName.length();
+        file.write(reinterpret_cast<const char*>(&matPathLength), sizeof(matPathLength));
+
+        if (matPathLength > 0)
+        {
+            file.write(gameObjectDtos[i].BindMaterialName.c_str(), matPathLength);
+        }
     }
 }
 
@@ -211,6 +227,7 @@ std::vector<GameObjectDto> GameObjectManager::GetGameObjectDtos(std::ifstream& f
 
     size_t idLength;
     size_t meshPathLength;
+    size_t matPathLength;
     size_t nameLength;
 
     std::vector<GameObjectDto> gameObjectDtos(numGameObjects);
@@ -233,6 +250,17 @@ std::vector<GameObjectDto> GameObjectManager::GetGameObjectDtos(std::ifstream& f
         file.read(reinterpret_cast<char*>(&meshPathLength), sizeof(meshPathLength));
         gameObjectDtos[i].MeshPath.resize(meshPathLength);
         file.read(&gameObjectDtos[i].MeshPath[0], meshPathLength);
+
+        file.read(reinterpret_cast<char*>(&matPathLength), sizeof(matPathLength));
+        gameObjectDtos[i].BindMaterialName.resize(matPathLength);
+        if (matPathLength > 0)
+        {
+            file.read(&gameObjectDtos[i].BindMaterialName[0], matPathLength);
+        }
+        else
+        {
+            gameObjectDtos[i].BindMaterialName = "NULL_MATERIAL";
+        }
     }
 
     return gameObjectDtos;

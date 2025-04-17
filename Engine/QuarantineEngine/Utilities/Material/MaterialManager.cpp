@@ -149,6 +149,7 @@ void MaterialManager::AddMaterial(Material mat)
 {
     std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(mat);
     std::string nameMaterial = CheckName(mat.Name);
+    mat_ptr->Name = nameMaterial;
     _materials[nameMaterial] = mat_ptr;
 }
 
@@ -325,7 +326,7 @@ MaterialDto MaterialManager::ReadQEMaterial(std::ifstream& matfile)
     matfile.read(reinterpret_cast<char*>(&materialDto.Shininess_Strength), sizeof(float));
     matfile.read(reinterpret_cast<char*>(&materialDto.Refractivity), sizeof(float));
 
-    matfile.read(reinterpret_cast<char*>(&materialDto.Diffuse), sizeof(glm::vec4));
+    matfile.read(reinterpret_cast<char*>(&materialDto.Diffuse[0]), sizeof(glm::vec4));
     matfile.read(reinterpret_cast<char*>(&materialDto.Ambient), sizeof(glm::vec4));
     matfile.read(reinterpret_cast<char*>(&materialDto.Specular), sizeof(glm::vec4));
     matfile.read(reinterpret_cast<char*>(&materialDto.Emissive), sizeof(glm::vec4));
