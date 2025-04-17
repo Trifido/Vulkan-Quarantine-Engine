@@ -13,35 +13,23 @@ void CullingSceneManager::InitializeCullingSceneResources()
 
     ShaderManager* shaderManager = ShaderManager::getInstance();
 
-    auto absPath = std::filesystem::absolute("../../resources/shaders").generic_string();
+    this->shader_aabb_ptr = shaderManager->GetShader("shader_aabb_debug");
 
-    std::string substring = "/Engine";
-    std::size_t ind = absPath.find(substring);
+    MaterialManager* matManager = MaterialManager::getInstance();
+    std::string nameDebugAABB = "editorDebugAABB";
 
-    if (ind != std::string::npos) {
-        absPath.erase(ind, substring.length());
+    if (!matManager->Exists(nameDebugAABB))
+    {
+        this->material_aabb_ptr = std::make_shared<Material>(Material(nameDebugAABB, this->shader_aabb_ptr));
+        this->material_aabb_ptr->layer = (unsigned int)RenderLayer::EDITOR;
+        this->material_aabb_ptr->InitializeMaterialDataUBO();
+        matManager->AddMaterial(this->material_aabb_ptr);
     }
-
-    const std::string absolute_debugBB_vertex_shader_path = absPath + "/Debug/debugAABB_vert.spv";
-    const std::string absolute_debugBB_frag_shader_path = absPath + "/Debug/debugAABB_frag.spv";
-
-    GraphicsPipelineData gpData = {};
-    gpData.HasVertexData = true;
-    gpData.polygonMode = VK_POLYGON_MODE_LINE;
-    gpData.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-    gpData.vertexBufferStride = sizeof(glm::vec4);
-    gpData.lineWidth = 2.0f;
-
-    this->shader_aabb_ptr = std::make_shared<ShaderModule>(ShaderModule(absolute_debugBB_vertex_shader_path, absolute_debugBB_frag_shader_path, gpData));
-    shaderManager->AddShader("shader_aabb_debug", shader_aabb_ptr);
-
-    this->material_aabb_ptr = std::make_shared<Material>(Material(this->shader_aabb_ptr));
-    this->material_aabb_ptr->layer = (unsigned int)RenderLayer::EDITOR;
-    this->material_aabb_ptr->InitializeMaterialDataUBO();
-
-    MaterialManager* instanceMaterialManager = MaterialManager::getInstance();
-    std::string nameDebugAABB = "editor:debug_AABB";
-    instanceMaterialManager->AddMaterial(nameDebugAABB, this->material_aabb_ptr);
+    else
+    {
+        this->material_aabb_ptr = matManager->GetMaterial(nameDebugAABB);
+        this->material_aabb_ptr->InitializeMaterialDataUBO();
+    }
 }
 
 std::shared_ptr<AABBObject> CullingSceneManager::GenerateAABB(std::pair<glm::vec3, glm::vec3> aabbData, std::shared_ptr<Transform> transform_ptr)

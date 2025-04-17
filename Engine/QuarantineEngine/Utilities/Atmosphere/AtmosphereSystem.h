@@ -9,11 +9,17 @@
 #include <LightManager.h>
 #include <QESingleton.h>
 #include <Compute/ComputeNodeManager.h>
+#include <AtmosphereDto.h>
+#include <SunLight.h>
 
 using namespace std;
 
 class AtmosphereSystem : public QESingleton<AtmosphereSystem>
 {
+private:
+    const std::string SUN_NAME = "QESunLight";
+    std::shared_ptr<SunLight> sunLight;
+
 public:
     enum ENVIRONMENT_TYPE
     {
@@ -24,7 +30,6 @@ public:
 
     bool IsInitialized = false;
 
-    SunUniform Sun;
 private:
     friend class QESingleton<AtmosphereSystem>; // Permitir acceso al constructor
 
@@ -36,7 +41,6 @@ private:
 
     std::shared_ptr<CustomTexture> outputTexture;
     std::shared_ptr<UniformBufferObject> resolutionUBO = nullptr;
-    std::shared_ptr<UniformBufferObject> sunUBO = nullptr;
 
     // Environment type
     ENVIRONMENT_TYPE environmentType;
@@ -84,6 +88,8 @@ public:
     AtmosphereSystem();
     ~AtmosphereSystem();
 
+    void LoadAtmosphereDto(AtmosphereDto atmosphereDto, Camera* cameraPtr);
+    AtmosphereDto CreateAtmosphereDto();
     void AddTextureResources(const string* texturePaths, uint32_t numTextures);
     void InitializeAtmosphere(Camera* cameraPtr);
     void InitializeAtmosphere(ENVIRONMENT_TYPE type, const string* texturePaths, uint32_t numTextures, Camera* cameraPtr);

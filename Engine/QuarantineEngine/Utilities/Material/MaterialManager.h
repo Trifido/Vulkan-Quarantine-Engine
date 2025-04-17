@@ -9,6 +9,7 @@
 #include <GraphicsPipelineModule.h>
 #include <RenderPassModule.h>
 #include <QESingleton.h>
+#include <MaterialDto.h>
 
 class MaterialManager : public QESingleton<MaterialManager>
 {
@@ -24,29 +25,33 @@ private:
     std::shared_ptr<ShaderModule> default_primitive_shader;
     std::shared_ptr<ShaderModule> default_particles_shader;
     std::shared_ptr<ShaderModule> mesh_shader_test;
+    std::shared_ptr<ShaderModule> shader_aabb_ptr;
+    std::shared_ptr<ShaderModule> shader_grid_ptr;
 
 public:
     std::shared_ptr<ShaderModule> csm_shader;
     std::shared_ptr<ShaderModule> omni_shadow_mapping_shader;
 
 private:
-    std::string CheckName(std::string nameMaterial);
     void CreateDefaultPrimitiveMaterial();
 public:
     MaterialManager();
     void InitializeMaterialManager();
     std::shared_ptr<Material> GetMaterial(std::string nameMaterial);
-    void AddMaterial(const char* nameMaterial, std::shared_ptr<Material> mat_ptr);
-    void AddMaterial(std::string& nameMaterial, std::shared_ptr<Material> mat_ptr);
-    void AddMaterial(std::string& nameMaterial, Material mat);
-    void AddMaterial(const char* nameMaterial, Material mat);
-    void CreateMaterial(std::string& nameMaterial, bool hasAnimation);
+    void AddMaterial(std::shared_ptr<Material> mat_ptr);
+    void AddMaterial(Material mat);
+    std::string CheckName(std::string nameMaterial);
+    void CreateMaterial(std::string& nameMaterial);
     void CreateMeshShaderMaterial(std::string& nameMaterial);
     bool Exists(std::string materialName);
     void CleanPipelines();
     void CleanLastResources();
     void UpdateUniforms();
     void InitializeMaterials();
+    static std::vector<MaterialDto> GetMaterialDtos(std::ifstream& file);
+    static MaterialDto ReadQEMaterial(std::ifstream& file);
+    void LoadMaterialDtos(std::vector<MaterialDto>& materialDtos);
+    void SaveMaterials(std::ofstream& file);
 };
 
 #endif

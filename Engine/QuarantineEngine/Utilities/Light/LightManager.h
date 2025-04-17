@@ -4,6 +4,7 @@
 
 #include <unordered_map>
 #include <memory>
+#include <fstream>
 #include <Light/Light.h>
 #include <Camera.h>
 #include <SwapChainModule.h>
@@ -18,6 +19,7 @@
 #include <CSMDescriptorsManager.h>
 
 #include <QESingleton.h>
+#include <LightDto.h>
 
 class DirectionalLight;
 class SpotLight;
@@ -92,6 +94,9 @@ public:
     void AddDirShadowMapShader(std::shared_ptr<ShaderModule> shadow_mapping_shader);
     void AddOmniShadowMapShader(std::shared_ptr<ShaderModule> omni_shadow_mapping_shader);
     void CreateLight(LightType type, std::string name);
+    void LoadLightDtos(const std::vector <LightDto>& lightDtos);
+    static std::vector <LightDto> GetLightDtos(std::ifstream& file);
+    void SaveLights(std::ofstream& file);
     std::shared_ptr<Light> GetLight(std::string name);
     void InitializeShadowMaps();
     void Update();

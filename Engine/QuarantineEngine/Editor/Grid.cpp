@@ -9,31 +9,23 @@ Grid::Grid()
 
     ShaderManager* shaderManager = ShaderManager::getInstance();
 
-    auto absPath = std::filesystem::absolute("../../resources/shaders").generic_string();
+    this->shader_grid_ptr = shaderManager->GetShader("shader_grid");
 
-    std::string substring = "/Engine";
-    std::size_t ind = absPath.find(substring);
+    MaterialManager* matManager = MaterialManager::getInstance();
 
-    if (ind != std::string::npos) {
-        absPath.erase(ind, substring.length());
+    std::string nameGrid = "editorGrid";
+    if (!matManager->Exists(nameGrid))
+    {
+        this->material_grid_ptr = std::make_shared<Material>(Material(nameGrid, this->shader_grid_ptr));
+        this->material_grid_ptr->layer = (unsigned int)RenderLayer::EDITOR;
+        this->material_grid_ptr->InitializeMaterialDataUBO();
+        matManager->AddMaterial(this->material_grid_ptr);
     }
-
-    const std::string absolute_grid_vertex_shader_path = absPath + "/Grid/grid_vert.spv";
-    const std::string absolute_grid_frag_shader_path = absPath + "/Grid/grid_frag.spv";
-
-    GraphicsPipelineData gpData = {};
-    gpData.HasVertexData = false;
-
-    this->shader_grid_ptr = std::make_shared<ShaderModule>(ShaderModule(absolute_grid_vertex_shader_path, absolute_grid_frag_shader_path, gpData));
-    shaderManager->AddShader("shader_grid", shader_grid_ptr);
-
-    this->material_grid_ptr = std::make_shared<Material>(Material(this->shader_grid_ptr));
-    this->material_grid_ptr->layer = (unsigned int)RenderLayer::EDITOR;
-    this->material_grid_ptr->InitializeMaterialDataUBO();
-
-    MaterialManager* instanceMaterialManager = MaterialManager::getInstance();
-    std::string nameGrid = "editor:grid";
-    instanceMaterialManager->AddMaterial(nameGrid, this->material_grid_ptr);
+    else
+    {
+        this->material_grid_ptr = matManager->GetMaterial(nameGrid);
+        this->material_grid_ptr->InitializeMaterialDataUBO();
+    }
     this->gridMesh->AddMaterial(this->material_grid_ptr);
 }
 

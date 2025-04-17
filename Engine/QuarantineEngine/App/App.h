@@ -55,6 +55,7 @@
 #include <ShadowPipelineManager.h>
 #include <Particles/ParticleSystemManager.h>
 #include <AtmosphereSystem.h>
+#include <QEScene.h>
 
 using namespace std;
 
@@ -94,13 +95,14 @@ class App
 public:
     App();
     ~App();
-    void run();
+    void run(QEScene scene);
 
     void addWindow(GLFWwindow& window);
     void initWindow();
     void init_imgui();
 private:
     void initVulkan();
+    void loadScene(QEScene scene);
     void mainLoop();
     void computeFrame();
     void drawFrame();  
@@ -139,6 +141,8 @@ private:
     //FontResourcesModule     fontModule;
 
     //RayTracingModule        raytracingModule;
+
+    QEScene     scene;
 
     Camera*     cameraEditor;
     LightManager*       lightManager {};

@@ -58,6 +58,7 @@ private:
     GraphicsPipelineData                            graphicsPipelineData;
 
 public:
+    std::string                                     shaderNameID;
     ReflectShader                                   reflectShader;
     std::vector<VkPipelineShaderStageCreateInfo>    shaderStages;
     VkPipelineVertexInputStateCreateInfo            vertexInputInfo{};
@@ -68,10 +69,10 @@ public:
     bool                                            IsShadowShader = false;
 
 public:
-    ShaderModule();
-    ShaderModule(std::string shaderName, GraphicsPipelineData pipelineData = GraphicsPipelineData());
-    ShaderModule(std::string vertexShaderName, std::string fragmentShaderName, GraphicsPipelineData pipelineData = GraphicsPipelineData());
-    ShaderModule(std::string firstShaderName, std::string secondShaderName, std::string thirdShaderName, GraphicsPipelineData pipelineData = GraphicsPipelineData());
+    ShaderModule(std::string shaderId);
+    ShaderModule(std::string shaderId, std::string shaderName, GraphicsPipelineData pipelineData = GraphicsPipelineData());
+    ShaderModule(std::string shaderId, std::string vertexShaderName, std::string fragmentShaderName, GraphicsPipelineData pipelineData = GraphicsPipelineData());
+    ShaderModule(std::string shaderId, std::string firstShaderName, std::string secondShaderName, std::string thirdShaderName, GraphicsPipelineData pipelineData = GraphicsPipelineData());
 
     static std::vector<char> readFile(const std::string& filename);
     void createShaderModule(const std::string& filename_compute);

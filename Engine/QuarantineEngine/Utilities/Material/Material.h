@@ -11,6 +11,7 @@
 #include <MaterialData.h>
 #include <DescriptorBuffer.h>
 #include <LightManager.h>
+#include <MaterialDto.h>
 
 class Material : public GameComponent
 {
@@ -20,16 +21,19 @@ private:
     bool hasDescriptorBuffer = false;
     bool isMeshShaderEnabled = false;
     LightManager* lightManager;
+    std::string materialFilePath;
 
 public:
+    std::string Name;
     MaterialData materialData;
     unsigned int layer;
     std::shared_ptr<ShaderModule> shader = nullptr;
     std::shared_ptr<DescriptorBuffer> descriptor;
 
 public:
-    Material();
-    Material(std::shared_ptr<ShaderModule> shader_ptr);
+    Material(std::string name, std::string filepath = "");
+    Material(std::string name, std::shared_ptr<ShaderModule> shader_ptr, std::string filepath = "");
+    Material(std::shared_ptr<ShaderModule> shader_ptr, const MaterialDto& materialDto);
     void CleanLastResources();
 
     void cleanup();
@@ -41,6 +45,7 @@ public:
     bool HasDescriptorBuffer() { return this->hasDescriptorBuffer; }
     void SetMeshShaderPipeline(bool value);
     void BindDescriptors(VkCommandBuffer& commandBuffer, uint32_t idx);
+    std::string SaveMaterialFile();
 };
 
 #endif // !MATERIAL_H

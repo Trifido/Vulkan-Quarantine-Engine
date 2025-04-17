@@ -3,8 +3,9 @@
 #include <fstream>
 #include <stdexcept>
 
-ShaderModule::ShaderModule()
+ShaderModule::ShaderModule(std::string shaderId)
 {
+    this->shaderNameID = shaderId;
     this->deviceModule = DeviceModule::getInstance();
     this->graphicsPipelineManager = GraphicsPipelineManager::getInstance();
     this->shadowPipelineManager = ShadowPipelineManager::getInstance();
@@ -12,7 +13,7 @@ ShaderModule::ShaderModule()
     this->reflectShader = ReflectShader();
 }
 
-ShaderModule::ShaderModule(std::string shaderName, GraphicsPipelineData pipelineData) : ShaderModule()
+ShaderModule::ShaderModule(std::string shaderId, std::string shaderName, GraphicsPipelineData pipelineData) : ShaderModule(shaderId)
 {
     this->graphicsPipelineData = pipelineData;
 
@@ -26,7 +27,7 @@ ShaderModule::ShaderModule(std::string shaderName, GraphicsPipelineData pipeline
     }
 }
 
-ShaderModule::ShaderModule(std::string vertexShaderName, std::string fragmentShaderName, GraphicsPipelineData pipelineData) : ShaderModule()
+ShaderModule::ShaderModule(std::string shaderId, std::string vertexShaderName, std::string fragmentShaderName, GraphicsPipelineData pipelineData) : ShaderModule(shaderId)
 {
     this->graphicsPipelineData = pipelineData;
 
@@ -40,8 +41,8 @@ ShaderModule::ShaderModule(std::string vertexShaderName, std::string fragmentSha
     }
 }
 
-ShaderModule::ShaderModule(std::string firstShaderName, std::string secondShaderName, std::string thirdShaderName, GraphicsPipelineData pipelineData)
-    : ShaderModule()
+ShaderModule::ShaderModule(std::string shaderId, std::string firstShaderName, std::string secondShaderName, std::string thirdShaderName, GraphicsPipelineData pipelineData)
+    : ShaderModule(shaderId)
 {
     this->graphicsPipelineData = pipelineData;
 

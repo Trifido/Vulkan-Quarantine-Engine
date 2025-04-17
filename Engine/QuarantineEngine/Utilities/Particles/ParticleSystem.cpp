@@ -42,7 +42,7 @@ void ParticleSystem::InitializeMaterial()
 {
     auto mat = this->materialManager->GetMaterial("defaultParticlesMat");
     auto newMatInstance = mat->CreateMaterialInstance();
-    this->materialManager->AddMaterial("defaultParticlesMat", newMatInstance);
+    this->materialManager->AddMaterial(newMatInstance);
 
     this->AddMaterial(newMatInstance);
     this->_Material->InitializeMaterialDataUBO();

@@ -7,6 +7,7 @@
 #include <BufferManageModule.h>
 #include <filesystem>
 #include "../Editor/Grid.h"
+#include <QEProjectManager.h>
 
 
 App::App()
@@ -29,8 +30,10 @@ App::~App()
 
 }
 
-void App::run()
+void App::run(QEScene scene)
 {
+    this->scene = scene;
+
     initWindow();
     initVulkan();
     mainLoop();
@@ -148,9 +151,6 @@ void App::initVulkan()
     //Creamos el frame buffer
     framebufferModule.createFramebuffer(renderPassModule->renderPass);
 
-    //Añadimos el camera editor
-    this->cameraEditor = CameraEditor::getInstance();
-
     //Añadimos requisitos para los geometryComponent
     BufferManageModule::commandPool = this->commandPoolModule->getCommandPool();
     BufferManageModule::computeCommandPool = this->commandPoolModule->getComputeCommandPool();
@@ -175,20 +175,17 @@ void App::initVulkan()
     this->computeNodeManager->InitializeComputeResources();
     this->particleSystemManager = ParticleSystemManager::getInstance();
 
-    this->lightManager->AddDirShadowMapShader(materialManager->csm_shader);
-    this->lightManager->AddOmniShadowMapShader(materialManager->omni_shadow_mapping_shader);
-    this->lightManager->SetCamera(this->cameraEditor);
+    // Import meshes
+    //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Raptoid/scene.gltf");
+    //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Golem/scene.gltf");
+
+    // Load Scene
+    this->loadScene(this->scene);
 
     this->cullingSceneManager = CullingSceneManager::getInstance();
     this->cullingSceneManager->InitializeCullingSceneResources();
     this->cullingSceneManager->AddCameraFrustum(this->cameraEditor->frustumComponent);
     this->cullingSceneManager->DebugMode = false;
-
-    this->atmosphereSystem = AtmosphereSystem::getInstance();
-    //this->atmosphereSystem->InitializeAtmosphere(this->cameraEditor);
-    //this->atmosphereSystem->InitializeAtmosphere(AtmosphereSystem::CUBEMAP, TEXTURE_SKYBOX_PATH_FACES.data(), TEXTURE_SKYBOX_PATH_FACES.size(), this->cameraEditor);
-    //this->atmosphereSystem->InitializeAtmosphere(AtmosphereSystem::SPHERICALMAP, &TEXTURE_SPHERICAL_MAP_PATH, 1, this->cameraEditor);
-    this->atmosphereSystem->InitializeAtmosphere(this->cameraEditor);
 
     // Inicializamos los componentes del editor
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
@@ -204,20 +201,24 @@ void App::initVulkan()
         absPath.erase(ind, substring.length());
     }
 
-    /*
+    /**/
+    //const std::string absolute_path = absPath + "/cyber_warrior/scene.gltf";
+    //const std::string absolute_path = absPath + "/drone/mech_drone.glb";
     //const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
-    const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
+    //const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
 
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(absolute_path));
+    //std::filesystem::path path = "C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/golem/Meshes/scene.gltf";
+    std::filesystem::path path = "C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf";
+    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(path.string()));
 
-    //model->transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
+    //model->_Transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
     //model->transform->SetOrientation(glm::vec3(-90.0f, 180.0f, 0.0f));
     model->_Transform->SetScale(glm::vec3(0.01f));
     //model->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
     //model->_Material->materialData.SetMaterialField("Specular", glm::vec3(0.5f, 0.5f, 0.5f));
     //model->_Material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
-    this->gameObjectManager->AddGameObject(model, "model");
-
+    this->gameObjectManager->AddGameObject(model, "modelRaptoid");
+    /**/
     std::shared_ptr<GameObject> floor = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
     floor->_Transform->SetPosition(glm::vec3(0.0f, -0.01f, 0.0f));
     floor->_Transform->SetScale(glm::vec3(3.0f, 1.0f, 3.0f));
@@ -301,11 +302,11 @@ void App::initVulkan()
 
     // DIRECTIONAL LIGHTS
     {
-        this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
-        auto dirlight = this->lightManager->GetLight("DirectionalLight0");
-        dirlight->diffuse = glm::vec3(0.6f);
-        dirlight->specular = glm::vec3(0.1f);
-        dirlight->SetDistanceEffect(100.0f);
+        //this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
+        //auto dirlight = this->lightManager->GetLight("DirectionalLight0");
+        //dirlight->diffuse = glm::vec3(0.6f);
+        //dirlight->specular = glm::vec3(0.1f);
+        //dirlight->SetDistanceEffect(100.0f);
 
         //this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight2");
         //auto dirlight2 = this->lightManager->GetLight("DirectionalLight2");
@@ -368,6 +369,31 @@ void App::initVulkan()
     init_imgui();
 }
 
+void App::loadScene(QEScene scene)
+{
+    // Initialize the camera editor
+    this->cameraEditor = CameraEditor::getInstance();
+    this->cameraEditor->LoadCameraDto(this->mainWindow.width, this->mainWindow.height, this->scene.cameraEditor);
+
+    // Initialize the materials
+    this->materialManager->LoadMaterialDtos(this->scene.materialDtos);
+
+    // Initialize the game object manager & the game objects
+    cout << "GameObject loading..." << endl;
+    this->gameObjectManager->LoadGameObjectDtos(this->scene.gameObjectDtos);
+
+    // Initialize the light manager & the lights
+    this->lightManager->AddDirShadowMapShader(materialManager->csm_shader);
+    this->lightManager->AddOmniShadowMapShader(materialManager->omni_shadow_mapping_shader);
+    this->lightManager->SetCamera(this->cameraEditor);
+
+    this->lightManager->LoadLightDtos(this->scene.lightDtos);
+
+    // Initialize the atmophere system
+    this->atmosphereSystem = AtmosphereSystem::getInstance();
+    this->atmosphereSystem->LoadAtmosphereDto(this->scene.atmosphere, this->cameraEditor);
+}
+
 void App::mainLoop()
 {
     bool changeAnimation = true;
@@ -402,37 +428,39 @@ void App::mainLoop()
         // UPDATE ATMOSPHERE
         this->atmosphereSystem->UpdateSun();
 
+        auto sunLight = std::static_pointer_cast<SunLight>(this->lightManager->GetLight("QESunLight"));
+
+        ImGuiIO& io = ImGui::GetIO();
+        if (io.KeyCtrl && (ImGui::IsKeyPressed('s', false) || ImGui::IsKeyPressed('S', false)))
+        {
+            this->scene.cameraEditor = this->cameraEditor->CreateCameraDto();
+            this->scene.atmosphere = this->atmosphereSystem->CreateAtmosphereDto();
+            this->scene.SaveScene();
+        }
+
         if (ImGui::IsKeyDown('j') || ImGui::IsKeyDown('J'))
         {
-            this->atmosphereSystem->Sun.Direction.x -= 0.001f;
-            //glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            //newPos.x += 0.1f;
-            //this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
-            //this->lightManager->UpdateUniform();
+            glm::vec3 newDir = sunLight->transform->ForwardVector;
+            newDir.x += 0.001f;
+            sunLight->SetLightDirection(newDir);
         }
         if (ImGui::IsKeyDown('l') || ImGui::IsKeyDown('L'))
         {
-            this->atmosphereSystem->Sun.Direction.x += 0.001f;
-            //glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            //newPos.x -= 0.1f;
-            //this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
-            //this->lightManager->UpdateUniform();
+            glm::vec3 newDir = sunLight->transform->ForwardVector;
+            newDir.x -= 0.001f;
+            sunLight->SetLightDirection(newDir);
         }
         if (ImGui::IsKeyDown('I'))
         {
-            this->atmosphereSystem->Sun.Direction.y += 0.001f;
-            //glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            //newPos.z += 0.1f;
-            //this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
-            //this->lightManager->UpdateUniform();
+            glm::vec3 newDir = sunLight->transform->ForwardVector;
+            newDir.y += 0.001f;
+            sunLight->SetLightDirection(newDir);
         }
         if (ImGui::IsKeyDown('K'))
         {
-            this->atmosphereSystem->Sun.Direction.y -= 0.001f;
-            //glm::vec3 newPos = this->lightManager->GetLight("DirectionalLight0")->transform->Rotation;
-            //newPos.z -= 0.1f;
-            //this->lightManager->GetLight("DirectionalLight0")->transform->SetOrientation(newPos);
-            //this->lightManager->UpdateUniform();
+            glm::vec3 newDir = sunLight->transform->ForwardVector;
+            newDir.y -= 0.001f;
+            sunLight->SetLightDirection(newDir);
         }
         if (ImGui::IsKeyDown('1'))
         {

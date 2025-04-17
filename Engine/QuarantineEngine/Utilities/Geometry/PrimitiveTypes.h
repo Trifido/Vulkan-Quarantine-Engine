@@ -5,6 +5,7 @@
 
 enum PRIMITIVE_TYPE
 {
+    NONE_TYPE,
     POINT_TYPE,
     TRIANGLE_TYPE,
     QUAD_TYPE,

@@ -12,7 +12,11 @@ MaterialData::MaterialData()
     this->fillEmptyTextures();
 
     this->numTextures = 0;
-    this->idxDiffuse = this->idxEmissive = this->idxHeight = this->idxNormal = this->idxSpecular = -1;
+    this->IDTextures[TEXTURE_TYPE::DIFFUSE_TYPE] = -1;
+    this->IDTextures[TEXTURE_TYPE::NORMAL_TYPE] = -1;
+    this->IDTextures[TEXTURE_TYPE::SPECULAR_TYPE] = -1;
+    this->IDTextures[TEXTURE_TYPE::EMISSIVE_TYPE] = -1;
+    this->IDTextures[TEXTURE_TYPE::HEIGHT_TYPE] = -1;
 
     this->Shininess = 32.0f;
     this->Opacity = 1.0f;
@@ -74,21 +78,21 @@ void MaterialData::ImportAssimpTexture(const aiScene* scene, aiMaterial* materia
     std::string textureName = this->GetTexture(scene, material, aiTextureType_DIFFUSE, TEXTURE_TYPE::DIFFUSE_TYPE);
     if (textureName != "")
     {
-        this->AddTexture(this->textureManager->GetTexture(textureName));
+        this->AddTexture(textureName, this->textureManager->GetTexture(textureName));
     }
     else
     {
         textureName = this->GetTexture(scene, material, aiTextureType_BASE_COLOR, TEXTURE_TYPE::DIFFUSE_TYPE);
         if (textureName != "")
         {
-            this->AddTexture(this->textureManager->GetTexture(textureName));
+            this->AddTexture(textureName, this->textureManager->GetTexture(textureName));
         }
         else
         {
             textureName = this->GetTexture(scene, material, aiTextureType_DIFFUSE_ROUGHNESS, TEXTURE_TYPE::DIFFUSE_TYPE);
             if (textureName != "")
             {
-                this->AddTexture(this->textureManager->GetTexture(textureName));
+                this->AddTexture(textureName, this->textureManager->GetTexture(textureName));
             }
         }
     }
@@ -96,33 +100,33 @@ void MaterialData::ImportAssimpTexture(const aiScene* scene, aiMaterial* materia
     textureName = this->GetTexture(scene, material, aiTextureType_SPECULAR, TEXTURE_TYPE::SPECULAR_TYPE);
     if (textureName != "")
     {
-        this->AddTexture(this->textureManager->GetTexture(textureName));
+        this->AddTexture(textureName, this->textureManager->GetTexture(textureName));
     }
 
     textureName = this->GetTexture(scene, material, aiTextureType_NORMALS, TEXTURE_TYPE::NORMAL_TYPE);
     if (textureName != "")
     {
-        this->AddTexture(this->textureManager->GetTexture(textureName));
+        this->AddTexture(textureName, this->textureManager->GetTexture(textureName));
     }
     else
     {
         textureName = this->GetTexture(scene, material, aiTextureType_HEIGHT, TEXTURE_TYPE::NORMAL_TYPE);
         if (textureName != "")
         {
-            this->AddTexture(this->textureManager->GetTexture(textureName));
+            this->AddTexture(textureName, this->textureManager->GetTexture(textureName));
         }
     }
 
     textureName = this->GetTexture(scene, material, aiTextureType_EMISSIVE, TEXTURE_TYPE::EMISSIVE_TYPE);
     if (textureName != "")
     {
-        this->AddTexture(this->textureManager->GetTexture(textureName));
+        this->AddTexture(textureName, this->textureManager->GetTexture(textureName));
     }
 
     textureName = this->GetTexture(scene, material, aiTextureType_HEIGHT, TEXTURE_TYPE::HEIGHT_TYPE);
     if (textureName != "")
     {
-        this->AddTexture(this->textureManager->GetTexture(textureName));
+        this->AddTexture(textureName, this->textureManager->GetTexture(textureName));
     }
 }
 
@@ -131,46 +135,38 @@ std::string MaterialData::GetTexture(const aiScene* scene, aiMaterial* mat, aiTe
     aiString str;
     mat->Get(AI_MATKEY_TEXTURE(type, 0), str);
 
-    if (auto texture = scene->GetEmbeddedTexture(str.C_Str()))
+    aiReturn texFound = mat->GetTexture(type, 0, &str);
+
+    if (texFound == AI_SUCCESS)
     {
-        std::string finalName = this->textureManager->AddTexture(texture->mFilename.C_Str(), CustomTexture(texture->pcData, texture->mWidth, texture->mHeight, textureType));
-        this->currentTextures.insert(texture->mFilename.C_Str());
+        std::string filePath = std::string(str.C_Str());
+        std::string finalName;
+        std::size_t pos = 0;
+        if (this->fileExtension == "fbx")
+        {
+            pos = filePath.find("\\");
+            finalName = filePath.substr(pos + 1, filePath.size());
+        }
+        else
+        {
+            finalName = filePath;
+        }
+
+        filePath = this->texturePath + finalName;
+
+        if (this->currentTextures.find(str.C_Str()) == this->currentTextures.end())
+        {
+            finalName = this->textureManager->AddTexture(finalName, CustomTexture(filePath, textureType));
+            this->currentTextures.insert(str.C_Str());
+        }
+
         return finalName;
     }
-    else {
-        aiReturn texFound = AI_SUCCESS;
-        texFound = mat->GetTexture(type, 0, &str);
 
-        if (texFound == AI_SUCCESS)
-        {
-            std::string filePath = std::string(str.C_Str());
-            std::string finalName;
-            std::size_t pos = 0;
-            if (this->fileExtension == "fbx")
-            {
-                pos = filePath.find("\\");
-                finalName = filePath.substr(pos + 1, filePath.size());
-            }
-            else
-            {
-                finalName = filePath;
-            }
-
-            filePath = this->texturePath + finalName;
-
-            if (this->currentTextures.find(str.C_Str()) == this->currentTextures.end())
-            {
-                finalName = this->textureManager->AddTexture(finalName, CustomTexture(filePath, textureType));
-                this->currentTextures.insert(str.C_Str());
-            }
-
-            return finalName;
-        }
-    }
     return "";
 }
 
-void MaterialData::AddTexture(std::shared_ptr<CustomTexture> texture)
+void MaterialData::AddTexture(std::string textureName, std::shared_ptr<CustomTexture> texture)
 {
     bool isInserted = false;
 
@@ -185,34 +181,20 @@ void MaterialData::AddTexture(std::shared_ptr<CustomTexture> texture)
         ptrTexture = texture;
     }
 
-    switch (texture->type)
+    this->textureManager->AddTexture(textureName, texture);
+    this->Textures[texture->type] = texture;
+
+    if (isInserted)
     {
-    case TEXTURE_TYPE::DIFFUSE_TYPE:
-    default:
-        diffuseTexture = texture;
-        if (isInserted) this->idxDiffuse = this->numTextures++;
-        break;
-    case TEXTURE_TYPE::NORMAL_TYPE:
-        normalTexture = texture;
-        if (isInserted) this->idxNormal = this->numTextures++;
-        break;
-    case TEXTURE_TYPE::SPECULAR_TYPE:
-        specularTexture = texture;
-        if (isInserted) this->idxSpecular = this->numTextures++;
-        break;
-    case TEXTURE_TYPE::HEIGHT_TYPE:
-        heightTexture = texture;
-        if (isInserted) this->idxHeight = this->numTextures++;
-        break;
-    case TEXTURE_TYPE::EMISSIVE_TYPE:
-        emissiveTexture = texture;
-        if (isInserted) this->idxEmissive = this->numTextures++;
-        break;
+        this->IDTextures[texture->type] = this->numTextures++;
     }
 }
 
 std::shared_ptr<CustomTexture> MaterialData::findTextureByType(TEXTURE_TYPE newtype)
 {
+    if (newtype == TEXTURE_TYPE::NULL_TYPE)
+        return textureManager->GetTexture("NULL_TEXTURE");
+
     for (size_t id = 0; id < this->TOTAL_NUM_TEXTURES; id++)
     {
         if (this->texture_vector->at(id) != nullptr)
@@ -298,32 +280,37 @@ void MaterialData::InitializeUBOMaterial(std::shared_ptr<ShaderModule> shader_pt
 
             if (name == "idxDiffuse")
             {
-                this->materialFields["idxDiffuse"] = std::pair<size_t, size_t>(position, sizeof(this->idxDiffuse));
-                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->idxDiffuse), position, sizeof(this->idxDiffuse));
+                int idxDiffuse = this->IDTextures[TEXTURE_TYPE::DIFFUSE_TYPE];
+                this->materialFields["idxDiffuse"] = std::pair<size_t, size_t>(position, sizeof(idxDiffuse));
+                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&idxDiffuse), position, sizeof(int));
                 continue;
             }
             if (name == "idxNormal")
             {
-                this->materialFields["idxNormal"] = std::pair<size_t, size_t>(position, sizeof(this->idxNormal));
-                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->idxNormal), position, sizeof(this->idxNormal));
+                int idxNormal = this->IDTextures[TEXTURE_TYPE::NORMAL_TYPE];
+                this->materialFields["idxNormal"] = std::pair<size_t, size_t>(position, sizeof(idxNormal));
+                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&idxNormal), position, sizeof(int));
                 continue;
             }
             if (name == "idxSpecular")
             {
-                this->materialFields["idxSpecular"] = std::pair<size_t, size_t>(position, sizeof(this->idxSpecular));
-                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->idxSpecular), position, sizeof(this->idxSpecular));
+                int idxSpecular = this->IDTextures[TEXTURE_TYPE::SPECULAR_TYPE];
+                this->materialFields["idxSpecular"] = std::pair<size_t, size_t>(position, sizeof(idxSpecular));
+                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&idxSpecular), position, sizeof(int));
                 continue;
             }
             if (name == "idxHeight")
             {
-                this->materialFields["idxHeight"] = std::pair<size_t, size_t>(position, sizeof(this->idxHeight));
-                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->idxHeight), position, sizeof(this->idxHeight));
+                int idxHeight = this->IDTextures[TEXTURE_TYPE::HEIGHT_TYPE];
+                this->materialFields["idxHeight"] = std::pair<size_t, size_t>(position, sizeof(idxHeight));
+                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&idxHeight), position, sizeof(int));
                 continue;
             }
             if (name == "idxEmissive")
             {
-                this->materialFields["idxEmissive"] = std::pair<size_t, size_t>(position, sizeof(this->idxEmissive));
-                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&this->idxEmissive), position, sizeof(this->idxEmissive));
+                int idxEmissive = this->IDTextures[TEXTURE_TYPE::EMISSIVE_TYPE];
+                this->materialFields["idxEmissive"] = std::pair<size_t, size_t>(position, sizeof(idxEmissive));
+                this->WriteToMaterialBuffer(reinterpret_cast<char*>(&idxEmissive), position, sizeof(int));
                 continue;
             }
 
@@ -498,27 +485,27 @@ void MaterialData::SetMaterialField(std::string nameField, int value)
 {
     if(nameField == "idxDiffuse")
     {
-        this->idxDiffuse = value;
-        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->idxDiffuse));
+        this->IDTextures[TEXTURE_TYPE::DIFFUSE_TYPE] = value;
+        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&value));
     }
     if(nameField == "idxNormal")
     {
-        this->idxNormal = value;
-        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->idxNormal));
+        this->IDTextures[TEXTURE_TYPE::NORMAL_TYPE] = value;
+        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&value));
     }
     if(nameField == "idxSpecular")
     {
-        this->idxSpecular = value;
-        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->idxSpecular));
+        this->IDTextures[TEXTURE_TYPE::SPECULAR_TYPE] = value;
+        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&value));
     }
     if(nameField == "idxHeight")
     {
-        this->idxHeight = value;
-        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->idxHeight));
+        this->IDTextures[TEXTURE_TYPE::HEIGHT_TYPE] = value;
+        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&value));
     }
     if(nameField == "idxEmissive")
     {
-        this->idxEmissive = value;
-        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&this->idxEmissive));
+        this->IDTextures[TEXTURE_TYPE::EMISSIVE_TYPE] = value;
+        this->UpdateMaterialData(nameField, reinterpret_cast<char*>(&value));
     }
 }

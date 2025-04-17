@@ -9,6 +9,7 @@
 #include "TextureTypes.h"
 #include "assimp/texture.h"
 #include <vector>
+#include <fstream>
 
 using namespace std;
 
@@ -16,7 +17,9 @@ class CustomTexture : public TextureManagerModule
 {
 private:
     int                 texWidth, texHeight, texChannels;
+
 public:
+    vector<string>      texturePaths;
     VkSampler           textureSampler;
     static VkCommandPool commandPool;
     TEXTURE_TYPE        type;
@@ -41,6 +44,7 @@ public:
     void createTextureSampler();
     void createCubemapTextureSampler();
     void cleanup();
+    void SaveTexturePath(std::ofstream& file);
 };
 
 #endif
