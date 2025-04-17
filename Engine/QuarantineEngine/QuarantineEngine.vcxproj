@@ -252,6 +252,7 @@
     <ClCompile Include="Utilities\Light\LightManager.cpp" />
     <ClCompile Include="Utilities\Light\PointLight.cpp" />
     <ClCompile Include="Utilities\Light\SpotLight.cpp" />
+    <ClCompile Include="Utilities\Light\SunLight.cpp" />
     <ClCompile Include="Utilities\Material\CustomTexture.cpp" />
     <ClCompile Include="Utilities\Material\Material.cpp" />
     <ClCompile Include="Utilities\Material\MaterialData.cpp" />
@@ -366,6 +367,7 @@
     <ClInclude Include="Utilities\Light\LightType.h" />
     <ClInclude Include="Utilities\Light\PointLight.h" />
     <ClInclude Include="Utilities\Light\SpotLight.h" />
+    <ClInclude Include="Utilities\Light\SunLight.h" />
     <ClInclude Include="Utilities\Material\CustomTexture.h" />
     <ClInclude Include="Utilities\Material\Material.h" />
     <ClInclude Include="Utilities\Material\MaterialData.h" />

@@ -4,6 +4,7 @@
 #include "DirectionalLight.h"
 #include "SpotLight.h"
 #include <SynchronizationModule.h>
+#include <SunLight.h>
 
 bool compareDistance(const LightMap& a, const LightMap& b)
 {
@@ -72,8 +73,16 @@ void LightManager::CreateLight(LightType type, std::string name)
                 this->PointLights.back()->shadowMappingResourcesPtr->CubemapSampler);
             break;
 
+        case LightType::SUN_LIGHT:
         case LightType::DIRECTIONAL_LIGHT:
-            this->DirLights.push_back(std::make_shared<DirectionalLight>(this->renderPassModule->dirShadowMappingRenderPass, this->camera));
+            if (type == LightType::SUN_LIGHT)
+            {
+                this->DirLights.push_back(std::make_shared<SunLight>(this->renderPassModule->dirShadowMappingRenderPass, this->camera));
+            }
+            else
+            {
+                this->DirLights.push_back(std::make_shared<DirectionalLight>(this->renderPassModule->dirShadowMappingRenderPass, this->camera));
+            }
             this->DirLights.back()->idxShadowMap = this->DirLights.size() - 1;
 
             this->AddLight(std::static_pointer_cast<Light>(this->DirLights.back()), name);

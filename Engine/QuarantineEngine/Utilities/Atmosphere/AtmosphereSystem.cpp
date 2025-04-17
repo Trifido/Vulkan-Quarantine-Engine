@@ -11,9 +11,7 @@ AtmosphereSystem::AtmosphereSystem()
     this->deviceModule = DeviceModule::getInstance();
     this->lightManager = LightManager::getInstance();
     this->swapChainModule = SwapChainModule::getInstance();
-
-    this->Sun.Direction = glm::normalize(glm::vec3(0.0, -0.1, 0.1));
-    this->Sun.Intensity = 100.0f;
+    //this->sunLight->SetParameters(glm::normalize(glm::vec3(0.0, -0.1, 0.1)), 100.0f);
 }
 
 AtmosphereSystem::~AtmosphereSystem()
@@ -23,8 +21,14 @@ AtmosphereSystem::~AtmosphereSystem()
 
 void AtmosphereSystem::LoadAtmosphereDto(AtmosphereDto atmosphereDto, Camera* cameraPtr)
 {
-    this->Sun.Direction = glm::normalize(atmosphereDto.sunDirection);
-    this->Sun.Intensity = atmosphereDto.sunIntensity;
+    this->sunLight = std::static_pointer_cast<SunLight>(this->lightManager->GetLight(SUN_NAME));
+    if (this->sunLight == nullptr)
+    {
+        this->lightManager->CreateLight(LightType::SUN_LIGHT, this->SUN_NAME);
+        this->sunLight = std::static_pointer_cast<SunLight>(this->lightManager->GetLight(SUN_NAME));
+    }
+    this->sunLight->SetParameters(glm::normalize(atmosphereDto.sunDirection), atmosphereDto.sunIntensity);
+
     this->environmentType = static_cast<ENVIRONMENT_TYPE>(atmosphereDto.environmentType);
     this->IsInitialized = atmosphereDto.hasAtmosphere;
 
@@ -47,7 +51,7 @@ AtmosphereDto AtmosphereSystem::CreateAtmosphereDto()
 {
     return
     {
-        this->IsInitialized, this->environmentType, this->Sun.Direction, this->Sun.Intensity
+        this->IsInitialized, this->environmentType, this->sunLight->uniformData.Direction, this->sunLight->uniformData.Intensity
     };
 }
 
@@ -109,9 +113,6 @@ void AtmosphereSystem::SetUpResources(Camera* cameraPtr)
         this->resolutionUBO = std::make_shared<UniformBufferObject>();
         this->resolutionUBO->CreateUniformBuffer(sizeof(ScreenResolutionUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 
-        this->sunUBO = std::make_shared<UniformBufferObject>();
-        this->sunUBO->CreateUniformBuffer(sizeof(SunUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
-
         this->UpdateAtmopshereResolution();
         this->computeNodeManager = ComputeNodeManager::getInstance();
 
@@ -137,7 +138,7 @@ void AtmosphereSystem::SetUpResources(Camera* cameraPtr)
         this->SVLUT_ComputeNode->InitializeOutputTextureComputeNode(640.0, 360, VK_FORMAT_R32G32B32A32_SFLOAT);
         this->SVLUT_ComputeNode->computeDescriptor->inputTextures.push_back(this->TLUT_ComputeNode->computeDescriptor->outputTexture);
         this->SVLUT_ComputeNode->computeDescriptor->inputTextures.push_back(this->MSLUT_ComputeNode->computeDescriptor->outputTexture);
-        this->SVLUT_ComputeNode->computeDescriptor->ubos["SunUniform"] = this->sunUBO;
+        this->SVLUT_ComputeNode->computeDescriptor->ubos["SunUniform"] = this->sunLight->sunUBO;
         this->computeNodeManager->AddComputeNode("sky_view_lut", this->SVLUT_ComputeNode);
     }
 
@@ -247,7 +248,7 @@ void AtmosphereSystem::CreateDescriptorSet()
             this->SetSamplerDescriptorWrite(descriptorWrites[1], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, this->SVLUT_ComputeNode->computeDescriptor->outputTexture, this->imageInfo_2);
             this->SetDescriptorWrite(descriptorWrites[2], this->descriptorSets[frameIdx], 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, this->camera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform));
             this->SetDescriptorWrite(descriptorWrites[3], this->descriptorSets[frameIdx], 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3, this->resolutionUBO->uniformBuffers[frameIdx], sizeof(ScreenResolutionUniform));
-            this->SetDescriptorWrite(descriptorWrites[4], this->descriptorSets[frameIdx], 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4, this->sunUBO->uniformBuffers[frameIdx], sizeof(SunUniform));
+            this->SetDescriptorWrite(descriptorWrites[4], this->descriptorSets[frameIdx], 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4, this->sunLight->sunUBO->uniformBuffers[frameIdx], sizeof(SunUniform));
         }
 
         vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
@@ -416,13 +417,7 @@ void AtmosphereSystem::UpdateSun()
 {
     if (this->environmentType == ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY)
     {
-        for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
-        {
-            void* data;
-            vkMapMemory(deviceModule->device, this->sunUBO->uniformBuffersMemory[currentFrame], 0, sizeof(SunUniform), 0, &data);
-            memcpy(data, &Sun, sizeof(SunUniform));
-            vkUnmapMemory(deviceModule->device, this->sunUBO->uniformBuffersMemory[currentFrame]);
-        }
+        this->sunLight->UpdateSun();
 
         this->SVLUT_ComputeNode->Compute = true;
     }
