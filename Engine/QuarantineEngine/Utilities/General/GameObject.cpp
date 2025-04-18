@@ -149,6 +149,12 @@ void GameObject::AddAnimation(std::shared_ptr<Animation> animation_ptr)
     }
 }
 
+void GameObject::AddCharacterController(std::shared_ptr<QECharacterController> characterController_ptr)
+{
+    this->characterController = characterController_ptr;
+    this->characterController->BindGameObjectProperties(this->physicBody);
+}
+
 void GameObject::InitializeComponents()
 {
     if (this->_Transform == nullptr)

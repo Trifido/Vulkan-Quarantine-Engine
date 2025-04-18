@@ -17,10 +17,10 @@ class PhysicBody : public GameComponent
 {
 private:
     btVector3 localInertia;
-    btRigidBody* body;
     std::shared_ptr<Transform> transform;
     std::shared_ptr<Collider> collider;
 public:
+    btRigidBody* body;
     PhysicBodyType Type;
     float Mass;
     glm::vec3 Inertia;

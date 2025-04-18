@@ -208,24 +208,38 @@ void App::initVulkan()
     //const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
 
     //std::filesystem::path path = "C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/golem/Meshes/scene.gltf";
-    std::filesystem::path path = "C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf";
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(path.string()));
+    //std::filesystem::path path = "C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf";
+    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(path.string()));
 
     //model->_Transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
     //model->transform->SetOrientation(glm::vec3(-90.0f, 180.0f, 0.0f));
-    model->_Transform->SetScale(glm::vec3(0.01f));
+    //model->_Transform->SetScale(glm::vec3(0.01f));
     //model->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
     //model->_Material->materialData.SetMaterialField("Specular", glm::vec3(0.5f, 0.5f, 0.5f));
     //model->_Material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
-    this->gameObjectManager->AddGameObject(model, "modelRaptoid");
+    //this->gameObjectManager->AddGameObject(model, "modelRaptoid");
     /**/
     std::shared_ptr<GameObject> floor = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
     floor->_Transform->SetPosition(glm::vec3(0.0f, -0.01f, 0.0f));
-    floor->_Transform->SetScale(glm::vec3(3.0f, 1.0f, 3.0f));
+    floor->_Transform->SetScale(glm::vec3(10.0f, 1.0f, 10.0f));
     floor->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.2f, 0.7f));
     floor->_Material->materialData.SetMaterialField("Specular", glm::vec3(0.0f, 0.0f, 0.0f));
     floor->_Material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
+    floor->AddPhysicBody(std::make_shared<PhysicBody>());
+    floor->AddCollider(std::make_shared<PlaneCollider>());
+    std::static_pointer_cast<PlaneCollider>(floor->collider)->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
+
     this->gameObjectManager->AddGameObject(floor, "floor");
+
+
+    std::shared_ptr<GameObject> character = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
+    character->_Transform->SetPosition(glm::vec3(0.0f, 1.0f, 0.0f));
+    character->AddPhysicBody(std::make_shared<PhysicBody>(PhysicBodyType::RIGID_BODY));
+    character->AddCollider(std::make_shared<BoxCollider>());
+    character->physicBody->Mass = 1.0f;
+    character->AddCharacterController(std::make_shared<QECharacterController>());
+
+    this->gameObjectManager->AddGameObject(character, "character");
     /**/
 
 //DEMOD
@@ -402,6 +416,10 @@ void App::mainLoop()
     {
         glfwPollEvents();
         this->timer->UpdateDeltaTime();
+
+        //CHARACTER CONTROLLER
+        auto character = this->gameObjectManager->GetGameObject("character");
+        QECharacterController::ProcessInput(mainWindow.getWindow(), character->characterController);
 
         //PHYSIC SYSTEM
         this->physicsModule->ComputePhysics((float)Timer::DeltaTime);
