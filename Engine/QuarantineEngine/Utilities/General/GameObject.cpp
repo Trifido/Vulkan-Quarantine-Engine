@@ -220,7 +220,12 @@ void GameObject::InitializePhysics()
     if (this->physicBody != nullptr && this->collider != nullptr)
     {
         this->physicBody->Initialize(this->_Transform, this->collider);
-    }   
+    }
+
+    if (this->characterController != nullptr)
+    {
+        this->characterController->Initialize();
+    }
 }
 
 bool GameObject::IsValidRender()

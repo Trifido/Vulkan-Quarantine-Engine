@@ -236,7 +236,7 @@ void App::initVulkan()
     character->_Transform->SetPosition(glm::vec3(0.0f, 1.0f, 0.0f));
     character->AddPhysicBody(std::make_shared<PhysicBody>(PhysicBodyType::RIGID_BODY));
     character->AddCollider(std::make_shared<BoxCollider>());
-    character->physicBody->Mass = 1.0f;
+    character->physicBody->Mass = 70.0f;
     character->AddCharacterController(std::make_shared<QECharacterController>());
 
     this->gameObjectManager->AddGameObject(character, "character");
@@ -369,6 +369,8 @@ void App::initVulkan()
     this->gameObjectManager->AddGameObject(floor, "floor");
     /**/
 
+    this->physicsModule->SetGravity(-20.0f);
+
     // Initialize Managers
     this->animationManager->InitializeAnimations();
     this->animationManager->UpdateAnimations(0.0f);
@@ -417,8 +419,9 @@ void App::mainLoop()
         glfwPollEvents();
         this->timer->UpdateDeltaTime();
 
-        //CHARACTER CONTROLLER
+        //UPDATE CHARACTER CONTROLLER
         auto character = this->gameObjectManager->GetGameObject("character");
+        character->characterController->Update(this->physicsModule->dynamicsWorld);
         QECharacterController::ProcessInput(mainWindow.getWindow(), character->characterController);
 
         //PHYSIC SYSTEM
@@ -445,7 +448,6 @@ void App::mainLoop()
 
         // UPDATE ATMOSPHERE
         this->atmosphereSystem->UpdateSun();
-
         auto sunLight = std::static_pointer_cast<SunLight>(this->lightManager->GetLight("QESunLight"));
 
         ImGuiIO& io = ImGui::GetIO();

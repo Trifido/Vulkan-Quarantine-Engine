@@ -16,7 +16,7 @@ PhysicsModule::PhysicsModule()
 
     this->dynamicsWorld = new btDiscreteDynamicsWorld(this->dispatcher, this->overlappingPairCache, this->solver, this->collisionConfiguration);
 
-    this->dynamicsWorld->setGravity(btVector3(0, -10, 0));
+    this->dynamicsWorld->setGravity(btVector3(0, this->gravity, 0));
 }
 
 void PhysicsModule::AddRigidBody(btRigidBody* body)
@@ -28,8 +28,14 @@ void PhysicsModule::ComputePhysics(float deltaTime)
 {
     if (this->dynamicsWorld)
     {
-        this->dynamicsWorld->stepSimulation(deltaTime);
+        this->dynamicsWorld->stepSimulation(deltaTime, 10);
     }
+}
+
+void PhysicsModule::SetGravity(float gravity)
+{
+    this->gravity = gravity;
+    this->dynamicsWorld->setGravity(btVector3(0, this->gravity, 0));
 }
 
 PhysicsModule::~PhysicsModule()

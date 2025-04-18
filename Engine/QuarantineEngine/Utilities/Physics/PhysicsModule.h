@@ -19,6 +19,7 @@ private:
     btCollisionDispatcher* dispatcher;
     btBroadphaseInterface* overlappingPairCache;
     btSequentialImpulseConstraintSolver* solver;
+    float gravity = -10.0f;
 
 public:
     btDiscreteDynamicsWorld* dynamicsWorld;
@@ -29,6 +30,8 @@ public:
 
     void AddRigidBody(btRigidBody* body);
     void ComputePhysics(float deltaTime);
+    void SetGravity(float gravity);
+    float GetGravity() const { return gravity; }
 
     ~PhysicsModule();
 };
