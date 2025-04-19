@@ -18,14 +18,14 @@ struct CameraDto
     float yawSaved;
 
     CameraDto()
-        : position{ -10.0f, 5.0f, 0.0f },
-        front{ 1.0f, 0.0f, 0.0f },
+        : position{ 0.0f, 10.0f, 10.0f },
+        front{ 0.0f, -0.5f, -0.5f },
         up{ 0.0f, 1.0f, 0.0f },
         nearPlane(0.1f),
         farPlane(500.0f),
         fov(45.0f),
-        pitchSaved(0.0f),
-        yawSaved(0.0f)
+        pitchSaved(-45.0f),
+        yawSaved(-90.0f)
     {
     }
 

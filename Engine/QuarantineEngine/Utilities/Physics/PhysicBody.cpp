@@ -5,11 +5,15 @@
 PhysicBody::PhysicBody()
 {
     this->UpdateType(PhysicBodyType::STATIC_BODY);
+    this->CollisionGroup = CollisionFlag::COL_NOTHING;
+    this->CollisionMask = CollisionFlag::COL_NOTHING;
 }
 
 PhysicBody::PhysicBody(const PhysicBodyType& type)
 {
     this->UpdateType(type);
+    this->CollisionGroup = CollisionFlag::COL_NOTHING;
+    this->CollisionMask = CollisionFlag::COL_NOTHING;
 }
 
 void PhysicBody::UpdateType(const PhysicBodyType &type)
@@ -78,7 +82,12 @@ void PhysicBody::Initialize(std::shared_ptr<Transform> transform_ptr, std::share
 
     //Add new rigidBody to physicsModule
     auto physicsModule = PhysicsModule::getInstance();
-    physicsModule->dynamicsWorld->addRigidBody(body);
+    physicsModule->dynamicsWorld->addRigidBody(body, this->CollisionGroup, this->CollisionMask);
+
+    if (this->Type == PhysicBodyType::STATIC_BODY)
+    {
+        this->body->setCollisionFlags(btCollisionObject::CF_STATIC_OBJECT);
+    }
 }
 
 void PhysicBody::copyTransformtoGLM()

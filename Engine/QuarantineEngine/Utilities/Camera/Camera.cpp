@@ -31,7 +31,7 @@ Camera::Camera(const float width, const float height, const CameraDto& cameraDto
 bool Camera::LoadCameraDto(const float width, const float height, const CameraDto& cameraDto)
 {
     this->cameraFront = cameraDto.front;
-    this->cameraPos = cameraDto.position;
+    this->cameraPos = cameraDto.position;// glm::vec3(0.0f, 10.0f, 10.0f);
     this->cameraUp = cameraDto.up;
     this->nearPlane = cameraDto.nearPlane;
     this->farPlane = cameraDto.farPlane;
