@@ -33,6 +33,7 @@ private:
     uint32_t numSwapChainImages;
     glm::vec2 pixelTileSize;
     float currentTileSize;
+    bool enabledVSync = true;
 
 public:
     SwapChainModule();
