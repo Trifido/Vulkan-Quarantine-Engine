@@ -33,7 +33,7 @@ struct DescriptorSetReflect
 
     bool Exist(const DescriptorBindingReflect& d)
     {
-        for (int id = 0; id < bindingCount; id++)
+        for (uint32_t id = 0; id < bindingCount; id++)
         {
             if (bindings[id] == d)
             {
@@ -101,7 +101,7 @@ private:
 
     void CheckStage(DescriptorSetReflect& descripReflect, const SpvReflectShaderModule& obj);
     void CheckDescriptorSet(DescriptorSetReflect& descripReflect, const SpvReflectDescriptorSet& obj, const char* indent);
-    DescriptorBindingReflect GetDescriptorBinding(const SpvReflectDescriptorBinding& obj, bool write_set, const char* indent);
+    DescriptorBindingReflect GetDescriptorBinding(const SpvReflectDescriptorBinding& obj, bool write_set);
     void CheckUBOMaterial(SpvReflectDescriptorSet* set);
     void CheckUBOAnimation(SpvReflectDescriptorSet* set);
     void CheckShadowMaps(SpvReflectDescriptorSet* set);

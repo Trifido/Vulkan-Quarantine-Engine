@@ -9,7 +9,7 @@
 SwapChainModule::SwapChainModule()
 {
     deviceModule = DeviceModule::getInstance();
-    this->currentTileSize = this->TILE_SIZE;
+    this->currentTileSize = (float)this->TILE_SIZE;
 }
 
 void SwapChainModule::createSwapChain(VkSurfaceKHR& surface, GLFWwindow* window)

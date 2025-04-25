@@ -100,7 +100,7 @@ void MeshImporter::SetVertexBoneData(AnimationVertexData& animData, int boneID, 
 
 void MeshImporter::ExtractBoneWeightForVertices(MeshData& data, aiMesh* mesh)
 {
-    for (int boneIndex = 0; boneIndex < mesh->mNumBones; boneIndex++)
+    for (unsigned int boneIndex = 0; boneIndex < mesh->mNumBones; boneIndex++)
     {
         int boneID = -1;
         std::string boneName = mesh->mBones[boneIndex]->mName.C_Str();
@@ -108,10 +108,10 @@ void MeshImporter::ExtractBoneWeightForVertices(MeshData& data, aiMesh* mesh)
         if (this->m_BoneInfoMap.find(boneName) == this->m_BoneInfoMap.end())
         {
             BoneInfo newBoneInfo;
-            newBoneInfo.id = this->numBones;
+            newBoneInfo.id = (int)this->numBones;
             newBoneInfo.offset = ConvertMatrixToGLMFormat(mesh->mBones[boneIndex]->mOffsetMatrix);
             this->m_BoneInfoMap[boneName] = newBoneInfo;
-            boneID = this->numBones;
+            boneID = (int)this->numBones;
             this->numBones++;
         }
         else
@@ -369,7 +369,7 @@ MeshData MeshImporter::LoadRawMesh(float rawData[], unsigned int numData, unsign
 {
     MeshData data = {};
     unsigned int NUMCOMP = offset;
-    for (int i = 0; i < numData; i++)
+    for (unsigned int i = 0; i < numData; i++)
     {
         unsigned int index = i * NUMCOMP;
 

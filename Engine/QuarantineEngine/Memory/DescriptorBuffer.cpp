@@ -355,7 +355,7 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
                 descriptorWrites[idx].dstBinding = binding.second.binding;
                 descriptorWrites[idx].dstArrayElement = 0;
                 descriptorWrites[idx].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                descriptorWrites[idx].descriptorCount = textures->size();
+                descriptorWrites[idx].descriptorCount = (uint32_t)textures->size();
                 descriptorWrites[idx].pBufferInfo = VK_NULL_HANDLE;
                 descriptorWrites[idx].dstSet = descriptorSets[frameIdx];
                 descriptorWrites[idx].pImageInfo = this->imageInfo.data();
@@ -452,7 +452,7 @@ void DescriptorBuffer::InitializeDescriptorSets(std::shared_ptr<ShaderModule> sh
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
         std::vector<VkWriteDescriptorSet> descriptorWrites{};
-        descriptorWrites = this->GetDescriptorWrites(shader_ptr, i);
+        descriptorWrites = this->GetDescriptorWrites(shader_ptr, (uint32_t)i);
         vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
 }

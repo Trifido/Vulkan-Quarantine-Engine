@@ -98,7 +98,7 @@ void AtmosphereSystem::SetUpResources(Camera* cameraPtr)
     auto shaderManager = ShaderManager::getInstance();
 
     const string absolute_sky_vert_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[this->environmentType]);
-    const string absolute_sky_frag_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[this->environmentType + (shaderPaths.size() * 0.5f)]);
+    const string absolute_sky_frag_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[this->environmentType + (int)(shaderPaths.size() * 0.5f)]);
 
     GraphicsPipelineData pipelineData = {};
     pipelineData.HasVertexData = this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY;
@@ -135,7 +135,7 @@ void AtmosphereSystem::SetUpResources(Camera* cameraPtr)
         this->SVLUT_ComputeNode->OnDemandCompute = true;
         this->SVLUT_ComputeNode->Compute = true;
         this->SVLUT_ComputeNode->NElements = 16;
-        this->SVLUT_ComputeNode->InitializeOutputTextureComputeNode(640.0, 360, VK_FORMAT_R32G32B32A32_SFLOAT);
+        this->SVLUT_ComputeNode->InitializeOutputTextureComputeNode(640, 360, VK_FORMAT_R32G32B32A32_SFLOAT);
         this->SVLUT_ComputeNode->computeDescriptor->inputTextures.push_back(this->TLUT_ComputeNode->computeDescriptor->outputTexture);
         this->SVLUT_ComputeNode->computeDescriptor->inputTextures.push_back(this->MSLUT_ComputeNode->computeDescriptor->outputTexture);
         this->SVLUT_ComputeNode->computeDescriptor->ubos["SunUniform"] = this->sunLight->sunUBO;

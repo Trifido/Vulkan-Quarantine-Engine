@@ -42,7 +42,7 @@ private:
 
     const size_t MAX_NUM_LIGHT = 64;
     const uint32_t BIN_SLICES = 16;
-    const uint32_t NUM_WORDS = (MAX_NUM_LIGHT + 31) / 32;
+    const uint32_t NUM_WORDS = (uint32_t)(MAX_NUM_LIGHT + 31) / 32;
     const uint32_t MAX_NUM_TILES = 240 * 135;
 
     DeviceModule* deviceModule = nullptr;

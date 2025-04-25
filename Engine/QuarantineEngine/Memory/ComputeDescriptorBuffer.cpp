@@ -10,7 +10,7 @@ ComputeDescriptorBuffer::ComputeDescriptorBuffer()
 
 ComputeDescriptorBuffer::ComputeDescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr) : ComputeDescriptorBuffer()
 {
-    this->numBinding = shader_ptr->reflectShader.bindings.at(0).size();
+    this->numBinding = (uint32_t)shader_ptr->reflectShader.bindings.at(0).size();
     this->StartResources(shader_ptr);
 }
 
@@ -395,7 +395,7 @@ void ComputeDescriptorBuffer::InitializeDescriptorSets(std::shared_ptr<ShaderMod
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
         std::vector<VkWriteDescriptorSet> descriptorWrites{};
-        descriptorWrites = this->GetDescriptorWrites(shader_ptr, i);
+        descriptorWrites = this->GetDescriptorWrites(shader_ptr, (uint32_t)i);
         vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
 }

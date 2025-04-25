@@ -746,8 +746,8 @@ void App::computeFrame()
         // Update particles system
         this->particleSystemManager->UpdateParticleSystems();
 
-        commandPoolModule->recordComputeCommandBuffer(commandPoolModule->getComputeCommandBuffer(synchronizationModule.GetCurrentFrame()));
-        synchronizationModule.submitComputeCommandBuffer(commandPoolModule->getComputeCommandBuffer(synchronizationModule.GetCurrentFrame()));
+        commandPoolModule->recordComputeCommandBuffer(commandPoolModule->getComputeCommandBuffer((uint32_t)synchronizationModule.GetCurrentFrame()));
+        synchronizationModule.submitComputeCommandBuffer(commandPoolModule->getComputeCommandBuffer((uint32_t)synchronizationModule.GetCurrentFrame()));
     }
 }
 
@@ -766,7 +766,7 @@ void App::drawFrame()
 
     commandPoolModule->Render(&framebufferModule);
 
-    synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer(synchronizationModule.GetCurrentFrame()), this->isRender);
+    synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer((uint32_t)synchronizationModule.GetCurrentFrame()), this->isRender);
 
     result = synchronizationModule.presentSwapchain(swapchainModule->getSwapchain(), swapchainModule->currentImage);
     resizeSwapchain(result, ERROR_RESIZE::IMAGE_ERROR);

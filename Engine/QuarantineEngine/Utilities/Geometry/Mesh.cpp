@@ -13,11 +13,11 @@
 Mesh::Mesh(const MeshData& data)
 {
     this->PATH = data.name;
-    this->numFaces = data.numFaces;
+    this->numFaces = (uint32_t) data.numFaces;
     this->hasAnimationData = data.HasAnimation;
     this->vertices = data.vertices;
     this->animationData = data.animationData;
-    this->numVertices = data.numVertices;
+    this->numVertices = (uint32_t) data.numVertices;
     this->indices = data.indices;
 }
 

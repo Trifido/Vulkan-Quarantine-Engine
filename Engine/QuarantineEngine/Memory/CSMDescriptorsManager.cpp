@@ -265,7 +265,7 @@ VkDescriptorSetLayout CSMDescriptorsManager::CreateRenderDescriptorSetLayout()
 
     VkDescriptorSetLayoutCreateInfo layoutInfo{};
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layoutInfo.bindingCount = layoutBindings.size();
+    layoutInfo.bindingCount = (uint32_t)layoutBindings.size();
     layoutInfo.pBindings = layoutBindings.data();
 
     if (vkCreateDescriptorSetLayout(deviceModule->device, &layoutInfo, nullptr, &resultLayout) != VK_SUCCESS)

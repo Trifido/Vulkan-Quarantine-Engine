@@ -18,7 +18,7 @@ ComputeNode::ComputeNode(std::shared_ptr<ShaderModule> shader_ptr) : ComputeNode
     this->computeDescriptor = std::make_shared<ComputeDescriptorBuffer>(this->computeShader);
 }
 
-void ComputeNode::FillComputeBuffer(size_t numElements, unsigned long long elementType, void* data)
+void ComputeNode::FillComputeBuffer(uint32_t numElements, unsigned long long elementType, void* data)
 {
     this->NElements = numElements;
 
@@ -39,7 +39,7 @@ void ComputeNode::FillComputeBuffer(size_t numElements, unsigned long long eleme
     this->InitializeComputeBuffer(0, bufferSize);
 
     // Fill ssbo
-    this->computeDescriptor->ssboData[0]->FillSSBO(stagingBuffer, bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->computeDescriptor->ssboData[0]->FillSSBO(stagingBuffer, (VkDeviceSize)bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
 
     vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
     vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);

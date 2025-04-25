@@ -64,7 +64,7 @@ void LightManager::CreateLight(LightType type, std::string name)
         default:
         case LightType::POINT_LIGHT:
             this->PointLights.push_back(std::make_shared<PointLight>(this->renderPassModule->omniShadowMappingRenderPass));
-            this->PointLights.back()->idxShadowMap = this->PointLights.size() - 1;
+            this->PointLights.back()->idxShadowMap = (uint32_t)this->PointLights.size() - 1;
 
             this->AddLight(std::static_pointer_cast<Light>(this->PointLights.back()), name);
             this->PointShadowDescritors->AddPointLightResources(
@@ -83,7 +83,7 @@ void LightManager::CreateLight(LightType type, std::string name)
             {
                 this->DirLights.push_back(std::make_shared<DirectionalLight>(this->renderPassModule->dirShadowMappingRenderPass, this->camera));
             }
-            this->DirLights.back()->idxShadowMap = this->DirLights.size() - 1;
+            this->DirLights.back()->idxShadowMap = (uint32_t)this->DirLights.size() - 1;
 
             this->AddLight(std::static_pointer_cast<Light>(this->DirLights.back()), name);
             this->CSMDescritors->AddDirLightResources(
@@ -193,7 +193,7 @@ void LightManager::InitializeShadowMaps()
 
 void LightManager::UpdateUniform()
 {
-    this->lightManagerUniform->numLights = std::min(this->_lights.size(), this->MAX_NUM_LIGHT);
+    this->lightManagerUniform->numLights = (uint32_t)std::min(this->_lights.size(), this->MAX_NUM_LIGHT);
 
     int cont = 0;
     for (auto& it : this->_lights)
@@ -405,7 +405,7 @@ void LightManager::ComputeLightTiles()
         tilesEntryCount = tileXCount * tileYCount * NUM_WORDS;
     }
 
-    this->swapChainModule->UpdateTileSize(newTileSize);
+    this->swapChainModule->UpdateTileSize((float)newTileSize);
 
     const uint32_t tile_x_count = tileXCount;
     const uint32_t tile_y_count = tileYCount;
