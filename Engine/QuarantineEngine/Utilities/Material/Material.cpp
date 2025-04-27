@@ -199,18 +199,18 @@ std::string Material::SaveMaterialFile()
     if (file.is_open())
     {
         // Name
-        int materialNameLength = Name.length();
+        int materialNameLength = static_cast<int>(Name.length());
         file.write(reinterpret_cast<const char*>(&materialNameLength), sizeof(int));
         file.write(reinterpret_cast<const char*>(Name.c_str()), materialNameLength);
 
         // Material file path
-        int materialPathLength = materialFilePath.length();
+        int materialPathLength = static_cast<int>(materialFilePath.length());
         file.write(reinterpret_cast<const char*>(&materialPathLength), sizeof(int));
         file.write(reinterpret_cast<const char*>(materialFilePath.c_str()), materialPathLength);
 
         // Shader
         std::string shaderName = shader->shaderNameID;
-        int shaderNameLength = shaderName.length();
+        int shaderNameLength = static_cast<int>(shaderName.length());
         file.write(reinterpret_cast<const char*>(&shaderNameLength), sizeof(int));
         file.write(reinterpret_cast<const char*>(shaderName.c_str()), shaderNameLength);
 

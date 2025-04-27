@@ -238,7 +238,6 @@ void MaterialData::InitializeUBOMaterial(std::shared_ptr<ShaderModule> shader_pt
         size_t position = 0;
         this->materialbuffer = new char[reflect.materialBufferSize];
 
-        uint16_t count = 0;
         for (auto name : reflect.materialUBOComponents)
         {
             if (name == "Opacity")

@@ -472,7 +472,7 @@ std::string ReflectShader::ToStringSpvBuiltIn(SpvBuiltIn built_in) {
 
     case SpvBuiltInMax:
     default:
-        break;
+        return "";
     }
 }
 
@@ -670,7 +670,6 @@ void ReflectShader::CheckStage(DescriptorSetReflect& descripReflect, const SpvRe
 
 void ReflectShader::CheckDescriptorSet(DescriptorSetReflect& descripReflect, const SpvReflectDescriptorSet& obj, const char* indent)
 {
-    const char* t = indent;
     std::string tt = std::string(indent) + "  ";
     std::string ttttt = std::string(indent) + "    ";
 

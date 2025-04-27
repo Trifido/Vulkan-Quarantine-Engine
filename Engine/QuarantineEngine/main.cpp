@@ -43,7 +43,7 @@ static bool                     g_SwapChainRebuild = false;
 
 int main(int, char**)
 {
-    bool result = QEProjectManager::CreateQEProject("QEExample");
+    QEProjectManager::CreateQEProject("QEExample");
     QEScene scene{};
     QEProjectManager::InitializeDefaultQEScene(scene);
     //QEProjectManager::ImportMeshFile();

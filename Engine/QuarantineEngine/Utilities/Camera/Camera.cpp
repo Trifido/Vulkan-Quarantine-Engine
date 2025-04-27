@@ -215,8 +215,8 @@ void Camera::InvertPitch(float heightPos)
 
 void Camera::UpdateViewportSize(VkExtent2D size)
 {
-    this->WIDTH = size.width;
-    this->HEIGHT = size.height;
+    this->WIDTH = (float)size.width;
+    this->HEIGHT = (float)size.height;
 }
 
 void Camera::UpdateCamera()

@@ -28,7 +28,7 @@ private:
 public:
     SynchronizationModule();
     VkSemaphore getImageAvailableSemaphore() { return imageAvailableSemaphores[currentFrame]; };
-    void createSyncObjects(uint32_t swapChainImagesNum);
+    void createSyncObjects();
     void cleanup();
     void submitCommandBuffer(VkCommandBuffer& commandBuffer, bool isRendered);
     void submitComputeCommandBuffer(VkCommandBuffer& commandBuffer);

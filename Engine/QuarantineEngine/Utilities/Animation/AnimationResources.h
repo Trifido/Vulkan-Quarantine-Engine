@@ -14,9 +14,9 @@ struct BoneInfo
 };
 struct AnimationNode
 {
-    glm::mat4 transformation;
+    glm::mat4 transformation = glm::mat4(1.0f);
     std::string name;
-    int childrenCount;
+    int childrenCount = 0;
     std::vector<AnimationNode> children;
 };
 

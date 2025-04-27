@@ -391,7 +391,6 @@ void ComputeDescriptorBuffer::InitializeDescriptorSets(std::shared_ptr<ShaderMod
         throw std::runtime_error("failed to allocate descriptor sets!");
     }
 
-    size_t numDescriptors = this->numBinding;
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
         std::vector<VkWriteDescriptorSet> descriptorWrites{};

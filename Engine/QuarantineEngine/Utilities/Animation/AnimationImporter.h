@@ -6,7 +6,7 @@
 #include <map>
 #include <AnimationResources.h>
 
-static class AnimationImporter
+class AnimationImporter
 {
 private:
     static void ProcessNode(AnimationNode& dest, const aiNode* src);

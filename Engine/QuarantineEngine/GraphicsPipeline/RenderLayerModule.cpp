@@ -21,7 +21,7 @@ unsigned int RenderLayerModule::GetLayer(unsigned int idx)
 
 unsigned int RenderLayerModule::GetCount()
 {
-    return enabledLayers.size();
+    return static_cast<unsigned int>(enabledLayers.size());
 }
 
 RenderLayerModule::RenderLayerModule()

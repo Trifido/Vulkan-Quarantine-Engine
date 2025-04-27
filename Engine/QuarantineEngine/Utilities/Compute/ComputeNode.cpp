@@ -36,10 +36,10 @@ void ComputeNode::FillComputeBuffer(uint32_t numElements, unsigned long long ele
     vkUnmapMemory(deviceModule->device, stagingBufferMemory);
 
     // Initialize ssbo
-    this->InitializeComputeBuffer(0, bufferSize);
+    this->InitializeComputeBuffer(0,(uint32_t)bufferSize);
 
     // Fill ssbo
-    this->computeDescriptor->ssboData[0]->FillSSBO(stagingBuffer, (VkDeviceSize)bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->computeDescriptor->ssboData[0]->FillSSBO(stagingBuffer, bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
 
     vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
     vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
@@ -127,7 +127,7 @@ void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
 
     if (this->widthImage == 0 || this->heightImage == 0)
     {
-        uint32_t groupX = (this->NElements < 256) ? this->NElements : CEIL_DIV(this->NElements, 256.0f);
+        uint32_t groupX = static_cast<uint32_t>((this->NElements < 256) ? this->NElements : CEIL_DIV(this->NElements, 256.0f));
         vkCmdDispatch(commandBuffer, groupX, 1, 1);
     }
     else

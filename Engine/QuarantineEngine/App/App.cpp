@@ -406,7 +406,7 @@ void App::initVulkan()
     this->lightManager->InitializeShadowMaps();
 
     this->commandPoolModule->Render(&framebufferModule);
-    this->synchronizationModule.createSyncObjects(swapchainModule->getNumSwapChainImages());
+    this->synchronizationModule.createSyncObjects();
 
     init_imgui();
 }

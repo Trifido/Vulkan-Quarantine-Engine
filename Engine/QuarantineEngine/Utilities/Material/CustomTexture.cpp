@@ -58,13 +58,14 @@ void CustomTexture::copyBufferToCubemapImage(VkBuffer buffer, VkImage image, uin
     uint32_t rowPitch = width * 4;   // Asume RGBA8, 4 bytes por píxel
 
     VkOffset3D offsets[6] = {
-        {2 * cubemapSize, cubemapSize, 0},  // +X
-        {0, cubemapSize, 0},               // -X
-        {cubemapSize, 0, 0},               // +Y
-        {cubemapSize, 2 * cubemapSize, 0}, // -Y
-        {cubemapSize, cubemapSize, 0},     // +Z
-        {3 * cubemapSize, cubemapSize, 0}  // -Z
+    {static_cast<int32_t>(2 * cubemapSize), static_cast<int32_t>(cubemapSize), 0},  // +X
+    {0, static_cast<int32_t>(cubemapSize), 0},                                     // -X
+    {static_cast<int32_t>(cubemapSize), 0, 0},                                     // +Y
+    {static_cast<int32_t>(cubemapSize), static_cast<int32_t>(2 * cubemapSize), 0}, // -Y
+    {static_cast<int32_t>(cubemapSize), static_cast<int32_t>(cubemapSize), 0},     // +Z
+    {static_cast<int32_t>(3 * cubemapSize), static_cast<int32_t>(cubemapSize), 0}  // -Z
     };
+
 
     for (uint32_t face = 0; face < 6; face++)
     {
@@ -648,7 +649,7 @@ void CustomTexture::SaveTexturePath(std::ofstream& file)
     for (int i = 0; i < texturePaths.size(); i++)
     {
         std::string texturePath = texturePaths.at(i);
-        int texturePathLength = texturePath.length();
+        int texturePathLength = static_cast<int>(texturePath.length());
         if (texturePathLength > 0)
         {
             file.write(reinterpret_cast<const char*>(&texturePathLength), sizeof(int));

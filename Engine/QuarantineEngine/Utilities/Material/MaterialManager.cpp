@@ -75,13 +75,13 @@ MaterialManager::MaterialManager()
     );
     shaderManager->AddShader(this->default_particles_shader);
 
-    GraphicsPipelineData pipelineMeshShader = {};
-    pipelineMeshShader.HasVertexData = false;
-    pipelineMeshShader.IsMeshShader = true;
-    this->mesh_shader_test = std::make_shared<ShaderModule>(
-        ShaderModule("mesh_shader", absolute_mesh_task_shader_path, absolute_mesh_mesh_shader_path, absolute_mesh_frag_shader_path, pipelineMeshShader)
-    );
-    shaderManager->AddShader(this->mesh_shader_test);
+    //GraphicsPipelineData pipelineMeshShader = {};
+    //pipelineMeshShader.HasVertexData = false;
+    //pipelineMeshShader.IsMeshShader = true;
+    //this->mesh_shader_test = std::make_shared<ShaderModule>(
+    //    ShaderModule("mesh_shader", absolute_mesh_task_shader_path, absolute_mesh_mesh_shader_path, absolute_mesh_frag_shader_path, pipelineMeshShader)
+    //);
+    //shaderManager->AddShader(this->mesh_shader_test);
 
     GraphicsPipelineData pipelineShadowShader = {};
 
@@ -387,14 +387,14 @@ void MaterialManager::LoadMaterialDtos(std::vector<MaterialDto>& materialDtos)
 
 void MaterialManager::SaveMaterials(std::ofstream& file)
 {
-    int materialCount = _materials.size();
+    int materialCount = static_cast<int>(_materials.size());
     file.write(reinterpret_cast<const char*>(&materialCount), sizeof(int));
 
     for (auto& it : _materials)
     {
         std::string materialPath = it.second->SaveMaterialFile();
 
-        int materialPathLength = materialPath.length();
+        int materialPathLength = static_cast<int>(materialPath.length());
 
         if (materialPathLength > 0)
         {

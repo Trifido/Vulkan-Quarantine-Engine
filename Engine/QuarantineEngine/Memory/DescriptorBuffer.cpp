@@ -9,8 +9,6 @@ DescriptorBuffer::DescriptorBuffer()
 
 DescriptorBuffer::DescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr) : DescriptorBuffer()
 {
-    uint32_t size = shader_ptr->reflectShader.bindings.size();
-
     for (int idSet = 0; idSet < shader_ptr->reflectShader.bindings.size(); idSet++)
     {
         for (auto binding : shader_ptr->reflectShader.bindings[idSet])
@@ -30,10 +28,6 @@ DescriptorBuffer::DescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr) : D
 void DescriptorBuffer::SetMeshletBuffers(std::shared_ptr<Meshlet> meshlets_ptr)
 {
     this->meshlets_ptr = meshlets_ptr;
-
-    uint32_t sizeMeshlet = sizeof(MeshletDescriptor);
-    uint32_t sizeBuffer = meshlets_ptr->gpuMeshlets.size();
-    uint32_t sizeTotalBuffer = sizeof(MeshletDescriptor) * meshlets_ptr->gpuMeshlets.size();
 
     this->ssboData["Meshlets"]->CreateSSBO(sizeof(MeshletDescriptor) * meshlets_ptr->gpuMeshlets.size(), MAX_FRAMES_IN_FLIGHT, *deviceModule);
     this->ssboSize["Meshlets"] = sizeof(MeshletDescriptor) * meshlets_ptr->gpuMeshlets.size();

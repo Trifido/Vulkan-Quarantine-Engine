@@ -270,7 +270,6 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 {
     MeshData data = {};
 
-    unsigned int WEIGHTS_PER_VERTEX = 4;
     bool existTangent = mesh->HasTangentsAndBitangents();
     bool existNormal = mesh->HasNormals();
 
@@ -438,8 +437,6 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
 
     if (material == nullptr)
         return;
-
-    auto countTextures = material->GetTextureCount(aiTextureType_NONE);
 
     aiReturn ret;//Code which says whether loading something has been successful of not
 
@@ -660,19 +657,19 @@ void MeshImporter::ExtractAndUpdateMaterials(aiScene* scene, const std::string& 
             if (file.is_open())
             {
                 // Name
-                int materialNameLength = materialName.length();
+                int materialNameLength = static_cast<int>(materialName.length());
                 file.write(reinterpret_cast<const char*>(&materialNameLength), sizeof(int));
                 file.write(reinterpret_cast<const char*>(&materialName[0]), materialName.size());
 
                 // Material file path
                 std::string materialPathStr = materialPath.string();
-                int materialPathLength = materialPathStr.length();
+                int materialPathLength = static_cast<int>(materialPathStr.length());
                 file.write(reinterpret_cast<const char*>(&materialPathLength), sizeof(int));
                 file.write(reinterpret_cast<const char*>(&materialPathStr[0]), materialPathLength);
 
                 // Shader
                 std::string shaderPath = "default";
-                int shaderPathLength = shaderPath.length();
+                int shaderPathLength = static_cast<int>(shaderPath.length());
                 file.write(reinterpret_cast<const char*>(&shaderPathLength), sizeof(int));
                 file.write(reinterpret_cast<const char*>(&shaderPath[0]), shaderPath.size());
 
@@ -732,7 +729,7 @@ void MeshImporter::ExtractAndUpdateMaterials(aiScene* scene, const std::string& 
                 // Guardar cada textura (longitud + path si existe)
                 for (const std::string& path : finalPaths)
                 {
-                    int length = path.length();
+                    int length = static_cast<int>(path.length());
                     file.write(reinterpret_cast<const char*>(&length), sizeof(int));
 
                     if (length > 0)

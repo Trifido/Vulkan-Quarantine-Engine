@@ -3,7 +3,7 @@
 
 size_t SynchronizationModule::currentFrame = 0;
 
-void SynchronizationModule::createSyncObjects(uint32_t swapChainImagesNum)
+void SynchronizationModule::createSyncObjects()
 {
     imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);

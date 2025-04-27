@@ -49,7 +49,7 @@ void BufferManageModule::createSharedBuffer(VkDeviceSize size, VkBufferUsageFlag
     bufferInfo.size = size;
     bufferInfo.usage = usage;
     bufferInfo.sharingMode = VK_SHARING_MODE_CONCURRENT;
-    bufferInfo.queueFamilyIndexCount = queueIndices.size();
+    bufferInfo.queueFamilyIndexCount = (uint32_t)queueIndices.size();
     bufferInfo.pQueueFamilyIndices = queueIndices.data();
 
     if (vkCreateBuffer(deviceModule.device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {

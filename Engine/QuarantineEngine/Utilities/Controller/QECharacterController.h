@@ -14,8 +14,8 @@ struct IgnoreSelfCallback : public btCollisionWorld::ClosestConvexResultCallback
 {
     const btCollisionObject* ignoreObject;
 
-    IgnoreSelfCallback(const btVector3& from, const btVector3& to, const btCollisionObject* ignore)
-        : btCollisionWorld::ClosestConvexResultCallback(from, to), ignoreObject(ignore) {}
+    IgnoreSelfCallback(const btVector3& from, const btVector3& to, const btCollisionObject* ignoreObj)
+        : btCollisionWorld::ClosestConvexResultCallback(from, to), ignoreObject(ignoreObj) {}
 
     bool needsCollision(btBroadphaseProxy* proxy0) const override
     {
@@ -27,6 +27,7 @@ struct IgnoreSelfCallback : public btCollisionWorld::ClosestConvexResultCallback
         return proxy0->m_clientObject != ignoreObject;
     }
 };
+
 
 class QECharacterController : public GameComponent
 {

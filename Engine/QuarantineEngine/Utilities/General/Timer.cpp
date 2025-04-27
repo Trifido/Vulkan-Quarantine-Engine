@@ -11,7 +11,7 @@ Timer::Timer()
 
 void Timer::UpdateDeltaTime()
 {
-    currentFrame = glfwGetTime();
+    currentFrame = static_cast<float>(glfwGetTime());
     DeltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
     FrameCounter++;
