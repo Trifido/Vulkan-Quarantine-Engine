@@ -63,11 +63,9 @@ void PhysicBody::Initialize(std::shared_ptr<Transform> transform_ptr, std::share
     glm::vec3 position = this->transform->Position;
     startTransform.setOrigin(btVector3(position.x, position.y, position.z));
 
-    float yaw = this->transform->RadiansRotation.x;
-    float pitch = this->transform->RadiansRotation.y;
-    float roll = this->transform->RadiansRotation.z;
-    btQuaternion rotation(yaw, pitch, roll);
-    startTransform.setRotation(rotation);
+    auto quat = this->transform->Orientation;
+    btQuaternion btQuat(quat.x, quat.y, quat.z, quat.w);
+    startTransform.setRotation(btQuat);
 
     btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
 

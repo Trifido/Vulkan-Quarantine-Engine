@@ -233,7 +233,7 @@ void App::initVulkan()
 
     this->gameObjectManager->AddGameObject(floor, "floor");
 
-    std::shared_ptr<GameObject> ramp = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
+    std::shared_ptr<GameObject> ramp = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
     ramp->_Transform->SetPosition(glm::vec3(0.0f, 0.5f, -10.0f));
     ramp->_Transform->SetOrientation(glm::vec3(25.0f, 0.0f, 0.0f));
     ramp->_Transform->SetScale(glm::vec3(10.0f, 1.0f, 10.0f));
@@ -241,7 +241,8 @@ void App::initVulkan()
     ramp->AddPhysicBody(std::make_shared<PhysicBody>());
     ramp->physicBody->CollisionGroup = CollisionFlag::COL_SCENE;
     ramp->physicBody->CollisionMask = CollisionFlag::COL_PLAYER;
-    ramp->AddCollider(std::make_shared<PlaneCollider>(0.01f, glm::vec3(0.0f, 1.0f, 0.0f)));
+    ramp->AddCollider(std::make_shared<BoxCollider>());
+    //ramp->AddCollider(std::make_shared<PlaneCollider>(0.01f, glm::vec3(0.0f, 1.0f, 0.0f)));
 
     this->gameObjectManager->AddGameObject(ramp, "ramp");
 

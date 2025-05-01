@@ -399,4 +399,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <Target Name="KillRunningEXE" BeforeTargets="BeforeBuild">
+    <Exec Command="taskkill /F /IM QuarantineEngine.exe" IgnoreExitCode="true" />
+  </Target>
 </Project>
