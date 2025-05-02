@@ -23,5 +23,5 @@ void BoxCollider::SetSize(const glm::vec3& value)
     if(this->colShape != nullptr)
         delete this->colShape;
     this->colShape = new btBoxShape(btVector3(this->Size.x, this->Size.y, this->Size.z));
-    this->colShape->setMargin(0.01f);
+    this->colShape->setMargin(this->CollisionMargin);
 }

@@ -325,9 +325,6 @@
     <ClCompile Include="Utilities\Light\SpotLight.cpp">
       <Filter>Kernel\Utilities\Light\sources</Filter>
     </ClCompile>
-    <ClCompile Include="Utilities\Physics\Collider.cpp">
-      <Filter>Kernel\Utilities\Physics\sources</Filter>
-    </ClCompile>
     <ClCompile Include="Utilities\Physics\SphereCollider.cpp">
       <Filter>Kernel\Utilities\Physics\sources</Filter>
     </ClCompile>
@@ -477,6 +474,12 @@
     </ClCompile>
     <ClCompile Include="Data\QEProjectManager.cpp">
       <Filter>Kernel\Data\sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Controller\QECharacterController.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities\Light\SunLight.cpp">
+      <Filter>sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -809,6 +812,8 @@
     <ClInclude Include="Data\Dtos\MaterialDto.h">
       <Filter>Kernel\Data\Dtos</Filter>
     </ClInclude>
+    <ClInclude Include="Utilities\Controller\QECharacterController.h" />
+    <ClInclude Include="Utilities\Light\SunLight.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.txt" />

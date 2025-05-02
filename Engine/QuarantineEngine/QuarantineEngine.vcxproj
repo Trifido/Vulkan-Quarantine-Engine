@@ -264,7 +264,6 @@
     <ClCompile Include="Utilities\Particles\ParticleSystemManager.cpp" />
     <ClCompile Include="Utilities\Physics\AABBObject.cpp" />
     <ClCompile Include="Utilities\Physics\BoxCollider.cpp" />
-    <ClCompile Include="Utilities\Physics\Collider.cpp" />
     <ClCompile Include="Utilities\Physics\PhysicBody.cpp" />
     <ClCompile Include="Utilities\Physics\PhysicsModule.cpp" />
     <ClCompile Include="Utilities\Physics\PlaneCollider.cpp" />

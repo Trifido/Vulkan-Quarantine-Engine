@@ -230,23 +230,31 @@ void App::initVulkan()
     floor->physicBody->CollisionMask = CollisionFlag::COL_PLAYER;
     floor->AddCollider(std::make_shared<PlaneCollider>());
     std::static_pointer_cast<PlaneCollider>(floor->collider)->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
-
     this->gameObjectManager->AddGameObject(floor, "floor");
 
     std::shared_ptr<GameObject> ramp = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
     ramp->_Transform->SetPosition(glm::vec3(0.0f, 0.5f, -10.0f));
-    ramp->_Transform->SetOrientation(glm::vec3(25.0f, 0.0f, 0.0f));
+    ramp->_Transform->SetOrientation(glm::vec3(0.0f, 0.0f, 0.0f));
     ramp->_Transform->SetScale(glm::vec3(10.0f, 1.0f, 10.0f));
     ramp->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
     ramp->AddPhysicBody(std::make_shared<PhysicBody>());
     ramp->physicBody->CollisionGroup = CollisionFlag::COL_SCENE;
     ramp->physicBody->CollisionMask = CollisionFlag::COL_PLAYER;
     ramp->AddCollider(std::make_shared<BoxCollider>());
-    //ramp->AddCollider(std::make_shared<PlaneCollider>(0.01f, glm::vec3(0.0f, 1.0f, 0.0f)));
-
     this->gameObjectManager->AddGameObject(ramp, "ramp");
 
+    std::shared_ptr<GameObject> wall = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
+    wall->_Transform->SetPosition(glm::vec3(3.0f, 0.5f, 0.0f));
+    wall->_Transform->SetOrientation(glm::vec3(0.0f, 0.0f, 0.0f));
+    wall->_Transform->SetScale(glm::vec3(4.0f, 0.5f, 4.0f));
+    wall->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.8f, 0.2f, 0.2f));
+    wall->AddPhysicBody(std::make_shared<PhysicBody>());
+    wall->physicBody->CollisionGroup = CollisionFlag::COL_SCENE;
+    wall->physicBody->CollisionMask = CollisionFlag::COL_PLAYER;
+    wall->AddCollider(std::make_shared<BoxCollider>());
+    this->gameObjectManager->AddGameObject(wall, "wall");
 
+    // CHARACTER CONTROLLER
     std::shared_ptr<GameObject> character = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
     character->_Transform->SetPosition(glm::vec3(0.0f, 0.5f, 0.0f));
     character->AddPhysicBody(std::make_shared<PhysicBody>(PhysicBodyType::RIGID_BODY));
@@ -258,15 +266,7 @@ void App::initVulkan()
     character->characterController->SetJumpForce(9.0f);
 
     this->gameObjectManager->AddGameObject(character, "character");
-    /**/
-    std::shared_ptr<GameObject> wall = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
-    wall->_Transform->SetPosition(glm::vec3(3.0f, 0.5f, 0.0f));
-    wall->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.8f, 0.2f, 0.2f));
-    wall->AddPhysicBody(std::make_shared<PhysicBody>(PhysicBodyType::STATIC_BODY));
-    wall->AddCollider(std::make_shared<BoxCollider>());
-    wall->physicBody->CollisionGroup = CollisionFlag::COL_SCENE;
-    wall->physicBody->CollisionMask = CollisionFlag::COL_PLAYER;
-    this->gameObjectManager->AddGameObject(wall, "wall");
+
     /**/
 
 //DEMOD

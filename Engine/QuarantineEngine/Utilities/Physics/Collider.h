@@ -9,6 +9,7 @@ class Collider : public GameComponent
 {
 public:
     btCollisionShape* colShape = nullptr;
+    float CollisionMargin = 0.04f;
 };
 
 #endif 

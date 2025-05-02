@@ -12,68 +12,104 @@ void QECharacterController::Initialize()
     this->physicBodyPtr->body->setCollisionFlags(btCollisionObject::CF_DYNAMIC_OBJECT);
 }
 
-void QECharacterController::BindGameObjectProperties(std::shared_ptr<PhysicBody> physicBodyPtr)
+void QECharacterController::BindGameObjectProperties(std::shared_ptr<PhysicBody> physicBodyPtr, std::shared_ptr<Collider> colliderPtr)
 {
     this->physicBodyPtr = physicBodyPtr;
+    this->colliderPtr = colliderPtr;
 }
 
 void QECharacterController::CheckIfGrounded()
 {
+    float margin = this->colliderPtr->CollisionMargin;
+
     btTransform trans;
     this->physicBodyPtr->body->getMotionState()->getWorldTransform(trans);
     btVector3 start = trans.getOrigin();
-    btVector3 end = start - btVector3(0, 0.51f, 0);
 
-    btCollisionWorld::ClosestRayResultCallback rayCallback(start, end);
-    rayCallback.m_collisionFilterGroup = CollisionFlag::COL_PLAYER;
-    rayCallback.m_collisionFilterMask = CollisionFlag::COL_SCENE;
-    PhysicsModule::getInstance()->dynamicsWorld->rayTest(start, end, rayCallback);
+    btVector3 min, max;
+    this->colliderPtr->colShape->getAabb(
+        this->physicBodyPtr->body->getWorldTransform(),
+        min,
+        max);
 
-    if (rayCallback.hasHit())
+    float yOffset = (max.y() - min.y()) * 0.5f;
+    start.setY(start.y() - yOffset + margin);
+
+
+    this->groundCheckRays[0] = btVector3(min.x() - margin, min.y() + margin, min.z() - margin);
+    this->groundCheckRays[1] = btVector3(max.x() + margin, min.y() + margin, min.z() - margin);
+    this->groundCheckRays[2] = btVector3(min.x() - margin, min.y() + margin, max.z() + margin);
+    this->groundCheckRays[3] = btVector3(max.x() + margin, min.y() + margin, max.z() + margin);
+
+    this->isGrounded = false;
+    this->canWalkOnGround = false;
+
+    // Check raycast from the character's position to the ground
+    for (int i = 0; i < 4; i++)
     {
-        this->isGrounded = true;
-        this->groundNormal = rayCallback.m_hitNormalWorld.normalized();
+        btVector3 rayEnd = this->groundCheckRays[i] - btVector3(0.0f, 0.5f, 0.0f);
 
-        // Calculamos si es una superficie caminable
-        float maxSlopeRadians = glm::radians(45.0f); // puedes exponerlo como parámetro
-        this->canWalkOnGround = this->groundNormal.dot(btVector3(0, 1, 0)) > cos(maxSlopeRadians);
+        btCollisionWorld::ClosestRayResultCallback rayCallback(this->groundCheckRays[i], rayEnd);
+        rayCallback.m_collisionFilterGroup = CollisionFlag::COL_PLAYER;
+        rayCallback.m_collisionFilterMask = CollisionFlag::COL_SCENE;
+        PhysicsModule::getInstance()->dynamicsWorld->rayTest(this->groundCheckRays[i], rayEnd, rayCallback);
+
+        if (rayCallback.hasHit())
+        {
+            this->isGrounded = true;
+            this->groundNormal = rayCallback.m_hitNormalWorld.normalized();
+
+            // Calculamos si es una superficie caminable
+            float maxSlopeRadians = glm::radians(35.0f); // puedes exponerlo como parámetro
+            this->canWalkOnGround = this->groundNormal.dot(btVector3(0, 1, 0)) > cos(maxSlopeRadians);
+
+            printf("Tierra!\n");
+
+            break;
+        }
     }
-    else
+
+    if (this->isGrounded == false)
     {
-        this->isGrounded = false;
-        this->canWalkOnGround = false;
+        printf("Aire!\n");
     }
-
-    isGrounded = rayCallback.hasHit();
 }
 
 void QECharacterController::Move(const btVector3 & direction, float speed)
 {
     btVector3 currentVel = this->physicBodyPtr->body->getLinearVelocity();
+    btVector3 adjustedDir;
     float airControl = this->isGrounded ? 1.0f : this->airControlFactor;
     float stepDistance = speed * Timer::DeltaTime;
 
     if (direction.length2() > 0.001f)
     {
-        if (this->CanMove(direction, stepDistance) && (this->isGrounded == false || this->canWalkOnGround))
+        if (this->CanMove(direction, stepDistance, adjustedDir) && (this->isGrounded == false || this->canWalkOnGround))
         {
-            btVector3 vel = direction.normalized() * speed;
+            btVector3 vel = adjustedDir.normalized() * speed;
 
             // Ajuste de dirección si está en suelo
             if (this->isGrounded && this->canWalkOnGround)
             {
-                btVector3 moveDir = direction.normalized();
-                btVector3 right = moveDir.cross(this->groundNormal).normalized();
-                btVector3 adjustedDir = this->groundNormal.cross(right).normalized();
+                btVector3 right = adjustedDir.cross(this->groundNormal);
+
+                if (right.length2() > 0.0001f)
+                {
+                    right = right.normalized();
+                    adjustedDir = this->groundNormal.cross(right).normalized();
+                }
+
                 vel = adjustedDir * speed;
             }
 
             btVector3 desiredVelocity = btVector3(vel.x() * airControl, currentVel.y(), vel.z() * airControl);
 
+            printf("Desired Velocity: %f %f %f\n", desiredVelocity.x(), desiredVelocity.y(), desiredVelocity.z());
             this->physicBodyPtr->body->setLinearVelocity(desiredVelocity);
         }
         else
         {
+            printf("No me muevo\n");
             this->physicBodyPtr->body->setLinearVelocity(btVector3(0, currentVel.y(), 0));
         }
     }
@@ -92,29 +128,53 @@ void QECharacterController::Jump()
     }
 }
 
-bool QECharacterController::CanMove(const btVector3& direction, float distance)
+bool QECharacterController::CanMove(const btVector3& direction, float distance, btVector3& outAdjustedDir)
 {
+    outAdjustedDir = btVector3(0, 0, 0);
     btTransform from = this->physicBodyPtr->body->getWorldTransform();
-    btTransform to = from;
-    to.setOrigin(from.getOrigin() + direction.normalized() * distance);
+    btVector3 start = from.getOrigin();
+    btVector3 desiredEnd = start + direction.normalized() * distance;
 
     btConvexShape* shape = static_cast<btConvexShape*>(this->physicBodyPtr->body->getCollisionShape());
 
-    IgnoreSelfCallback callback(
-        from.getOrigin(),
-        to.getOrigin(),
-        this->physicBodyPtr->body);
-
-    // Ajusta los grupos según tu sistema
+    IgnoreSelfCallback callback(start, desiredEnd, this->physicBodyPtr->body);
     callback.m_collisionFilterGroup = this->physicBodyPtr->CollisionGroup;
     callback.m_collisionFilterMask = this->physicBodyPtr->CollisionMask;
 
-    // Ignorar el propio cuerpo
-    callback.m_hitCollisionObject = this->physicBodyPtr->body;
+    PhysicsModule::getInstance()->dynamicsWorld->convexSweepTest(shape, from, btTransform(btQuaternion::getIdentity(), desiredEnd), callback);
 
-    PhysicsModule::getInstance()->dynamicsWorld->convexSweepTest(shape, from, to, callback);
+    if (!callback.hasHit()) {
+        outAdjustedDir = direction.normalized(); // sin colisión, usa la dirección original
+        printf("Adjusted dir: %.3f %.3f %.3f\n", outAdjustedDir.getX(), outAdjustedDir.getY(), outAdjustedDir.getZ());
 
-    return !callback.hasHit();
+        return true;
+    }
+
+    // Intentar deslizarse
+    btVector3 normal = callback.hitNormal.normalized();
+    btVector3 slideDir = direction - normal * direction.dot(normal);
+
+    if (slideDir.fuzzyZero()) {
+        return false; // no hay dirección útil para deslizarse
+    }
+
+    // Segundo intento con dirección deslizada
+    btVector3 slideEnd = start + slideDir.normalized() * distance;
+
+    IgnoreSelfCallback slideCallback(start, slideEnd, this->physicBodyPtr->body);
+    slideCallback.m_collisionFilterGroup = this->physicBodyPtr->CollisionGroup;
+    slideCallback.m_collisionFilterMask = this->physicBodyPtr->CollisionMask;
+
+    PhysicsModule::getInstance()->dynamicsWorld->convexSweepTest(shape, from, btTransform(btQuaternion::getIdentity(), slideEnd), slideCallback);
+
+    if (!slideCallback.hasHit()) {
+        outAdjustedDir = slideDir.normalized();
+        printf("Adjusted dir: %.3f %.3f %.3f\n", outAdjustedDir.getX(), outAdjustedDir.getY(), outAdjustedDir.getZ());
+        return true;
+    }
+
+    printf("Adjusted dir: %.3f %.3f %.3f\n", outAdjustedDir.getX(), outAdjustedDir.getY(), outAdjustedDir.getZ());
+    return false; // tampoco podemos deslizar
 }
 
 
