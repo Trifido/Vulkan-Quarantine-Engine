@@ -12,9 +12,9 @@ void QECharacterController::Initialize()
     this->physicBodyPtr->body->setCollisionFlags(btCollisionObject::CF_DYNAMIC_OBJECT);
 }
 
-void QECharacterController::BindGameObjectProperties(std::shared_ptr<PhysicBody> physicBodyPtr, std::shared_ptr<Collider> colliderPtr)
+void QECharacterController::BindGameObjectProperties(std::shared_ptr<PhysicBody> physicBody, std::shared_ptr<Collider> colliderPtr)
 {
-    this->physicBodyPtr = physicBodyPtr;
+    this->physicBodyPtr = physicBody;
     this->colliderPtr = colliderPtr;
 }
 
@@ -24,7 +24,6 @@ void QECharacterController::CheckIfGrounded()
 
     btTransform trans;
     this->physicBodyPtr->body->getMotionState()->getWorldTransform(trans);
-    btVector3 start = trans.getOrigin();
 
     btVector3 min, max;
     this->colliderPtr->colShape->getAabb(
@@ -32,14 +31,10 @@ void QECharacterController::CheckIfGrounded()
         min,
         max);
 
-    float yOffset = (max.y() - min.y()) * 0.5f;
-    start.setY(start.y() - yOffset + margin);
-
-
-    this->groundCheckRays[0] = btVector3(min.x() - margin, min.y() + margin, min.z() - margin);
-    this->groundCheckRays[1] = btVector3(max.x() + margin, min.y() + margin, min.z() - margin);
-    this->groundCheckRays[2] = btVector3(min.x() - margin, min.y() + margin, max.z() + margin);
-    this->groundCheckRays[3] = btVector3(max.x() + margin, min.y() + margin, max.z() + margin);
+    this->groundCheckRays[0] = btVector3(min.x() + margin, min.y() + margin, min.z() + margin);
+    this->groundCheckRays[1] = btVector3(max.x() - margin, min.y() + margin, min.z() + margin);
+    this->groundCheckRays[2] = btVector3(min.x() + margin, min.y() + margin, max.z() - margin);
+    this->groundCheckRays[3] = btVector3(max.x() - margin, min.y() + margin, max.z() - margin);
 
     this->isGrounded = false;
     this->canWalkOnGround = false;
@@ -47,7 +42,7 @@ void QECharacterController::CheckIfGrounded()
     // Check raycast from the character's position to the ground
     for (int i = 0; i < 4; i++)
     {
-        btVector3 rayEnd = this->groundCheckRays[i] - btVector3(0.0f, 0.5f, 0.0f);
+        btVector3 rayEnd = this->groundCheckRays[i] - btVector3(0.0f, margin * 2.0f, 0.0f);
 
         btCollisionWorld::ClosestRayResultCallback rayCallback(this->groundCheckRays[i], rayEnd);
         rayCallback.m_collisionFilterGroup = CollisionFlag::COL_PLAYER;
@@ -60,7 +55,7 @@ void QECharacterController::CheckIfGrounded()
             this->groundNormal = rayCallback.m_hitNormalWorld.normalized();
 
             // Calculamos si es una superficie caminable
-            float maxSlopeRadians = glm::radians(35.0f); // puedes exponerlo como parámetro
+            float maxSlopeRadians = glm::radians(35.0f);
             this->canWalkOnGround = this->groundNormal.dot(btVector3(0, 1, 0)) > cos(maxSlopeRadians);
 
             printf("Tierra!\n");
@@ -144,9 +139,7 @@ bool QECharacterController::CanMove(const btVector3& direction, float distance, 
     PhysicsModule::getInstance()->dynamicsWorld->convexSweepTest(shape, from, btTransform(btQuaternion::getIdentity(), desiredEnd), callback);
 
     if (!callback.hasHit()) {
-        outAdjustedDir = direction.normalized(); // sin colisión, usa la dirección original
-        printf("Adjusted dir: %.3f %.3f %.3f\n", outAdjustedDir.getX(), outAdjustedDir.getY(), outAdjustedDir.getZ());
-
+        outAdjustedDir = direction.normalized();
         return true;
     }
 
@@ -154,8 +147,9 @@ bool QECharacterController::CanMove(const btVector3& direction, float distance, 
     btVector3 normal = callback.hitNormal.normalized();
     btVector3 slideDir = direction - normal * direction.dot(normal);
 
-    if (slideDir.fuzzyZero()) {
-        return false; // no hay dirección útil para deslizarse
+    if (slideDir.fuzzyZero())
+    {
+        return false;
     }
 
     // Segundo intento con dirección deslizada
@@ -169,12 +163,10 @@ bool QECharacterController::CanMove(const btVector3& direction, float distance, 
 
     if (!slideCallback.hasHit()) {
         outAdjustedDir = slideDir.normalized();
-        printf("Adjusted dir: %.3f %.3f %.3f\n", outAdjustedDir.getX(), outAdjustedDir.getY(), outAdjustedDir.getZ());
         return true;
     }
 
-    printf("Adjusted dir: %.3f %.3f %.3f\n", outAdjustedDir.getX(), outAdjustedDir.getY(), outAdjustedDir.getZ());
-    return false; // tampoco podemos deslizar
+    return false;
 }
 
 

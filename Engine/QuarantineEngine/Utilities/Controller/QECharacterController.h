@@ -64,7 +64,7 @@ class QECharacterController : public GameComponent
 
     public:
         void Initialize();
-        void BindGameObjectProperties(std::shared_ptr<PhysicBody> physicBodyPtr, std::shared_ptr<Collider> colliderPtr);
+        void BindGameObjectProperties(std::shared_ptr<PhysicBody> physicBody, std::shared_ptr<Collider> collider);
         void Update();
         btVector3 GetPosition();
         static void ProcessInput(GLFWwindow* window, std::shared_ptr<QECharacterController> player);
