@@ -20,7 +20,8 @@ void QECharacterController::BindGameObjectProperties(std::shared_ptr<PhysicBody>
 
 void QECharacterController::CheckIfGrounded()
 {
-    float margin = this->colliderPtr->CollisionMargin;
+    this->isGrounded = false;
+    this->canWalkOnGround = false;
 
     btTransform trans;
     this->physicBodyPtr->body->getMotionState()->getWorldTransform(trans);
@@ -31,34 +32,24 @@ void QECharacterController::CheckIfGrounded()
         min,
         max);
 
-    this->groundCheckRays[0] = btVector3(min.x() + margin, min.y() + margin, min.z() + margin);
-    this->groundCheckRays[1] = btVector3(max.x() - margin, min.y() + margin, min.z() + margin);
-    this->groundCheckRays[2] = btVector3(min.x() + margin, min.y() + margin, max.z() - margin);
-    this->groundCheckRays[3] = btVector3(max.x() - margin, min.y() + margin, max.z() - margin);
-
-    this->isGrounded = false;
-    this->canWalkOnGround = false;
-
     // Check raycast from the character's position to the ground
-    for (int i = 0; i < 4; i++)
+    btVector3 groundCheckRays = (min + max) * 0.5f;
+    float rayEndY = max.y() - groundCheckRays.y() + this->colliderPtr->CollisionMargin;
+    btVector3 rayEnd = groundCheckRays - btVector3(0.0f, rayEndY, 0.0f);
+
+    btCollisionWorld::ClosestRayResultCallback rayCallback(groundCheckRays, rayEnd);
+    rayCallback.m_collisionFilterGroup = CollisionFlag::COL_PLAYER;
+    rayCallback.m_collisionFilterMask = CollisionFlag::COL_SCENE;
+    PhysicsModule::getInstance()->dynamicsWorld->rayTest(groundCheckRays, rayEnd, rayCallback);
+
+    if (rayCallback.hasHit())
     {
-        btVector3 rayEnd = this->groundCheckRays[i] - btVector3(0.0f, margin * 2.0f, 0.0f);
+        this->isGrounded = true;
+        this->groundNormal = rayCallback.m_hitNormalWorld.normalized();
 
-        btCollisionWorld::ClosestRayResultCallback rayCallback(this->groundCheckRays[i], rayEnd);
-        rayCallback.m_collisionFilterGroup = CollisionFlag::COL_PLAYER;
-        rayCallback.m_collisionFilterMask = CollisionFlag::COL_SCENE;
-        PhysicsModule::getInstance()->dynamicsWorld->rayTest(this->groundCheckRays[i], rayEnd, rayCallback);
-
-        if (rayCallback.hasHit())
-        {
-            this->isGrounded = true;
-            this->groundNormal = rayCallback.m_hitNormalWorld.normalized();
-
-            // Calculamos si es una superficie caminable
-            float maxSlopeRadians = glm::radians<float>(35.0f);
-            this->canWalkOnGround = this->groundNormal.dot(btVector3(0, 1, 0)) > cos(maxSlopeRadians);
-            break;
-        }
+        // Calculamos si es una superficie caminable
+        float maxSlopeRadians = glm::radians<float>(maxStepAngle);
+        this->canWalkOnGround = this->groundNormal.dot(btVector3(0, 1, 0)) > cos(maxSlopeRadians);
     }
 }
 
