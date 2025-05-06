@@ -55,6 +55,8 @@ class QECharacterController : public GameComponent
         float airControlFactor = 0.8f;
         float jumpForce = 8.0f;
         btVector3 groundCheckRays[4];
+        float maxStepHeight = 1.6f;
+        float minStepSize = 0.5f;
 
     private:
         void CheckIfGrounded();

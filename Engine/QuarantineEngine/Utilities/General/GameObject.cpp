@@ -4,6 +4,7 @@
 
 #include "PrimitiveTypes.h"
 #include <AnimationImporter.h>
+#include <CapsuleMesh.h>
 
 GameObject::GameObject()
 {
@@ -278,7 +279,16 @@ void GameObject::InitializeGameObject(PRIMITIVE_TYPE type, bool isMeshShading)
     this->InitializeResources();
     this->isMeshShading = isMeshShading;
     this->_primitiveMeshType = type;
-    this->_Mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh(type));
+
+    if (type == PRIMITIVE_TYPE::CAPSULE_TYPE)
+    {
+        this->_Mesh = std::make_shared<CapsuleMesh>(CapsuleMesh());
+    }
+    else
+    {
+        this->_Mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh(type));
+    }
+
     this->_meshImportedType = MeshImportedType::PRIMITIVE_GEO;
 
     if (type != PRIMITIVE_TYPE::GRID_TYPE)

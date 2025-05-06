@@ -255,10 +255,11 @@ void App::initVulkan()
     this->gameObjectManager->AddGameObject(wall, "wall");
 
     // CHARACTER CONTROLLER
-    std::shared_ptr<GameObject> character = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
+    std::shared_ptr<GameObject> character = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CAPSULE_TYPE));
     character->_Transform->SetPosition(glm::vec3(0.0f, 0.5f, 0.0f));
+    character->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
     character->AddPhysicBody(std::make_shared<PhysicBody>(PhysicBodyType::RIGID_BODY));
-    character->AddCollider(std::make_shared<BoxCollider>());
+    character->AddCollider(std::make_shared<CapsuleCollider>());
     character->physicBody->Mass = 70.0f;
     character->physicBody->CollisionGroup = CollisionFlag::COL_PLAYER;
     character->physicBody->CollisionMask = CollisionFlag::COL_SCENE;

@@ -1,4 +1,4 @@
-#include <QECharacterController.h>
+ï»¿#include <QECharacterController.h>
 #include <PhysicsModule.h>
 #include <Timer.h>
 
@@ -6,16 +6,16 @@ void QECharacterController::Initialize()
 {
     this->physicBodyPtr->body->setAngularFactor(0);     // No permitir que rote
     this->physicBodyPtr->body->setDamping(0.9f, 0.9f);  // Linear y angular damping
-    this->physicBodyPtr->body->setFriction(1.0f);       // buena fricción
+    this->physicBodyPtr->body->setFriction(1.0f);       // buena fricciÃ³n
     this->physicBodyPtr->body->setRestitution(0.0f);    // sin rebote
     this->physicBodyPtr->body->setActivationState(DISABLE_DEACTIVATION);
     this->physicBodyPtr->body->setCollisionFlags(btCollisionObject::CF_DYNAMIC_OBJECT);
 }
 
-void QECharacterController::BindGameObjectProperties(std::shared_ptr<PhysicBody> physicBody, std::shared_ptr<Collider> colliderPtr)
+void QECharacterController::BindGameObjectProperties(std::shared_ptr<PhysicBody> physicBody, std::shared_ptr<Collider> collider)
 {
     this->physicBodyPtr = physicBody;
-    this->colliderPtr = colliderPtr;
+    this->colliderPtr = collider;
 }
 
 void QECharacterController::CheckIfGrounded()
@@ -55,18 +55,10 @@ void QECharacterController::CheckIfGrounded()
             this->groundNormal = rayCallback.m_hitNormalWorld.normalized();
 
             // Calculamos si es una superficie caminable
-            float maxSlopeRadians = glm::radians(35.0f);
+            float maxSlopeRadians = glm::radians<float>(35.0f);
             this->canWalkOnGround = this->groundNormal.dot(btVector3(0, 1, 0)) > cos(maxSlopeRadians);
-
-            printf("Tierra!\n");
-
             break;
         }
-    }
-
-    if (this->isGrounded == false)
-    {
-        printf("Aire!\n");
     }
 }
 
@@ -83,7 +75,7 @@ void QECharacterController::Move(const btVector3 & direction, float speed)
         {
             btVector3 vel = adjustedDir.normalized() * speed;
 
-            // Ajuste de dirección si está en suelo
+            // Ajuste de direcciÃ³n si estÃ¡ en suelo
             if (this->isGrounded && this->canWalkOnGround)
             {
                 btVector3 right = adjustedDir.cross(this->groundNormal);
@@ -99,12 +91,10 @@ void QECharacterController::Move(const btVector3 & direction, float speed)
 
             btVector3 desiredVelocity = btVector3(vel.x() * airControl, currentVel.y(), vel.z() * airControl);
 
-            printf("Desired Velocity: %f %f %f\n", desiredVelocity.x(), desiredVelocity.y(), desiredVelocity.z());
             this->physicBodyPtr->body->setLinearVelocity(desiredVelocity);
         }
         else
         {
-            printf("No me muevo\n");
             this->physicBodyPtr->body->setLinearVelocity(btVector3(0, currentVel.y(), 0));
         }
     }
@@ -152,7 +142,7 @@ bool QECharacterController::CanMove(const btVector3& direction, float distance, 
         return false;
     }
 
-    // Segundo intento con dirección deslizada
+    // Segundo intento con direcciÃ³n deslizada
     btVector3 slideEnd = start + slideDir.normalized() * distance;
 
     IgnoreSelfCallback slideCallback(start, slideEnd, this->physicBodyPtr->body);
@@ -161,7 +151,8 @@ bool QECharacterController::CanMove(const btVector3& direction, float distance, 
 
     PhysicsModule::getInstance()->dynamicsWorld->convexSweepTest(shape, from, btTransform(btQuaternion::getIdentity(), slideEnd), slideCallback);
 
-    if (!slideCallback.hasHit()) {
+    if (!slideCallback.hasHit())
+    {
         outAdjustedDir = slideDir.normalized();
         return true;
     }
@@ -169,14 +160,13 @@ bool QECharacterController::CanMove(const btVector3& direction, float distance, 
     return false;
 }
 
-
-// Actualizar la física (para simular la física del personaje)
+// Actualizar la fÃ­sica (para simular la fÃ­sica del personaje)
 void QECharacterController::Update()
 {
     this->CheckIfGrounded();
 }
 
-// Obtener la posición del personaje
+// Obtener la posiciÃ³n del personaje
 btVector3 QECharacterController::GetPosition()
 {
     btTransform trans;

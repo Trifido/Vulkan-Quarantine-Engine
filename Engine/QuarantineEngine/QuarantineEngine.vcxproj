@@ -243,6 +243,7 @@
     <ClCompile Include="Utilities\General\QEScene.cpp" />
     <ClCompile Include="Utilities\General\Timer.cpp" />
     <ClCompile Include="Utilities\General\Transform.cpp" />
+    <ClCompile Include="Utilities\Geometry\CapsuleMesh.cpp" />
     <ClCompile Include="Utilities\Geometry\GeometryComponent.cpp" />
     <ClCompile Include="Utilities\Geometry\Mesh.cpp" />
     <ClCompile Include="Utilities\Geometry\MeshImporter.cpp" />
@@ -264,6 +265,7 @@
     <ClCompile Include="Utilities\Particles\ParticleSystemManager.cpp" />
     <ClCompile Include="Utilities\Physics\AABBObject.cpp" />
     <ClCompile Include="Utilities\Physics\BoxCollider.cpp" />
+    <ClCompile Include="Utilities\Physics\CapsuleCollider.cpp" />
     <ClCompile Include="Utilities\Physics\PhysicBody.cpp" />
     <ClCompile Include="Utilities\Physics\PhysicsModule.cpp" />
     <ClCompile Include="Utilities\Physics\PlaneCollider.cpp" />
@@ -353,6 +355,7 @@
     <ClInclude Include="Utilities\General\QEScene.h" />
     <ClInclude Include="Utilities\General\Timer.h" />
     <ClInclude Include="Utilities\General\Transform.h" />
+    <ClInclude Include="Utilities\Geometry\CapsuleMesh.h" />
     <ClInclude Include="Utilities\Geometry\GeometryComponent.h" />
     <ClInclude Include="Utilities\Geometry\Mesh.h" />
     <ClInclude Include="Utilities\Geometry\MeshImportedType.h" />
@@ -380,6 +383,7 @@
     <ClInclude Include="Utilities\Particles\ParticleSystemManager.h" />
     <ClInclude Include="Utilities\Physics\AABBObject.h" />
     <ClInclude Include="Utilities\Physics\BoxCollider.h" />
+    <ClInclude Include="Utilities\Physics\CapsuleCollider.h" />
     <ClInclude Include="Utilities\Physics\Collider.h" />
     <ClInclude Include="Utilities\Physics\PhysicBody.h" />
     <ClInclude Include="Utilities\Physics\PhysicsModule.h" />
