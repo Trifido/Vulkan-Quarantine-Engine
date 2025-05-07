@@ -30,6 +30,31 @@ void PhysicsModule::ComputePhysics(float deltaTime)
     {
         this->dynamicsWorld->stepSimulation(deltaTime, 10);
     }
+
+    this->UpdateDebugDrawer();
+}
+
+void PhysicsModule::CleanupDebugDrawer() { debugDrawer->cleanup(); }
+
+void PhysicsModule::InitializeDebugResources()
+{
+    // Set debug mode
+    this->debugDrawer = new BulletDebugDrawer();
+    this->debugDrawer->setDebugMode(btIDebugDraw::DBG_DrawWireframe);
+    this->dynamicsWorld->setDebugDrawer(this->debugDrawer);
+
+    this->debugDrawer->InitializeDebugResources();
+}
+
+void PhysicsModule::UpdateDebugDrawer()
+{
+    if (this->dynamicsWorld->getNumCollisionObjects() > 0)
+    {
+        this->debugDrawer->clear();
+        this->dynamicsWorld->debugDrawWorld();
+
+        this->debugDrawer->UpdateBuffers();
+    }
 }
 
 void PhysicsModule::SetGravity(float gravity)

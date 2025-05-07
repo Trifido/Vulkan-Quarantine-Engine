@@ -487,6 +487,9 @@
     <ClCompile Include="Utilities\Controller\QECharacterController.cpp">
       <Filter>Kernel\Utilities\Physics\sources</Filter>
     </ClCompile>
+    <ClCompile Include="Utilities\Physics\BulletDebugDrawer.cpp">
+      <Filter>sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SetUp\DeviceModule.h">
@@ -828,6 +831,7 @@
     <ClInclude Include="Utilities\Controller\QECharacterController.h">
       <Filter>Kernel\Utilities\Physics\headers</Filter>
     </ClInclude>
+    <ClInclude Include="Utilities\Physics\BulletDebugDrawer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.txt" />

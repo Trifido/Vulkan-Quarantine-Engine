@@ -51,6 +51,8 @@ MaterialManager::MaterialManager()
     const std::string absolute_mesh_frag_shader_path = absPath + "/mesh/mesh_frag.spv";
     const std::string absolute_debugBB_vertex_shader_path = absPath + "/Debug/debugAABB_vert.spv";
     const std::string absolute_debugBB_frag_shader_path = absPath + "/Debug/debugAABB_frag.spv";
+    const std::string absolute_debug_vertex_shader_path = absPath + "/Debug/debug_vert.spv";
+    const std::string absolute_debug_frag_shader_path = absPath + "/Debug/debug_frag.spv";
     const std::string absolute_grid_vertex_shader_path = absPath + "/Grid/grid_vert.spv";
     const std::string absolute_grid_frag_shader_path = absPath + "/Grid/grid_frag.spv";
 
@@ -104,6 +106,17 @@ MaterialManager::MaterialManager()
 
     this->shader_aabb_ptr = std::make_shared<ShaderModule>(ShaderModule("shader_aabb_debug", absolute_debugBB_vertex_shader_path, absolute_debugBB_frag_shader_path, gpData));
     shaderManager->AddShader(shader_aabb_ptr);
+
+    {
+        gpData.HasVertexData = true;
+        gpData.polygonMode = VK_POLYGON_MODE_LINE;
+        gpData.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+        gpData.vertexBufferStride = sizeof(DebugVertex);
+        gpData.lineWidth = 1.0f;
+
+        this->shader_debug_ptr = std::make_shared<ShaderModule>(ShaderModule("shader_debug_lines", absolute_debug_vertex_shader_path, absolute_debug_frag_shader_path, gpData));
+        shaderManager->AddShader(shader_debug_ptr);
+    }
 
     gpData = {};
     gpData.HasVertexData = false;

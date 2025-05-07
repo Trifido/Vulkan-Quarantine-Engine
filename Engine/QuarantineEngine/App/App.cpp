@@ -187,6 +187,9 @@ void App::initVulkan()
     this->cullingSceneManager->AddCameraFrustum(this->cameraEditor->frustumComponent);
     this->cullingSceneManager->DebugMode = false;
 
+    this->physicsModule->InitializeDebugResources();
+    this->physicsModule->debugDrawer->DebugMode = false;
+
     // Inicializamos los componentes del editor
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
     this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
@@ -234,7 +237,7 @@ void App::initVulkan()
 
     std::shared_ptr<GameObject> ramp = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
     ramp->_Transform->SetPosition(glm::vec3(0.0f, -0.5f, -10.0f));
-    ramp->_Transform->SetOrientation(glm::vec3(-70.0f, 0.0f, 0.0f));
+    ramp->_Transform->SetOrientation(glm::vec3(70.0f, 0.0f, 0.0f));
     ramp->_Transform->SetScale(glm::vec3(3.0f, 10.0f, 3.0f));
     ramp->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
     ramp->AddPhysicBody(std::make_shared<PhysicBody>());
@@ -605,6 +608,7 @@ void App::cleanUp()
     this->particleSystemManager->Cleanup();
     this->editorManager->Cleanup();
     this->cullingSceneManager->CleanUp();
+    this->physicsModule->CleanupDebugDrawer();
 
     this->textureManager->Clean();
 

@@ -265,6 +265,7 @@
     <ClCompile Include="Utilities\Particles\ParticleSystemManager.cpp" />
     <ClCompile Include="Utilities\Physics\AABBObject.cpp" />
     <ClCompile Include="Utilities\Physics\BoxCollider.cpp" />
+    <ClCompile Include="Utilities\Physics\BulletDebugDrawer.cpp" />
     <ClCompile Include="Utilities\Physics\CapsuleCollider.cpp" />
     <ClCompile Include="Utilities\Physics\PhysicBody.cpp" />
     <ClCompile Include="Utilities\Physics\PhysicsModule.cpp" />
@@ -383,6 +384,7 @@
     <ClInclude Include="Utilities\Particles\ParticleSystemManager.h" />
     <ClInclude Include="Utilities\Physics\AABBObject.h" />
     <ClInclude Include="Utilities\Physics\BoxCollider.h" />
+    <ClInclude Include="Utilities\Physics\BulletDebugDrawer.h" />
     <ClInclude Include="Utilities\Physics\CapsuleCollider.h" />
     <ClInclude Include="Utilities\Physics\Collider.h" />
     <ClInclude Include="Utilities\Physics\PhysicBody.h" />

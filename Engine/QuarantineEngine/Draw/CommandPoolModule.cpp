@@ -18,6 +18,7 @@ CommandPoolModule::CommandPoolModule()
     lightManager = LightManager::getInstance();
     renderPassModule = RenderPassModule::getInstance();
     atmosphereSystem = AtmosphereSystem::getInstance();
+    physicsModule = PhysicsModule::getInstance();
 
     this->ClearColor = glm::vec3(0.1f);
 }
@@ -121,6 +122,7 @@ void CommandPoolModule::setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t
     this->gameObjectManager->DrawCommand(commandBuffers[iCBuffer], iCBuffer);
     this->editorManager->DrawCommnad(commandBuffers[iCBuffer], iCBuffer);
     this->cullingSceneManager->DrawDebug(commandBuffers[iCBuffer], iCBuffer);
+    this->physicsModule->debugDrawer->DrawDebug(commandBuffers[iCBuffer], iCBuffer);
 
     if (ImGui::GetDrawData() != nullptr)
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[iCBuffer]);
