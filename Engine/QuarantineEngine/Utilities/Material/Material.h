@@ -45,6 +45,7 @@ public:
     bool HasDescriptorBuffer() { return this->hasDescriptorBuffer; }
     void SetMeshShaderPipeline(bool value);
     void BindDescriptors(VkCommandBuffer& commandBuffer, uint32_t idx);
+    void RenameMaterial(std::string newName);
     std::string SaveMaterialFile();
 };
 

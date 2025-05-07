@@ -187,6 +187,16 @@ void Material::BindDescriptors(VkCommandBuffer& commandBuffer, uint32_t idx)
     }
 }
 
+void Material::RenameMaterial(std::string newName)
+{
+    if (this->Name != newName)
+    {
+        fs::path newFilePath = fs::path(this->materialFilePath).parent_path() / (newName + ".qemat");
+        this->materialFilePath = newFilePath.string();
+        this->Name = newName;
+    }
+}
+
 std::string Material::SaveMaterialFile()
 {
     std::ofstream file(materialFilePath, std::ios::binary);

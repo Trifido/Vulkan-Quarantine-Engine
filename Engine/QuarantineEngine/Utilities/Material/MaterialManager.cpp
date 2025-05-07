@@ -155,6 +155,7 @@ std::shared_ptr<Material> MaterialManager::GetMaterial(std::string nameMaterial)
 void MaterialManager::AddMaterial(std::shared_ptr<Material> mat_ptr)
 {
     std::string nameMaterial = CheckName(mat_ptr->Name);
+    mat_ptr->RenameMaterial(nameMaterial);
     _materials[nameMaterial] = mat_ptr;
 }
 

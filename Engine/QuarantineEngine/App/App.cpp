@@ -200,11 +200,11 @@ void App::initVulkan()
     std::string substring = "/Engine";
     std::size_t ind = absPath.find(substring);
 
-    if (ind != std::string::npos) {
+    if (ind != std::string::npos)
+    {
         absPath.erase(ind, substring.length());
     }
 
-    /**/
     //const std::string absolute_path = absPath + "/cyber_warrior/scene.gltf";
     //const std::string absolute_path = absPath + "/drone/mech_drone.glb";
     //const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
@@ -221,7 +221,8 @@ void App::initVulkan()
     //model->_Material->materialData.SetMaterialField("Specular", glm::vec3(0.5f, 0.5f, 0.5f));
     //model->_Material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
     //this->gameObjectManager->AddGameObject(model, "modelRaptoid");
-    /**/
+
+    /*
     std::shared_ptr<GameObject> floor = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
     floor->_Transform->SetPosition(glm::vec3(0.0f, -0.01f, 0.0f));
     floor->_Transform->SetScale(glm::vec3(10.0f, 1.0f, 10.0f));
@@ -233,8 +234,8 @@ void App::initVulkan()
     floor->physicBody->CollisionMask = CollisionFlag::COL_PLAYER;
     floor->AddCollider(std::make_shared<PlaneCollider>());
     std::static_pointer_cast<PlaneCollider>(floor->collider)->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
-    this->gameObjectManager->AddGameObject(floor, "floor");
-
+    this->gameObjectManager->AddGameObject(floor, "floor");*/
+    /*
     std::shared_ptr<GameObject> ramp = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
     ramp->_Transform->SetPosition(glm::vec3(0.0f, -0.5f, -10.0f));
     ramp->_Transform->SetOrientation(glm::vec3(70.0f, 0.0f, 0.0f));
@@ -245,7 +246,7 @@ void App::initVulkan()
     ramp->physicBody->CollisionMask = CollisionFlag::COL_PLAYER;
     ramp->AddCollider(std::make_shared<BoxCollider>());
     this->gameObjectManager->AddGameObject(ramp, "ramp");
-
+    /*
     std::shared_ptr<GameObject> wall = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
     wall->_Transform->SetPosition(glm::vec3(3.0f, 0.5f, 0.0f));
     wall->_Transform->SetOrientation(glm::vec3(0.0f, 0.0f, 0.0f));
@@ -256,7 +257,7 @@ void App::initVulkan()
     wall->physicBody->CollisionMask = CollisionFlag::COL_PLAYER;
     wall->AddCollider(std::make_shared<BoxCollider>());
     this->gameObjectManager->AddGameObject(wall, "wall");
-
+    /*
     // CHARACTER CONTROLLER
     std::shared_ptr<GameObject> character = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CAPSULE_TYPE));
     character->_Transform->SetPosition(glm::vec3(0.0f, 0.5f, 0.0f));
@@ -270,7 +271,7 @@ void App::initVulkan()
     character->characterController->SetJumpForce(9.0f);
 
     this->gameObjectManager->AddGameObject(character, "character");
-
+    */
     /**/
 
 //DEMOD
@@ -420,7 +421,7 @@ void App::loadScene(QEScene scene)
 {
     // Initialize the camera editor
     this->cameraEditor = CameraEditor::getInstance();
-    //this->cameraEditor->LoadCameraDto(this->mainWindow.width, this->mainWindow.height, this->scene.cameraEditor);
+    this->cameraEditor->LoadCameraDto(this->mainWindow.width, this->mainWindow.height, this->scene.cameraEditor);
 
     // Initialize the materials
     this->materialManager->LoadMaterialDtos(this->scene.materialDtos);
@@ -451,9 +452,9 @@ void App::mainLoop()
         this->timer->UpdateDeltaTime();
 
         //UPDATE CHARACTER CONTROLLER
-        auto character = this->gameObjectManager->GetGameObject("character");
-        character->characterController->Update();
-        QECharacterController::ProcessInput(mainWindow.getWindow(), character->characterController);
+        //auto character = this->gameObjectManager->GetGameObject("character");
+        //character->characterController->Update();
+        //QECharacterController::ProcessInput(mainWindow.getWindow(), character->characterController);
 
         //PHYSIC SYSTEM
         this->physicsModule->ComputePhysics((float)Timer::DeltaTime);
