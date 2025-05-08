@@ -234,7 +234,7 @@ void App::initVulkan()
     floor->physicBody->CollisionMask = CollisionFlag::COL_PLAYER;
     floor->AddCollider(std::make_shared<PlaneCollider>());
     std::static_pointer_cast<PlaneCollider>(floor->collider)->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
-    this->gameObjectManager->AddGameObject(floor, "floor");*/
+    this->gameObjectManager->AddGameObject(floor, "floor");
     /*
     std::shared_ptr<GameObject> ramp = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
     ramp->_Transform->SetPosition(glm::vec3(0.0f, -0.5f, -10.0f));
@@ -246,7 +246,7 @@ void App::initVulkan()
     ramp->physicBody->CollisionMask = CollisionFlag::COL_PLAYER;
     ramp->AddCollider(std::make_shared<BoxCollider>());
     this->gameObjectManager->AddGameObject(ramp, "ramp");
-    /*
+    /**/
     std::shared_ptr<GameObject> wall = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
     wall->_Transform->SetPosition(glm::vec3(3.0f, 0.5f, 0.0f));
     wall->_Transform->SetOrientation(glm::vec3(0.0f, 0.0f, 0.0f));
@@ -271,7 +271,6 @@ void App::initVulkan()
     character->characterController->SetJumpForce(9.0f);
 
     this->gameObjectManager->AddGameObject(character, "character");
-    */
     /**/
 
 //DEMOD
@@ -373,7 +372,6 @@ void App::initVulkan()
     //spotLight->outerCutoff = glm::cos(glm::radians(45.0f));
     //spotLight->SetDistanceEffect(100.0f);
 
-    this->lightManager->UpdateUniform();
     // END -------------------------- Lights ----------------------------------------
 
     // Initialize Physics
@@ -434,7 +432,6 @@ void App::loadScene(QEScene scene)
     this->lightManager->AddDirShadowMapShader(materialManager->csm_shader);
     this->lightManager->AddOmniShadowMapShader(materialManager->omni_shadow_mapping_shader);
     this->lightManager->SetCamera(this->cameraEditor);
-
     this->lightManager->LoadLightDtos(this->scene.lightDtos);
 
     // Initialize the atmophere system

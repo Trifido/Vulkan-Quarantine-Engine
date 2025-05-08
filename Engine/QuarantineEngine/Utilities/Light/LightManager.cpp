@@ -564,6 +564,7 @@ void LightManager::Update()
     vkUnmapMemory(this->deviceModule->device, this->lightBinSSBO->uniformBuffersMemory[currentFrame]);
 
     this->UpdateCSMLights();
+    this->UpdateUniform();
 
     this->CSMDescritors->UpdateResources(currentFrame);
 }

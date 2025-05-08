@@ -88,6 +88,7 @@ private:
     void SortingLights();
     void ComputeLightsLUT();
     void ComputeLightTiles();
+    void UpdateUniform();
 
 public:
     LightManager();
@@ -100,7 +101,6 @@ public:
     std::shared_ptr<Light> GetLight(std::string name);
     void InitializeShadowMaps();
     void Update();
-    void UpdateUniform();
     void UpdateUBOLight();
     void UpdateCSMLights();
     void CleanLightUBO();
