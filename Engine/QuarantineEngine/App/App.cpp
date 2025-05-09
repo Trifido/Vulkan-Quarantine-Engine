@@ -178,6 +178,7 @@ void App::initVulkan()
     // Import meshes
     //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Raptoid/scene.gltf");
     //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Golem/scene.gltf");
+    //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Idle_Character.glb");
 
     // Load Scene
     this->loadScene(this->scene);
@@ -185,10 +186,10 @@ void App::initVulkan()
     this->cullingSceneManager = CullingSceneManager::getInstance();
     this->cullingSceneManager->InitializeCullingSceneResources();
     this->cullingSceneManager->AddCameraFrustum(this->cameraEditor->frustumComponent);
-    this->cullingSceneManager->DebugMode = false;
+    this->cullingSceneManager->DebugMode = true;
 
     this->physicsModule->InitializeDebugResources();
-    this->physicsModule->debugDrawer->DebugMode = false;
+    this->physicsModule->debugDrawer->DebugMode = true;
 
     // Inicializamos los componentes del editor
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
@@ -210,9 +211,20 @@ void App::initVulkan()
     //const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
     //const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
 
-    //std::filesystem::path path = "C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/golem/Meshes/scene.gltf";
     //std::filesystem::path path = "C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf";
-    //std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(path.string()));
+    std::filesystem::path path = "C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Idle_Character.gltf";
+
+    // CHARACTER CONTROLLER
+    std::shared_ptr<GameObject> character = std::make_shared<GameObject>(GameObject(path.string()));
+    character->AddPhysicBody(std::make_shared<PhysicBody>(PhysicBodyType::RIGID_BODY));
+    character->AddCollider(std::make_shared<CapsuleCollider>());
+    character->collider->LocalDisplacement = glm::vec3(0.0f, 1.0f, 0.0f);
+    character->physicBody->Mass = 70.0f;
+    character->physicBody->CollisionGroup = CollisionFlag::COL_PLAYER;
+    character->physicBody->CollisionMask = CollisionFlag::COL_SCENE;
+    character->AddCharacterController(std::make_shared<QECharacterController>());
+    character->characterController->SetJumpForce(9.0f);
+    this->gameObjectManager->AddGameObject(character, "character");
 
     //model->_Transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
     //model->transform->SetOrientation(glm::vec3(-90.0f, 180.0f, 0.0f));
@@ -222,7 +234,7 @@ void App::initVulkan()
     //model->_Material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
     //this->gameObjectManager->AddGameObject(model, "modelRaptoid");
 
-    /*
+    /**/
     std::shared_ptr<GameObject> floor = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
     floor->_Transform->SetPosition(glm::vec3(0.0f, -0.01f, 0.0f));
     floor->_Transform->SetScale(glm::vec3(10.0f, 1.0f, 10.0f));
@@ -449,9 +461,9 @@ void App::mainLoop()
         this->timer->UpdateDeltaTime();
 
         //UPDATE CHARACTER CONTROLLER
-        //auto character = this->gameObjectManager->GetGameObject("character");
-        //character->characterController->Update();
-        //QECharacterController::ProcessInput(mainWindow.getWindow(), character->characterController);
+        auto character = this->gameObjectManager->GetGameObject("character");
+        character->characterController->Update();
+        QECharacterController::ProcessInput(mainWindow.getWindow(), character->characterController);
 
         //PHYSIC SYSTEM
         this->physicsModule->ComputePhysics((float)Timer::DeltaTime);

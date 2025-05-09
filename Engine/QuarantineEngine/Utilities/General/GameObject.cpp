@@ -92,6 +92,7 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
     auto animatorPtr = isAnimationPipeline ? this->animationComponent->animator : nullptr;
 
     this->SetDrawCommand(commandBuffer, idx, animatorPtr);
+
     for (auto child : childs)
     {
         child->SetDrawCommand(commandBuffer, idx, animatorPtr);

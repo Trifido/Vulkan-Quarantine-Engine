@@ -13,6 +13,7 @@ private:
     std::vector<std::shared_ptr<Transform>> childTransforms;
     glm::mat4 parentModel;
     glm::mat4 model;
+    glm::mat4 localModel;
     glm::mat4 scale_mat;
     glm::mat4 rot_mat;
     glm::mat4 trans_mat;
@@ -42,6 +43,8 @@ public:
     const glm::mat4& GetModel();
     void SetModel(const glm::mat4& newModel);
     void AddChild(std::shared_ptr<Transform> child);
+
+    void Debug_PrintModel() const;
 };
 
 #endif
