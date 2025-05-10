@@ -16,6 +16,16 @@ Started during the 2020 quarantine period with **OpenGL**, it has since evolved 
 
 ## 🚀 Features
 
+- Low-level Vulkan rendering pipeline
+- Custom ECS (Entity Component System)
+- Scene serialization and deserialization
+- Cross-platform architecture in progress (Windows/Linux)
+- Modular code structure using modern C++
+
+---
+
+## 📸 Screenshots
+
 ### 🦴 GPU Animation System *(Compute Shaders)*
 <img src="https://github.com/Trifido/Vulkan-Quarantine-Engine/assets/6890573/08d68027-12a0-4d75-a26d-67d48cfe353c" width="100%"/>
 
