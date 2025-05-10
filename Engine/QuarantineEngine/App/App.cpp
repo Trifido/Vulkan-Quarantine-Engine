@@ -217,8 +217,8 @@ void App::initVulkan()
     // CHARACTER CONTROLLER
     std::shared_ptr<GameObject> character = std::make_shared<GameObject>(GameObject(path.string()));
     character->AddPhysicBody(std::make_shared<PhysicBody>(PhysicBodyType::RIGID_BODY));
-    character->AddCollider(std::make_shared<CapsuleCollider>());
-    character->collider->LocalDisplacement = glm::vec3(0.0f, 1.0f, 0.0f);
+    character->AddCollider(std::make_shared<CapsuleCollider>(0.35f, 1.7f));
+    character->collider->LocalDisplacement = glm::vec3(0.0f, 0.85f, 0.0f);
     character->physicBody->Mass = 70.0f;
     character->physicBody->CollisionGroup = CollisionFlag::COL_PLAYER;
     character->physicBody->CollisionMask = CollisionFlag::COL_SCENE;
