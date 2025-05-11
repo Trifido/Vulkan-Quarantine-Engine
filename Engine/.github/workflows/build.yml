@@ -1,0 +1,34 @@
+name: Build and Test
+
+on:
+  push:
+    branches:
+      - main  # El workflow se ejecutará cuando haya un push en la rama main
+  pull_request:
+    branches:
+      - main  # O cuando haya un pull request hacia la rama main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Puedes usar también 'windows-latest' si prefieres en Windows
+
+    steps:
+    # Paso 1: Clonar el repositorio
+    - name: Check out repository
+      uses: actions/checkout@v3
+
+    # Paso 2: Configurar CMake
+    - name: Set up CMake
+      uses: lukka/get-cmake@v3
+
+    # Paso 3: Configurar el compilador y las dependencias
+    - name: Build with CMake
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        cmake --build . --config Release
+
+    # Paso 4: Ejecutar el ejecutable (o prueba si tienes)
+    - name: Run the build
+      run: ./build/QuarantineEngine  # Ejecuta el archivo compilado
