@@ -26,5 +26,5 @@ jobs:
         cmake ..
         cmake --build . --config Release
 
-    - name: Run the build
-      run: .\build\Release\QuarantineEngine.exe
+    #- name: Run the build
+    #  run: .\build\Release\QuarantineEngine.exe
