@@ -27,9 +27,9 @@ jobs:
         cmake --build . --config Release
 
     - name: Upload artifact (Release build)
-    uses: actions/upload-artifact@v4
-    with:
-      name: QuarantineEngine
-      path: build/Release/QuarantineEngine.exe
+      uses: actions/upload-artifact@v4
+      with:
+        name: QuarantineEngine
+        path: build/Release/QuarantineEngine.exe
     #- name: Run the build
     #  run: .\build\Release\QuarantineEngine.exe
