@@ -13,22 +13,18 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    # Step 1: Clone the repo
-    - name: Check out repository
-      uses: actions/checkout@v3
+      - name: Check out repository
+        uses: actions/checkout@v3
 
-    # Step 2: Configure CMake
-    - name: Set up CMake
-      uses: lukka/get-cmake@v3
+      - name: Set up CMake
+        uses: actions/setup-cmake@v3  # Usando una acción alternativa
 
-    # Step 3: Configure the compiler and dependencies
-    - name: Build with CMake
-      run: |
-        mkdir build
-        cd build
-        cmake ..
-        cmake --build . --config Release
+      - name: Build with CMake
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+          cmake --build . --config Release
 
-    # Step 4: Run
-    - name: Run the build
-      run: ./build/QuarantineEngine
+      - name: Run the build
+        run: ./build/QuarantineEngine
