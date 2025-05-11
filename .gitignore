@@ -96,6 +96,7 @@ StyleCopReport.xml
 *.svclog
 *.scc
 *.txt
+!CMakeLists.txt
 *.spv
 *.bat
 *.fbx
