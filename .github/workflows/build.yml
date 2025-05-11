@@ -14,10 +14,10 @@ jobs:
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4.2.2
 
     - name: Set up CMake
-      uses: actions/setup-cmake@v2
+      uses: jwlawson/actions-setup-cmake@v2
 
     - name: Build with CMake
       run: |
