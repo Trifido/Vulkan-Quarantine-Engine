@@ -5,6 +5,8 @@
 #define POINT_LIGHT 0
 #define DIRECTIONAL_LIGHT 1
 #define SPOT_LIGHT 2
+#define AREA_LIGHT 3
+#define SUN_LIGHT 4
 
 #define CSM_COUNT 4
 
@@ -201,7 +203,7 @@ void main()
                 {
                     resultPoint += ComputePointLight(lights[gli], normal, albedoColor, specularColor, emissiveColor);
                 }
-                else if (lights[gli].lightType == DIRECTIONAL_LIGHT)
+                else if (lights[gli].lightType == DIRECTIONAL_LIGHT || lights[gli].lightType == SUN_LIGHT)
                 {
                     resultDir += ComputeDirectionalLight(lights[gli], normal, albedoColor, specularColor, emissiveColor);
                 }

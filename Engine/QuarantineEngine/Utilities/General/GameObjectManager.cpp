@@ -75,14 +75,6 @@ void GameObjectManager::CSMCommand(VkCommandBuffer& commandBuffer, uint32_t idx,
     }
 }
 
-void GameObjectManager::ShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout)
-{
-    for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
-    {
-        //model.second->drawShadowCommand(commandBuffer, idx, pipelineLayout);
-    }
-}
-
 void GameObjectManager::OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, glm::mat4 viewParameter, glm::vec3 lightPosition)
 {
     for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
@@ -174,7 +166,7 @@ void GameObjectManager::SaveGameObjects(std::ofstream& file)
         }
     }
 
-    int numGameObjects = gameObjectDtos.size();
+    int numGameObjects = static_cast<int>(gameObjectDtos.size());
     file.write(reinterpret_cast<const char*>(&numGameObjects), sizeof(int));
 
     size_t idLength = sizeof(char) * Numbered::ID_LENGTH;
@@ -182,7 +174,7 @@ void GameObjectManager::SaveGameObjects(std::ofstream& file)
     for (int i = 0; i < gameObjectDtos.size(); i++)
     {
         file.write(reinterpret_cast<const char*>(&idLength), sizeof(idLength));
-        file.write(gameObjectDtos[i].Id.c_str(), idLength);
+        file.write(gameObjectDtos[i].Id.c_str(), static_cast<int>(idLength));
 
         nameLength = gameObjectDtos[i].Name.length();
         file.write(reinterpret_cast<const char*>(&nameLength), sizeof(nameLength));

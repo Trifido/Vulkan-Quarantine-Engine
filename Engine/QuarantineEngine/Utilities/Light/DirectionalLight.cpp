@@ -13,7 +13,6 @@ DirectionalLight::DirectionalLight() : Light()
 DirectionalLight::DirectionalLight(std::shared_ptr<VkRenderPass> renderPass, Camera* camera) : DirectionalLight()
 {
     this->camera = camera;
-    auto size = sizeof(glm::mat4);
     this->shadowMappingResourcesPtr = std::make_shared<CSMResources>(renderPass);
 }
 

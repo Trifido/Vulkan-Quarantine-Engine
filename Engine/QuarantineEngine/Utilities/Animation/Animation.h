@@ -14,8 +14,8 @@ public:
 
 public:
     Animation(const AnimationData& animData);
-    inline float GetTicksPerSecond() { return animationData.m_TicksPerSecond; }
-    inline float GetDuration() { return animationData.m_Duration; }
+    inline float GetTicksPerSecond() { return static_cast<float>(animationData.m_TicksPerSecond); }
+    inline float GetDuration() { return static_cast<float>(animationData.m_Duration); }
     inline const AnimationNode& GetRootNode() { return animationData.animationNodeData; }
     Bone* FindBone(const std::string& name);
 };

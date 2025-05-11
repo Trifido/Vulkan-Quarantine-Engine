@@ -12,6 +12,7 @@
 #include <OmniShadowResources.h>
 #include <FrameBufferModule.h>
 #include <AtmosphereSystem.h>
+#include <PhysicsModule.h>
 #include <QESingleton.h>
 
 class CommandPoolModule : public QESingleton<CommandPoolModule>
@@ -27,6 +28,7 @@ private:
     LightManager*                   lightManager;
     RenderPassModule*               renderPassModule;
     AtmosphereSystem*               atmosphereSystem;
+    PhysicsModule*                  physicsModule;
 
     VkCommandPool                   commandPool;
     VkCommandPool                   computeCommandPool;

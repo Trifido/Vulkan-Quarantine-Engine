@@ -34,9 +34,9 @@ private:
     bool isAlreadySpawnZero = false;
 
 public:
-    float   ParticleLifeTime = 10.0;
-    float   LifeTime = 0.0;
-    float   SpawnTime = 0.1;
+    float   ParticleLifeTime = 10.0f;
+    float   LifeTime = 0.0f;
+    float   SpawnTime = 0.1f;
     uint32_t    ParticlesPerSpawn = 10;
     float   EmissionAngle = 0.35f;
     float   EmissionRadius = 0.0f;
@@ -51,7 +51,7 @@ public:
     float   TotalSprites = 16.0f;
     bool    InfinityLifeTime = true;
     int32_t MaxNumParticles = 500;
-    glm::vec4 InitialColor = glm::vec4(0.5, 0.5, 0.5, 1.0f);
+    glm::vec4 InitialColor = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
 
 private:
     void createShaderStorageBuffers();

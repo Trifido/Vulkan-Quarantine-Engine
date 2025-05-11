@@ -18,6 +18,7 @@ CommandPoolModule::CommandPoolModule()
     lightManager = LightManager::getInstance();
     renderPassModule = RenderPassModule::getInstance();
     atmosphereSystem = AtmosphereSystem::getInstance();
+    physicsModule = PhysicsModule::getInstance();
 
     this->ClearColor = glm::vec3(0.1f);
 }
@@ -90,8 +91,8 @@ void CommandPoolModule::setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = swapchainModule->swapChainExtent.width;
-    viewport.height = swapchainModule->swapChainExtent.height;
+    viewport.width = (float)swapchainModule->swapChainExtent.width;
+    viewport.height = (float)swapchainModule->swapChainExtent.height;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
@@ -121,6 +122,7 @@ void CommandPoolModule::setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t
     this->gameObjectManager->DrawCommand(commandBuffers[iCBuffer], iCBuffer);
     this->editorManager->DrawCommnad(commandBuffers[iCBuffer], iCBuffer);
     this->cullingSceneManager->DrawDebug(commandBuffers[iCBuffer], iCBuffer);
+    this->physicsModule->debugDrawer->DrawDebug(commandBuffers[iCBuffer], iCBuffer);
 
     if (ImGui::GetDrawData() != nullptr)
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[iCBuffer]);
@@ -139,8 +141,8 @@ void CommandPoolModule::setDirectionalShadowRenderPass(std::shared_ptr<VkRenderP
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = size;
-    viewport.height = size;
+    viewport.width = (float)size;
+    viewport.height = (float)size;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
@@ -199,8 +201,8 @@ void CommandPoolModule::setOmniShadowRenderPass(std::shared_ptr<VkRenderPass> re
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = size;
-    viewport.height = size;
+    viewport.width = (float)size;
+    viewport.height = (float)size;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
@@ -329,7 +331,7 @@ void CommandPoolModule::recordComputeCommandBuffer(VkCommandBuffer commandBuffer
         throw std::runtime_error("failed to begin recording compute command buffer!");
     }
 
-    computeNodeManager->RecordComputeNodes(commandBuffer, currentFrame);
+    computeNodeManager->RecordComputeNodes(commandBuffer, (uint32_t)currentFrame);
 
     if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
         throw std::runtime_error("failed to record compute command buffer!");

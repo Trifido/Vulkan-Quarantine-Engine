@@ -178,6 +178,7 @@ void App::initVulkan()
     // Import meshes
     //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Raptoid/scene.gltf");
     //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Golem/scene.gltf");
+    //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Idle_Character.glb");
 
     // Load Scene
     this->loadScene(this->scene);
@@ -185,7 +186,10 @@ void App::initVulkan()
     this->cullingSceneManager = CullingSceneManager::getInstance();
     this->cullingSceneManager->InitializeCullingSceneResources();
     this->cullingSceneManager->AddCameraFrustum(this->cameraEditor->frustumComponent);
-    this->cullingSceneManager->DebugMode = false;
+    this->cullingSceneManager->DebugMode = true;
+
+    this->physicsModule->InitializeDebugResources();
+    this->physicsModule->debugDrawer->DebugMode = true;
 
     // Inicializamos los componentes del editor
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
@@ -197,35 +201,88 @@ void App::initVulkan()
     std::string substring = "/Engine";
     std::size_t ind = absPath.find(substring);
 
-    if (ind != std::string::npos) {
+    if (ind != std::string::npos)
+    {
         absPath.erase(ind, substring.length());
     }
 
-    /**/
     //const std::string absolute_path = absPath + "/cyber_warrior/scene.gltf";
     //const std::string absolute_path = absPath + "/drone/mech_drone.glb";
     //const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
     //const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
 
-    //std::filesystem::path path = "C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/golem/Meshes/scene.gltf";
-    std::filesystem::path path = "C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf";
-    std::shared_ptr<GameObject> model = std::make_shared<GameObject>(GameObject(path.string()));
+    //std::filesystem::path path = "C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf";
+    std::filesystem::path path = "C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Idle_Character.gltf";
+
+    // CHARACTER CONTROLLER
+    std::shared_ptr<GameObject> character = std::make_shared<GameObject>(GameObject(path.string()));
+    character->AddPhysicBody(std::make_shared<PhysicBody>(PhysicBodyType::RIGID_BODY));
+    character->AddCollider(std::make_shared<CapsuleCollider>(0.35f, 1.7f));
+    character->collider->LocalDisplacement = glm::vec3(0.0f, 0.85f, 0.0f);
+    character->physicBody->Mass = 70.0f;
+    character->physicBody->CollisionGroup = CollisionFlag::COL_PLAYER;
+    character->physicBody->CollisionMask = CollisionFlag::COL_SCENE;
+    character->AddCharacterController(std::make_shared<QECharacterController>());
+    character->characterController->SetJumpForce(9.0f);
+    this->gameObjectManager->AddGameObject(character, "character");
 
     //model->_Transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
     //model->transform->SetOrientation(glm::vec3(-90.0f, 180.0f, 0.0f));
-    model->_Transform->SetScale(glm::vec3(0.01f));
+    //model->_Transform->SetScale(glm::vec3(0.01f));
     //model->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
     //model->_Material->materialData.SetMaterialField("Specular", glm::vec3(0.5f, 0.5f, 0.5f));
     //model->_Material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
-    this->gameObjectManager->AddGameObject(model, "modelRaptoid");
+    //this->gameObjectManager->AddGameObject(model, "modelRaptoid");
+
     /**/
     std::shared_ptr<GameObject> floor = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
     floor->_Transform->SetPosition(glm::vec3(0.0f, -0.01f, 0.0f));
-    floor->_Transform->SetScale(glm::vec3(3.0f, 1.0f, 3.0f));
+    floor->_Transform->SetScale(glm::vec3(10.0f, 1.0f, 10.0f));
     floor->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.2f, 0.7f));
     floor->_Material->materialData.SetMaterialField("Specular", glm::vec3(0.0f, 0.0f, 0.0f));
     floor->_Material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
+    floor->AddPhysicBody(std::make_shared<PhysicBody>());
+    floor->physicBody->CollisionGroup = CollisionFlag::COL_SCENE;
+    floor->physicBody->CollisionMask = CollisionFlag::COL_PLAYER;
+    floor->AddCollider(std::make_shared<PlaneCollider>());
+    std::static_pointer_cast<PlaneCollider>(floor->collider)->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
     this->gameObjectManager->AddGameObject(floor, "floor");
+    /*
+    std::shared_ptr<GameObject> ramp = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
+    ramp->_Transform->SetPosition(glm::vec3(0.0f, -0.5f, -10.0f));
+    ramp->_Transform->SetOrientation(glm::vec3(70.0f, 0.0f, 0.0f));
+    ramp->_Transform->SetScale(glm::vec3(3.0f, 10.0f, 3.0f));
+    ramp->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
+    ramp->AddPhysicBody(std::make_shared<PhysicBody>());
+    ramp->physicBody->CollisionGroup = CollisionFlag::COL_SCENE;
+    ramp->physicBody->CollisionMask = CollisionFlag::COL_PLAYER;
+    ramp->AddCollider(std::make_shared<BoxCollider>());
+    this->gameObjectManager->AddGameObject(ramp, "ramp");
+    /**/
+    std::shared_ptr<GameObject> wall = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
+    wall->_Transform->SetPosition(glm::vec3(3.0f, 0.5f, 0.0f));
+    wall->_Transform->SetOrientation(glm::vec3(0.0f, 0.0f, 0.0f));
+    wall->_Transform->SetScale(glm::vec3(4.0f, 0.5f, 4.0f));
+    wall->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.8f, 0.2f, 0.2f));
+    wall->AddPhysicBody(std::make_shared<PhysicBody>());
+    wall->physicBody->CollisionGroup = CollisionFlag::COL_SCENE;
+    wall->physicBody->CollisionMask = CollisionFlag::COL_PLAYER;
+    wall->AddCollider(std::make_shared<BoxCollider>());
+    this->gameObjectManager->AddGameObject(wall, "wall");
+    /*
+    // CHARACTER CONTROLLER
+    std::shared_ptr<GameObject> character = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CAPSULE_TYPE));
+    character->_Transform->SetPosition(glm::vec3(0.0f, 0.5f, 0.0f));
+    character->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
+    character->AddPhysicBody(std::make_shared<PhysicBody>(PhysicBodyType::RIGID_BODY));
+    character->AddCollider(std::make_shared<CapsuleCollider>());
+    character->physicBody->Mass = 70.0f;
+    character->physicBody->CollisionGroup = CollisionFlag::COL_PLAYER;
+    character->physicBody->CollisionMask = CollisionFlag::COL_SCENE;
+    character->AddCharacterController(std::make_shared<QECharacterController>());
+    character->characterController->SetJumpForce(9.0f);
+
+    this->gameObjectManager->AddGameObject(character, "character");
     /**/
 
 //DEMOD
@@ -327,7 +384,6 @@ void App::initVulkan()
     //spotLight->outerCutoff = glm::cos(glm::radians(45.0f));
     //spotLight->SetDistanceEffect(100.0f);
 
-    this->lightManager->UpdateUniform();
     // END -------------------------- Lights ----------------------------------------
 
     // Initialize Physics
@@ -355,6 +411,8 @@ void App::initVulkan()
     this->gameObjectManager->AddGameObject(floor, "floor");
     /**/
 
+    this->physicsModule->SetGravity(-20.0f);
+
     // Initialize Managers
     this->animationManager->InitializeAnimations();
     this->animationManager->UpdateAnimations(0.0f);
@@ -364,7 +422,7 @@ void App::initVulkan()
     this->lightManager->InitializeShadowMaps();
 
     this->commandPoolModule->Render(&framebufferModule);
-    this->synchronizationModule.createSyncObjects(swapchainModule->getNumSwapChainImages());
+    this->synchronizationModule.createSyncObjects();
 
     init_imgui();
 }
@@ -386,7 +444,6 @@ void App::loadScene(QEScene scene)
     this->lightManager->AddDirShadowMapShader(materialManager->csm_shader);
     this->lightManager->AddOmniShadowMapShader(materialManager->omni_shadow_mapping_shader);
     this->lightManager->SetCamera(this->cameraEditor);
-
     this->lightManager->LoadLightDtos(this->scene.lightDtos);
 
     // Initialize the atmophere system
@@ -402,6 +459,11 @@ void App::mainLoop()
     {
         glfwPollEvents();
         this->timer->UpdateDeltaTime();
+
+        //UPDATE CHARACTER CONTROLLER
+        auto character = this->gameObjectManager->GetGameObject("character");
+        character->characterController->Update();
+        QECharacterController::ProcessInput(mainWindow.getWindow(), character->characterController);
 
         //PHYSIC SYSTEM
         this->physicsModule->ComputePhysics((float)Timer::DeltaTime);
@@ -427,7 +489,6 @@ void App::mainLoop()
 
         // UPDATE ATMOSPHERE
         this->atmosphereSystem->UpdateSun();
-
         auto sunLight = std::static_pointer_cast<SunLight>(this->lightManager->GetLight("QESunLight"));
 
         ImGuiIO& io = ImGui::GetIO();
@@ -557,6 +618,7 @@ void App::cleanUp()
     this->particleSystemManager->Cleanup();
     this->editorManager->Cleanup();
     this->cullingSceneManager->CleanUp();
+    this->physicsModule->CleanupDebugDrawer();
 
     this->textureManager->Clean();
 
@@ -700,8 +762,8 @@ void App::computeFrame()
         // Update particles system
         this->particleSystemManager->UpdateParticleSystems();
 
-        commandPoolModule->recordComputeCommandBuffer(commandPoolModule->getComputeCommandBuffer(synchronizationModule.GetCurrentFrame()));
-        synchronizationModule.submitComputeCommandBuffer(commandPoolModule->getComputeCommandBuffer(synchronizationModule.GetCurrentFrame()));
+        commandPoolModule->recordComputeCommandBuffer(commandPoolModule->getComputeCommandBuffer((uint32_t)synchronizationModule.GetCurrentFrame()));
+        synchronizationModule.submitComputeCommandBuffer(commandPoolModule->getComputeCommandBuffer((uint32_t)synchronizationModule.GetCurrentFrame()));
     }
 }
 
@@ -720,7 +782,7 @@ void App::drawFrame()
 
     commandPoolModule->Render(&framebufferModule);
 
-    synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer(synchronizationModule.GetCurrentFrame()), this->isRender);
+    synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer((uint32_t)synchronizationModule.GetCurrentFrame()), this->isRender);
 
     result = synchronizationModule.presentSwapchain(swapchainModule->getSwapchain(), swapchainModule->currentImage);
     resizeSwapchain(result, ERROR_RESIZE::IMAGE_ERROR);

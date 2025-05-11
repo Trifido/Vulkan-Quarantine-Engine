@@ -28,4 +28,12 @@ struct Particle
     glm::vec2 nextOffset;
 };
 
+struct DebugVertex
+{
+    glm::vec4 pos;
+    glm::vec4 col;
+
+    DebugVertex(glm::vec4 position, glm::vec4 color) { pos = position; col = color; }
+};
+
 #endif

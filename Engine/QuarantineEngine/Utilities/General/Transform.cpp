@@ -4,6 +4,7 @@
 Transform::Transform()
 {
     this->model = glm::mat4(1.0f);
+    this->localModel = glm::mat4(1.0f);
     this->parentModel = glm::mat4(1.0f);
     this->ResetTransform();
     this->UpVector = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -75,7 +76,8 @@ const glm::mat4& Transform::GetModel()
 
 void Transform::SetModel(const glm::mat4& newModel)
 {
-    this->model = this->parentModel * newModel;
+    this->localModel = newModel;
+    this->model = this->parentModel * this->localModel;
     this->SendNewParentModel();
 }
 
@@ -85,10 +87,25 @@ void Transform::AddChild(std::shared_ptr<Transform> child)
     child->ReceiveNewParentModel(this->model);
 }
 
+void Transform::Debug_PrintModel() const
+{
+    std::cout << "Model Matrix: " << std::endl;
+    for (int i = 0; i < 4; ++i)
+    {
+        for (int j = 0; j < 4; ++j)
+        {
+            std::cout << this->model[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << "------------------------" << std::endl;
+}
+
 void Transform::ReceiveNewParentModel(glm::mat4 parentModel)
 {
     this->parentModel = parentModel;
-    this->SetModel(this->model);
+    this->model = this->parentModel * this->localModel;
+    this->SendNewParentModel();
 }
 
 void Transform::SendNewParentModel()

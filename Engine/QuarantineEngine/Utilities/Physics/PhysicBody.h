@@ -13,17 +13,30 @@ enum PhysicBodyType
     RIGID_BODY
 };
 
+enum CollisionFlag
+{
+    COL_NOTHING = 0,
+    COL_DEFAULT = 1 << 0,
+    COL_PLAYER = 1 << 1,
+    COL_SCENE = 1 << 2,
+    COL_ENEMY = 1 << 3,
+    COL_TRIGGER = 1 << 4,
+    COL_ALL = -1
+};
+
 class PhysicBody : public GameComponent
 {
 private:
     btVector3 localInertia;
-    btRigidBody* body;
     std::shared_ptr<Transform> transform;
     std::shared_ptr<Collider> collider;
 public:
+    btRigidBody* body;
     PhysicBodyType Type;
     float Mass;
     glm::vec3 Inertia;
+    CollisionFlag CollisionGroup;
+    CollisionFlag CollisionMask;
 public:
     PhysicBody();
     PhysicBody(const PhysicBodyType& type);

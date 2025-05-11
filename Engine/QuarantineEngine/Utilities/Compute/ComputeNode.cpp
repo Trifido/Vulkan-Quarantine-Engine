@@ -18,7 +18,7 @@ ComputeNode::ComputeNode(std::shared_ptr<ShaderModule> shader_ptr) : ComputeNode
     this->computeDescriptor = std::make_shared<ComputeDescriptorBuffer>(this->computeShader);
 }
 
-void ComputeNode::FillComputeBuffer(size_t numElements, unsigned long long elementType, void* data)
+void ComputeNode::FillComputeBuffer(uint32_t numElements, unsigned long long elementType, void* data)
 {
     this->NElements = numElements;
 
@@ -36,7 +36,7 @@ void ComputeNode::FillComputeBuffer(size_t numElements, unsigned long long eleme
     vkUnmapMemory(deviceModule->device, stagingBufferMemory);
 
     // Initialize ssbo
-    this->InitializeComputeBuffer(0, bufferSize);
+    this->InitializeComputeBuffer(0,(uint32_t)bufferSize);
 
     // Fill ssbo
     this->computeDescriptor->ssboData[0]->FillSSBO(stagingBuffer, bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
@@ -127,7 +127,7 @@ void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
 
     if (this->widthImage == 0 || this->heightImage == 0)
     {
-        uint32_t groupX = (this->NElements < 256) ? this->NElements : CEIL_DIV(this->NElements, 256.0f);
+        uint32_t groupX = static_cast<uint32_t>((this->NElements < 256) ? this->NElements : CEIL_DIV(this->NElements, 256.0f));
         vkCmdDispatch(commandBuffer, groupX, 1, 1);
     }
     else

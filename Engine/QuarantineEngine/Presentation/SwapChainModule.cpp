@@ -9,7 +9,7 @@
 SwapChainModule::SwapChainModule()
 {
     deviceModule = DeviceModule::getInstance();
-    this->currentTileSize = this->TILE_SIZE;
+    this->currentTileSize = (float)this->TILE_SIZE;
 }
 
 void SwapChainModule::createSwapChain(VkSurfaceKHR& surface, GLFWwindow* window)
@@ -99,9 +99,12 @@ VkSurfaceFormatKHR SwapChainModule::chooseSwapSurfaceFormat(const std::vector<Vk
 
 VkPresentModeKHR SwapChainModule::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
 {
-    for (const auto& availablePresentMode : availablePresentModes) {
-        if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
-            return availablePresentMode;
+    if (!this->enabledVSync)
+    {
+        for (const auto& availablePresentMode : availablePresentModes) {
+            if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
+                return availablePresentMode;
+            }
         }
     }
 

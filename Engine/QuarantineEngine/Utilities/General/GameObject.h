@@ -15,6 +15,7 @@
 #include <Numbered.h>
 #include <AABBObject.h>
 #include <GameObjectDto.h>
+#include <QECharacterController.h>
 
 typedef class GameObject GameObject;
 
@@ -46,6 +47,7 @@ public:
     std::shared_ptr<Collider>           collider = nullptr;
     std::shared_ptr<AnimationComponent> animationComponent = nullptr;
     std::shared_ptr<SkeletalComponent>  skeletalComponent = nullptr;
+    std::shared_ptr<QECharacterController> characterController = nullptr;
 
     std::vector<std::shared_ptr<GameObject>>    childs;
     GameObject*     parent = nullptr;
@@ -69,6 +71,7 @@ public:
     void AddPhysicBody(std::shared_ptr<PhysicBody> physicBody_ptr);
     void AddCollider(std::shared_ptr<Collider> collider_ptr);
     void AddAnimation(std::shared_ptr<Animation> animation_ptr);
+    void AddCharacterController(std::shared_ptr<QECharacterController> characterController_ptr);
     void InitializePhysics();
     virtual bool IsValidRender();
     void UpdatePhysicTransform();

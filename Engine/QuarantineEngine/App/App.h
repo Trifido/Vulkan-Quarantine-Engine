@@ -56,6 +56,7 @@
 #include <Particles/ParticleSystemManager.h>
 #include <AtmosphereSystem.h>
 #include <QEScene.h>
+#include <CapsuleCollider.h>
 
 using namespace std;
 

@@ -4,6 +4,7 @@
 
 #include "PrimitiveTypes.h"
 #include <AnimationImporter.h>
+#include <CapsuleMesh.h>
 
 GameObject::GameObject()
 {
@@ -91,6 +92,7 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
     auto animatorPtr = isAnimationPipeline ? this->animationComponent->animator : nullptr;
 
     this->SetDrawCommand(commandBuffer, idx, animatorPtr);
+
     for (auto child : childs)
     {
         child->SetDrawCommand(commandBuffer, idx, animatorPtr);
@@ -147,6 +149,12 @@ void GameObject::AddAnimation(std::shared_ptr<Animation> animation_ptr)
         this->animationManager = AnimationManager::getInstance();
         this->animationManager->AddAnimationComponent(this->id, this->animationComponent);
     }
+}
+
+void GameObject::AddCharacterController(std::shared_ptr<QECharacterController> characterController_ptr)
+{
+    this->characterController = characterController_ptr;
+    this->characterController->BindGameObjectProperties(this->physicBody, this->collider);
 }
 
 void GameObject::InitializeComponents()
@@ -214,7 +222,12 @@ void GameObject::InitializePhysics()
     if (this->physicBody != nullptr && this->collider != nullptr)
     {
         this->physicBody->Initialize(this->_Transform, this->collider);
-    }   
+    }
+
+    if (this->characterController != nullptr)
+    {
+        this->characterController->Initialize();
+    }
 }
 
 bool GameObject::IsValidRender()
@@ -267,7 +280,16 @@ void GameObject::InitializeGameObject(PRIMITIVE_TYPE type, bool isMeshShading)
     this->InitializeResources();
     this->isMeshShading = isMeshShading;
     this->_primitiveMeshType = type;
-    this->_Mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh(type));
+
+    if (type == PRIMITIVE_TYPE::CAPSULE_TYPE)
+    {
+        this->_Mesh = std::make_shared<CapsuleMesh>(CapsuleMesh());
+    }
+    else
+    {
+        this->_Mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh(type));
+    }
+
     this->_meshImportedType = MeshImportedType::PRIMITIVE_GEO;
 
     if (type != PRIMITIVE_TYPE::GRID_TYPE)

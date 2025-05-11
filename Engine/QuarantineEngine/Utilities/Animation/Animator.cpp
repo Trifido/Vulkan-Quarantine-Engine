@@ -42,8 +42,6 @@ void Animator::SetVertexBufferInComputeNode(std::string id, VkBuffer vertexBuffe
     this->computeNodes[id]->NElements = numElements;
     this->computeNodes[id]->computeDescriptor->InitializeSSBOData();
 
-    uint32_t numSSBOs = this->computeNodes[id]->computeDescriptor->ssboData.size();
-
     uint32_t bufferSize = sizeof(Vertex) * numElements;
     this->computeNodes[id]->computeDescriptor->ssboData[0]->CreateSSBO(bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
     this->computeNodes[id]->computeDescriptor->ssboSize[0] = bufferSize;

@@ -48,7 +48,7 @@ void AnimationImporter::ReadMissingBones(const aiAnimation* animation, Animation
 
         if (animationData.m_BoneInfoMap.find(boneName) == animationData.m_BoneInfoMap.end())
         {
-            animationData.m_BoneInfoMap[boneName].id = numBones;
+            animationData.m_BoneInfoMap[boneName].id = (int)numBones;
             animationData.m_BoneInfoMap[boneName].offset = glm::mat4(1.0f);
             numBones++;
         }
@@ -64,7 +64,7 @@ void AnimationImporter::ProcessNode(AnimationNode& dest, const aiNode* src)
     dest.transformation = ConvertMatrixToGLMFormat(src->mTransformation);
     dest.childrenCount = src->mNumChildren;
 
-    for (int i = 0; i < src->mNumChildren; i++)
+    for (unsigned int i = 0; i < src->mNumChildren; i++)
     {
         AnimationNode newData;
         ProcessNode(newData, src->mChildren[i]);

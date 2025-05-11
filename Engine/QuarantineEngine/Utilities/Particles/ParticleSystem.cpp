@@ -205,7 +205,7 @@ void ParticleSystem::GenerateParticles()
     this->ParticlesPerSpawn = 0;
     this->acumulativeTimer += this->timer->DeltaTime;
 
-    unsigned int particlesToSpawn = this->acumulativeTimer / this->SpawnTime;
+    unsigned int particlesToSpawn = static_cast<uint32_t>(this->acumulativeTimer / this->SpawnTime);
     this->acumulativeTimer = std::fmod(this->acumulativeTimer, this->SpawnTime);
 
     if (particlesToSpawn >= 1)

@@ -472,12 +472,14 @@ std::string ReflectShader::ToStringSpvBuiltIn(SpvBuiltIn built_in) {
 
     case SpvBuiltInMax:
     default:
-        break;
+        return "";
     }
 }
 
-std::string ReflectShader::ToStringDescriptorType(SpvReflectDescriptorType value) {
-    switch (value) {
+std::string ReflectShader::ToStringDescriptorType(SpvReflectDescriptorType value)
+{
+    switch (value)
+    {
     case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
         return "VK_DESCRIPTOR_TYPE_SAMPLER";
     case SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
@@ -502,9 +504,9 @@ std::string ReflectShader::ToStringDescriptorType(SpvReflectDescriptorType value
         return "VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT";
     case SPV_REFLECT_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
         return "VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR";
+    default:
+        return "VK_DESCRIPTOR_TYPE_???";
     }
-    // unhandled SpvReflectDescriptorType enum value
-    return "VK_DESCRIPTOR_TYPE_???";
 }
 
 void ReflectShader::PrintModuleInfo(std::ostream& os, const SpvReflectShaderModule& obj) {
@@ -668,7 +670,6 @@ void ReflectShader::CheckStage(DescriptorSetReflect& descripReflect, const SpvRe
 
 void ReflectShader::CheckDescriptorSet(DescriptorSetReflect& descripReflect, const SpvReflectDescriptorSet& obj, const char* indent)
 {
-    const char* t = indent;
     std::string tt = std::string(indent) + "  ";
     std::string ttttt = std::string(indent) + "    ";
 
@@ -678,7 +679,7 @@ void ReflectShader::CheckDescriptorSet(DescriptorSetReflect& descripReflect, con
 
     for (uint32_t i = 0; i < obj.binding_count; ++i) {
         const SpvReflectDescriptorBinding& binding = *obj.bindings[i];
-        descripReflect.bindings[i] = GetDescriptorBinding(binding, false, ttttt.c_str());
+        descripReflect.bindings[i] = GetDescriptorBinding(binding, false);
         descripReflect.bindings[i].set = obj.set;
         descripReflect.bindings[i].stage = descripReflect.stage;
 
@@ -699,7 +700,7 @@ void ReflectShader::CheckUBOMaterial(SpvReflectDescriptorSet* set)
 {
     if (!this->isUBOMaterial)
     {
-        for (int b = 0; b < set->binding_count && !this->isUBOMaterial; b++)
+        for (uint32_t b = 0; b < set->binding_count && !this->isUBOMaterial; b++)
         {
             if (set->bindings[b]->block.name != NULL)
             {
@@ -707,7 +708,7 @@ void ReflectShader::CheckUBOMaterial(SpvReflectDescriptorSet* set)
                 {
                     this->isUBOMaterial = true;
                     this->materialBufferSize = set->bindings[b]->block.size;
-                    for (int m = 0; m < set->bindings[b]->block.member_count; m++)
+                    for (uint32_t m = 0; m < set->bindings[b]->block.member_count; m++)
                     {
                         materialUBOComponents.push_back(set->bindings[b]->block.members[m].name);
                     }
@@ -721,7 +722,7 @@ void ReflectShader::CheckUBOAnimation(SpvReflectDescriptorSet* set)
 {
     if (!this->isUboAnimation)
     {
-        for (int b = 0; b < set->binding_count && !this->isUboAnimation; b++)
+        for (uint32_t b = 0; b < set->binding_count && !this->isUboAnimation; b++)
         {
             if (set->bindings[b]->block.name != NULL)
             {
@@ -729,7 +730,7 @@ void ReflectShader::CheckUBOAnimation(SpvReflectDescriptorSet* set)
                 {
                     this->isUboAnimation = true;
                     this->animationBufferSize = set->bindings[b]->block.size;
-                    for (int m = 0; m < set->bindings[b]->block.member_count; m++)
+                    for (uint32_t m = 0; m < set->bindings[b]->block.member_count; m++)
                     {
                         animationUBOComponents.push_back(set->bindings[b]->block.members[m].name);
                     }
@@ -741,7 +742,7 @@ void ReflectShader::CheckUBOAnimation(SpvReflectDescriptorSet* set)
 
 void ReflectShader::CheckShadowMaps(SpvReflectDescriptorSet* set)
 {
-    for (int b = 0; b < set->binding_count; b++)
+    for (uint32_t b = 0; b < set->binding_count; b++)
     {
         if (set->bindings[b]->name != NULL)
         {
@@ -757,7 +758,7 @@ void ReflectShader::CheckShadowMaps(SpvReflectDescriptorSet* set)
     }
 }
 
-DescriptorBindingReflect ReflectShader::GetDescriptorBinding(const SpvReflectDescriptorBinding& obj, bool write_set, const char* indent)
+DescriptorBindingReflect ReflectShader::GetDescriptorBinding(const SpvReflectDescriptorBinding& obj, bool write_set)
 {
     DescriptorBindingReflect descriptor = DescriptorBindingReflect();
 
@@ -915,7 +916,7 @@ void ReflectShader::PerformReflect(VkShaderModuleCreateInfo createInfo)
 
     this->descriptorSetReflect.push_back(descripReflect);
 
-    if (module.shader_stage == SPV_REFLECT_SHADER_STAGE_VERTEX_BIT)
+    if ((module.shader_stage & SPV_REFLECT_SHADER_STAGE_VERTEX_BIT) != 0)
     {
         uint32_t count2 = 0;
         result = spvReflectEnumerateInputVariables(&module, &count2, NULL);

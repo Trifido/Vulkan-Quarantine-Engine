@@ -3,11 +3,13 @@
 
 SunLight::SunLight() : DirectionalLight()
 {
+    this->lightType = LightType::SUN_LIGHT;
 }
 
 SunLight::SunLight(std::shared_ptr<VkRenderPass> renderPass, Camera* camera) :
     DirectionalLight(renderPass, camera)
 {
+    this->lightType = LightType::SUN_LIGHT;
     this->sunUBO = std::make_shared<UniformBufferObject>();
     this->sunUBO->CreateUniformBuffer(sizeof(SunUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 

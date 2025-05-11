@@ -64,7 +64,7 @@ void LightManager::CreateLight(LightType type, std::string name)
         default:
         case LightType::POINT_LIGHT:
             this->PointLights.push_back(std::make_shared<PointLight>(this->renderPassModule->omniShadowMappingRenderPass));
-            this->PointLights.back()->idxShadowMap = this->PointLights.size() - 1;
+            this->PointLights.back()->idxShadowMap = (uint32_t)this->PointLights.size() - 1;
 
             this->AddLight(std::static_pointer_cast<Light>(this->PointLights.back()), name);
             this->PointShadowDescritors->AddPointLightResources(
@@ -83,7 +83,7 @@ void LightManager::CreateLight(LightType type, std::string name)
             {
                 this->DirLights.push_back(std::make_shared<DirectionalLight>(this->renderPassModule->dirShadowMappingRenderPass, this->camera));
             }
-            this->DirLights.back()->idxShadowMap = this->DirLights.size() - 1;
+            this->DirLights.back()->idxShadowMap = (uint32_t)this->DirLights.size() - 1;
 
             this->AddLight(std::static_pointer_cast<Light>(this->DirLights.back()), name);
             this->CSMDescritors->AddDirLightResources(
@@ -152,7 +152,7 @@ std::vector<LightDto> LightManager::GetLightDtos(std::ifstream& file)
 
 void LightManager::SaveLights(std::ofstream& file)
 {
-    int numLights = this->_lights.size();
+    int numLights = static_cast<int>(this->_lights.size());
     file.write(reinterpret_cast<const char*>(&numLights), sizeof(int));
 
     for (auto& it : this->_lights)
@@ -160,7 +160,7 @@ void LightManager::SaveLights(std::ofstream& file)
         auto light = it.second;
 
         std::string name = it.first;
-        int nameLength = name.length();
+        int nameLength = static_cast<int>(name.length());
         file.write(reinterpret_cast<const char*>(&nameLength), sizeof(int));
         file.write(name.c_str(), nameLength);
         file.write(reinterpret_cast<const char*>(&light->lightType), sizeof(LightType));
@@ -193,7 +193,7 @@ void LightManager::InitializeShadowMaps()
 
 void LightManager::UpdateUniform()
 {
-    this->lightManagerUniform->numLights = std::min(this->_lights.size(), this->MAX_NUM_LIGHT);
+    this->lightManagerUniform->numLights = (uint32_t)std::min(this->_lights.size(), this->MAX_NUM_LIGHT);
 
     int cont = 0;
     for (auto& it : this->_lights)
@@ -348,7 +348,7 @@ void LightManager::ComputeLightsLUT()
 
     for (uint32_t bin = 0; bin < BIN_SLICES; bin++)
     {
-        uint32_t min_light_id = this->sortedLight.size() + 1;
+        uint32_t min_light_id = static_cast<uint32_t>(this->sortedLight.size() + 1);
         uint32_t max_light_id = 0;
 
         float bin_min = bin_size * bin;
@@ -405,12 +405,11 @@ void LightManager::ComputeLightTiles()
         tilesEntryCount = tileXCount * tileYCount * NUM_WORDS;
     }
 
-    this->swapChainModule->UpdateTileSize(newTileSize);
+    this->swapChainModule->UpdateTileSize((float)newTileSize);
 
     const uint32_t tile_x_count = tileXCount;
     const uint32_t tile_y_count = tileYCount;
     const uint32_t tiles_entry_count = tile_x_count * tile_y_count * NUM_WORDS;
-    const uint32_t buffer_size = tiles_entry_count * sizeof(uint32_t);
 
     this->light_tiles_bits.clear();
     this->light_tiles_bits.resize(tiles_entry_count, 0u);
@@ -431,7 +430,6 @@ void LightManager::ComputeLightTiles()
         glm::vec4 view_space_pos = camera->view * pos;
         glm::vec2 cx{ view_space_pos.x, view_space_pos.z };
         const float tx_squared = glm::dot(cx, cx) - (radius * radius);
-        const bool tx_camera_inside = tx_squared <= 0;
         glm::vec2 vx{ sqrtf(tx_squared), radius };
         glm::mat2 xtransf_min{ vx.x, vx.y, -vx.y, vx.x };
         glm::vec2 minx = xtransf_min * cx;
@@ -440,7 +438,6 @@ void LightManager::ComputeLightTiles()
 
         glm::vec2 cy{ -view_space_pos.y, view_space_pos.z };
         const float ty_squared = glm::dot(cy, cy) - (radius * radius);
-        const bool ty_camera_inside = ty_squared <= 0;
         glm::vec2 vy{ sqrtf(ty_squared), radius };
         glm::mat2 ytransf_min{ vy.x, vy.y, -vy.y, vy.x };
         glm::vec2 miny = ytransf_min * cy;
@@ -482,12 +479,6 @@ void LightManager::ComputeLightTiles()
         // Inverted Y aabb
         aabb.w = -1 * aabb_min.y;
         aabb.y = -1 * aabb_max.y;
-
-        const float position_len = sqrtf(glm::dot(glm::vec3{ view_space_pos.x, view_space_pos.y, view_space_pos.z }, glm::vec3{ view_space_pos.x, view_space_pos.y, view_space_pos.z }));
-        const bool camera_inside = (position_len - radius) < near_z;
-
-
-        aabb = { -1,-1, 1, 1 };
 
         glm::vec4 aabb_screen{ (aabb.x * 0.5f + 0.5f) * (swapChainModule->swapChainExtent.width - 1),
                            (aabb.y * 0.5f + 0.5f) * (swapChainModule->swapChainExtent.height - 1),
@@ -546,12 +537,12 @@ void LightManager::Update()
     this->ComputeLightsLUT();
     this->ComputeLightTiles();
 
-    uint32_t currentFrame = SynchronizationModule::GetCurrentFrame();
+    uint32_t currentFrame = static_cast<uint32_t>(SynchronizationModule::GetCurrentFrame());
 
     if (!this->lights_index.empty())
     {
         void* data2;
-        size_t indexSize = this->lights_index.size() * sizeof(uint32_t);
+        uint32_t indexSize = static_cast<uint32_t>(this->lights_index.size()) * sizeof(uint32_t);
 
         vkMapMemory(this->deviceModule->device, this->lightIndexSSBO->uniformBuffersMemory[currentFrame], 0, indexSize, 0, &data2);
         memcpy(data2, this->lights_index.data(), indexSize);
@@ -573,6 +564,7 @@ void LightManager::Update()
     vkUnmapMemory(this->deviceModule->device, this->lightBinSSBO->uniformBuffersMemory[currentFrame]);
 
     this->UpdateCSMLights();
+    this->UpdateUniform();
 
     this->CSMDescritors->UpdateResources(currentFrame);
 }

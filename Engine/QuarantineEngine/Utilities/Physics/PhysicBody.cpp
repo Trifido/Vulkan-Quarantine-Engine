@@ -5,11 +5,15 @@
 PhysicBody::PhysicBody()
 {
     this->UpdateType(PhysicBodyType::STATIC_BODY);
+    this->CollisionGroup = CollisionFlag::COL_NOTHING;
+    this->CollisionMask = CollisionFlag::COL_NOTHING;
 }
 
 PhysicBody::PhysicBody(const PhysicBodyType& type)
 {
     this->UpdateType(type);
+    this->CollisionGroup = CollisionFlag::COL_NOTHING;
+    this->CollisionMask = CollisionFlag::COL_NOTHING;
 }
 
 void PhysicBody::UpdateType(const PhysicBodyType &type)
@@ -56,14 +60,12 @@ void PhysicBody::Initialize(std::shared_ptr<Transform> transform_ptr, std::share
     glm::vec3 scale = this->transform->Scale;
     collider_ptr->colShape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
 
-    glm::vec3 position = this->transform->Position;
+    glm::vec3 position = this->transform->Position + collider_ptr->LocalDisplacement;
     startTransform.setOrigin(btVector3(position.x, position.y, position.z));
 
-    float yaw = this->transform->RadiansRotation.x;
-    float pitch = this->transform->RadiansRotation.y;
-    float roll = this->transform->RadiansRotation.z;
-    btQuaternion rotation(yaw, pitch, roll);
-    startTransform.setRotation(rotation);
+    auto quat = this->transform->Orientation;
+    btQuaternion btQuat(quat.x, quat.y, quat.z, quat.w);
+    startTransform.setRotation(btQuat);
 
     btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
 
@@ -78,7 +80,12 @@ void PhysicBody::Initialize(std::shared_ptr<Transform> transform_ptr, std::share
 
     //Add new rigidBody to physicsModule
     auto physicsModule = PhysicsModule::getInstance();
-    physicsModule->dynamicsWorld->addRigidBody(body);
+    physicsModule->dynamicsWorld->addRigidBody(body, this->CollisionGroup, this->CollisionMask);
+
+    if (this->Type == PhysicBodyType::STATIC_BODY)
+    {
+        this->body->setCollisionFlags(btCollisionObject::CF_STATIC_OBJECT);
+    }
 }
 
 void PhysicBody::copyTransformtoGLM()
@@ -89,7 +96,11 @@ void PhysicBody::copyTransformtoGLM()
         this->body->getMotionState()->getWorldTransform(trans);
 
         //Update glm::matrix
-        this->transform->SetModel(bulletToGlm(trans));
+        glm::mat4 m = bulletToGlm(trans);
+        m[3][0] -= this->collider->LocalDisplacement.x;
+        m[3][1] -= this->collider->LocalDisplacement.y;
+        m[3][2] -= this->collider->LocalDisplacement.z;
+        this->transform->SetModel(m);
     }
 }
 
@@ -130,5 +141,3 @@ glm::quat PhysicBody::bulletToGlm(const btQuaternion& q) { return glm::quat(q.ge
 btVector3 PhysicBody::glmToBullet(const glm::vec3& v) { return btVector3(v.x, v.y, v.z); }
 btMatrix3x3 PhysicBody::glmToBullet(const glm::mat3& m) { return btMatrix3x3(m[0][0], m[1][0], m[2][0], m[0][1], m[1][1], m[2][1], m[0][2], m[1][2], m[2][2]); }
 btQuaternion PhysicBody::glmToBullet(const glm::quat& q) { return btQuaternion(q.x, q.y, q.z, q.w); }
-
-

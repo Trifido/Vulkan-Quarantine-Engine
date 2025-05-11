@@ -4,7 +4,7 @@ void ComputePipelineModule::CompileComputePipeline(std::vector<VkPipelineShaderS
 {
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = descriptorLayouts.size(); // Number of descriptor sets
+    pipelineLayoutInfo.setLayoutCount = (uint32_t)descriptorLayouts.size(); // Number of descriptor sets
     pipelineLayoutInfo.pSetLayouts = descriptorLayouts.data(); // Ptr to descriptor set layout
 
     if (vkCreatePipelineLayout(deviceModule->device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {

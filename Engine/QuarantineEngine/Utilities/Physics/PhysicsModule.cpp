@@ -16,7 +16,7 @@ PhysicsModule::PhysicsModule()
 
     this->dynamicsWorld = new btDiscreteDynamicsWorld(this->dispatcher, this->overlappingPairCache, this->solver, this->collisionConfiguration);
 
-    this->dynamicsWorld->setGravity(btVector3(0, -10, 0));
+    this->dynamicsWorld->setGravity(btVector3(0, this->gravity, 0));
 }
 
 void PhysicsModule::AddRigidBody(btRigidBody* body)
@@ -28,8 +28,39 @@ void PhysicsModule::ComputePhysics(float deltaTime)
 {
     if (this->dynamicsWorld)
     {
-        this->dynamicsWorld->stepSimulation(deltaTime);
+        this->dynamicsWorld->stepSimulation(deltaTime, 10);
     }
+
+    this->UpdateDebugDrawer();
+}
+
+void PhysicsModule::CleanupDebugDrawer() { debugDrawer->cleanup(); }
+
+void PhysicsModule::InitializeDebugResources()
+{
+    // Set debug mode
+    this->debugDrawer = new BulletDebugDrawer();
+    this->debugDrawer->setDebugMode(btIDebugDraw::DBG_DrawWireframe);
+    this->dynamicsWorld->setDebugDrawer(this->debugDrawer);
+
+    this->debugDrawer->InitializeDebugResources();
+}
+
+void PhysicsModule::UpdateDebugDrawer()
+{
+    if (this->dynamicsWorld->getNumCollisionObjects() > 0)
+    {
+        this->debugDrawer->clear();
+        this->dynamicsWorld->debugDrawWorld();
+
+        this->debugDrawer->UpdateBuffers();
+    }
+}
+
+void PhysicsModule::SetGravity(float gravity)
+{
+    this->gravity = gravity;
+    this->dynamicsWorld->setGravity(btVector3(0, this->gravity, 0));
 }
 
 PhysicsModule::~PhysicsModule()

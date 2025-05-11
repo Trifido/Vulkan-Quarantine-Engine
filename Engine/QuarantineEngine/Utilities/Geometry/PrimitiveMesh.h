@@ -26,6 +26,8 @@ private:
     void InitializeGrid();
     void InitializeCube();
     void InitializeSphere();
+
+protected:
     void createVertexBuffer() override;
 };
 

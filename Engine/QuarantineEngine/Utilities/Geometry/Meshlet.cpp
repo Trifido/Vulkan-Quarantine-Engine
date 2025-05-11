@@ -55,7 +55,7 @@ void Meshlet::GenerateCustomMeshlet(std::vector<Vertex>& vertices, std::vector<u
     this->gpuMeshlets.reserve(meshlet_count);
 
     auto i_face_from = 0u;
-    const unsigned int face_count = num_faces;
+    const unsigned int face_count = static_cast<const unsigned int>(num_faces);
 
     std::map<unsigned, bool> unique_index_map;
     std::vector<glm::vec4*> meshlet_vertices;
@@ -64,10 +64,8 @@ void Meshlet::GenerateCustomMeshlet(std::vector<Vertex>& vertices, std::vector<u
     for (unsigned i_meshlet = 0; i_meshlet < meshlet_count; ++i_meshlet)
     {
         const auto i_face_to = glm::min(i_face_from + this->meshlet_primitive_count, face_count);
-        auto global_index_to = i_face_to * 3;
-        auto global_index_from = i_face_from * 3;
 
-        uint16_t primitive_count = i_face_to - i_face_from;
+        uint16_t primitive_count = static_cast<uint16_t>(i_face_to - i_face_from);
         unique_index_map.clear();
 
         meshlet_vertices.clear();
@@ -80,7 +78,6 @@ void Meshlet::GenerateCustomMeshlet(std::vector<Vertex>& vertices, std::vector<u
         for (unsigned i_face = i_face_from; i_face < i_face_to; ++i_face)
         {
             auto global_index_to = i_face * 3;
-            auto init_index = this->indexData.at(global_index_to);
 
             for (unsigned i_indx = 0; i_indx < 3; ++i_indx)
             {
@@ -158,7 +155,6 @@ void Meshlet::GenerateMeshlet(const std::vector<Vertex>& vertices, const std::ve
         0.5f);
     meshlets.resize(meshlets_count);
 
-    uint32_t meshlet_vertex_offset = meshlet_vertices_indices.size();
     for (size_t i = 0; i < meshlets_count; ++i)
     {
         const meshopt_Meshlet& local_meshlet = meshlets[i];
@@ -188,7 +184,7 @@ void Meshlet::GenerateMeshlet(const std::vector<Vertex>& vertices, const std::ve
 
         newMeshlet.cone = bounding_cone;
         newMeshlet.sphere = bounding_sphere;
-        newMeshlet.primitive_count = local_meshlet.triangle_count;
+        newMeshlet.primitive_count = static_cast<uint16_t>(local_meshlet.triangle_count);
 
         this->gpuMeshlets.push_back(newMeshlet);
     }

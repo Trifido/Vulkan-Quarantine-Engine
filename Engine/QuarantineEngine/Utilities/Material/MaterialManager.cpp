@@ -51,6 +51,8 @@ MaterialManager::MaterialManager()
     const std::string absolute_mesh_frag_shader_path = absPath + "/mesh/mesh_frag.spv";
     const std::string absolute_debugBB_vertex_shader_path = absPath + "/Debug/debugAABB_vert.spv";
     const std::string absolute_debugBB_frag_shader_path = absPath + "/Debug/debugAABB_frag.spv";
+    const std::string absolute_debug_vertex_shader_path = absPath + "/Debug/debug_vert.spv";
+    const std::string absolute_debug_frag_shader_path = absPath + "/Debug/debug_frag.spv";
     const std::string absolute_grid_vertex_shader_path = absPath + "/Grid/grid_vert.spv";
     const std::string absolute_grid_frag_shader_path = absPath + "/Grid/grid_frag.spv";
 
@@ -75,13 +77,13 @@ MaterialManager::MaterialManager()
     );
     shaderManager->AddShader(this->default_particles_shader);
 
-    GraphicsPipelineData pipelineMeshShader = {};
-    pipelineMeshShader.HasVertexData = false;
-    pipelineMeshShader.IsMeshShader = true;
-    this->mesh_shader_test = std::make_shared<ShaderModule>(
-        ShaderModule("mesh_shader", absolute_mesh_task_shader_path, absolute_mesh_mesh_shader_path, absolute_mesh_frag_shader_path, pipelineMeshShader)
-    );
-    shaderManager->AddShader(this->mesh_shader_test);
+    //GraphicsPipelineData pipelineMeshShader = {};
+    //pipelineMeshShader.HasVertexData = false;
+    //pipelineMeshShader.IsMeshShader = true;
+    //this->mesh_shader_test = std::make_shared<ShaderModule>(
+    //    ShaderModule("mesh_shader", absolute_mesh_task_shader_path, absolute_mesh_mesh_shader_path, absolute_mesh_frag_shader_path, pipelineMeshShader)
+    //);
+    //shaderManager->AddShader(this->mesh_shader_test);
 
     GraphicsPipelineData pipelineShadowShader = {};
 
@@ -104,6 +106,17 @@ MaterialManager::MaterialManager()
 
     this->shader_aabb_ptr = std::make_shared<ShaderModule>(ShaderModule("shader_aabb_debug", absolute_debugBB_vertex_shader_path, absolute_debugBB_frag_shader_path, gpData));
     shaderManager->AddShader(shader_aabb_ptr);
+
+    {
+        gpData.HasVertexData = true;
+        gpData.polygonMode = VK_POLYGON_MODE_LINE;
+        gpData.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+        gpData.vertexBufferStride = sizeof(DebugVertex);
+        gpData.lineWidth = 1.0f;
+
+        this->shader_debug_ptr = std::make_shared<ShaderModule>(ShaderModule("shader_debug_lines", absolute_debug_vertex_shader_path, absolute_debug_frag_shader_path, gpData));
+        shaderManager->AddShader(shader_debug_ptr);
+    }
 
     gpData = {};
     gpData.HasVertexData = false;
@@ -142,6 +155,7 @@ std::shared_ptr<Material> MaterialManager::GetMaterial(std::string nameMaterial)
 void MaterialManager::AddMaterial(std::shared_ptr<Material> mat_ptr)
 {
     std::string nameMaterial = CheckName(mat_ptr->Name);
+    mat_ptr->RenameMaterial(nameMaterial);
     _materials[nameMaterial] = mat_ptr;
 }
 
@@ -387,14 +401,14 @@ void MaterialManager::LoadMaterialDtos(std::vector<MaterialDto>& materialDtos)
 
 void MaterialManager::SaveMaterials(std::ofstream& file)
 {
-    int materialCount = _materials.size();
+    int materialCount = static_cast<int>(_materials.size());
     file.write(reinterpret_cast<const char*>(&materialCount), sizeof(int));
 
     for (auto& it : _materials)
     {
         std::string materialPath = it.second->SaveMaterialFile();
 
-        int materialPathLength = materialPath.length();
+        int materialPathLength = static_cast<int>(materialPath.length());
 
         if (materialPathLength > 0)
         {

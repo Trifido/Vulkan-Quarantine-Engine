@@ -26,6 +26,7 @@ private:
     std::shared_ptr<ShaderModule> default_particles_shader;
     std::shared_ptr<ShaderModule> mesh_shader_test;
     std::shared_ptr<ShaderModule> shader_aabb_ptr;
+    std::shared_ptr<ShaderModule> shader_debug_ptr;
     std::shared_ptr<ShaderModule> shader_grid_ptr;
 
 public:
