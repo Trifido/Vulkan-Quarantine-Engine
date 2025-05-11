@@ -92,14 +92,14 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>%VULKAN_SDK%\Include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\Linking\meshoptimizer;$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\QuarantineEngine\Utilities\Atmosphere;$(SolutionDir)\QuarantineEngine\Utilities\Camera;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Controller;$(SolutionDir)\QuarantineEngine\Utilities\General;$(SolutionDir)\QuarantineEngine\Data\Dtos;$(SolutionDir)\QuarantineEngine\Data;$(SolutionDir)\QuarantineEngine\Templates;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%VULKAN_SDK%\Include;$(SolutionDir)\Externals\assimp\include;$(SolutionDir)\Externals\bullet3\src;$(SolutionDir)\Externals\meshoptimizer;$(SolutionDir)\Externals\SPIRV-Reflect;$(SolutionDir)\QuarantineEngine\Utilities\Atmosphere;$(SolutionDir)\QuarantineEngine\Utilities\Camera;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Controller;$(SolutionDir)\QuarantineEngine\Utilities\General;$(SolutionDir)\QuarantineEngine\Data\Dtos;$(SolutionDir)\QuarantineEngine\Data;$(SolutionDir)\QuarantineEngine\Templates;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Externals\GLFW\include;$(SolutionDir)\Externals\imgui;$(SolutionDir)\Externals\stb;$(SolutionDir)\Externals\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\Linking\bullet3\lib;$(SolutionDir)\Linking\meshoptimizer;$(SolutionDir)\Linking\assimp\lib;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib32;..\libs\glfw\lib-vc2010-32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Externals\SPIRV-Reflect;$(SolutionDir)\Externals\bullet3\lib;$(SolutionDir)\Externals\meshoptimizer;$(SolutionDir)\Externals\assimp\lib;$(SolutionDir)\Externals\GLFW\lib\GLFW;%VULKAN_SDK%\lib32;..\libs\glfw\lib-vc2010-32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mtd.lib;BulletCollision_Debug.lib;BulletDynamics_Debug.lib;LinearMath_Debug.lib;spirv-reflect-static.lib;meshoptimizer.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
@@ -109,14 +109,14 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>%VULKAN_SDK%\Include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\Linking\meshoptimizer;$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\QuarantineEngine\Utilities\Atmosphere;$(SolutionDir)\QuarantineEngine\Utilities\Camera;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Controller;$(SolutionDir)\QuarantineEngine\Utilities\General;$(SolutionDir)\QuarantineEngine\Data\Dtos;$(SolutionDir)\QuarantineEngine\Data;$(SolutionDir)\QuarantineEngine\Templates;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Utilities\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Input;.\Utilities\Light;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%VULKAN_SDK%\Include;$(SolutionDir)\Externals\assimp\include;$(SolutionDir)\Externals\bullet3\src;$(SolutionDir)\Externals\meshoptimizer;$(SolutionDir)\Externals\SPIRV-Reflect;$(SolutionDir)\QuarantineEngine\Utilities\Atmosphere;$(SolutionDir)\QuarantineEngine\Utilities\Camera;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Controller;$(SolutionDir)\QuarantineEngine\Utilities\General;$(SolutionDir)\QuarantineEngine\Data\Dtos;$(SolutionDir)\QuarantineEngine\Data;$(SolutionDir)\QuarantineEngine\Templates;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Externals\GLFW\include;$(SolutionDir)\Externals;$(SolutionDir)\Externals\imgui;$(SolutionDir)\Externals\stb;$(SolutionDir)\Externals\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Utilities\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Input;.\Utilities\Light;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\Linking\bullet3\lib;$(SolutionDir)\Linking\meshoptimizer;$(SolutionDir)\Linking\assimp\lib;C:\Users\vicente.martinez\Documents\GitHub\Vulkan-Quarantine-Engine\Engine\lib\Debug;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib;..\libs\glfw\lib-vc2010-64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Externals\SPIRV-Reflect;$(SolutionDir)\Externals\bullet3\lib;$(SolutionDir)\Externals\meshoptimizer;$(SolutionDir)\Externals\assimp\lib;C:\Users\vicente.martinez\Documents\GitHub\Vulkan-Quarantine-Engine\Engine\lib\Debug;$(SolutionDir)\Externals\GLFW\lib\GLFW;%VULKAN_SDK%\lib;..\libs\glfw\lib-vc2010-64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mtd.lib;BulletCollision_Debug.lib;BulletDynamics_Debug.lib;LinearMath_Debug.lib;spirv-reflect-static.lib;meshoptimizer.lib;assimp-vc142-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
@@ -126,9 +126,9 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <FunctionLevelExternals>true</FunctionLevelExternals>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>%VULKAN_SDK%\Include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\Linking\meshoptimizer;$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\QuarantineEngine\Utilities\Atmosphere;$(SolutionDir)\QuarantineEngine\Utilities\Camera;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Controller;$(SolutionDir)\QuarantineEngine\Utilities\General;$(SolutionDir)\QuarantineEngine\Data\Dtos;$(SolutionDir)\QuarantineEngine\Data;$(SolutionDir)\QuarantineEngine\Templates;$(SolutionDir)\QuarantineEngine\Utilities\Compute;$(SolutionDir)\QuarantineEngine\Utilities\Particles;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%VULKAN_SDK%\Include;$(SolutionDir)\Externals\assimp\include;$(SolutionDir)\Externals\bullet3\src;$(SolutionDir)\Externals\meshoptimizer;$(SolutionDir)\Externals\SPIRV-Reflect;$(SolutionDir)\QuarantineEngine\Utilities\Atmosphere;$(SolutionDir)\QuarantineEngine\Utilities\Camera;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Controller;$(SolutionDir)\QuarantineEngine\Utilities\General;$(SolutionDir)\QuarantineEngine\Data\Dtos;$(SolutionDir)\QuarantineEngine\Data;$(SolutionDir)\QuarantineEngine\Templates;$(SolutionDir)\QuarantineEngine\Utilities\Compute;$(SolutionDir)\QuarantineEngine\Utilities\Particles;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Externals\GLFW\include;$(SolutionDir)\Externals\SPIRV-Reflect;$(SolutionDir)\Externals\imgui;$(SolutionDir)\Externals\stb;$(SolutionDir)\Externals\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -138,7 +138,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>false</EnableCOMDATFolding>
       <OptimizeReferences>false</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\Linking\bullet3\lib;$(SolutionDir)\Linking\meshoptimizer;$(SolutionDir)\Linking\assimp\lib;$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib32;..\libs\glfw\lib-vc2010-32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Externals\SPIRV-Reflect;$(SolutionDir)\Externals\bullet3\lib;$(SolutionDir)\Externals\meshoptimizer;$(SolutionDir)\Externals\assimp\lib;$(SolutionDir)\Externals\SPIRV-Reflect;$(SolutionDir)\Externals\GLFW\lib\GLFW;%VULKAN_SDK%\lib32;..\libs\glfw\lib-vc2010-32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mtd.lib;BulletCollision_Debug.lib;BulletDynamics_Debug.lib;LinearMath_Debug.lib;spirv-reflect-static.lib;meshoptimizer.lib;spirv-reflect-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>
@@ -150,9 +150,9 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <FunctionLevelExternals>true</FunctionLevelExternals>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>%VULKAN_SDK%\Include;$(SolutionDir)\Linking\assimp\include;$(SolutionDir)\Linking\bullet3\src;$(SolutionDir)\Linking\meshoptimizer;$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\QuarantineEngine\Utilities\Atmosphere;$(SolutionDir)\QuarantineEngine\Utilities\Camera;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Controller;$(SolutionDir)\QuarantineEngine\Utilities\General;$(SolutionDir)\QuarantineEngine\Data\Dtos;$(SolutionDir)\QuarantineEngine\Data;$(SolutionDir)\QuarantineEngine\Templates;$(SolutionDir)\QuarantineEngine\Utilities\Compute;$(SolutionDir)\QuarantineEngine\Utilities\Particles;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Linking\GLFW\include;$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\Linking;$(SolutionDir)\Linking\imgui;$(SolutionDir)\Linking\stb;$(SolutionDir)\Linking\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Utilities\Geometry;.\Input;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%VULKAN_SDK%\Include;$(SolutionDir)\Externals\assimp\include;$(SolutionDir)\Externals\bullet3\src;$(SolutionDir)\Externals\meshoptimizer;$(SolutionDir)\Externals\SPIRV-Reflect;$(SolutionDir)\QuarantineEngine\Utilities\Atmosphere;$(SolutionDir)\QuarantineEngine\Utilities\Camera;$(SolutionDir)\QuarantineEngine\Utilities\Light;$(SolutionDir)\QuarantineEngine\Utilities\Controller;$(SolutionDir)\QuarantineEngine\Utilities\General;$(SolutionDir)\QuarantineEngine\Data\Dtos;$(SolutionDir)\QuarantineEngine\Data;$(SolutionDir)\QuarantineEngine\Templates;$(SolutionDir)\QuarantineEngine\Utilities\Compute;$(SolutionDir)\QuarantineEngine\Utilities\Particles;$(SolutionDir)\QuarantineEngine\Utilities\Animation;$(SolutionDir)\Externals\GLFW\include;$(SolutionDir)\Externals\SPIRV-Reflect;$(SolutionDir)\Externals;$(SolutionDir)\Externals\imgui;$(SolutionDir)\Externals\stb;$(SolutionDir)\Externals\tinyobjloader;.\Draw;.\GraphicsPipeline;.\Presentation;.\setup;.\Utilities\Material;.\Utilities\Physics;.\Geometry;.\Memory;.\Utilities;.\RayTracing;.\GUI;.\App;.\Utilities\Geometry;.\Input;%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -162,7 +162,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>false</EnableCOMDATFolding>
       <OptimizeReferences>false</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)\Linking\SPIRV-Reflect;$(SolutionDir)\Linking\bullet3\lib;$(SolutionDir)\Linking\meshoptimizer;$(SolutionDir)\Linking\assimp\lib;$(SolutionDir)\Linking\SPIRV-Reflect;C:\Users\vicente.martinez\Documents\GitHub\Vulkan-Quarantine-Engine\Engine\lib\Debug;$(SolutionDir)\Linking\GLFW\lib\GLFW;%VULKAN_SDK%\lib;..\libs\glfw\lib-vc2010-64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Externals\SPIRV-Reflect;$(SolutionDir)\Externals\bullet3\lib;$(SolutionDir)\Externals\meshoptimizer;$(SolutionDir)\Externals\assimp\lib;$(SolutionDir)\Externals\SPIRV-Reflect;C:\Users\vicente.martinez\Documents\GitHub\Vulkan-Quarantine-Engine\Engine\lib\Debug;$(SolutionDir)\Externals\GLFW\lib\GLFW;%VULKAN_SDK%\lib;..\libs\glfw\lib-vc2010-64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;assimp-vc142-mtd.lib;BulletCollision_Debug.lib;BulletDynamics_Debug.lib;LinearMath_Debug.lib;spirv-reflect-static.lib;meshoptimizer.lib;spirv-reflect-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>
@@ -171,13 +171,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Linking\imgui\backends\imgui_impl_glfw.cpp" />
-    <ClCompile Include="..\Linking\imgui\backends\imgui_impl_vulkan.cpp" />
-    <ClCompile Include="..\Linking\imgui\imgui.cpp" />
-    <ClCompile Include="..\Linking\imgui\imgui_demo.cpp" />
-    <ClCompile Include="..\Linking\imgui\imgui_draw.cpp" />
-    <ClCompile Include="..\Linking\imgui\imgui_tables.cpp" />
-    <ClCompile Include="..\Linking\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="..\Externals\imgui\backends\imgui_impl_glfw.cpp" />
+    <ClCompile Include="..\Externals\imgui\backends\imgui_impl_vulkan.cpp" />
+    <ClCompile Include="..\Externals\imgui\imgui.cpp" />
+    <ClCompile Include="..\Externals\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\Externals\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\Externals\imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\Externals\imgui\imgui_widgets.cpp" />
     <ClCompile Include="App\App.cpp" />
     <ClCompile Include="Data\QEProjectManager.cpp" />
     <ClCompile Include="Draw\CommandPoolModule.cpp" />
@@ -273,11 +273,11 @@
     <ClCompile Include="Utilities\Physics\SphereCollider.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Linking\imgui\backends\imgui_impl_glfw.h" />
-    <ClInclude Include="..\Linking\imgui\backends\imgui_impl_vulkan.h" />
-    <ClInclude Include="..\Linking\imgui\imconfig.h" />
-    <ClInclude Include="..\Linking\imgui\imgui.h" />
-    <ClInclude Include="..\Linking\imgui\imgui_internal.h" />
+    <ClInclude Include="..\Externals\imgui\backends\imgui_impl_glfw.h" />
+    <ClInclude Include="..\Externals\imgui\backends\imgui_impl_vulkan.h" />
+    <ClInclude Include="..\Externals\imgui\imconfig.h" />
+    <ClInclude Include="..\Externals\imgui\imgui.h" />
+    <ClInclude Include="..\Externals\imgui\imgui_internal.h" />
     <ClInclude Include="App\App.h" />
     <ClInclude Include="Data\Dtos\AtmosphereDto.h" />
     <ClInclude Include="Data\Dtos\CameraDto.h" />
