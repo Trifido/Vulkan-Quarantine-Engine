@@ -2,34 +2,38 @@ name: Build and Test
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-    - name: Check out repository
+    - name: Checkout repository
       uses: actions/checkout@v4.2.2
 
     - name: Set up CMake
       uses: jwlawson/actions-setup-cmake@v2
 
-    - name: Build with CMake
+    - name: Configure CMake (Release)
       run: |
-        mkdir build
-        cd build
-        cmake ..
-        cmake --build . --config Release
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
-    - name: Upload artifact (Release build)
+    - name: Build with CMake
+      run: cmake --build build --config Release
+
+    - name: Upload QuarantineEngine.exe
       uses: actions/upload-artifact@v4
       with:
         name: QuarantineEngine
         path: build/Release/QuarantineEngine.exe
-    #- name: Run the build
-    #  run: .\build\Release\QuarantineEngine.exe
+
+    # OPTIONAL: Upload DLLs (if you use dynamic libs like assimp)
+    - name: Upload runtime DLLs (if any)
+      uses: actions/upload-artifact@v4
+      with:
+        name: EngineRuntimeDLLs
+        path: |
+          build/Release/*.dll
