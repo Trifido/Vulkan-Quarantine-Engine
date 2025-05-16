@@ -5,7 +5,7 @@
 
 #include <ostream>
 #include <vector>
-#include "spirv_reflect.h"
+#include "SPIRV-Reflect/spirv_reflect.h"
 #include <vulkan/vulkan.h>
 #include <unordered_map>
 

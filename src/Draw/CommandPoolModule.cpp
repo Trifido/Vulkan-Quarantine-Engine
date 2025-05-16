@@ -102,7 +102,7 @@ void CommandPoolModule::setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t
 
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = *(this->renderPassModule->renderPass);
+    renderPassInfo.renderPass = *(this->renderPassModule->DefaultRenderPass);
     renderPassInfo.framebuffer = framebuffer;
     renderPassInfo.renderArea.offset = { 0, 0 };
     renderPassInfo.renderArea.extent = swapchainModule->swapChainExtent;
@@ -296,7 +296,7 @@ void CommandPoolModule::Render(FramebufferModule* framebufferModule)
 
         for (uint32_t idDirLight = 0; idDirLight < this->lightManager->DirLights.size(); idDirLight++)
         {
-            this->setDirectionalShadowRenderPass(this->renderPassModule->dirShadowMappingRenderPass, idDirLight, i);
+            this->setDirectionalShadowRenderPass(this->renderPassModule->DirShadowMappingRenderPass, idDirLight, i);
         }
 
         //auto itSpotlight = this->lightManager->SpotLights.begin();
@@ -308,7 +308,7 @@ void CommandPoolModule::Render(FramebufferModule* framebufferModule)
 
         for(uint32_t idPointLight = 0; idPointLight < this->lightManager->PointLights.size(); idPointLight++)
         {
-            this->setOmniShadowRenderPass(this->renderPassModule->omniShadowMappingRenderPass, idPointLight, i);
+            this->setOmniShadowRenderPass(this->renderPassModule->OmniShadowMappingRenderPass, idPointLight, i);
         }
 
         this->setCustomRenderPass(framebufferModule->swapChainFramebuffers[swapchainModule->currentImage], i);

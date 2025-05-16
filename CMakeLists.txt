@@ -85,7 +85,7 @@ add_subdirectory(extern/meshoptimizer EXCLUDE_FROM_ALL)
 # ImGui
 # ------------------------------
 
-set(IMGUI_DIR ${CMAKE_SOURCE_DIR}/extern/imgui)
+set(IMGUI_DIR ${CMAKE_SOURCE_DIR}/extern/imgui-docking)
 add_library(imgui STATIC
   ${IMGUI_DIR}/imgui.cpp
   ${IMGUI_DIR}/imgui_draw.cpp
@@ -109,6 +109,10 @@ target_include_directories(imgui PUBLIC
 file(GLOB_RECURSE ENGINE_SRC CONFIGURE_DEPENDS src/*.cpp)
 file(GLOB_RECURSE ENGINE_HDR CONFIGURE_DEPENDS src/*.h)
 add_executable(QuarantineEngine ${ENGINE_SRC} ${ENGINE_HDR})
+
+if (MSVC)
+  target_compile_options(QuarantineEngine PRIVATE /Zc:__cplusplus)
+endif()
 
 # ------------------------------
 # Visual Studio Folder Grouping

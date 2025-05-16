@@ -88,12 +88,12 @@ MaterialManager::MaterialManager()
     GraphicsPipelineData pipelineShadowShader = {};
 
     pipelineShadowShader.shadowMode = ShadowMappingMode::DIRECTIONAL_SHADOW;
-    pipelineShadowShader.renderPass = this->renderPassModule->dirShadowMappingRenderPass;
+    pipelineShadowShader.renderPass = this->renderPassModule->DirShadowMappingRenderPass;
     this->csm_shader = std::make_shared<ShaderModule>(ShaderModule("csm_shader", absolute_csm_vertex_shader_path, absolute_csm_frag_shader_path, pipelineShadowShader));
     shaderManager->AddShader(this->csm_shader);
 
     pipelineShadowShader.shadowMode = ShadowMappingMode::OMNI_SHADOW;
-    pipelineShadowShader.renderPass = this->renderPassModule->omniShadowMappingRenderPass;
+    pipelineShadowShader.renderPass = this->renderPassModule->OmniShadowMappingRenderPass;
     this->omni_shadow_mapping_shader = std::make_shared<ShaderModule>(ShaderModule("omni_shadow_mapping_shader", absolute_omni_shadow_vertex_shader_path, absolute_omni_shadow_frag_shader_path, pipelineShadowShader));
     shaderManager->AddShader(this->omni_shadow_mapping_shader);
 

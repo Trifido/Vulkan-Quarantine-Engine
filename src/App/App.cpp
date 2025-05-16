@@ -89,6 +89,8 @@ void App::init_imgui()
     init_info.Device = deviceModule->device;
     init_info.Queue = queueModule->graphicsQueue;
     init_info.DescriptorPool = imguiPool;
+    init_info.Subpass = 0;                      // normalmente el primero
+    init_info.RenderPass = *this->renderPassModule->ImGuiRenderPass;
     init_info.MinImageCount = 3;
     init_info.ImageCount = 3;
     init_info.MSAASamples = *deviceModule->getMsaaSamples();//VK_SAMPLE_COUNT_1_BIT;
@@ -99,9 +101,6 @@ void App::init_imgui()
     VkCommandBuffer commandBuffer = beginSingleTimeCommands(deviceModule->device, commandPoolModule->getCommandPool());
     ImGui_ImplVulkan_CreateFontsTexture();
     endSingleTimeCommands(deviceModule->device, queueModule->graphicsQueue, commandPoolModule->getCommandPool(), commandBuffer);
-
-    //clear font textures from cpu data
-    ImGui_ImplVulkan_DestroyFontUploadObjects();
 }
 
 void App::addWindow(GLFWwindow& window)
@@ -141,15 +140,16 @@ void App::initVulkan()
 
     //Creamos el Render Pass
     renderPassModule = RenderPassModule::getInstance();
-    renderPassModule->createRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
-    renderPassModule->createDirShadowRenderPass(VK_FORMAT_D32_SFLOAT);
-    renderPassModule->createOmniShadowRenderPass(VK_FORMAT_R32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT);
+    renderPassModule->CreateImGuiRenderPass(swapchainModule->swapChainImageFormat, *antialiasingModule->msaaSamples);
+    renderPassModule->CreateRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
+    renderPassModule->CreateDirShadowRenderPass(VK_FORMAT_D32_SFLOAT);
+    renderPassModule->CreateOmniShadowRenderPass(VK_FORMAT_R32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT);
 
     //Registramos el default render pass
-    this->graphicsPipelineManager->RegisterDefaultRenderPass(renderPassModule->renderPass);
+    this->graphicsPipelineManager->RegisterDefaultRenderPass(renderPassModule->DefaultRenderPass);
 
     //Creamos el frame buffer
-    framebufferModule.createFramebuffer(renderPassModule->renderPass);
+    framebufferModule.createFramebuffer(renderPassModule->DefaultRenderPass);
 
     //Añadimos requisitos para los geometryComponent
     BufferManageModule::commandPool = this->commandPoolModule->getCommandPool();
@@ -492,7 +492,7 @@ void App::mainLoop()
         auto sunLight = std::static_pointer_cast<SunLight>(this->lightManager->GetLight("QESunLight"));
 
         ImGuiIO& io = ImGui::GetIO();
-        if (io.KeyCtrl && (ImGui::IsKeyPressed(ImGuiKey_S, false)))
+        if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false))
         {
             this->scene.cameraEditor = this->cameraEditor->CreateCameraDto();
             this->scene.atmosphere = this->atmosphereSystem->CreateAtmosphereDto();
@@ -544,7 +544,6 @@ void App::mainLoop()
 
             if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
             {
-                ImGui::UpdatePlatformWindows();
                 ImGui::UpdatePlatformWindows();
                 ImGui::RenderPlatformWindowsDefault();
             }
@@ -841,18 +840,18 @@ void App::recreateSwapchain()
     depthBufferModule->createDepthResources(swapchainModule->swapChainExtent, commandPoolModule->getCommandPool());
 
     //Recreamos el render pass
-    renderPassModule->createRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
-    renderPassModule->createDirShadowRenderPass(VK_FORMAT_D32_SFLOAT);
-    renderPassModule->createOmniShadowRenderPass(VK_FORMAT_R32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT);
+    renderPassModule->CreateRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
+    renderPassModule->CreateDirShadowRenderPass(VK_FORMAT_D32_SFLOAT);
+    renderPassModule->CreateOmniShadowRenderPass(VK_FORMAT_R32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT);
 
     //Recreamos los graphics pipeline de los materiales
-    graphicsPipelineManager->RegisterDefaultRenderPass(renderPassModule->renderPass);
+    graphicsPipelineManager->RegisterDefaultRenderPass(renderPassModule->DefaultRenderPass);
 
     shaderManager->RecreateShaderGraphicsPipelines();
     //materialManager->RecreateMaterials(renderPassModule);
 
     //Recreamos el frame buffer
-    framebufferModule.createFramebuffer(renderPassModule->renderPass);
+    framebufferModule.createFramebuffer(renderPassModule->DefaultRenderPass);
 
     commandPoolModule->recreateCommandBuffers();
     commandPoolModule->Render(&framebufferModule);

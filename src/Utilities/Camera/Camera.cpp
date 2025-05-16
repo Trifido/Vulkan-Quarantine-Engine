@@ -66,33 +66,29 @@ void Camera::CameraController(float deltaTime)
     EditorScroll();
     EditorRotate();
 
-    if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_UpArrow)) ||
-        (ImGui::GetIO().KeyShift && ImGui::IsKeyDown('W')) ||
-        (ImGui::GetIO().KeyShift && ImGui::IsKeyDown('w')))
+    if (ImGui::IsKeyPressed(ImGuiKey_UpArrow) ||
+        (ImGui::GetIO().KeyShift && ImGui::IsKeyDown(ImGuiKey_W)))
     {
         cameraPos += cameraSpeed * deltaTime * cameraFront;
         this->isInputUpdated = true;
     }
 
-    if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_DownArrow)) ||
-        (ImGui::GetIO().KeyShift && ImGui::IsKeyDown('S')) ||
-        (ImGui::GetIO().KeyShift && ImGui::IsKeyDown('s')))
+    if (ImGui::IsKeyPressed(ImGuiKey_DownArrow) ||
+        (ImGui::GetIO().KeyShift && ImGui::IsKeyDown(ImGuiKey_S)))
     {
         cameraPos -= cameraSpeed * deltaTime * cameraFront;
         this->isInputUpdated = true;
     }
 
-    if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_LeftArrow)) ||
-        (ImGui::GetIO().KeyShift && ImGui::IsKeyDown('A')) ||
-        (ImGui::GetIO().KeyShift && ImGui::IsKeyDown('a')))
+    if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow) ||
+        (ImGui::GetIO().KeyShift && ImGui::IsKeyDown(ImGuiKey_A)))
     {
         cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * deltaTime * cameraSpeed;
         this->isInputUpdated = true;
     }
 
-    if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_RightArrow)) ||
-        (ImGui::GetIO().KeyShift && ImGui::IsKeyDown('D')) ||
-        (ImGui::GetIO().KeyShift && ImGui::IsKeyDown('d')))
+    if (ImGui::IsKeyPressed(ImGuiKey_RightArrow) ||
+        (ImGui::GetIO().KeyShift && ImGui::IsKeyDown(ImGuiKey_D)))
     {
         cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * deltaTime * cameraSpeed;
         this->isInputUpdated = true;

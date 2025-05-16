@@ -89,19 +89,18 @@ void App::init_imgui()
     init_info.Device = deviceModule->device;
     init_info.Queue = queueModule->graphicsQueue;
     init_info.DescriptorPool = imguiPool;
+    init_info.Subpass = 0;                      // normalmente el primero
+    init_info.RenderPass = *this->renderPassModule->ImGuiRenderPass;
     init_info.MinImageCount = 3;
     init_info.ImageCount = 3;
     init_info.MSAASamples = *deviceModule->getMsaaSamples();//VK_SAMPLE_COUNT_1_BIT;
 
-    ImGui_ImplVulkan_Init(&init_info, *(renderPassModule->renderPass));
+    ImGui_ImplVulkan_Init(&init_info);
 
     //execute a gpu command to upload imgui font textures
     VkCommandBuffer commandBuffer = beginSingleTimeCommands(deviceModule->device, commandPoolModule->getCommandPool());
-    ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
+    ImGui_ImplVulkan_CreateFontsTexture();
     endSingleTimeCommands(deviceModule->device, queueModule->graphicsQueue, commandPoolModule->getCommandPool(), commandBuffer);
-
-    //clear font textures from cpu data
-    ImGui_ImplVulkan_DestroyFontUploadObjects();
 }
 
 void App::addWindow(GLFWwindow& window)
@@ -141,15 +140,16 @@ void App::initVulkan()
 
     //Creamos el Render Pass
     renderPassModule = RenderPassModule::getInstance();
-    renderPassModule->createRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
-    renderPassModule->createDirShadowRenderPass(VK_FORMAT_D32_SFLOAT);
-    renderPassModule->createOmniShadowRenderPass(VK_FORMAT_R32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT);
+    renderPassModule->CreateImGuiRenderPass(swapchainModule->swapChainImageFormat, *antialiasingModule->msaaSamples);
+    renderPassModule->CreateRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
+    renderPassModule->CreateDirShadowRenderPass(VK_FORMAT_D32_SFLOAT);
+    renderPassModule->CreateOmniShadowRenderPass(VK_FORMAT_R32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT);
 
     //Registramos el default render pass
-    this->graphicsPipelineManager->RegisterDefaultRenderPass(renderPassModule->renderPass);
+    this->graphicsPipelineManager->RegisterDefaultRenderPass(renderPassModule->DefaultRenderPass);
 
     //Creamos el frame buffer
-    framebufferModule.createFramebuffer(renderPassModule->renderPass);
+    framebufferModule.createFramebuffer(renderPassModule->DefaultRenderPass);
 
     //Añadimos requisitos para los geometryComponent
     BufferManageModule::commandPool = this->commandPoolModule->getCommandPool();
@@ -492,38 +492,38 @@ void App::mainLoop()
         auto sunLight = std::static_pointer_cast<SunLight>(this->lightManager->GetLight("QESunLight"));
 
         ImGuiIO& io = ImGui::GetIO();
-        if (io.KeyCtrl && (ImGui::IsKeyPressed('s', false) || ImGui::IsKeyPressed('S', false)))
+        if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false))
         {
             this->scene.cameraEditor = this->cameraEditor->CreateCameraDto();
             this->scene.atmosphere = this->atmosphereSystem->CreateAtmosphereDto();
             this->scene.SaveScene();
         }
 
-        if (ImGui::IsKeyDown('j') || ImGui::IsKeyDown('J'))
+        if (ImGui::IsKeyDown(ImGuiKey_J))
         {
             glm::vec3 newDir = sunLight->transform->ForwardVector;
             newDir.x += 0.001f;
             sunLight->SetLightDirection(newDir);
         }
-        if (ImGui::IsKeyDown('l') || ImGui::IsKeyDown('L'))
+        if (ImGui::IsKeyDown(ImGuiKey_L))
         {
             glm::vec3 newDir = sunLight->transform->ForwardVector;
             newDir.x -= 0.001f;
             sunLight->SetLightDirection(newDir);
         }
-        if (ImGui::IsKeyDown('I'))
+        if (ImGui::IsKeyDown(ImGuiKey_I))
         {
             glm::vec3 newDir = sunLight->transform->ForwardVector;
             newDir.y += 0.001f;
             sunLight->SetLightDirection(newDir);
         }
-        if (ImGui::IsKeyDown('K'))
+        if (ImGui::IsKeyDown(ImGuiKey_K))
         {
             glm::vec3 newDir = sunLight->transform->ForwardVector;
             newDir.y -= 0.001f;
             sunLight->SetLightDirection(newDir);
         }
-        if (ImGui::IsKeyDown('1'))
+        if (ImGui::IsKeyDown(ImGuiKey_1))
         {
             if (changeAnimation)
             {
@@ -531,7 +531,7 @@ void App::mainLoop()
                 changeAnimation = false;
             }
         }
-        if (ImGui::IsKeyReleased('1'))
+        if (ImGui::IsKeyReleased(ImGuiKey_1))
         {
             changeAnimation = true;
         }
@@ -840,18 +840,18 @@ void App::recreateSwapchain()
     depthBufferModule->createDepthResources(swapchainModule->swapChainExtent, commandPoolModule->getCommandPool());
 
     //Recreamos el render pass
-    renderPassModule->createRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
-    renderPassModule->createDirShadowRenderPass(VK_FORMAT_D32_SFLOAT);
-    renderPassModule->createOmniShadowRenderPass(VK_FORMAT_R32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT);
+    renderPassModule->CreateRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
+    renderPassModule->CreateDirShadowRenderPass(VK_FORMAT_D32_SFLOAT);
+    renderPassModule->CreateOmniShadowRenderPass(VK_FORMAT_R32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT);
 
     //Recreamos los graphics pipeline de los materiales
-    graphicsPipelineManager->RegisterDefaultRenderPass(renderPassModule->renderPass);
+    graphicsPipelineManager->RegisterDefaultRenderPass(renderPassModule->DefaultRenderPass);
 
     shaderManager->RecreateShaderGraphicsPipelines();
     //materialManager->RecreateMaterials(renderPassModule);
 
     //Recreamos el frame buffer
-    framebufferModule.createFramebuffer(renderPassModule->renderPass);
+    framebufferModule.createFramebuffer(renderPassModule->DefaultRenderPass);
 
     commandPoolModule->recreateCommandBuffers();
     commandPoolModule->Render(&framebufferModule);

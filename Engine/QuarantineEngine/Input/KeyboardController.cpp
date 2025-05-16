@@ -23,15 +23,15 @@ void KeyboardController::CleanLastResources()
 
 void KeyboardController::ReadPolygonModeKeys()
 {
-    if (ImGui::IsKeyDown('1'))
+    if (ImGui::IsKeyDown(ImGuiKey_1))
     {
         Notify(1);
     }
-    else if(ImGui::IsKeyDown('2'))
+    else if(ImGui::IsKeyDown(ImGuiKey_2))
     {
         Notify(2);
     }
-    else if (ImGui::IsKeyDown('3'))
+    else if (ImGui::IsKeyDown(ImGuiKey_3))
     {
         Notify(3);
     }

@@ -63,7 +63,7 @@ void LightManager::CreateLight(LightType type, std::string name)
     {
         default:
         case LightType::POINT_LIGHT:
-            this->PointLights.push_back(std::make_shared<PointLight>(this->renderPassModule->omniShadowMappingRenderPass));
+            this->PointLights.push_back(std::make_shared<PointLight>(this->renderPassModule->OmniShadowMappingRenderPass));
             this->PointLights.back()->idxShadowMap = (uint32_t)this->PointLights.size() - 1;
 
             this->AddLight(std::static_pointer_cast<Light>(this->PointLights.back()), name);
@@ -77,11 +77,11 @@ void LightManager::CreateLight(LightType type, std::string name)
         case LightType::DIRECTIONAL_LIGHT:
             if (type == LightType::SUN_LIGHT)
             {
-                this->DirLights.push_back(std::make_shared<SunLight>(this->renderPassModule->dirShadowMappingRenderPass, this->camera));
+                this->DirLights.push_back(std::make_shared<SunLight>(this->renderPassModule->DirShadowMappingRenderPass, this->camera));
             }
             else
             {
-                this->DirLights.push_back(std::make_shared<DirectionalLight>(this->renderPassModule->dirShadowMappingRenderPass, this->camera));
+                this->DirLights.push_back(std::make_shared<DirectionalLight>(this->renderPassModule->DirShadowMappingRenderPass, this->camera));
             }
             this->DirLights.back()->idxShadowMap = (uint32_t)this->DirLights.size() - 1;
 
@@ -95,7 +95,7 @@ void LightManager::CreateLight(LightType type, std::string name)
             break;
 
         case LightType::SPOT_LIGHT:
-            this->SpotLights.push_back(std::make_shared<SpotLight>(this->CSMShaderModule, this->renderPassModule->dirShadowMappingRenderPass));
+            this->SpotLights.push_back(std::make_shared<SpotLight>(this->CSMShaderModule, this->renderPassModule->DirShadowMappingRenderPass));
             this->AddLight(std::static_pointer_cast<Light>(this->SpotLights.back()), name);
             break;
     }

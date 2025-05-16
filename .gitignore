@@ -362,6 +362,7 @@ MigrationBackup/
 .resources/ 
 .resources/models/
 .QEProjects/
+/build/
 #*.bat
 #*.spv
 *.gltf

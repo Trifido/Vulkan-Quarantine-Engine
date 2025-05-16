@@ -5,9 +5,10 @@ RenderPassModule::RenderPassModule()
 {
     device_ptr = DeviceModule::getInstance();
 
-    this->renderPass = std::make_shared<VkRenderPass>();
-    this->dirShadowMappingRenderPass = std::make_shared<VkRenderPass>();
-    this->omniShadowMappingRenderPass = std::make_shared<VkRenderPass>();
+    this->ImGuiRenderPass = std::make_shared<VkRenderPass>();
+    this->DefaultRenderPass = std::make_shared<VkRenderPass>();
+    this->DirShadowMappingRenderPass = std::make_shared<VkRenderPass>();
+    this->OmniShadowMappingRenderPass = std::make_shared<VkRenderPass>();
 }
 
 RenderPassModule::~RenderPassModule()
@@ -17,12 +18,13 @@ RenderPassModule::~RenderPassModule()
 
 void RenderPassModule::cleanup()
 {
-    vkDestroyRenderPass(device_ptr->device, *renderPass, nullptr);
-    vkDestroyRenderPass(device_ptr->device, *dirShadowMappingRenderPass, nullptr);
-    vkDestroyRenderPass(device_ptr->device, *omniShadowMappingRenderPass, nullptr);
+    vkDestroyRenderPass(device_ptr->device, *ImGuiRenderPass, nullptr);
+    vkDestroyRenderPass(device_ptr->device, *DefaultRenderPass, nullptr);
+    vkDestroyRenderPass(device_ptr->device, *DirShadowMappingRenderPass, nullptr);
+    vkDestroyRenderPass(device_ptr->device, *OmniShadowMappingRenderPass, nullptr);
 }
 
-void RenderPassModule::createRenderPass(VkFormat swapchainFormat, VkFormat depthFormat, VkSampleCountFlagBits msaaSamples)
+void RenderPassModule::CreateRenderPass(VkFormat swapchainFormat, VkFormat depthFormat, VkSampleCountFlagBits msaaSamples)
 {
     VkAttachmentDescription colorAttachment{};
     colorAttachment.format = swapchainFormat;
@@ -90,12 +92,12 @@ void RenderPassModule::createRenderPass(VkFormat swapchainFormat, VkFormat depth
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies = &dependency;
 
-    if (vkCreateRenderPass(device_ptr->device, &renderPassInfo, nullptr, renderPass.get()) != VK_SUCCESS) {
+    if (vkCreateRenderPass(device_ptr->device, &renderPassInfo, nullptr, DefaultRenderPass.get()) != VK_SUCCESS) {
         throw std::runtime_error("failed to create render pass!");
     }
 }
 
-void RenderPassModule::createDirShadowRenderPass(VkFormat shadowFormat)
+void RenderPassModule::CreateDirShadowRenderPass(VkFormat shadowFormat)
 {
     VkAttachmentDescription attachmentDescription{};
     attachmentDescription.format = shadowFormat;
@@ -144,13 +146,13 @@ void RenderPassModule::createDirShadowRenderPass(VkFormat shadowFormat)
     renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
     renderPassInfo.pDependencies = dependencies.data();
 
-    if (vkCreateRenderPass(device_ptr->device, &renderPassInfo, nullptr, dirShadowMappingRenderPass.get()) != VK_SUCCESS)
+    if (vkCreateRenderPass(device_ptr->device, &renderPassInfo, nullptr, DirShadowMappingRenderPass.get()) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create directional shadow render pass!");
     }
 }
 
-void RenderPassModule::createOmniShadowRenderPass(VkFormat shadowFormat, VkFormat shadowDepthFormat)
+void RenderPassModule::CreateOmniShadowRenderPass(VkFormat shadowFormat, VkFormat shadowDepthFormat)
 {
     VkAttachmentDescription attachmentsDescription[2]{};
 
@@ -194,8 +196,44 @@ void RenderPassModule::createOmniShadowRenderPass(VkFormat shadowFormat, VkForma
     renderPassInfo.subpassCount = 1;
     renderPassInfo.pSubpasses = &subpass;
 
-    if (vkCreateRenderPass(device_ptr->device, &renderPassInfo, nullptr, omniShadowMappingRenderPass.get()) != VK_SUCCESS)
+    if (vkCreateRenderPass(device_ptr->device, &renderPassInfo, nullptr, OmniShadowMappingRenderPass.get()) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create omni shadow render pass!");
+    }
+}
+
+void RenderPassModule::CreateImGuiRenderPass(VkFormat swapchainFormat, VkSampleCountFlagBits msaaSamples)
+{
+    VkAttachmentDescription color_attach = {};
+    color_attach.format = swapchainFormat;
+    color_attach.samples = msaaSamples;
+    color_attach.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD; // o CLEAR si lo prefieres
+    color_attach.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    color_attach.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    color_attach.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    color_attach.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    color_attach.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+    VkAttachmentReference color_ref = {};
+    color_ref.attachment = 0;
+    color_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkSubpassDescription subpass = {};
+    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass.colorAttachmentCount = 1;
+    subpass.pColorAttachments = &color_ref;
+
+    // (Opcionalmente depth/MSAA attachments aquí)
+
+    VkRenderPassCreateInfo rp_info = {};
+    rp_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    rp_info.attachmentCount = 1;
+    rp_info.pAttachments = &color_attach;
+    rp_info.subpassCount = 1;
+    rp_info.pSubpasses = &subpass;
+
+    if (vkCreateRenderPass(device_ptr->device, &rp_info, nullptr, ImGuiRenderPass.get()) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to create imgui render pass!");
     }
 }

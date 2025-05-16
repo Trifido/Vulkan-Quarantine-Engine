@@ -605,9 +605,9 @@ void ReflectShader::PrintInterfaceVariable(std::ostream& os, SpvSourceLanguage s
 {
     const char* t = indent;
     os << t << "location  : ";
-    if (obj.decoration_flags & SPV_REFLECT_DECORATION_BUILT_IN) {
-        os << ToStringSpvBuiltIn(obj.built_in) << " "
-            << "(built-in)";
+    if (obj.decoration_flags & SPV_REFLECT_DECORATION_BUILT_IN)
+    {
+        os << ToStringSpvBuiltIn((SpvBuiltIn)obj.built_in) << " " << "(built-in)";
     }
     else {
         os << obj.location;
