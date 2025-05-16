@@ -25,7 +25,6 @@
 *.so
 *.dylib
 *.pdb
-*.lib
 *.a
 *.lo
 *.la
