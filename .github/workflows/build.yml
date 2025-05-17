@@ -19,7 +19,7 @@ jobs:
 
       # 2) Install vcpkg
       - name: Install vcpkg
-        uses: lukka/get-vcpkg@main
+        uses: lukka/get-vcpkg@master
 
       # 3) Install dependencies via vcpkg
       - name: Install dependencies via vcpkg
