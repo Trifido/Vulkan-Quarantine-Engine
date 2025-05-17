@@ -22,6 +22,13 @@ jobs:
         uses: lukka/run-vcpkg@v11.5
         with:
           vcpkgFolder: './vcpkg'
+      - name: Bootstrap vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          # carpeta donde se instala vcpkg
+          vcpkgDirectory: './vcpkg'
+          # no actualizar el baseline para evitar requerir commit-ID
+          doNotUpdateVcpkg: true
 
       # 3) Install all required libs via vcpkg
       - name: Install dependencies
