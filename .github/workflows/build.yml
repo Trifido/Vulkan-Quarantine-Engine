@@ -2,9 +2,9 @@ name: Build and Test
 
 on:
   push:
-    branches: [main]
+    branches: [main, build]
   pull_request:
-    branches: [main]
+    branches: [main, build]
 
 jobs:
   build:
@@ -27,16 +27,16 @@ jobs:
 
       # 4) Install all required libs via vcpkg
       - name: Install dependencies
-        run: |
-          .\vcpkg\vcpkg.exe install ^
-            vulkan-loader:x64-windows ^
-            glfw3:x64-windows ^
-            glm:x64-windows ^
-            stb:x64-windows ^
-            assimp:x64-windows ^
-            bullet3:x64-windows ^
-            spirv-reflect:x64-windows ^
+        run: .\vcpkg\vcpkg.exe install `
+            vulkan-loader:x64-windows `
+            glfw3:x64-windows `
+            glm:x64-windows `
+            stb:x64-windows `
+            assimp:x64-windows `
+            bullet3:x64-windows `
+            spirv-reflect:x64-windows `
             meshoptimizer:x64-windows
+        shell: pwsh
 
       # 5) Set up CMake
       - name: Set up CMake
