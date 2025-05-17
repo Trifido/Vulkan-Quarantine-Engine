@@ -85,7 +85,7 @@ add_subdirectory(extern/meshoptimizer EXCLUDE_FROM_ALL)
 # ImGui
 # ------------------------------
 
-set(IMGUI_DIR ${CMAKE_SOURCE_DIR}/extern/imgui-docking)
+set(IMGUI_DIR ${CMAKE_SOURCE_DIR}/extern/imgui)
 add_library(imgui STATIC
   ${IMGUI_DIR}/imgui.cpp
   ${IMGUI_DIR}/imgui_draw.cpp
