@@ -112,6 +112,17 @@ add_executable(QuarantineEngine ${ENGINE_SRC} ${ENGINE_HDR})
 
 if (MSVC)
   target_compile_options(QuarantineEngine PRIVATE /Zc:__cplusplus)
+  add_compile_options(/MP)
+endif()
+
+# + /MP para que cl.exe compile en paralelo
+if(MSVC)
+  target_compile_options(QuarantineEngine PRIVATE /MP)
+  # Fuerza en el .vcxproj el checkbox de multiprocesador
+  set_target_properties(QuarantineEngine
+    PROPERTIES
+      VS_GLOBAL_MultiProcessorCompilation "true"
+  )
 endif()
 
 # ------------------------------

@@ -11,9 +11,6 @@ static void glfw_error_callback(int error, const char* description)
 
 GUIWindow::GUIWindow()
 {
-    monitor = glfwGetPrimaryMonitor();
-    title = "Vulkan Quarantine Engine";
-    glfwGetMonitorPhysicalSize(monitor, &width, &height);
 }
 
 static void ShowDockingDisabledMessage()
@@ -31,6 +28,10 @@ bool GUIWindow::init(bool fullScreen)
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
         return 1;
+
+    monitor = glfwGetPrimaryMonitor();
+    title = "Vulkan Quarantine Engine";
+    glfwGetMonitorPhysicalSize(monitor, &width, &height);
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);

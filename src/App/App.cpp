@@ -592,8 +592,8 @@ void App::mainLoop()
     }
     vkDeviceWaitIdle(deviceModule->device);
 
-    vkDestroyDescriptorPool(deviceModule->device, imguiPool, nullptr);
     ImGui_ImplVulkan_Shutdown();
+    vkDestroyDescriptorPool(deviceModule->device, imguiPool, nullptr);
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 }
