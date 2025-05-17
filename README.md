@@ -12,6 +12,14 @@ Started during the 2020 quarantine period with **OpenGL**, it has since evolved 
 
 🔗 [More info about the engine](https://insidethepixels.wordpress.com/2021/01/18/quarantine-engine/)
 
+
+## 🎓 Learning Objectives
+
+- Master low-level Vulkan API
+- Implement real-time graphics techniques
+- Explore GPU compute workflows
+- Learn modular C++ engine design
+
 ---
 
 ## 🚀 Features
@@ -23,6 +31,51 @@ Started during the 2020 quarantine period with **OpenGL**, it has since evolved 
 - Modular code structure using modern C++
 
 ---
+
+
+## 📦 Dependencies (Submodules)
+
+Before building, initialize and update all submodules:
+
+```bash
+git submodule update --init --recursive
+```
+
+| Folder                 | Description                                                               | Branch / Tag |
+| ---------------------- | ------------------------------------------------------------------------- | ------------ |
+| `extern/imgui`         | [Dear ImGui](https://github.com/ocornut/imgui) with docking support       | `docking`    |
+| `extern/glfw`          | [GLFW 3](https://github.com/glfw/glfw)                                    | `3.4`        |
+| `extern/glm`           | [GLM](https://github.com/g-truc/glm)                                      | `1.0.1`      |
+| `extern/stb`           | [stb single-file headers](https://github.com/nothings/stb)                | `master`     |
+| `extern/bullet3`       | [Bullet Physics](https://github.com/bulletphysics/bullet3) (static build) | latest       |
+| `extern/assimp`        | [Assimp](https://github.com/assimp/assimp)                                | latest       |
+| `extern/SPIRV-Reflect` | [SPIRV-Reflect](https://github.com/KhronosGroup/SPIRV-Reflect)            | latest       |
+| `extern/meshoptimizer` | [meshoptimizer](https://github.com/zeux/meshoptimizer)                    | latest       |
+
+## 🛠️ Build Instructions
+### Prerequisites
+
+- CMake ≥ 3.16
+- Vulkan SDK installed and VULKAN_SDK environment variable set
+- Git with submodule support
+- On Windows: Visual Studio 2022 (Desktop Development with C++)
+
+### Windows (Visual Studio)
+
+```bash
+mkdir build
+cd build
+cmake -G "Visual Studio 17 2022" -A x64 ..
+cmake --build . --config Release --parallel 8
+```
+- Executable: build/Release/QuarantineEngine.exe
+
+## ⚙️ Setup Scripts
+We provide a PowerShell script to automate project generation:
+```bash
+./setup/build.ps1
+```
+Running this script will configure and generate the Visual Studio solution (x64, Debug & Release) under build/.
 
 ## 📸 Screenshots
 
@@ -43,14 +96,5 @@ Started during the 2020 quarantine period with **OpenGL**, it has since evolved 
 
 ### 🧩 Task/Mesh Shader Pipeline
 <img src="https://github.com/Trifido/Vulkan-Quarantine-Engine/assets/6890573/8a8dca40-46b1-4032-809e-947dcba1e77e" width="100%"/>
-
----
-
-## 🎓 Learning Objectives
-
-- Master low-level Vulkan API
-- Implement real-time graphics techniques
-- Explore GPU compute workflows
-- Learn modular C++ engine design
 
 ---

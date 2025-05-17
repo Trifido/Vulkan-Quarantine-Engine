@@ -96,6 +96,7 @@ StyleCopReport.xml
 *.svclog
 *.scc
 *.txt
+!CMakeLists.txt
 *.spv
 *.bat
 *.fbx
@@ -358,11 +359,11 @@ MigrationBackup/
 
 # External Engine folders
 .external/
-.resources/ 
-.resources/models/
-.QEProjects/
+resources/models/
+QEProjects/
+/build/
 #*.bat
 #*.spv
-*.gltf
+.gltf
 *.bin
 *.jpeg
