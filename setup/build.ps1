@@ -17,16 +17,16 @@ param(
     [string]$Configuration = "Debug"
 )
 
-# Núcleos para paralelizar
-$cores = [environment]::ProcessorCount
+# Número de núcleos para paralelizar
+$cores = [Environment]::ProcessorCount
 
-# Ruta al directorio del script (setup/)
+# Ruta al directorio donde está este script (setup/)
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 # Proyecto raíz (un nivel arriba de setup/)
-$projectRoot = Join-Path $scriptDir ".." | Resolve-Path -Path
+$projectRoot = (Resolve-Path (Join-Path $scriptDir "..")).Path
 
-# Build dir en la raíz
+# Build dir en la raíz del proyecto
 $buildDir = Join-Path $projectRoot "build"
 
 Write-Host "=== QuarantineEngine Build Script ===" -ForegroundColor Cyan

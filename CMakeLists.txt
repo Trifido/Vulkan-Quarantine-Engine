@@ -232,3 +232,32 @@ if(WIN32)
       $<TARGET_FILE_DIR:QuarantineEngine>
   )
 endif()
+
+if (MSVC)
+  # Función para excluir un target del build por defecto en VS
+  function(exclude_from_vs_build tgt)
+    if (TARGET ${tgt})
+      set_target_properties(${tgt}
+        PROPERTIES
+          EXCLUDE_FROM_DEFAULT_BUILD TRUE
+      )
+    endif()
+  endfunction()
+
+  # Lista de tus dependencias que quieres compilar sólo una vez
+  foreach(dep
+    glfw
+    glm
+    stb
+    assimp
+    BulletDynamics
+    BulletCollision
+    LinearMath
+    SPIRV-Reflect
+    meshoptimizer
+    imgui
+    zlibstatic
+  )
+    exclude_from_vs_build(${dep})
+  endforeach()
+endif()
