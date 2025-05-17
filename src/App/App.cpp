@@ -203,11 +203,12 @@ void App::initVulkan()
     //const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
     //const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
 
+    auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Idle_Character.gltf").generic_string();
     //std::filesystem::path path = "C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf";
-    std::filesystem::path path = "C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Idle_Character.gltf";
+    //std::filesystem::path path = "C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Idle_Character.gltf";
 
     // CHARACTER CONTROLLER
-    std::shared_ptr<GameObject> character = std::make_shared<GameObject>(GameObject(path.string()));
+    std::shared_ptr<GameObject> character = std::make_shared<GameObject>(GameObject(characterPath));
     character->AddPhysicBody(std::make_shared<PhysicBody>(PhysicBodyType::RIGID_BODY));
     character->AddCollider(std::make_shared<CapsuleCollider>(0.35f, 1.7f));
     character->collider->LocalDisplacement = glm::vec3(0.0f, 0.85f, 0.0f);
