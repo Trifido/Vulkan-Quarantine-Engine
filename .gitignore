@@ -360,10 +360,10 @@ MigrationBackup/
 # External Engine folders
 .external/
 resources/models/
-#.QEProjects/
+QEProjects/
 /build/
 #*.bat
 #*.spv
-#*.gltf
+.gltf
 *.bin
 *.jpeg
