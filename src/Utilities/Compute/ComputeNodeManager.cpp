@@ -29,13 +29,6 @@ void ComputeNodeManager::InitializeComputeResources()
 
     auto absPath = std::filesystem::absolute("../../resources/shaders/").generic_string();
 
-    std::string substring = "/Engine";
-    std::size_t ind = absPath.find(substring);
-
-    if (ind != std::string::npos) {
-        absPath.erase(ind, substring.length());
-    }
-
     const std::string absolute_emit_compute_shader_path = absPath + "Particles/emitParticles.spv";
     const std::string absolute_update_compute_shader_path = absPath + "Particles/updateParticles.spv";
     const std::string absolute_animation_compute_shader_path = absPath + "Animation/computeSkinning.spv";

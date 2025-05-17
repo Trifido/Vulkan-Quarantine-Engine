@@ -198,14 +198,6 @@ void App::initVulkan()
 
     auto absPath = std::filesystem::absolute("../../resources/models").generic_string();
 
-    std::string substring = "/Engine";
-    std::size_t ind = absPath.find(substring);
-
-    if (ind != std::string::npos)
-    {
-        absPath.erase(ind, substring.length());
-    }
-
     //const std::string absolute_path = absPath + "/cyber_warrior/scene.gltf";
     //const std::string absolute_path = absPath + "/drone/mech_drone.glb";
     //const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";

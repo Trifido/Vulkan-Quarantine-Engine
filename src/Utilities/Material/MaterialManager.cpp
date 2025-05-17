@@ -31,13 +31,6 @@ MaterialManager::MaterialManager()
 
     auto absPath = std::filesystem::absolute("../../resources/shaders").generic_string();
 
-    std::string substring = "/Engine";
-    std::size_t ind = absPath.find(substring);
-
-    if (ind != std::string::npos) {
-        absPath.erase(ind, substring.length());
-    }
-
     const std::string absolute_default_vertex_shader_path = absPath + "/Default/default_vert.spv";
     const std::string absolute_default_frag_shader_path = absPath + "/Default/default_frag.spv";
     const std::string absolute_csm_vertex_shader_path = absPath + "/Shadow/csm_vert.spv";

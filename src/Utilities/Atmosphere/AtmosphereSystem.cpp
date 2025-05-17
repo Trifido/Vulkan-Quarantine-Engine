@@ -295,16 +295,9 @@ void AtmosphereSystem::SetSamplerDescriptorWrite(VkWriteDescriptorSet& descripto
 
 string AtmosphereSystem::GetAbsolutePath(string relativePath, string filename)
 {
-    auto absPath = std::filesystem::absolute(relativePath).generic_string();
+    auto absPath = std::filesystem::absolute(relativePath) / filename;
 
-    std::string substring = "/Engine";
-    std::size_t ind = absPath.find(substring);
-
-    if (ind != std::string::npos) {
-        absPath.erase(ind, substring.length());
-    }
-
-    return absPath + "/" + filename;
+    return absPath.string();
 }
 
 void AtmosphereSystem::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t frameIdx)

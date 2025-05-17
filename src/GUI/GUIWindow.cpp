@@ -25,42 +25,67 @@ static void ShowDockingDisabledMessage()
 
 bool GUIWindow::init(bool fullScreen)
 {
+    // 1) Error callback y init
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
-        return 1;
+        return false;
 
-    monitor = glfwGetPrimaryMonitor();
-    title = "Vulkan Quarantine Engine";
-    glfwGetMonitorPhysicalSize(monitor, &width, &height);
+    // 2) Obtener monitor y su video mode
+    GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
+    if (!primaryMonitor)
+        return false; // debería funcionar salvo error grave de GLFW
 
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
+    if (!mode)
+        return false;
 
-    const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-
+    // 3) Calcular tamaño de ventana
     if (fullScreen)
     {
-        this->width = mode->width;
-        this->height = mode->height;
+        width = mode->width;
+        height = mode->height;
+
+        // Especificamos el formato de color y refresco para fullscreen
+        glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+        glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+        glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+        glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
     }
     else
     {
-        //this->width = 1280;
-        //this->height = 720;
-        this->width = 1410;
-        this->height = 775;
+        // Tamaño por defecto en modo ventana
+        width = 1410;
+        height = 775;
     }
-    window = glfwCreateWindow(this->width, this->height, title.c_str(), monitor, NULL);
 
+    title = "Vulkan Quarantine Engine";
+
+    // 4) Hints comunes
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+
+    // 5) Crear la ventana:
+    //    - Si fullScreen, pasamos el monitor; si no, pasamos NULL para ventana windowed
+    GLFWmonitor* windowMonitor = fullScreen ? primaryMonitor : nullptr;
+    window = glfwCreateWindow(width, height, title.c_str(), windowMonitor, nullptr);
+    if (!window)
+    {
+        glfwTerminate();
+        return false;
+    }
+
+    // 6) Callbacks
     glfwSetWindowUserPointer(window, this);
     glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 
+    // 7) Comprobar Vulkan
     if (!glfwVulkanSupported())
     {
         printf("GLFW: Vulkan Not Supported\n");
-        return 1;
+        return false;
     }
 
+    // 8) Inicializar ImGui (tu rutina)
     setupImgui();
 
     return true;
