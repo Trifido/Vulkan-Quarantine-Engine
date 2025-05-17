@@ -15,36 +15,36 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
         with:
-          submodules: true
+          submodules: recursive
 
-      # 2) Install vcpkg
-      - name: Install vcpkg
-        uses: lukka/get-vcpkg@master
+      # 2) Bootstrap vcpkg into ./vcpkg
+      - name: Bootstrap vcpkg
+        uses: lukka/run-vcpkg@v11.5
+        with:
+          vcpkgFolder: './vcpkg'
 
-      # 3) Install dependencies via vcpkg
-      - name: Install dependencies via vcpkg
+      # 3) Install all required libs via vcpkg
+      - name: Install dependencies
         run: |
-          .\vcpkg\vcpkg.exe install `
-            vulkan-loader:x64-windows `
-            glfw3:x64-windows `
-            glm:x64-windows `
-            stb:x64-windows `
-            assimp:x64-windows `
-            bullet3:x64-windows `
-            spirv-reflect:x64-windows `
+          .\vcpkg\vcpkg.exe install ^
+            vulkan-loader:x64-windows ^
+            glfw3:x64-windows ^
+            glm:x64-windows ^
+            stb:x64-windows ^
+            assimp:x64-windows ^
+            bullet3:x64-windows ^
+            spirv-reflect:x64-windows ^
             meshoptimizer:x64-windows
-        env:
-          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
 
       # 4) Set up CMake
       - name: Set up CMake
         uses: jwlawson/actions-setup-cmake@v2
 
-      # 5) Configure CMake
+      # 5) Configure CMake (Release)
       - name: Configure CMake (Release)
         run: |
-          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 `
-            -DCMAKE_BUILD_TYPE=Release `
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 ^
+            -DCMAKE_BUILD_TYPE=Release ^
             -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake
 
       # 6) Build
@@ -57,10 +57,3 @@ jobs:
         with:
           name: QuarantineEngine
           path: build/Release/QuarantineEngine.exe
-
-      # 8) Upload runtime DLLs (if any)
-      - name: Upload runtime DLLs
-        uses: actions/upload-artifact@v4
-        with:
-          name: EngineRuntimeDLLs
-          path: build/Release/*.dll
