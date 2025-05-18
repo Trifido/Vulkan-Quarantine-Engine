@@ -7,7 +7,7 @@
 #include "Material.h"
 #include <PrimitiveTypes.h>
 #include "Camera.h"
-#include <PhysicBody.h>
+#include <PhysicsBody.h>
 #include <Collider.h>
 #include <AnimationManager.h>
 #include <CullingSceneManager.h>
@@ -40,11 +40,8 @@ public:
     MeshImportedType                    _meshImportedType;
     PRIMITIVE_TYPE                      _primitiveMeshType;
     std::string                         MeshFilePath;
-    std::shared_ptr<PhysicBody>         physicBody = nullptr;
-    std::shared_ptr<Collider>           collider = nullptr;
     std::shared_ptr<AnimationComponent> animationComponent = nullptr;
     std::shared_ptr<SkeletalComponent>  skeletalComponent = nullptr;
-    std::shared_ptr<QECharacterController> characterController = nullptr;
     std::list<std::shared_ptr<QEGameComponent>> components;
 
     std::vector<std::shared_ptr<QEGameObject>>    childs;
@@ -66,8 +63,6 @@ public:
     virtual void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
     virtual void CreateShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout);
     void AddMaterial(std::shared_ptr<Material> material_ptr);
-    void AddPhysicBody(std::shared_ptr<PhysicBody> physicBody_ptr);
-    void AddCollider(std::shared_ptr<Collider> collider_ptr);
     void AddAnimation(std::shared_ptr<Animation> animation_ptr);
     void AddCharacterController(std::shared_ptr<QECharacterController> characterController_ptr);
     void InitializePhysics();
@@ -79,7 +74,23 @@ public:
     void QERelease() {}
 
     template<typename T>
-    bool AddComponent(std::shared_ptr<T> component_ptr);
+    bool AddComponent(std::shared_ptr<T> component_ptr)
+    {
+        if (component_ptr == nullptr)
+            return false;
+
+        if (std::find_if(components.begin(), components.end(), [&](const std::shared_ptr<QEGameComponent>& comp) {
+            return dynamic_cast<T*>(comp.get()) != nullptr;
+            }) != components.end())
+        {
+            return false;
+        }
+
+        components.push_back(component_ptr);
+        component_ptr->BindGameObject(this);
+
+        return true;
+    }
 
     template<typename T>
     std::shared_ptr<T> GetComponent();

@@ -53,25 +53,6 @@ QEGameObject::QEGameObject(const GameObjectDto& gameObjectDto) : Numbered(gameOb
 }
 
 template<typename T>
-bool QEGameObject::AddComponent(std::shared_ptr<T> component_ptr)
-{
-    if (component_ptr == nullptr)
-        return false;
-
-    if (std::find_if(components.begin(), components.end(), [&](const std::shared_ptr<QEGameComponent>& comp) {
-        return dynamic_cast<T*>(comp.get()) != nullptr;
-    }) != components.end())
-    {
-        return false;
-    }
-
-    components.push_back(component_ptr);
-    component_ptr->BindGameObject(this);
-
-    return true;
-}
-
-template<typename T>
 inline std::shared_ptr<T> QEGameObject::GetComponent()
 {
     for (auto& comp : components)
@@ -161,16 +142,6 @@ void QEGameObject::AddMaterial(std::shared_ptr<Material> material_ptr)
     }
 }
 
-void QEGameObject::AddPhysicBody(std::shared_ptr<PhysicBody> physicBody_ptr)
-{
-    this->physicBody = physicBody_ptr;
-}
-
-void QEGameObject::AddCollider(std::shared_ptr<Collider> collider_ptr)
-{
-    this->collider = collider_ptr;
-}
-
 void QEGameObject::AddAnimation(std::shared_ptr<Animation> animation_ptr)
 {
     if (this->animationComponent == nullptr)
@@ -189,8 +160,10 @@ void QEGameObject::AddAnimation(std::shared_ptr<Animation> animation_ptr)
 
 void QEGameObject::AddCharacterController(std::shared_ptr<QECharacterController> characterController_ptr)
 {
-    this->characterController = characterController_ptr;
-    this->characterController->BindGameObjectProperties(this->physicBody, this->collider);
+    this->AddComponent(characterController_ptr);
+    auto physicsBody = this->GetComponent<PhysicsBody>();
+    auto collider = this->GetComponent<Collider>();
+    characterController_ptr->BindGameObjectProperties(physicsBody, collider);
 }
 
 void QEGameObject::InitializeComponents()
@@ -256,15 +229,19 @@ void QEGameObject::InitializeAnimationComponent()
 
 void QEGameObject::InitializePhysics()
 {
-    if (this->physicBody != nullptr && this->collider != nullptr)
+    auto physicsBody = this->GetComponent<PhysicsBody>();
+    auto collider = this->GetComponent<Collider>();
+
+    if (physicsBody != nullptr && collider != nullptr)
     {
         auto transform = this->GetComponent<Transform>();
-        this->physicBody->Initialize(transform, this->collider);
+        physicsBody->Initialize(transform, collider);
     }
 
-    if (this->characterController != nullptr)
+    auto characterController = this->GetComponent<QECharacterController>();
+    if (characterController != nullptr)
     {
-        this->characterController->Initialize();
+        characterController->Initialize();
     }
 }
 
@@ -390,9 +367,12 @@ bool QEGameObject::IsValidGameObject()
 
 void QEGameObject::UpdatePhysicTransform()
 {
-    if (this->physicBody != nullptr && this->collider != nullptr)
+    auto physicsBody = this->GetComponent<PhysicsBody>();
+    auto collider = this->GetComponent<Collider>();
+
+    if (physicsBody != nullptr && collider != nullptr)
     {
-        this->physicBody->UpdateTransform();
+        physicsBody->UpdateTransform();
     }
 }
 

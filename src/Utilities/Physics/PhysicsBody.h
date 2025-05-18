@@ -24,7 +24,7 @@ enum CollisionFlag
     COL_ALL = -1
 };
 
-class PhysicBody : public QEGameComponent
+class PhysicsBody : public QEGameComponent
 {
 private:
     btVector3 localInertia;
@@ -38,8 +38,8 @@ public:
     CollisionFlag CollisionGroup;
     CollisionFlag CollisionMask;
 public:
-    PhysicBody();
-    PhysicBody(const PhysicBodyType& type);
+    PhysicsBody();
+    PhysicsBody(const PhysicBodyType& type);
     void UpdateType(const PhysicBodyType& type);
     void UpdateInertia(const glm::vec3& localInertia);
     void Initialize(std::shared_ptr<Transform> transform_ptr, std::shared_ptr<Collider> collider_ptr);

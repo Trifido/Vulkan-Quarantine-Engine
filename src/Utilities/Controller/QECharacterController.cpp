@@ -12,7 +12,7 @@ void QECharacterController::Initialize()
     this->physicBodyPtr->body->setCollisionFlags(btCollisionObject::CF_DYNAMIC_OBJECT);
 }
 
-void QECharacterController::BindGameObjectProperties(std::shared_ptr<PhysicBody> physicBody, std::shared_ptr<Collider> collider)
+void QECharacterController::BindGameObjectProperties(std::shared_ptr<PhysicsBody> physicBody, std::shared_ptr<Collider> collider)
 {
     this->physicBodyPtr = physicBody;
     this->colliderPtr = collider;

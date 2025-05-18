@@ -46,7 +46,8 @@ void GameObjectManager::AddGameObject(std::shared_ptr<QEGameObject> object_ptr, 
             this->_objects[mat->layer][name] = object_ptr;
         }
 
-        if (object_ptr->physicBody != nullptr)
+        auto physicBody = object_ptr->GetComponent<PhysicsBody>();
+        if (physicBody != nullptr)
         {
             this->_physicObjects[name] = object_ptr;
         }

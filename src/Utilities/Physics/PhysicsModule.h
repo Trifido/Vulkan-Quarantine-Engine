@@ -2,7 +2,7 @@
 #ifndef PHYSICS_MODULE_H
 #define PHYSICS_MODULE_H
 
-#include <PhysicBody.h>
+#include <PhysicsBody.h>
 #include <BoxCollider.h>
 #include <SphereCollider.h>
 #include <PlaneCollider.h>

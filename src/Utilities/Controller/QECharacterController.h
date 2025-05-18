@@ -4,7 +4,7 @@
 
 #include <QEGameComponent.h>
 #include <Transform.h>
-#include <PhysicBody.h>
+#include <PhysicsBody.h>
 #include <Collider.h>
 #include <btBulletDynamicsCommon.h>
 #include <GLFW/glfw3.h>
@@ -48,7 +48,7 @@ class QECharacterController : public QEGameComponent
 {
     private:
         std::shared_ptr<Collider> colliderPtr;
-        std::shared_ptr<PhysicBody> physicBodyPtr;
+        std::shared_ptr<PhysicsBody> physicBodyPtr;
         bool isGrounded = false;
         bool canWalkOnGround = false;
         btVector3 groundNormal = btVector3(0, 1, 0);
@@ -64,7 +64,7 @@ class QECharacterController : public QEGameComponent
 
     public:
         void Initialize();
-        void BindGameObjectProperties(std::shared_ptr<PhysicBody> physicBody, std::shared_ptr<Collider> collider);
+        void BindGameObjectProperties(std::shared_ptr<PhysicsBody> physicBody, std::shared_ptr<Collider> collider);
         void Update();
         btVector3 GetPosition();
         static void ProcessInput(GLFWwindow* window, std::shared_ptr<QECharacterController> player);

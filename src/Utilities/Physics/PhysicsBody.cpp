@@ -1,22 +1,22 @@
-#include "PhysicBody.h"
+#include <PhysicsBody.h>
 #include <LinearMath/btVector3.h>
 #include <PhysicsModule.h>
 
-PhysicBody::PhysicBody()
+PhysicsBody::PhysicsBody()
 {
     this->UpdateType(PhysicBodyType::STATIC_BODY);
     this->CollisionGroup = CollisionFlag::COL_NOTHING;
     this->CollisionMask = CollisionFlag::COL_NOTHING;
 }
 
-PhysicBody::PhysicBody(const PhysicBodyType& type)
+PhysicsBody::PhysicsBody(const PhysicBodyType& type)
 {
     this->UpdateType(type);
     this->CollisionGroup = CollisionFlag::COL_NOTHING;
     this->CollisionMask = CollisionFlag::COL_NOTHING;
 }
 
-void PhysicBody::UpdateType(const PhysicBodyType &type)
+void PhysicsBody::UpdateType(const PhysicBodyType &type)
 {
     this->Type = type;
 
@@ -32,7 +32,7 @@ void PhysicBody::UpdateType(const PhysicBodyType &type)
     this->UpdateInertia(glm::vec3(0.0f));
 }
 
-void PhysicBody::UpdateInertia(const glm::vec3 &localInertia)
+void PhysicsBody::UpdateInertia(const glm::vec3 &localInertia)
 {
     this->Inertia = localInertia;
     this->localInertia[0] = this->Inertia.x;
@@ -40,7 +40,7 @@ void PhysicBody::UpdateInertia(const glm::vec3 &localInertia)
     this->localInertia[2] = this->Inertia.z;
 }
 
-void PhysicBody::UpdateTransform()
+void PhysicsBody::UpdateTransform()
 {
     if (this->Type == PhysicBodyType::RIGID_BODY)
     {
@@ -49,7 +49,7 @@ void PhysicBody::UpdateTransform()
 }
 
 
-void PhysicBody::Initialize(std::shared_ptr<Transform> transform_ptr, std::shared_ptr<Collider> collider_ptr)
+void PhysicsBody::Initialize(std::shared_ptr<Transform> transform_ptr, std::shared_ptr<Collider> collider_ptr)
 {
     this->transform = transform_ptr;
     this->collider = collider_ptr;
@@ -88,7 +88,7 @@ void PhysicBody::Initialize(std::shared_ptr<Transform> transform_ptr, std::share
     }
 }
 
-void PhysicBody::copyTransformtoGLM()
+void PhysicsBody::copyTransformtoGLM()
 {
     btTransform trans;
     if (this->body && this->body->getMotionState())
@@ -104,7 +104,7 @@ void PhysicBody::copyTransformtoGLM()
     }
 }
 
-glm::mat4 PhysicBody::bulletToGlm(const btTransform& t)
+glm::mat4 PhysicsBody::bulletToGlm(const btTransform& t)
 {
     glm::mat4 m(0.0f);
     const btMatrix3x3& basis = t.getBasis();
@@ -129,27 +129,27 @@ glm::mat4 PhysicBody::bulletToGlm(const btTransform& t)
     return m;
 }
 
-btTransform PhysicBody::glmToBullet(const glm::mat4& m)
+btTransform PhysicsBody::glmToBullet(const glm::mat4& m)
 {
     glm::mat3 m3(m);
     return btTransform(glmToBullet(m3), glmToBullet(glm::vec3(m[3][0], m[3][1], m[3][2])));
 }
 
-glm::vec3 PhysicBody::bulletToGlm(const btVector3& v) { return glm::vec3(v.getX(), v.getY(), v.getZ()); }
-glm::quat PhysicBody::bulletToGlm(const btQuaternion& q) { return glm::quat(q.getW(), q.getX(), q.getY(), q.getZ()); }
+glm::vec3 PhysicsBody::bulletToGlm(const btVector3& v) { return glm::vec3(v.getX(), v.getY(), v.getZ()); }
+glm::quat PhysicsBody::bulletToGlm(const btQuaternion& q) { return glm::quat(q.getW(), q.getX(), q.getY(), q.getZ()); }
 
-btVector3 PhysicBody::glmToBullet(const glm::vec3& v) { return btVector3(v.x, v.y, v.z); }
-btMatrix3x3 PhysicBody::glmToBullet(const glm::mat3& m) { return btMatrix3x3(m[0][0], m[1][0], m[2][0], m[0][1], m[1][1], m[2][1], m[0][2], m[1][2], m[2][2]); }
-btQuaternion PhysicBody::glmToBullet(const glm::quat& q) { return btQuaternion(q.x, q.y, q.z, q.w); }
+btVector3 PhysicsBody::glmToBullet(const glm::vec3& v) { return btVector3(v.x, v.y, v.z); }
+btMatrix3x3 PhysicsBody::glmToBullet(const glm::mat3& m) { return btMatrix3x3(m[0][0], m[1][0], m[2][0], m[0][1], m[1][1], m[2][1], m[0][2], m[1][2], m[2][2]); }
+btQuaternion PhysicsBody::glmToBullet(const glm::quat& q) { return btQuaternion(q.x, q.y, q.z, q.w); }
 
-void PhysicBody::QEStart()
+void PhysicsBody::QEStart()
 {
 }
 
-void PhysicBody::QEUpdate()
+void PhysicsBody::QEUpdate()
 {
 }
 
-void PhysicBody::QERelease()
+void PhysicsBody::QERelease()
 {
 }

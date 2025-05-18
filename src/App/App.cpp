@@ -209,14 +209,19 @@ void App::initVulkan()
 
     // CHARACTER CONTROLLER
     std::shared_ptr<QEGameObject> character = std::make_shared<QEGameObject>(QEGameObject(characterPath));
-    character->AddPhysicBody(std::make_shared<PhysicBody>(PhysicBodyType::RIGID_BODY));
-    character->AddCollider(std::make_shared<CapsuleCollider>(0.35f, 1.7f));
-    character->collider->LocalDisplacement = glm::vec3(0.0f, 0.85f, 0.0f);
-    character->physicBody->Mass = 70.0f;
-    character->physicBody->CollisionGroup = CollisionFlag::COL_PLAYER;
-    character->physicBody->CollisionMask = CollisionFlag::COL_SCENE;
+    character->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>(PhysicBodyType::RIGID_BODY));
+    character->AddComponent<Collider>(std::make_shared<CapsuleCollider>(0.35f, 1.7f));
+    auto characterCollider = character->GetComponent<Collider>();
+    characterCollider->LocalDisplacement = glm::vec3(0.0f, 0.85f, 0.0f);
+
+    auto characterPBody = character->GetComponent<PhysicsBody>();
+    characterPBody->Mass = 70.0f;
+    characterPBody->CollisionGroup = CollisionFlag::COL_PLAYER;
+    characterPBody->CollisionMask = CollisionFlag::COL_SCENE;
+
     character->AddCharacterController(std::make_shared<QECharacterController>());
-    character->characterController->SetJumpForce(9.0f);
+    auto characterController = character->GetComponent<QECharacterController>();
+    characterController->SetJumpForce(9.0f);
     this->gameObjectManager->AddGameObject(character, "character");
 
     //model->_Transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
@@ -238,11 +243,14 @@ void App::initVulkan()
     floorMat->materialData.SetMaterialField("Specular", glm::vec3(0.0f, 0.0f, 0.0f));
     floorMat->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
 
-    floor->AddPhysicBody(std::make_shared<PhysicBody>());
-    floor->physicBody->CollisionGroup = CollisionFlag::COL_SCENE;
-    floor->physicBody->CollisionMask = CollisionFlag::COL_PLAYER;
-    floor->AddCollider(std::make_shared<PlaneCollider>());
-    std::static_pointer_cast<PlaneCollider>(floor->collider)->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
+    floor->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>());
+    auto floorPBody = floor->GetComponent<PhysicsBody>();
+    floorPBody->CollisionGroup = CollisionFlag::COL_SCENE;
+    floorPBody->CollisionMask = CollisionFlag::COL_PLAYER;
+    floor->AddComponent<Collider>(std::make_shared<PlaneCollider>());
+
+    auto floorCollider = floor->GetComponent<Collider>();
+    std::static_pointer_cast<PlaneCollider>(floorCollider)->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
     this->gameObjectManager->AddGameObject(floor, "floor");
     /*
     std::shared_ptr<QEGameObject> ramp = std::make_shared<QEGameObject>(QEGameObject(PRIMITIVE_TYPE::CUBE_TYPE));
@@ -265,10 +273,11 @@ void App::initVulkan()
     auto wallMat = wall->GetComponent<Material>();
     wallMat->materialData.SetMaterialField("Diffuse", glm::vec3(0.8f, 0.2f, 0.2f));
 
-    wall->AddPhysicBody(std::make_shared<PhysicBody>());
-    wall->physicBody->CollisionGroup = CollisionFlag::COL_SCENE;
-    wall->physicBody->CollisionMask = CollisionFlag::COL_PLAYER;
-    wall->AddCollider(std::make_shared<BoxCollider>());
+    wall->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>());
+    auto wallPBody = wall->GetComponent<PhysicsBody>();
+    wallPBody->CollisionGroup = CollisionFlag::COL_SCENE;
+    wallPBody->CollisionMask = CollisionFlag::COL_PLAYER;
+    wall->AddComponent<Collider>(std::make_shared<BoxCollider>());
     this->gameObjectManager->AddGameObject(wall, "wall");
     /*
     // CHARACTER CONTROLLER
@@ -463,8 +472,9 @@ void App::mainLoop()
 
         //UPDATE CHARACTER CONTROLLER
         auto character = this->gameObjectManager->GetGameObject("character");
-        character->characterController->Update();
-        QECharacterController::ProcessInput(mainWindow.getWindow(), character->characterController);
+        auto characterController = character->GetComponent<QECharacterController>();
+        characterController->Update();
+        QECharacterController::ProcessInput(mainWindow.getWindow(), characterController);
 
         //PHYSIC SYSTEM
         this->physicsModule->ComputePhysics((float)Timer::DeltaTime);
