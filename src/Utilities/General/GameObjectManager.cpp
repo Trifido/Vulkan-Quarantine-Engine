@@ -67,7 +67,7 @@ void GameObjectManager::CSMCommand(VkCommandBuffer& commandBuffer, uint32_t idx,
     for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
     {
         PushConstantCSMStruct shadowParameters = {};
-        shadowParameters.model = model.second->_Transform->GetModel();
+        shadowParameters.model = model.second->GetComponent<Transform>()->GetModel();
         shadowParameters.cascadeIndex = cascadeIndex;
 
         vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantCSMStruct), &shadowParameters);
@@ -81,12 +81,13 @@ void GameObjectManager::OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32
     {
         PushConstantOmniShadowStruct shadowParameters = {};
         shadowParameters.view = viewParameter;
+        auto transform = model.second->GetComponent<Transform>();
 
         glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), -lightPosition);
-        glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), model.second->_Transform->Scale);
-        glm::mat4 rotationMatrix = glm::toMat4(model.second->_Transform->Orientation);
+        glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), transform->Scale);
+        glm::mat4 rotationMatrix = glm::toMat4(transform->Orientation);
         shadowParameters.lightModel = translationMatrix * rotationMatrix * scaleMatrix;
-        shadowParameters.model = model.second->_Transform->GetModel();
+        shadowParameters.model = transform->GetModel();
 
         vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantOmniShadowStruct), &shadowParameters);
         model.second->CreateShadowCommand(commandBuffer, idx, pipelineLayout);
@@ -154,10 +155,12 @@ void GameObjectManager::SaveGameObjects(std::ofstream& file)
                 matPath = model.second->_Material->Name;
             }
 
+            auto transform = model.second->GetComponent<Transform>();
+
             GameObjectDto gameObjectDto(
                 model.second->ID(),
                 model.first,
-                model.second->_Transform->GetModel(),
+                transform->GetModel(),
                 model.second->_meshImportedType,
                 model.second->_primitiveMeshType,
                 model.second->MeshFilePath,

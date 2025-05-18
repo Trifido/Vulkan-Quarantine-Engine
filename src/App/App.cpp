@@ -229,8 +229,9 @@ void App::initVulkan()
 
     /**/
     std::shared_ptr<QEGameObject> floor = std::make_shared<QEGameObject>(QEGameObject(PRIMITIVE_TYPE::PLANE_TYPE));
-    floor->_Transform->SetPosition(glm::vec3(0.0f, -0.01f, 0.0f));
-    floor->_Transform->SetScale(glm::vec3(10.0f, 1.0f, 10.0f));
+    auto floorTransform = floor->GetComponent<Transform>();
+    floorTransform->SetPosition(glm::vec3(0.0f, -0.01f, 0.0f));
+    floorTransform->SetScale(glm::vec3(10.0f, 1.0f, 10.0f));
     floor->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.2f, 0.7f));
     floor->_Material->materialData.SetMaterialField("Specular", glm::vec3(0.0f, 0.0f, 0.0f));
     floor->_Material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
@@ -253,9 +254,10 @@ void App::initVulkan()
     this->gameObjectManager->AddGameObject(ramp, "ramp");
     /**/
     std::shared_ptr<QEGameObject> wall = std::make_shared<QEGameObject>(QEGameObject(PRIMITIVE_TYPE::CUBE_TYPE));
-    wall->_Transform->SetPosition(glm::vec3(3.0f, 0.5f, 0.0f));
-    wall->_Transform->SetOrientation(glm::vec3(0.0f, 0.0f, 0.0f));
-    wall->_Transform->SetScale(glm::vec3(4.0f, 0.5f, 4.0f));
+    auto wallTransform = wall->GetComponent<Transform>();
+    wallTransform->SetPosition(glm::vec3(3.0f, 0.5f, 0.0f));
+    wallTransform->SetOrientation(glm::vec3(0.0f, 0.0f, 0.0f));
+    wallTransform->SetScale(glm::vec3(4.0f, 0.5f, 4.0f));
     wall->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.8f, 0.2f, 0.2f));
     wall->AddPhysicBody(std::make_shared<PhysicBody>());
     wall->physicBody->CollisionGroup = CollisionFlag::COL_SCENE;

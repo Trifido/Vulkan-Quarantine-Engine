@@ -49,7 +49,6 @@ QEGameObject::QEGameObject(const GameObjectDto& gameObjectDto) : Numbered(gameOb
     }
 
     this->_meshImportedType = static_cast<MeshImportedType>(gameObjectDto.MeshImportedType);
-    this->_Transform->SetModel(gameObjectDto.WorldTransform);
     this->GetComponent<Transform>()->SetModel(gameObjectDto.WorldTransform);
 }
 
@@ -59,10 +58,12 @@ bool QEGameObject::AddComponent(std::shared_ptr<T> component_ptr)
     if (component_ptr == nullptr)
         return false;
 
-    //if (std::find_if(components.begin(), components.end(), [&](const std::shared_ptr<QEGameComponent>& comp){ return comp->GetType() == component_ptr->GetType(); }) != components.end())
-    //{
-    //    return false;
-    //}
+    if (std::find_if(components.begin(), components.end(), [&](const std::shared_ptr<QEGameComponent>& comp) {
+        return dynamic_cast<T*>(comp.get()) != nullptr;
+    }) != components.end())
+    {
+        return false;
+    }
 
     components.push_back(component_ptr);
     component_ptr->BindGameObject(this);
@@ -71,15 +72,16 @@ bool QEGameObject::AddComponent(std::shared_ptr<T> component_ptr)
 }
 
 template<typename T>
-inline T* QEGameObject::GetComponent()
+inline std::shared_ptr<T> QEGameObject::GetComponent()
 {
     for (auto& comp : components)
     {
-        if (auto ptr = dynamic_cast<T*>(comp.get()))
+        if (auto ptr = std::dynamic_pointer_cast<T>(comp))
         {
             return ptr;
         }
     }
+
     return nullptr;
 }
 
@@ -190,11 +192,7 @@ void QEGameObject::AddCharacterController(std::shared_ptr<QECharacterController>
 
 void QEGameObject::InitializeComponents()
 {
-    auto transform = this->GetComponent<Transform>();
-    if (transform == nullptr)
-    {
-        this->_Transform = std::make_shared<Transform>();
-    }
+    this->AddComponent<Transform>(std::make_shared<Transform>());
 
     if (this->_Mesh != nullptr)
     {
@@ -253,7 +251,8 @@ void QEGameObject::InitializePhysics()
 {
     if (this->physicBody != nullptr && this->collider != nullptr)
     {
-        this->physicBody->Initialize(this->_Transform, this->collider);
+        auto transform = this->GetComponent<Transform>();
+        this->physicBody->Initialize(transform, this->collider);
     }
 
     if (this->characterController != nullptr)
@@ -264,7 +263,8 @@ void QEGameObject::InitializePhysics()
 
 bool QEGameObject::IsValidRender()
 {
-    if (this->_Transform == nullptr)
+    auto transform = this->GetComponent<Transform>();
+    if (transform == nullptr)
         return false;
 
     if (this->_Mesh != nullptr && this->_Material != nullptr)
@@ -357,8 +357,9 @@ void QEGameObject::InitializeGameObject(PRIMITIVE_TYPE type, bool isMeshShading)
 
     if (type != PRIMITIVE_TYPE::GRID_TYPE)
     {
+        auto transform = this->GetComponent<Transform>();
         auto downcastedPtr = std::dynamic_pointer_cast<PrimitiveMesh>(this->_Mesh);
-        this->aabbculling = this->cullingSceneManager->GenerateAABB(downcastedPtr->aabbData, this->_Transform);
+        this->aabbculling = this->cullingSceneManager->GenerateAABB(downcastedPtr->aabbData, transform);
     }
 
     this->vkCmdDrawMeshTasksEXT =
@@ -367,7 +368,8 @@ void QEGameObject::InitializeGameObject(PRIMITIVE_TYPE type, bool isMeshShading)
 
 bool QEGameObject::IsValidGameObject()
 {
-    return this->_Transform != nullptr;
+    auto transform = this->GetComponent<Transform>();
+    return transform != nullptr;
 }
 
 void QEGameObject::UpdatePhysicTransform()
@@ -391,10 +393,11 @@ bool QEGameObject::CreateChildsGameObject(std::string pathfile)
 
     if (data.size() > 1)
     {
-        this->_Transform = std::make_shared<Transform>();
+        this->AddComponent<Transform>(std::make_shared<Transform>());
+        auto transform = this->GetComponent<Transform>();
         this->childs.resize(data.size());
 
-        glm::mat4 parentModel = this->_Transform->GetModel();
+        glm::mat4 parentModel = transform->GetModel();
 
         for (size_t id = 0; id < data.size(); id++)
         {
@@ -402,16 +405,17 @@ bool QEGameObject::CreateChildsGameObject(std::string pathfile)
             this->childs[id]->_Mesh = std::make_shared<Mesh>(Mesh(data[id]));
             this->childs[id]->_meshImportedType = this->_meshImportedType;
             this->childs[id]->isMeshShading = this->isMeshShading;
-            this->childs[id]->_Transform = std::make_shared<Transform>(Transform(parentModel * data[id].model));
+            this->childs[id]->AddComponent<Transform>(std::make_shared<Transform>(Transform(parentModel * data[id].model)));
             this->childs[id]->AddMaterial(this->materialManager->GetMaterial(data[id].materialID));
-            this->_Transform->AddChild(this->childs[id]->_Transform);
+            transform->AddChild(this->childs[id]->GetComponent<Transform>());
             this->childs[id]->parent = this;
         }
     }
     else
     {
+        auto transform = this->GetComponent<Transform>();
         this->_Mesh = std::make_shared<Mesh>(Mesh(data[0]));
-        this->_Transform = std::make_shared<Transform>(Transform(data[0].model));
+        this->AddComponent<Transform>(std::make_shared<Transform>(Transform(data[0].model)));
         this->_Material = this->materialManager->GetMaterial(this->bindMaterialName);
         if (this->_Material == nullptr)
         {
@@ -440,7 +444,8 @@ bool QEGameObject::CreateChildsGameObject(std::string pathfile)
     }
 
     std::pair<glm::vec3, glm::vec3> aabbData = importer.GetAABBData();
-    this->aabbculling = this->cullingSceneManager->GenerateAABB(aabbData, this->_Transform);
+    auto transform = this->GetComponent<Transform>();
+    this->aabbculling = this->cullingSceneManager->GenerateAABB(aabbData, transform);
 
     for (unsigned int i = 0; i < childs.size(); i++)
     {
@@ -488,7 +493,8 @@ void QEGameObject::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, 
 
         this->_Material->BindDescriptors(commandBuffer, idx);
 
-        vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantStruct), &this->_Transform->GetModel());
+        auto transform = this->GetComponent<Transform>();
+        vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantStruct), &transform->GetModel());
 
         if (this->isMeshShading)
         {

@@ -41,7 +41,6 @@ public:
     MeshImportedType                    _meshImportedType;
     PRIMITIVE_TYPE                      _primitiveMeshType;
     std::string                         MeshFilePath;
-    std::shared_ptr<Transform>          _Transform = nullptr;
     std::shared_ptr<Material>           _Material = nullptr;
     std::shared_ptr<PhysicBody>         physicBody = nullptr;
     std::shared_ptr<Collider>           collider = nullptr;
@@ -85,7 +84,7 @@ public:
     bool AddComponent(std::shared_ptr<T> component_ptr);
 
     template<typename T>
-    T* GetComponent();
+    std::shared_ptr<T> GetComponent();
 
 protected:
     virtual bool IsValidGameObject();

@@ -92,7 +92,8 @@ void ParticleSystem::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, this->_Material->descriptor->getDescriptorSet(idx), 0, nullptr);
     }
 
-    vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantStruct), &this->_Transform->GetModel());
+    auto transform = this->GetComponent<Transform>();
+    vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantStruct), &transform->GetModel());
 
     vkCmdDraw(commandBuffer, this->MaxNumParticles * 6, 1, 0, 0);
 }
