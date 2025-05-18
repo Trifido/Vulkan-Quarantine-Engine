@@ -5,13 +5,13 @@
 
 #include <ComputePipelineModule.h>
 #include <ComputeDescriptorBuffer.h>
-#include "GameComponent.h"
+#include "QEGameComponent.h"
 #include "ShaderModule.h"
 #include <string>
 
 #define CEIL_DIV(x, y) (((x) + (y) - 1) / (y))
 
-class ComputeNode : public GameComponent
+class ComputeNode : public QEGameComponent
 {
 private:
     DeviceModule*                               deviceModule = nullptr;
@@ -38,6 +38,10 @@ public:
     void UpdateComputeDescriptor();
 private:
     void UpdateOutputTextureState();
+
+    void QEStart() override;
+    void QEUpdate() override;
+    void QERelease() override;
 };
 
 #endif // !COMPUTE_NODE_H

@@ -1,4 +1,4 @@
-#include "GameObject.h"
+#include "QEGameObject.h"
 #include <PrimitiveMesh.h>
 #include <MeshImporter.h>
 
@@ -6,7 +6,7 @@
 #include <AnimationImporter.h>
 #include <CapsuleMesh.h>
 
-GameObject::GameObject()
+QEGameObject::QEGameObject()
 {
     this->childs.resize(0);
     this->InitializeResources();
@@ -18,17 +18,17 @@ GameObject::GameObject()
         (PFN_vkCmdDrawMeshTasksEXT)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksEXT");
 }
 
-GameObject::GameObject(PRIMITIVE_TYPE type, bool isMeshShading)
+QEGameObject::QEGameObject(PRIMITIVE_TYPE type, bool isMeshShading)
 {
     this->InitializeGameObject(type, isMeshShading);
 }
 
-GameObject::GameObject(std::string meshPath, bool isMeshShading)
+QEGameObject::QEGameObject(std::string meshPath, bool isMeshShading)
 {
     this->InitializeGameObject(meshPath, isMeshShading);
 }
 
-GameObject::GameObject(const GameObjectDto& gameObjectDto) : Numbered(gameObjectDto.Id)
+QEGameObject::QEGameObject(const GameObjectDto& gameObjectDto) : Numbered(gameObjectDto.Id)
 {
     PRIMITIVE_TYPE primitiveType = static_cast<PRIMITIVE_TYPE>(gameObjectDto.MeshPrimitiveType);
     MeshImportedType meshType = static_cast<MeshImportedType>(gameObjectDto.MeshImportedType);
@@ -52,7 +52,7 @@ GameObject::GameObject(const GameObjectDto& gameObjectDto) : Numbered(gameObject
     this->_Transform->SetModel(gameObjectDto.WorldTransform);
 }
 
-void GameObject::InitializeResources()
+void QEGameObject::InitializeResources()
 {
     this->deviceModule = DeviceModule::getInstance();
     this->queueModule = QueueModule::getInstance();
@@ -60,7 +60,7 @@ void GameObject::InitializeResources()
     this->cullingSceneManager = CullingSceneManager::getInstance();
 }
 
-void GameObject::Cleanup()
+void QEGameObject::Cleanup()
 {
     if (_Mesh != nullptr)
     {
@@ -86,7 +86,7 @@ void GameObject::Cleanup()
     }    
 }
 
-void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
+void QEGameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
     bool isAnimationPipeline = this->_meshImportedType == ANIMATED_GEO;
     auto animatorPtr = isAnimationPipeline ? this->animationComponent->animator : nullptr;
@@ -99,7 +99,7 @@ void GameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
     }
 }
 
-void GameObject::CreateShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout)
+void QEGameObject::CreateShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout)
 {
     bool isAnimationPipeline = this->_meshImportedType == ANIMATED_GEO;
     auto animatorPtr = isAnimationPipeline ? this->animationComponent->animator : nullptr;
@@ -111,7 +111,7 @@ void GameObject::CreateShadowCommand(VkCommandBuffer& commandBuffer, uint32_t id
     }
 }
 
-void GameObject::AddMaterial(std::shared_ptr<Material> material_ptr)
+void QEGameObject::AddMaterial(std::shared_ptr<Material> material_ptr)
 {
     if (material_ptr == nullptr)
         return;
@@ -125,17 +125,17 @@ void GameObject::AddMaterial(std::shared_ptr<Material> material_ptr)
     }
 }
 
-void GameObject::AddPhysicBody(std::shared_ptr<PhysicBody> physicBody_ptr)
+void QEGameObject::AddPhysicBody(std::shared_ptr<PhysicBody> physicBody_ptr)
 {
     this->physicBody = physicBody_ptr;
 }
 
-void GameObject::AddCollider(std::shared_ptr<Collider> collider_ptr)
+void QEGameObject::AddCollider(std::shared_ptr<Collider> collider_ptr)
 {
     this->collider = collider_ptr;
 }
 
-void GameObject::AddAnimation(std::shared_ptr<Animation> animation_ptr)
+void QEGameObject::AddAnimation(std::shared_ptr<Animation> animation_ptr)
 {
     if (this->animationComponent == nullptr)
     {
@@ -151,13 +151,13 @@ void GameObject::AddAnimation(std::shared_ptr<Animation> animation_ptr)
     }
 }
 
-void GameObject::AddCharacterController(std::shared_ptr<QECharacterController> characterController_ptr)
+void QEGameObject::AddCharacterController(std::shared_ptr<QECharacterController> characterController_ptr)
 {
     this->characterController = characterController_ptr;
     this->characterController->BindGameObjectProperties(this->physicBody, this->collider);
 }
 
-void GameObject::InitializeComponents()
+void QEGameObject::InitializeComponents()
 {
     if (this->_Transform == nullptr)
     {
@@ -183,7 +183,7 @@ void GameObject::InitializeComponents()
     }
 }
 
-void GameObject::InitializeAnimationComponent()
+void QEGameObject::InitializeAnimationComponent()
 {
     if (this->animationComponent != nullptr)
     {
@@ -217,7 +217,7 @@ void GameObject::InitializeAnimationComponent()
     }
 }
 
-void GameObject::InitializePhysics()
+void QEGameObject::InitializePhysics()
 {
     if (this->physicBody != nullptr && this->collider != nullptr)
     {
@@ -230,7 +230,7 @@ void GameObject::InitializePhysics()
     }
 }
 
-bool GameObject::IsValidRender()
+bool QEGameObject::IsValidRender()
 {
     if (this->_Transform == nullptr)
         return false;
@@ -247,7 +247,7 @@ bool GameObject::IsValidRender()
     return false;
 }
 
-bool GameObject::IsRenderEnable()
+bool QEGameObject::IsRenderEnable()
 {
     bool isRender = true;
     isRender = isRender && this->_Material != nullptr;
@@ -257,7 +257,7 @@ bool GameObject::IsRenderEnable()
     return isRender;
 }
 
-void GameObject::InitializeGameObject(std::string meshPath, bool isMeshShading)
+void QEGameObject::InitializeGameObject(std::string meshPath, bool isMeshShading)
 {
     this->InitializeResources();
     this->isMeshShading = isMeshShading;
@@ -275,7 +275,7 @@ void GameObject::InitializeGameObject(std::string meshPath, bool isMeshShading)
         (PFN_vkCmdDrawMeshTasksEXT)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksEXT");
 }
 
-void GameObject::InitializeGameObject(PRIMITIVE_TYPE type, bool isMeshShading)
+void QEGameObject::InitializeGameObject(PRIMITIVE_TYPE type, bool isMeshShading)
 {
     this->InitializeResources();
     this->isMeshShading = isMeshShading;
@@ -333,12 +333,12 @@ void GameObject::InitializeGameObject(PRIMITIVE_TYPE type, bool isMeshShading)
         (PFN_vkCmdDrawMeshTasksEXT)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksEXT");
 }
 
-bool GameObject::IsValidGameObject()
+bool QEGameObject::IsValidGameObject()
 {
     return this->_Transform != nullptr;
 }
 
-void GameObject::UpdatePhysicTransform()
+void QEGameObject::UpdatePhysicTransform()
 {
     if (this->physicBody != nullptr && this->collider != nullptr)
     {
@@ -346,7 +346,7 @@ void GameObject::UpdatePhysicTransform()
     }
 }
 
-bool GameObject::CreateChildsGameObject(std::string pathfile)
+bool QEGameObject::CreateChildsGameObject(std::string pathfile)
 {
     MeshImporter importer = {};
     importer.EnableMeshShaderMaterials = this->isMeshShading;
@@ -366,7 +366,7 @@ bool GameObject::CreateChildsGameObject(std::string pathfile)
 
         for (size_t id = 0; id < data.size(); id++)
         {
-            this->childs[id] = std::make_shared<GameObject>();
+            this->childs[id] = std::make_shared<QEGameObject>();
             this->childs[id]->_Mesh = std::make_shared<Mesh>(Mesh(data[id]));
             this->childs[id]->_meshImportedType = this->_meshImportedType;
             this->childs[id]->isMeshShading = this->isMeshShading;
@@ -418,7 +418,7 @@ bool GameObject::CreateChildsGameObject(std::string pathfile)
     return true;
 }
 
-void GameObject::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator_ptr)
+void QEGameObject::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator_ptr)
 {
     if (this->IsRenderEnable())
     {
@@ -469,7 +469,7 @@ void GameObject::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, st
     }
 }
 
-void GameObject::SetDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, std::shared_ptr<Animator> animator_ptr)
+void QEGameObject::SetDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, std::shared_ptr<Animator> animator_ptr)
 {
     if (this->IsRenderEnable())
     {

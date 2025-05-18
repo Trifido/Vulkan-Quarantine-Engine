@@ -2,7 +2,7 @@
 #ifndef QE_CHARACTER_CONTROLLER
 #define QE_CHARACTER_CONTROLLER
 
-#include <GameComponent.h>
+#include <QEGameComponent.h>
 #include <Transform.h>
 #include <PhysicBody.h>
 #include <Collider.h>
@@ -44,7 +44,7 @@ struct IgnoreSelfCallback : public btCollisionWorld::ClosestConvexResultCallback
     }
 };
 
-class QECharacterController : public GameComponent
+class QECharacterController : public QEGameComponent
 {
     private:
         std::shared_ptr<Collider> colliderPtr;
@@ -70,6 +70,10 @@ class QECharacterController : public GameComponent
         static void ProcessInput(GLFWwindow* window, std::shared_ptr<QECharacterController> player);
         void SetAirControlFactor(float factor) { airControlFactor = factor; }
         void SetJumpForce(float force) { jumpForce = force; }
+
+        void QEStart() override;
+        void QEUpdate() override;
+        void QERelease() override;
 };
 
 #endif // !QE_CHARACTER_CONTROLLER

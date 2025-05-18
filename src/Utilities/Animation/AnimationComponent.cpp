@@ -67,3 +67,15 @@ void AnimationComponent::CleanLastResources()
         this->numAnimations = 0;
     }
 }
+
+void AnimationComponent::QEStart()
+{
+}
+
+void AnimationComponent::QEUpdate()
+{
+}
+
+void AnimationComponent::QERelease()
+{
+}

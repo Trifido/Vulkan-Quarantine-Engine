@@ -34,6 +34,7 @@ FetchContent_Declare(
   GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(glfw)
+set_target_properties(glfw PROPERTIES DEBUG_POSTFIX "d")
 
 # GLM
 FetchContent_Declare(

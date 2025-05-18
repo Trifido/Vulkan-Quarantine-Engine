@@ -24,6 +24,18 @@ void GeometryComponent::cleanup()
     }
 }
 
+void GeometryComponent::QEStart()
+{
+}
+
+void GeometryComponent::QEUpdate()
+{
+}
+
+void GeometryComponent::QERelease()
+{
+}
+
 void GeometryComponent::createIndexBuffer()
 {
     VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();

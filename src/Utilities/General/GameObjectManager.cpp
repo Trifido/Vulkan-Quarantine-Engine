@@ -4,7 +4,7 @@
 
 std::string GameObjectManager::CheckName(std::string nameGameObject)
 {
-    std::unordered_map<std::string, std::shared_ptr<GameObject>>::const_iterator got;
+    std::unordered_map<std::string, std::shared_ptr<QEGameObject>>::const_iterator got;
     std::string newName = nameGameObject;
     unsigned int id = 0;
 
@@ -25,7 +25,7 @@ std::string GameObjectManager::CheckName(std::string nameGameObject)
     return newName;
 }
 
-void GameObjectManager::AddGameObject(std::shared_ptr<GameObject> object_ptr, std::string name)
+void GameObjectManager::AddGameObject(std::shared_ptr<QEGameObject> object_ptr, std::string name)
 {
     if (object_ptr->IsValidRender())
     {
@@ -126,7 +126,7 @@ void GameObjectManager::CleanLastResources()
     this->_physicObjects.clear();
 }
 
-std::shared_ptr<GameObject> GameObjectManager::GetGameObject(std::string name)
+std::shared_ptr<QEGameObject> GameObjectManager::GetGameObject(std::string name)
 {
     for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
     {
@@ -206,7 +206,7 @@ void GameObjectManager::LoadGameObjectDtos(std::vector<GameObjectDto>& gameObjec
     // Load the GameObjects
     for (size_t i = 0; i < gameObjectDtos.size(); i++)
     {
-        std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>(gameObjectDtos[i]);
+        std::shared_ptr<QEGameObject> gameObject = std::make_shared<QEGameObject>(gameObjectDtos[i]);
         this->AddGameObject(gameObject, gameObjectDtos[i].Name);
     }
 }

@@ -141,3 +141,15 @@ glm::quat PhysicBody::bulletToGlm(const btQuaternion& q) { return glm::quat(q.ge
 btVector3 PhysicBody::glmToBullet(const glm::vec3& v) { return btVector3(v.x, v.y, v.z); }
 btMatrix3x3 PhysicBody::glmToBullet(const glm::mat3& m) { return btMatrix3x3(m[0][0], m[1][0], m[2][0], m[0][1], m[1][1], m[2][1], m[0][2], m[1][2], m[2][2]); }
 btQuaternion PhysicBody::glmToBullet(const glm::quat& q) { return btQuaternion(q.x, q.y, q.z, q.w); }
+
+void PhysicBody::QEStart()
+{
+}
+
+void PhysicBody::QEUpdate()
+{
+}
+
+void PhysicBody::QERelease()
+{
+}

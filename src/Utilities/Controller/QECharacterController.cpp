@@ -185,3 +185,15 @@ void QECharacterController::ProcessInput(GLFWwindow* window, std::shared_ptr<QEC
         player->Jump();
     }
 }
+
+void QECharacterController::QEStart()
+{
+}
+
+void QECharacterController::QEUpdate()
+{
+}
+
+void QECharacterController::QERelease()
+{
+}

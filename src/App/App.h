@@ -31,7 +31,7 @@
 //#include "RayTracingModule.h"
 
 //  Utilities
-#include "GameObject.h"
+#include "QEGameObject.h"
 #include "Mesh.h"
 #include "Transform.h"
 #include "Material.h"

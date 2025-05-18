@@ -24,7 +24,7 @@ enum CollisionFlag
     COL_ALL = -1
 };
 
-class PhysicBody : public GameComponent
+class PhysicBody : public QEGameComponent
 {
 private:
     btVector3 localInertia;
@@ -45,6 +45,12 @@ public:
     void Initialize(std::shared_ptr<Transform> transform_ptr, std::shared_ptr<Collider> collider_ptr);
 
     void UpdateTransform();
+
+    void QEStart() override;
+
+    void QEUpdate() override;
+
+    void QERelease() override;
 private:
     void copyTransformtoGLM();
 
@@ -56,7 +62,6 @@ private:
     btVector3 glmToBullet(const glm::vec3& v);
     btMatrix3x3 glmToBullet(const glm::mat3& m);
     btQuaternion glmToBullet(const glm::quat& q);
-
 };
 
 #endif

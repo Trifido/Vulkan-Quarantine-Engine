@@ -263,3 +263,15 @@ std::string Material::SaveMaterialFile()
     }
     return this->materialFilePath;
 }
+
+void Material::QEStart()
+{
+}
+
+void Material::QEUpdate()
+{
+}
+
+void Material::QERelease()
+{
+}

@@ -3,13 +3,13 @@
 #ifndef GAEOMETRY_COMPONENT_H
 #define GAEOMETRY_COMPONENT_H
 
-#include "GameComponent.h"
+#include "QEGameComponent.h"
 #include <Geometry/Vertex.h>
 #include <DeviceModule.h>
 #include <Geometry/PrimitiveTypes.h>
 #include <Meshlet.h>
 
-class GeometryComponent : GameComponent
+class GeometryComponent : QEGameComponent
 {
 protected:
     VkDeviceMemory  vertexBufferMemory = VK_NULL_HANDLE;
@@ -31,6 +31,13 @@ public:
 
     virtual void InitializeMesh() = 0;
     virtual void cleanup();
+
+    void QEStart() override;
+
+    void QEUpdate() override;
+
+    void QERelease() override;
+
 };
 
 #endif

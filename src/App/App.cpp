@@ -208,7 +208,7 @@ void App::initVulkan()
     //std::filesystem::path path = "C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Idle_Character.gltf";
 
     // CHARACTER CONTROLLER
-    std::shared_ptr<GameObject> character = std::make_shared<GameObject>(GameObject(characterPath));
+    std::shared_ptr<QEGameObject> character = std::make_shared<QEGameObject>(QEGameObject(characterPath));
     character->AddPhysicBody(std::make_shared<PhysicBody>(PhysicBodyType::RIGID_BODY));
     character->AddCollider(std::make_shared<CapsuleCollider>(0.35f, 1.7f));
     character->collider->LocalDisplacement = glm::vec3(0.0f, 0.85f, 0.0f);
@@ -228,7 +228,7 @@ void App::initVulkan()
     //this->gameObjectManager->AddGameObject(model, "modelRaptoid");
 
     /**/
-    std::shared_ptr<GameObject> floor = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
+    std::shared_ptr<QEGameObject> floor = std::make_shared<QEGameObject>(QEGameObject(PRIMITIVE_TYPE::PLANE_TYPE));
     floor->_Transform->SetPosition(glm::vec3(0.0f, -0.01f, 0.0f));
     floor->_Transform->SetScale(glm::vec3(10.0f, 1.0f, 10.0f));
     floor->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.2f, 0.7f));
@@ -241,7 +241,7 @@ void App::initVulkan()
     std::static_pointer_cast<PlaneCollider>(floor->collider)->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
     this->gameObjectManager->AddGameObject(floor, "floor");
     /*
-    std::shared_ptr<GameObject> ramp = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
+    std::shared_ptr<QEGameObject> ramp = std::make_shared<QEGameObject>(QEGameObject(PRIMITIVE_TYPE::CUBE_TYPE));
     ramp->_Transform->SetPosition(glm::vec3(0.0f, -0.5f, -10.0f));
     ramp->_Transform->SetOrientation(glm::vec3(70.0f, 0.0f, 0.0f));
     ramp->_Transform->SetScale(glm::vec3(3.0f, 10.0f, 3.0f));
@@ -252,7 +252,7 @@ void App::initVulkan()
     ramp->AddCollider(std::make_shared<BoxCollider>());
     this->gameObjectManager->AddGameObject(ramp, "ramp");
     /**/
-    std::shared_ptr<GameObject> wall = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
+    std::shared_ptr<QEGameObject> wall = std::make_shared<QEGameObject>(QEGameObject(PRIMITIVE_TYPE::CUBE_TYPE));
     wall->_Transform->SetPosition(glm::vec3(3.0f, 0.5f, 0.0f));
     wall->_Transform->SetOrientation(glm::vec3(0.0f, 0.0f, 0.0f));
     wall->_Transform->SetScale(glm::vec3(4.0f, 0.5f, 4.0f));
@@ -264,7 +264,7 @@ void App::initVulkan()
     this->gameObjectManager->AddGameObject(wall, "wall");
     /*
     // CHARACTER CONTROLLER
-    std::shared_ptr<GameObject> character = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CAPSULE_TYPE));
+    std::shared_ptr<QEGameObject> character = std::make_shared<QEGameObject>(QEGameObject(PRIMITIVE_TYPE::CAPSULE_TYPE));
     character->_Transform->SetPosition(glm::vec3(0.0f, 0.5f, 0.0f));
     character->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
     character->AddPhysicBody(std::make_shared<PhysicBody>(PhysicBodyType::RIGID_BODY));
@@ -285,16 +285,16 @@ void App::initVulkan()
     //textureManager->AddTexture("normal_brick", CustomTexture(TEXTURE_WALL_NORMAL_PATH, TEXTURE_TYPE::NORMAL_TYPE));
     //textureManager->AddTexture("test", CustomTexture(TEXTURE_TEST_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
 
-    std::shared_ptr<GameObject> cube = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::CUBE_TYPE));
+    std::shared_ptr<QEGameObject> cube = std::make_shared<QEGameObject>(QEGameObject(PRIMITIVE_TYPE::CUBE_TYPE));
     cube->_Transform->SetPosition(glm::vec3(0.0f, 10.0f, 0.0f));
     cube->_Transform->SetOrientation(glm::vec3(0.0f, 0.0f, 65.0f));
 
-    std::shared_ptr<GameObject> plano = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
+    std::shared_ptr<QEGameObject> plano = std::make_shared<QEGameObject>(QEGameObject(PRIMITIVE_TYPE::PLANE_TYPE));
     plano->_Transform->SetOrientation(glm::vec3(0.0f, 0.0f, 45.0f));
     plano->_Transform->SetPosition(glm::vec3(0.0f, 3.0f, 0.0f));
     plano->_Transform->SetScale(glm::vec3(5.0f, 1.0f, 5.0f));
 
-    std::shared_ptr<GameObject> floor = std::make_shared<GameObject>(GameObject(PRIMITIVE_TYPE::PLANE_TYPE));
+    std::shared_ptr<QEGameObject> floor = std::make_shared<QEGameObject>(QEGameObject(PRIMITIVE_TYPE::PLANE_TYPE));
     floor->_Transform->SetPosition(glm::vec3(0.0f, -0.10f, 0.0f));
     floor->_Transform->SetScale(glm::vec3(50.0f, 1.0f, 50.0f));
 
@@ -430,7 +430,7 @@ void App::loadScene(QEScene scene)
     this->materialManager->LoadMaterialDtos(this->scene.materialDtos);
 
     // Initialize the game object manager & the game objects
-    cout << "GameObject loading..." << endl;
+    cout << "QEGameObject loading..." << endl;
     this->gameObjectManager->LoadGameObjectDtos(this->scene.gameObjectDtos);
 
     // Initialize the light manager & the lights

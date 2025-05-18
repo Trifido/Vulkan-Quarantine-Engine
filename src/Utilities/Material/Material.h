@@ -4,7 +4,7 @@
 #define MATERIAL_H
 
 #include <glm/glm.hpp>
-#include "GameComponent.h"
+#include "QEGameComponent.h"
 #include <RenderLayer.h>
 #include <ShaderManager.h>
 #include <ShaderModule.h>
@@ -13,7 +13,7 @@
 #include <LightManager.h>
 #include <MaterialDto.h>
 
-class Material : public GameComponent
+class Material : public QEGameComponent
 {
 private:
     bool isMeshBinding = false;
@@ -47,6 +47,10 @@ public:
     void BindDescriptors(VkCommandBuffer& commandBuffer, uint32_t idx);
     void RenameMaterial(std::string newName);
     std::string SaveMaterialFile();
+
+    void QEStart() override;
+    void QEUpdate() override;
+    void QERelease() override;
 };
 
 #endif // !MATERIAL_H

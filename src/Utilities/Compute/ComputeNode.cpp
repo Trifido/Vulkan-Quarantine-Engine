@@ -164,3 +164,15 @@ void ComputeNode::UpdateOutputTextureState()
             outputTexture->transitionImageLayout(outputTexture->image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, subresourceRange);
     }
 }
+
+void ComputeNode::QEStart()
+{
+}
+
+void ComputeNode::QEUpdate()
+{
+}
+
+void ComputeNode::QERelease()
+{
+}

@@ -101,6 +101,18 @@ void Transform::Debug_PrintModel() const
     std::cout << "------------------------" << std::endl;
 }
 
+void Transform::QEStart()
+{
+}
+
+void Transform::QEUpdate()
+{
+}
+
+void Transform::QERelease()
+{
+}
+
 void Transform::ReceiveNewParentModel(glm::mat4 parentModel)
 {
     this->parentModel = parentModel;

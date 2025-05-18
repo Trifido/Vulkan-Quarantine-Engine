@@ -7,7 +7,7 @@
 #include <SwapChainModule.h>
 #include <BufferManageModule.h>
 
-ParticleSystem::ParticleSystem() : GameObject()
+ParticleSystem::ParticleSystem() : QEGameObject()
 {
     this->timer = Timer::getInstance();
     this->computeNodeManager = ComputeNodeManager::getInstance();
@@ -35,7 +35,7 @@ void ParticleSystem::InitializeParticleSystem()
 
 void ParticleSystem::cleanup()
 {
-    GameObject::Cleanup();
+    QEGameObject::Cleanup();
 }
 
 void ParticleSystem::InitializeMaterial()

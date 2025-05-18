@@ -5,7 +5,7 @@
 
 Grid::Grid()
 {
-    this->gridMesh = std::make_unique<GameObject>(GameObject(PRIMITIVE_TYPE::GRID_TYPE));
+    this->gridMesh = std::make_unique<QEGameObject>(QEGameObject(PRIMITIVE_TYPE::GRID_TYPE));
 
     ShaderManager* shaderManager = ShaderManager::getInstance();
 

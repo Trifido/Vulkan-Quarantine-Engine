@@ -2,12 +2,12 @@
 #ifndef TRANSFORM_H
 #define TRANSFORM_H
 
-#include "GameComponent.h"
+#include "QEGameComponent.h"
 #include <memory>
 #include <glm/gtc/quaternion.hpp>
 #include <UBO.h>
 
-class Transform : public GameComponent
+class Transform : public QEGameComponent
 {
 private:
     std::vector<std::shared_ptr<Transform>> childTransforms;
@@ -45,6 +45,10 @@ public:
     void AddChild(std::shared_ptr<Transform> child);
 
     void Debug_PrintModel() const;
+
+    void QEStart() override;
+    void QEUpdate() override;
+    void QERelease() override;
 };
 
 #endif

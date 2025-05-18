@@ -5,7 +5,7 @@
 #include <vulkan/vulkan.hpp>
 #include <vector>
 #include "GraphicsPipelineModule.h"
-#include "GameObject.h"
+#include "QEGameObject.h"
 #include "../Editor/EditorObjectManager.h"
 #include <GameObjectManager.h>
 #include <Compute/ComputeNodeManager.h>

@@ -1,6 +1,6 @@
 #pragma once
-#ifndef GAMEOBJECT_H
-#define GAMEOBJECT_H
+#ifndef QE_GAME_OBJECT_H
+#define QE_GAME_OBJECT_H
 
 #include "Mesh.h"
 #include "Transform.h"
@@ -17,9 +17,9 @@
 #include <GameObjectDto.h>
 #include <QECharacterController.h>
 
-typedef class GameObject GameObject;
+typedef class QEGameObject QEGameObject;
 
-class GameObject : Numbered
+class QEGameObject : Numbered
 {
     friend class CullingSceneManager;
 
@@ -49,8 +49,8 @@ public:
     std::shared_ptr<SkeletalComponent>  skeletalComponent = nullptr;
     std::shared_ptr<QECharacterController> characterController = nullptr;
 
-    std::vector<std::shared_ptr<GameObject>>    childs;
-    GameObject*     parent = nullptr;
+    std::vector<std::shared_ptr<QEGameObject>>    childs;
+    QEGameObject*     parent = nullptr;
 
 private:
     void InitializeResources();
@@ -59,10 +59,10 @@ private:
     void InitializeGameObject(PRIMITIVE_TYPE type, bool isMeshShading = false);
 
 public:
-    GameObject();
-    GameObject(PRIMITIVE_TYPE type, bool isMeshShading = false);
-    GameObject(std::string meshPath, bool isMeshShading = false);
-    GameObject(const GameObjectDto& gameObjectDto);
+    QEGameObject();
+    QEGameObject(PRIMITIVE_TYPE type, bool isMeshShading = false);
+    QEGameObject(std::string meshPath, bool isMeshShading = false);
+    QEGameObject(const GameObjectDto& gameObjectDto);
     inline std::string ID() const { return id; }
     void Cleanup();
     virtual void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
@@ -75,6 +75,10 @@ public:
     void InitializePhysics();
     virtual bool IsValidRender();
     void UpdatePhysicTransform();
+
+    void QEStart() {}
+    void QEUpdate() {}
+    void QERelease() {}
 
 protected:
     virtual bool IsValidGameObject();

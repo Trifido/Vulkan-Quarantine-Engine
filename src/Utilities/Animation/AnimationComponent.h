@@ -2,11 +2,11 @@
 
 #ifndef ANIMATION_COMPONENT_H
 #define ANIMATION_COMPONENT_H
-#include "GameComponent.h"
+#include "QEGameComponent.h"
 #include <Animation/Animation.h>
 #include <Animator.h>
 
-class AnimationComponent : GameComponent
+class AnimationComponent : QEGameComponent
 {
 public:
     std::shared_ptr<Animator> animator;
@@ -27,6 +27,11 @@ public:
     int idAnimation = 0;
     void ChangeAnimation();
     void CleanLastResources();
+
+    // Heredado vía QEGameComponent
+    void QEStart() override;
+    void QEUpdate() override;
+    void QERelease() override;
 };
 
 #endif

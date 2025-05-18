@@ -3,7 +3,7 @@
 #ifndef PARTICLE_SYSTEM_H
 #define PARTICLE_SYSTEM_H
 
-#include "GameObject.h"
+#include "QEGameObject.h"
 #include "Compute/ComputeNode.h"
 #include <Compute/ComputeNodeManager.h>
 #include <Timer.h>
@@ -14,7 +14,7 @@ struct NewParticlesUBO
     uint32_t  frameCount;
 };
 
-class ParticleSystem : public GameObject
+class ParticleSystem : public QEGameObject
 {
 private:
     ComputeNodeManager* computeNodeManager;

@@ -4,7 +4,7 @@
 #define ANIMATION_MANAGER_H
 
 #include <Animation/AnimationComponent.h>
-#include <GameObject.h>
+#include <QEGameObject.h>
 #include <QESingleton.h>
 
 class AnimationManager : public QESingleton<AnimationManager>
