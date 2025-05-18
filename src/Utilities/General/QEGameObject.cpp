@@ -82,9 +82,10 @@ void QEGameObject::Cleanup()
         mesh->cleanup();
     }
 
-    if (this->animationComponent != nullptr)
+    auto animationComponent = this->GetComponent<AnimationComponent>();
+    if (animationComponent != nullptr)
     {
-        this->animationComponent->CleanLastResources();
+        animationComponent->CleanLastResources();
     }
 
     if (!this->childs.empty())
@@ -94,9 +95,10 @@ void QEGameObject::Cleanup()
             auto childMesh = child->GetComponent<Mesh>();
             childMesh->cleanup();
 
-            if (child->animationComponent != nullptr)
+            auto childAC = child->GetComponent<AnimationComponent>();
+            if (childAC != nullptr)
             {
-                child->animationComponent->CleanLastResources();
+                childAC->CleanLastResources();
             }
         }
     }    
@@ -105,7 +107,8 @@ void QEGameObject::Cleanup()
 void QEGameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
     bool isAnimationPipeline = this->_meshImportedType == ANIMATED_GEO;
-    auto animatorPtr = isAnimationPipeline ? this->animationComponent->animator : nullptr;
+    auto animationComponent = this->GetComponent<AnimationComponent>();
+    auto animatorPtr = isAnimationPipeline ? animationComponent->animator : nullptr;
 
     this->SetDrawCommand(commandBuffer, idx, animatorPtr);
 
@@ -118,7 +121,8 @@ void QEGameObject::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t id
 void QEGameObject::CreateShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout)
 {
     bool isAnimationPipeline = this->_meshImportedType == ANIMATED_GEO;
-    auto animatorPtr = isAnimationPipeline ? this->animationComponent->animator : nullptr;
+    auto animationComponent = this->GetComponent<AnimationComponent>();
+    auto animatorPtr = isAnimationPipeline ? animationComponent->animator : nullptr;
 
     this->SetDrawShadowCommand(commandBuffer, idx, pipelineLayout, animatorPtr);
     for (auto child : childs)
@@ -144,17 +148,19 @@ void QEGameObject::AddMaterial(std::shared_ptr<Material> material_ptr)
 
 void QEGameObject::AddAnimation(std::shared_ptr<Animation> animation_ptr)
 {
-    if (this->animationComponent == nullptr)
+    auto animationComponent = this->GetComponent<AnimationComponent>();
+    if (animationComponent == nullptr)
     {
-        this->animationComponent = std::make_shared<AnimationComponent>();
+        this->AddComponent(std::make_shared<AnimationComponent>());
     }
 
-    this->animationComponent->AddAnimation(animation_ptr);
+    animationComponent = this->GetComponent<AnimationComponent>();
+    animationComponent->AddAnimation(animation_ptr);
 
     if (this->animationManager == nullptr)
     {
         this->animationManager = AnimationManager::getInstance();
-        this->animationManager->AddAnimationComponent(this->id, this->animationComponent);
+        this->animationManager->AddAnimationComponent(this->id, animationComponent);
     }
 }
 
@@ -193,7 +199,8 @@ void QEGameObject::InitializeComponents()
 
 void QEGameObject::InitializeAnimationComponent()
 {
-    if (this->animationComponent != nullptr)
+    auto animationComponent = this->GetComponent<AnimationComponent>();
+    if (animationComponent != nullptr)
     {
         std::vector<std::string> idChilds;
         if (!this->childs.empty())
@@ -208,7 +215,7 @@ void QEGameObject::InitializeAnimationComponent()
             idChilds.push_back(this->id);
         }
 
-        this->animationComponent->animator->InitializeComputeNodes(idChilds);
+        animationComponent->animator->InitializeComputeNodes(idChilds);
 
         if (!this->childs.empty())
         {
@@ -216,13 +223,13 @@ void QEGameObject::InitializeAnimationComponent()
             {
                 auto childMesh = this->childs[idChild]->GetComponent<Mesh>();
                 uint32_t numVertices = childMesh->numVertices;
-                this->animationComponent->animator->SetVertexBufferInComputeNode(this->childs[idChild]->id, childMesh->vertexBuffer, childMesh->animationBuffer, numVertices);
+                animationComponent->animator->SetVertexBufferInComputeNode(this->childs[idChild]->id, childMesh->vertexBuffer, childMesh->animationBuffer, numVertices);
             }
         }
         else
         {
             auto mesh = this->GetComponent<GeometryComponent>();
-            this->animationComponent->animator->SetVertexBufferInComputeNode(0, mesh->vertexBuffer, mesh->animationBuffer, mesh->numVertices);
+            animationComponent->animator->SetVertexBufferInComputeNode(0, mesh->vertexBuffer, mesh->animationBuffer, mesh->numVertices);
         }
     }
 }
@@ -420,7 +427,8 @@ bool QEGameObject::CreateChildsGameObject(std::string pathfile)
 
     if (this->_meshImportedType == MeshImportedType::ANIMATED_GEO)
     {
-        skeletalComponent = std::make_shared<SkeletalComponent>();
+        this->AddComponent(std::make_shared<SkeletalComponent>());
+        auto skeletalComponent = this->GetComponent<SkeletalComponent>();
         skeletalComponent->numBones = importer.GetBoneCount();
         skeletalComponent->m_BoneInfoMap = importer.GetBoneInfoMap();
 

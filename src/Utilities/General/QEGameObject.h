@@ -40,8 +40,6 @@ public:
     MeshImportedType                    _meshImportedType;
     PRIMITIVE_TYPE                      _primitiveMeshType;
     std::string                         MeshFilePath;
-    std::shared_ptr<AnimationComponent> animationComponent = nullptr;
-    std::shared_ptr<SkeletalComponent>  skeletalComponent = nullptr;
     std::list<std::shared_ptr<QEGameComponent>> components;
 
     std::vector<std::shared_ptr<QEGameObject>>    childs;

@@ -6,7 +6,7 @@
 #include <Animation/Animation.h>
 #include <Animator.h>
 
-class AnimationComponent : QEGameComponent
+class AnimationComponent : public QEGameComponent
 {
 public:
     std::shared_ptr<Animator> animator;

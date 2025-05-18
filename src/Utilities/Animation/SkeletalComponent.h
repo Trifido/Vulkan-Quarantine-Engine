@@ -5,7 +5,7 @@
 #include <QEGameComponent.h>
 #include <AnimationResources.h>
 
-class SkeletalComponent : QEGameComponent
+class SkeletalComponent : public QEGameComponent
 {
 public:
     size_t numBones;
