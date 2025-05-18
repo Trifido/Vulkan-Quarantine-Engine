@@ -36,6 +36,16 @@ Write-Host "Configuration: $Configuration"
 Write-Host "Parallel cores: $cores"
 Write-Host "-------------------------------------"
 
+# 0) Actualizar submódulos Git
+Write-Host "Updating Git submodules..." -ForegroundColor Cyan
+Push-Location $projectRoot
+git submodule update --init --recursive
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Failed to update submodules (exit code $LASTEXITCODE)."
+    exit $LASTEXITCODE
+}
+Pop-Location
+
 # 1) Crear carpeta build/ si no existe
 if (!(Test-Path $buildDir)) {
     Write-Host "Creating build directory at root..."
