@@ -45,19 +45,19 @@ void ParticleSystem::InitializeMaterial()
     this->materialManager->AddMaterial(newMatInstance);
 
     this->AddMaterial(newMatInstance);
-    this->_Material->InitializeMaterialDataUBO();
-    this->_Material->descriptor->ssboData["ParticleSSBO"] = computeNodeUpdateParticles->computeDescriptor->ssboData[0];
-    this->_Material->descriptor->ssboSize["ParticleSSBO"] = computeNodeUpdateParticles->computeDescriptor->ssboSize[0];
+    newMatInstance->InitializeMaterialDataUBO();
+    newMatInstance->descriptor->ssboData["ParticleSSBO"] = computeNodeUpdateParticles->computeDescriptor->ssboData[0];
+    newMatInstance->descriptor->ssboSize["ParticleSSBO"] = computeNodeUpdateParticles->computeDescriptor->ssboSize[0];
 
-    this->_Material->descriptor->ubos["particleSystemUBO"] = std::make_shared<UniformBufferObject>();
-    this->_Material->descriptor->ubos["particleSystemUBO"]->CreateUniformBuffer(sizeof(ParticleTextureParamsUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
-    this->_Material->descriptor->uboSizes["particleSystemUBO"] = sizeof(ParticleTextureParamsUniform);
+    newMatInstance->descriptor->ubos["particleSystemUBO"] = std::make_shared<UniformBufferObject>();
+    newMatInstance->descriptor->ubos["particleSystemUBO"]->CreateUniformBuffer(sizeof(ParticleTextureParamsUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    newMatInstance->descriptor->uboSizes["particleSystemUBO"] = sizeof(ParticleTextureParamsUniform);
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {
         void* data;
-        vkMapMemory(deviceModule->device, this->_Material->descriptor->ubos["particleSystemUBO"]->uniformBuffersMemory[currentFrame], 0, sizeof(ParticleTextureParamsUniform), 0, &data);
+        vkMapMemory(deviceModule->device, newMatInstance->descriptor->ubos["particleSystemUBO"]->uniformBuffersMemory[currentFrame], 0, sizeof(ParticleTextureParamsUniform), 0, &data);
         memcpy(data, static_cast<const void*>(&this->particleTextureParams), sizeof(ParticleTextureParamsUniform));
-        vkUnmapMemory(deviceModule->device, this->_Material->descriptor->ubos["particleSystemUBO"]->uniformBuffersMemory[currentFrame]);
+        vkUnmapMemory(deviceModule->device, newMatInstance->descriptor->ubos["particleSystemUBO"]->uniformBuffersMemory[currentFrame]);
     }
 }
 
@@ -80,16 +80,17 @@ void ParticleSystem::createShaderStorageBuffers()
 
 void ParticleSystem::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator)
 {
-    auto pipelineModule = this->_Material->shader->PipelineModule;
+    auto mat = this->GetComponent<Material>();
+    auto pipelineModule = mat->shader->PipelineModule;
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
     vkCmdSetDepthTestEnable(commandBuffer, true);
     vkCmdSetDepthWriteEnable(commandBuffer, false);
     vkCmdSetCullMode(commandBuffer, false);
 
-    if (this->_Material->HasDescriptorBuffer())
+    if (mat->HasDescriptorBuffer())
     {
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, this->_Material->descriptor->getDescriptorSet(idx), 0, nullptr);
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, mat->descriptor->getDescriptorSet(idx), 0, nullptr);
     }
 
     auto transform = this->GetComponent<Transform>();
@@ -228,7 +229,8 @@ void ParticleSystem::GenerateParticles()
 
 void ParticleSystem::AddParticleTexture(std::shared_ptr<CustomTexture> texture)
 {
-    this->_Material->materialData.texture_vector->at(0) = texture;
+    auto mat = this->GetComponent<Material>();
+    mat->materialData.texture_vector->at(0) = texture;
 }
 
 void ParticleSystem::Update()

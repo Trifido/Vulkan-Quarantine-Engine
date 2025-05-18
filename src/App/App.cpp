@@ -232,9 +232,12 @@ void App::initVulkan()
     auto floorTransform = floor->GetComponent<Transform>();
     floorTransform->SetPosition(glm::vec3(0.0f, -0.01f, 0.0f));
     floorTransform->SetScale(glm::vec3(10.0f, 1.0f, 10.0f));
-    floor->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.2f, 0.7f));
-    floor->_Material->materialData.SetMaterialField("Specular", glm::vec3(0.0f, 0.0f, 0.0f));
-    floor->_Material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
+
+    auto floorMat = floor->GetComponent<Material>();
+    floorMat->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.2f, 0.7f));
+    floorMat->materialData.SetMaterialField("Specular", glm::vec3(0.0f, 0.0f, 0.0f));
+    floorMat->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
+
     floor->AddPhysicBody(std::make_shared<PhysicBody>());
     floor->physicBody->CollisionGroup = CollisionFlag::COL_SCENE;
     floor->physicBody->CollisionMask = CollisionFlag::COL_PLAYER;
@@ -258,7 +261,10 @@ void App::initVulkan()
     wallTransform->SetPosition(glm::vec3(3.0f, 0.5f, 0.0f));
     wallTransform->SetOrientation(glm::vec3(0.0f, 0.0f, 0.0f));
     wallTransform->SetScale(glm::vec3(4.0f, 0.5f, 4.0f));
-    wall->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.8f, 0.2f, 0.2f));
+
+    auto wallMat = wall->GetComponent<Material>();
+    wallMat->materialData.SetMaterialField("Diffuse", glm::vec3(0.8f, 0.2f, 0.2f));
+
     wall->AddPhysicBody(std::make_shared<PhysicBody>());
     wall->physicBody->CollisionGroup = CollisionFlag::COL_SCENE;
     wall->physicBody->CollisionMask = CollisionFlag::COL_PLAYER;

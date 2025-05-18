@@ -149,12 +149,12 @@ void QEGameObject::AddMaterial(std::shared_ptr<Material> material_ptr)
     if (material_ptr == nullptr)
         return;
 
-    this->_Material = material_ptr;
+    this->AddComponent<Material>(material_ptr);
     this->bindMaterialName = material_ptr->Name;
 
     if (this->_Mesh != nullptr)
     {
-        this->_Material->bindingMesh(this->_Mesh);
+        material_ptr->bindingMesh(this->_Mesh);
     }
 }
 
@@ -200,7 +200,8 @@ void QEGameObject::InitializeComponents()
 
         if (this->isMeshShading)
         {
-            this->_Material->descriptor->SetMeshletBuffers(this->_Mesh->meshlets_ptr);
+            auto material = this->GetComponent<Material>();
+            material->descriptor->SetMeshletBuffers(this->_Mesh->meshlets_ptr);
         }
     }
 
@@ -267,12 +268,14 @@ bool QEGameObject::IsValidRender()
     if (transform == nullptr)
         return false;
 
-    if (this->_Mesh != nullptr && this->_Material != nullptr)
+    auto material = this->GetComponent<Material>();
+    if (this->_Mesh != nullptr && material != nullptr)
         return true;
 
     for (auto child : childs)
     {
-        if (child->_Mesh != nullptr && child->_Material != nullptr)
+        auto childMat = child->GetComponent<Material>();
+        if (child->_Mesh != nullptr && childMat != nullptr)
             return true;
     }
 
@@ -282,7 +285,8 @@ bool QEGameObject::IsValidRender()
 bool QEGameObject::IsRenderEnable()
 {
     bool isRender = true;
-    isRender = isRender && this->_Material != nullptr;
+    auto material = this->GetComponent<Material>();
+    isRender = isRender && material != nullptr;
     isRender = isRender && this->_Mesh != nullptr;
     isRender = isRender && this->aabbculling->isGameObjectVisible;
 
@@ -326,9 +330,9 @@ void QEGameObject::InitializeGameObject(PRIMITIVE_TYPE type, bool isMeshShading)
 
     if (type != PRIMITIVE_TYPE::GRID_TYPE)
     {
-        this->_Material = this->materialManager->GetMaterial(this->bindMaterialName);
+        auto matptr = this->materialManager->GetMaterial(this->bindMaterialName);
 
-        if (this->_Material == nullptr)
+        if (matptr == nullptr)
         {
             if (this->isMeshShading)
             {
@@ -346,7 +350,8 @@ void QEGameObject::InitializeGameObject(PRIMITIVE_TYPE type, bool isMeshShading)
             }
         }
 
-        this->_Material->InitializeMaterialDataUBO();
+        matptr = this->materialManager->GetMaterial(this->bindMaterialName);
+        matptr->InitializeMaterialDataUBO();
     }
     else
     {
@@ -413,14 +418,13 @@ bool QEGameObject::CreateChildsGameObject(std::string pathfile)
     }
     else
     {
-        auto transform = this->GetComponent<Transform>();
         this->_Mesh = std::make_shared<Mesh>(Mesh(data[0]));
+
+        auto transform = this->GetComponent<Transform>();
         this->AddComponent<Transform>(std::make_shared<Transform>(Transform(data[0].model)));
-        this->_Material = this->materialManager->GetMaterial(this->bindMaterialName);
-        if (this->_Material == nullptr)
-        {
-            this->AddMaterial(this->materialManager->GetMaterial(data[0].materialID));
-        }
+
+        auto matptr = this->materialManager->GetMaterial(this->bindMaterialName);
+        this->AddMaterial(this->materialManager->GetMaterial(data[0].materialID));
     }
 
     if (this->_meshImportedType == MeshImportedType::ANIMATED_GEO)
@@ -459,7 +463,8 @@ void QEGameObject::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, 
 {
     if (this->IsRenderEnable())
     {
-        auto pipelineModule = this->_Material->shader->PipelineModule;
+        auto mat = this->GetComponent<Material>();
+        auto pipelineModule = mat->shader->PipelineModule;
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
         vkCmdSetDepthTestEnable(commandBuffer, true);
@@ -491,7 +496,7 @@ void QEGameObject::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, 
             vkCmdBindIndexBuffer(commandBuffer, this->_Mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
         }
 
-        this->_Material->BindDescriptors(commandBuffer, idx);
+        mat->BindDescriptors(commandBuffer, idx);
 
         auto transform = this->GetComponent<Transform>();
         vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantStruct), &transform->GetModel());

@@ -41,7 +41,6 @@ public:
     MeshImportedType                    _meshImportedType;
     PRIMITIVE_TYPE                      _primitiveMeshType;
     std::string                         MeshFilePath;
-    std::shared_ptr<Material>           _Material = nullptr;
     std::shared_ptr<PhysicBody>         physicBody = nullptr;
     std::shared_ptr<Collider>           collider = nullptr;
     std::shared_ptr<AnimationComponent> animationComponent = nullptr;

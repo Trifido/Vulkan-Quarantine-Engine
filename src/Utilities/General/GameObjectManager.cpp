@@ -31,17 +31,19 @@ void GameObjectManager::AddGameObject(std::shared_ptr<QEGameObject> object_ptr, 
     {
         name = CheckName(name);
 
-        if (object_ptr->_Material == nullptr)
+        auto mat = object_ptr->GetComponent<Material>();
+        if (mat == nullptr)
         {
             if (!object_ptr->childs.empty())
             {
-                unsigned int childLayer = object_ptr->childs[0]->_Material->layer;
+                auto matChild = object_ptr->childs[0]->GetComponent<Material>();
+                unsigned int childLayer = matChild->layer;
                 this->_objects[childLayer][name] = object_ptr;
             }
         }
         else
         {
-            this->_objects[object_ptr->_Material->layer][name] = object_ptr;
+            this->_objects[mat->layer][name] = object_ptr;
         }
 
         if (object_ptr->physicBody != nullptr)
@@ -150,9 +152,10 @@ void GameObjectManager::SaveGameObjects(std::ofstream& file)
         for (auto model : this->_objects[id])
         {
             std::string matPath = "NULL_MATERIAL";
-            if (model.second->_Material != nullptr)
+            auto mat = model.second->GetComponent<Material>();
+            if (mat != nullptr)
             {
-                matPath = model.second->_Material->Name;
+                matPath = mat->Name;
             }
 
             auto transform = model.second->GetComponent<Transform>();
