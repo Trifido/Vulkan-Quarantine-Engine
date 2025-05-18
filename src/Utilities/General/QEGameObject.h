@@ -48,6 +48,7 @@ public:
     std::shared_ptr<AnimationComponent> animationComponent = nullptr;
     std::shared_ptr<SkeletalComponent>  skeletalComponent = nullptr;
     std::shared_ptr<QECharacterController> characterController = nullptr;
+    std::list<std::shared_ptr<QEGameComponent>> components;
 
     std::vector<std::shared_ptr<QEGameObject>>    childs;
     QEGameObject*     parent = nullptr;
@@ -79,6 +80,12 @@ public:
     void QEStart() {}
     void QEUpdate() {}
     void QERelease() {}
+
+    template<typename T>
+    bool AddComponent(std::shared_ptr<T> component_ptr);
+
+    template<typename T>
+    T* GetComponent();
 
 protected:
     virtual bool IsValidGameObject();

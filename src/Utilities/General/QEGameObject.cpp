@@ -50,6 +50,37 @@ QEGameObject::QEGameObject(const GameObjectDto& gameObjectDto) : Numbered(gameOb
 
     this->_meshImportedType = static_cast<MeshImportedType>(gameObjectDto.MeshImportedType);
     this->_Transform->SetModel(gameObjectDto.WorldTransform);
+    this->GetComponent<Transform>()->SetModel(gameObjectDto.WorldTransform);
+}
+
+template<typename T>
+bool QEGameObject::AddComponent(std::shared_ptr<T> component_ptr)
+{
+    if (component_ptr == nullptr)
+        return false;
+
+    //if (std::find_if(components.begin(), components.end(), [&](const std::shared_ptr<QEGameComponent>& comp){ return comp->GetType() == component_ptr->GetType(); }) != components.end())
+    //{
+    //    return false;
+    //}
+
+    components.push_back(component_ptr);
+    component_ptr->BindGameObject(this);
+
+    return true;
+}
+
+template<typename T>
+inline T* QEGameObject::GetComponent()
+{
+    for (auto& comp : components)
+    {
+        if (auto ptr = dynamic_cast<T*>(comp.get()))
+        {
+            return ptr;
+        }
+    }
+    return nullptr;
 }
 
 void QEGameObject::InitializeResources()
@@ -159,7 +190,8 @@ void QEGameObject::AddCharacterController(std::shared_ptr<QECharacterController>
 
 void QEGameObject::InitializeComponents()
 {
-    if (this->_Transform == nullptr)
+    auto transform = this->GetComponent<Transform>();
+    if (transform == nullptr)
     {
         this->_Transform = std::make_shared<Transform>();
     }
