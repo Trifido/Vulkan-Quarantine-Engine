@@ -9,7 +9,7 @@
 #include <Geometry/PrimitiveTypes.h>
 #include <Meshlet.h>
 
-class GeometryComponent : QEGameComponent
+class GeometryComponent : public QEGameComponent
 {
 protected:
     VkDeviceMemory  vertexBufferMemory = VK_NULL_HANDLE;

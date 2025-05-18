@@ -37,7 +37,6 @@ protected:
     AnimationManager*   animationManager = nullptr;
 
 public:
-    std::shared_ptr<GeometryComponent>  _Mesh = nullptr;
     MeshImportedType                    _meshImportedType;
     PRIMITIVE_TYPE                      _primitiveMeshType;
     std::string                         MeshFilePath;

@@ -95,9 +95,10 @@ void QEGameObject::InitializeResources()
 
 void QEGameObject::Cleanup()
 {
-    if (_Mesh != nullptr)
+    auto mesh = this->GetComponent<GeometryComponent>();
+    if (mesh != nullptr)
     {
-        _Mesh->cleanup();
+        mesh->cleanup();
     }
 
     if (this->animationComponent != nullptr)
@@ -109,7 +110,8 @@ void QEGameObject::Cleanup()
     {
         for (auto& child : this->childs)
         {
-            child->_Mesh->cleanup();
+            auto childMesh = child->GetComponent<Mesh>();
+            childMesh->cleanup();
 
             if (child->animationComponent != nullptr)
             {
@@ -152,9 +154,10 @@ void QEGameObject::AddMaterial(std::shared_ptr<Material> material_ptr)
     this->AddComponent<Material>(material_ptr);
     this->bindMaterialName = material_ptr->Name;
 
-    if (this->_Mesh != nullptr)
+    auto mesh = this->GetComponent<GeometryComponent>();
+    if (mesh != nullptr)
     {
-        material_ptr->bindingMesh(this->_Mesh);
+        material_ptr->bindingMesh(mesh);
     }
 }
 
@@ -194,14 +197,15 @@ void QEGameObject::InitializeComponents()
 {
     this->AddComponent<Transform>(std::make_shared<Transform>());
 
-    if (this->_Mesh != nullptr)
+    auto mesh = this->GetComponent<GeometryComponent>();
+    if (mesh != nullptr)
     {
-        this->_Mesh->InitializeMesh();
+        mesh->InitializeMesh();
 
         if (this->isMeshShading)
         {
             auto material = this->GetComponent<Material>();
-            material->descriptor->SetMeshletBuffers(this->_Mesh->meshlets_ptr);
+            material->descriptor->SetMeshletBuffers(mesh->meshlets_ptr);
         }
     }
 
@@ -237,13 +241,15 @@ void QEGameObject::InitializeAnimationComponent()
         {
             for (int idChild = 0; idChild < this->childs.size(); idChild++)
             {
-                uint32_t numVertices = this->childs[idChild]->_Mesh->numVertices;
-                this->animationComponent->animator->SetVertexBufferInComputeNode(this->childs[idChild]->id, this->childs[idChild]->_Mesh->vertexBuffer, this->childs[idChild]->_Mesh->animationBuffer, numVertices);
+                auto childMesh = this->childs[idChild]->GetComponent<Mesh>();
+                uint32_t numVertices = childMesh->numVertices;
+                this->animationComponent->animator->SetVertexBufferInComputeNode(this->childs[idChild]->id, childMesh->vertexBuffer, childMesh->animationBuffer, numVertices);
             }
         }
         else
         {
-            this->animationComponent->animator->SetVertexBufferInComputeNode(0, this->_Mesh->vertexBuffer, this->_Mesh->animationBuffer, this->_Mesh->numVertices);
+            auto mesh = this->GetComponent<GeometryComponent>();
+            this->animationComponent->animator->SetVertexBufferInComputeNode(0, mesh->vertexBuffer, mesh->animationBuffer, mesh->numVertices);
         }
     }
 }
@@ -269,13 +275,15 @@ bool QEGameObject::IsValidRender()
         return false;
 
     auto material = this->GetComponent<Material>();
-    if (this->_Mesh != nullptr && material != nullptr)
+    auto mesh = this->GetComponent<GeometryComponent>();
+    if (mesh != nullptr && material != nullptr)
         return true;
 
     for (auto child : childs)
     {
         auto childMat = child->GetComponent<Material>();
-        if (child->_Mesh != nullptr && childMat != nullptr)
+        auto childMesh = child->GetComponent<GeometryComponent>();
+        if (childMesh != nullptr && childMat != nullptr)
             return true;
     }
 
@@ -286,8 +294,9 @@ bool QEGameObject::IsRenderEnable()
 {
     bool isRender = true;
     auto material = this->GetComponent<Material>();
+    auto mesh = this->GetComponent<GeometryComponent>();
     isRender = isRender && material != nullptr;
-    isRender = isRender && this->_Mesh != nullptr;
+    isRender = isRender && mesh != nullptr;
     isRender = isRender && this->aabbculling->isGameObjectVisible;
 
     return isRender;
@@ -316,14 +325,15 @@ void QEGameObject::InitializeGameObject(PRIMITIVE_TYPE type, bool isMeshShading)
     this->InitializeResources();
     this->isMeshShading = isMeshShading;
     this->_primitiveMeshType = type;
+    auto mesh = this->GetComponent<GeometryComponent>();
 
     if (type == PRIMITIVE_TYPE::CAPSULE_TYPE)
     {
-        this->_Mesh = std::make_shared<CapsuleMesh>(CapsuleMesh());
+        this->AddComponent<GeometryComponent>(std::make_shared<CapsuleMesh>(CapsuleMesh()));
     }
     else
     {
-        this->_Mesh = std::make_shared<PrimitiveMesh>(PrimitiveMesh(type));
+        this->AddComponent<GeometryComponent>(std::make_shared<PrimitiveMesh>(PrimitiveMesh(type)));
     }
 
     this->_meshImportedType = MeshImportedType::PRIMITIVE_GEO;
@@ -363,7 +373,8 @@ void QEGameObject::InitializeGameObject(PRIMITIVE_TYPE type, bool isMeshShading)
     if (type != PRIMITIVE_TYPE::GRID_TYPE)
     {
         auto transform = this->GetComponent<Transform>();
-        auto downcastedPtr = std::dynamic_pointer_cast<PrimitiveMesh>(this->_Mesh);
+        auto mesh = this->GetComponent<GeometryComponent>();
+        auto downcastedPtr = std::dynamic_pointer_cast<PrimitiveMesh>(mesh);
         this->aabbculling = this->cullingSceneManager->GenerateAABB(downcastedPtr->aabbData, transform);
     }
 
@@ -407,7 +418,7 @@ bool QEGameObject::CreateChildsGameObject(std::string pathfile)
         for (size_t id = 0; id < data.size(); id++)
         {
             this->childs[id] = std::make_shared<QEGameObject>();
-            this->childs[id]->_Mesh = std::make_shared<Mesh>(Mesh(data[id]));
+            this->childs[id]->AddComponent<GeometryComponent>(std::make_shared<Mesh>(Mesh(data[id])));
             this->childs[id]->_meshImportedType = this->_meshImportedType;
             this->childs[id]->isMeshShading = this->isMeshShading;
             this->childs[id]->AddComponent<Transform>(std::make_shared<Transform>(Transform(parentModel * data[id].model)));
@@ -418,7 +429,7 @@ bool QEGameObject::CreateChildsGameObject(std::string pathfile)
     }
     else
     {
-        this->_Mesh = std::make_shared<Mesh>(Mesh(data[0]));
+        this->AddComponent<GeometryComponent>(std::make_shared<Mesh>(Mesh(data[0])));
 
         auto transform = this->GetComponent<Transform>();
         this->AddComponent<Transform>(std::make_shared<Transform>(Transform(data[0].model)));
@@ -464,6 +475,7 @@ void QEGameObject::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, 
     if (this->IsRenderEnable())
     {
         auto mat = this->GetComponent<Material>();
+        auto mesh = this->GetComponent<GeometryComponent>();
         auto pipelineModule = mat->shader->PipelineModule;
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
@@ -490,10 +502,10 @@ void QEGameObject::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, 
             }
             else
             {
-                VkBuffer vertexBuffers[] = { this->_Mesh->vertexBuffer };
+                VkBuffer vertexBuffers[] = { mesh->vertexBuffer };
                 vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
             }
-            vkCmdBindIndexBuffer(commandBuffer, this->_Mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+            vkCmdBindIndexBuffer(commandBuffer, mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
         }
 
         mat->BindDescriptors(commandBuffer, idx);
@@ -507,7 +519,7 @@ void QEGameObject::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, 
         }
         else
         {
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->_Mesh->indices.size()), 1, 0, 0, 0);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh->indices.size()), 1, 0, 0, 0);
         }
     }
 }
@@ -516,6 +528,8 @@ void QEGameObject::SetDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t
 {
     if (this->IsRenderEnable())
     {
+        auto mesh = this->GetComponent<GeometryComponent>();
+
         if (!this->isMeshShading)
         {
             VkDeviceSize offsets[] = { 0 };
@@ -526,10 +540,10 @@ void QEGameObject::SetDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t
             }
             else
             {
-                VkBuffer vertexBuffers[] = { this->_Mesh->vertexBuffer };
+                VkBuffer vertexBuffers[] = { mesh->vertexBuffer };
                 vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
             }
-            vkCmdBindIndexBuffer(commandBuffer, this->_Mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+            vkCmdBindIndexBuffer(commandBuffer, mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
         }
 
         if (this->isMeshShading)
@@ -538,7 +552,7 @@ void QEGameObject::SetDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t
         }
         else
         {
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->_Mesh->indices.size()), 1, 0, 0, 0);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh->indices.size()), 1, 0, 0, 0);
         }
     }
 }
