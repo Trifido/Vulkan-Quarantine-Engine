@@ -28,6 +28,7 @@ public:
     uint32_t numFaces;
     std::vector<uint32_t> indices;
     std::shared_ptr<Meshlet> meshlets_ptr = nullptr;
+    std::string Path;
 
     virtual void InitializeMesh() = 0;
     virtual void cleanup();

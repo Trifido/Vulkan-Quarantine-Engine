@@ -38,7 +38,6 @@ protected:
 
 public:
     MeshImportedType                    _meshImportedType;
-    PRIMITIVE_TYPE                      _primitiveMeshType;
     std::string                         MeshFilePath;
     std::list<std::shared_ptr<QEGameComponent>> components;
 
@@ -67,7 +66,8 @@ public:
     virtual bool IsValidRender();
     void UpdatePhysicTransform();
 
-    void QEStart() {}
+    void QEInitialize();
+
     void QEUpdate() {}
     void QERelease() {}
 
@@ -91,7 +91,18 @@ public:
     }
 
     template<typename T>
-    std::shared_ptr<T> GetComponent();
+    std::shared_ptr<T> GetComponent()
+    {
+        for (auto& comp : components)
+        {
+            if (auto ptr = std::dynamic_pointer_cast<T>(comp))
+            {
+                return ptr;
+            }
+        }
+
+        return nullptr;
+    }
 
 protected:
     virtual bool IsValidGameObject();

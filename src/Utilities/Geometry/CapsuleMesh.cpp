@@ -3,7 +3,7 @@
 
 CapsuleMesh::CapsuleMesh() : PrimitiveMesh(PRIMITIVE_TYPE::CAPSULE_TYPE)
 {
-    this->type = PRIMITIVE_TYPE::CAPSULE_TYPE;
+    this->Type = PRIMITIVE_TYPE::CAPSULE_TYPE;
     this->capsuleRadius = 0.5f;
     this->capsuleHeight = 1.0f;
     this->capsuleSegments = 16;

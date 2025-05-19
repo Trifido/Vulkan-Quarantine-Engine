@@ -252,17 +252,25 @@ void App::initVulkan()
     auto floorCollider = floor->GetComponent<Collider>();
     std::static_pointer_cast<PlaneCollider>(floorCollider)->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
     this->gameObjectManager->AddGameObject(floor, "floor");
-    /*
+
+    /**/
     std::shared_ptr<QEGameObject> ramp = std::make_shared<QEGameObject>(QEGameObject(PRIMITIVE_TYPE::CUBE_TYPE));
-    ramp->_Transform->SetPosition(glm::vec3(0.0f, -0.5f, -10.0f));
-    ramp->_Transform->SetOrientation(glm::vec3(70.0f, 0.0f, 0.0f));
-    ramp->_Transform->SetScale(glm::vec3(3.0f, 10.0f, 3.0f));
-    ramp->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
-    ramp->AddPhysicBody(std::make_shared<PhysicBody>());
-    ramp->physicBody->CollisionGroup = CollisionFlag::COL_SCENE;
-    ramp->physicBody->CollisionMask = CollisionFlag::COL_PLAYER;
-    ramp->AddCollider(std::make_shared<BoxCollider>());
+    auto rampTransform = ramp->GetComponent<Transform>();
+    rampTransform->SetPosition(glm::vec3(0.0f, -0.5f, -10.0f));
+    rampTransform->SetOrientation(glm::vec3(70.0f, 0.0f, 0.0f));
+    rampTransform->SetScale(glm::vec3(3.0f, 10.0f, 3.0f));
+
+    auto rampMat = ramp->GetComponent<Material>();
+    rampMat->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
+
+    ramp->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>());
+    auto rampPBody = ramp->GetComponent<PhysicsBody>();
+    rampPBody->CollisionGroup = CollisionFlag::COL_SCENE;
+    rampPBody->CollisionMask = CollisionFlag::COL_PLAYER;
+
+    ramp->AddComponent(std::make_shared<BoxCollider>());
     this->gameObjectManager->AddGameObject(ramp, "ramp");
+
     /**/
     std::shared_ptr<QEGameObject> wall = std::make_shared<QEGameObject>(QEGameObject(PRIMITIVE_TYPE::CUBE_TYPE));
     auto wallTransform = wall->GetComponent<Transform>();
@@ -277,6 +285,7 @@ void App::initVulkan()
     auto wallPBody = wall->GetComponent<PhysicsBody>();
     wallPBody->CollisionGroup = CollisionFlag::COL_SCENE;
     wallPBody->CollisionMask = CollisionFlag::COL_PLAYER;
+
     wall->AddComponent<Collider>(std::make_shared<BoxCollider>());
     this->gameObjectManager->AddGameObject(wall, "wall");
     /*
@@ -430,6 +439,8 @@ void App::initVulkan()
     this->materialManager->InitializeMaterials();
     this->computeNodeManager->InitializeComputeNodes();
     this->lightManager->InitializeShadowMaps();
+
+    this->gameObjectManager->InitializeQEGameObjects();
 
     this->commandPoolModule->Render(&framebufferModule);
     this->synchronizationModule.createSyncObjects();

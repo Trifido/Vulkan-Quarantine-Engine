@@ -52,18 +52,9 @@ QEGameObject::QEGameObject(const GameObjectDto& gameObjectDto) : Numbered(gameOb
     this->GetComponent<Transform>()->SetModel(gameObjectDto.WorldTransform);
 }
 
-template<typename T>
-inline std::shared_ptr<T> QEGameObject::GetComponent()
+void QEGameObject::QEInitialize()
 {
-    for (auto& comp : components)
-    {
-        if (auto ptr = std::dynamic_pointer_cast<T>(comp))
-        {
-            return ptr;
-        }
-    }
-
-    return nullptr;
+    this->InitializeResources();
 }
 
 void QEGameObject::InitializeResources()
@@ -308,7 +299,6 @@ void QEGameObject::InitializeGameObject(PRIMITIVE_TYPE type, bool isMeshShading)
 {
     this->InitializeResources();
     this->isMeshShading = isMeshShading;
-    this->_primitiveMeshType = type;
     auto mesh = this->GetComponent<GeometryComponent>();
 
     if (type == PRIMITIVE_TYPE::CAPSULE_TYPE)

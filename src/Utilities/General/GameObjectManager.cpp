@@ -1,6 +1,7 @@
 #include "GameObjectManager.h"
 #include <iostream>
 #include <GameObjectDto.h>
+#include <PrimitiveMesh.h>
 
 std::string GameObjectManager::CheckName(std::string nameGameObject)
 {
@@ -160,13 +161,14 @@ void GameObjectManager::SaveGameObjects(std::ofstream& file)
             }
 
             auto transform = model.second->GetComponent<Transform>();
+            auto mesh = model.second->GetComponent<PrimitiveMesh>();
 
             GameObjectDto gameObjectDto(
                 model.second->ID(),
                 model.first,
                 transform->GetModel(),
                 model.second->_meshImportedType,
-                model.second->_primitiveMeshType,
+                mesh->Type,
                 model.second->MeshFilePath,
                 matPath);
             gameObjectDtos.push_back(gameObjectDto);
@@ -215,6 +217,39 @@ void GameObjectManager::LoadGameObjectDtos(std::vector<GameObjectDto>& gameObjec
     {
         std::shared_ptr<QEGameObject> gameObject = std::make_shared<QEGameObject>(gameObjectDtos[i]);
         this->AddGameObject(gameObject, gameObjectDtos[i].Name);
+    }
+}
+
+void GameObjectManager::InitializeQEGameObjects()
+{
+    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
+    {
+        for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
+        {
+            model.second->QEInitialize();
+        }
+    }
+}
+
+void GameObjectManager::UpdateQEGameObjects()
+{
+    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
+    {
+        for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
+        {
+            model.second->QEUpdate();
+        }
+    }
+}
+
+void GameObjectManager::ReleaseQEGameObjects()
+{
+    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
+    {
+        for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
+        {
+            model.second->QERelease();
+        }
     }
 }
 

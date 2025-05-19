@@ -9,14 +9,14 @@ PrimitiveMesh::PrimitiveMesh()
 
 PrimitiveMesh::PrimitiveMesh(PRIMITIVE_TYPE type)
 {
-    this->type = type;
+    this->Type = type;
 }
 
 void PrimitiveMesh::InitializeMesh()
 {
-    this->type = type;
+    this->Type = Type;
 
-    switch (this->type)
+    switch (this->Type)
     {
     case PRIMITIVE_TYPE::POINT_TYPE:
         this->InitializePoint();

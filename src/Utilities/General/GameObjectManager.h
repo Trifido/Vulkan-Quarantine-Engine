@@ -35,6 +35,10 @@ public:
     std::vector<GameObjectDto> GetGameObjectDtos(std::ifstream& file);
     void SaveGameObjects(std::ofstream& file);
     void LoadGameObjectDtos(std::vector<GameObjectDto>& gameObjectDtos);
+
+    void InitializeQEGameObjects();
+    void UpdateQEGameObjects();
+    void ReleaseQEGameObjects();
 };
 
 #endif
