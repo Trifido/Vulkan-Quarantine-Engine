@@ -8,6 +8,7 @@
 #include <filesystem>
 #include "../Editor/Grid.h"
 #include <QEProjectManager.h>
+#include <QEMeshRenderer.h>
 
 
 App::App()
@@ -156,7 +157,7 @@ void App::initVulkan()
     BufferManageModule::computeCommandPool = this->commandPoolModule->getComputeCommandPool();
     BufferManageModule::graphicsQueue = this->queueModule->graphicsQueue;
     BufferManageModule::computeQueue = this->queueModule->computeQueue;
-    GeometryComponent::deviceModule_ptr = this->deviceModule;
+    QEGeometryComponent::deviceModule_ptr = this->deviceModule;
     TextureManagerModule::queueModule = this->queueModule;
     CustomTexture::commandPool = commandPoolModule->getCommandPool();
     OmniShadowResources::commandPool = commandPoolModule->getCommandPool();
@@ -208,7 +209,13 @@ void App::initVulkan()
     //std::filesystem::path path = "C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Idle_Character.gltf";
 
     // CHARACTER CONTROLLER
-    std::shared_ptr<QEGameObject> character = std::make_shared<QEGameObject>(QEGameObject(characterPath));
+
+    /*
+    std::shared_ptr<QEGeometryComponent> geometryComponent = make_shared<QEGeometryComponent>(std::make_unique<MeshGenerator>(characterPath));
+
+    std::shared_ptr<QEGameObject> character = std::make_shared<QEGameObject>();
+    character->AddComponent<QEGeometryComponent>(geometryComponent);
+    character->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
     character->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>(PhysicBodyType::RIGID_BODY));
     character->AddComponent<Collider>(std::make_shared<CapsuleCollider>(0.35f, 1.7f));
     auto characterCollider = character->GetComponent<Collider>();
@@ -223,6 +230,7 @@ void App::initVulkan()
     auto characterController = character->GetComponent<QECharacterController>();
     characterController->SetJumpForce(9.0f);
     this->gameObjectManager->AddGameObject(character, "character");
+    */
 
     //model->_Transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
     //model->transform->SetOrientation(glm::vec3(-90.0f, 180.0f, 0.0f));
@@ -233,7 +241,12 @@ void App::initVulkan()
     //this->gameObjectManager->AddGameObject(model, "modelRaptoid");
 
     /**/
-    std::shared_ptr<QEGameObject> floor = std::make_shared<QEGameObject>(QEGameObject(PRIMITIVE_TYPE::PLANE_TYPE));
+
+
+    std::shared_ptr<QEGameObject> floor = std::make_shared<QEGameObject>();
+    std::shared_ptr<QEGeometryComponent> geometryFloorComponent = make_shared<QEGeometryComponent>(std::make_unique<QuadGenerator>());
+    floor->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
+    floor->AddComponent<QEGeometryComponent>(geometryFloorComponent);
     auto floorTransform = floor->GetComponent<Transform>();
     floorTransform->SetPosition(glm::vec3(0.0f, -0.01f, 0.0f));
     floorTransform->SetScale(glm::vec3(10.0f, 1.0f, 10.0f));
@@ -254,7 +267,10 @@ void App::initVulkan()
     this->gameObjectManager->AddGameObject(floor, "floor");
 
     /**/
-    std::shared_ptr<QEGameObject> ramp = std::make_shared<QEGameObject>(QEGameObject(PRIMITIVE_TYPE::CUBE_TYPE));
+    std::shared_ptr<QEGameObject> ramp = std::make_shared<QEGameObject>();
+    std::shared_ptr<QEGeometryComponent> geometryCubeComponent = make_shared<QEGeometryComponent>(std::make_unique<CubeGenerator>());
+    ramp->AddComponent<QEGeometryComponent>(geometryCubeComponent);
+    ramp->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
     auto rampTransform = ramp->GetComponent<Transform>();
     rampTransform->SetPosition(glm::vec3(0.0f, -0.5f, -10.0f));
     rampTransform->SetOrientation(glm::vec3(70.0f, 0.0f, 0.0f));
@@ -272,7 +288,10 @@ void App::initVulkan()
     this->gameObjectManager->AddGameObject(ramp, "ramp");
 
     /**/
-    std::shared_ptr<QEGameObject> wall = std::make_shared<QEGameObject>(QEGameObject(PRIMITIVE_TYPE::CUBE_TYPE));
+    std::shared_ptr<QEGameObject> wall = std::make_shared<QEGameObject>();
+    std::shared_ptr<QEGeometryComponent> geometryWallComponent = make_shared<QEGeometryComponent>(std::make_unique<CubeGenerator>());
+    wall->AddComponent<QEGeometryComponent>(geometryWallComponent);
+    wall->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
     auto wallTransform = wall->GetComponent<Transform>();
     wallTransform->SetPosition(glm::vec3(3.0f, 0.5f, 0.0f));
     wallTransform->SetOrientation(glm::vec3(0.0f, 0.0f, 0.0f));
@@ -482,10 +501,10 @@ void App::mainLoop()
         this->timer->UpdateDeltaTime();
 
         //UPDATE CHARACTER CONTROLLER
-        auto character = this->gameObjectManager->GetGameObject("character");
-        auto characterController = character->GetComponent<QECharacterController>();
-        characterController->Update();
-        QECharacterController::ProcessInput(mainWindow.getWindow(), characterController);
+        //auto character = this->gameObjectManager->GetGameObject("character");
+        //auto characterController = character->GetComponent<QECharacterController>();
+        //characterController->Update();
+        //QECharacterController::ProcessInput(mainWindow.getWindow(), characterController);
 
         //PHYSIC SYSTEM
         this->physicsModule->ComputePhysics((float)Timer::DeltaTime);

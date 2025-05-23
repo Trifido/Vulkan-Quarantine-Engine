@@ -3,12 +3,12 @@
 #ifndef AABB_OBJECT_H
 #define AABB_OBJECT_H
 
-#include <GeometryComponent.h>
+#include <QEGeometryComponent.h>
 #include <Transform.h>
 #include <glm/glm.hpp>
 #include <vector>
 
-class AABBObject : public GeometryComponent
+class AABBObject : public QEGeometryComponent
 {
 private:
     std::shared_ptr<Transform> transform;
@@ -20,9 +20,11 @@ public:
     glm::vec3 Center;
     bool isGameObjectVisible = true;
     std::vector<glm::vec4> vertices;
+    std::vector<uint32_t> indices;
 
 private:
-    void createVertexBuffer() override;
+    void CreateVertexBuffers() override;
+    void CreateIndexBuffers() override;
 
 public:
     void CreateBuffers();

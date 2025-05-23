@@ -88,8 +88,8 @@ void Meshlet::GenerateCustomMeshlet(std::vector<Vertex>& vertices, std::vector<u
                     .insert(std::make_pair(index, true))
                     .second)
                 {
-                    auto* vertex = &vertices.at(index).pos;
-                    auto* normal = &vertices.at(index).norm;
+                    auto* vertex = &vertices.at(index).Position;
+                    auto* normal = &vertices.at(index).Normal;
 
                     meshlet_vertices.push_back(vertex);
                     meshlet_normals.push_back(normal);
@@ -147,7 +147,7 @@ void Meshlet::GenerateMeshlet(const std::vector<Vertex>& vertices, const std::ve
         meshlet_triangles.data(),
         indices.data(),
         indices.size(),
-        &vertices[0].pos.x,
+        &vertices[0].Position.x,
         vertices.size(),
         sizeof(Vertex),
         this->MAX_VERTICES,
@@ -163,7 +163,7 @@ void Meshlet::GenerateMeshlet(const std::vector<Vertex>& vertices, const std::ve
             &meshlet_vertices_indices[local_meshlet.vertex_offset],
             &meshlet_triangles[local_meshlet.triangle_offset],
             local_meshlet.triangle_count,
-            &vertices[0].pos.x,
+            &vertices[0].Position.x,
             vertices.size(),
             sizeof(Vertex)
         );

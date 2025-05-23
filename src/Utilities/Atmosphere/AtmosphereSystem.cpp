@@ -2,7 +2,6 @@
 #include <ShaderManager.h>
 #include <MaterialManager.h>
 #include <filesystem>
-#include <PrimitiveMesh.h>
 #include <SynchronizationModule.h>
 
 AtmosphereSystem::AtmosphereSystem()
@@ -146,13 +145,14 @@ void AtmosphereSystem::SetUpResources(Camera* cameraPtr)
     {
     default:
     case ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY:
-        this->_Mesh = std::make_shared<PrimitiveMesh>(PRIMITIVE_TYPE::QUAD_TYPE);
+
+        this->_Mesh = std::make_shared<QEGeometryComponent>(std::make_unique<QuadGenerator>());
         break;
     case ENVIRONMENT_TYPE::CUBEMAP:
-        this->_Mesh = std::make_shared<PrimitiveMesh>(PRIMITIVE_TYPE::CUBE_TYPE);
+        this->_Mesh = std::make_shared<QEGeometryComponent>(std::make_unique<CubeGenerator>());
         break;
     case ENVIRONMENT_TYPE::SPHERICALMAP:
-        this->_Mesh = std::make_shared<PrimitiveMesh>(PRIMITIVE_TYPE::SPHERE_TYPE);
+        this->_Mesh = std::make_shared<QEGeometryComponent>(std::make_unique<SphereGenerator>());
         break;
     }
 
@@ -342,12 +342,13 @@ void AtmosphereSystem::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t fram
 
     if (this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY)
     {
+        auto mesh = this->_Mesh->GetMesh();
         VkDeviceSize offsets[] = { 0 };
-        VkBuffer vertexBuffers[] = { this->_Mesh->vertexBuffer };
+        VkBuffer vertexBuffers[] = { this->_Mesh->vertexBuffer[0]};
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-        vkCmdBindIndexBuffer(commandBuffer, this->_Mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdBindIndexBuffer(commandBuffer, this->_Mesh->indexBuffer[0], 0, VK_INDEX_TYPE_UINT32);
 
-        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->_Mesh->indices.size()), 1, 0, 0, 0);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh->MeshData[0].Indices.size()), 1, 0, 0, 0);
     }
     else
     {

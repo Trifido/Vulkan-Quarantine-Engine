@@ -1,7 +1,7 @@
 #include "GameObjectManager.h"
 #include <iostream>
 #include <GameObjectDto.h>
-#include <PrimitiveMesh.h>
+#include <QEMeshRenderer.h>
 
 std::string GameObjectManager::CheckName(std::string nameGameObject)
 {
@@ -61,7 +61,10 @@ void GameObjectManager::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx
     {
         for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
         {
-            model.second->CreateDrawCommand(commandBuffer, idx);
+            auto meshRenderer = model.second->GetComponent<QEMeshRenderer>();
+            if (meshRenderer == nullptr)
+                continue;
+            meshRenderer->SetDrawCommand(commandBuffer, idx);
         }
     }
 }
@@ -70,12 +73,16 @@ void GameObjectManager::CSMCommand(VkCommandBuffer& commandBuffer, uint32_t idx,
 {
     for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
     {
+        auto meshRenderer = model.second->GetComponent<QEMeshRenderer>();
+        if (meshRenderer == nullptr)
+            continue;
+
         PushConstantCSMStruct shadowParameters = {};
         shadowParameters.model = model.second->GetComponent<Transform>()->GetModel();
         shadowParameters.cascadeIndex = cascadeIndex;
 
         vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantCSMStruct), &shadowParameters);
-        model.second->CreateShadowCommand(commandBuffer, idx, pipelineLayout);
+        meshRenderer->SetDrawShadowCommand(commandBuffer, idx, pipelineLayout);
     }
 }
 
@@ -83,6 +90,10 @@ void GameObjectManager::OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32
 {
     for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
     {
+        auto meshRenderer = model.second->GetComponent<QEMeshRenderer>();
+        if (meshRenderer == nullptr)
+            continue;
+
         PushConstantOmniShadowStruct shadowParameters = {};
         shadowParameters.view = viewParameter;
         auto transform = model.second->GetComponent<Transform>();
@@ -94,7 +105,7 @@ void GameObjectManager::OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32
         shadowParameters.model = transform->GetModel();
 
         vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantOmniShadowStruct), &shadowParameters);
-        model.second->CreateShadowCommand(commandBuffer, idx, pipelineLayout);
+        meshRenderer->SetDrawShadowCommand(commandBuffer, idx, pipelineLayout);
     }
 }
 
@@ -161,15 +172,13 @@ void GameObjectManager::SaveGameObjects(std::ofstream& file)
             }
 
             auto transform = model.second->GetComponent<Transform>();
-            auto mesh = model.second->GetComponent<PrimitiveMesh>();
+            auto mesh = model.second->GetComponent<QEGeometryComponent>();
 
             GameObjectDto gameObjectDto(
                 model.second->ID(),
                 model.first,
                 transform->GetModel(),
-                model.second->_meshImportedType,
-                mesh->Type,
-                model.second->MeshFilePath,
+                "",
                 matPath);
             gameObjectDtos.push_back(gameObjectDto);
         }
@@ -190,10 +199,6 @@ void GameObjectManager::SaveGameObjects(std::ofstream& file)
         file.write(gameObjectDtos[i].Name.c_str(), nameLength);
 
         file.write(reinterpret_cast<const char*>(&gameObjectDtos[i].WorldTransform), sizeof(glm::mat4));
-
-        file.write(reinterpret_cast<const char*>(&gameObjectDtos[i].MeshImportedType), sizeof(int));
-
-        file.write(reinterpret_cast<const char*>(&gameObjectDtos[i].MeshPrimitiveType), sizeof(int));
 
         size_t meshPathLength = gameObjectDtos[i].MeshPath.length();
         file.write(reinterpret_cast<const char*>(&meshPathLength), sizeof(meshPathLength));
@@ -276,10 +281,6 @@ std::vector<GameObjectDto> GameObjectManager::GetGameObjectDtos(std::ifstream& f
         file.read(&gameObjectDtos[i].Name[0], nameLength);
 
         file.read(reinterpret_cast<char*>(&gameObjectDtos[i].WorldTransform), sizeof(glm::mat4));
-
-        file.read(reinterpret_cast<char*>(&gameObjectDtos[i].MeshImportedType), sizeof(int));
-
-        file.read(reinterpret_cast<char*>(&gameObjectDtos[i].MeshPrimitiveType), sizeof(int));
 
         file.read(reinterpret_cast<char*>(&meshPathLength), sizeof(meshPathLength));
         gameObjectDtos[i].MeshPath.resize(meshPathLength);

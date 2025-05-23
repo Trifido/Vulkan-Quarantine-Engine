@@ -7,13 +7,13 @@
 
 struct Vertex
 {
-    glm::vec4 pos;
-    glm::vec4 norm;
-    alignas(16)glm::vec2 texCoord;
+    glm::vec4 Position;
+    glm::vec4 Normal;
+    alignas(16)glm::vec2 UV;
     bool operator==(const Vertex& other) const {
-        return this->pos == other.pos && this->norm == other.norm;
+        return this->Position == other.Position && this->Normal == other.Normal;
     }
-    glm::vec4 Tangents;
+    glm::vec4 Tangent;
 };
 
 struct Particle

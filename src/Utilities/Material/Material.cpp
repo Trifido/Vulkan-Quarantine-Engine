@@ -117,11 +117,6 @@ void Material::cleanup()
     this->materialData.CleanMaterialUBO();
 }
 
-void Material::bindingMesh(std::shared_ptr<GeometryComponent> mesh)
-{
-    this->isMeshBinding = true;
-}
-
 void Material::InitializeMaterial()
 {
     if (this->hasDescriptorBuffer && this->IsInitialized)
@@ -130,10 +125,9 @@ void Material::InitializeMaterial()
     }
 }
 
-
 void Material::UpdateUniformData()
 {
-    if (this->isMeshBinding && this->shader != nullptr && this->hasDescriptorBuffer)
+    if (this->shader != nullptr && this->hasDescriptorBuffer)
     {
         this->materialData.UpdateUBOMaterial();
     }

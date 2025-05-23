@@ -62,7 +62,7 @@ private:
     shared_ptr<ComputeNode> SVLUT_ComputeNode;
 
     // Mesh
-    shared_ptr<GeometryComponent> _Mesh = nullptr;
+    shared_ptr<QEGeometryComponent> _Mesh = nullptr;
 
     // Descriptor set
     vector<VkDescriptorSet> descriptorSets;

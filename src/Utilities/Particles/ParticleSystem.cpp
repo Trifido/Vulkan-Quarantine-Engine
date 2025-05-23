@@ -40,11 +40,11 @@ void ParticleSystem::cleanup()
 
 void ParticleSystem::InitializeMaterial()
 {
-    auto mat = this->materialManager->GetMaterial("defaultParticlesMat");
+    std::shared_ptr<Material> mat = this->materialManager->GetMaterial("defaultParticlesMat");
     auto newMatInstance = mat->CreateMaterialInstance();
     this->materialManager->AddMaterial(newMatInstance);
 
-    this->AddMaterial(newMatInstance);
+    this->AddComponent<Material>(newMatInstance);
     newMatInstance->InitializeMaterialDataUBO();
     newMatInstance->descriptor->ssboData["ParticleSSBO"] = computeNodeUpdateParticles->computeDescriptor->ssboData[0];
     newMatInstance->descriptor->ssboSize["ParticleSSBO"] = computeNodeUpdateParticles->computeDescriptor->ssboSize[0];

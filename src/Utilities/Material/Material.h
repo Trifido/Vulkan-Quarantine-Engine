@@ -16,7 +16,6 @@
 class Material : public QEGameComponent
 {
 private:
-    bool isMeshBinding = false;
     bool IsInitialized = false;
     bool hasDescriptorBuffer = false;
     bool isMeshShaderEnabled = false;
@@ -38,7 +37,6 @@ public:
 
     void cleanup();
     std::shared_ptr<Material> CreateMaterialInstance();
-    void bindingMesh(std::shared_ptr<GeometryComponent> mesh);
     void InitializeMaterial();
     void InitializeMaterialDataUBO();
     void UpdateUniformData();

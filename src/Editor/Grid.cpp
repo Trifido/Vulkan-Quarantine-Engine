@@ -2,10 +2,13 @@
 #include <ShaderManager.h>
 #include <GraphicsPipelineModule.h>
 #include <filesystem>
+#include <QEMeshRenderer.h>
 
 Grid::Grid()
 {
-    this->gridMesh = std::make_unique<QEGameObject>(QEGameObject(PRIMITIVE_TYPE::GRID_TYPE));
+    std::shared_ptr<QEGeometryComponent> geometryComponent = std::make_shared<QEGeometryComponent>(std::make_unique<GridGenerator>());
+    this->gridMesh = std::make_unique<QEGameObject>();
+    this->gridMesh->AddComponent<QEGeometryComponent>(geometryComponent);
 
     ShaderManager* shaderManager = ShaderManager::getInstance();
 
@@ -26,7 +29,7 @@ Grid::Grid()
         this->material_grid_ptr = matManager->GetMaterial(nameGrid);
         this->material_grid_ptr->InitializeMaterialDataUBO();
     }
-    this->gridMesh->AddMaterial(this->material_grid_ptr);
+    this->gridMesh->AddComponent<Material>(this->material_grid_ptr);
 }
 
 void Grid::Draw(VkCommandBuffer& commandBuffer, uint32_t idx)

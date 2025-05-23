@@ -32,7 +32,6 @@
 
 //  Utilities
 #include "QEGameObject.h"
-#include "Mesh.h"
 #include "Transform.h"
 #include "Material.h"
 #include "Camera.h"
