@@ -112,13 +112,13 @@ void BulletDebugDrawer::InitializeDebugResources()
     {
         this->material_debug_ptr = std::make_shared<Material>(Material(nameDebugAABB, this->shader_debug_ptr));
         this->material_debug_ptr->layer = (unsigned int)RenderLayer::EDITOR;
-        this->material_debug_ptr->InitializeMaterialDataUBO();
+        this->material_debug_ptr->InitializeMaterialData();
         matManager->AddMaterial(this->material_debug_ptr);
     }
     else
     {
         this->material_debug_ptr = matManager->GetMaterial(nameDebugAABB);
-        this->material_debug_ptr->InitializeMaterialDataUBO();
+        this->material_debug_ptr->InitializeMaterialData();
     }
 
     this->createVertexBuffer();

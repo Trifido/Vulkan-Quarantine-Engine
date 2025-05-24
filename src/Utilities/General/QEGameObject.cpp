@@ -81,6 +81,11 @@ void QEGameObject::QEInitialize()
 
         this->InitializeAnimationComponent();
     }
+
+    for (auto gameComponent : this->components)
+    {
+        gameComponent->QEStart();
+    }
 }
 
 void QEGameObject::InitializeResources()

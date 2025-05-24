@@ -96,7 +96,7 @@ void Material::CleanLastResources()
     this->hasDescriptorBuffer = false;
 }
 
-void Material::InitializeMaterialDataUBO()
+void Material::InitializeMaterialData()
 {
     if (this->hasDescriptorBuffer && !this->IsInitialized)
     {
@@ -104,6 +104,9 @@ void Material::InitializeMaterialDataUBO()
         this->descriptor->ubos["materialUBO"] = this->materialData.materialUBO;
         this->descriptor->uboSizes["materialUBO"] = this->materialData.materialUniformSize;
         this->descriptor->textures = this->materialData.texture_vector;
+
+        this->descriptor->InitializeDescriptorSets(this->shader);
+
         this->IsInitialized = true;
     }
 }
@@ -115,14 +118,6 @@ void Material::cleanup()
         this->descriptor->Cleanup();
     }
     this->materialData.CleanMaterialUBO();
-}
-
-void Material::InitializeMaterial()
-{
-    if (this->hasDescriptorBuffer && this->IsInitialized)
-    {        
-        this->descriptor->InitializeDescriptorSets(this->shader);
-    }
 }
 
 void Material::UpdateUniformData()
@@ -260,6 +255,7 @@ std::string Material::SaveMaterialFile()
 
 void Material::QEStart()
 {
+    this->InitializeMaterialData();
 }
 
 void Material::QEUpdate()

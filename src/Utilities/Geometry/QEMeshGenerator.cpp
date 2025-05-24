@@ -40,11 +40,11 @@ QEMesh CubeGenerator::GenerateQEMesh()
     // duplicamos vértices por cara (24 en total).
     // Índices de las 6 caras (2 triángulos × 3 índices):
     unsigned int faceIndices[36] = {
-        0,  1,  2,   2,  3,  0,   // atrás
+        0,  2,  1,   2,  0,  3,   // atrás
         4,  5,  6,   6,  7,  4,   // adelante
         8,  9, 10,  10, 11,  8,   // izquierda
        12, 13, 14,  14, 15, 12,   // derecha
-       16, 17, 18,  18, 19, 16,   // arriba
+       16, 18, 17,  18, 16, 19,   // arriba
        20, 21, 22,  22, 23, 20    // abajo
     };
 

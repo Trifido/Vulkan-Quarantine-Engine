@@ -37,8 +37,7 @@ public:
 
     void cleanup();
     std::shared_ptr<Material> CreateMaterialInstance();
-    void InitializeMaterial();
-    void InitializeMaterialDataUBO();
+    void InitializeMaterialData();
     void UpdateUniformData();
     bool HasDescriptorBuffer() { return this->hasDescriptorBuffer; }
     void SetMeshShaderPipeline(bool value);

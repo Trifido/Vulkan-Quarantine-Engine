@@ -22,13 +22,13 @@ void CullingSceneManager::InitializeCullingSceneResources()
     {
         this->material_aabb_ptr = std::make_shared<Material>(Material(nameDebugAABB, this->shader_aabb_ptr));
         this->material_aabb_ptr->layer = (unsigned int)RenderLayer::EDITOR;
-        this->material_aabb_ptr->InitializeMaterialDataUBO();
+        this->material_aabb_ptr->InitializeMaterialData();
         matManager->AddMaterial(this->material_aabb_ptr);
     }
     else
     {
         this->material_aabb_ptr = matManager->GetMaterial(nameDebugAABB);
-        this->material_aabb_ptr->InitializeMaterialDataUBO();
+        this->material_aabb_ptr->InitializeMaterialData();
     }
 }
 

@@ -45,7 +45,7 @@ void ParticleSystem::InitializeMaterial()
     this->materialManager->AddMaterial(newMatInstance);
 
     this->AddComponent<Material>(newMatInstance);
-    newMatInstance->InitializeMaterialDataUBO();
+    newMatInstance->InitializeMaterialData();
     newMatInstance->descriptor->ssboData["ParticleSSBO"] = computeNodeUpdateParticles->computeDescriptor->ssboData[0];
     newMatInstance->descriptor->ssboSize["ParticleSSBO"] = computeNodeUpdateParticles->computeDescriptor->ssboSize[0];
 

@@ -250,14 +250,6 @@ void MaterialManager::UpdateUniforms()
     }
 }
 
-void MaterialManager::InitializeMaterials()
-{
-    for (auto it : _materials)
-    {
-        it.second->InitializeMaterial();
-    }
-}
-
 std::vector<MaterialDto> MaterialManager::GetMaterialDtos(std::ifstream& file)
 {
     // Read the materials

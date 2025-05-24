@@ -21,13 +21,13 @@ Grid::Grid()
     {
         this->material_grid_ptr = std::make_shared<Material>(Material(nameGrid, this->shader_grid_ptr));
         this->material_grid_ptr->layer = (unsigned int)RenderLayer::EDITOR;
-        this->material_grid_ptr->InitializeMaterialDataUBO();
+        this->material_grid_ptr->InitializeMaterialData();
         matManager->AddMaterial(this->material_grid_ptr);
     }
     else
     {
         this->material_grid_ptr = matManager->GetMaterial(nameGrid);
-        this->material_grid_ptr->InitializeMaterialDataUBO();
+        this->material_grid_ptr->InitializeMaterialData();
     }
     this->gridMesh->AddComponent<Material>(this->material_grid_ptr);
 }

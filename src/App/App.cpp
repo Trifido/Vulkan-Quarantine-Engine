@@ -187,10 +187,10 @@ void App::initVulkan()
     this->cullingSceneManager = CullingSceneManager::getInstance();
     this->cullingSceneManager->InitializeCullingSceneResources();
     this->cullingSceneManager->AddCameraFrustum(this->cameraEditor->frustumComponent);
-    this->cullingSceneManager->DebugMode = true;
+    this->cullingSceneManager->DebugMode = false;
 
     this->physicsModule->InitializeDebugResources();
-    this->physicsModule->debugDrawer->DebugMode = true;
+    this->physicsModule->debugDrawer->DebugMode = false;
 
     // Inicializamos los componentes del editor
     std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
@@ -242,19 +242,22 @@ void App::initVulkan()
 
     /**/
 
+    auto defaultMat = this->materialManager->GetMaterial("defaultPrimitiveMat");
+    auto floorMatInstance = defaultMat->CreateMaterialInstance();
+    this->materialManager->AddMaterial(floorMatInstance);
 
     std::shared_ptr<QEGameObject> floor = std::make_shared<QEGameObject>();
-    std::shared_ptr<QEGeometryComponent> geometryFloorComponent = make_shared<QEGeometryComponent>(std::make_unique<QuadGenerator>());
+    std::shared_ptr<QEGeometryComponent> geometryFloorComponent = make_shared<QEGeometryComponent>(std::make_unique<FloorGenerator>());
     floor->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
     floor->AddComponent<QEGeometryComponent>(geometryFloorComponent);
+    floor->AddComponent<Material>(floorMatInstance);
     auto floorTransform = floor->GetComponent<Transform>();
     floorTransform->SetPosition(glm::vec3(0.0f, -0.01f, 0.0f));
     floorTransform->SetScale(glm::vec3(10.0f, 1.0f, 10.0f));
 
-    auto floorMat = floor->GetComponent<Material>();
-    floorMat->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.2f, 0.7f));
-    floorMat->materialData.SetMaterialField("Specular", glm::vec3(0.0f, 0.0f, 0.0f));
-    floorMat->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
+    floorMatInstance->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.2f, 0.7f));
+    floorMatInstance->materialData.SetMaterialField("Specular", glm::vec3(0.0f, 0.0f, 0.0f));
+    floorMatInstance->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
 
     floor->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>());
     auto floorPBody = floor->GetComponent<PhysicsBody>();
@@ -267,17 +270,20 @@ void App::initVulkan()
     this->gameObjectManager->AddGameObject(floor, "floor");
 
     /**/
+
+    auto rampMatInstance = defaultMat->CreateMaterialInstance();
+    this->materialManager->AddMaterial(rampMatInstance);
     std::shared_ptr<QEGameObject> ramp = std::make_shared<QEGameObject>();
     std::shared_ptr<QEGeometryComponent> geometryCubeComponent = make_shared<QEGeometryComponent>(std::make_unique<CubeGenerator>());
     ramp->AddComponent<QEGeometryComponent>(geometryCubeComponent);
     ramp->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
+    ramp->AddComponent<Material>(rampMatInstance);
     auto rampTransform = ramp->GetComponent<Transform>();
     rampTransform->SetPosition(glm::vec3(0.0f, -0.5f, -10.0f));
     rampTransform->SetOrientation(glm::vec3(70.0f, 0.0f, 0.0f));
     rampTransform->SetScale(glm::vec3(3.0f, 10.0f, 3.0f));
 
-    auto rampMat = ramp->GetComponent<Material>();
-    rampMat->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
+    rampMatInstance->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
 
     ramp->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>());
     auto rampPBody = ramp->GetComponent<PhysicsBody>();
@@ -288,17 +294,19 @@ void App::initVulkan()
     this->gameObjectManager->AddGameObject(ramp, "ramp");
 
     /**/
+    auto wallMatInstance = defaultMat->CreateMaterialInstance();
+    this->materialManager->AddMaterial(wallMatInstance);
     std::shared_ptr<QEGameObject> wall = std::make_shared<QEGameObject>();
     std::shared_ptr<QEGeometryComponent> geometryWallComponent = make_shared<QEGeometryComponent>(std::make_unique<CubeGenerator>());
     wall->AddComponent<QEGeometryComponent>(geometryWallComponent);
     wall->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
+    wall->AddComponent<Material>(wallMatInstance);
     auto wallTransform = wall->GetComponent<Transform>();
     wallTransform->SetPosition(glm::vec3(3.0f, 0.5f, 0.0f));
     wallTransform->SetOrientation(glm::vec3(0.0f, 0.0f, 0.0f));
     wallTransform->SetScale(glm::vec3(4.0f, 0.5f, 4.0f));
 
-    auto wallMat = wall->GetComponent<Material>();
-    wallMat->materialData.SetMaterialField("Diffuse", glm::vec3(0.8f, 0.2f, 0.2f));
+    wallMatInstance->materialData.SetMaterialField("Diffuse", glm::vec3(0.8f, 0.2f, 0.2f));
 
     wall->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>());
     auto wallPBody = wall->GetComponent<PhysicsBody>();
@@ -455,7 +463,6 @@ void App::initVulkan()
     this->animationManager->InitializeAnimations();
     this->animationManager->UpdateAnimations(0.0f);
     this->gameObjectManager->InitializePhysics();
-    this->materialManager->InitializeMaterials();
     this->computeNodeManager->InitializeComputeNodes();
     this->lightManager->InitializeShadowMaps();
 

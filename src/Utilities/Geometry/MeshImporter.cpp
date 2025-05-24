@@ -469,7 +469,7 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, QEMeshDat
         mat_ptr = materialManager->GetMaterial(materialName);
     }
 
-    mat_ptr->InitializeMaterialDataUBO();
+    mat_ptr->InitializeMaterialData();
 
     meshData.MaterialID = materialName;
 
