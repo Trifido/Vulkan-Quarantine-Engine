@@ -3,13 +3,15 @@
 #ifndef MATERIAL_MANAGER_H
 #define MATERIAL_MANAGER_H
 
-#include <Material/Material.h>
-#include <CameraEditor.h>
-#include <Material/TextureManager.h>
-#include <GraphicsPipelineModule.h>
-#include <RenderPassModule.h>
+#include <TextureManager.h>
 #include <QESingleton.h>
 #include <MaterialDto.h>
+
+class Material;
+class QECamera;
+class LightManager;
+class RenderPassModule;
+class ShaderModule;
 
 class MaterialManager : public QESingleton<MaterialManager>
 {
@@ -17,7 +19,7 @@ private:
     friend class QESingleton<MaterialManager>; // Permitir acceso al constructor
     std::unordered_map<std::string, std::shared_ptr<Material>> _materials;
 
-    Camera*             cameraEditor;
+    QECamera*           cameraEditor;
     LightManager*       lightManager;
     RenderPassModule*   renderPassModule;
 

@@ -2,7 +2,7 @@
 
 CameraEditor* CameraEditor::instance = nullptr;
 
-CameraEditor::CameraEditor(float width, float height, CameraDto cameraDto) : Camera(width, height, cameraDto)
+CameraEditor::CameraEditor(float width, float height, CameraDto cameraDto) : QECamera(width, height, cameraDto)
 {
     
 }

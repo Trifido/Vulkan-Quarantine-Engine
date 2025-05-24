@@ -218,11 +218,11 @@ void GameObjectManager::SaveGameObjects(std::ofstream& file)
 void GameObjectManager::LoadGameObjectDtos(std::vector<GameObjectDto>& gameObjectDtos)
 {
     // Load the GameObjects
-    for (size_t i = 0; i < gameObjectDtos.size(); i++)
-    {
-        std::shared_ptr<QEGameObject> gameObject = std::make_shared<QEGameObject>(gameObjectDtos[i]);
-        this->AddGameObject(gameObject, gameObjectDtos[i].Name);
-    }
+    //for (size_t i = 0; i < gameObjectDtos.size(); i++)
+    //{
+    //    std::shared_ptr<QEGameObject> gameObject = std::make_shared<QEGameObject>(gameObjectDtos[i]);
+    //    this->AddGameObject(gameObject, gameObjectDtos[i].Name);
+    //}
 }
 
 void GameObjectManager::InitializeQEGameObjects()

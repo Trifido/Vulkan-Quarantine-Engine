@@ -10,14 +10,15 @@
 #include <vulkan/vulkan_core.h>
 #include <memory>
 #include "UBO.h"
-#include <FrustumComponent.h>
 #include <CameraDto.h>
 
-class Camera
+class FrustumComponent;
+
+class QECamera
 {
 private:
     DeviceModule* deviceModule = nullptr;
-    std::shared_ptr<CameraUniform> cameraUniform = nullptr;
+    std::shared_ptr<CameraUniform> cameraUniform;
     glm::vec4 normalize_plane(glm::vec4 plane);
     bool isInputUpdated = true;
 
@@ -36,8 +37,8 @@ protected:
     float pitch = 0.0f;
 
 public:
-    std::shared_ptr<FrustumComponent> frustumComponent = nullptr;
-    std::shared_ptr<UniformBufferObject> cameraUBO = nullptr;
+    std::shared_ptr<FrustumComponent> frustumComponent;
+    std::shared_ptr<UniformBufferObject> cameraUBO;
     float WIDTH, HEIGHT;
     glm::vec3 cameraFront;
     glm::vec3 cameraPos;
@@ -50,8 +51,8 @@ protected:
     void UpdateFrustumPlanes();
 
 public:
-    Camera();
-    Camera(const float width, const float height, const CameraDto& cameraDto = CameraDto());
+    QECamera() = default;
+    QECamera(const float width, const float height, const CameraDto& cameraDto = CameraDto());
     bool LoadCameraDto(const float width, const float height, const CameraDto& cameraDto);
     CameraDto CreateCameraDto();
     void CameraController(float deltaTime);

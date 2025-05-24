@@ -18,7 +18,7 @@ AtmosphereSystem::~AtmosphereSystem()
     this->deviceModule = nullptr;
 }
 
-void AtmosphereSystem::LoadAtmosphereDto(AtmosphereDto atmosphereDto, Camera* cameraPtr)
+void AtmosphereSystem::LoadAtmosphereDto(AtmosphereDto atmosphereDto, QECamera* cameraPtr)
 {
     this->sunLight = std::static_pointer_cast<SunLight>(this->lightManager->GetLight(SUN_NAME));
     if (this->sunLight == nullptr)
@@ -79,7 +79,7 @@ void AtmosphereSystem::AddTextureResources(const string* texturePaths, uint32_t 
     this->CreateDescriptorSet();
 }
 
-void AtmosphereSystem::InitializeAtmosphere(Camera* cameraPtr)
+void AtmosphereSystem::InitializeAtmosphere(QECamera* cameraPtr)
 {
     this->SetUpResources(cameraPtr);
     this->UpdateSun();
@@ -87,7 +87,7 @@ void AtmosphereSystem::InitializeAtmosphere(Camera* cameraPtr)
     this->CreateDescriptorSet();
 }
 
-void AtmosphereSystem::SetUpResources(Camera* cameraPtr)
+void AtmosphereSystem::SetUpResources(QECamera* cameraPtr)
 {
     this->Cleanup();
     this->CleanLastResources();
@@ -156,10 +156,10 @@ void AtmosphereSystem::SetUpResources(Camera* cameraPtr)
         break;
     }
 
-    this->_Mesh->InitializeMesh();
+    this->_Mesh->QEStart();
 }
 
-void AtmosphereSystem::InitializeAtmosphere(ENVIRONMENT_TYPE type, const string* texturePaths, uint32_t numTextures, Camera* cameraPtr)
+void AtmosphereSystem::InitializeAtmosphere(ENVIRONMENT_TYPE type, const string* texturePaths, uint32_t numTextures, QECamera* cameraPtr)
 {
     if (this->environmentType == type) return;
 
@@ -172,7 +172,7 @@ void AtmosphereSystem::InitializeAtmosphere(ENVIRONMENT_TYPE type, const string*
     this->AddTextureResources(texturePaths, numTextures);
 }
 
-void AtmosphereSystem::SetCamera(Camera* cameraPtr)
+void AtmosphereSystem::SetCamera(QECamera* cameraPtr)
 {
     this->camera = cameraPtr;
 }

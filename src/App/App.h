@@ -144,7 +144,7 @@ private:
 
     QEScene     scene;
 
-    Camera*     cameraEditor;
+    QECamera*     cameraEditor;
     LightManager*       lightManager {};
     ShaderManager*      shaderManager{};
     MaterialManager*    materialManager {};

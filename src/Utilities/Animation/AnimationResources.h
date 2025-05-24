@@ -12,6 +12,7 @@ struct BoneInfo
     int id;
     glm::mat4 offset;
 
+    BoneInfo() = default;
     BoneInfo(uint32_t _id, const glm::mat4& _offset)
         : id(_id), offset(_offset) {}
 };

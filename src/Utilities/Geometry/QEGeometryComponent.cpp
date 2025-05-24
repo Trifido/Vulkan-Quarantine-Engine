@@ -3,6 +3,22 @@
 
 DeviceModule* QEGeometryComponent::deviceModule_ptr;
 
+const QEMesh* QEGeometryComponent::GetMesh() const
+{
+    if (mesh.MeshData.empty())
+        return nullptr;
+    return &mesh;
+}
+
+size_t QEGeometryComponent::GetIndicesCount(uint32_t meshIndex) const
+{
+    if (meshIndex < 0 || meshIndex >= mesh.MeshData.size())
+    {
+        throw std::out_of_range("Mesh index out of range");
+    }
+    return mesh.MeshData[meshIndex].Indices.size();
+}
+
 void QEGeometryComponent::cleanup()
 {
     for(int i = 0; i < indexBufferMemory.size(); i++)
@@ -35,6 +51,12 @@ void QEGeometryComponent::cleanup()
 
 void QEGeometryComponent::QEStart()
 {
+    if (generator == nullptr || deviceModule_ptr == nullptr  || mesh.MeshData.empty())
+    {
+        return;
+    }
+
+    BuildMesh();
 }
 
 void QEGeometryComponent::QEUpdate()

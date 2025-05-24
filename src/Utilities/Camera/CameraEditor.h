@@ -4,7 +4,7 @@
 
 #include <Camera.h>
 
-class CameraEditor : public Camera
+class CameraEditor : public QECamera
 {
 public:
     static CameraEditor* instance;

@@ -2,16 +2,9 @@
 #ifndef QE_GAME_OBJECT_H
 #define QE_GAME_OBJECT_H
 
-#include "Transform.h"
-#include "Material.h"
-#include "Camera.h"
-#include <PhysicsBody.h>
-#include <Collider.h>
 #include <AnimationManager.h>
 #include <CullingSceneManager.h>
-#include <SkeletalComponent.h>
 #include <Numbered.h>
-#include <AABBObject.h>
 #include <GameObjectDto.h>
 #include <QECharacterController.h>
 
@@ -51,12 +44,27 @@ public:
     void UpdatePhysicTransform();
 
     void QEInitialize();
-
     void QEUpdate() {}
     void QERelease() {}
 
     template<typename T>
-    bool AddComponent(std::shared_ptr<T> component_ptr);
+    bool AddComponent(std::shared_ptr<T> component_ptr)
+    {
+        if (component_ptr == nullptr)
+            return false;
+
+        if (std::find_if(components.begin(), components.end(), [&](const std::shared_ptr<QEGameComponent>& comp) {
+            return dynamic_cast<T*>(comp.get()) != nullptr;
+            }) != components.end())
+        {
+            return false;
+        }
+
+        components.push_back(component_ptr);
+        component_ptr->BindGameObject(this);
+
+        return true;
+    }
 
     template<typename T>
     std::shared_ptr<T> GetComponent()
@@ -75,7 +83,6 @@ public:
 protected:
     virtual bool IsValidGameObject();
     void InitializeAnimationComponent();
-    bool CreateChildsGameObject(std::string pathfile);
 };
 
 #endif

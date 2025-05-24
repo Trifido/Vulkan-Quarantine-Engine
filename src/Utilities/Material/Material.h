@@ -26,7 +26,7 @@ public:
     std::string Name;
     MaterialData materialData;
     unsigned int layer;
-    std::shared_ptr<ShaderModule> shader = nullptr;
+    std::shared_ptr<ShaderModule> shader;
     std::shared_ptr<DescriptorBuffer> descriptor;
 
 public:

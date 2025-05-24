@@ -284,7 +284,7 @@ void App::initVulkan()
     rampPBody->CollisionGroup = CollisionFlag::COL_SCENE;
     rampPBody->CollisionMask = CollisionFlag::COL_PLAYER;
 
-    ramp->AddComponent(std::make_shared<BoxCollider>());
+    ramp->AddComponent<BoxCollider>(std::make_shared<BoxCollider>());
     this->gameObjectManager->AddGameObject(ramp, "ramp");
 
     /**/

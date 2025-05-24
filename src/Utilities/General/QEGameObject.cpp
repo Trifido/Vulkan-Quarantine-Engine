@@ -1,31 +1,9 @@
 #include "QEGameObject.h"
-#include <MeshImporter.h>
-
-#include <AnimationImporter.h>
 
 QEGameObject::QEGameObject()
 {
     this->childs.resize(0);
     this->InitializeResources();
-}
-
-template<typename T>
-bool QEGameObject::AddComponent(std::shared_ptr<T> component_ptr)
-{
-    if (component_ptr == nullptr)
-        return false;
-
-    if (std::find_if(components.begin(), components.end(), [&](const std::shared_ptr<QEGameComponent>& comp) {
-        return dynamic_cast<T*>(comp.get()) != nullptr;
-        }) != components.end())
-    {
-        return false;
-    }
-
-    components.push_back(component_ptr);
-    component_ptr->BindGameObject(this);
-
-    return true;
 }
 
 /*
@@ -64,6 +42,8 @@ void QEGameObject::QEInitialize()
         return;
     }
 
+    geometryComponent->BuildMesh();
+
     // Set the AABB component
     auto mesh = geometryComponent->GetMesh();
     auto aabbCulling = this->cullingSceneManager->GenerateAABB(mesh->BoundingBox, transform);
@@ -89,7 +69,7 @@ void QEGameObject::QEInitialize()
     //Set the animations
     if (mesh->AnimationData.size())
     {
-        this->AddComponent(std::make_shared<AnimationComponent>());
+        this->AddComponent<AnimationComponent>(std::make_shared<AnimationComponent>());
 
         for (auto anim : mesh->AnimationData)
         {
@@ -133,7 +113,7 @@ void QEGameObject::AddAnimation(std::shared_ptr<Animation> animation_ptr)
     auto animationComponent = this->GetComponent<AnimationComponent>();
     if (animationComponent == nullptr)
     {
-        this->AddComponent(std::make_shared<AnimationComponent>());
+        this->AddComponent<AnimationComponent>(std::make_shared<AnimationComponent>());
     }
 
     animationComponent = this->GetComponent<AnimationComponent>();
@@ -148,7 +128,7 @@ void QEGameObject::AddAnimation(std::shared_ptr<Animation> animation_ptr)
 
 void QEGameObject::AddCharacterController(std::shared_ptr<QECharacterController> characterController_ptr)
 {
-    this->AddComponent(characterController_ptr);
+    this->AddComponent<QECharacterController>(characterController_ptr);
     auto physicsBody = this->GetComponent<PhysicsBody>();
     auto collider = this->GetComponent<Collider>();
     characterController_ptr->BindGameObjectProperties(physicsBody, collider);
@@ -170,8 +150,7 @@ void QEGameObject::InitializeAnimationComponent()
         std::vector<std::string> idMeshes;
         for (unsigned int i = 0; i < mesh->MeshData.size(); i++)
         {
-            std::string meshID = this->id + "_" + std::to_string(i);
-            idMeshes.push_back(meshID);
+            idMeshes.push_back(std::to_string(i));
         }
 
         animationComponent->animator->InitializeComputeNodes(idMeshes);

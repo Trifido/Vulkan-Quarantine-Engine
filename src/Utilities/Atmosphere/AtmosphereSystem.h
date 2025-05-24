@@ -34,7 +34,7 @@ private:
     friend class QESingleton<AtmosphereSystem>; // Permitir acceso al constructor
 
     DeviceModule* deviceModule;
-    Camera* camera = nullptr;
+    QECamera* camera = nullptr;
     LightManager* lightManager = nullptr;
     ComputeNodeManager* computeNodeManager;
     SwapChainModule* swapChainModule;
@@ -82,18 +82,18 @@ private:
     VkDescriptorBufferInfo GetBufferInfo(VkBuffer buffer, VkDeviceSize bufferSize);
     void SetDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, uint32_t idBuffer, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize);
     void SetSamplerDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding, std::shared_ptr<CustomTexture> texture, VkDescriptorImageInfo& imageInfo);
-    void SetUpResources(Camera* cameraPtr);
+    void SetUpResources(QECamera* cameraPtr);
 
 public:
     AtmosphereSystem();
     ~AtmosphereSystem();
 
-    void LoadAtmosphereDto(AtmosphereDto atmosphereDto, Camera* cameraPtr);
+    void LoadAtmosphereDto(AtmosphereDto atmosphereDto, QECamera* cameraPtr);
     AtmosphereDto CreateAtmosphereDto();
     void AddTextureResources(const string* texturePaths, uint32_t numTextures);
-    void InitializeAtmosphere(Camera* cameraPtr);
-    void InitializeAtmosphere(ENVIRONMENT_TYPE type, const string* texturePaths, uint32_t numTextures, Camera* cameraPtr);
-    void SetCamera(Camera* cameraPtr);
+    void InitializeAtmosphere(QECamera* cameraPtr);
+    void InitializeAtmosphere(ENVIRONMENT_TYPE type, const string* texturePaths, uint32_t numTextures, QECamera* cameraPtr);
+    void SetCamera(QECamera* cameraPtr);
     void DrawCommand(VkCommandBuffer& commandBuffer, uint32_t frameIdx);
     void Cleanup();
     void CleanLastResources();

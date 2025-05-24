@@ -1,4 +1,7 @@
 #include "Camera.h"
+
+#include <FrustumComponent.h>
+
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <SynchronizationModule.h>
@@ -15,7 +18,7 @@ float glm_vec3_norm(glm::vec3 v) {
     return sqrtf(glm_vec3_norm2(v));
 }
 
-Camera::Camera(const float width, const float height, const CameraDto& cameraDto)
+QECamera::QECamera(const float width, const float height, const CameraDto& cameraDto)
 {
     this->deviceModule = DeviceModule::getInstance();
 
@@ -28,7 +31,7 @@ Camera::Camera(const float width, const float height, const CameraDto& cameraDto
     this->LoadCameraDto(width, height, cameraDto);
 }
 
-bool Camera::LoadCameraDto(const float width, const float height, const CameraDto& cameraDto)
+bool QECamera::LoadCameraDto(const float width, const float height, const CameraDto& cameraDto)
 {
     this->cameraFront = cameraDto.front;
     this->cameraPos = cameraDto.position;// glm::vec3(0.0f, 10.0f, 10.0f);
@@ -51,7 +54,7 @@ bool Camera::LoadCameraDto(const float width, const float height, const CameraDt
     return true;
 }
 
-CameraDto Camera::CreateCameraDto()
+CameraDto QECamera::CreateCameraDto()
 {
     return
     {
@@ -61,7 +64,7 @@ CameraDto Camera::CreateCameraDto()
     };
 }
 
-void Camera::CameraController(float deltaTime)
+void QECamera::CameraController(float deltaTime)
 {
     EditorScroll();
     EditorRotate();
@@ -100,7 +103,7 @@ void Camera::CameraController(float deltaTime)
     }
 }
 
-void Camera::EditorScroll()
+void QECamera::EditorScroll()
 {
     if (ImGui::GetIO().MouseWheel != 0.0f && ImGui::GetIO().KeyShift)
     {
@@ -115,7 +118,7 @@ void Camera::EditorScroll()
     }
 }
 
-void Camera::EditorRotate()
+void QECamera::EditorRotate()
 {
     if (ImGui::GetIO().KeyShift && ImGui::IsMouseDown(1))
     {
@@ -162,7 +165,7 @@ void Camera::EditorRotate()
     }
 }
 
-void Camera::CheckCameraAttributes(float* positionCamera, float* frontCamera, float nfov, float nPlane, float fPlane)
+void QECamera::CheckCameraAttributes(float* positionCamera, float* frontCamera, float nfov, float nPlane, float fPlane)
 {
     bool posEqual = true;
     bool lookAtEqual = true;
@@ -192,7 +195,7 @@ void Camera::CheckCameraAttributes(float* positionCamera, float* frontCamera, fl
     }
 }
 
-void Camera::InvertPitch(float heightPos)
+void QECamera::InvertPitch(float heightPos)
 {
     this->cameraPos.y = cameraPos.y + heightPos;
 
@@ -209,13 +212,13 @@ void Camera::InvertPitch(float heightPos)
     this->UpdateUBOCamera();
 }
 
-void Camera::UpdateViewportSize(VkExtent2D size)
+void QECamera::UpdateViewportSize(VkExtent2D size)
 {
     this->WIDTH = (float)size.width;
     this->HEIGHT = (float)size.height;
 }
 
-void Camera::UpdateCamera()
+void QECamera::UpdateCamera()
 {
     this->view = glm::lookAt(this->cameraPos, this->cameraPos + this->cameraFront, this->cameraUp);
     this->projection = glm::perspective(glm::radians(fov), (float)this->WIDTH / (float)this->HEIGHT, this->nearPlane, this->farPlane);
@@ -228,7 +231,7 @@ void Camera::UpdateCamera()
     this->frustumComponent->ActivateComputeCulling(true);
 }
 
-void Camera::UpdateUniform()
+void QECamera::UpdateUniform()
 {
     this->cameraUniform->projection = this->projection;
     this->cameraUniform->view = this->view;
@@ -238,7 +241,7 @@ void Camera::UpdateUniform()
     this->UpdateFrustumPlanes();
 }
 
-glm::vec4 Camera::normalize_plane(glm::vec4 plane) {
+glm::vec4 QECamera::normalize_plane(glm::vec4 plane) {
     float len = glm_vec3_norm({ plane.x, plane.y, plane.z });
 
     float value = 1.0f / len;
@@ -246,7 +249,7 @@ glm::vec4 Camera::normalize_plane(glm::vec4 plane) {
     return plane;
 }
 
-void Camera::UpdateFrustumPlanes()
+void QECamera::UpdateFrustumPlanes()
 {
     glm::mat4 viewprojectionTranspose = glm::transpose(this->VP);
     this->cameraUniform->frustumPlanes[0] = normalize_plane(viewprojectionTranspose[3] + viewprojectionTranspose[0]);
@@ -259,7 +262,7 @@ void Camera::UpdateFrustumPlanes()
     this->frustumComponent->RecreateFrustum(this->VP);
 }
 
-void Camera::UpdateUBOCamera()
+void QECamera::UpdateUBOCamera()
 {
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {
@@ -270,7 +273,7 @@ void Camera::UpdateUBOCamera()
     }
 }
 
-void Camera::CleanCameraUBO()
+void QECamera::CleanCameraUBO()
 {
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
@@ -282,12 +285,12 @@ void Camera::CleanCameraUBO()
     }
 }
 
-bool Camera::IsModified()
+bool QECamera::IsModified()
 {
     return this->isInputUpdated;
 }
 
-void Camera::ResetModifiedField()
+void QECamera::ResetModifiedField()
 {
     this->isInputUpdated = false;
 }

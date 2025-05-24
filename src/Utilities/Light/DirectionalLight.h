@@ -12,14 +12,14 @@ class DirectionalLight : public Light
 {
 private:
     float cascadeSplitLambda = 0.95f;
-    Camera* camera = nullptr;
+    QECamera* camera = nullptr;
 
 public:
     std::shared_ptr<CSMResources> shadowMappingResourcesPtr = nullptr;
 
 public:
     DirectionalLight();
-    DirectionalLight(std::shared_ptr<VkRenderPass> renderPass, Camera* camera);
+    DirectionalLight(std::shared_ptr<VkRenderPass> renderPass, QECamera* camera);
     void UpdateUniform() override;
     void CleanShadowMapResources();
     void UpdateCascades();

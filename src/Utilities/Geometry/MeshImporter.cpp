@@ -1,9 +1,12 @@
 #include "MeshImporter.h"
 #include <fstream>
+#include <memory>
 #include <assimp/Exporter.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/config.h>
 #include <unordered_set>
+#include "MaterialData.h"
+#include "Material.h"
 
 void MeshImporter::RecreateNormals(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices)
 {
@@ -94,7 +97,7 @@ void MeshImporter::ExtractBoneWeightForVertices(QEMeshData& data, aiMesh* mesh, 
         if (m_BoneInfoMap.find(boneName) == m_BoneInfoMap.end())
         {
             glm::mat4 offset = ConvertMatrixToGLMFormat(mesh->mBones[boneIndex]->mOffsetMatrix);
-            m_BoneInfoMap[boneName] = { m_BoneInfoMap.size(), offset };
+            m_BoneInfoMap[boneName] = { static_cast<uint32_t>(m_BoneInfoMap.size()), offset };
             boneID = (int)m_BoneInfoMap.size() - 1;
         }
         else

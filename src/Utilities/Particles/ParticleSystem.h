@@ -55,7 +55,7 @@ public:
 
 private:
     void createShaderStorageBuffers();
-    void SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator_ptr = nullptr) override;
+    void SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator_ptr = nullptr);
     void InitializeDeadList();
     void InitializeParticleSystemParameters();
     void SetNewParticlesUBO(uint32_t newParticles, uint32_t nFrame);
@@ -68,7 +68,7 @@ public:
     void AddParticleTexture(std::shared_ptr<CustomTexture> texture);
     void Update();
     void cleanup();
-    void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx) override;
+    void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
     bool IsValidRender() override;
 };
 

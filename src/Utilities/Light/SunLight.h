@@ -13,7 +13,7 @@ public:
 
 public:
     SunLight();
-    SunLight(std::shared_ptr<VkRenderPass> renderPass, Camera* camera);
+    SunLight(std::shared_ptr<VkRenderPass> renderPass, QECamera* camera);
     void UpdateSun();
     void SetLightDirection(glm::vec3 dir);
 };

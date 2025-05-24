@@ -10,7 +10,7 @@ DirectionalLight::DirectionalLight() : Light()
     this->transform->SetOrientation(glm::vec3(90.0f, 0.0f, 0.0f));
 }
 
-DirectionalLight::DirectionalLight(std::shared_ptr<VkRenderPass> renderPass, Camera* camera) : DirectionalLight()
+DirectionalLight::DirectionalLight(std::shared_ptr<VkRenderPass> renderPass, QECamera* camera) : DirectionalLight()
 {
     this->camera = camera;
     this->shadowMappingResourcesPtr = std::make_shared<CSMResources>(renderPass);

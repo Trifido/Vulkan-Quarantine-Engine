@@ -3,10 +3,12 @@
 #ifndef AABB_OBJECT_H
 #define AABB_OBJECT_H
 
-#include <QEGeometryComponent.h>
-#include <Transform.h>
-#include <glm/glm.hpp>
+#include <memory>
 #include <vector>
+#include <glm/glm.hpp>
+
+#include "Transform.h"
+#include "QEGeometryComponent.h"
 
 class AABBObject : public QEGeometryComponent
 {
@@ -23,13 +25,13 @@ public:
     std::vector<uint32_t> indices;
 
 private:
-    void CreateVertexBuffers() override;
-    void CreateIndexBuffers() override;
+    void CreateVertexBuffers();
+    void CreateIndexBuffers();
 
 public:
+    AABBObject();
     void CreateBuffers();
     void CleanResources();
-    void InitializeMesh() override;
     void AddTransform(std::shared_ptr<Transform> modelTransform);
     const std::shared_ptr<Transform> GetTransform();
 };

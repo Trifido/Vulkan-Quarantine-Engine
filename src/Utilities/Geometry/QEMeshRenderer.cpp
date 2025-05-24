@@ -49,7 +49,7 @@ void QEMeshRenderer::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx
 
             if (animator_ptr != nullptr)
             {
-                vkCmdBindVertexBuffers(commandBuffer, 0, 1, &animator_ptr->GetComputeNode(this->id)->computeDescriptor->ssboData[2]->uniformBuffers.at(idx), offsets);
+                vkCmdBindVertexBuffers(commandBuffer, 0, 1, &animator_ptr->GetComputeNode(std::to_string(i))->computeDescriptor->ssboData[2]->uniformBuffers.at(idx), offsets);
             }
             else
             {
@@ -86,7 +86,7 @@ void QEMeshRenderer::SetDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32
 
             if (animator_ptr != nullptr)
             {
-                vkCmdBindVertexBuffers(commandBuffer, 0, 1, &animator_ptr->GetComputeNode(this->id)->computeDescriptor->ssboData[2]->uniformBuffers.at(idx), offsets);
+                vkCmdBindVertexBuffers(commandBuffer, 0, 1, &animator_ptr->GetComputeNode(std::to_string(i))->computeDescriptor->ssboData[2]->uniformBuffers.at(idx), offsets);
             }
             else
             {

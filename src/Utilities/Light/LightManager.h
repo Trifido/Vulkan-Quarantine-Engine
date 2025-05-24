@@ -18,6 +18,8 @@
 #include <PointShadowDescriptorsManager.h>
 #include <CSMDescriptorsManager.h>
 
+#include <ShadowPipelineModule.h>
+
 #include <QESingleton.h>
 #include <LightDto.h>
 
@@ -47,7 +49,7 @@ private:
 
     DeviceModule* deviceModule = nullptr;
     SwapChainModule* swapChainModule = nullptr;
-    Camera* camera = nullptr;
+    QECamera* camera = nullptr;
 
     uint32_t currentNumLights = 0;
     std::unordered_map<std::string, std::shared_ptr<Light>> _lights;
@@ -61,14 +63,14 @@ private:
     RenderPassModule* renderPassModule = nullptr;
 
 public:
-    std::shared_ptr<UniformBufferObject>    lightUBO = nullptr;
-    std::shared_ptr<UniformBufferObject>    lightSSBO = nullptr;
+    std::shared_ptr<UniformBufferObject>    lightUBO;
+    std::shared_ptr<UniformBufferObject>    lightSSBO;
     VkDeviceSize                            lightSSBOSize;
-    std::shared_ptr<UniformBufferObject>    lightIndexSSBO = nullptr;
+    std::shared_ptr<UniformBufferObject>    lightIndexSSBO;
     VkDeviceSize                            lightIndexSSBOSize;
-    std::shared_ptr<UniformBufferObject>    lightTilesSSBO = nullptr;
+    std::shared_ptr<UniformBufferObject>    lightTilesSSBO;
     VkDeviceSize                            lightTilesSSBOSize;
-    std::shared_ptr<UniformBufferObject>    lightBinSSBO = nullptr;
+    std::shared_ptr<UniformBufferObject>    lightBinSSBO;
     VkDeviceSize                            lightBinSSBOSize;
 
     std::vector<std::shared_ptr<DirectionalLight>> DirLights;
@@ -77,11 +79,11 @@ public:
 
     std::shared_ptr<PointShadowDescriptorsManager> PointShadowDescritors;
     std::shared_ptr<CSMDescriptorsManager> CSMDescritors;
-    std::shared_ptr<ShadowPipelineModule> CSMPipelineModule = nullptr;
-    std::shared_ptr<ShadowPipelineModule> OmniShadowPipelineModule = nullptr;
+    std::shared_ptr<ShadowPipelineModule> CSMPipelineModule;
+    std::shared_ptr<ShadowPipelineModule> OmniShadowPipelineModule;
 
-    std::shared_ptr<ShaderModule> CSMShaderModule = nullptr;
-    std::shared_ptr<ShaderModule> OmniShadowShaderModule = nullptr;
+    std::shared_ptr<ShaderModule> CSMShaderModule;
+    std::shared_ptr<ShaderModule> OmniShadowShaderModule;
 
 private:
     void AddLight(std::shared_ptr<Light> light_ptr, std::string& name);
@@ -106,7 +108,7 @@ public:
     void CleanLightUBO();
     void CleanLastResources();
     void CleanShadowMapResources();
-    void SetCamera(Camera* camera_ptr);
+    void SetCamera(QECamera* camera_ptr);
 };
 
 #endif

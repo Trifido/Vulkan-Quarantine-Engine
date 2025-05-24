@@ -34,18 +34,17 @@ void CullingSceneManager::InitializeCullingSceneResources()
 
 std::shared_ptr<AABBObject> CullingSceneManager::GenerateAABB(std::pair<glm::vec3, glm::vec3> aabbData, std::shared_ptr<Transform> transform_ptr)
 {
-    AABBObject aabb;
-    aabb.min = aabbData.first;
-    aabb.max = aabbData.second;
-    aabb.Size = (aabbData.second + aabbData.first) * 0.5f;
-    aabb.Center = (aabbData.first - aabbData.second) * 0.5f;
-    aabb.AddTransform(transform_ptr);
+    this->aabb_objects.push_back(std::make_shared<AABBObject>());
 
-    aabb.CreateBuffers();
+    auto aabbPtr = this->aabb_objects.back();
+    aabbPtr->min = aabbData.first;
+    aabbPtr->max = aabbData.second;
+    aabbPtr->Size = (aabbData.second + aabbData.first) * 0.5f;
+    aabbPtr->Center = (aabbData.first - aabbData.second) * 0.5f;
+    aabbPtr->AddTransform(transform_ptr);
+    aabbPtr->CreateBuffers();
 
-    this->aabb_objects.push_back(std::make_shared<AABBObject>(aabb));
-
-    return this->aabb_objects.back();
+    return aabbPtr;
 }
 
 void CullingSceneManager::CleanUp()
@@ -74,9 +73,9 @@ void CullingSceneManager::DrawDebug(VkCommandBuffer& commandBuffer, uint32_t idx
         for (unsigned int i = 0; i < this->aabb_objects.size(); i++)
         {
             VkDeviceSize offsets[] = { 0 };
-            VkBuffer vertexBuffers[] = { this->aabb_objects.at(i)->vertexBuffer };
+            VkBuffer vertexBuffers[] = { this->aabb_objects.at(i)->vertexBuffer[0]};
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-            vkCmdBindIndexBuffer(commandBuffer, this->aabb_objects.at(i)->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+            vkCmdBindIndexBuffer(commandBuffer, this->aabb_objects.at(i)->indexBuffer[0], 0, VK_INDEX_TYPE_UINT32);
 
             VkShaderStageFlagBits stages = VK_SHADER_STAGE_ALL;
             vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, stages, 0, sizeof(PushConstantStruct), &this->aabb_objects.at(i)->GetTransform()->GetModel());

@@ -1,6 +1,11 @@
 #include "AABBObject.h"
 #include <BufferManageModule.h>
 
+
+AABBObject::AABBObject()
+{
+}
+
 void AABBObject::CreateVertexBuffers()
 {
     vertexBuffer.resize(1);
@@ -43,7 +48,8 @@ void AABBObject::CreateBuffers()
     0, 1, 1, 2, 2, 3, 3, 0, 0, 4, 4, 5, 5, 6, 6, 7, 7, 4, 3, 7, 2, 6, 1, 5
     };
 
-    this->InitializeMesh();
+    this->CreateVertexBuffers();
+    this->CreateIndexBuffers();
 }
 
 void AABBObject::CleanResources()
@@ -53,12 +59,6 @@ void AABBObject::CleanResources()
     this->indices.clear();
 
     this->cleanup();
-}
-
-void AABBObject::InitializeMesh()
-{
-    this->CreateVertexBuffers();
-    this->CreateIndexBuffers();
 }
 
 void AABBObject::AddTransform(std::shared_ptr<Transform> modelTransform)

@@ -1,4 +1,5 @@
 #include "BulletDebugDrawer.h"
+#include "Material.h"
 #include <BufferManageModule.h>
 
 DeviceModule* BulletDebugDrawer::deviceModule_ptr;
