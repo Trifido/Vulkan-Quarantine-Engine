@@ -36,7 +36,6 @@ public:
     QEGameObject();
     //QEGameObject(const GameObjectDto& gameObjectDto);
     inline std::string ID() const { return id; }
-    void Cleanup();
     void AddAnimation(std::shared_ptr<Animation> animation_ptr);
     void AddCharacterController(std::shared_ptr<QECharacterController> characterController_ptr);
     void InitializePhysics();
@@ -45,7 +44,7 @@ public:
 
     void QEInitialize();
     void QEUpdate() {}
-    void QERelease() {}
+    void QERelease();
 
     template<typename T>
     bool AddComponent(std::shared_ptr<T> component_ptr)

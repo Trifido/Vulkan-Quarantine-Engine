@@ -1,11 +1,6 @@
 #include "AABBObject.h"
 #include <BufferManageModule.h>
 
-
-AABBObject::AABBObject()
-{
-}
-
 void AABBObject::CreateVertexBuffers()
 {
     vertexBuffer.resize(1);
@@ -58,7 +53,7 @@ void AABBObject::CleanResources()
     this->vertices.clear();
     this->indices.clear();
 
-    this->cleanup();
+    QERelease();
 }
 
 void AABBObject::AddTransform(std::shared_ptr<Transform> modelTransform)

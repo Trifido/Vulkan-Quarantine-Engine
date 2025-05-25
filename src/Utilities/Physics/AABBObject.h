@@ -29,7 +29,7 @@ private:
     void CreateIndexBuffers();
 
 public:
-    AABBObject();
+    AABBObject() = default;
     void CreateBuffers();
     void CleanResources();
     void AddTransform(std::shared_ptr<Transform> modelTransform);

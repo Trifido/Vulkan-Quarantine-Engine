@@ -16,6 +16,9 @@ private:
     std::unique_ptr<IQEMeshGenerator> generator;
     QEMesh mesh;
 
+    bool started_ = false;
+    bool released_ = false;
+
 protected:
     std::vector<VkDeviceMemory> vertexBufferMemory = { VK_NULL_HANDLE };
     std::vector<VkDeviceMemory> indexBufferMemory = { VK_NULL_HANDLE };
@@ -40,8 +43,6 @@ public:
     std::vector<std::shared_ptr<Meshlet>> meshlets_ptr = {};
     std::string Path;
 
-    virtual void cleanup();
-
     void QEStart() override;
 
     void QEUpdate() override;
@@ -54,8 +55,12 @@ public:
 
     size_t GetIndicesCount(uint32_t meshIndex) const;
 
+    inline bool IsQEStarted() const { return started_; }
+    inline bool IsQEReleased() const { return released_; }
+
 private:
     void CreateMeshlets();
+    void ReleaseResources();
 };
 
 #endif

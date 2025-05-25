@@ -30,6 +30,9 @@ void QEMeshRenderer::QERelease()
 
 void QEMeshRenderer::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
+    if (this->materialComponent == nullptr)
+        return;
+
     auto animator_ptr = (this->animationComponent != nullptr) ? this->animationComponent->animator : nullptr;
     auto pipelineModule = this->materialComponent->shader->PipelineModule;
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
@@ -77,6 +80,9 @@ void QEMeshRenderer::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx
 
 void QEMeshRenderer::SetDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout)
 {
+    if (this->geometryComponent == nullptr)
+        return;
+
     auto animator_ptr = (this->animationComponent != nullptr) ? this->animationComponent->animator : nullptr;
     for (int i = 0; i < geometryComponent->indexBuffer.size(); i++)
     {

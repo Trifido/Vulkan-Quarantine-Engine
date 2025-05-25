@@ -42,7 +42,7 @@ void QEGameObject::QEInitialize()
         return;
     }
 
-    geometryComponent->BuildMesh();
+    geometryComponent->QEStart();
 
     // Set the AABB component
     auto mesh = geometryComponent->GetMesh();
@@ -88,6 +88,14 @@ void QEGameObject::QEInitialize()
     }
 }
 
+void QEGameObject::QERelease()
+{
+    for (auto gameComponent : this->components)
+    {
+        gameComponent->QERelease();
+    }
+}
+
 void QEGameObject::InitializeResources()
 {
     this->deviceModule = DeviceModule::getInstance();
@@ -96,21 +104,6 @@ void QEGameObject::InitializeResources()
     this->cullingSceneManager = CullingSceneManager::getInstance();
 
     AddComponent<Transform>(std::make_shared<Transform>());
-}
-
-void QEGameObject::Cleanup()
-{
-    auto mesh = this->GetComponent<QEGeometryComponent>();
-    if (mesh != nullptr)
-    {
-        mesh->cleanup();
-    }
-
-    auto animationComponent = this->GetComponent<AnimationComponent>();
-    if (animationComponent != nullptr)
-    {
-        animationComponent->CleanLastResources();
-    } 
 }
 
 void QEGameObject::AddAnimation(std::shared_ptr<Animation> animation_ptr)

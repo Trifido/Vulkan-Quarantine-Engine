@@ -360,7 +360,7 @@ void AtmosphereSystem::Cleanup()
 {
     if (_Mesh != nullptr)
     {
-        this->_Mesh->cleanup();
+        this->_Mesh->QERelease();
         this->_Mesh = nullptr;
     }
 

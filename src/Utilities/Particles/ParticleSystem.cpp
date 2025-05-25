@@ -35,7 +35,7 @@ void ParticleSystem::InitializeParticleSystem()
 
 void ParticleSystem::cleanup()
 {
-    QEGameObject::Cleanup();
+    QEGameObject::QERelease();
 }
 
 void ParticleSystem::InitializeMaterial()

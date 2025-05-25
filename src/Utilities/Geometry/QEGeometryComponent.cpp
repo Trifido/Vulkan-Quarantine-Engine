@@ -19,7 +19,7 @@ size_t QEGeometryComponent::GetIndicesCount(uint32_t meshIndex) const
     return mesh.MeshData[meshIndex].Indices.size();
 }
 
-void QEGeometryComponent::cleanup()
+void QEGeometryComponent::ReleaseResources()
 {
     for(int i = 0; i < indexBufferMemory.size(); i++)
     {
@@ -27,6 +27,7 @@ void QEGeometryComponent::cleanup()
         {
             vkDestroyBuffer(deviceModule_ptr->device, indexBuffer[i], nullptr);
             vkFreeMemory(deviceModule_ptr->device, indexBufferMemory[i], nullptr);
+            indexBufferMemory[i] = VK_NULL_HANDLE;
         }
     }
 
@@ -36,6 +37,7 @@ void QEGeometryComponent::cleanup()
         {
             vkDestroyBuffer(deviceModule_ptr->device, vertexBuffer[i], nullptr);
             vkFreeMemory(deviceModule_ptr->device, vertexBufferMemory[i], nullptr);
+            vertexBufferMemory[i] = VK_NULL_HANDLE;
         }
     }
 
@@ -45,18 +47,26 @@ void QEGeometryComponent::cleanup()
         {
             vkDestroyBuffer(deviceModule_ptr->device, animationBuffer[i], nullptr);
             vkFreeMemory(deviceModule_ptr->device, animationBufferMemory[i], nullptr);
+            animationBufferMemory[i] = VK_NULL_HANDLE;
         }
     }
 }
 
 void QEGeometryComponent::QEStart()
 {
-    if (generator == nullptr || deviceModule_ptr == nullptr  || mesh.MeshData.empty())
+    if (IsQEStarted())
+    {
+        return;
+    }
+
+    if (generator == nullptr || deviceModule_ptr == nullptr)
     {
         return;
     }
 
     BuildMesh();
+
+    started_ = true;
 }
 
 void QEGeometryComponent::QEUpdate()
@@ -65,6 +75,14 @@ void QEGeometryComponent::QEUpdate()
 
 void QEGeometryComponent::QERelease()
 {
+    if (IsQEReleased())
+    {
+        return;
+    }
+
+    ReleaseResources();
+
+    released_ = true;
 }
 
 void QEGeometryComponent::BuildMesh()

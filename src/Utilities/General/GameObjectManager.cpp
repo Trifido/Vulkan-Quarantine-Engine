@@ -28,30 +28,31 @@ std::string GameObjectManager::CheckName(std::string nameGameObject)
 
 void GameObjectManager::AddGameObject(std::shared_ptr<QEGameObject> object_ptr, std::string name)
 {
-    if (object_ptr->IsValidRender())
-    {
-        name = CheckName(name);
+    name = CheckName(name);
 
-        auto mat = object_ptr->GetComponent<Material>();
-        if (mat == nullptr)
+    auto mat = object_ptr->GetComponent<Material>();
+    if (mat == nullptr)
+    {
+        if (!object_ptr->childs.empty())
         {
-            if (!object_ptr->childs.empty())
-            {
-                auto matChild = object_ptr->childs[0]->GetComponent<Material>();
-                unsigned int childLayer = matChild->layer;
-                this->_objects[childLayer][name] = object_ptr;
-            }
+            auto matChild = object_ptr->childs[0]->GetComponent<Material>();
+            unsigned int childLayer = matChild->layer;
+            this->_objects[childLayer][name] = object_ptr;
         }
         else
         {
-            this->_objects[mat->layer][name] = object_ptr;
+            this->_objects[(unsigned int)RenderLayer::ENVIRONMENT][name] = object_ptr;
         }
+    }
+    else
+    {
+        this->_objects[mat->layer][name] = object_ptr;
+    }
 
-        auto physicBody = object_ptr->GetComponent<PhysicsBody>();
-        if (physicBody != nullptr)
-        {
-            this->_physicObjects[name] = object_ptr;
-        }
+    auto physicBody = object_ptr->GetComponent<PhysicsBody>();
+    if (physicBody != nullptr)
+    {
+        this->_physicObjects[name] = object_ptr;
     }
 }
 
@@ -125,13 +126,13 @@ void GameObjectManager::UpdatePhysicTransforms()
     }
 }
 
-void GameObjectManager::Cleanup()
+void GameObjectManager::ReleaseAllGameObjects()
 {
     for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
     {
         for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
         {
-            model.second->Cleanup();
+            model.second->QERelease();
         }
     }
 }

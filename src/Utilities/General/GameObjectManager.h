@@ -30,7 +30,7 @@ public:
     void OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, glm::mat4 viewParameter, glm::vec3 lightPosition);
     void InitializePhysics();
     void UpdatePhysicTransforms();
-    void Cleanup();
+    void ReleaseAllGameObjects();
     void CleanLastResources();
     std::vector<GameObjectDto> GetGameObjectDtos(std::ifstream& file);
     void SaveGameObjects(std::ofstream& file);

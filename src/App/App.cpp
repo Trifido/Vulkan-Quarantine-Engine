@@ -245,12 +245,13 @@ void App::initVulkan()
     auto defaultMat = this->materialManager->GetMaterial("defaultPrimitiveMat");
     auto floorMatInstance = defaultMat->CreateMaterialInstance();
     this->materialManager->AddMaterial(floorMatInstance);
-
+    
     std::shared_ptr<QEGameObject> floor = std::make_shared<QEGameObject>();
     std::shared_ptr<QEGeometryComponent> geometryFloorComponent = make_shared<QEGeometryComponent>(std::make_unique<FloorGenerator>());
-    floor->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
     floor->AddComponent<QEGeometryComponent>(geometryFloorComponent);
+    floor->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
     floor->AddComponent<Material>(floorMatInstance);
+    
     auto floorTransform = floor->GetComponent<Transform>();
     floorTransform->SetPosition(glm::vec3(0.0f, -0.01f, 0.0f));
     floorTransform->SetScale(glm::vec3(10.0f, 1.0f, 10.0f));
@@ -258,7 +259,8 @@ void App::initVulkan()
     floorMatInstance->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.2f, 0.7f));
     floorMatInstance->materialData.SetMaterialField("Specular", glm::vec3(0.0f, 0.0f, 0.0f));
     floorMatInstance->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
-
+    this->gameObjectManager->AddGameObject(floor, "floor");
+    /*
     floor->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>());
     auto floorPBody = floor->GetComponent<PhysicsBody>();
     floorPBody->CollisionGroup = CollisionFlag::COL_SCENE;
@@ -269,7 +271,7 @@ void App::initVulkan()
     std::static_pointer_cast<PlaneCollider>(floorCollider)->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
     this->gameObjectManager->AddGameObject(floor, "floor");
 
-    /**/
+    /*
 
     auto rampMatInstance = defaultMat->CreateMaterialInstance();
     this->materialManager->AddMaterial(rampMatInstance);
@@ -293,7 +295,7 @@ void App::initVulkan()
     ramp->AddComponent<BoxCollider>(std::make_shared<BoxCollider>());
     this->gameObjectManager->AddGameObject(ramp, "ramp");
 
-    /**/
+    /*
     auto wallMatInstance = defaultMat->CreateMaterialInstance();
     this->materialManager->AddMaterial(wallMatInstance);
     std::shared_ptr<QEGameObject> wall = std::make_shared<QEGameObject>();
@@ -314,7 +316,7 @@ void App::initVulkan()
     wallPBody->CollisionMask = CollisionFlag::COL_PLAYER;
 
     wall->AddComponent<Collider>(std::make_shared<BoxCollider>());
-    this->gameObjectManager->AddGameObject(wall, "wall");
+    this->gameObjectManager->AddGameObject(wall, "wall"); */
     /*
     // CHARACTER CONTROLLER
     std::shared_ptr<QEGameObject> character = std::make_shared<QEGameObject>(QEGameObject(PRIMITIVE_TYPE::CAPSULE_TYPE));
@@ -662,7 +664,7 @@ void App::cleanUp()
     this->lightManager->CleanShadowMapResources();
 
     this->atmosphereSystem->Cleanup();
-    this->gameObjectManager->Cleanup();
+    this->gameObjectManager->ReleaseAllGameObjects();
     this->particleSystemManager->Cleanup();
     this->editorManager->Cleanup();
     this->cullingSceneManager->CleanUp();
@@ -888,6 +890,7 @@ void App::recreateSwapchain()
     depthBufferModule->createDepthResources(swapchainModule->swapChainExtent, commandPoolModule->getCommandPool());
 
     //Recreamos el render pass
+    renderPassModule->CreateImGuiRenderPass(swapchainModule->swapChainImageFormat, *antialiasingModule->msaaSamples);
     renderPassModule->CreateRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
     renderPassModule->CreateDirShadowRenderPass(VK_FORMAT_D32_SFLOAT);
     renderPassModule->CreateOmniShadowRenderPass(VK_FORMAT_R32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT);
