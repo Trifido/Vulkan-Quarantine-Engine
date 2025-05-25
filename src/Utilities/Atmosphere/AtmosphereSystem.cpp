@@ -139,6 +139,10 @@ void AtmosphereSystem::SetUpResources(QECamera* cameraPtr)
         this->SVLUT_ComputeNode->computeDescriptor->inputTextures.push_back(this->MSLUT_ComputeNode->computeDescriptor->outputTexture);
         this->SVLUT_ComputeNode->computeDescriptor->ubos["SunUniform"] = this->sunLight->sunUBO;
         this->computeNodeManager->AddComputeNode("sky_view_lut", this->SVLUT_ComputeNode);
+
+        this->TLUT_ComputeNode->InitializeComputeNode();
+        this->MSLUT_ComputeNode->InitializeComputeNode();
+        this->SVLUT_ComputeNode->InitializeComputeNode();
     }
 
     switch (this->environmentType)

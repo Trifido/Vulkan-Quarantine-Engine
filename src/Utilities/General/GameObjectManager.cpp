@@ -30,18 +30,18 @@ void GameObjectManager::AddGameObject(std::shared_ptr<QEGameObject> object_ptr, 
 {
     name = CheckName(name);
 
-    auto mat = object_ptr->GetComponent<Material>();
+    auto mat = object_ptr->GetMaterial();
     if (mat == nullptr)
     {
         if (!object_ptr->childs.empty())
         {
-            auto matChild = object_ptr->childs[0]->GetComponent<Material>();
+            auto matChild = object_ptr->childs[0]->GetMaterial();
             unsigned int childLayer = matChild->layer;
             this->_objects[childLayer][name] = object_ptr;
         }
         else
         {
-            this->_objects[(unsigned int)RenderLayer::ENVIRONMENT][name] = object_ptr;
+            this->_objects[(unsigned int)RenderLayer::SOLID][name] = object_ptr;
         }
     }
     else
@@ -166,7 +166,7 @@ void GameObjectManager::SaveGameObjects(std::ofstream& file)
         for (auto model : this->_objects[id])
         {
             std::string matPath = "NULL_MATERIAL";
-            auto mat = model.second->GetComponent<Material>();
+            auto mat = model.second->GetMaterial();
             if (mat != nullptr)
             {
                 matPath = mat->Name;

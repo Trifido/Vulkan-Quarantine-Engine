@@ -15,7 +15,7 @@ private:
     PFN_vkCmdDrawMeshTasksEXT vkCmdDrawMeshTasksEXT = nullptr;
     std::shared_ptr<AnimationComponent> animationComponent = nullptr;
     std::shared_ptr<QEGeometryComponent> geometryComponent = nullptr;
-    std::shared_ptr<Material> materialComponent = nullptr;
+    std::vector<std::shared_ptr<QEMaterial>>& materialComponents;
     std::shared_ptr<Transform> transformComponent = nullptr;
 public:
     bool IsMeshShaderPipeline = false;

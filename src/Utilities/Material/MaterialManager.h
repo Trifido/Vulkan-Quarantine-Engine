@@ -7,7 +7,7 @@
 #include <QESingleton.h>
 #include <MaterialDto.h>
 
-class Material;
+class QEMaterial;
 class QECamera;
 class LightManager;
 class RenderPassModule;
@@ -17,7 +17,7 @@ class MaterialManager : public QESingleton<MaterialManager>
 {
 private:
     friend class QESingleton<MaterialManager>; // Permitir acceso al constructor
-    std::unordered_map<std::string, std::shared_ptr<Material>> _materials;
+    std::unordered_map<std::string, std::shared_ptr<QEMaterial>> _materials;
 
     QECamera*           cameraEditor;
     LightManager*       lightManager;
@@ -40,9 +40,9 @@ private:
 public:
     MaterialManager();
     void InitializeMaterialManager();
-    std::shared_ptr<Material> GetMaterial(std::string nameMaterial);
-    void AddMaterial(std::shared_ptr<Material> mat_ptr);
-    void AddMaterial(Material mat);
+    std::shared_ptr<QEMaterial> GetMaterial(std::string nameMaterial);
+    void AddMaterial(std::shared_ptr<QEMaterial> mat_ptr);
+    void AddMaterial(QEMaterial mat);
     std::string CheckName(std::string nameMaterial);
     void CreateMaterial(std::string& nameMaterial);
     void CreateMeshShaderMaterial(std::string& nameMaterial);

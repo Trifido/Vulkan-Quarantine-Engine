@@ -167,6 +167,7 @@ void ComputeNode::UpdateOutputTextureState()
 
 void ComputeNode::QEStart()
 {
+    InitializeComputeNode();
 }
 
 void ComputeNode::QEUpdate()

@@ -44,14 +44,6 @@ void ComputeNodeManager::InitializeComputeResources()
     shaderManager->AddShader(std::make_shared<ShaderModule>(ShaderModule("sky_view_lut", sky_view_lut_compute_shader_path)));
 }
 
-void ComputeNodeManager::InitializeComputeNodes()
-{
-    for (auto it : _computeNodes)
-    {
-        it.second->InitializeComputeNode();
-    }
-}
-
 void ComputeNodeManager::AddComputeNode(std::string& nameComputeNode, ComputeNode mat)
 {
     nameComputeNode = CheckName(nameComputeNode);

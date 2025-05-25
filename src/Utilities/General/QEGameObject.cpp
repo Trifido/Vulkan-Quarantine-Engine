@@ -52,17 +52,23 @@ void QEGameObject::QEInitialize()
     //Set the materials
     std::set<std::string> matIDs;
 
-    for (auto m : mesh->MeshData)
+    if (mesh->MaterialRel.empty())
     {
-        matIDs.insert(m.MaterialID);
-    }
-
-    for (auto matID : matIDs)
-    {
-        std::shared_ptr<Material> material = this->materialManager->GetMaterial(matID);
-        if (material != nullptr)
+        auto mat = this->GetMaterial();
+        if (mat != nullptr)
         {
-            this->AddComponent<Material>(material);
+            mesh->MaterialRel.push_back(mat->Name);
+        }
+    }
+    else
+    {
+        for (auto matID : mesh->MaterialRel)
+        {
+            std::shared_ptr<QEMaterial> material = this->materialManager->GetMaterial(matID);
+            if (material != nullptr)
+            {
+                this->AddComponent<QEMaterial>(material);
+            }
         }
     }
 
@@ -85,6 +91,11 @@ void QEGameObject::QEInitialize()
     for (auto gameComponent : this->components)
     {
         gameComponent->QEStart();
+    }
+
+    for (auto mat : this->materials)
+    {
+        mat->InitializeMaterialData();
     }
 }
 
@@ -157,6 +168,8 @@ void QEGameObject::InitializeAnimationComponent()
         {
             animationComponent->animator->SetVertexBufferInComputeNode(idMeshes[i], meshComponent->vertexBuffer[i], meshComponent->animationBuffer[i], mesh->MeshData[i].NumVertices);
         }
+
+        animationComponent->animator->InitializeDescriptorsComputeNodes();
     }
 }
 
@@ -184,14 +197,14 @@ bool QEGameObject::IsValidRender()
     if (transform == nullptr)
         return false;
 
-    auto material = this->GetComponent<Material>();
+    auto material = this->GetMaterial();
     auto mesh = this->GetComponent<QEGeometryComponent>();
     if (mesh != nullptr && material != nullptr)
         return true;
 
     for (auto child : childs)
     {
-        auto childMat = child->GetComponent<Material>();
+        auto childMat = child->GetMaterial();
         auto childMesh = child->GetComponent<QEGeometryComponent>();
         if (childMesh != nullptr && childMat != nullptr)
             return true;

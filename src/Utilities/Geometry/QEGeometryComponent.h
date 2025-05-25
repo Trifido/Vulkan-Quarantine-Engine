@@ -51,7 +51,7 @@ public:
 
     void BuildMesh();
 
-    const QEMesh* GetMesh() const;
+    QEMesh* GetMesh();
 
     size_t GetIndicesCount(uint32_t meshIndex) const;
 

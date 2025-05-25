@@ -10,7 +10,7 @@ class Grid : public EditorObject
 {
 private:
     std::shared_ptr<ShaderModule> shader_grid_ptr = nullptr;
-    std::shared_ptr<Material> material_grid_ptr = nullptr;
+    std::shared_ptr<QEMaterial> material_grid_ptr = nullptr;
 
 public:
     std::unique_ptr<QEGameObject> gridMesh = nullptr;

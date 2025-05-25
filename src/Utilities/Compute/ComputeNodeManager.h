@@ -20,7 +20,6 @@ private:
 public:
     ComputeNodeManager() = default;
     void InitializeComputeResources();
-    void InitializeComputeNodes();
     void AddComputeNode(std::string& nameComputeNode, ComputeNode mat);
     void AddComputeNode(const char* nameComputeNode, std::shared_ptr<ComputeNode> mat_ptr);
     void AddComputeNode(std::string& nameComputeNode, std::shared_ptr<ComputeNode> mat_ptr);

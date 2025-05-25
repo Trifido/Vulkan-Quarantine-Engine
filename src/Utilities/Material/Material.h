@@ -1,10 +1,9 @@
 #pragma once
 
-#ifndef MATERIAL_H
-#define MATERIAL_H
+#ifndef QE_MATERIAL_H
+#define QE_MATERIAL_H
 
 #include <glm/glm.hpp>
-#include "QEGameComponent.h"
 #include <RenderLayer.h>
 #include <ShaderManager.h>
 #include <ShaderModule.h>
@@ -13,7 +12,7 @@
 #include <LightManager.h>
 #include <MaterialDto.h>
 
-class Material : public QEGameComponent
+class QEMaterial : public Numbered
 {
 private:
     bool IsInitialized = false;
@@ -30,13 +29,13 @@ public:
     std::shared_ptr<DescriptorBuffer> descriptor;
 
 public:
-    Material(std::string name, std::string filepath = "");
-    Material(std::string name, std::shared_ptr<ShaderModule> shader_ptr, std::string filepath = "");
-    Material(std::shared_ptr<ShaderModule> shader_ptr, const MaterialDto& materialDto);
+    QEMaterial(std::string name, std::string filepath = "");
+    QEMaterial(std::string name, std::shared_ptr<ShaderModule> shader_ptr, std::string filepath = "");
+    QEMaterial(std::shared_ptr<ShaderModule> shader_ptr, const MaterialDto& materialDto);
     void CleanLastResources();
 
     void cleanup();
-    std::shared_ptr<Material> CreateMaterialInstance();
+    std::shared_ptr<QEMaterial> CreateMaterialInstance();
     void InitializeMaterialData();
     void UpdateUniformData();
     bool HasDescriptorBuffer() { return this->hasDescriptorBuffer; }
@@ -44,10 +43,6 @@ public:
     void BindDescriptors(VkCommandBuffer& commandBuffer, uint32_t idx);
     void RenameMaterial(std::string newName);
     std::string SaveMaterialFile();
-
-    void QEStart() override;
-    void QEUpdate() override;
-    void QERelease() override;
 };
 
 #endif // !MATERIAL_H

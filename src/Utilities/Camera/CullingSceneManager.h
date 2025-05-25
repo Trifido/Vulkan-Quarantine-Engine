@@ -16,7 +16,7 @@ private:
     std::vector<std::shared_ptr<AABBObject> > aabb_objects;
     std::shared_ptr<FrustumComponent> cameraFrustum = nullptr;
     std::shared_ptr<ShaderModule> shader_aabb_ptr = nullptr;
-    std::shared_ptr<Material> material_aabb_ptr = nullptr;
+    std::shared_ptr<QEMaterial> material_aabb_ptr = nullptr;
 
 public:
     bool DebugMode = true;

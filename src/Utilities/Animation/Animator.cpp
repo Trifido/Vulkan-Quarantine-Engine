@@ -65,6 +65,14 @@ void Animator::SetVertexBufferInComputeNode(std::string id, VkBuffer vertexBuffe
     }
 }
 
+void Animator::InitializeDescriptorsComputeNodes()
+{
+    for (auto computeNode : this->computeNodes)
+    {
+        computeNode.second->InitializeComputeNode();
+    }
+}
+
 std::shared_ptr<ComputeNode> Animator::GetComputeNode(std::string id)
 {
     return this->computeNodes[id];

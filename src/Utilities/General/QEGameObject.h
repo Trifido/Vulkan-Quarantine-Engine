@@ -26,6 +26,7 @@ protected:
 
 public:
     std::list<std::shared_ptr<QEGameComponent>> components;
+    std::vector<std::shared_ptr<QEMaterial>>    materials;
     std::vector<std::shared_ptr<QEGameObject>>    childs;
     QEGameObject*     parent = nullptr;
 
@@ -49,20 +50,41 @@ public:
     template<typename T>
     bool AddComponent(std::shared_ptr<T> component_ptr)
     {
-        if (component_ptr == nullptr)
+        if (!component_ptr)
             return false;
 
-        if (std::find_if(components.begin(), components.end(), [&](const std::shared_ptr<QEGameComponent>& comp) {
-            return dynamic_cast<T*>(comp.get()) != nullptr;
-            }) != components.end())
+        if constexpr (std::is_base_of_v<QEMaterial, T>)
         {
-            return false;
+            const auto& newID = component_ptr->id;
+            auto it = std::find_if(materials.begin(), materials.end(),
+                [&](const std::shared_ptr<QEMaterial>& m) {
+                    return m->id == newID;
+                }
+            );
+            if (it != materials.end()) {
+                // Ya hay un QEMaterial con ese ID: no lo añadimos
+                return false;
+            }
+
+            materials.push_back(component_ptr);
+            return true;
         }
+        else
+        {
+            auto it = std::find_if(
+                components.begin(), components.end(),
+                [&](const std::shared_ptr<QEGameComponent>& comp)
+                {
+                    return dynamic_cast<T*>(comp.get()) != nullptr;
+                }
+            );
+            if (it != components.end())
+                return false;
 
-        components.push_back(component_ptr);
-        component_ptr->BindGameObject(this);
-
-        return true;
+            components.push_back(component_ptr);
+            component_ptr->BindGameObject(this);
+            return true;
+        }
     }
 
     template<typename T>
@@ -77,6 +99,31 @@ public:
         }
 
         return nullptr;
+    }
+
+    std::shared_ptr<QEMaterial> GetMaterial(const std::string& matID = "") const
+    {
+        if (materials.empty())
+            return nullptr;
+
+        if (matID == "")
+        {
+            return materials.front();
+        }
+
+        for (auto& mat : materials)
+        {
+            if (mat->Name == matID)
+            {
+                return mat;
+            }
+        }
+        return nullptr;
+    }
+
+    const std::vector<std::shared_ptr<QEMaterial>>& GetMaterials() const
+    {
+        return materials;
     }
 
 protected:

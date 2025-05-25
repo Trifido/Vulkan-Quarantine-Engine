@@ -1,7 +1,7 @@
 #include "Material.h"
 #include <QEProjectManager.h>
 
-Material::Material(std::string name, std::string filepath)
+QEMaterial::QEMaterial(std::string name, std::string filepath)
 {
     this->Name = name;
 
@@ -21,7 +21,7 @@ Material::Material(std::string name, std::string filepath)
     this->lightManager = LightManager::getInstance();
 }
 
-Material::Material(std::string name, std::shared_ptr<ShaderModule> shader_ptr, std::string filepath) : Material(name, filepath)
+QEMaterial::QEMaterial(std::string name, std::shared_ptr<ShaderModule> shader_ptr, std::string filepath) : QEMaterial(name, filepath)
 {
     this->shader = shader_ptr;
     this->hasDescriptorBuffer = shader_ptr->reflectShader.bindings.size() > 0;
@@ -32,7 +32,7 @@ Material::Material(std::string name, std::shared_ptr<ShaderModule> shader_ptr, s
     }
 }
 
-Material::Material(std::shared_ptr<ShaderModule> shader_ptr, const MaterialDto& materialDto) : Material(materialDto.Name, shader_ptr, materialDto.FilePath)
+QEMaterial::QEMaterial(std::shared_ptr<ShaderModule> shader_ptr, const MaterialDto& materialDto) : QEMaterial(materialDto.Name, shader_ptr, materialDto.FilePath)
 {
     this->layer = materialDto.layer;
 
@@ -72,15 +72,15 @@ Material::Material(std::shared_ptr<ShaderModule> shader_ptr, const MaterialDto& 
     }
 }
 
-std::shared_ptr<Material> Material::CreateMaterialInstance()
+std::shared_ptr<QEMaterial> QEMaterial::CreateMaterialInstance()
 {
     std::string instanceName = "QEMatInst_" + this->Name;
-    std::shared_ptr<Material> mat_instance = std::make_shared<Material>(instanceName, this->shader);
+    std::shared_ptr<QEMaterial> mat_instance = std::make_shared<QEMaterial>(instanceName, this->shader);
     mat_instance->layer = this->layer;
     return mat_instance;
 }
 
-void Material::CleanLastResources()
+void QEMaterial::CleanLastResources()
 {
     this->materialData.CleanLastResources();
 
@@ -96,7 +96,7 @@ void Material::CleanLastResources()
     this->hasDescriptorBuffer = false;
 }
 
-void Material::InitializeMaterialData()
+void QEMaterial::InitializeMaterialData()
 {
     if (this->hasDescriptorBuffer && !this->IsInitialized)
     {
@@ -111,7 +111,7 @@ void Material::InitializeMaterialData()
     }
 }
 
-void Material::cleanup()
+void QEMaterial::cleanup()
 {
     if (this->hasDescriptorBuffer)
     {
@@ -120,7 +120,7 @@ void Material::cleanup()
     this->materialData.CleanMaterialUBO();
 }
 
-void Material::UpdateUniformData()
+void QEMaterial::UpdateUniformData()
 {
     if (this->shader != nullptr && this->hasDescriptorBuffer)
     {
@@ -128,7 +128,7 @@ void Material::UpdateUniformData()
     }
 }
 
-void Material::SetMeshShaderPipeline(bool value)
+void QEMaterial::SetMeshShaderPipeline(bool value)
 {
     if (this->isMeshShaderEnabled != value)
     {
@@ -158,7 +158,7 @@ void Material::SetMeshShaderPipeline(bool value)
     }
 }
 
-void Material::BindDescriptors(VkCommandBuffer& commandBuffer, uint32_t idx)
+void QEMaterial::BindDescriptors(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
     if (this->HasDescriptorBuffer())
     {
@@ -176,7 +176,7 @@ void Material::BindDescriptors(VkCommandBuffer& commandBuffer, uint32_t idx)
     }
 }
 
-void Material::RenameMaterial(std::string newName)
+void QEMaterial::RenameMaterial(std::string newName)
 {
     if (this->Name != newName)
     {
@@ -186,7 +186,7 @@ void Material::RenameMaterial(std::string newName)
     }
 }
 
-std::string Material::SaveMaterialFile()
+std::string QEMaterial::SaveMaterialFile()
 {
     std::ofstream file(materialFilePath, std::ios::binary);
     if (!file)
@@ -251,18 +251,4 @@ std::string Material::SaveMaterialFile()
         file.close();
     }
     return this->materialFilePath;
-}
-
-void Material::QEStart()
-{
-    this->InitializeMaterialData();
-}
-
-void Material::QEUpdate()
-{
-}
-
-void Material::QERelease()
-{
-
 }

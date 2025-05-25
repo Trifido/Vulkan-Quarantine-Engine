@@ -19,7 +19,7 @@ Grid::Grid()
     std::string nameGrid = "editorGrid";
     if (!matManager->Exists(nameGrid))
     {
-        this->material_grid_ptr = std::make_shared<Material>(Material(nameGrid, this->shader_grid_ptr));
+        this->material_grid_ptr = std::make_shared<QEMaterial>(QEMaterial(nameGrid, this->shader_grid_ptr));
         this->material_grid_ptr->layer = (unsigned int)RenderLayer::EDITOR;
         this->material_grid_ptr->InitializeMaterialData();
         matManager->AddMaterial(this->material_grid_ptr);
@@ -29,12 +29,12 @@ Grid::Grid()
         this->material_grid_ptr = matManager->GetMaterial(nameGrid);
         this->material_grid_ptr->InitializeMaterialData();
     }
-    this->gridMesh->AddComponent<Material>(this->material_grid_ptr);
+    this->gridMesh->AddComponent<QEMaterial>(this->material_grid_ptr);
 }
 
 void Grid::Draw(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
-    auto mat = this->gridMesh->GetComponent<Material>();
+    auto mat = this->gridMesh->GetMaterial();
     auto pipelineModule = mat->shader->PipelineModule;
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 

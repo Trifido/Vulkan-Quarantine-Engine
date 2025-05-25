@@ -40,11 +40,11 @@ void ParticleSystem::cleanup()
 
 void ParticleSystem::InitializeMaterial()
 {
-    std::shared_ptr<Material> mat = this->materialManager->GetMaterial("defaultParticlesMat");
+    std::shared_ptr<QEMaterial> mat = this->materialManager->GetMaterial("defaultParticlesMat");
     auto newMatInstance = mat->CreateMaterialInstance();
     this->materialManager->AddMaterial(newMatInstance);
 
-    this->AddComponent<Material>(newMatInstance);
+    this->AddComponent<QEMaterial>(newMatInstance);
     newMatInstance->InitializeMaterialData();
     newMatInstance->descriptor->ssboData["ParticleSSBO"] = computeNodeUpdateParticles->computeDescriptor->ssboData[0];
     newMatInstance->descriptor->ssboSize["ParticleSSBO"] = computeNodeUpdateParticles->computeDescriptor->ssboSize[0];
@@ -80,7 +80,7 @@ void ParticleSystem::createShaderStorageBuffers()
 
 void ParticleSystem::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator)
 {
-    auto mat = this->GetComponent<Material>();
+    auto mat = this->GetMaterial();
     auto pipelineModule = mat->shader->PipelineModule;
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
@@ -229,7 +229,7 @@ void ParticleSystem::GenerateParticles()
 
 void ParticleSystem::AddParticleTexture(std::shared_ptr<CustomTexture> texture)
 {
-    auto mat = this->GetComponent<Material>();
+    auto mat = this->GetMaterial();
     mat->materialData.texture_vector->at(0) = texture;
 }
 

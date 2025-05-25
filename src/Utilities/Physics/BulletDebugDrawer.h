@@ -22,7 +22,7 @@ private:
     glm::vec4 debugColor = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
 
     std::shared_ptr<ShaderModule> shader_debug_ptr = nullptr;
-    std::shared_ptr<Material> material_debug_ptr = nullptr;
+    std::shared_ptr<QEMaterial> material_debug_ptr = nullptr;
 
 public:
     bool DebugMode = false;

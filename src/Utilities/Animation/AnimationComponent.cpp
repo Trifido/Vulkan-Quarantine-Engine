@@ -70,6 +70,8 @@ void AnimationComponent::CleanLastResources()
 
 void AnimationComponent::QEStart()
 {
+    auto animation = this->_animations.begin()->second;
+    this->animator->PlayAnimation(animation);
 }
 
 void AnimationComponent::QEUpdate()

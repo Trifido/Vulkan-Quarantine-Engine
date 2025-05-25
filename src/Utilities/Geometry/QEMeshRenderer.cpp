@@ -2,6 +2,7 @@
 #include "QEGameObject.h"
 
 QEMeshRenderer::QEMeshRenderer()
+    : materialComponents(*(new std::vector<std::shared_ptr<QEMaterial>>()))
 {
     this->deviceModule = DeviceModule::getInstance();
 }
@@ -11,12 +12,15 @@ void QEMeshRenderer::QEStart()
     vkCmdDrawMeshTasksEXT = (PFN_vkCmdDrawMeshTasksEXT)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksEXT");
     animationComponent = this->Owner->GetComponent<AnimationComponent>();
     geometryComponent = this->Owner->GetComponent<QEGeometryComponent>();
-    materialComponent = this->Owner->GetComponent<Material>();
+    materialComponents = this->Owner->GetMaterials();
     transformComponent = this->Owner->GetComponent<Transform>();
 
     if (this->IsMeshShaderPipeline)
     {
-        materialComponent->descriptor->SetMeshletBuffers(geometryComponent->meshlets_ptr[0]);
+        if (!materialComponents.empty())
+        {
+            materialComponents[0]->descriptor->SetMeshletBuffers(geometryComponent->meshlets_ptr[0]);
+        }   
     }
 }
 
@@ -30,11 +34,11 @@ void QEMeshRenderer::QERelease()
 
 void QEMeshRenderer::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
-    if (this->materialComponent == nullptr)
+    if (this->materialComponents.empty())
         return;
 
     auto animator_ptr = (this->animationComponent != nullptr) ? this->animationComponent->animator : nullptr;
-    auto pipelineModule = this->materialComponent->shader->PipelineModule;
+    auto pipelineModule = this->materialComponents[0]->shader->PipelineModule;
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
     vkCmdSetDepthTestEnable(commandBuffer, true);
@@ -44,6 +48,8 @@ void QEMeshRenderer::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx
     vkCmdSetCullMode(commandBuffer, true);
     vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
 
+    //std::vector<string> materialID = this->geometryComponent->GetMesh()->MeshData[0].materialID;
+    auto qeMesh = this->geometryComponent->GetMesh();
     for (int i = 0; i < this->geometryComponent->indexBuffer.size(); i++)
     {
         if (!this->IsMeshShaderPipeline)
@@ -52,7 +58,8 @@ void QEMeshRenderer::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx
 
             if (animator_ptr != nullptr)
             {
-                vkCmdBindVertexBuffers(commandBuffer, 0, 1, &animator_ptr->GetComputeNode(std::to_string(i))->computeDescriptor->ssboData[2]->uniformBuffers.at(idx), offsets);
+                auto computeNode = animator_ptr->GetComputeNode(std::to_string(i));
+                vkCmdBindVertexBuffers(commandBuffer, 0, 1, &computeNode->computeDescriptor->ssboData[2]->uniformBuffers.at(idx), offsets);
             }
             else
             {
@@ -62,7 +69,10 @@ void QEMeshRenderer::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx
             vkCmdBindIndexBuffer(commandBuffer, this->geometryComponent->indexBuffer[i], 0, VK_INDEX_TYPE_UINT32);
         }
 
-        this->materialComponent->BindDescriptors(commandBuffer, idx);
+        string materialID = qeMesh->MaterialRel[i];
+        auto material = this->Owner->GetMaterial(materialID);
+        //auto material = MaterialManager::getInstance()->GetMaterial();
+        material->BindDescriptors(commandBuffer, idx);
 
         vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantStruct), &this->transformComponent->GetModel());
 
@@ -92,7 +102,8 @@ void QEMeshRenderer::SetDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32
 
             if (animator_ptr != nullptr)
             {
-                vkCmdBindVertexBuffers(commandBuffer, 0, 1, &animator_ptr->GetComputeNode(std::to_string(i))->computeDescriptor->ssboData[2]->uniformBuffers.at(idx), offsets);
+                auto computeNode = animator_ptr->GetComputeNode(std::to_string(i));
+                vkCmdBindVertexBuffers(commandBuffer, 0, 1, &computeNode->computeDescriptor->ssboData[2]->uniformBuffers.at(idx), offsets);
             }
             else
             {

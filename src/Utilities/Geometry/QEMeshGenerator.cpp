@@ -470,5 +470,20 @@ QEMesh MeshGenerator::GenerateQEMesh()
         mesh.AnimationData = AnimationImporter::ImportAnimation(dataPath, mesh.BonesInfoMap, mesh.BonesInfoMap.size());
     }
 
+    mesh.BoundingBox = mesh.MeshData[0].BoundingBox;
+
+    for (unsigned int i = 0; i < mesh.MeshData.size(); i++)
+    {
+        const auto& bb = mesh.MeshData[i].BoundingBox;
+
+        mesh.BoundingBox.first.x = std::min(mesh.BoundingBox.first.x, bb.first.x);
+        mesh.BoundingBox.first.y = std::min(mesh.BoundingBox.first.y, bb.first.y);
+        mesh.BoundingBox.first.z = std::min(mesh.BoundingBox.first.z, bb.first.z);
+
+        mesh.BoundingBox.second.x = std::max(mesh.BoundingBox.second.x, bb.second.x);
+        mesh.BoundingBox.second.y = std::max(mesh.BoundingBox.second.y, bb.second.y);
+        mesh.BoundingBox.second.z = std::max(mesh.BoundingBox.second.z, bb.second.z);
+    }
+
     return mesh;
 }

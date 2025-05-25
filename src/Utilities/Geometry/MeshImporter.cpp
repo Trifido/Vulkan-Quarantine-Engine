@@ -228,6 +228,12 @@ QEMesh MeshImporter::LoadMesh(std::string path)
     glm::mat4 parentTransform = glm::mat4(1.0f);
     ProcessNode(scene->mRootNode, scene, parentTransform, mesh, matpath);
 
+    mesh.MaterialRel.resize(mesh.MeshData.size());
+    for (int i = 0; i < mesh.MeshData.size(); i++)
+    {
+        mesh.MaterialRel[i] = mesh.MeshData[i].MaterialID;
+    }
+
     return mesh;
 }
 
@@ -432,7 +438,7 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, QEMeshDat
     if (ret != AI_SUCCESS) rawName = "";//Failed to find material name so makes var empty
 
     std::string materialName = rawName.C_Str();
-    std::shared_ptr<Material> mat_ptr;
+    std::shared_ptr<QEMaterial> mat_ptr;
 
     auto materialManager = MaterialManager::getInstance();
 
@@ -460,7 +466,7 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, QEMeshDat
 
             matDto.UpdateTexturePaths(matpath);
 
-            mat_ptr = std::make_shared<Material>(Material(shader, matDto));
+            mat_ptr = std::make_shared<QEMaterial>(QEMaterial(shader, matDto));
             materialManager->AddMaterial(mat_ptr);
         }
     }
@@ -469,10 +475,7 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, QEMeshDat
         mat_ptr = materialManager->GetMaterial(materialName);
     }
 
-    mat_ptr->InitializeMaterialData();
-
     meshData.MaterialID = materialName;
-
     material = nullptr;
 }
 
