@@ -97,7 +97,6 @@ public:
     ~App();
     void run(QEScene scene);
 
-    void addWindow(GLFWwindow& window);
     void initWindow();
     void init_imgui();
 private:
@@ -114,7 +113,7 @@ private:
     //bool createFontsTexture(VkCommandBuffer& commandBuffer);
     //void setupImguiUploadFonts();
 public:
-    GUIWindow               mainWindow;
+    GUIWindow*              mainWindow;
     bool                    framebufferResized = false;
 private:
     VulkanInstance          vulkanInstance {};

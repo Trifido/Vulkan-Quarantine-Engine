@@ -47,6 +47,7 @@ struct IgnoreSelfCallback : public btCollisionWorld::ClosestConvexResultCallback
 class QECharacterController : public QEGameComponent
 {
     private:
+        GLFWwindow* window;
         std::shared_ptr<Collider> colliderPtr;
         std::shared_ptr<PhysicsBody> physicBodyPtr;
         bool isGrounded = false;
@@ -63,11 +64,12 @@ class QECharacterController : public QEGameComponent
         bool CanMove(const btVector3& direction, float distance, btVector3& outAdjustedDir);
 
     public:
+        void AddGLFWWindow(GLFWwindow* window) { this->window = window; }
         void Initialize();
         void BindGameObjectProperties(std::shared_ptr<PhysicsBody> physicBody, std::shared_ptr<Collider> collider);
         void Update();
         btVector3 GetPosition();
-        static void ProcessInput(GLFWwindow* window, std::shared_ptr<QECharacterController> player);
+        void ProcessInput();
         void SetAirControlFactor(float factor) { airControlFactor = factor; }
         void SetJumpForce(float force) { jumpForce = force; }
 

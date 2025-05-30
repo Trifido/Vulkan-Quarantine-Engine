@@ -99,6 +99,14 @@ void QEGameObject::QEInitialize()
     }
 }
 
+void QEGameObject::QEUpdate()
+{
+    for (auto gameComponent : this->components)
+    {
+        gameComponent->QEUpdate();
+    }
+}
+
 void QEGameObject::QERelease()
 {
     for (auto gameComponent : this->components)

@@ -7,11 +7,12 @@
 
 #include "DeviceModule.h"
 #include "QueueModule.h"
-#include "CommandPoolModule.h"
 
-class GUIWindow
+class GUIWindow : public QESingleton<GUIWindow>
 {
 private:
+    friend class QESingleton<GUIWindow>;
+
     std::string title;
     bool isRunning;
     GLFWmonitor* monitor;

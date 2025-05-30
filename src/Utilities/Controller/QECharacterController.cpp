@@ -165,7 +165,7 @@ btVector3 QECharacterController::GetPosition()
     return trans.getOrigin();
 }
 
-void QECharacterController::ProcessInput(GLFWwindow* window, std::shared_ptr<QECharacterController> player)
+void QECharacterController::ProcessInput()
 {
     btVector3 dir(0, 0, 0);
     const float moveSpeed = 5.0f;
@@ -178,11 +178,11 @@ void QECharacterController::ProcessInput(GLFWwindow* window, std::shared_ptr<QEC
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) dir += btVector3(1, 0, 0);
     }
 
-    player->Move(dir, moveSpeed);
+    Move(dir, moveSpeed);
 
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
     {
-        player->Jump();
+        Jump();
     }
 }
 
@@ -192,6 +192,8 @@ void QECharacterController::QEStart()
 
 void QECharacterController::QEUpdate()
 {
+    CheckIfGrounded();
+    ProcessInput();
 }
 
 void QECharacterController::QERelease()

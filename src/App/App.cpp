@@ -43,7 +43,8 @@ void App::run(QEScene scene)
 
 void App::initWindow()
 {
-    this->mainWindow.init();
+    this->mainWindow = GUIWindow::getInstance();
+    this->mainWindow->init();
 }
 
 void App::init_imgui()
@@ -81,7 +82,7 @@ void App::init_imgui()
     ImGui::CreateContext();
 
     //this initializes imgui for GLFW
-    ImGui_ImplGlfw_InitForVulkan(mainWindow.window, true);
+    ImGui_ImplGlfw_InitForVulkan(mainWindow->window, true);
 
     //this initializes imgui for Vulkan
     ImGui_ImplVulkan_InitInfo init_info = {};
@@ -104,17 +105,12 @@ void App::init_imgui()
     endSingleTimeCommands(deviceModule->device, queueModule->graphicsQueue, commandPoolModule->getCommandPool(), commandBuffer);
 }
 
-void App::addWindow(GLFWwindow& window)
-{
-    mainWindow.window = &window;
-}
-
 void App::initVulkan()
 {
     vulkanInstance.debug_level = DEBUG_LEVEL::ONLY_ERROR;
     vulkanInstance.createInstance();
     layerExtensionModule.setupDebugMessenger(vulkanInstance.getInstance(), vulkanInstance.debug_level);
-    windowSurface.createSurface(vulkanInstance.getInstance(), mainWindow.getWindow());
+    windowSurface.createSurface(vulkanInstance.getInstance(), mainWindow->getWindow());
     deviceModule->pickPhysicalDevice(vulkanInstance.getInstance(), windowSurface.getSurface());
     deviceModule->createLogicalDevice(windowSurface.getSurface(), *queueModule);
 
@@ -125,7 +121,7 @@ void App::initVulkan()
     //Inicializamos el Swapchain Module
     swapchainModule = SwapChainModule::getInstance();
     swapchainModule->InitializeScreenDataResources();
-    swapchainModule->createSwapChain(windowSurface.getSurface(), mainWindow.getWindow());
+    swapchainModule->createSwapChain(windowSurface.getSurface(), mainWindow->getWindow());
 
     //Creamos el Command pool module y los Command buffers
     commandPoolModule->createCommandPool(windowSurface.getSurface());
@@ -206,7 +202,7 @@ void App::initVulkan()
 
     auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Idle_Character.gltf").generic_string();
     //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Golem/Meshes/scene.gltf").generic_string();
-    //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf").generic_string();
+    auto characterPath2 = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf").generic_string();
 
     // CHARACTER CONTROLLER
     /*
@@ -216,19 +212,20 @@ void App::initVulkan()
     std::shared_ptr<QEGameObject> character = std::make_shared<QEGameObject>();
     character->AddComponent<QEGeometryComponent>(geometryComponent);
     character->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
-    //character->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>(PhysicBodyType::RIGID_BODY));
-    //character->AddComponent<Collider>(std::make_shared<CapsuleCollider>(0.35f, 1.7f));
-    //auto characterCollider = character->GetComponent<Collider>();
-    //characterCollider->LocalDisplacement = glm::vec3(0.0f, 0.85f, 0.0f);
+    character->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>(PhysicBodyType::RIGID_BODY));
+    character->AddComponent<Collider>(std::make_shared<CapsuleCollider>(0.35f, 1.7f));
+    auto characterCollider = character->GetComponent<Collider>();
+    characterCollider->LocalDisplacement = glm::vec3(0.0f, 0.85f, 0.0f);
 
-    //auto characterPBody = character->GetComponent<PhysicsBody>();
-    //characterPBody->Mass = 70.0f;
-    //characterPBody->CollisionGroup = CollisionFlag::COL_PLAYER;
-    //characterPBody->CollisionMask = CollisionFlag::COL_SCENE;
+    auto characterPBody = character->GetComponent<PhysicsBody>();
+    characterPBody->Mass = 70.0f;
+    characterPBody->CollisionGroup = CollisionFlag::COL_PLAYER;
+    characterPBody->CollisionMask = CollisionFlag::COL_SCENE;
 
-    //character->AddCharacterController(std::make_shared<QECharacterController>());
-    //auto characterController = character->GetComponent<QECharacterController>();
-    //characterController->SetJumpForce(9.0f);
+    character->AddCharacterController(std::make_shared<QECharacterController>());
+    auto characterController = character->GetComponent<QECharacterController>();
+    characterController->SetJumpForce(9.0f);
+    characterController->AddGLFWWindow(this->mainWindow->getWindow());
     this->gameObjectManager->AddGameObject(character, "character");
     /**/
 
@@ -475,7 +472,7 @@ void App::loadScene(QEScene scene)
 {
     // Initialize the camera editor
     this->cameraEditor = CameraEditor::getInstance();
-    this->cameraEditor->LoadCameraDto(this->mainWindow.width, this->mainWindow.height, this->scene.cameraEditor);
+    this->cameraEditor->LoadCameraDto(this->mainWindow->width, this->mainWindow->height, this->scene.cameraEditor);
 
     // Initialize the materials
     this->materialManager->LoadMaterialDtos(this->scene.materialDtos);
@@ -499,7 +496,7 @@ void App::mainLoop()
 {
     bool changeAnimation = true;
 
-    while (!glfwWindowShouldClose(mainWindow.getWindow()))
+    while (!glfwWindowShouldClose(mainWindow->getWindow()))
     {
         glfwPollEvents();
         this->timer->UpdateDeltaTime();
@@ -515,6 +512,8 @@ void App::mainLoop()
 
         // Update transforms
         this->gameObjectManager->UpdatePhysicTransforms();
+
+        this->gameObjectManager->UpdateQEGameObjects();
 
         //ANIMATION SYSTEM
         this->animationManager->UpdateAnimations((float)Timer::DeltaTime);
@@ -682,7 +681,7 @@ void App::cleanUp()
     this->windowSurface.cleanUp(vulkanInstance.getInstance());
     this->vulkanInstance.destroyInstance();
 
-    glfwDestroyWindow(mainWindow.getWindow());
+    glfwDestroyWindow(mainWindow->getWindow());
 
     glfwTerminate();
 
@@ -864,13 +863,13 @@ void App::resizeSwapchain(VkResult result, ERROR_RESIZE errorResize)
 
 void App::recreateSwapchain()
 {
-    mainWindow.checkMinimize();
+    mainWindow->checkMinimize();
 
     vkDeviceWaitIdle(deviceModule->device);
 
     //Recreamos el swapchain
     cleanUpSwapchain();
-    swapchainModule->createSwapChain(windowSurface.getSurface(), mainWindow.getWindow());
+    swapchainModule->createSwapChain(windowSurface.getSurface(), mainWindow->getWindow());
 
     //Actualizamos el formato de la cámara
     this->cameraEditor->UpdateViewportSize(swapchainModule->swapChainExtent);

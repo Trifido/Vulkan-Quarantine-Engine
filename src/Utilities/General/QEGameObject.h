@@ -44,7 +44,7 @@ public:
     void UpdatePhysicTransform();
 
     void QEInitialize();
-    void QEUpdate() {}
+    void QEUpdate();
     void QERelease();
 
     template<typename T>
