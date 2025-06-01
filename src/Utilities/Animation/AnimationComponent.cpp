@@ -1,4 +1,5 @@
 #include "AnimationComponent.h"
+#include <QEGameObject.h>
 
 AnimationComponent::AnimationComponent()
 {
@@ -70,8 +71,32 @@ void AnimationComponent::CleanLastResources()
 
 void AnimationComponent::QEStart()
 {
-    auto animation = this->_animations.begin()->second;
-    this->animator->PlayAnimation(animation);
+    auto animationComponent = this->Owner->GetComponent<AnimationComponent>();
+    if (animationComponent != nullptr)
+    {
+        auto meshComponent = this->Owner->GetComponent<QEGeometryComponent>();
+        auto mesh = meshComponent->GetMesh();
+
+        if (mesh->MeshData.empty())
+        {
+            return;
+        }
+
+        std::vector<std::string> idMeshes;
+        for (unsigned int i = 0; i < mesh->MeshData.size(); i++)
+        {
+            idMeshes.push_back(std::to_string(i));
+        }
+
+        animationComponent->animator->InitializeComputeNodes(idMeshes);
+
+        for (unsigned int i = 0; i < mesh->MeshData.size(); i++)
+        {
+            animationComponent->animator->SetVertexBufferInComputeNode(idMeshes[i], meshComponent->vertexBuffer[i], meshComponent->animationBuffer[i], mesh->MeshData[i].NumVertices);
+        }
+
+        animationComponent->animator->InitializeDescriptorsComputeNodes();
+    }
 
     QEGameComponent::QEStart();
 }
@@ -87,5 +112,8 @@ void AnimationComponent::QEDestroy()
 
 void AnimationComponent::QEInit()
 {
+    auto animation = this->_animations.begin()->second;
+    this->animator->PlayAnimation(animation);
+
     QEGameComponent::QEInit();
 }

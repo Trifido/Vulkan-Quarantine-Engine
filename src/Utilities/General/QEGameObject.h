@@ -37,7 +37,6 @@ public:
     QEGameObject();
     //QEGameObject(const GameObjectDto& gameObjectDto);
     inline std::string ID() const { return id; }
-    void AddAnimation(std::shared_ptr<Animation> animation_ptr);
     virtual bool IsValidRender();
 
     void QEStart();
@@ -125,7 +124,6 @@ public:
 
 protected:
     virtual bool IsValidGameObject();
-    void InitializeAnimationComponent();
 };
 
 #endif

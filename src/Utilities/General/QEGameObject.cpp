@@ -76,16 +76,21 @@ void QEGameObject::QEStart()
     if (mesh->AnimationData.size())
     {
         this->AddComponent<AnimationComponent>(std::make_shared<AnimationComponent>());
+        auto animationComponent = this->GetComponent<AnimationComponent>();
 
         for (auto anim : mesh->AnimationData)
         {
             if (anim.m_Duration > 0.0f)
             {
-                this->AddAnimation(std::make_shared<Animation>(anim));
+                animationComponent->AddAnimation(std::make_shared<Animation>(anim));
             }
         }
 
-        this->InitializeAnimationComponent();
+        if (this->animationManager == nullptr)
+        {
+            this->animationManager = AnimationManager::getInstance();
+            this->animationManager->AddAnimationComponent(this->id, animationComponent);
+        }
     }
 
     for (auto gameComponent : this->components)
@@ -127,54 +132,6 @@ void QEGameObject::InitializeResources()
     this->cullingSceneManager = CullingSceneManager::getInstance();
 
     AddComponent<Transform>(std::make_shared<Transform>());
-}
-
-void QEGameObject::AddAnimation(std::shared_ptr<Animation> animation_ptr)
-{
-    auto animationComponent = this->GetComponent<AnimationComponent>();
-    if (animationComponent == nullptr)
-    {
-        this->AddComponent<AnimationComponent>(std::make_shared<AnimationComponent>());
-    }
-
-    animationComponent = this->GetComponent<AnimationComponent>();
-    animationComponent->AddAnimation(animation_ptr);
-
-    if (this->animationManager == nullptr)
-    {
-        this->animationManager = AnimationManager::getInstance();
-        this->animationManager->AddAnimationComponent(this->id, animationComponent);
-    }
-}
-
-void QEGameObject::InitializeAnimationComponent()
-{
-    auto animationComponent = this->GetComponent<AnimationComponent>();
-    if (animationComponent != nullptr)
-    {
-        auto meshComponent = this->GetComponent<QEGeometryComponent>();
-        auto mesh = meshComponent->GetMesh();
-
-        if (mesh->MeshData.empty())
-        {
-            return;
-        }
-
-        std::vector<std::string> idMeshes;
-        for (unsigned int i = 0; i < mesh->MeshData.size(); i++)
-        {
-            idMeshes.push_back(std::to_string(i));
-        }
-
-        animationComponent->animator->InitializeComputeNodes(idMeshes);
-
-        for (unsigned int i = 0; i < mesh->MeshData.size(); i++)
-        {
-            animationComponent->animator->SetVertexBufferInComputeNode(idMeshes[i], meshComponent->vertexBuffer[i], meshComponent->animationBuffer[i], mesh->MeshData[i].NumVertices);
-        }
-
-        animationComponent->animator->InitializeDescriptorsComputeNodes();
-    }
 }
 
 bool QEGameObject::IsValidRender()
