@@ -5,7 +5,7 @@
 #include "QEGameComponent.h"
 #include "btBulletDynamicsCommon.h"
 
-class Collider : public QEGameComponent
+class QECollider : public QEGameComponent
 {
 public:
     btCollisionShape* colShape = nullptr;
@@ -13,8 +13,9 @@ public:
     glm::vec3 LocalDisplacement = glm::vec3(0.0f);
 
     void QEStart() override;
+    void QEInit() override;
     void QEUpdate() override;
-    void QERelease() override;
+    void QEDestroy() override;
 };
 
 #endif 

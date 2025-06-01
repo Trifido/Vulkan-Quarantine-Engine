@@ -168,12 +168,19 @@ void ComputeNode::UpdateOutputTextureState()
 void ComputeNode::QEStart()
 {
     InitializeComputeNode();
+    QEGameComponent::QEStart();
 }
 
 void ComputeNode::QEUpdate()
 {
 }
 
-void ComputeNode::QERelease()
+void ComputeNode::QEDestroy()
 {
+    QEGameComponent::QEDestroy();
+}
+
+void ComputeNode::QEInit()
+{
+    QEGameComponent::QEInit();
 }

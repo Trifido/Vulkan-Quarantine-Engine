@@ -4,7 +4,7 @@
 
 #include <Collider.h>
 
-class SphereCollider : public Collider
+class SphereCollider : public QECollider
 {
 protected:
     float Radius;

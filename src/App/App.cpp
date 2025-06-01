@@ -213,8 +213,8 @@ void App::initVulkan()
     character->AddComponent<QEGeometryComponent>(geometryComponent);
     character->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
     character->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>(PhysicBodyType::RIGID_BODY));
-    character->AddComponent<Collider>(std::make_shared<CapsuleCollider>(0.35f, 1.7f));
-    auto characterCollider = character->GetComponent<Collider>();
+    character->AddComponent<QECollider>(std::make_shared<CapsuleCollider>(0.35f, 1.7f));
+    auto characterCollider = character->GetComponent<QECollider>();
     characterCollider->LocalDisplacement = glm::vec3(0.0f, 0.85f, 0.0f);
 
     auto characterPBody = character->GetComponent<PhysicsBody>();
@@ -222,7 +222,7 @@ void App::initVulkan()
     characterPBody->CollisionGroup = CollisionFlag::COL_PLAYER;
     characterPBody->CollisionMask = CollisionFlag::COL_SCENE;
 
-    character->AddCharacterController(std::make_shared<QECharacterController>());
+    character->AddComponent<QECharacterController>(std::make_shared<QECharacterController>());
     auto characterController = character->GetComponent<QECharacterController>();
     characterController->SetJumpForce(9.0f);
     characterController->AddGLFWWindow(this->mainWindow->getWindow());
@@ -261,9 +261,9 @@ void App::initVulkan()
     auto floorPBody = floor->GetComponent<PhysicsBody>();
     floorPBody->CollisionGroup = CollisionFlag::COL_SCENE;
     floorPBody->CollisionMask = CollisionFlag::COL_PLAYER;
-    floor->AddComponent<Collider>(std::make_shared<PlaneCollider>());
+    floor->AddComponent<QECollider>(std::make_shared<PlaneCollider>());
 
-    auto floorCollider = floor->GetComponent<Collider>();
+    auto floorCollider = floor->GetComponent<QECollider>();
     std::static_pointer_cast<PlaneCollider>(floorCollider)->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
     this->gameObjectManager->AddGameObject(floor, "floor");  
 
@@ -308,7 +308,7 @@ void App::initVulkan()
     wallPBody->CollisionGroup = CollisionFlag::COL_SCENE;
     wallPBody->CollisionMask = CollisionFlag::COL_PLAYER;
 
-    wall->AddComponent<Collider>(std::make_shared<BoxCollider>());
+    wall->AddComponent<QECollider>(std::make_shared<BoxCollider>());
     this->gameObjectManager->AddGameObject(wall, "wall");
     /*
     // CHARACTER CONTROLLER
@@ -457,10 +457,9 @@ void App::initVulkan()
     // Initialize Managers
     this->animationManager->InitializeAnimations();
     this->animationManager->UpdateAnimations(0.0f);
-    this->gameObjectManager->InitializePhysics();
     this->lightManager->InitializeShadowMaps();
 
-    this->gameObjectManager->InitializeQEGameObjects();
+    this->gameObjectManager->StartQEGameObjects();
 
     this->commandPoolModule->Render(&framebufferModule);
     this->synchronizationModule.createSyncObjects();
@@ -501,17 +500,8 @@ void App::mainLoop()
         glfwPollEvents();
         this->timer->UpdateDeltaTime();
 
-        //UPDATE CHARACTER CONTROLLER
-        //auto character = this->gameObjectManager->GetGameObject("character");
-        //auto characterController = character->GetComponent<QECharacterController>();
-        //characterController->Update();
-        //QECharacterController::ProcessInput(mainWindow.getWindow(), characterController);
-
         //PHYSIC SYSTEM
         this->physicsModule->ComputePhysics((float)Timer::DeltaTime);
-
-        // Update transforms
-        this->gameObjectManager->UpdatePhysicTransforms();
 
         this->gameObjectManager->UpdateQEGameObjects();
 

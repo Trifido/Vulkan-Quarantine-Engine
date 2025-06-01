@@ -72,12 +72,20 @@ void AnimationComponent::QEStart()
 {
     auto animation = this->_animations.begin()->second;
     this->animator->PlayAnimation(animation);
+
+    QEGameComponent::QEStart();
 }
 
 void AnimationComponent::QEUpdate()
 {
 }
 
-void AnimationComponent::QERelease()
+void AnimationComponent::QEDestroy()
 {
+    QEGameComponent::QEDestroy();
+}
+
+void AnimationComponent::QEInit()
+{
+    QEGameComponent::QEInit();
 }

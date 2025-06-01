@@ -28,10 +28,10 @@ public:
     void ChangeAnimation();
     void CleanLastResources();
 
-    // Heredado vía QEGameComponent
     void QEStart() override;
+    void QEInit() override;
     void QEUpdate() override;
-    void QERelease() override;
+    void QEDestroy() override;
 };
 
 #endif

@@ -29,7 +29,7 @@ class PhysicsBody : public QEGameComponent
 private:
     btVector3 localInertia;
     std::shared_ptr<Transform> transform;
-    std::shared_ptr<Collider> collider;
+    std::shared_ptr<QECollider> collider;
 public:
     btRigidBody* body;
     PhysicBodyType Type;
@@ -42,17 +42,15 @@ public:
     PhysicsBody(const PhysicBodyType& type);
     void UpdateType(const PhysicBodyType& type);
     void UpdateInertia(const glm::vec3& localInertia);
-    void Initialize(std::shared_ptr<Transform> transform_ptr, std::shared_ptr<Collider> collider_ptr);
-
-    void UpdateTransform();
 
     void QEStart() override;
-
+    void QEInit() override;
     void QEUpdate() override;
-
-    void QERelease() override;
+    void QEDestroy() override;
 private:
+    void Initialize();
     void copyTransformtoGLM();
+    void UpdateTransform();
 
     glm::mat4 bulletToGlm(const btTransform& t);
     glm::vec3 bulletToGlm(const btVector3& v);

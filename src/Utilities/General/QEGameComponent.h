@@ -12,13 +12,25 @@ class QEGameObject;
 
 class QEGameComponent : Numbered
 {
+protected:
+    bool _QEBound = false;
+    bool _QEStarted = false;
+    bool _QEInitialized = false;
+    bool _QEDestroyed = false;
+
 public:
     QEGameObject* Owner = nullptr; // Pointer to the owner game object
+    inline bool QEBound() const { return _QEBound; };
+    inline bool QEStarted() const { return _QEStarted; };
+    inline bool QEInitialized() const { return _QEInitialized; };
+    inline bool QEDestroyed() const { return _QEDestroyed; };
+
 public:
     QEGameComponent() {}
-    virtual void QEStart() = 0;
+    virtual void QEStart() ;
+    virtual void QEInit() = 0;
     virtual void QEUpdate() = 0;
-    virtual void QERelease() = 0;
+    virtual void QEDestroy() = 0;
 
     void BindGameObject(QEGameObject* gameObject);
 };

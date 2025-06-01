@@ -13,7 +13,7 @@
 struct IgnoreSelfCallback : public btCollisionWorld::ClosestConvexResultCallback
 {
     const btCollisionObject* ignoreObject;
-    btVector3 hitNormal;  // Aquí guardamos la normal del impacto
+    btVector3 hitNormal;
 
     IgnoreSelfCallback(const btVector3& from, const btVector3& to, const btCollisionObject* ignoreObj)
         : btCollisionWorld::ClosestConvexResultCallback(from, to), ignoreObject(ignoreObj), hitNormal(btVector3(0, 0, 0)) {}
@@ -29,14 +29,12 @@ struct IgnoreSelfCallback : public btCollisionWorld::ClosestConvexResultCallback
     btScalar addSingleResult(btCollisionWorld::LocalConvexResult& convexResult, bool normalInWorldSpace) override
     {
         if (convexResult.m_hitCollisionObject == ignoreObject)
-            return 1.0f; // Ignorar colisión con uno mismo
+            return 1.0f;
 
-        // Guarda la normal
         if (normalInWorldSpace)
             hitNormal = convexResult.m_hitNormalLocal;
         else
         {
-            // Si no está en espacio mundial, transformarla
             hitNormal = convexResult.m_hitCollisionObject->getWorldTransform().getBasis() * convexResult.m_hitNormalLocal;
         }
 
@@ -48,7 +46,7 @@ class QECharacterController : public QEGameComponent
 {
     private:
         GLFWwindow* window;
-        std::shared_ptr<Collider> colliderPtr;
+        std::shared_ptr<QECollider> colliderPtr;
         std::shared_ptr<PhysicsBody> physicBodyPtr;
         bool isGrounded = false;
         bool canWalkOnGround = false;
@@ -62,11 +60,10 @@ class QECharacterController : public QEGameComponent
         void Jump();
         void Move(const btVector3& direction, float speed);
         bool CanMove(const btVector3& direction, float distance, btVector3& outAdjustedDir);
+        void Initialize();
 
     public:
         void AddGLFWWindow(GLFWwindow* window) { this->window = window; }
-        void Initialize();
-        void BindGameObjectProperties(std::shared_ptr<PhysicsBody> physicBody, std::shared_ptr<Collider> collider);
         void Update();
         btVector3 GetPosition();
         void ProcessInput();
@@ -74,8 +71,9 @@ class QECharacterController : public QEGameComponent
         void SetJumpForce(float force) { jumpForce = force; }
 
         void QEStart() override;
+        void QEInit() override;
         void QEUpdate() override;
-        void QERelease() override;
+        void QEDestroy() override;
 };
 
 #endif // !QE_CHARACTER_CONTROLLER

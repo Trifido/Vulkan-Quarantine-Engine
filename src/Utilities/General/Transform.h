@@ -47,8 +47,9 @@ public:
     void Debug_PrintModel() const;
 
     void QEStart() override;
+    void QEInit() override;
     void QEUpdate() override;
-    void QERelease() override;
+    void QEDestroy() override;
 };
 
 #endif

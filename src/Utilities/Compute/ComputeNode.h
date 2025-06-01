@@ -40,8 +40,9 @@ private:
     void UpdateOutputTextureState();
 
     void QEStart() override;
+    void QEInit() override;
     void QEUpdate() override;
-    void QERelease() override;
+    void QEDestroy() override;
 };
 
 #endif // !COMPUTE_NODE_H

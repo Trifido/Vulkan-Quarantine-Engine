@@ -50,5 +50,5 @@ void Grid::Draw(VkCommandBuffer& commandBuffer, uint32_t idx)
 
 void Grid::Clean()
 {
-    this->gridMesh->QERelease();
+    this->gridMesh->QEDestroy();
 }

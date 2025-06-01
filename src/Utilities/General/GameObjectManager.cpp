@@ -110,29 +110,13 @@ void GameObjectManager::OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32
     }
 }
 
-void GameObjectManager::InitializePhysics()
-{
-    for (auto model : this->_physicObjects)
-    {
-        model.second->InitializePhysics();
-    }
-}
-
-void GameObjectManager::UpdatePhysicTransforms()
-{
-    for (auto model : this->_physicObjects)
-    {
-        model.second->UpdatePhysicTransform();
-    }
-}
-
 void GameObjectManager::ReleaseAllGameObjects()
 {
     for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
     {
         for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
         {
-            model.second->QERelease();
+            model.second->QEDestroy();
         }
     }
 }
@@ -226,13 +210,13 @@ void GameObjectManager::LoadGameObjectDtos(std::vector<GameObjectDto>& gameObjec
     //}
 }
 
-void GameObjectManager::InitializeQEGameObjects()
+void GameObjectManager::StartQEGameObjects()
 {
     for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
     {
         for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
         {
-            model.second->QEInitialize();
+            model.second->QEStart();
         }
     }
 }
@@ -248,13 +232,13 @@ void GameObjectManager::UpdateQEGameObjects()
     }
 }
 
-void GameObjectManager::ReleaseQEGameObjects()
+void GameObjectManager::DestroyQEGameObjects()
 {
     for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
     {
         for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
         {
-            model.second->QERelease();
+            model.second->QEDestroy();
         }
     }
 }

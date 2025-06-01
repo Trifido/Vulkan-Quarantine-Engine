@@ -1,13 +1,20 @@
 #include "Collider.h"
 
-void Collider::QEStart()
+void QECollider::QEStart()
+{
+    QEGameComponent::QEStart();
+}
+
+void QECollider::QEInit()
+{
+    QEGameComponent::QEInit();
+}
+
+void QECollider::QEUpdate()
 {
 }
 
-void Collider::QEUpdate()
+void QECollider::QEDestroy()
 {
-}
-
-void Collider::QERelease()
-{
+    QEGameComponent::QEDestroy();
 }

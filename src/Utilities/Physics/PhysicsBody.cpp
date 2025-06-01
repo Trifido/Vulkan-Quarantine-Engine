@@ -1,6 +1,7 @@
 #include <PhysicsBody.h>
 #include <LinearMath/btVector3.h>
 #include <PhysicsModule.h>
+#include <QEGameObject.h>
 
 PhysicsBody::PhysicsBody()
 {
@@ -48,19 +49,15 @@ void PhysicsBody::UpdateTransform()
     }
 }
 
-
-void PhysicsBody::Initialize(std::shared_ptr<Transform> transform_ptr, std::shared_ptr<Collider> collider_ptr)
+void PhysicsBody::Initialize()
 {
-    this->transform = transform_ptr;
-    this->collider = collider_ptr;
-
     btTransform startTransform;
     startTransform.setIdentity();
 
     glm::vec3 scale = this->transform->Scale;
-    collider_ptr->colShape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
+    this->collider->colShape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
 
-    glm::vec3 position = this->transform->Position + collider_ptr->LocalDisplacement;
+    glm::vec3 position = this->transform->Position + this->collider->LocalDisplacement;
     startTransform.setOrigin(btVector3(position.x, position.y, position.z));
 
     auto quat = this->transform->Orientation;
@@ -144,12 +141,30 @@ btQuaternion PhysicsBody::glmToBullet(const glm::quat& q) { return btQuaternion(
 
 void PhysicsBody::QEStart()
 {
+    QEGameComponent::QEStart();
+}
+
+void PhysicsBody::QEInit()
+{
+    if (this->Owner == nullptr)
+        return;
+
+    this->collider = this->Owner->GetComponent<QECollider>();
+    this->transform = this->Owner->GetComponent<Transform>();
+
+    if (this->collider && this->transform)
+    {
+        this->Initialize();
+        QEGameComponent::QEInit();
+    }
 }
 
 void PhysicsBody::QEUpdate()
 {
+    this->UpdateTransform();
 }
 
-void PhysicsBody::QERelease()
+void PhysicsBody::QEDestroy()
 {
+    QEGameComponent::QEDestroy();
 }

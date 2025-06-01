@@ -25,8 +25,9 @@ public:
     ~QEMeshRenderer() {}
 
     void QEStart() override;
+    void QEInit() override;
     void QEUpdate() override;
-    void QERelease() override;
+    void QEDestroy() override;
 
     void SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
     void SetDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout);

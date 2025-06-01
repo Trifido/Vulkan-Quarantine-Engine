@@ -364,7 +364,7 @@ void AtmosphereSystem::Cleanup()
 {
     if (_Mesh != nullptr)
     {
-        this->_Mesh->QERelease();
+        this->_Mesh->QEDestroy();
         this->_Mesh = nullptr;
     }
 

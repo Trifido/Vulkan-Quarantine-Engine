@@ -54,7 +54,7 @@ void QEGeometryComponent::ReleaseResources()
 
 void QEGeometryComponent::QEStart()
 {
-    if (IsQEStarted())
+    if (_QEStarted)
     {
         return;
     }
@@ -66,23 +66,28 @@ void QEGeometryComponent::QEStart()
 
     BuildMesh();
 
-    started_ = true;
+    QEGameComponent::QEStart();
+}
+
+void QEGeometryComponent::QEInit()
+{
+    QEGameComponent::QEInit();
 }
 
 void QEGeometryComponent::QEUpdate()
 {
 }
 
-void QEGeometryComponent::QERelease()
+void QEGeometryComponent::QEDestroy()
 {
-    if (IsQEReleased())
+    if (_QEDestroyed)
     {
         return;
     }
 
     ReleaseResources();
 
-    released_ = true;
+    QEGameComponent::QEDestroy();
 }
 
 void QEGeometryComponent::BuildMesh()

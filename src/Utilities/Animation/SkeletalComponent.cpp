@@ -8,6 +8,6 @@ void SkeletalComponent::QEUpdate()
 {
 }
 
-void SkeletalComponent::QERelease()
+void SkeletalComponent::QEDestroy()
 {
 }

@@ -1,6 +1,7 @@
 ﻿#include <QECharacterController.h>
 #include <PhysicsModule.h>
 #include <Timer.h>
+#include <QEGameObject.h>
 
 void QECharacterController::Initialize()
 {
@@ -10,12 +11,6 @@ void QECharacterController::Initialize()
     this->physicBodyPtr->body->setRestitution(0.0f);    // sin rebote
     this->physicBodyPtr->body->setActivationState(DISABLE_DEACTIVATION);
     this->physicBodyPtr->body->setCollisionFlags(btCollisionObject::CF_DYNAMIC_OBJECT);
-}
-
-void QECharacterController::BindGameObjectProperties(std::shared_ptr<PhysicsBody> physicBody, std::shared_ptr<Collider> collider)
-{
-    this->physicBodyPtr = physicBody;
-    this->colliderPtr = collider;
 }
 
 void QECharacterController::CheckIfGrounded()
@@ -188,6 +183,23 @@ void QECharacterController::ProcessInput()
 
 void QECharacterController::QEStart()
 {
+    QEGameComponent::QEStart();
+}
+
+void QECharacterController::QEInit()
+{
+    auto physicsBody = this->Owner->GetComponent<PhysicsBody>();
+    auto collider = this->Owner->GetComponent<QECollider>();
+
+    if (collider != NULL && physicsBody != NULL)
+    {
+        this->physicBodyPtr = physicsBody;
+        this->colliderPtr = collider;
+
+        this->Initialize();
+
+        QEGameComponent::QEInit();
+    }
 }
 
 void QECharacterController::QEUpdate()
@@ -196,6 +208,7 @@ void QECharacterController::QEUpdate()
     ProcessInput();
 }
 
-void QECharacterController::QERelease()
+void QECharacterController::QEDestroy()
 {
+    QEGameComponent::QEDestroy();
 }

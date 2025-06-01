@@ -4,7 +4,7 @@
 
 #include <Collider.h>
 
-class BoxCollider : public Collider
+class BoxCollider : public QECollider
 {
 protected:
     glm::vec3 Size;

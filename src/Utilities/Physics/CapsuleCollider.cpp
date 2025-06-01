@@ -1,6 +1,6 @@
 #include "CapsuleCollider.h"
 
-CapsuleCollider::CapsuleCollider() : Collider()
+CapsuleCollider::CapsuleCollider() : QECollider()
 {
     this->SetSize(0.5f, 2.0f);
 }

@@ -10,6 +10,11 @@ QEMeshRenderer::QEMeshRenderer()
 void QEMeshRenderer::QEStart()
 {
     vkCmdDrawMeshTasksEXT = (PFN_vkCmdDrawMeshTasksEXT)vkGetDeviceProcAddr(this->deviceModule->device, "vkCmdDrawMeshTasksEXT");
+    QEGameComponent::QEStart();
+}
+
+void QEMeshRenderer::QEInit()
+{
     animationComponent = this->Owner->GetComponent<AnimationComponent>();
     geometryComponent = this->Owner->GetComponent<QEGeometryComponent>();
     materialComponents = this->Owner->GetMaterials();
@@ -20,16 +25,18 @@ void QEMeshRenderer::QEStart()
         if (!materialComponents.empty())
         {
             materialComponents[0]->descriptor->SetMeshletBuffers(geometryComponent->meshlets_ptr[0]);
-        }   
+        }
     }
+    QEGameComponent::QEInit();
 }
 
 void QEMeshRenderer::QEUpdate()
 {
 }
 
-void QEMeshRenderer::QERelease()
+void QEMeshRenderer::QEDestroy()
 {
+    QEGameComponent::QEDestroy();
 }
 
 void QEMeshRenderer::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)

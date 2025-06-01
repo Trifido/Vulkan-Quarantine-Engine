@@ -28,17 +28,15 @@ public:
     void DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
     void CSMCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex);
     void OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, glm::mat4 viewParameter, glm::vec3 lightPosition);
-    void InitializePhysics();
-    void UpdatePhysicTransforms();
     void ReleaseAllGameObjects();
     void CleanLastResources();
     std::vector<GameObjectDto> GetGameObjectDtos(std::ifstream& file);
     void SaveGameObjects(std::ofstream& file);
     void LoadGameObjectDtos(std::vector<GameObjectDto>& gameObjectDtos);
 
-    void InitializeQEGameObjects();
+    void StartQEGameObjects();
     void UpdateQEGameObjects();
-    void ReleaseQEGameObjects();
+    void DestroyQEGameObjects();
 };
 
 #endif

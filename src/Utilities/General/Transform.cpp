@@ -109,7 +109,11 @@ void Transform::QEUpdate()
 {
 }
 
-void Transform::QERelease()
+void Transform::QEDestroy()
+{
+}
+
+void Transform::QEInit()
 {
 }
 

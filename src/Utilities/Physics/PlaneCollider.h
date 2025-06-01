@@ -4,7 +4,7 @@
 
 #include <Collider.h>
 
-class PlaneCollider : public Collider
+class PlaneCollider : public QECollider
 {
 protected:
     float Size;

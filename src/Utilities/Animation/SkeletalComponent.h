@@ -14,7 +14,7 @@ public:
 public:
     void QEStart() override;
     void QEUpdate() override;
-    void QERelease() override;
+    void QEDestroy() override;
 };
 
 #endif

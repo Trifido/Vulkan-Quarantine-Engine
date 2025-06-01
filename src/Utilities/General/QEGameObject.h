@@ -38,14 +38,11 @@ public:
     //QEGameObject(const GameObjectDto& gameObjectDto);
     inline std::string ID() const { return id; }
     void AddAnimation(std::shared_ptr<Animation> animation_ptr);
-    void AddCharacterController(std::shared_ptr<QECharacterController> characterController_ptr);
-    void InitializePhysics();
     virtual bool IsValidRender();
-    void UpdatePhysicTransform();
 
-    void QEInitialize();
+    void QEStart();
     void QEUpdate();
-    void QERelease();
+    void QEDestroy();
 
     template<typename T>
     bool AddComponent(std::shared_ptr<T> component_ptr)

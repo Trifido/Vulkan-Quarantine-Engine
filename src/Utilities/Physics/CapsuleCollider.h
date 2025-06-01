@@ -3,7 +3,7 @@
 #define CAPSULE_COLLIDER_H
 
 #include "Collider.h"
-class CapsuleCollider : public Collider
+class CapsuleCollider : public QECollider
 {
 private:
     float radius;

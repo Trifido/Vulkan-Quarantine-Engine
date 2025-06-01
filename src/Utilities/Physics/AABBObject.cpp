@@ -53,7 +53,7 @@ void AABBObject::CleanResources()
     this->vertices.clear();
     this->indices.clear();
 
-    QERelease();
+    QEDestroy();
 }
 
 void AABBObject::AddTransform(std::shared_ptr<Transform> modelTransform)
