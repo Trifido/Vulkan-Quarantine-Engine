@@ -2,7 +2,6 @@
 #ifndef QE_GAME_OBJECT_H
 #define QE_GAME_OBJECT_H
 
-#include <AnimationManager.h>
 #include <CullingSceneManager.h>
 #include <Numbered.h>
 #include <GameObjectDto.h>
@@ -22,7 +21,6 @@ protected:
     DeviceModule*       deviceModule = nullptr;
     QueueModule*        queueModule = nullptr;
     MaterialManager*    materialManager = nullptr;
-    AnimationManager*   animationManager = nullptr;
 
 public:
     std::list<std::shared_ptr<QEGameComponent>> components;

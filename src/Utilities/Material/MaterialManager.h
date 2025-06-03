@@ -19,7 +19,6 @@ private:
     friend class QESingleton<MaterialManager>; // Permitir acceso al constructor
     std::unordered_map<std::string, std::shared_ptr<QEMaterial>> _materials;
 
-    QECamera*           cameraEditor;
     LightManager*       lightManager;
     RenderPassModule*   renderPassModule;
 

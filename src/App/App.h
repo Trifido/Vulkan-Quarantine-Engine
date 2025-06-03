@@ -34,9 +34,8 @@
 #include "QEGameObject.h"
 #include "Transform.h"
 #include "Material.h"
-#include "Camera.h"
+#include "QECamera.h"
 #include "LightManager.h"
-#include "AnimationManager.h"
 #include "Particles/ParticleSystem.h"
 
 // Editor
@@ -150,7 +149,6 @@ private:
     ComputeNodeManager* computeNodeManager{};
     TextureManager*     textureManager{};
     GameObjectManager*  gameObjectManager{};
-    AnimationManager*   animationManager{};
     GraphicsPipelineManager* graphicsPipelineManager{};
     ComputePipelineManager* computePipelineManager{};
     ShadowPipelineManager* shadowPipelineManager{};

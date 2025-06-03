@@ -20,7 +20,6 @@ App::App()
 
     this->physicsModule = PhysicsModule::getInstance();
     this->editorManager = EditorObjectManager::getInstance();
-    this->animationManager = AnimationManager::getInstance();
     this->graphicsPipelineManager = GraphicsPipelineManager::getInstance();
     this->shadowPipelineManager = ShadowPipelineManager::getInstance();
     this->computePipelineManager = ComputePipelineManager::getInstance();
@@ -455,8 +454,6 @@ void App::initVulkan()
     this->physicsModule->SetGravity(-20.0f);
 
     // Initialize Managers
-    this->animationManager->InitializeAnimations();
-    this->animationManager->UpdateAnimations(0.0f);
     this->lightManager->InitializeShadowMaps();
 
     this->gameObjectManager->StartQEGameObjects();
@@ -504,13 +501,7 @@ void App::mainLoop()
         this->physicsModule->ComputePhysics((float)Timer::DeltaTime);
 
         this->gameObjectManager->UpdateQEGameObjects();
-
-        //ANIMATION SYSTEM
-        this->animationManager->UpdateAnimations((float)Timer::DeltaTime);
-        
-        //COMPUTE NODES
-        this->computeNodeManager->UpdateComputeNodes();
-
+                
         // INPUT EVENTS
         this->keyboard_ptr->ReadKeyboardEvents();
         this->cameraEditor->CameraController((float)Timer::DeltaTime);
@@ -556,18 +547,6 @@ void App::mainLoop()
             glm::vec3 newDir = sunLight->transform->ForwardVector;
             newDir.y -= 0.001f;
             sunLight->SetLightDirection(newDir);
-        }
-        if (ImGui::IsKeyDown(ImGuiKey_1))
-        {
-            if (changeAnimation)
-            {
-                this->animationManager->ChangeAnimation();
-                changeAnimation = false;
-            }
-        }
-        if (ImGui::IsKeyReleased(ImGuiKey_1))
-        {
-            changeAnimation = true;
         }
 
         {
@@ -641,10 +620,10 @@ void App::cleanUp()
     //this->framebufferModule.cleanupShadowBuffer();
     this->swapchainModule->CleanScreenDataResources();
 
+    this->cameraEditor->CleanCameraUBO();
     this->materialManager->CleanPipelines();
     this->computePipelineManager->CleanComputePipeline();
     this->computeNodeManager->Cleanup();
-    this->animationManager->Cleanup();
     this->lightManager->CleanShadowMapResources();
 
     this->atmosphereSystem->Cleanup();
@@ -708,9 +687,6 @@ void App::cleanManagers()
 
     this->computePipelineManager->ResetInstance();
     this->computePipelineManager = nullptr;
-
-    this->animationManager->ResetInstance();
-    this->animationManager = nullptr;
 
     this->atmosphereSystem->CleanLastResources();
     this->atmosphereSystem->ResetInstance();

@@ -7,6 +7,7 @@
 #include "Compute/ComputeNode.h"
 #include <Compute/ComputeNodeManager.h>
 #include <Timer.h>
+#include <Animator.h>
 
 struct NewParticlesUBO
 {

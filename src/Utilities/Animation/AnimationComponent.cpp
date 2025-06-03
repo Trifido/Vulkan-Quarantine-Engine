@@ -1,5 +1,6 @@
 #include "AnimationComponent.h"
 #include <QEGameObject.h>
+#include <Timer.h>
 
 AnimationComponent::AnimationComponent()
 {
@@ -103,10 +104,12 @@ void AnimationComponent::QEStart()
 
 void AnimationComponent::QEUpdate()
 {
+    this->animator->UpdateAnimation(Timer::DeltaTime);
 }
 
 void AnimationComponent::QEDestroy()
 {
+    this->CleanLastResources();
     QEGameComponent::QEDestroy();
 }
 

@@ -5,7 +5,7 @@
 
 #include "ShaderModule.h"
 #include "CustomTexture.h"
-#include "Camera.h"
+#include "QECamera.h"
 #include "UBO.h"
 
 class ComputeDescriptorBuffer

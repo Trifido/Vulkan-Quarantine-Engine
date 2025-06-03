@@ -1,4 +1,5 @@
 #include "QEGameObject.h"
+#include <AnimationComponent.h>
 
 QEGameObject::QEGameObject()
 {
@@ -84,12 +85,6 @@ void QEGameObject::QEStart()
             {
                 animationComponent->AddAnimation(std::make_shared<Animation>(anim));
             }
-        }
-
-        if (this->animationManager == nullptr)
-        {
-            this->animationManager = AnimationManager::getInstance();
-            this->animationManager->AddAnimationComponent(this->id, animationComponent);
         }
     }
 

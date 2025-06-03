@@ -5,7 +5,7 @@
 #include <DeviceModule.h>
 #include <ShaderModule.h>
 #include <CustomTexture.h>
-#include <Camera.h>
+#include <QECamera.h>
 #include <LightManager.h>
 #include <QESingleton.h>
 #include <Compute/ComputeNodeManager.h>

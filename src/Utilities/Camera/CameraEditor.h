@@ -2,7 +2,7 @@
 #ifndef CAMERA_EDITOR_H
 #define CAMERA_EDITOR_H
 
-#include <Camera.h>
+#include <QECamera.h>
 
 class CameraEditor : public QECamera
 {

@@ -15,7 +15,6 @@ private:
     std::unordered_map<std::string, std::shared_ptr<Animation>> _animations;
     size_t numAnimations = 0;
 
-    friend class AnimationManager;
 public:
     AnimationComponent();
     void AddAnimation(std::shared_ptr<Animation> animation_ptr);

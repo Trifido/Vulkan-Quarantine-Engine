@@ -1,10 +1,11 @@
-#include "Camera.h"
+#include "QECamera.h"
 
 #include <FrustumComponent.h>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <SynchronizationModule.h>
+#include <Timer.h>
 
 float glm_vec3_dot(glm::vec3 a, glm::vec3 b) {
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
@@ -271,6 +272,26 @@ void QECamera::UpdateUBOCamera()
         memcpy(data, static_cast<const void*>(this->cameraUniform.get()), sizeof(CameraUniform));
         vkUnmapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame]);
     }
+}
+
+void QECamera::QEStart()
+{
+    QEGameComponent::QEStart();
+}
+
+void QECamera::QEInit()
+{
+    QEGameComponent::QEInit();
+}
+
+void QECamera::QEUpdate()
+{
+    CameraController(Timer::DeltaTime);
+}
+
+void QECamera::QEDestroy()
+{
+    QEGameComponent::QEDestroy();
 }
 
 void QECamera::CleanCameraUBO()

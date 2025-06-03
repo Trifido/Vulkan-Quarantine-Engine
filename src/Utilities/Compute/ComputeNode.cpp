@@ -138,11 +138,6 @@ void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
     }
 }
 
-void ComputeNode::UpdateComputeDescriptor()
-{
-    this->computeDescriptor->UpdateUBODeltaTime();
-}
-
 void ComputeNode::UpdateOutputTextureState()
 {
     auto outputTexture = this->computeDescriptor->outputTexture;
@@ -173,6 +168,7 @@ void ComputeNode::QEStart()
 
 void ComputeNode::QEUpdate()
 {
+    this->computeDescriptor->UpdateUBODeltaTime();
 }
 
 void ComputeNode::QEDestroy()

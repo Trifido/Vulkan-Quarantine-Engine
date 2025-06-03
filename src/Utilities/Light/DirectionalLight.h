@@ -4,7 +4,7 @@
 
 #include "Light.h"
 #include "CSMResources.h"
-#include <Camera.h>
+#include <QECamera.h>
 
 class DescriptorBuffer;
 

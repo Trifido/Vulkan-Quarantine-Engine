@@ -1,6 +1,6 @@
 #pragma once
-#ifndef CAMERA_H
-#define CAMERA_H
+#ifndef QE_CAMERA_H
+#define QE_CAMERA_H
 #define _USE_MATH_DEFINES
 
 #include <glm/glm.hpp>
@@ -11,10 +11,11 @@
 #include <memory>
 #include "UBO.h"
 #include <CameraDto.h>
+#include <QEGameComponent.h>
 
 class FrustumComponent;
 
-class QECamera
+class QECamera : public QEGameComponent
 {
 private:
     DeviceModule* deviceModule = nullptr;
@@ -76,6 +77,12 @@ private:
     void EditorRotate();
     void InvertPitch(float heightPos);
     void UpdateUBOCamera();
+
+    // Heredado vía QEGameComponent
+    void QEStart() override;
+    void QEInit() override;
+    void QEUpdate() override;
+    void QEDestroy() override;
 };
 
 #endif // !CAMERA_H

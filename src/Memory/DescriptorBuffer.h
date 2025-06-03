@@ -5,7 +5,7 @@
 
 #include "CustomTexture.h"
 #include "ShaderModule.h"
-#include "Camera.h"
+#include "QECamera.h"
 #include "LightManager.h"
 #include "UBO.h"
 #include <MaterialData.h>

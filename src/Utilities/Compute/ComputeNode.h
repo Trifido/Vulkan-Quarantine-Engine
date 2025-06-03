@@ -35,7 +35,7 @@ public:
     void InitializeComputeNode();
     void InitializeOutputTextureComputeNode(uint32_t width, uint32_t height, VkFormat format);
     void DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t currentFrame);
-    void UpdateComputeDescriptor();
+
 private:
     void UpdateOutputTextureState();
 

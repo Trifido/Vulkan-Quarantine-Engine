@@ -55,7 +55,6 @@ MaterialManager::MaterialManager()
     const std::string absolute_grid_frag_shader_path = absPath + "/Grid/grid_frag.spv";
 
     this->lightManager = LightManager::getInstance();
-    this->cameraEditor = CameraEditor::getInstance();
 
     auto shaderManager = ShaderManager::getInstance();
     this->default_shader = std::make_shared<ShaderModule>(
@@ -216,7 +215,6 @@ void MaterialManager::CleanPipelines()
         it.second->cleanup();
     }
     // Clean Camera & Lights UBO's
-    this->cameraEditor->CleanCameraUBO();
     this->lightManager->CleanLightUBO();
 }
 
@@ -230,7 +228,6 @@ void MaterialManager::CleanLastResources()
     }
 
     this->_materials.clear();
-    this->cameraEditor = nullptr;
     this->lightManager = nullptr;
     this->default_shader.reset();
     this->default_primitive_shader.reset();

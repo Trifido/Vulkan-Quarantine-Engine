@@ -6,7 +6,7 @@
 #include <memory>
 #include <fstream>
 #include <Light/Light.h>
-#include <Camera.h>
+#include <QECamera.h>
 #include <SwapChainModule.h>
 #include <ShaderModule.h>
 #include <RenderPassModule.h>
