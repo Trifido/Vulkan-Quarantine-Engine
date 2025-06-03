@@ -242,8 +242,3 @@ void ParticleSystem::CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t 
 {
     this->SetDrawCommand(commandBuffer, idx);
 }
-
-bool ParticleSystem::IsValidRender()
-{
-    return true;
-}

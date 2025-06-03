@@ -133,31 +133,3 @@ void QEGameObject::InitializeResources()
 
     AddComponent<Transform>(std::make_shared<Transform>());
 }
-
-bool QEGameObject::IsValidRender()
-{
-    auto transform = this->GetComponent<Transform>();
-    if (transform == nullptr)
-        return false;
-
-    auto material = this->GetMaterial();
-    auto mesh = this->GetComponent<QEGeometryComponent>();
-    if (mesh != nullptr && material != nullptr)
-        return true;
-
-    for (auto child : childs)
-    {
-        auto childMat = child->GetMaterial();
-        auto childMesh = child->GetComponent<QEGeometryComponent>();
-        if (childMesh != nullptr && childMat != nullptr)
-            return true;
-    }
-
-    return false;
-}
-
-bool QEGameObject::IsValidGameObject()
-{
-    auto transform = this->GetComponent<Transform>();
-    return transform != nullptr;
-}

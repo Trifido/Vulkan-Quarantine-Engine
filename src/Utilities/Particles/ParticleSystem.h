@@ -69,7 +69,6 @@ public:
     void Update();
     void cleanup();
     void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
-    bool IsValidRender() override;
 };
 
 #endif // !PARTICLE_SYSTEM_H

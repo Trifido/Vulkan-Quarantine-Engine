@@ -27,7 +27,7 @@ public:
 
 public:
     QEGameComponent() {}
-    virtual void QEStart() ;
+    virtual void QEStart() = 0;
     virtual void QEInit() = 0;
     virtual void QEUpdate() = 0;
     virtual void QEDestroy() = 0;

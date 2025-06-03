@@ -37,7 +37,6 @@ public:
     QEGameObject();
     //QEGameObject(const GameObjectDto& gameObjectDto);
     inline std::string ID() const { return id; }
-    virtual bool IsValidRender();
 
     void QEStart();
     void QEUpdate();
@@ -121,9 +120,6 @@ public:
     {
         return materials;
     }
-
-protected:
-    virtual bool IsValidGameObject();
 };
 
 #endif
