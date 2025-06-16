@@ -36,21 +36,21 @@ Write-Host "Configuration: $Configuration"
 Write-Host "Parallel cores: $cores"
 Write-Host "-------------------------------------"
 
-# 0) Actualizar submódulos Git
+# 0) Limpieza (opcional) de la carpeta build/
+Write-Host "Cleaning existing build directory..." -ForegroundColor Cyan
+if (Test-Path $buildDir) {
+    try {
+        Remove-Item -Recurse -Force $buildDir
+        Write-Host "Removed existing build directory." -ForegroundColor Green
+    } catch {
+        Write-Warning "Failed to remove build directory: $_"
+    }
+}
+
+# 1) Actualizar submódulos Git
 Write-Host "Updating Git submodules..." -ForegroundColor Cyan
 Push-Location $projectRoot
-git submodule update --init --recursive
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "Failed to update submodules (exit code $LASTEXITCODE)."
-    exit $LASTEXITCODE
-}
-Pop-Location
-
-# 1) Crear carpeta build/ si no existe
-if (!(Test-Path $buildDir)) {
-    Write-Host "Creating build directory at root..."
-    New-Item -ItemType Directory -Path $buildDir | Out-Null
-}
+git s
 
 # 2) CMake configure
 Write-Host "Running CMake configure..."
@@ -66,10 +66,17 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # 3) CMake build
-Write-Host "Building QuarantineEngine ($Configuration)..."
-cmake --build $buildDir `
-      --config $Configuration `
-      --parallel $cores
+foreach ($cfg in @("Debug","Release")) {
+    Write-Host "Building QuarantineEngine ($cfg)..." -ForegroundColor Cyan
+    cmake --build $buildDir `
+          --config $cfg `
+          --parallel $cores
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Build failed for configuration $cfg (exit code $LASTEXITCODE)."
+        exit $LASTEXITCODE
+    }
+}
 
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Build failed (exit code $LASTEXITCODE)."

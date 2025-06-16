@@ -35,7 +35,8 @@ jobs:
             assimp:x64-windows `
             bullet3:x64-windows `
             spirv-reflect:x64-windows `
-            meshoptimizer:x64-windows
+            meshoptimizer:x64-windows `
+            yaml-cpp:x64-windows
         shell: pwsh
 
       # 5) Set up CMake

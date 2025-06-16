@@ -33,8 +33,28 @@ FetchContent_Declare(
   GIT_TAG 3.4
   GIT_SHALLOW TRUE
 )
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+
 FetchContent_MakeAvailable(glfw)
-set_target_properties(glfw PROPERTIES DEBUG_POSTFIX "d")
+set_target_properties(glfw PROPERTIES
+  ARCHIVE_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_BINARY_DIR}/lib/Debug"
+  ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/lib/Release"
+  RUNTIME_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_BINARY_DIR}/bin/Debug"
+  RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/bin/Release"
+)
+
+# Excluir 'update_mappings' del build y moverlo a un folder oculto
+if (TARGET update_mappings)
+  set_target_properties(update_mappings
+    PROPERTIES
+      EXCLUDE_FROM_ALL          TRUE
+      EXCLUDE_FROM_DEFAULT_BUILD TRUE
+      FOLDER                     "Dependencies"
+  )
+endif()
 
 # GLM
 FetchContent_Declare(
@@ -53,6 +73,18 @@ FetchContent_Declare(
   GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(stb)
+
+# yaml-cpp
+FetchContent_Declare(
+  yaml-cpp
+  GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+  GIT_TAG master
+  GIT_SHALLOW TRUE
+)
+set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(yaml-cpp)
 
 # ------------------------------
 # Submodules as libraries
@@ -173,6 +205,7 @@ target_include_directories(QuarantineEngine PRIVATE
   ${glfw_SOURCE_DIR}/include
   ${glm_SOURCE_DIR}
   ${stb_SOURCE_DIR}
+  ${yaml_cpp_SOURCE_DIR}/include
   ${IMGUI_DIR}
   ${IMGUI_DIR}/backends
   ${CMAKE_SOURCE_DIR}/extern/assimp/include
@@ -186,6 +219,13 @@ target_include_directories(QuarantineEngine PRIVATE
 # Linking
 # ------------------------------
 
+target_link_directories(QuarantineEngine PRIVATE
+  # En Debug: busca en build/lib/Debug
+  $<$<CONFIG:Debug>:${CMAKE_BINARY_DIR}/lib/Debug>
+  # En Release: busca en build/lib/Release
+  $<$<CONFIG:Release>:${CMAKE_BINARY_DIR}/lib/Release>
+)
+
 target_link_libraries(QuarantineEngine
   glfw
   imgui
@@ -196,6 +236,7 @@ target_link_libraries(QuarantineEngine
   LinearMath
   SPIRV-Reflect
   meshoptimizer
+  yaml-cpp 
 )
 
 # ------------------------------
@@ -216,7 +257,7 @@ endfunction()
 
 foreach(TARGET_NAME
   glfw imgui assimp BulletDynamics BulletCollision LinearMath
-  SPIRV-Reflect meshoptimizer glm zlibstatic
+  SPIRV-Reflect meshoptimizer glm zlibstatic yaml-cpp
 )
   hide_from_vs(${TARGET_NAME})
 endforeach()
@@ -230,6 +271,8 @@ if(WIN32)
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       $<TARGET_FILE:assimp>
       $<TARGET_FILE:meshoptimizer>
+      $<TARGET_FILE:yaml-cpp>
+      $<TARGET_FILE:glfw>
       $<TARGET_FILE_DIR:QuarantineEngine>
   )
 endif()
@@ -261,4 +304,11 @@ if (MSVC)
   )
     exclude_from_vs_build(${dep})
   endforeach()
+
+  # Indica a Visual Studio que QuarantineEngine sea el proyecto de inicio
+  set_property(
+    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    PROPERTY VS_STARTUP_PROJECT QuarantineEngine
+  )
+
 endif()
