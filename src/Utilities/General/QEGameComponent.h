@@ -7,11 +7,13 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <Numbered.h>
+#include <Reflectable.h>
 
 class QEGameObject;
 
-class QEGameComponent : Numbered
+class QEGameComponent : public SerializableComponent, public Numbered
 {
+    REFLECTABLE_COMPONENT(QEGameComponent)
 protected:
     bool _QEBound = false;
     bool _QEStarted = false;
@@ -27,10 +29,10 @@ public:
 
 public:
     QEGameComponent() {}
-    virtual void QEStart() = 0;
-    virtual void QEInit() = 0;
-    virtual void QEUpdate() = 0;
-    virtual void QEDestroy() = 0;
+    virtual void QEStart();
+    virtual void QEInit();
+    virtual void QEUpdate();
+    virtual void QEDestroy();
 
     void BindGameObject(QEGameObject* gameObject);
 };

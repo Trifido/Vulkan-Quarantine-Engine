@@ -9,20 +9,20 @@
 #include "../Editor/Grid.h"
 #include <QEProjectManager.h>
 #include <QEMeshRenderer.h>
+#include <TestComponent.h>
 
+App::App()  
+{ 
+    this->timer = Timer::getInstance();  
+    this->keyboard_ptr = KeyboardController::getInstance();  
+    this->queueModule = QueueModule::getInstance();  
+    this->deviceModule = DeviceModule::getInstance();  
 
-App::App()
-{
-    this->timer = Timer::getInstance();
-    this->keyboard_ptr = KeyboardController::getInstance();
-    this->queueModule = QueueModule::getInstance();
-    this->deviceModule = DeviceModule::getInstance();
-
-    this->physicsModule = PhysicsModule::getInstance();
-    this->editorManager = EditorObjectManager::getInstance();
-    this->graphicsPipelineManager = GraphicsPipelineManager::getInstance();
-    this->shadowPipelineManager = ShadowPipelineManager::getInstance();
-    this->computePipelineManager = ComputePipelineManager::getInstance();
+    this->physicsModule = PhysicsModule::getInstance();  
+    this->editorManager = EditorObjectManager::getInstance();  
+    this->graphicsPipelineManager = GraphicsPipelineManager::getInstance();  
+    this->shadowPipelineManager = ShadowPipelineManager::getInstance();  
+    this->computePipelineManager = ComputePipelineManager::getInstance();  
 }
 
 App::~App()
@@ -468,6 +468,7 @@ void App::loadScene(QEScene scene)
 {
     // Initialize the camera editor
     this->cameraEditor = CameraEditor::getInstance();
+    cameraEditor->QEStart();
     this->cameraEditor->LoadCameraDto(this->mainWindow->width, this->mainWindow->height, this->scene.cameraEditor);
 
     // Initialize the materials
@@ -519,9 +520,13 @@ void App::mainLoop()
         ImGuiIO& io = ImGui::GetIO();
         if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false))
         {
-            this->scene.cameraEditor = this->cameraEditor->CreateCameraDto();
-            this->scene.atmosphere = this->atmosphereSystem->CreateAtmosphereDto();
-            this->scene.SaveScene();
+            auto yaml = serializeComponent(this->cameraEditor);
+            exportToFile(yaml, "cameraEditor.yaml");
+            std::cout << yaml << std::endl;
+
+            //this->scene.cameraEditor = this->cameraEditor->CreateCameraDto();
+            //this->scene.atmosphere = this->atmosphereSystem->CreateAtmosphereDto();
+            //this->scene.SaveScene();
         }
 
         if (ImGui::IsKeyDown(ImGuiKey_J))

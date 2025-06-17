@@ -26,6 +26,9 @@ endif()
 # FetchContent dependencies
 # ------------------------------
 
+# Antes de FetchContent_Declare(glfw), fuerza GLFW como estática
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+
 # GLFW
 FetchContent_Declare(
   glfw
@@ -44,6 +47,7 @@ set_target_properties(glfw PROPERTIES
   ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/lib/Release"
   RUNTIME_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_BINARY_DIR}/bin/Debug"
   RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/bin/Release"
+  OUTPUT_NAME glfw3
 )
 
 # Excluir 'update_mappings' del build y moverlo a un folder oculto
@@ -225,7 +229,6 @@ target_link_directories(QuarantineEngine PRIVATE
   # En Release: busca en build/lib/Release
   $<$<CONFIG:Release>:${CMAKE_BINARY_DIR}/lib/Release>
 )
-
 target_link_libraries(QuarantineEngine
   glfw
   imgui
@@ -236,7 +239,7 @@ target_link_libraries(QuarantineEngine
   LinearMath
   SPIRV-Reflect
   meshoptimizer
-  yaml-cpp 
+  yaml-cpp  
 )
 
 # ------------------------------

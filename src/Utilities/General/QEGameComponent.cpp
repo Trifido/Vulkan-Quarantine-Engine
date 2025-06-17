@@ -25,6 +25,10 @@ void QEGameComponent::QEInit()
     }
 }
 
+void QEGameComponent::QEUpdate()
+{
+}
+
 void QEGameComponent::QEDestroy()
 {
     if (!_QEDestroyed)

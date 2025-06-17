@@ -4,17 +4,18 @@
   generando la carpeta build/ en la raíz del repositorio.
 
 .PARAMETER Configuration
-  La configuración a compilar: Debug o Release. Por defecto "Debug".
+  La configuración a compilar: Debug, Release o Both. Por defecto "Both".
 
 .EXAMPLE
   # Desde la carpeta setup:
-  .\build.ps1
-  .\build.ps1 -Configuration Release
+  .\build.ps1             # compila Debug y Release
+  .\build.ps1 -Configuration Debug   # solo Debug
+  .\build.ps1 -Configuration Release # solo Release
 #>
 
 param(
-    [ValidateSet("Debug","Release")]
-    [string]$Configuration = "Debug"
+    [ValidateSet("Debug","Release","Both")]
+    [string]$Configuration = "Both"
 )
 
 # Número de núcleos para paralelizar
@@ -50,7 +51,8 @@ if (Test-Path $buildDir) {
 # 1) Actualizar submódulos Git
 Write-Host "Updating Git submodules..." -ForegroundColor Cyan
 Push-Location $projectRoot
-git s
+git submodule update --init --recursive
+Pop-Location
 
 # 2) CMake configure
 Write-Host "Running CMake configure..."
@@ -65,8 +67,16 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-# 3) CMake build
-foreach ($cfg in @("Debug","Release")) {
+# 3) CMake build según configuración
+# Definimos la lista de configs a compilar
+$configs = @()
+switch ($Configuration) {
+    'Debug'   { $configs = @('Debug'); break }
+    'Release' { $configs = @('Release'); break }
+    default   { $configs = @('Debug','Release'); break }
+}
+
+foreach ($cfg in $configs) {
     Write-Host "Building QuarantineEngine ($cfg)..." -ForegroundColor Cyan
     cmake --build $buildDir `
           --config $cfg `
@@ -76,11 +86,6 @@ foreach ($cfg in @("Debug","Release")) {
         Write-Error "Build failed for configuration $cfg (exit code $LASTEXITCODE)."
         exit $LASTEXITCODE
     }
-}
-
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "Build failed (exit code $LASTEXITCODE)."
-    exit $LASTEXITCODE
 }
 
 Write-Host "Build succeeded!" -ForegroundColor Green

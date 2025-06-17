@@ -17,6 +17,7 @@ class FrustumComponent;
 
 class QECamera : public QEGameComponent
 {
+    REFLECTABLE_COMPONENT(QECamera)
 private:
     DeviceModule* deviceModule = nullptr;
     std::shared_ptr<CameraUniform> cameraUniform;
@@ -24,25 +25,26 @@ private:
     bool isInputUpdated = true;
 
 protected:
-    glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-    glm::vec3 cameraRight = glm::vec3(1.0f, 0.0f, 0.0f);
+    REFLECT_PROPERTY(float, nearPlane)
+    REFLECT_PROPERTY(float, farPlane)
+    REFLECT_PROPERTY(glm::vec3, cameraUp)
+    REFLECT_PROPERTY(float, fov)
+    REFLECT_PROPERTY(float, pitch)
+    REFLECT_PROPERTY(float, yaw)
 
-    const float cameraSpeed = 10.0f;
-
-    bool firstMouse = true;
-    float lastX = 1280.0f / 2.0;
-    float lastY = 720.0 / 2.0;
-    float fov = 45.0f;
-    float nearPlane, farPlane;
-    float yaw = 0.0f;	// yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right so we initially rotate a bit to the left.
-    float pitch = 0.0f;
+    glm::vec3 cameraRight;
+    bool firstMouse;
+    float cameraSpeed;
+    float lastX;
+    float lastY;
 
 public:
+    REFLECT_PROPERTY(glm::vec3, cameraPos)
+    REFLECT_PROPERTY(glm::vec3, cameraFront)
+
     std::shared_ptr<FrustumComponent> frustumComponent;
     std::shared_ptr<UniformBufferObject> cameraUBO;
     float WIDTH, HEIGHT;
-    glm::vec3 cameraFront;
-    glm::vec3 cameraPos;
     glm::mat4 view;
     glm::mat4 projection;
     glm::mat4 VP;
@@ -71,21 +73,17 @@ public:
     bool IsModified();
     void ResetModifiedField();
 
+    void QEStart() override;
+    void QEInit() override;
+    void QEUpdate() override;
+    void QEDestroy() override;
+
 private:
     void CheckCameraAttributes(float* positionCamera, float* frontCamera, float fov, float nearPlane, float farPlane);
     void EditorScroll();
     void EditorRotate();
     void InvertPitch(float heightPos);
     void UpdateUBOCamera();
-
-    // Heredado vía QEGameComponent
-    void QEStart() override;
-    void QEInit() override;
-    void QEUpdate() override;
-    void QEDestroy() override;
 };
 
 #endif // !CAMERA_H
-
-
-
