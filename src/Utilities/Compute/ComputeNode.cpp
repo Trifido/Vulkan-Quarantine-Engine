@@ -6,10 +6,15 @@ ComputeNode::ComputeNode()
 {
     this->deviceModule = DeviceModule::getInstance();
     this->widthImage = this->heightImage = 0;
+    this->UseDependencyBuffer = false;
+    this->OnDemandCompute = false;
+    this->Compute = true;
+    this->NElements = 0;
 }
 
 ComputeNode::ComputeNode(std::string computeShaderPath) : ComputeNode(std::make_shared<ShaderModule>(computeShaderPath))
 {
+    this->computeShaderPath = computeShaderPath;
 }
 
 ComputeNode::ComputeNode(std::shared_ptr<ShaderModule> shader_ptr) : ComputeNode()

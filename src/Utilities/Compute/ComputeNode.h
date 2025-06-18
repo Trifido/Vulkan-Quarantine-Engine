@@ -13,16 +13,21 @@
 
 class ComputeNode : public QEGameComponent
 {
+    REFLECTABLE_COMPONENT(ComputeNode)
 private:
     DeviceModule*                               deviceModule = nullptr;
     std::shared_ptr<ShaderModule>               computeShader = nullptr;
-    uint32_t widthImage, heightImage;
+
+    REFLECT_PROPERTY(std::string, computeShaderPath)
+    REFLECT_PROPERTY(uint32_t, widthImage)
+    REFLECT_PROPERTY(uint32_t, heightImage)
 public:
     std::shared_ptr<ComputeDescriptorBuffer>    computeDescriptor = nullptr;
-    uint32_t NElements = 0;
-    bool UseDependencyBuffer = false;
-    bool OnDemandCompute = false;
-    bool Compute = true;
+
+    REFLECT_PROPERTY(uint32_t, NElements)
+    REFLECT_PROPERTY(bool, UseDependencyBuffer)
+    REFLECT_PROPERTY(bool, OnDemandCompute)
+    REFLECT_PROPERTY(bool, Compute)
 
 public:
     ComputeNode();

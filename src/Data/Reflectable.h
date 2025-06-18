@@ -73,6 +73,12 @@ inline YAML::Node serializeComponent(const SerializableComponent* comp)
         if (field.type == typeid(int)) {
             node[field.name] = *(int*)fieldPtr;
         }
+        else if (field.type == typeid(uint32_t)) {
+            node[field.name] = *(uint32_t*)fieldPtr;
+        }
+        else if (field.type == typeid(bool)) {
+            node[field.name] = *(bool*)fieldPtr;
+        }
         else if (field.type == typeid(float)) {
             node[field.name] = *(float*)fieldPtr;
         }
@@ -118,6 +124,12 @@ inline void deserializeComponent(SerializableComponent* comp, const YAML::Node& 
         if (!node[field.name]) continue;
         if (field.type == typeid(int)) {
             *(int*)fieldPtr = node[field.name].as<int>();
+        }
+        else if (field.type == typeid(uint32_t)) {
+            *(uint32_t*)fieldPtr = node[field.name].as<uint32_t>();
+        }
+        else if (field.type == typeid(bool)) {
+            *(bool*)fieldPtr = node[field.name].as<bool>();
         }
         else if (field.type == typeid(float)) {
             *(float*)fieldPtr = node[field.name].as<float>();
