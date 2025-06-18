@@ -9,24 +9,26 @@
 
 class Transform : public QEGameComponent
 {
+    REFLECTABLE_COMPONENT(Transform)
 private:
     std::vector<std::shared_ptr<Transform>> childTransforms;
-    glm::mat4 parentModel;
-    glm::mat4 model;
-    glm::mat4 localModel;
-    glm::mat4 scale_mat;
-    glm::mat4 rot_mat;
-    glm::mat4 trans_mat;
+    REFLECT_PROPERTY(std::vector<std::string>, childIDs)
+    REFLECT_PROPERTY(glm::mat4, parentModel)
+    REFLECT_PROPERTY(glm::mat4, model)
+    REFLECT_PROPERTY(glm::mat4, localModel)
+    REFLECT_PROPERTY(glm::mat4, scale_mat)
+    REFLECT_PROPERTY(glm::mat4, rot_mat)
+    REFLECT_PROPERTY(glm::mat4, trans_mat)
 
 public:
-    glm::vec3 Position;
-    glm::vec3 Direction;
-    glm::quat Orientation;
-    glm::vec3 Rotation;
-    glm::vec3 RadiansRotation;
-    glm::vec3 Scale;
-    glm::vec3 UpVector;
-    glm::vec3 ForwardVector;
+    REFLECT_PROPERTY(glm::vec3, Position)
+    REFLECT_PROPERTY(glm::vec3, Direction)
+    REFLECT_PROPERTY(glm::quat, Orientation)
+    REFLECT_PROPERTY(glm::vec3, Rotation)
+    REFLECT_PROPERTY(glm::vec3, RadiansRotation)
+    REFLECT_PROPERTY(glm::vec3, Scale)
+    REFLECT_PROPERTY(glm::vec3, UpVector)
+    REFLECT_PROPERTY(glm::vec3, ForwardVector)
 
 private:
     void ReceiveNewParentModel(glm::mat4 parentModel);

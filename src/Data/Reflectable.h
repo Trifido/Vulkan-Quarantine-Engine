@@ -79,9 +79,29 @@ inline YAML::Node serializeComponent(const SerializableComponent* comp)
         else if (field.type == typeid(std::string)) {
             node[field.name] = *(std::string*)fieldPtr;
         }
+        else if (field.type == typeid(glm::vec2)) {
+            auto v = *reinterpret_cast<glm::vec2*>(fieldPtr);
+            node[field.name] = v;
+        }
         else if (field.type == typeid(glm::vec3)) {
             auto v = *reinterpret_cast<glm::vec3*>(fieldPtr);
-            node[field.name] = v;  // usará convert<glm::vec3>::encode
+            node[field.name] = v;
+        }
+        else if (field.type == typeid(glm::vec4)) {
+            auto v = *reinterpret_cast<glm::vec4*>(fieldPtr);
+            node[field.name] = v;
+        }
+        else if (field.type == typeid(glm::quat)) {
+            auto v = *reinterpret_cast<glm::quat*>(fieldPtr);
+            node[field.name] = v;
+        }
+        else if (field.type == typeid(glm::mat4)) {
+            auto v = *reinterpret_cast<glm::mat4*>(fieldPtr);
+            node[field.name] = v;
+        }
+        else if (field.type == typeid(std::vector<std::string>)) {
+            auto& vec = *reinterpret_cast<const std::vector<std::string>*>(fieldPtr);
+            node[field.name] = vec;  // usa convert<vector<string>>::encode
         }
         else {
             node[field.name] = "<unsupported type>";
@@ -102,11 +122,26 @@ inline void deserializeComponent(SerializableComponent* comp, const YAML::Node& 
         else if (field.type == typeid(float)) {
             *(float*)fieldPtr = node[field.name].as<float>();
         }
+        else if (field.type == typeid(std::string)) {
+            *(std::string*)fieldPtr = node[field.name].as<std::string>();
+        }
+        else if (field.type == typeid(glm::vec2)) {
+            *reinterpret_cast<glm::vec2*>(fieldPtr) = node[field.name].as<glm::vec2>();
+        }
         else if (field.type == typeid(glm::vec3)) {
             *reinterpret_cast<glm::vec3*>(fieldPtr) = node[field.name].as<glm::vec3>();
         }
-        else if (field.type == typeid(std::string)) {
-            *(std::string*)fieldPtr = node[field.name].as<std::string>();
+        else if (field.type == typeid(glm::vec4)) {
+            *reinterpret_cast<glm::vec4*>(fieldPtr) = node[field.name].as<glm::vec4>();
+        }
+        else if (field.type == typeid(glm::quat)) {
+            *reinterpret_cast<glm::quat*>(fieldPtr) = node[field.name].as<glm::quat>();
+        }
+        else if (field.type == typeid(glm::mat4)) {
+            *reinterpret_cast<glm::mat4*>(fieldPtr) = node[field.name].as<glm::mat4>();
+        }
+        else if (field.type == typeid(std::vector<std::string>)) {
+            *reinterpret_cast<std::vector<std::string>*>(fieldPtr) = node[field.name].as<std::vector<std::string>>();
         }
     }
 }

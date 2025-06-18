@@ -43,11 +43,8 @@ set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(glfw)
 set_target_properties(glfw PROPERTIES
-  ARCHIVE_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_BINARY_DIR}/lib/Debug"
-  ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/lib/Release"
-  RUNTIME_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_BINARY_DIR}/bin/Debug"
-  RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/bin/Release"
-  OUTPUT_NAME glfw3
+  OUTPUT_NAME    "glfw3"    # nombre base
+  DEBUG_POSTFIX  ""         # elimina el sufijo _Debug
 )
 
 # Excluir 'update_mappings' del build y moverlo a un folder oculto

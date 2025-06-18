@@ -84,6 +84,7 @@ void Transform::SetModel(const glm::mat4& newModel)
 void Transform::AddChild(std::shared_ptr<Transform> child)
 {
     this->childTransforms.push_back(child);
+    this->childIDs.push_back(child->id);
     child->ReceiveNewParentModel(this->model);
 }
 
@@ -103,6 +104,7 @@ void Transform::Debug_PrintModel() const
 
 void Transform::QEStart()
 {
+    this->childIDs = {};
 }
 
 void Transform::QEUpdate()
