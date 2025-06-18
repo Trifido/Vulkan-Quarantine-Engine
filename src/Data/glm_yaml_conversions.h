@@ -2,6 +2,7 @@
 #include <yaml-cpp/yaml.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <btBulletDynamicsCommon.h>
 #include <vector>
 
 namespace YAML {
@@ -38,6 +39,25 @@ namespace YAML {
             v.x = node[0].as<float>();
             v.y = node[1].as<float>();
             v.z = node[2].as<float>();
+            return true;
+        }
+    };
+
+    template<>
+    struct convert<btVector3> {
+        static Node encode(const btVector3& v) {
+            Node node;
+            node.push_back(v[0]);
+            node.push_back(v[1]);
+            node.push_back(v[2]);
+            return node;
+        }
+
+        static bool decode(const Node& node, btVector3& v) {
+            if (!node.IsSequence() || node.size() != 3) return false;
+            v[0] = node[0].as<float>();
+            v[1] = node[1].as<float>();
+            v[2] = node[2].as<float>();
             return true;
         }
     };

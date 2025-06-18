@@ -146,6 +146,16 @@ bool QECharacterController::CanMove(const btVector3& direction, float distance, 
     return false;
 }
 
+QECharacterController::QECharacterController()
+{
+    isGrounded = false;
+    canWalkOnGround = false;
+    airControlFactor = 0.8f;
+    jumpForce = 8.0f;
+    maxStepAngle = 35.0f;
+    groundNormal = btVector3(0, 1, 0);
+}
+
 // Actualizar la física (para simular la física del personaje)
 void QECharacterController::Update()
 {
@@ -195,6 +205,8 @@ void QECharacterController::QEInit()
     {
         this->physicBodyPtr = physicsBody;
         this->colliderPtr = collider;
+        this->physicBodyID = physicBodyPtr->id;
+        this->colliderID = collider->id;
 
         this->Initialize();
 

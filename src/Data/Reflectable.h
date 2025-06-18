@@ -93,6 +93,10 @@ inline YAML::Node serializeComponent(const SerializableComponent* comp)
             auto v = *reinterpret_cast<glm::vec3*>(fieldPtr);
             node[field.name] = v;
         }
+        else if (field.type == typeid(btVector3)) {
+            auto v = *reinterpret_cast<btVector3*>(fieldPtr);
+            node[field.name] = v;
+        }
         else if (field.type == typeid(glm::vec4)) {
             auto v = *reinterpret_cast<glm::vec4*>(fieldPtr);
             node[field.name] = v;
@@ -142,6 +146,9 @@ inline void deserializeComponent(SerializableComponent* comp, const YAML::Node& 
         }
         else if (field.type == typeid(glm::vec3)) {
             *reinterpret_cast<glm::vec3*>(fieldPtr) = node[field.name].as<glm::vec3>();
+        }
+        else if (field.type == typeid(btVector3)) {
+            *reinterpret_cast<btVector3*>(fieldPtr) = node[field.name].as<btVector3>();
         }
         else if (field.type == typeid(glm::vec4)) {
             *reinterpret_cast<glm::vec4*>(fieldPtr) = node[field.name].as<glm::vec4>();

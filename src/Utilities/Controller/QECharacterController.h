@@ -44,16 +44,20 @@ struct IgnoreSelfCallback : public btCollisionWorld::ClosestConvexResultCallback
 
 class QECharacterController : public QEGameComponent
 {
+    REFLECTABLE_COMPONENT(QECharacterController)
     private:
+
+        REFLECT_PROPERTY(std::string, colliderID)
+        REFLECT_PROPERTY(std::string, physicBodyID)
+        REFLECT_PROPERTY(bool, isGrounded)
+        REFLECT_PROPERTY(bool, canWalkOnGround)
+        REFLECT_PROPERTY(float, airControlFactor)
+        REFLECT_PROPERTY(float, jumpForce)
+        REFLECT_PROPERTY(float, maxStepAngle)
+        REFLECT_PROPERTY(btVector3, groundNormal)
         GLFWwindow* window;
         std::shared_ptr<QECollider> colliderPtr;
         std::shared_ptr<PhysicsBody> physicBodyPtr;
-        bool isGrounded = false;
-        bool canWalkOnGround = false;
-        btVector3 groundNormal = btVector3(0, 1, 0);
-        float airControlFactor = 0.8f;
-        float jumpForce = 8.0f;
-        float maxStepAngle = 35.0f;
 
     private:
         void CheckIfGrounded();
@@ -63,6 +67,7 @@ class QECharacterController : public QEGameComponent
         void Initialize();
 
     public:
+        QECharacterController();
         void AddGLFWWindow(GLFWwindow* window) { this->window = window; }
         void Update();
         btVector3 GetPosition();
