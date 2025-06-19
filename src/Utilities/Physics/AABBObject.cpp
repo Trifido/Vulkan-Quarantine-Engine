@@ -32,6 +32,11 @@ void AABBObject::CreateIndexBuffers()
     CreateGeometryBuffer(bufferSize, usageFlags, indices.data(), indexBuffer[0], indexBufferMemory[0]);
 }
 
+AABBObject::AABBObject()
+{
+    isGameObjectVisible = true;
+}
+
 void AABBObject::CreateBuffers()
 {
     this->vertices = {

@@ -18,6 +18,7 @@ private:
     DeviceModule*                               deviceModule = nullptr;
     std::shared_ptr<ShaderModule>               computeShader = nullptr;
 
+protected:
     REFLECT_PROPERTY(std::string, computeShaderPath)
     REFLECT_PROPERTY(uint32_t, widthImage)
     REFLECT_PROPERTY(uint32_t, heightImage)

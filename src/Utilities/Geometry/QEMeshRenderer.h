@@ -10,7 +10,7 @@
 
 class QEMeshRenderer : public QEGameComponent
 {
-    REFLECTABLE_COMPONENT(QEMeshRenderer)
+    REFLECTABLE_DERIVED_COMPONENT(QEMeshRenderer, QEGameComponent)
 private:
     DeviceModule* deviceModule = nullptr;
     PFN_vkCmdDrawMeshTasksEXT vkCmdDrawMeshTasksEXT = nullptr;

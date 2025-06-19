@@ -12,15 +12,12 @@
 
 class QEGeometryComponent : public QEGameComponent
 {
-    REFLECTABLE_COMPONENT(QEGeometryComponent)
-private:
-    REFLECT_PROPERTY(string, _name)
-    REFLECT_PROPERTY(string, _filepath)
-
-    std::unique_ptr<IQEMeshGenerator> generator;
-    QEMesh mesh;
+public:
+    REFLECTABLE_DERIVED_COMPONENT(QEGeometryComponent, QEGameComponent)
 
 protected:
+    REFLECT_PROPERTY(string, _name)
+    REFLECT_PROPERTY(string, _filepath)
     std::vector<VkDeviceMemory> vertexBufferMemory = { VK_NULL_HANDLE };
     std::vector<VkDeviceMemory> indexBufferMemory = { VK_NULL_HANDLE };
     std::vector<VkDeviceMemory> animationBufferMemory = { VK_NULL_HANDLE };
@@ -29,6 +26,10 @@ protected:
     virtual void CreateVertexBuffers();
     void CreateAnimationVertexBuffers();
     void CreateGeometryBuffer(VkDeviceSize bufferSize, VkBufferUsageFlags usageFlags, const void* dataArray, VkBuffer& buffer, VkDeviceMemory& memory);
+
+private:
+    std::unique_ptr<IQEMeshGenerator> generator;
+    QEMesh mesh;
 
 public:
     QEGeometryComponent() = default;

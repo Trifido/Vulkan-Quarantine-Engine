@@ -33,10 +33,18 @@ struct QEMetaType
 {
     std::string typeName;
     std::vector<QEMetaField> fields;
+    QEMetaType* base = nullptr;
 
     void addField(const std::string& name, std::type_index type, size_t offset)
     {
         fields.push_back({ name, type, offset });
+    }
+
+    std::vector<QEMetaField> allFields() const {
+        if (!base) return fields;
+        auto v = base->allFields();
+        v.insert(v.end(), fields.begin(), fields.end());
+        return v;
     }
 };
 
@@ -69,7 +77,7 @@ inline YAML::Node serializeComponent(const SerializableComponent* comp)
     YAML::Node node;
     node["type"] = comp->getTypeName();
     QEMetaType* meta = comp->meta();
-    for (const auto& field : meta->fields) {
+    for (const auto& field : meta->allFields()) {
         void* fieldPtr = (void*)((char*)comp + field.offset);
         if (field.type == typeid(int)) {
             node[field.name] = *(int*)fieldPtr;
@@ -132,7 +140,7 @@ inline YAML::Node serializeComponent(const SerializableComponent* comp)
 inline void deserializeComponent(SerializableComponent* comp, const YAML::Node& node)
 {
     QEMetaType* meta = comp->meta();
-    for (const auto& field : meta->fields) {
+    for (const auto& field : meta->allFields()) {
         void* fieldPtr = (void*)((char*)comp + field.offset);
         if (!node[field.name]) continue;
         if (field.type == typeid(int)) {
@@ -186,22 +194,21 @@ inline void deserializeComponent(SerializableComponent* comp, const YAML::Node& 
     }
 }
 
-#define REFLECTABLE_COMPONENT(Type) \
-    using Self = Type; \
-    using Self = Type;                                                                 \
-    static QEMetaType* staticMeta() {                                                  \
-        static QEMetaType meta{#Type};                                                 \
-        static bool initialized = false;                                               \
-        if (!initialized) {                                                            \
-            initialized = true;                                                        \
-            meta.addField(                                                             \
-              "id",                                                                    \
-              typeid(std::string),                                                     \
-              offsetof(Self, id)                                                       \
-            );                                                                         \
-        }                                                                              \
-        return &meta;                                                                  \
-    }                                                                                  \
+#define REFLECTABLE_COMPONENT(Type)                                \
+    using Self = Type;                                             \
+    static QEMetaType* staticMeta() {                              \
+        static QEMetaType meta{#Type};                             \
+        static bool initialized = false;                           \
+        if (!initialized) {                                        \
+            initialized = true;                                    \
+            meta.base = nullptr;   /* no hay clase base */        \
+            /* añade aquí los campos propios: */                   \
+            meta.addField("id", typeid(std::string), offsetof(Self, id)); \
+            registerMetaType(#Type, &meta);                        \
+            getFactoryRegistry()[#Type] = &Type::createInstance;   \
+        }                                                          \
+        return &meta;                                              \
+    }                                                              \
     QEMetaType* meta() const override { return staticMeta(); } \
     const std::string& getTypeName() const override { \
         static const std::string name = #Type; \
@@ -225,6 +232,35 @@ inline void deserializeComponent(SerializableComponent* comp, const YAML::Node& 
         } \
     } _autoField_##Name;
 
+#define REFLECTABLE_DERIVED_COMPONENT(Type, BaseType)                        \
+    using Self = Type;                                                       \
+    static QEMetaType* staticMeta() {                                        \
+        static QEMetaType meta{#Type};                                       \
+        static bool initialized = false;                                     \
+        if (!initialized) {                                                  \
+            initialized = true;                                              \
+            /* 1) Apuntamos al meta de la base */                            \
+            meta.base = BaseType::staticMeta();                              \
+            /* 2) Ya registrarCamposPropios se hará por los REFLECT_PROPERTY */\
+            /* 3) Registramos este tipo en el registry */                    \
+            registerMetaType(#Type, &meta);                                  \
+            getFactoryRegistry()[#Type] = &Type::createInstance;             \
+        }                                                                    \
+        return &meta;                                                        \
+    }                                                                        \
+    QEMetaType* meta()   const override { return staticMeta(); }             \
+    const std::string& getTypeName() const override {                        \
+        static const std::string name = #Type;                               \
+        return name;                                                         \
+    }                                                                        \
+    static std::unique_ptr<QEGameComponent> createInstance() {               \
+        return std::make_unique<Type>();                                     \
+    }                                                                        \
+    struct AutoRegister_##Type {                                             \
+        AutoRegister_##Type() {                                              \
+            /* El registro global ya está hecho en staticMeta() */           \
+        }                                                                    \
+    } _autoRegister_##Type;
 
 void exportToFile(const YAML::Node& node, const std::string& filename);
 

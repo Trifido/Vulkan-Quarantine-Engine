@@ -17,7 +17,8 @@ class FrustumComponent;
 
 class QECamera : public QEGameComponent
 {
-    REFLECTABLE_COMPONENT(QECamera)
+//protected:
+//    REFLECTABLE_COMPONENT(QECamera)
 private:
     DeviceModule* deviceModule = nullptr;
     std::shared_ptr<CameraUniform> cameraUniform;
@@ -25,22 +26,31 @@ private:
     bool isInputUpdated = true;
 
 protected:
-    REFLECT_PROPERTY(float, nearPlane)
-    REFLECT_PROPERTY(float, farPlane)
-    REFLECT_PROPERTY(glm::vec3, cameraUp)
-    REFLECT_PROPERTY(float, fov)
-    REFLECT_PROPERTY(float, pitch)
-    REFLECT_PROPERTY(float, yaw)
+    //REFLECT_PROPERTY(float, nearPlane)
+    //REFLECT_PROPERTY(float, farPlane)
+    //REFLECT_PROPERTY(glm::vec3, cameraUp)
+    //REFLECT_PROPERTY(float, fov)
+    //REFLECT_PROPERTY(float, pitch)
+    //REFLECT_PROPERTY(float, yaw)
 
-    glm::vec3 cameraRight;
-    bool firstMouse;
-    float cameraSpeed;
-    float lastX;
-    float lastY;
+    float nearPlane;
+    float farPlane;
+    glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+    glm::vec3 cameraRight = glm::vec3(1.0f, 0.0f, 0.0f);
+    float cameraSpeed = 10.0f;
+    float fov = 45.0f;
+    float pitch = 0.0f;
+    float yaw = 0.0f;
+
+    bool firstMouse = true;
+    float lastX = 1280.0f / 2.0;
+    float lastY = 720.0 / 2.0;
 
 public:
-    REFLECT_PROPERTY(glm::vec3, cameraPos)
-    REFLECT_PROPERTY(glm::vec3, cameraFront)
+    glm::vec3 cameraPos;
+    glm::vec3 cameraFront;
+    //REFLECT_PROPERTY(glm::vec3, cameraPos)
+    //REFLECT_PROPERTY(glm::vec3, cameraFront)
 
     std::shared_ptr<FrustumComponent> frustumComponent;
     std::shared_ptr<UniformBufferObject> cameraUBO;
@@ -54,7 +64,6 @@ protected:
     void UpdateFrustumPlanes();
 
 public:
-    QECamera() = default;
     QECamera(const float width, const float height, const CameraDto& cameraDto = CameraDto());
     bool LoadCameraDto(const float width, const float height, const CameraDto& cameraDto);
     CameraDto CreateCameraDto();

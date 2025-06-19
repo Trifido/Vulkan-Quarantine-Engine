@@ -44,7 +44,7 @@ struct IgnoreSelfCallback : public btCollisionWorld::ClosestConvexResultCallback
 
 class QECharacterController : public QEGameComponent
 {
-    REFLECTABLE_COMPONENT(QECharacterController)
+    REFLECTABLE_DERIVED_COMPONENT(QECharacterController, QEGameComponent)
     private:
 
         REFLECT_PROPERTY(std::string, colliderID)

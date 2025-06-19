@@ -10,7 +10,7 @@
 
 class PhysicsBody : public QEGameComponent
 {
-    REFLECTABLE_COMPONENT(PhysicsBody)
+    REFLECTABLE_DERIVED_COMPONENT(PhysicsBody, QEGameComponent)
 private:
     REFLECT_PROPERTY(btVector3, localInertia)
     std::shared_ptr<Transform> transform;

@@ -7,7 +7,7 @@
 
 class QECollider : public QEGameComponent
 {
-    REFLECTABLE_COMPONENT(QECollider)
+    REFLECTABLE_DERIVED_COMPONENT(QECollider, QEGameComponent)
 public:
     btCollisionShape* colShape = nullptr;
 

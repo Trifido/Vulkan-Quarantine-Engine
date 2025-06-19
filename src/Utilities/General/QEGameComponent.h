@@ -13,8 +13,8 @@ class QEGameObject;
 
 class QEGameComponent : public SerializableComponent, public Numbered
 {
-    REFLECTABLE_COMPONENT(QEGameComponent)
 protected:
+    REFLECTABLE_COMPONENT(QEGameComponent)
     REFLECT_PROPERTY(bool, _QEBound)
     REFLECT_PROPERTY(bool, _QEStarted)
     REFLECT_PROPERTY(bool, _QEInitialized)

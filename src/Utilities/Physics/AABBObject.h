@@ -12,15 +12,17 @@
 
 class AABBObject : public QEGeometryComponent
 {
+    REFLECTABLE_DERIVED_COMPONENT(AABBObject, QEGameComponent)
 private:
     std::shared_ptr<Transform> transform;
 
 public:
-    glm::vec3 min;
-    glm::vec3 max;
-    glm::vec3 Size;
-    glm::vec3 Center;
-    bool isGameObjectVisible = true;
+    REFLECT_PROPERTY(glm::vec3, min)
+    REFLECT_PROPERTY(glm::vec3, max)
+    REFLECT_PROPERTY(glm::vec3, Size)
+    REFLECT_PROPERTY(glm::vec3, Center)
+    REFLECT_PROPERTY(bool, isGameObjectVisible)
+
     std::vector<glm::vec4> vertices;
     std::vector<uint32_t> indices;
 
@@ -29,7 +31,7 @@ private:
     void CreateIndexBuffers();
 
 public:
-    AABBObject() = default;
+    AABBObject();
     void CreateBuffers();
     void CleanResources();
     void AddTransform(std::shared_ptr<Transform> modelTransform);
