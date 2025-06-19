@@ -12,7 +12,11 @@
 
 class QEGeometryComponent : public QEGameComponent
 {
+    REFLECTABLE_COMPONENT(QEGeometryComponent)
 private:
+    REFLECT_PROPERTY(string, _name)
+    REFLECT_PROPERTY(string, _filepath)
+
     std::unique_ptr<IQEMeshGenerator> generator;
     QEMesh mesh;
 

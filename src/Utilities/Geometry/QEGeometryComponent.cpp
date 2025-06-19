@@ -93,6 +93,10 @@ void QEGeometryComponent::QEDestroy()
 void QEGeometryComponent::BuildMesh()
 {
     mesh = generator->GenerateQEMesh();
+
+    _name = mesh.Name;
+    _filepath = mesh.FilePath;
+
     CreateIndexBuffers();
     CreateVertexBuffers();
     CreateAnimationVertexBuffers();
