@@ -15,20 +15,26 @@ class QEGameComponent : public SerializableComponent, public Numbered
 {
     REFLECTABLE_COMPONENT(QEGameComponent)
 protected:
-    bool _QEBound = false;
-    bool _QEStarted = false;
-    bool _QEInitialized = false;
-    bool _QEDestroyed = false;
+    REFLECT_PROPERTY(bool, _QEBound)
+    REFLECT_PROPERTY(bool, _QEStarted)
+    REFLECT_PROPERTY(bool, _QEInitialized)
+    REFLECT_PROPERTY(bool, _QEDestroyed)
 
 public:
-    QEGameObject* Owner = nullptr; // Pointer to the owner game object
+    QEGameObject* Owner = nullptr;
     inline bool QEBound() const { return _QEBound; };
     inline bool QEStarted() const { return _QEStarted; };
     inline bool QEInitialized() const { return _QEInitialized; };
     inline bool QEDestroyed() const { return _QEDestroyed; };
 
 public:
-    QEGameComponent() {}
+    QEGameComponent()
+    {
+        _QEBound = false;
+        _QEStarted = false;
+        _QEInitialized = false;
+        _QEDestroyed = false;
+    }
     virtual void QEStart();
     virtual void QEInit();
     virtual void QEUpdate();

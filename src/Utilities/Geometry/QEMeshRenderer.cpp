@@ -5,6 +5,7 @@ QEMeshRenderer::QEMeshRenderer()
     : materialComponents(*(new std::vector<std::shared_ptr<QEMaterial>>()))
 {
     this->deviceModule = DeviceModule::getInstance();
+    IsMeshShaderPipeline = false;
 }
 
 void QEMeshRenderer::QEStart()

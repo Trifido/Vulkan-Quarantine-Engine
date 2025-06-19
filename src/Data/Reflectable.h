@@ -11,6 +11,7 @@
 #include "glm_yaml_conversions.h"
 #include <memory>
 #include <iostream>
+#include <PhysicsTypes.h>
 
 struct SerializableComponent
 {
@@ -113,6 +114,14 @@ inline YAML::Node serializeComponent(const SerializableComponent* comp)
             auto& vec = *reinterpret_cast<const std::vector<std::string>*>(fieldPtr);
             node[field.name] = vec;  // usa convert<vector<string>>::encode
         }
+        else if (field.type == typeid(PhysicBodyType)) {
+            auto v = *reinterpret_cast<PhysicBodyType*>(fieldPtr);
+            node[field.name] = static_cast<int>(v);
+        }
+        else if (field.type == typeid(CollisionFlag)) {
+            auto v = *reinterpret_cast<CollisionFlag*>(fieldPtr);
+            node[field.name] = static_cast<int>(v);
+        }
         else {
             node[field.name] = "<unsupported type>";
         }
@@ -161,6 +170,18 @@ inline void deserializeComponent(SerializableComponent* comp, const YAML::Node& 
         }
         else if (field.type == typeid(std::vector<std::string>)) {
             *reinterpret_cast<std::vector<std::string>*>(fieldPtr) = node[field.name].as<std::vector<std::string>>();
+        }
+        else if (field.type == typeid(PhysicBodyType))
+        {
+            int ival = node[field.name].as<int>();
+            auto v = static_cast<PhysicBodyType>(ival);
+            *reinterpret_cast<PhysicBodyType*>(fieldPtr) = v;
+        }
+        else if (field.type == typeid(CollisionFlag))
+        {
+            int ival = node[field.name].as<int>();
+            auto v = static_cast<CollisionFlag>(ival);
+            *reinterpret_cast<CollisionFlag*>(fieldPtr) = v;
         }
     }
 }

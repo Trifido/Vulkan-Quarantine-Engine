@@ -10,6 +10,7 @@
 
 class QEMeshRenderer : public QEGameComponent
 {
+    REFLECTABLE_COMPONENT(QEMeshRenderer)
 private:
     DeviceModule* deviceModule = nullptr;
     PFN_vkCmdDrawMeshTasksEXT vkCmdDrawMeshTasksEXT = nullptr;
@@ -17,8 +18,9 @@ private:
     std::shared_ptr<QEGeometryComponent> geometryComponent = nullptr;
     std::vector<std::shared_ptr<QEMaterial>>& materialComponents;
     std::shared_ptr<Transform> transformComponent = nullptr;
+
 public:
-    bool IsMeshShaderPipeline = false;
+    REFLECT_PROPERTY(bool, IsMeshShaderPipeline)
 
 public:
     QEMeshRenderer();

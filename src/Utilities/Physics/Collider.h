@@ -7,11 +7,14 @@
 
 class QECollider : public QEGameComponent
 {
+    REFLECTABLE_COMPONENT(QECollider)
 public:
     btCollisionShape* colShape = nullptr;
-    float CollisionMargin = 0.04f;
-    glm::vec3 LocalDisplacement = glm::vec3(0.0f);
 
+    REFLECT_PROPERTY(float, CollisionMargin)
+    REFLECT_PROPERTY(glm::vec3, LocalDisplacement)
+
+    QECollider();
     void QEStart() override;
     void QEInit() override;
     void QEUpdate() override;

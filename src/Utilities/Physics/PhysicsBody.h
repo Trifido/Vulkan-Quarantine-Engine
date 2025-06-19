@@ -6,37 +6,22 @@
 #include <Collider.h>
 #include <glm/matrix.hpp>
 #include <btBulletDynamicsCommon.h>
-
-enum PhysicBodyType
-{
-    STATIC_BODY,
-    RIGID_BODY
-};
-
-enum CollisionFlag
-{
-    COL_NOTHING = 0,
-    COL_DEFAULT = 1 << 0,
-    COL_PLAYER = 1 << 1,
-    COL_SCENE = 1 << 2,
-    COL_ENEMY = 1 << 3,
-    COL_TRIGGER = 1 << 4,
-    COL_ALL = -1
-};
+#include "PhysicsTypes.h"
 
 class PhysicsBody : public QEGameComponent
 {
+    REFLECTABLE_COMPONENT(PhysicsBody)
 private:
-    btVector3 localInertia;
+    REFLECT_PROPERTY(btVector3, localInertia)
     std::shared_ptr<Transform> transform;
     std::shared_ptr<QECollider> collider;
 public:
     btRigidBody* body;
-    PhysicBodyType Type;
-    float Mass;
-    glm::vec3 Inertia;
-    CollisionFlag CollisionGroup;
-    CollisionFlag CollisionMask;
+    REFLECT_PROPERTY(PhysicBodyType, Type)
+    REFLECT_PROPERTY(float, Mass)
+    REFLECT_PROPERTY(glm::vec3, Inertia)
+    REFLECT_PROPERTY(CollisionFlag, CollisionGroup)
+    REFLECT_PROPERTY(CollisionFlag, CollisionMask)
 public:
     PhysicsBody();
     PhysicsBody(const PhysicBodyType& type);
