@@ -21,6 +21,7 @@ float glm_vec3_norm(glm::vec3 v) {
 
 QECamera::QECamera(const float width, const float height, const CameraDto& cameraDto)
 {
+    QEGameComponent::QEGameComponent();
     this->deviceModule = DeviceModule::getInstance();
 
     this->frustumComponent = std::make_shared<FrustumComponent>();
@@ -277,6 +278,16 @@ void QECamera::UpdateUBOCamera()
 void QECamera::QEStart()
 {
     QEGameComponent::QEStart();
+
+    cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+    cameraRight = glm::vec3(1.0f, 0.0f, 0.0f);
+    cameraSpeed = 10.0f;
+    yaw = 0.0f;
+    pitch = 0.0f;
+    firstMouse = true;
+    lastX = 1280.0f / 2.0;
+    lastY = 720.0 / 2.0;
+    fov = 45.0f;
 }
 
 void QECamera::QEInit()

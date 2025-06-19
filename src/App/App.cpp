@@ -462,10 +462,8 @@ void App::initVulkan()
 
     init_imgui();
 
-
-    auto controller = character->GetComponent<QECharacterController>();
-    auto yaml = serializeComponent(controller.get());
-    exportToFile(yaml, "controller.yaml");
+    auto yaml = serializeComponent(cameraEditor);
+    exportToFile(yaml, "cameraEditor.yaml");
     std::cout << yaml << std::endl;
 }
 
