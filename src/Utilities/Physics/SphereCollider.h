@@ -6,8 +6,10 @@
 
 class SphereCollider : public QECollider
 {
+    REFLECTABLE_DERIVED_COMPONENT(SphereCollider, QECollider)
 protected:
-    float Radius;
+    REFLECT_PROPERTY(float, Radius)
+
 public:
     SphereCollider();
     SphereCollider(const float& radius);
