@@ -9,7 +9,6 @@
 #include "../Editor/Grid.h"
 #include <QEProjectManager.h>
 #include <QEMeshRenderer.h>
-#include <TestComponent.h>
 
 App::App()  
 { 
@@ -462,6 +461,12 @@ void App::initVulkan()
     this->synchronizationModule.createSyncObjects();
 
     init_imgui();
+
+
+    auto controller = character->GetComponent<QECharacterController>();
+    auto yaml = serializeComponent(controller.get());
+    exportToFile(yaml, "controller.yaml");
+    std::cout << yaml << std::endl;
 }
 
 void App::loadScene(QEScene scene)
@@ -520,10 +525,6 @@ void App::mainLoop()
         ImGuiIO& io = ImGui::GetIO();
         if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false))
         {
-            auto yaml = serializeComponent(this->cameraEditor);
-            exportToFile(yaml, "cameraEditor.yaml");
-            std::cout << yaml << std::endl;
-
             //this->scene.cameraEditor = this->cameraEditor->CreateCameraDto();
             //this->scene.atmosphere = this->atmosphereSystem->CreateAtmosphereDto();
             //this->scene.SaveScene();
