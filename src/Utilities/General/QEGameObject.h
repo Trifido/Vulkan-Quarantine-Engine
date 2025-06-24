@@ -15,7 +15,6 @@ class QEGameObject : Numbered
 
 private:
     CullingSceneManager* cullingSceneManager = nullptr;
-    std::string bindMaterialName = "NULL_MATERIAL";
 
 protected:
     DeviceModule*       deviceModule = nullptr;

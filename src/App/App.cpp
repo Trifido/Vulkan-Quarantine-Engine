@@ -200,7 +200,7 @@ void App::initVulkan()
 
     auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Idle_Character.gltf").generic_string();
     //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Golem/Meshes/scene.gltf").generic_string();
-    auto characterPath2 = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf").generic_string();
+    //auto characterPath2 = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf").generic_string();
 
     // CHARACTER CONTROLLER
     /*
@@ -471,7 +471,7 @@ void App::loadScene(QEScene scene)
 {
     // Initialize the camera editor
     this->cameraEditor = CameraEditor::getInstance();
-    cameraEditor->QEStart();
+    this->cameraEditor->QEStart();
     this->cameraEditor->LoadCameraDto(this->mainWindow->width, this->mainWindow->height, this->scene.cameraEditor);
 
     // Initialize the materials
@@ -518,7 +518,7 @@ void App::mainLoop()
 
         // UPDATE ATMOSPHERE
         this->atmosphereSystem->UpdateSun();
-        auto sunLight = std::static_pointer_cast<SunLight>(this->lightManager->GetLight("QESunLight"));
+        auto sunLight = std::static_pointer_cast<QESunLight>(this->lightManager->GetLight("QESunLight"));
 
         ImGuiIO& io = ImGui::GetIO();
         if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false))

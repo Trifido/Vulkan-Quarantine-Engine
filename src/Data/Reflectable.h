@@ -12,6 +12,7 @@
 #include <memory>
 #include <iostream>
 #include <PhysicsTypes.h>
+#include <LightType.h>
 
 struct SerializableComponent
 {
@@ -130,6 +131,10 @@ inline YAML::Node serializeComponent(const SerializableComponent* comp)
             auto v = *reinterpret_cast<CollisionFlag*>(fieldPtr);
             node[field.name] = static_cast<int>(v);
         }
+        else if (field.type == typeid(LightType)) {
+            auto v = *reinterpret_cast<LightType*>(fieldPtr);
+            node[field.name] = static_cast<uint32_t>(v);
+        }
         else {
             node[field.name] = "<unsupported type>";
         }
@@ -190,6 +195,12 @@ inline void deserializeComponent(SerializableComponent* comp, const YAML::Node& 
             int ival = node[field.name].as<int>();
             auto v = static_cast<CollisionFlag>(ival);
             *reinterpret_cast<CollisionFlag*>(fieldPtr) = v;
+        }
+        else if (field.type == typeid(LightType))
+        {
+            uint32_t ival = node[field.name].as<uint32_t>();
+            auto v = static_cast<LightType>(ival);
+            *reinterpret_cast<LightType*>(fieldPtr) = v;
         }
     }
 }

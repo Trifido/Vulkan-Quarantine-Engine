@@ -23,9 +23,9 @@
 #include <QESingleton.h>
 #include <LightDto.h>
 
-class DirectionalLight;
-class SpotLight;
-class PointLight;
+class QEDirectionalLight;
+class QESpotLight;
+class QEPointLight;
 
 struct LightMap
 {
@@ -52,7 +52,7 @@ private:
     QECamera* camera = nullptr;
 
     uint32_t currentNumLights = 0;
-    std::unordered_map<std::string, std::shared_ptr<Light>> _lights;
+    std::unordered_map<std::string, std::shared_ptr<QELight>> _lights;
     std::shared_ptr<LightManagerUniform> lightManagerUniform;
     std::vector<LightUniform> lightBuffer;
     std::vector<LightMap> sortedLight;
@@ -73,9 +73,9 @@ public:
     std::shared_ptr<UniformBufferObject>    lightBinSSBO;
     VkDeviceSize                            lightBinSSBOSize;
 
-    std::vector<std::shared_ptr<DirectionalLight>> DirLights;
-    std::vector<std::shared_ptr<SpotLight>> SpotLights;
-    std::vector<std::shared_ptr<PointLight>> PointLights;
+    std::vector<std::shared_ptr<QEDirectionalLight>> DirLights;
+    std::vector<std::shared_ptr<QESpotLight>> SpotLights;
+    std::vector<std::shared_ptr<QEPointLight>> PointLights;
 
     std::shared_ptr<PointShadowDescriptorsManager> PointShadowDescritors;
     std::shared_ptr<CSMDescriptorsManager> CSMDescritors;
@@ -86,7 +86,7 @@ public:
     std::shared_ptr<ShaderModule> OmniShadowShaderModule;
 
 private:
-    void AddLight(std::shared_ptr<Light> light_ptr, std::string& name);
+    void AddLight(std::shared_ptr<QELight> light_ptr, std::string& name);
     void SortingLights();
     void ComputeLightsLUT();
     void ComputeLightTiles();
@@ -100,7 +100,7 @@ public:
     void LoadLightDtos(const std::vector <LightDto>& lightDtos);
     static std::vector <LightDto> GetLightDtos(std::ifstream& file);
     void SaveLights(std::ofstream& file);
-    std::shared_ptr<Light> GetLight(std::string name);
+    std::shared_ptr<QELight> GetLight(std::string name);
     void InitializeShadowMaps();
     void Update();
     void UpdateUBOLight();

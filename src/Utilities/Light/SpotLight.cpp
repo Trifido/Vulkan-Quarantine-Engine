@@ -1,7 +1,7 @@
 #include "SpotLight.h"
 #include <SynchronizationModule.h>
 
-SpotLight::SpotLight() : Light()
+QESpotLight::QESpotLight() : QELight()
 {
     this->lightType = LightType::SPOT_LIGHT;
 
@@ -12,7 +12,7 @@ SpotLight::SpotLight() : Light()
     this->transform->SetOrientation(glm::vec3(90.0f, 0.0f, 0.0f));
 }
 
-SpotLight::SpotLight(std::shared_ptr<ShaderModule> shaderModule, std::shared_ptr<VkRenderPass> renderPass) : SpotLight()
+QESpotLight::QESpotLight(std::shared_ptr<ShaderModule> shaderModule, std::shared_ptr<VkRenderPass> renderPass) : QESpotLight()
 {
     auto size = sizeof(glm::mat4);
     //this->shadowMappingPtr = std::make_shared<OmniShadowResources>(shaderModule, renderPass, ShadowMappingMode::DIRECTIONAL_SHADOW);
@@ -24,9 +24,9 @@ SpotLight::SpotLight(std::shared_ptr<ShaderModule> shaderModule, std::shared_ptr
     //this->descriptorBuffer->InitializeShadowMapDescritorSets(shaderModule, shadowMapUBO, size);
 }
 
-void SpotLight::UpdateUniform()
+void QESpotLight::UpdateUniform()
 {
-    Light::UpdateUniform();
+    QELight::UpdateUniform();
 
     this->uniform->cutOff = this->cutOff;
     this->uniform->outerCutoff = this->outerCutoff;

@@ -9,8 +9,9 @@
 
 class DescriptorBuffer;
 
-class SpotLight : public Light
+class QESpotLight : public QELight
 {
+    REFLECTABLE_DERIVED_COMPONENT(QESpotLight, QELight)
 public:
     //std::shared_ptr<OmniShadowResources> shadowMappingPtr = nullptr;
 
@@ -18,8 +19,8 @@ public:
     //std::shared_ptr<DescriptorBuffer> descriptorBuffer = nullptr;
 
 public:
-    SpotLight();
-    SpotLight(std::shared_ptr<ShaderModule> shaderModule, std::shared_ptr<VkRenderPass> renderPass);
+    QESpotLight();
+    QESpotLight(std::shared_ptr<ShaderModule> shaderModule, std::shared_ptr<VkRenderPass> renderPass);
     void UpdateUniform() override;
 };
 

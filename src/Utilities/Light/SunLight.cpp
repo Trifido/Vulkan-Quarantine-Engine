@@ -1,13 +1,13 @@
 #include "SunLight.h"
 #include <SynchronizationModule.h>
 
-SunLight::SunLight() : DirectionalLight()
+QESunLight::QESunLight() : QEDirectionalLight()
 {
     this->lightType = LightType::SUN_LIGHT;
 }
 
-SunLight::SunLight(std::shared_ptr<VkRenderPass> renderPass, QECamera* camera) :
-    DirectionalLight(renderPass, camera)
+QESunLight::QESunLight(std::shared_ptr<VkRenderPass> renderPass, QECamera* camera) :
+    QEDirectionalLight(renderPass, camera)
 {
     this->lightType = LightType::SUN_LIGHT;
     this->sunUBO = std::make_shared<UniformBufferObject>();
@@ -19,7 +19,7 @@ SunLight::SunLight(std::shared_ptr<VkRenderPass> renderPass, QECamera* camera) :
     this->SetDistanceEffect(100.0f);
 }
 
-void SunLight::UpdateSun()
+void QESunLight::UpdateSun()
 {
     this->UpdateUniform();
 
@@ -32,7 +32,7 @@ void SunLight::UpdateSun()
     }
 }
 
-void SunLight::SetLightDirection(glm::vec3 dir)
+void QESunLight::SetLightDirection(glm::vec3 dir)
 {
     this->transform->ForwardVector = glm::normalize(dir);
     this->uniformData.Direction = this->transform->ForwardVector;

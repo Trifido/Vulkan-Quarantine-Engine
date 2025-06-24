@@ -4,16 +4,19 @@
 
 #include "DirectionalLight.h"
 
-class SunLight : public DirectionalLight
+class QESunLight : public QEDirectionalLight
 {
+    REFLECTABLE_DERIVED_COMPONENT(QESunLight, QELight)
+
 public:
     SunUniform uniformData;
     std::shared_ptr<UniformBufferObject> sunUBO = nullptr;
-    float baseIntensity;
+
+    REFLECT_PROPERTY(float, baseIntensity)
 
 public:
-    SunLight();
-    SunLight(std::shared_ptr<VkRenderPass> renderPass, QECamera* camera);
+    QESunLight();
+    QESunLight(std::shared_ptr<VkRenderPass> renderPass, QECamera* camera);
     void UpdateSun();
     void SetLightDirection(glm::vec3 dir);
 };

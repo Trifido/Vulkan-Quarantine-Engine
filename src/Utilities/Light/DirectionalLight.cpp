@@ -1,24 +1,24 @@
 #include "DirectionalLight.h"
 #include <SynchronizationModule.h>
 
-DirectionalLight::DirectionalLight() : Light()
+QEDirectionalLight::QEDirectionalLight() : QELight()
 {
     this->lightType = LightType::DIRECTIONAL_LIGHT;
     this->radius = FLT_MAX;
-
+    this->cascadeSplitLambda = 0.95f;
     this->transform->SetPosition(glm::vec3(0.0f, 10.0f, 0.0f));
     this->transform->SetOrientation(glm::vec3(90.0f, 0.0f, 0.0f));
 }
 
-DirectionalLight::DirectionalLight(std::shared_ptr<VkRenderPass> renderPass, QECamera* camera) : DirectionalLight()
+QEDirectionalLight::QEDirectionalLight(std::shared_ptr<VkRenderPass> renderPass, QECamera* camera) : QEDirectionalLight()
 {
     this->camera = camera;
     this->shadowMappingResourcesPtr = std::make_shared<CSMResources>(renderPass);
 }
 
-void DirectionalLight::UpdateUniform()
+void QEDirectionalLight::UpdateUniform()
 {
-    Light::UpdateUniform();
+    QELight::UpdateUniform();
 
     this->uniform->position = this->transform->Position;
     this->uniform->direction = this->transform->ForwardVector;
@@ -27,7 +27,7 @@ void DirectionalLight::UpdateUniform()
     this->shadowMappingResourcesPtr->UpdateOffscreenUBOShadowMap();
 }
 
-void DirectionalLight::UpdateCascades()
+void QEDirectionalLight::UpdateCascades()
 {
     float cascadeSplitPtr[SHADOW_MAP_CASCADE_COUNT];
     float nearClip = camera->GetNear();
@@ -116,7 +116,7 @@ void DirectionalLight::UpdateCascades()
     }
 }
 
-void DirectionalLight::CleanShadowMapResources()
+void QEDirectionalLight::CleanShadowMapResources()
 {
     this->shadowMappingResourcesPtr->Cleanup();
 }

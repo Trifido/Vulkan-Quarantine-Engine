@@ -1,10 +1,11 @@
 #pragma once
-#ifndef LIGHT_H
-#define LIGHT_H
+#ifndef QELIGHT_H
+#define QELIGHT_H
 
 #include "Transform.h"
 #include "DeviceModule.h"
 #include <LightType.h>
+#include <QEGameComponent.h>
 
 struct AttenuationData
 {
@@ -15,30 +16,38 @@ struct AttenuationData
 
 const uint32_t NUM_ATTENUATIONS = 12;
 
-class Light
+class QELight : public QEGameComponent
 {
 protected:
+    REFLECTABLE_DERIVED_COMPONENT(QELight, QEGameComponent)
+
+protected:
     DeviceModule* deviceModule = nullptr;
-    float constant;
-    float linear;
-    float quadratic;
-    float radius;
+
+    REFLECT_PROPERTY(float, constant)
+    REFLECT_PROPERTY(float, linear)
+    REFLECT_PROPERTY(float, quadratic)
+    REFLECT_PROPERTY(float, radius)
 
 public:
-    std::unique_ptr<Transform> transform;
+    std::shared_ptr<Transform> transform;
     std::shared_ptr<LightUniform> uniform;
-    uint32_t lightType;
-    glm::vec3 diffuse;
-    glm::vec3 specular;
-    uint32_t idxShadowMap;
-    float cutOff;
-    float outerCutoff;
+
+    REFLECT_PROPERTY(LightType, lightType)
+    REFLECT_PROPERTY(uint32_t, idxShadowMap)
+    REFLECT_PROPERTY(glm::vec3, diffuse)
+    REFLECT_PROPERTY(glm::vec3, specular)
+    REFLECT_PROPERTY(float, cutOff)
+    REFLECT_PROPERTY(float, outerCutoff)
 
 public:
-    Light();
+    QELight();
     virtual void UpdateUniform();
     void SetDistanceEffect(float radiusEffect);
     float GetDistanceEffect() { return this->radius; }
+
+protected:
+    void QEInit() override;
 };
 
 #endif

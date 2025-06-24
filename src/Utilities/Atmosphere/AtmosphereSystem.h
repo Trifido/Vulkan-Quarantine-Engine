@@ -18,7 +18,7 @@ class AtmosphereSystem : public QESingleton<AtmosphereSystem>
 {
 private:
     const std::string SUN_NAME = "QESunLight";
-    std::shared_ptr<SunLight> sunLight;
+    std::shared_ptr<QESunLight> sunLight;
 
 public:
     enum ENVIRONMENT_TYPE

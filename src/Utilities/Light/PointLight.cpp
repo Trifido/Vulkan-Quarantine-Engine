@@ -1,19 +1,19 @@
 #include <PointLight.h>
 #include <numbers>
 
-PointLight::PointLight() : Light()
+QEPointLight::QEPointLight() : QELight()
 {
     this->lightType = LightType::POINT_LIGHT;
 }
 
-PointLight::PointLight(std::shared_ptr<VkRenderPass> renderPass) : PointLight()
+QEPointLight::QEPointLight(std::shared_ptr<VkRenderPass> renderPass) : QEPointLight()
 {
     this->shadowMappingResourcesPtr = std::make_shared<OmniShadowResources>(renderPass);
 }
 
-void PointLight::UpdateUniform()
+void QEPointLight::UpdateUniform()
 {
-    Light::UpdateUniform();
+    QELight::UpdateUniform();
 
     this->uniform->position = this->transform->Position;
     this->uniform->radius = this->radius;
@@ -26,7 +26,7 @@ void PointLight::UpdateUniform()
     this->shadowMappingResourcesPtr->UpdateUBOShadowMap(omniParameters);
 }
 
-void PointLight::CleanShadowMapResources()
+void QEPointLight::CleanShadowMapResources()
 {
     this->shadowMappingResourcesPtr->Cleanup();
 }

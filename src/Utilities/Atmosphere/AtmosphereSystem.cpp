@@ -20,11 +20,11 @@ AtmosphereSystem::~AtmosphereSystem()
 
 void AtmosphereSystem::LoadAtmosphereDto(AtmosphereDto atmosphereDto, QECamera* cameraPtr)
 {
-    this->sunLight = std::static_pointer_cast<SunLight>(this->lightManager->GetLight(SUN_NAME));
+    this->sunLight = std::static_pointer_cast<QESunLight>(this->lightManager->GetLight(SUN_NAME));
     if (this->sunLight == nullptr)
     {
         this->lightManager->CreateLight(LightType::SUN_LIGHT, this->SUN_NAME);
-        this->sunLight = std::static_pointer_cast<SunLight>(this->lightManager->GetLight(SUN_NAME));
+        this->sunLight = std::static_pointer_cast<QESunLight>(this->lightManager->GetLight(SUN_NAME));
     }
     this->sunLight->SetLightDirection(atmosphereDto.sunDirection);
 
