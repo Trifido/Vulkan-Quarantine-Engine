@@ -11,24 +11,20 @@
 #include <Compute/ComputeNodeManager.h>
 #include <AtmosphereDto.h>
 #include <SunLight.h>
+#include <AtmosphereType.h>
 
 using namespace std;
 
-class AtmosphereSystem : public QESingleton<AtmosphereSystem>
+class AtmosphereSystem : public QESingleton<AtmosphereSystem>, public SerializableComponent
 {
 private:
     const std::string SUN_NAME = "QESunLight";
     std::shared_ptr<QESunLight> sunLight;
+    glm::vec3 sunDirection;
+    float sunIntensity;
 
 public:
-    enum ENVIRONMENT_TYPE
-    {
-        CUBEMAP = 0,
-        SPHERICALMAP = 1,
-        PHYSICALLY_BASED_SKY = 2,
-    };
-
-    bool IsInitialized = false;
+    bool IsInitialized;
 
 private:
     friend class QESingleton<AtmosphereSystem>; // Permitir acceso al constructor
@@ -42,8 +38,7 @@ private:
     std::shared_ptr<CustomTexture> outputTexture;
     std::shared_ptr<UniformBufferObject> resolutionUBO = nullptr;
 
-    // Environment type
-    ENVIRONMENT_TYPE environmentType;
+    AtmosphereType atmosphereType;
 
     // Skybox shader
     const vector<string> shaderPaths = {
@@ -88,17 +83,27 @@ public:
     AtmosphereSystem();
     ~AtmosphereSystem();
 
+    const std::string& getTypeName() const override {
+        static const std::string name = "AtmosphereSystem";
+        return name;
+    }
+    QEMetaType* meta() const override {
+        return nullptr; // o un meta vacío si no usas campos “normales”
+    }
+
     void LoadAtmosphereDto(AtmosphereDto atmosphereDto, QECamera* cameraPtr);
     AtmosphereDto CreateAtmosphereDto();
     void AddTextureResources(const string* texturePaths, uint32_t numTextures);
     void InitializeAtmosphere(QECamera* cameraPtr);
-    void InitializeAtmosphere(ENVIRONMENT_TYPE type, const string* texturePaths, uint32_t numTextures, QECamera* cameraPtr);
+    void InitializeAtmosphere(AtmosphereType type, const string* texturePaths, uint32_t numTextures, QECamera* cameraPtr);
     void SetCamera(QECamera* cameraPtr);
     void DrawCommand(VkCommandBuffer& commandBuffer, uint32_t frameIdx);
     void Cleanup();
     void CleanLastResources();
     void UpdateSun();
     void UpdateAtmopshereResolution();
+    YAML::Node serialize() const;
+    void deserialize(const YAML::Node& node);
 };
 
 #endif // !ATMOSPHERE_SYSTEM_H

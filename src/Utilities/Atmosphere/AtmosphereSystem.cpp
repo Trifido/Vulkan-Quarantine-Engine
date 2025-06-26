@@ -3,13 +3,17 @@
 #include <MaterialManager.h>
 #include <filesystem>
 #include <SynchronizationModule.h>
+#include <yaml-cpp/yaml.h>
+#include <yaml-cpp/node/convert.h> 
+#include "glm_yaml_conversions.h"
 
 AtmosphereSystem::AtmosphereSystem()
 {
-    this->environmentType = ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY;
+    this->atmosphereType = AtmosphereType::PHYSICALLY_BASED_SKY;
     this->deviceModule = DeviceModule::getInstance();
     this->lightManager = LightManager::getInstance();
     this->swapChainModule = SwapChainModule::getInstance();
+    this->IsInitialized = false;
     //this->sunLight->SetParameters(glm::normalize(glm::vec3(0.0, -0.1, 0.1)), 100.0f);
 }
 
@@ -28,19 +32,19 @@ void AtmosphereSystem::LoadAtmosphereDto(AtmosphereDto atmosphereDto, QECamera* 
     }
     this->sunLight->SetLightDirection(atmosphereDto.sunDirection);
 
-    this->environmentType = static_cast<ENVIRONMENT_TYPE>(atmosphereDto.environmentType);
+    this->atmosphereType = static_cast<AtmosphereType>(atmosphereDto.environmentType);
     this->IsInitialized = atmosphereDto.hasAtmosphere;
 
-    switch (this->environmentType)
+    switch (this->atmosphereType)
     {
-    case ENVIRONMENT_TYPE::CUBEMAP:
-        this->InitializeAtmosphere(this->environmentType, nullptr, 0, cameraPtr);
+    case AtmosphereType::CUBEMAP:
+        this->InitializeAtmosphere(this->atmosphereType, nullptr, 0, cameraPtr);
         break;
-    case ENVIRONMENT_TYPE::SPHERICALMAP:
-        this->InitializeAtmosphere(this->environmentType, nullptr, 0, cameraPtr);
+    case AtmosphereType::SPHERICALMAP:
+        this->InitializeAtmosphere(this->atmosphereType, nullptr, 0, cameraPtr);
         break;
     default:
-    case ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY:
+    case AtmosphereType::PHYSICALLY_BASED_SKY:
         this->InitializeAtmosphere(cameraPtr);
         break;
     }
@@ -50,13 +54,13 @@ AtmosphereDto AtmosphereSystem::CreateAtmosphereDto()
 {
     return
     {
-        this->IsInitialized, this->environmentType, this->sunLight->uniformData.Direction, this->sunLight->uniformData.Intensity
+        this->IsInitialized, this->atmosphereType, this->sunLight->uniformData.Direction, this->sunLight->uniformData.Intensity
     };
 }
 
 void AtmosphereSystem::AddTextureResources(const string* texturePaths, uint32_t numTextures)
 {
-    TEXTURE_TYPE textureType = (this->environmentType == ENVIRONMENT_TYPE::CUBEMAP) ? TEXTURE_TYPE::CUBEMAP_TYPE : TEXTURE_TYPE::DIFFUSE_TYPE;
+    TEXTURE_TYPE textureType = (this->atmosphereType == AtmosphereType::CUBEMAP) ? TEXTURE_TYPE::CUBEMAP_TYPE : TEXTURE_TYPE::DIFFUSE_TYPE;
 
     vector<string> resultPaths;
     for (size_t i = 0; i < numTextures; i++)
@@ -96,18 +100,18 @@ void AtmosphereSystem::SetUpResources(QECamera* cameraPtr)
 
     auto shaderManager = ShaderManager::getInstance();
 
-    const string absolute_sky_vert_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[this->environmentType]);
-    const string absolute_sky_frag_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[this->environmentType + (int)(shaderPaths.size() * 0.5f)]);
+    const string absolute_sky_vert_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[this->atmosphereType]);
+    const string absolute_sky_frag_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[this->atmosphereType + (int)(shaderPaths.size() * 0.5f)]);
 
     GraphicsPipelineData pipelineData = {};
-    pipelineData.HasVertexData = this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY;
+    pipelineData.HasVertexData = this->atmosphereType != AtmosphereType::PHYSICALLY_BASED_SKY;
 
     this->environment_shader = std::make_shared<ShaderModule>(
         ShaderModule("environment_map", absolute_sky_vert_shader_path, absolute_sky_frag_shader_path, pipelineData)
     );
     shaderManager->AddShader(this->environment_shader);
 
-    if (this->environmentType == ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY)
+    if (this->atmosphereType == AtmosphereType::PHYSICALLY_BASED_SKY)
     {
         this->resolutionUBO = std::make_shared<UniformBufferObject>();
         this->resolutionUBO->CreateUniformBuffer(sizeof(ScreenResolutionUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
@@ -145,17 +149,17 @@ void AtmosphereSystem::SetUpResources(QECamera* cameraPtr)
         this->SVLUT_ComputeNode->InitializeComputeNode();
     }
 
-    switch (this->environmentType)
+    switch (this->atmosphereType)
     {
     default:
-    case ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY:
+    case AtmosphereType::PHYSICALLY_BASED_SKY:
 
         this->_Mesh = std::make_shared<QEGeometryComponent>(std::make_unique<QuadGenerator>());
         break;
-    case ENVIRONMENT_TYPE::CUBEMAP:
+    case AtmosphereType::CUBEMAP:
         this->_Mesh = std::make_shared<QEGeometryComponent>(std::make_unique<CubeGenerator>());
         break;
-    case ENVIRONMENT_TYPE::SPHERICALMAP:
+    case AtmosphereType::SPHERICALMAP:
         this->_Mesh = std::make_shared<QEGeometryComponent>(std::make_unique<SphereGenerator>());
         break;
     }
@@ -163,11 +167,11 @@ void AtmosphereSystem::SetUpResources(QECamera* cameraPtr)
     this->_Mesh->QEStart();
 }
 
-void AtmosphereSystem::InitializeAtmosphere(ENVIRONMENT_TYPE type, const string* texturePaths, uint32_t numTextures, QECamera* cameraPtr)
+void AtmosphereSystem::InitializeAtmosphere(AtmosphereType type, const string* texturePaths, uint32_t numTextures, QECamera* cameraPtr)
 {
-    if (this->environmentType == type) return;
+    if (this->atmosphereType == type) return;
 
-    this->environmentType = type;
+    this->atmosphereType = type;
 
     this->SetUpResources(cameraPtr);
 
@@ -185,12 +189,12 @@ void AtmosphereSystem::CreateDescriptorPool()
 {
     std::vector<VkDescriptorPoolSize> poolSizes;
 
-    int numPool = (this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY) ? 2 : 1;
+    int numPool = (this->atmosphereType != AtmosphereType::PHYSICALLY_BASED_SKY) ? 2 : 1;
     poolSizes.resize(numPool);
     poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     poolSizes[0].descriptorCount = 1;
 
-    if (this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY)
+    if (this->atmosphereType != AtmosphereType::PHYSICALLY_BASED_SKY)
     {
         poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         poolSizes[1].descriptorCount = 1;
@@ -231,8 +235,8 @@ void AtmosphereSystem::CreateDescriptorSet()
         throw std::runtime_error("failed to allocate descriptor sets!");
     }
 
-    int numWrites = (this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY) ? 2 : 5;
-    int numBuffers = (this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY) ? 1 : 3;
+    int numWrites = (this->atmosphereType != AtmosphereType::PHYSICALLY_BASED_SKY) ? 2 : 5;
+    int numBuffers = (this->atmosphereType != AtmosphereType::PHYSICALLY_BASED_SKY) ? 1 : 3;
     this->buffersInfo.resize(numBuffers);
 
     for (size_t frameIdx = 0; frameIdx < MAX_FRAMES_IN_FLIGHT; frameIdx++)
@@ -241,7 +245,7 @@ void AtmosphereSystem::CreateDescriptorSet()
         descriptorWrites.resize(numWrites);
 
 
-        if (this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY)
+        if (this->atmosphereType != AtmosphereType::PHYSICALLY_BASED_SKY)
         {
             this->SetDescriptorWrite(descriptorWrites[0], this->descriptorSets[frameIdx], 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, this->camera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform));
             this->SetSamplerDescriptorWrite(descriptorWrites[1], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, this->environmentTexture, this->imageInfo_1);
@@ -344,7 +348,7 @@ void AtmosphereSystem::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t fram
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->environment_shader->PipelineModule->pipelineLayout, 0, 1, &descriptorSets.at(frameIdx), 0, nullptr);
     }
 
-    if (this->environmentType != ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY)
+    if (this->atmosphereType != AtmosphereType::PHYSICALLY_BASED_SKY)
     {
         auto mesh = this->_Mesh->GetMesh();
         VkDeviceSize offsets[] = { 0 };
@@ -413,7 +417,7 @@ void AtmosphereSystem::CleanLastResources()
 
 void AtmosphereSystem::UpdateSun()
 {
-    if (this->environmentType == ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY)
+    if (this->atmosphereType == AtmosphereType::PHYSICALLY_BASED_SKY)
     {
         this->sunLight->UpdateSun();
 
@@ -423,7 +427,7 @@ void AtmosphereSystem::UpdateSun()
 
 void AtmosphereSystem::UpdateAtmopshereResolution()
 {
-    if (this->environmentType == ENVIRONMENT_TYPE::PHYSICALLY_BASED_SKY)
+    if (this->atmosphereType == AtmosphereType::PHYSICALLY_BASED_SKY)
     {
         ScreenResolutionUniform resolution = {};
         resolution.resolution = glm::vec2(this->swapChainModule->swapChainExtent.width, this->swapChainModule->swapChainExtent.height);
@@ -436,4 +440,26 @@ void AtmosphereSystem::UpdateAtmopshereResolution()
             vkUnmapMemory(deviceModule->device, this->resolutionUBO->uniformBuffersMemory[currentFrame]);
         }
     }
+}
+
+YAML::Node AtmosphereSystem::serialize() const
+{
+    YAML::Node node;
+    node["IsInitialized"] = IsInitialized;
+    node["AtmosphereType"] = static_cast<uint32_t>(atmosphereType);
+    node["SunDirection"] = sunLight->uniform->direction;
+    node["SunBaseIntensity"] = sunLight->baseIntensity;
+    return node;
+}
+
+void AtmosphereSystem::deserialize(const YAML::Node& node)
+{
+    if (node["IsInitialized"])
+        IsInitialized = node["IsInitialized"].as<bool>();
+    if (node["AtmosphereType"])
+        atmosphereType = AtmosphereType(node["AtmosphereType"].as<uint32_t>());
+    if (node["SunDirection"])
+        sunLight->SetLightDirection(node["SunDirection"].as<glm::vec3>());
+    if (node["SunBaseIntensity"])
+        sunLight->baseIntensity = node["SunBaseIntensity"].as<float>();
 }

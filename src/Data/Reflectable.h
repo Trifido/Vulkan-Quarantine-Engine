@@ -13,6 +13,7 @@
 #include <iostream>
 #include <PhysicsTypes.h>
 #include <LightType.h>
+#include <AtmosphereType.h>
 
 struct SerializableComponent
 {
@@ -135,6 +136,10 @@ inline YAML::Node serializeComponent(const SerializableComponent* comp)
             auto v = *reinterpret_cast<LightType*>(fieldPtr);
             node[field.name] = static_cast<uint32_t>(v);
         }
+        else if (field.type == typeid(AtmosphereType)) {
+            auto v = *reinterpret_cast<AtmosphereType*>(fieldPtr);
+            node[field.name] = static_cast<uint32_t>(v);
+        }
         else {
             node[field.name] = "<unsupported type>";
         }
@@ -201,6 +206,12 @@ inline void deserializeComponent(SerializableComponent* comp, const YAML::Node& 
             uint32_t ival = node[field.name].as<uint32_t>();
             auto v = static_cast<LightType>(ival);
             *reinterpret_cast<LightType*>(fieldPtr) = v;
+        }
+        else if (field.type == typeid(AtmosphereType))
+        {
+            uint32_t ival = node[field.name].as<uint32_t>();
+            auto v = static_cast<AtmosphereType>(ival);
+            *reinterpret_cast<AtmosphereType*>(fieldPtr) = v;
         }
     }
 }

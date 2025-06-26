@@ -462,8 +462,8 @@ void App::initVulkan()
 
     init_imgui();
 
-    auto yaml = serializeComponent(cameraEditor);
-    exportToFile(yaml, "cameraEditor.yaml");
+    auto yaml = atmosphereSystem->serialize();
+    exportToFile(yaml, "atmosphereSystem.yaml");
     std::cout << yaml << std::endl;
 }
 

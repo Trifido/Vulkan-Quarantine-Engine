@@ -6,6 +6,11 @@ QEDirectionalLight::QEDirectionalLight() : QELight()
     this->lightType = LightType::DIRECTIONAL_LIGHT;
     this->radius = FLT_MAX;
     this->cascadeSplitLambda = 0.95f;
+
+    if (this->transform == nullptr)
+    {
+        this->transform = std::make_shared<Transform>();
+    }
     this->transform->SetPosition(glm::vec3(0.0f, 10.0f, 0.0f));
     this->transform->SetOrientation(glm::vec3(90.0f, 0.0f, 0.0f));
 }
