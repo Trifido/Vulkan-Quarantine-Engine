@@ -378,10 +378,9 @@ void App::initVulkan()
         this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
         auto pointLight1 = this->lightManager->GetLight("PointLight1");
         pointLight->AddComponent(pointLight1);
-        //auto pointLight = this->lightManager->GetLight("PointLight1");
-        //pointLight->transform->SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
         auto pointLightTransform = pointLight->GetComponent<Transform>();
         pointLightTransform->SetPosition(glm::vec3(5.0f, 5.0f, 0.0f));
+        //pointLightTransform->SetOrientation(glm::vec3(45.0f, 0.0f, 0.0f));
         pointLight1->diffuse = glm::vec3(0.7f, 0.0f, 0.0f);
         pointLight1->specular = glm::vec3(0.7f, 0.0f, 0.0f);
         pointLight1->SetDistanceEffect(100.0f);
@@ -495,8 +494,8 @@ void App::loadScene(QEScene scene)
     this->lightManager->LoadLightDtos(this->scene.lightDtos);
 
     // Initialize the atmophere system
-    //this->atmosphereSystem = AtmosphereSystem::getInstance();
-    //this->atmosphereSystem->LoadAtmosphereDto(this->scene.atmosphere, this->cameraEditor);
+    this->atmosphereSystem = AtmosphereSystem::getInstance();
+    this->atmosphereSystem->LoadAtmosphereDto(this->scene.atmosphere, this->cameraEditor);
 }
 
 void App::mainLoop()
@@ -524,7 +523,7 @@ void App::mainLoop()
         this->lightManager->Update();
 
         // UPDATE ATMOSPHERE
-        //this->atmosphereSystem->UpdateSun();
+        this->atmosphereSystem->UpdateSun();
         auto sunLight = std::static_pointer_cast<QESunLight>(this->lightManager->GetLight("QESunLight"));
 
         ImGuiIO& io = ImGui::GetIO();

@@ -1,4 +1,4 @@
-#include "GameObjectManager.h"
+﻿#include "GameObjectManager.h"
 #include <iostream>
 #include <GameObjectDto.h>
 #include <QEMeshRenderer.h>
@@ -95,15 +95,13 @@ void GameObjectManager::OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32
         if (meshRenderer == nullptr)
             continue;
 
-        PushConstantOmniShadowStruct shadowParameters = {};
-        shadowParameters.view = viewParameter;
         auto transform = model.second->GetComponent<Transform>();
-
         glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), -lightPosition);
-        glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), transform->Scale);
-        glm::mat4 rotationMatrix = glm::toMat4(transform->Orientation);
-        shadowParameters.lightModel = translationMatrix * rotationMatrix * scaleMatrix;
+
+        PushConstantOmniShadowStruct shadowParameters = {};
+        shadowParameters.lightModel = translationMatrix * transform->GetModel();
         shadowParameters.model = transform->GetModel();
+        shadowParameters.view = viewParameter;
 
         vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantOmniShadowStruct), &shadowParameters);
         meshRenderer->SetDrawShadowCommand(commandBuffer, idx, pipelineLayout);
