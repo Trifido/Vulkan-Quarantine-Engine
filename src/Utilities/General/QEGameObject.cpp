@@ -38,52 +38,50 @@ void QEGameObject::QEStart()
     auto geometryComponent = this->GetComponent<QEGeometryComponent>();
     auto transform = this->GetComponent<Transform>();
 
-    if (geometryComponent == nullptr)
+    if (geometryComponent != nullptr)
     {
-        return;
-    }
+        geometryComponent->QEStart();
 
-    geometryComponent->QEStart();
+        // Set the AABB component
+        auto mesh = geometryComponent->GetMesh();
+        auto aabbCulling = this->cullingSceneManager->GenerateAABB(mesh->BoundingBox, transform);
+        this->AddComponent<AABBObject>(aabbCulling);
 
-    // Set the AABB component
-    auto mesh = geometryComponent->GetMesh();
-    auto aabbCulling = this->cullingSceneManager->GenerateAABB(mesh->BoundingBox, transform);
-    this->AddComponent<AABBObject>(aabbCulling);
+        //Set the materials
+        std::set<std::string> matIDs;
 
-    //Set the materials
-    std::set<std::string> matIDs;
-
-    if (mesh->MaterialRel.empty())
-    {
-        auto mat = this->GetMaterial();
-        if (mat != nullptr)
+        if (mesh->MaterialRel.empty())
         {
-            mesh->MaterialRel.push_back(mat->Name);
-        }
-    }
-    else
-    {
-        for (auto matID : mesh->MaterialRel)
-        {
-            std::shared_ptr<QEMaterial> material = this->materialManager->GetMaterial(matID);
-            if (material != nullptr)
+            auto mat = this->GetMaterial();
+            if (mat != nullptr)
             {
-                this->AddComponent<QEMaterial>(material);
+                mesh->MaterialRel.push_back(mat->Name);
             }
         }
-    }
-
-    //Set the animations
-    if (mesh->AnimationData.size())
-    {
-        this->AddComponent<AnimationComponent>(std::make_shared<AnimationComponent>());
-        auto animationComponent = this->GetComponent<AnimationComponent>();
-
-        for (auto anim : mesh->AnimationData)
+        else
         {
-            if (anim.m_Duration > 0.0f)
+            for (auto matID : mesh->MaterialRel)
             {
-                animationComponent->AddAnimation(std::make_shared<Animation>(anim));
+                std::shared_ptr<QEMaterial> material = this->materialManager->GetMaterial(matID);
+                if (material != nullptr)
+                {
+                    this->AddComponent<QEMaterial>(material);
+                }
+            }
+        }
+
+        //Set the animations
+        if (mesh->AnimationData.size())
+        {
+            this->AddComponent<AnimationComponent>(std::make_shared<AnimationComponent>());
+            auto animationComponent = this->GetComponent<AnimationComponent>();
+
+            for (auto anim : mesh->AnimationData)
+            {
+                if (anim.m_Duration > 0.0f)
+                {
+                    animationComponent->AddAnimation(std::make_shared<Animation>(anim));
+                }
             }
         }
     }

@@ -374,12 +374,18 @@ void App::initVulkan()
     // INIT ------------------------- Lights ----------------------------------------
     // POINT LIGHTS
     {
-        //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
+        std::shared_ptr<QEGameObject> pointLight = std::make_shared<QEGameObject>();
+        this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
+        auto pointLight1 = this->lightManager->GetLight("PointLight1");
+        pointLight->AddComponent(pointLight1);
         //auto pointLight = this->lightManager->GetLight("PointLight1");
         //pointLight->transform->SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
-        //pointLight->diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
-        //pointLight->specular = glm::vec3(0.7f, 0.7f, 0.7f);
-        //pointLight->SetDistanceEffect(100.0f);
+        auto pointLightTransform = pointLight->GetComponent<Transform>();
+        pointLightTransform->SetPosition(glm::vec3(5.0f, 5.0f, 0.0f));
+        pointLight1->diffuse = glm::vec3(0.7f, 0.0f, 0.0f);
+        pointLight1->specular = glm::vec3(0.7f, 0.0f, 0.0f);
+        pointLight1->SetDistanceEffect(100.0f);
+        this->gameObjectManager->AddGameObject(pointLight, "PointLight1");
 
         //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight2");
         //auto pointLight2 = this->lightManager->GetLight("PointLight2");
@@ -456,15 +462,16 @@ void App::initVulkan()
     this->lightManager->InitializeShadowMaps();
 
     this->gameObjectManager->StartQEGameObjects();
+    this->gameObjectManager->UpdateQEGameObjects();
 
     this->commandPoolModule->Render(&framebufferModule);
     this->synchronizationModule.createSyncObjects();
 
     init_imgui();
 
-    auto yaml = atmosphereSystem->serialize();
-    exportToFile(yaml, "atmosphereSystem.yaml");
-    std::cout << yaml << std::endl;
+    //auto yaml = atmosphereSystem->serialize();
+    //exportToFile(yaml, "atmosphereSystem.yaml");
+    //std::cout << yaml << std::endl;
 }
 
 void App::loadScene(QEScene scene)
@@ -488,8 +495,8 @@ void App::loadScene(QEScene scene)
     this->lightManager->LoadLightDtos(this->scene.lightDtos);
 
     // Initialize the atmophere system
-    this->atmosphereSystem = AtmosphereSystem::getInstance();
-    this->atmosphereSystem->LoadAtmosphereDto(this->scene.atmosphere, this->cameraEditor);
+    //this->atmosphereSystem = AtmosphereSystem::getInstance();
+    //this->atmosphereSystem->LoadAtmosphereDto(this->scene.atmosphere, this->cameraEditor);
 }
 
 void App::mainLoop()
@@ -517,7 +524,7 @@ void App::mainLoop()
         this->lightManager->Update();
 
         // UPDATE ATMOSPHERE
-        this->atmosphereSystem->UpdateSun();
+        //this->atmosphereSystem->UpdateSun();
         auto sunLight = std::static_pointer_cast<QESunLight>(this->lightManager->GetLight("QESunLight"));
 
         ImGuiIO& io = ImGui::GetIO();
