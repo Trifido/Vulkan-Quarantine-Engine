@@ -35,6 +35,7 @@ QECamera::QECamera(const float width, const float height, const CameraDto& camer
 
 bool QECamera::LoadCameraDto(const float width, const float height, const CameraDto& cameraDto)
 {
+
     this->cameraFront = cameraDto.front;
     this->cameraPos = cameraDto.position;// glm::vec3(0.0f, 10.0f, 10.0f);
     this->cameraUp = cameraDto.up;

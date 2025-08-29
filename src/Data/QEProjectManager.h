@@ -25,6 +25,7 @@ public:
     static bool CreateQEProject(const std::string& projectName);
     static bool CreateFolder(const fs::path& projectPath, const std::string& folderName);
     static bool CreateScene(const std::string& sceneName = "DefaultScene");
+    static bool CreateYamlSceneFile(const std::string& sceneName = "DefaultScene");
     static bool ImportMeshFile(const fs::path& inputFile);
     static fs::path GetMaterialFolderPath();
 

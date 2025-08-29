@@ -198,13 +198,12 @@ void App::initVulkan()
     //const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
     //const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
 
-    auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Idle_Character.gltf").generic_string();
+    //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Idle_Character.gltf").generic_string();
     //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Golem/Meshes/scene.gltf").generic_string();
     //auto characterPath2 = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf").generic_string();
 
     // CHARACTER CONTROLLER
     /*
-    */
     std::shared_ptr<QEGeometryComponent> geometryComponent = make_shared<QEGeometryComponent>(std::make_unique<MeshGenerator>(characterPath));
 
     std::shared_ptr<QEGameObject> character = std::make_shared<QEGameObject>();
@@ -235,7 +234,7 @@ void App::initVulkan()
     //model->_Material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
     //this->gameObjectManager->AddGameObject(model, "modelRaptoid");
 
-    /**/
+    /*
 
     auto defaultMat = this->materialManager->GetMaterial("defaultPrimitiveMat");
     auto floorMatInstance = defaultMat->CreateMaterialInstance();
@@ -374,17 +373,17 @@ void App::initVulkan()
     // INIT ------------------------- Lights ----------------------------------------
     // POINT LIGHTS
     {
-        std::shared_ptr<QEGameObject> pointLight = std::make_shared<QEGameObject>();
-        this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight1");
-        auto pointLight1 = this->lightManager->GetLight("PointLight1");
-        pointLight->AddComponent(pointLight1);
-        auto pointLightTransform = pointLight->GetComponent<Transform>();
-        pointLightTransform->SetPosition(glm::vec3(5.0f, 5.0f, 0.0f));
+        //std::shared_ptr<QEGameObject> pointLight = std::make_shared<QEGameObject>();
+        //this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "PointLight1");
+        //auto pointLight1 = this->lightManager->GetLight("PointLight1");
+        //pointLight->AddComponent(pointLight1);
+        //auto pointLightTransform = pointLight->GetComponent<Transform>();
+        //pointLightTransform->SetPosition(glm::vec3(5.0f, 5.0f, 0.0f));
         //pointLightTransform->SetOrientation(glm::vec3(45.0f, 0.0f, 0.0f));
-        pointLight1->diffuse = glm::vec3(0.7f, 0.0f, 0.0f);
-        pointLight1->specular = glm::vec3(0.7f, 0.0f, 0.0f);
-        pointLight1->SetDistanceEffect(100.0f);
-        this->gameObjectManager->AddGameObject(pointLight, "PointLight1");
+        //pointLight1->diffuse = glm::vec3(0.7f, 0.0f, 0.0f);
+        //pointLight1->specular = glm::vec3(0.7f, 0.0f, 0.0f);
+        //pointLight1->SetDistanceEffect(100.0f);
+        //this->gameObjectManager->AddGameObject(pointLight, "PointLight1");
 
         //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight2");
         //auto pointLight2 = this->lightManager->GetLight("PointLight2");
@@ -468,9 +467,10 @@ void App::initVulkan()
 
     init_imgui();
 
-    //auto yaml = atmosphereSystem->serialize();
-    //exportToFile(yaml, "atmosphereSystem.yaml");
-    //std::cout << yaml << std::endl;
+    auto yaml = serializeComponent(cameraEditor);
+    exportToFile(yaml, "cameraEditor.yaml");
+    std::cout << yaml << std::endl;
+    /**/
 }
 
 void App::loadScene(QEScene scene)
@@ -478,7 +478,7 @@ void App::loadScene(QEScene scene)
     // Initialize the camera editor
     this->cameraEditor = CameraEditor::getInstance();
     this->cameraEditor->QEStart();
-    this->cameraEditor->LoadCameraDto(this->mainWindow->width, this->mainWindow->height, this->scene.cameraEditor);
+    //this->cameraEditor->LoadCameraDto(this->mainWindow->width, this->mainWindow->height, this->scene.cameraEditor);
 
     // Initialize the materials
     this->materialManager->LoadMaterialDtos(this->scene.materialDtos);
@@ -497,6 +497,21 @@ void App::loadScene(QEScene scene)
     this->atmosphereSystem = AtmosphereSystem::getInstance();
     this->atmosphereSystem->LoadAtmosphereDto(this->scene.atmosphere, this->cameraEditor);
 }
+
+void App::loadSceneV2(QEScenev2 scene)
+{
+    if (scene.cameraEditor != nullptr)
+    {
+        this->cameraEditor = scene.cameraEditor;
+    }
+    else
+    {
+        this->cameraEditor = CameraEditor::getInstance();
+    }
+
+    this->cameraEditor->QEStart();
+}
+
 
 void App::mainLoop()
 {

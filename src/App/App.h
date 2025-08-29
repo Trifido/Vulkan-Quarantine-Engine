@@ -55,6 +55,7 @@
 #include <AtmosphereSystem.h>
 #include <QEScene.h>
 #include <CapsuleCollider.h>
+#include <QEScenev2.h>
 
 using namespace std;
 
@@ -101,6 +102,7 @@ public:
 private:
     void initVulkan();
     void loadScene(QEScene scene);
+    void loadSceneV2(QEScenev2 scene);
     void mainLoop();
     void computeFrame();
     void drawFrame();  
