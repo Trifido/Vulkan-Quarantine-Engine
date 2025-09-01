@@ -8,32 +8,6 @@ QEGameObject::QEGameObject()
     this->InitializeResources();
 }
 
-/*
-QEGameObject::QEGameObject(const GameObjectDto& gameObjectDto) : Numbered(gameObjectDto.Id)
-{
-    PRIMITIVE_TYPE primitiveType = static_cast<PRIMITIVE_TYPE>(gameObjectDto.MeshPrimitiveType);
-    MeshImportedType meshType = static_cast<MeshImportedType>(gameObjectDto.MeshImportedType);
-
-    this->bindMaterialName = gameObjectDto.BindMaterialName;
-
-    if (meshType == MeshImportedType::PRIMITIVE_GEO && primitiveType != PRIMITIVE_TYPE::NONE_TYPE)
-    {
-        this->InitializeGameObject(primitiveType);
-    }
-    else if (meshType != MeshImportedType::PRIMITIVE_GEO)
-    {
-        this->InitializeGameObject(gameObjectDto.MeshPath);
-    }
-    else
-    {
-        return;
-    }
-
-    this->_meshImportedType = static_cast<MeshImportedType>(gameObjectDto.MeshImportedType);
-    this->GetComponent<Transform>()->SetModel(gameObjectDto.WorldTransform);
-}
-*/
-
 void QEGameObject::QEStart()
 {
     auto geometryComponent = this->GetComponent<QEGeometryComponent>();
@@ -59,6 +33,15 @@ void QEGameObject::QEStart()
             if (mat != nullptr)
             {
                 mesh->MaterialRel.push_back(mat->Name);
+            }
+            else
+            {
+                std::shared_ptr<QEMaterial> material = this->materialManager->GetMaterial(bindedMaterials.front());
+                if (material != nullptr)
+                {
+                    mesh->MaterialRel.push_back(material->Name);
+                    this->AddComponent<QEMaterial>(material);
+                }
             }
         }
         else
@@ -130,6 +113,10 @@ YAML::Node QEGameObject::ToYaml() const
     for (const auto& comp : components)  
         comps.push_back(serializeComponent(comp.get()));
 
+    auto mats = node["materials"];
+    for (const auto& mat : materials)
+        mats.push_back(mat->Name);
+
     auto chs = node["children"];
     for (const auto& ch : childs)
         chs.push_back(ch->ToYaml());
@@ -173,6 +160,14 @@ std::shared_ptr<QEGameObject> QEGameObject::FromYaml(const YAML::Node& node)
             std::shared_ptr<QEGameComponent> sptr(uptr.release());
             sptr->BindGameObject(go.get());
             go->components.push_back(sptr);
+        }
+    }
+
+    if (node["materials"] && node["materials"].IsSequence())
+    {
+        for (const auto& matnode : node["materials"])
+        {
+            go->bindedMaterials.push_back(matnode.as<std::string>());
         }
     }
 

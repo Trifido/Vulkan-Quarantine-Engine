@@ -16,6 +16,7 @@ class QEGameObject : Numbered
 
 private:
     CullingSceneManager* cullingSceneManager = nullptr;
+    std::vector<std::string> bindedMaterials;
 
 protected:
     DeviceModule*       deviceModule = nullptr;
@@ -64,6 +65,7 @@ public:
             }
 
             materials.push_back(component_ptr);
+            bindedMaterials.push_back(component_ptr->Name);
             return true;
         }
         else
