@@ -501,7 +501,7 @@ void App::loadScene(QEScene scene)
 
 void App::loadSceneV2(QEScenev2 scenev2)
 {
-    scenev2.DeserializeScene(gameObjectManager);
+    scenev2.DeserializeScene();
 
     this->cameraEditor = CameraEditor::getInstance();
     this->cameraEditor->QEStart();
@@ -521,7 +521,7 @@ void App::saveScene()
 {
     scenev2.cameraEditor = CameraEditor::getInstance();
     this->scenev2.atmosphereDto = this->atmosphereSystem->CreateAtmosphereDto();
-    this->scenev2.SerializeScene(this->gameObjectManager->SerializeGameObjects());
+    this->scenev2.SerializeScene();
 }
 
 void App::mainLoop()

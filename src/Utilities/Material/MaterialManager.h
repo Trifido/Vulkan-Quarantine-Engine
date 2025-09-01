@@ -6,6 +6,7 @@
 #include <TextureManager.h>
 #include <QESingleton.h>
 #include <MaterialDto.h>
+#include <yaml-cpp/yaml.h>
 
 class QEMaterial;
 class QECamera;
@@ -53,6 +54,8 @@ public:
     static MaterialDto ReadQEMaterial(std::ifstream& file);
     void LoadMaterialDtos(std::vector<MaterialDto>& materialDtos);
     void SaveMaterials(std::ofstream& file);
+    YAML::Node SerializeMaterials();
+    void DeserializeMaterials(YAML::Node materials);
 };
 
 #endif

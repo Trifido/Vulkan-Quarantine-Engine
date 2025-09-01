@@ -1,4 +1,6 @@
 #include "QEScenev2.h"
+#include <GameObjectManager.h>
+#include <LightManager.h>
 
 QEScenev2::QEScenev2()
 {
@@ -30,12 +32,17 @@ bool QEScenev2::InitScenev2(fs::path scenefile)
     return true;
 }
 
-bool QEScenev2::SerializeScene(const YAML::Node& gameObjects)
+bool QEScenev2::SerializeScene()
 {
+    auto gameObjectManager = GameObjectManager::getInstance();
+    auto materialManager = MaterialManager::getInstance();
+    auto lightManager = LightManager::getInstance();
+
     YAML::Node root;
     root["CameraEditor"] = serializeComponent(cameraEditor);
     root["AtmosphereDto"] = SerializeAtmosphere(atmosphereDto);
-    root["GameObjects"] = gameObjects;
+    root["Materials"] = materialManager->SerializeMaterials();
+    root["GameObjects"] = gameObjectManager->SerializeGameObjects();
 
     fs::path filePath = this->scenePath / this->sceneName;
 
@@ -53,8 +60,12 @@ bool QEScenev2::SerializeScene(const YAML::Node& gameObjects)
     return true;
 }
 
-bool QEScenev2::DeserializeScene(GameObjectManager* gameObjectManager)
+bool QEScenev2::DeserializeScene()
 {
+    auto gameObjectManager = GameObjectManager::getInstance();
+    auto materialManager = MaterialManager::getInstance();
+    auto lightManager = LightManager::getInstance();
+
     namespace fs = std::filesystem;
     const fs::path filePath = this->scenePath / this->sceneName;
 
@@ -97,6 +108,15 @@ bool QEScenev2::DeserializeScene(GameObjectManager* gameObjectManager)
     else
     {
         std::cerr << "Warning: nodo 'AtmosphereDto' no encontrado en YAML. Usando defaults.\n";
+    }
+
+    if (auto n = root["Materials"])
+    {
+        materialManager->DeserializeMaterials(n);
+    }
+    else
+    {
+        std::cerr << "Warning: nodo 'Materials' no encontrado en YAML.\n";
     }
 
     if (auto n = root["GameObjects"])

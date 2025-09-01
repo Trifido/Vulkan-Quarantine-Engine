@@ -6,13 +6,10 @@
 #include <QEGameObject.h>
 #include <AtmosphereDto.h>
 #include <vector>
-#include <GameObjectManager.h>
 
 using namespace std;
 
 namespace fs = filesystem;
-
-class GameObjectManager;
 
 class QEScenev2
 {
@@ -30,8 +27,8 @@ public:
     QEScenev2(string sceneName, fs::path scenePath);
     ~QEScenev2();
     bool InitScenev2(fs::path filename);
-    bool SerializeScene(const YAML::Node &gameObjects);
-    bool DeserializeScene(GameObjectManager* gameobjectManager);
+    bool SerializeScene();
+    bool DeserializeScene();
 };
 
 #endif

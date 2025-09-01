@@ -404,3 +404,52 @@ void MaterialManager::SaveMaterials(std::ofstream& file)
         }
     }
 }
+
+YAML::Node MaterialManager::SerializeMaterials()
+{
+    YAML::Node materialsNode;
+
+    for (auto& it : _materials)
+    {
+        std::string materialPath = it.second->SaveMaterialFile();
+        materialsNode.push_back(materialPath);
+    }
+
+    return materialsNode;
+}
+
+void MaterialManager::DeserializeMaterials(YAML::Node materials)
+{
+    std::vector<MaterialDto> materialDtos;
+
+    try
+    {
+        if (materials && materials.IsSequence())
+        {
+            for (const auto& materialPath : materials)
+            {
+                std::string matPath = materialPath.as<std::string>();
+
+                std::ifstream matfile(matPath, std::ios::binary);
+                if (!matfile.is_open())
+                {
+                    std::cerr << "Error al abrir el material " << matPath << std::endl;
+                    continue;
+                }
+
+                MaterialDto materialDto = ReadQEMaterial(matfile);
+
+                matfile.close();
+
+                materialDtos.push_back(materialDto);
+            }
+        }
+    }
+    catch (const std::bad_alloc& e)
+    {
+        std::cerr << "Error al asignar memoria para los materiales: " << e.what() << std::endl;
+        return;
+    }
+
+    this->LoadMaterialDtos(materialDtos);
+}
