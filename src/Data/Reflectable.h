@@ -216,6 +216,7 @@ inline void deserializeComponent(SerializableComponent* comp, const YAML::Node& 
     }
 }
 
+// --- BASE ---
 #define REFLECTABLE_COMPONENT(Type)                                \
     using Self = Type;                                             \
     static QEMetaType* staticMeta() {                              \
@@ -223,29 +224,27 @@ inline void deserializeComponent(SerializableComponent* comp, const YAML::Node& 
         static bool initialized = false;                           \
         if (!initialized) {                                        \
             initialized = true;                                    \
-            meta.base = nullptr;   /* no hay clase base */        \
-            /* añade aquí los campos propios: */                   \
+            meta.base = nullptr;                                   \
+            /* campos comunes de la base */                        \
             meta.addField("id", typeid(std::string), offsetof(Self, id)); \
             registerMetaType(#Type, &meta);                        \
             getFactoryRegistry()[#Type] = &Type::createInstance;   \
         }                                                          \
         return &meta;                                              \
     }                                                              \
-    QEMetaType* meta() const override { return staticMeta(); } \
-    const std::string& getTypeName() const override { \
-        static const std::string name = #Type; \
-        return name; \
-    } \
-    static std::unique_ptr<QEGameComponent> createInstance() { \
-        return std::make_unique<Type>(); \
-    } \
-    static struct AutoRegister { \
-        AutoRegister() { \
-            registerMetaType(#Type, staticMeta()); \
-            getFactoryRegistry()[#Type] = &Type::createInstance; \
-        } \
-    } _autoRegisterInstance;
+    QEMetaType* meta() const override { return staticMeta(); }     \
+    const std::string& getTypeName() const override {              \
+        static const std::string name = #Type;                     \
+        return name;                                               \
+    }                                                              \
+    static std::unique_ptr<QEGameComponent> createInstance() {     \
+        return std::make_unique<Type>();                           \
+    }                                                              \
+    inline static struct AutoRegister {                            \
+        AutoRegister() { (void)Self::staticMeta(); }               \
+    } _autoRegisterInstance{};
 
+// --- CAMPOS ---
 #define REFLECT_PROPERTY(Type, Name) \
     Type Name; \
     struct AutoField_##Name { \
@@ -254,35 +253,32 @@ inline void deserializeComponent(SerializableComponent* comp, const YAML::Node& 
         } \
     } _autoField_##Name;
 
-#define REFLECTABLE_DERIVED_COMPONENT(Type, BaseType)                        \
-    using Self = Type;                                                       \
-    static QEMetaType* staticMeta() {                                        \
-        static QEMetaType meta{#Type};                                       \
-        static bool initialized = false;                                     \
-        if (!initialized) {                                                  \
-            initialized = true;                                              \
-            /* 1) Apuntamos al meta de la base */                            \
-            meta.base = BaseType::staticMeta();                              \
-            /* 2) Ya registrarCamposPropios se hará por los REFLECT_PROPERTY */\
-            /* 3) Registramos este tipo en el registry */                    \
-            registerMetaType(#Type, &meta);                                  \
-            getFactoryRegistry()[#Type] = &Type::createInstance;             \
-        }                                                                    \
-        return &meta;                                                        \
-    }                                                                        \
-    QEMetaType* meta()   const override { return staticMeta(); }             \
-    const std::string& getTypeName() const override {                        \
-        static const std::string name = #Type;                               \
-        return name;                                                         \
-    }                                                                        \
-    static std::unique_ptr<QEGameComponent> createInstance() {               \
-        return std::make_unique<Type>();                                     \
-    }                                                                        \
-    struct AutoRegister_##Type {                                             \
-        AutoRegister_##Type() {                                              \
-            /* El registro global ya está hecho en staticMeta() */           \
-        }                                                                    \
-    } _autoRegister_##Type;
+// --- DERIVADA ---
+#define REFLECTABLE_DERIVED_COMPONENT(Type, BaseType)              \
+    using Self = Type;                                             \
+    static QEMetaType* staticMeta() {                              \
+        static QEMetaType meta{#Type};                             \
+        static bool initialized = false;                           \
+        if (!initialized) {                                        \
+            initialized = true;                                    \
+            meta.base = BaseType::staticMeta();                    \
+            registerMetaType(#Type, &meta);                        \
+            getFactoryRegistry()[#Type] = &Type::createInstance;   \
+        }                                                          \
+        return &meta;                                              \
+    }                                                              \
+    QEMetaType* meta()   const override { return staticMeta(); }   \
+    const std::string& getTypeName() const override {              \
+        static const std::string name = #Type;                     \
+        return name;                                               \
+    }                                                              \
+    static std::unique_ptr<QEGameComponent> createInstance() {     \
+        return std::make_unique<Type>();                           \
+    }                                                              \
+    inline static struct AutoRegister_##Type {                     \
+        AutoRegister_##Type() { (void)Self::staticMeta(); }        \
+    } _autoRegister_##Type{};
+
 
 void exportToFile(const YAML::Node& node, const std::string& filename);
 

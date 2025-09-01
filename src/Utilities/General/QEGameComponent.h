@@ -15,10 +15,10 @@ class QEGameComponent : public SerializableComponent, public Numbered
 {
 protected:
     REFLECTABLE_COMPONENT(QEGameComponent)
-    REFLECT_PROPERTY(bool, _QEBound)
-    REFLECT_PROPERTY(bool, _QEStarted)
-    REFLECT_PROPERTY(bool, _QEInitialized)
-    REFLECT_PROPERTY(bool, _QEDestroyed)
+    bool _QEBound;
+    bool _QEStarted;
+    bool _QEInitialized;
+    bool _QEDestroyed;
 
 public:
     QEGameObject* Owner = nullptr;

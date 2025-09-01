@@ -2,6 +2,7 @@
 
 QECollider::QECollider()
 {
+    colShape = nullptr;
     CollisionMargin = 0.04f;
     LocalDisplacement = glm::vec3(0.0f);
 }

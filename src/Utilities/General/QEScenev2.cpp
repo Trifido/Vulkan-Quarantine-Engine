@@ -1,20 +1,41 @@
 #include "QEScenev2.h"
 
-QEScenev2::QEScenev2(string sceneName, fs::path scenePath)
+QEScenev2::QEScenev2()
+{
+}
+
+QEScenev2::QEScenev2(string sceneName, fs::path scenePath) : QEScenev2()
 {
     this->sceneName = sceneName;
     this->scenePath = scenePath;
 }
 
-bool QEScenev2::InitScenev2(fs::path filename)
+QEScenev2::~QEScenev2()
 {
-    return false;
+    cameraEditor = NULL;
 }
 
-bool QEScenev2::SaveScenev2()
+bool QEScenev2::InitScenev2(fs::path scenefile)
+{
+    std::ifstream file(scenefile, std::ios::binary);
+    if (!file.is_open())
+    {
+        std::cerr << "Error al abrir la escena" << scenefile << std::endl;
+        return false;
+    }
+
+    this->scenePath = scenefile.parent_path();
+    this->sceneName = scenefile.filename().string();
+
+    return true;
+}
+
+bool QEScenev2::SerializeScene(const YAML::Node& gameObjects)
 {
     YAML::Node root;
     root["CameraEditor"] = serializeComponent(cameraEditor);
+    root["AtmosphereDto"] = SerializeAtmosphere(atmosphereDto);
+    root["GameObjects"] = gameObjects;
 
     fs::path filePath = this->scenePath / this->sceneName;
 
@@ -28,6 +49,64 @@ bool QEScenev2::SaveScenev2()
 
     file << root;
     file.close();
+
+    return true;
+}
+
+bool QEScenev2::DeserializeScene(GameObjectManager* gameObjectManager)
+{
+    namespace fs = std::filesystem;
+    const fs::path filePath = this->scenePath / this->sceneName;
+
+    YAML::Node root;
+    try
+    {
+        root = YAML::LoadFile(filePath.string());
+    }
+    catch (const YAML::BadFile& e)
+    {
+        std::cerr << "No se pudo abrir la escena: " << filePath << " (" << e.what() << ")\n";
+        return false;
+    }
+    catch (const YAML::ParserException& e)
+    {
+        std::cerr << "YAML inválido en " << filePath << " (" << e.what() << ")\n";
+        return false;
+    }
+
+    // CameraEditor
+    if (auto n = root["CameraEditor"])
+    {
+        cameraEditor = CameraEditor::getInstance();
+        deserializeComponent(cameraEditor, n);
+        cameraEditor->UpdateCamera();
+    }
+    else
+    {
+        std::cerr << "Warning: nodo 'CameraEditor' no encontrado en YAML.\n";
+    }
+
+    // AtmosphereDto
+    if (auto n = root["AtmosphereDto"])
+    {
+        if (!DeserializeAtmosphere(n, atmosphereDto))
+        {
+            std::cerr << "Warning: 'AtmosphereDto' no se pudo deserializar. Usando defaults.\n";
+        }
+    }
+    else
+    {
+        std::cerr << "Warning: nodo 'AtmosphereDto' no encontrado en YAML. Usando defaults.\n";
+    }
+
+    if (auto n = root["GameObjects"])
+    {
+        gameObjectManager->DeserializeGameObjects(n);
+    }
+    else
+    {
+        std::cerr << "Warning: nodo 'GameObjects' no encontrado en YAML.\n";
+    }
 
     return true;
 }

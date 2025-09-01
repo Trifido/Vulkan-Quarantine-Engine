@@ -6,6 +6,7 @@
 #include <Numbered.h>
 #include <GameObjectDto.h>
 #include <QECharacterController.h>
+#include <yaml-cpp/yaml.h>
 
 typedef class QEGameObject QEGameObject;
 
@@ -22,6 +23,7 @@ protected:
     MaterialManager*    materialManager = nullptr;
 
 public:
+    std::string Name;
     std::list<std::shared_ptr<QEGameComponent>> components;
     std::vector<std::shared_ptr<QEMaterial>>    materials;
     std::vector<std::shared_ptr<QEGameObject>>    childs;
@@ -38,6 +40,9 @@ public:
     void QEStart();
     void QEUpdate();
     void QEDestroy();
+
+    YAML::Node ToYaml() const;
+    static std::shared_ptr<QEGameObject> FromYaml(const YAML::Node& node);
 
     template<typename T>
     bool AddComponent(std::shared_ptr<T> component_ptr)

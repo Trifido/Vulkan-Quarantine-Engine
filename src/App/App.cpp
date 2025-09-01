@@ -29,9 +29,9 @@ App::~App()
 
 }
 
-void App::run(QEScene scene)
+void App::run(QEScenev2 scene)
 {
-    this->scene = scene;
+    this->scenev2 = scene;
 
     initWindow();
     initVulkan();
@@ -176,7 +176,8 @@ void App::initVulkan()
     //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Idle_Character.glb");
 
     // Load Scene
-    this->loadScene(this->scene);
+    //this->loadScene(this->scene);
+    this->loadSceneV2(this->scenev2);
 
     this->cullingSceneManager = CullingSceneManager::getInstance();
     this->cullingSceneManager->InitializeCullingSceneResources();
@@ -467,9 +468,9 @@ void App::initVulkan()
 
     init_imgui();
 
-    auto yaml = serializeComponent(cameraEditor);
-    exportToFile(yaml, "cameraEditor.yaml");
-    std::cout << yaml << std::endl;
+    //auto yaml = wall->ToYaml();
+    //exportToFile(yaml, "wallGameObject.yaml");
+    //std::cout << yaml << std::endl;
     /**/
 }
 
@@ -498,20 +499,30 @@ void App::loadScene(QEScene scene)
     this->atmosphereSystem->LoadAtmosphereDto(this->scene.atmosphere, this->cameraEditor);
 }
 
-void App::loadSceneV2(QEScenev2 scene)
+void App::loadSceneV2(QEScenev2 scenev2)
 {
-    if (scene.cameraEditor != nullptr)
-    {
-        this->cameraEditor = scene.cameraEditor;
-    }
-    else
-    {
-        this->cameraEditor = CameraEditor::getInstance();
-    }
+    scenev2.DeserializeScene(gameObjectManager);
 
+    this->cameraEditor = CameraEditor::getInstance();
     this->cameraEditor->QEStart();
+
+    // Initialize the light manager & the lights
+    this->lightManager->AddDirShadowMapShader(materialManager->csm_shader);
+    this->lightManager->AddOmniShadowMapShader(materialManager->omni_shadow_mapping_shader);
+    this->lightManager->SetCamera(this->cameraEditor);
+    //this->lightManager->LoadLightDtos(this->scene.lightDtos);
+
+    // Initialize the atmophere system
+    this->atmosphereSystem = AtmosphereSystem::getInstance();
+    this->atmosphereSystem->LoadAtmosphereDto(scenev2.atmosphereDto, this->cameraEditor);
 }
 
+void App::saveScene()
+{
+    scenev2.cameraEditor = CameraEditor::getInstance();
+    this->scenev2.atmosphereDto = this->atmosphereSystem->CreateAtmosphereDto();
+    this->scenev2.SerializeScene(this->gameObjectManager->SerializeGameObjects());
+}
 
 void App::mainLoop()
 {
@@ -544,6 +555,7 @@ void App::mainLoop()
         ImGuiIO& io = ImGui::GetIO();
         if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false))
         {
+            saveScene();
             //this->scene.cameraEditor = this->cameraEditor->CreateCameraDto();
             //this->scene.atmosphere = this->atmosphereSystem->CreateAtmosphereDto();
             //this->scene.SaveScene();

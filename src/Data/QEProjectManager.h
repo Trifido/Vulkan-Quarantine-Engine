@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <string>
 #include <QEScene.h>
+#include <QEScenev2.h>
 
 const static std::string PROJECTS_FOLDER_PATH = "../../QEProjects";
 const static std::string SCENE_FOLDER = "QEScenes";
@@ -25,11 +26,12 @@ public:
     static bool CreateQEProject(const std::string& projectName);
     static bool CreateFolder(const fs::path& projectPath, const std::string& folderName);
     static bool CreateScene(const std::string& sceneName = "DefaultScene");
-    static bool CreateYamlSceneFile(const std::string& sceneName = "DefaultScene");
+    static bool CreateYamlScene(const std::string& sceneName = "DefaultScene");
     static bool ImportMeshFile(const fs::path& inputFile);
     static fs::path GetMaterialFolderPath();
 
     static bool InitializeDefaultQEScene(QEScene& scene);
+    static bool InitializeDefaultQEScenev2(QEScenev2& scene);
 };
 
 #endif // !QE_PROJECT_MANAGER

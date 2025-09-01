@@ -6,7 +6,10 @@ DeviceModule* QEGeometryComponent::deviceModule_ptr;
 QEMesh* QEGeometryComponent::GetMesh()
 {
     if (mesh.MeshData.empty())
+    {
         return nullptr;
+    }
+
     return &mesh;
 }
 
@@ -17,6 +20,50 @@ size_t QEGeometryComponent::GetIndicesCount(uint32_t meshIndex) const
         throw std::out_of_range("Mesh index out of range");
     }
     return mesh.MeshData[meshIndex].Indices.size();
+}
+
+std::unique_ptr<IQEMeshGenerator> QEGeometryComponent::GetGenerator(string name, string filepath)
+{
+    if (filepath != "QECore")
+    {
+        return std::make_unique<MeshGenerator>(filepath);
+    }
+    else if (name == "CubePrimitive")
+    {
+        return std::make_unique<CubeGenerator>();
+    }
+    else if (name == "SpherePrimitive")
+    {
+        return std::make_unique<SphereGenerator>();
+    }
+    else if (name == "QuadPrimitive")
+    {
+        return std::make_unique<QuadGenerator>();
+    }
+    else if (name == "PointPrimitive")
+    {
+        return std::make_unique<PointGenerator>();
+    }
+    else if (name == "FloorPrimitive")
+    {
+        return std::make_unique<FloorGenerator>();
+    }
+    else if (name == "GridPrimitive")
+    {
+        return std::make_unique<GridGenerator>();
+    }
+    else if (name == "TrianglePrimitive")
+    {
+        return std::make_unique<TriangleGenerator>();
+    }
+    else if (name == "CapsulePrimitive")
+    {
+        return std::make_unique<CapsuleGenerator>();
+    }
+    else
+    {
+        return std::make_unique<MeshGenerator>();
+    }
 }
 
 void QEGeometryComponent::ReleaseResources()
@@ -59,9 +106,14 @@ void QEGeometryComponent::QEStart()
         return;
     }
 
-    if (generator == nullptr || deviceModule_ptr == nullptr)
+    if (deviceModule_ptr == nullptr)
     {
         return;
+    }
+
+    if (generator == nullptr)
+    {
+        generator = GetGenerator(_name, _filepath);
     }
 
     BuildMesh();

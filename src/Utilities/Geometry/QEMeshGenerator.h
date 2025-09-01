@@ -90,6 +90,7 @@ private:
     int capsuleRings = 8;
 
 public:
+    explicit CapsuleGenerator() {}
     explicit CapsuleGenerator(int segments, int rings, float radius, float height)
         : capsuleSegments(segments), capsuleRings(rings), capsuleRadius(radius), capsuleHeight(height) {
     }

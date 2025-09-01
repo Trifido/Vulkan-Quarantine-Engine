@@ -208,6 +208,31 @@ void GameObjectManager::LoadGameObjectDtos(std::vector<GameObjectDto>& gameObjec
     //}
 }
 
+YAML::Node GameObjectManager::SerializeGameObjects()
+{
+    YAML::Node gameObjectsNode;
+
+    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
+    {
+        unsigned int id = this->renderLayers.GetLayer(idl);
+        for (auto model : this->_objects[id])
+        {
+            gameObjectsNode.push_back(model.second->ToYaml());
+        }
+    }
+
+    return gameObjectsNode;
+}
+
+void GameObjectManager::DeserializeGameObjects(YAML::Node gameObjects)
+{
+    for (auto gameObjectData : gameObjects)
+    {
+        std::shared_ptr<QEGameObject> gameObject = QEGameObject::FromYaml(gameObjectData);
+        this->AddGameObject(gameObject, gameObject->Name);
+    }
+}
+
 void GameObjectManager::StartQEGameObjects()
 {
     for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)

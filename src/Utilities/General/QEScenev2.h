@@ -4,11 +4,16 @@
 
 #include <Camera/CameraEditor.h>
 #include <QEGameObject.h>
+#include <AtmosphereDto.h>
 #include <vector>
+#include <GameObjectManager.h>
 
 using namespace std;
 
 namespace fs = filesystem;
+
+class GameObjectManager;
+
 class QEScenev2
 {
 private:
@@ -16,13 +21,17 @@ private:
 
 public:
     string sceneName;
-    CameraEditor* cameraEditor;
+    QECamera* cameraEditor = NULL;
+    AtmosphereDto atmosphereDto;
     //vector<QEGameObject> GameObjects;
 
 public:
+    QEScenev2();
     QEScenev2(string sceneName, fs::path scenePath);
+    ~QEScenev2();
     bool InitScenev2(fs::path filename);
-    bool SaveScenev2();
+    bool SerializeScene(const YAML::Node &gameObjects);
+    bool DeserializeScene(GameObjectManager* gameobjectManager);
 };
 
 #endif

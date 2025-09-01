@@ -58,6 +58,9 @@ public:
     QEMesh* GetMesh();
 
     size_t GetIndicesCount(uint32_t meshIndex) const;
+
+    static std::unique_ptr<IQEMeshGenerator> GetGenerator(string name, string filepath);
+
 private:
     void CreateMeshlets();
     void ReleaseResources();

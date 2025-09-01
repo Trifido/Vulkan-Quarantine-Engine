@@ -95,7 +95,7 @@ class App
 public:
     App();
     ~App();
-    void run(QEScene scene);
+    void run(QEScenev2 scene);
 
     void initWindow();
     void init_imgui();
@@ -103,6 +103,7 @@ private:
     void initVulkan();
     void loadScene(QEScene scene);
     void loadSceneV2(QEScenev2 scene);
+    void saveScene();
     void mainLoop();
     void computeFrame();
     void drawFrame();  
@@ -143,6 +144,7 @@ private:
     //RayTracingModule        raytracingModule;
 
     QEScene     scene;
+    QEScenev2     scenev2;
 
     QECamera*     cameraEditor;
     LightManager*       lightManager {};

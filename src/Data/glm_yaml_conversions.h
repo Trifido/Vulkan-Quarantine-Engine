@@ -5,12 +5,15 @@
 #include <btBulletDynamicsCommon.h>
 #include <vector>
 
+#include "AtmosphereDto.h"
+
 namespace YAML {
 
     template<>
     struct convert<glm::vec2> {
         static Node encode(const glm::vec2& v) {
             Node node;
+            node.SetStyle(YAML::EmitterStyle::Flow);
             node.push_back(v.x);
             node.push_back(v.y);
             return node;
@@ -28,6 +31,7 @@ namespace YAML {
     struct convert<glm::vec3> {
         static Node encode(const glm::vec3& v) {
             Node node;
+            node.SetStyle(YAML::EmitterStyle::Flow);
             node.push_back(v.x);
             node.push_back(v.y);
             node.push_back(v.z);
@@ -47,6 +51,7 @@ namespace YAML {
     struct convert<btVector3> {
         static Node encode(const btVector3& v) {
             Node node;
+            node.SetStyle(YAML::EmitterStyle::Flow);
             node.push_back(v[0]);
             node.push_back(v[1]);
             node.push_back(v[2]);
@@ -66,6 +71,7 @@ namespace YAML {
     struct convert<glm::vec4> {
         static Node encode(const glm::vec4& v) {
             Node node;
+            node.SetStyle(YAML::EmitterStyle::Flow);
             node.push_back(v.x);
             node.push_back(v.y);
             node.push_back(v.z);
@@ -87,6 +93,7 @@ namespace YAML {
     struct convert<glm::quat> {
         static Node encode(const glm::quat& q) {
             Node node;
+            node.SetStyle(YAML::EmitterStyle::Flow);
             // guardamos en orden (x, y, z, w)
             node.push_back(q.x);
             node.push_back(q.y);
@@ -108,33 +115,37 @@ namespace YAML {
     };
 
     template<>
-    struct convert<glm::mat4> {
-        static Node encode(const glm::mat4& m) {
-            Node node;
-            node.push_back(m[0][0]);
-            node.push_back(m[0][1]);
-            node.push_back(m[0][2]);
-            node.push_back(m[0][3]);
-            node.push_back(m[1][0]);
-            node.push_back(m[1][1]);
-            node.push_back(m[1][2]);
-            node.push_back(m[1][3]);
-            node.push_back(m[2][0]);
-            node.push_back(m[2][1]);
-            node.push_back(m[2][2]);
-            node.push_back(m[2][3]);
-            node.push_back(m[3][0]);
-            node.push_back(m[3][1]);
-            node.push_back(m[3][2]);
-            node.push_back(m[3][3]);
-            return node;
+    struct convert<glm::mat4>
+    {
+        static Node encode(const glm::mat4& m)
+        {
+            YAML::Node n;
+            // n.SetStyle(YAML::EmitterStyle::Block); // (opcional) ya es el predeterminado
+            for (int r = 0; r < 4; ++r)
+            {
+                YAML::Node row;
+                row.SetStyle(YAML::EmitterStyle::Flow); // [a, b, c, d]
+                for (int c = 0; c < 4; ++c)
+                {
+                    // glm es column-major: m[col][row]
+                    row.push_back(m[c][r]);
+                }
+                n.push_back(row);
+            }
+            return n;
         }
 
-        static bool decode(const Node& node, glm::mat4& m) {
-            if (!node.IsSequence() || node.size() != 16) return false;
-            for (int i = 0; i < 16; ++i) {
-                // glm::mat4 se accede como m[col][row], es una matriz 4x4 en columnas
-                m[i / 4][i % 4] = node[i].as<float>();
+        static bool decode(const Node& n, glm::mat4& m)
+        {
+            if (!n.IsSequence() || n.size() != 4) return false;
+            for (int r = 0; r < 4; ++r)
+            {
+                const YAML::Node& row = n[r];
+                if (!row.IsSequence() || row.size() != 4) return false;
+                for (int c = 0; c < 4; ++c)
+                {
+                    m[c][r] = row[c].as<float>(); // column-major
+                }
             }
             return true;
         }
