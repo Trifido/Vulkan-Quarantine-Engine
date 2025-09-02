@@ -36,6 +36,11 @@ public:
     void CleanResources();
     void AddTransform(std::shared_ptr<Transform> modelTransform);
     const std::shared_ptr<Transform> GetTransform();
+
+    void QEStart() override;
+    void QEInit() override;
+    void QEUpdate() override;
+    void QEDestroy() override;
 };
 
 #endif // !AABB_OBJECT_H

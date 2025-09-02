@@ -70,3 +70,32 @@ const std::shared_ptr<Transform> AABBObject::GetTransform()
 {
     return this->transform;
 }
+
+void AABBObject::QEStart()
+{
+    if (_QEStarted)
+    {
+        return;
+    }
+
+    QEGameComponent::QEStart();
+}
+
+void AABBObject::QEInit()
+{
+    QEGameComponent::QEInit();
+}
+
+void AABBObject::QEUpdate()
+{
+}
+
+void AABBObject::QEDestroy()
+{
+    if (_QEDestroyed)
+    {
+        return;
+    }
+
+    QEGameComponent::QEDestroy();
+}
