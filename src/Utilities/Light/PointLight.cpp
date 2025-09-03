@@ -6,7 +6,7 @@ QEPointLight::QEPointLight() : QELight()
     this->lightType = LightType::POINT_LIGHT;
 }
 
-QEPointLight::QEPointLight(std::shared_ptr<VkRenderPass> renderPass) : QEPointLight()
+void QEPointLight::Setup(std::shared_ptr<VkRenderPass> renderPass)
 {
     this->shadowMappingResourcesPtr = std::make_shared<OmniShadowResources>(renderPass);
 }

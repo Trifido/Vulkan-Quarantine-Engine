@@ -93,10 +93,12 @@ private:
     void UpdateUniform();
 
 public:
+    void AddNewLight(std::shared_ptr<QELight> light_ptr, std::string& name);
     LightManager();
     void AddDirShadowMapShader(std::shared_ptr<ShaderModule> shadow_mapping_shader);
     void AddOmniShadowMapShader(std::shared_ptr<ShaderModule> omni_shadow_mapping_shader);
-    void CreateLight(LightType type, std::string name);
+    std::shared_ptr<QELight> CreateLight(LightType type, std::string name);
+    void DeleteLight(std::shared_ptr<QELight> light_ptr, std::string& name);
     void LoadLightDtos(const std::vector <LightDto>& lightDtos);
     static std::vector <LightDto> GetLightDtos(std::ifstream& file);
     void SaveLights(std::ofstream& file);

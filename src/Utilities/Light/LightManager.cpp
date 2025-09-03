@@ -57,16 +57,22 @@ void LightManager::AddOmniShadowMapShader(std::shared_ptr<ShaderModule> omni_sha
     this->OmniShadowPipelineModule = this->OmniShadowShaderModule->ShadowPipelineModule;
 }
 
-void LightManager::CreateLight(LightType type, std::string name)
+void LightManager::AddNewLight(std::shared_ptr<QELight> light_ptr, std::string& name)
 {
-    switch (type)
+    if (light_ptr->ResourcesInitialized)
+    {
+        return;
+    }
+
+    switch (light_ptr->lightType)
     {
         default:
         case LightType::POINT_LIGHT:
-            this->PointLights.push_back(std::make_shared<QEPointLight>(this->renderPassModule->OmniShadowMappingRenderPass));
+            this->PointLights.push_back(std::static_pointer_cast<QEPointLight>(light_ptr));
+            this->PointLights.back()->Setup(this->renderPassModule->OmniShadowMappingRenderPass);
             this->PointLights.back()->idxShadowMap = (uint32_t)this->PointLights.size() - 1;
 
-            this->AddLight(std::static_pointer_cast<QELight>(this->PointLights.back()), name);
+            this->AddLight(light_ptr, name);
             this->PointShadowDescritors->AddPointLightResources(
                 this->PointLights.back()->shadowMappingResourcesPtr->shadowMapUBO,
                 this->PointLights.back()->shadowMappingResourcesPtr->CubemapImageView,
@@ -75,17 +81,19 @@ void LightManager::CreateLight(LightType type, std::string name)
 
         case LightType::SUN_LIGHT:
         case LightType::DIRECTIONAL_LIGHT:
-            if (type == LightType::SUN_LIGHT)
+            if (light_ptr->lightType == LightType::SUN_LIGHT)
             {
-                this->DirLights.push_back(std::make_shared<QESunLight>(this->renderPassModule->DirShadowMappingRenderPass, this->camera));
+                this->DirLights.push_back(std::static_pointer_cast<QESunLight>(light_ptr));
+                this->DirLights.back()->Setup(this->renderPassModule->DirShadowMappingRenderPass, this->camera);
             }
             else
             {
-                this->DirLights.push_back(std::make_shared<QEDirectionalLight>(this->renderPassModule->DirShadowMappingRenderPass, this->camera));
+                this->DirLights.push_back(std::static_pointer_cast<QEDirectionalLight>(light_ptr));
+                this->DirLights.back()->Setup(this->renderPassModule->DirShadowMappingRenderPass, this->camera);
             }
             this->DirLights.back()->idxShadowMap = (uint32_t)this->DirLights.size() - 1;
 
-            this->AddLight(std::static_pointer_cast<QELight>(this->DirLights.back()), name);
+            this->AddLight(light_ptr, name);
             this->CSMDescritors->AddDirLightResources(
                 this->DirLights.back()->shadowMappingResourcesPtr->OffscreenShadowMapUBO,
                 this->DirLights.back()->shadowMappingResourcesPtr->CSMImageView,
@@ -95,10 +103,97 @@ void LightManager::CreateLight(LightType type, std::string name)
             break;
 
         case LightType::SPOT_LIGHT:
-            this->SpotLights.push_back(std::make_shared<QESpotLight>(this->CSMShaderModule, this->renderPassModule->DirShadowMappingRenderPass));
-            this->AddLight(std::static_pointer_cast<QELight>(this->SpotLights.back()), name);
+            this->SpotLights.push_back(std::dynamic_pointer_cast<QESpotLight>(light_ptr));
+            this->AddLight(light_ptr, name);
             break;
     }
+
+    light_ptr->ResourcesInitialized = true;
+}
+
+std::shared_ptr<QELight> LightManager::CreateLight(LightType type, std::string name)
+{
+    std::shared_ptr<QELight> newLight;
+
+    switch (type)
+    {
+        default:
+        case LightType::POINT_LIGHT:
+            newLight = std::make_shared<QEPointLight>();
+            break;
+
+        case LightType::SUN_LIGHT:
+            newLight = std::make_shared<QESunLight>();
+            break;
+        case LightType::DIRECTIONAL_LIGHT:
+            newLight = std::make_shared<QEDirectionalLight>();      
+            break;
+
+        case LightType::SPOT_LIGHT:
+            newLight = std::make_shared<QESpotLight>(this->CSMShaderModule, this->renderPassModule->DirShadowMappingRenderPass);
+            break;
+    }
+
+    newLight->Name = name;
+    return newLight;
+}
+
+void LightManager::DeleteLight(std::shared_ptr<QELight> light_ptr, std::string& name)
+{
+    switch (light_ptr->lightType)
+    {
+        default:
+        case LightType::POINT_LIGHT:
+            {
+                auto it = std::find_if(PointLights.begin(), PointLights.end(),
+                    [light_ptr](const auto& light) { return light->id == light_ptr->id; });
+
+                if (it != PointLights.end())
+                {
+                    int localLightPosition = static_cast<int>(std::distance(PointLights.begin(), it));
+                    PointLights.erase(it);
+                    PointShadowDescritors->DeletePointLightResources(localLightPosition);
+                }
+            }
+            break;
+        case LightType::DIRECTIONAL_LIGHT:
+        case LightType::SUN_LIGHT:
+            {
+                auto it = std::find_if(DirLights.begin(), DirLights.end(),
+                    [light_ptr](const auto& light) { return light->id == light_ptr->id; });
+
+                if (it != DirLights.end())
+                {
+                    int localLightPosition = static_cast<int>(std::distance(DirLights.begin(), it));
+                    DirLights.erase(it);
+                    CSMDescritors->DeleteDirLightResources(localLightPosition);
+                }
+            }
+            break;
+        case LightType::SPOT_LIGHT:
+            {
+                auto it = std::find_if(SpotLights.begin(), SpotLights.end(),
+                    [light_ptr](const auto& light) { return light->id == light_ptr->id; });
+
+                if (it != SpotLights.end())
+                {
+                    int localLightPosition = static_cast<int>(std::distance(SpotLights.begin(), it));
+                    SpotLights.erase(it);
+                }
+            }
+            break;
+    }
+
+    auto it = std::find_if(_lights.begin(), _lights.end(),
+        [light_ptr](const auto& light) { return light.second->id == light_ptr->id; });
+
+    if (it != _lights.end())
+    {
+        int localLightPosition = static_cast<int>(std::distance(_lights.begin(), it));
+        _lights.erase(it);
+    }
+
+    this->currentNumLights--;
 }
 
 void LightManager::LoadLightDtos(const std::vector<LightDto>& lightDtos)
@@ -300,6 +395,8 @@ void LightManager::AddLight(std::shared_ptr<QELight> light_ptr, std::string& nam
         name += "_1";
         this->_lights[name] = light_ptr;
     }
+
+    light_ptr->Name = name;
 
     this->currentNumLights++;
 }

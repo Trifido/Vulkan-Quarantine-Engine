@@ -375,16 +375,15 @@ void App::initVulkan()
     // POINT LIGHTS
     {
         //std::shared_ptr<QEGameObject> pointLight = std::make_shared<QEGameObject>();
-        //this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "PointLight1");
-        //auto pointLight1 = this->lightManager->GetLight("PointLight1");
+        //auto pointLight1 = this->lightManager->CreateLight(LightType::POINT_LIGHT, "LuzPuntual");
         //pointLight->AddComponent(pointLight1);
         //auto pointLightTransform = pointLight->GetComponent<Transform>();
-        //pointLightTransform->SetPosition(glm::vec3(5.0f, 5.0f, 0.0f));
+        //pointLightTransform->SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
         //pointLightTransform->SetOrientation(glm::vec3(45.0f, 0.0f, 0.0f));
-        //pointLight1->diffuse = glm::vec3(0.7f, 0.0f, 0.0f);
-        //pointLight1->specular = glm::vec3(0.7f, 0.0f, 0.0f);
+        //pointLight1->diffuse = glm::vec3(0.0f, 1.0f, 0.0f);
+        //pointLight1->specular = glm::vec3(0.0f, 1.0f, 0.0f);
         //pointLight1->SetDistanceEffect(100.0f);
-        //this->gameObjectManager->AddGameObject(pointLight, "PointLight1");
+        //this->gameObjectManager->AddGameObject(pointLight, "LuzPuntualGO");
 
         //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight2");
         //auto pointLight2 = this->lightManager->GetLight("PointLight2");
@@ -458,10 +457,11 @@ void App::initVulkan()
     this->physicsModule->SetGravity(-20.0f);
 
     // Initialize Managers
-    this->lightManager->InitializeShadowMaps();
 
     this->gameObjectManager->StartQEGameObjects();
     this->gameObjectManager->UpdateQEGameObjects();
+
+    this->lightManager->InitializeShadowMaps();
 
     this->commandPoolModule->Render(&framebufferModule);
     this->synchronizationModule.createSyncObjects();

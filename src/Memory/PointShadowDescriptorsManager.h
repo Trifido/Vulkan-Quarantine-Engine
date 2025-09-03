@@ -50,6 +50,7 @@ public:
 public:
     PointShadowDescriptorsManager();
     void AddPointLightResources(std::shared_ptr<UniformBufferObject> shadowMapUBO, VkImageView imageView, VkSampler sampler);
+    void DeletePointLightResources(int idPos);
     void InitializeDescriptorSetLayouts(std::shared_ptr<ShaderModule> offscreen_shader_ptr);
     void Clean();
 

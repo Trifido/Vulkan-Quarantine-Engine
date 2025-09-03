@@ -21,6 +21,17 @@ void PointShadowDescriptorsManager::AddPointLightResources(std::shared_ptr<Unifo
     }
 }
 
+void PointShadowDescriptorsManager::DeletePointLightResources(int idPos)
+{
+    if (idPos >= 0 && idPos < this->_numPointLights)
+    {
+        this->shadowMapUBOs.erase(this->shadowMapUBOs.begin() + idPos);
+        this->_imageViews.erase(this->_imageViews.begin() + idPos);
+        this->_samplers.erase(this->_samplers.begin() + idPos);
+        this->_numPointLights--;
+    }
+}
+
 void PointShadowDescriptorsManager::InitializeDescriptorSetLayouts(std::shared_ptr<ShaderModule> offscreen_shader_ptr)
 {
     this->CreateCubemapPlaceHolder();

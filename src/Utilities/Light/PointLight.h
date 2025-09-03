@@ -15,7 +15,7 @@ public:
 
 public:
     QEPointLight();
-    QEPointLight(std::shared_ptr<VkRenderPass> renderPass);
+    void Setup(std::shared_ptr<VkRenderPass> renderPass);
     void UpdateUniform() override;
     void CleanShadowMapResources();
 };

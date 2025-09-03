@@ -66,6 +66,7 @@ AttenuationData ATTENUATION_TAB[12] = {
 
 QELight::QELight()
 {
+    this->Name = "QELight";
     this->deviceModule = DeviceModule::getInstance();
     this->uniform = std::make_shared<LightUniform>();
 
@@ -114,4 +115,10 @@ void QELight::QEInit()
     }
 
     this->transform = this->Owner->GetComponent<Transform>();
+}
+
+void QELight::QEStart()
+{
+    auto lightManager = LightManager::getInstance();
+    lightManager->AddNewLight(std::shared_ptr<QELight>(this, [](QELight*) {}), this->Name);
 }

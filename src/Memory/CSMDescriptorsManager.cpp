@@ -28,6 +28,17 @@ void CSMDescriptorsManager::AddDirLightResources(std::shared_ptr<UniformBufferOb
     }
 }
 
+void CSMDescriptorsManager::DeleteDirLightResources(int idPos)
+{
+    if (idPos >= 0 && idPos < this->_numDirLights)
+    {
+        this->csmOffscreenUBOs.erase(this->csmOffscreenUBOs.begin() + idPos);
+        this->_imageViews.erase(this->_imageViews.begin() + idPos);
+        this->_samplers.erase(this->_samplers.begin() + idPos);
+        this->_numDirLights--;
+    }
+}
+
 void CSMDescriptorsManager::BindResources(std::shared_ptr<std::array<CascadeResource, SHADOW_MAP_CASCADE_COUNT>> resources)
 {
     this->csmResources.push_back(resources);

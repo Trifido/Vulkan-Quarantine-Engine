@@ -58,6 +58,7 @@ public:
 public:
     CSMDescriptorsManager();
     void AddDirLightResources(std::shared_ptr<UniformBufferObject> offscreenShadowMapUBO, VkImageView imageView, VkSampler sampler);
+    void DeleteDirLightResources(int idPos);
     void BindResources(std::shared_ptr<std::array<CascadeResource, SHADOW_MAP_CASCADE_COUNT>> resources);
     void UpdateResources(int currentFrame);
     void InitializeDescriptorSetLayouts(std::shared_ptr<ShaderModule> offscreen_shader_ptr);

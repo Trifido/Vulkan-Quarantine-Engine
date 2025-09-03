@@ -1,6 +1,5 @@
 #include "QEScenev2.h"
 #include <GameObjectManager.h>
-#include <LightManager.h>
 
 QEScenev2::QEScenev2()
 {
@@ -64,7 +63,6 @@ bool QEScenev2::DeserializeScene()
 {
     auto gameObjectManager = GameObjectManager::getInstance();
     auto materialManager = MaterialManager::getInstance();
-    auto lightManager = LightManager::getInstance();
 
     namespace fs = std::filesystem;
     const fs::path filePath = this->scenePath / this->sceneName;

@@ -4,12 +4,6 @@
 QESunLight::QESunLight() : QEDirectionalLight()
 {
     this->lightType = LightType::SUN_LIGHT;
-}
-
-QESunLight::QESunLight(std::shared_ptr<VkRenderPass> renderPass, QECamera* camera) :
-    QEDirectionalLight(renderPass, camera)
-{
-    this->lightType = LightType::SUN_LIGHT;
     this->sunUBO = std::make_shared<UniformBufferObject>();
     this->sunUBO->CreateUniformBuffer(sizeof(SunUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 

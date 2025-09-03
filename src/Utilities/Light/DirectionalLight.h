@@ -21,7 +21,7 @@ public:
 
 public:
     QEDirectionalLight();
-    QEDirectionalLight(std::shared_ptr<VkRenderPass> renderPass, QECamera* camera);
+    void Setup(std::shared_ptr<VkRenderPass> renderPass, QECamera* camera);
     void UpdateUniform() override;
     void CleanShadowMapResources();
     void UpdateCascades();

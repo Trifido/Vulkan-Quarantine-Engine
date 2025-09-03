@@ -16,7 +16,6 @@ public:
 
 public:
     QESunLight();
-    QESunLight(std::shared_ptr<VkRenderPass> renderPass, QECamera* camera);
     void UpdateSun();
     void SetLightDirection(glm::vec3 dir);
 };
