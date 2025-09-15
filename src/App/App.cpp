@@ -199,9 +199,9 @@ void App::initVulkan()
     //const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
     //const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
 
-    auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Idle_Character.gltf").generic_string();
+    //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Idle_Character.gltf").generic_string();
     //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Golem/Meshes/scene.gltf").generic_string();
-    //auto characterPath2 = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf").generic_string();
+    //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf").generic_string();
 
     // CHARACTER CONTROLLER
     /*
