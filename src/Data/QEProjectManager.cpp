@@ -167,11 +167,11 @@ fs::path QEProjectManager::GetMaterialFolderPath()
     return fs::path(CURRENT_PROJECT_PATH / ASSETS_FOLDER / MATERIALS_FOLDER);
 }
 
-bool QEProjectManager::InitializeDefaultQEScenev2(QEScenev2& scene)
+bool QEProjectManager::InitializeDefaultQEScene(QEScene& scene)
 {
     if (fs::exists(CURRENT_DEFAULT_SCENE_PATH))
     {
-        return scene.InitScenev2(CURRENT_DEFAULT_SCENE_PATH);
+        return scene.InitScene(CURRENT_DEFAULT_SCENE_PATH);
     }
 
     return false;

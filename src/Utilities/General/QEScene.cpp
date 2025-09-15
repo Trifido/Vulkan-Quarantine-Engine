@@ -1,22 +1,22 @@
-#include "QEScenev2.h"
+#include "QEScene.h"
 #include <GameObjectManager.h>
 
-QEScenev2::QEScenev2()
+QEScene::QEScene()
 {
 }
 
-QEScenev2::QEScenev2(string sceneName, fs::path scenePath) : QEScenev2()
+QEScene::QEScene(string sceneName, fs::path scenePath) : QEScene()
 {
     this->sceneName = sceneName;
     this->scenePath = scenePath;
 }
 
-QEScenev2::~QEScenev2()
+QEScene::~QEScene()
 {
     cameraEditor = NULL;
 }
 
-bool QEScenev2::InitScenev2(fs::path scenefile)
+bool QEScene::InitScene(fs::path scenefile)
 {
     std::ifstream file(scenefile, std::ios::binary);
     if (!file.is_open())
@@ -31,7 +31,7 @@ bool QEScenev2::InitScenev2(fs::path scenefile)
     return true;
 }
 
-bool QEScenev2::SerializeScene()
+bool QEScene::SerializeScene()
 {
     auto gameObjectManager = GameObjectManager::getInstance();
     auto materialManager = MaterialManager::getInstance();
@@ -59,7 +59,7 @@ bool QEScenev2::SerializeScene()
     return true;
 }
 
-bool QEScenev2::DeserializeScene()
+bool QEScene::DeserializeScene()
 {
     auto gameObjectManager = GameObjectManager::getInstance();
     auto materialManager = MaterialManager::getInstance();

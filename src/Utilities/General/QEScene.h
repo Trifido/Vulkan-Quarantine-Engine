@@ -11,7 +11,7 @@ using namespace std;
 
 namespace fs = filesystem;
 
-class QEScenev2
+class QEScene
 {
 private:
     fs::path scenePath;
@@ -22,10 +22,10 @@ public:
     AtmosphereDto atmosphereDto;
 
 public:
-    QEScenev2();
-    QEScenev2(string sceneName, fs::path scenePath);
-    ~QEScenev2();
-    bool InitScenev2(fs::path filename);
+    QEScene();
+    QEScene(string sceneName, fs::path scenePath);
+    ~QEScene();
+    bool InitScene(fs::path filename);
     bool SerializeScene();
     bool DeserializeScene();
 };

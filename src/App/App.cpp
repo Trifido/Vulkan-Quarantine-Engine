@@ -29,9 +29,9 @@ App::~App()
 
 }
 
-void App::run(QEScenev2 scene)
+void App::run(QEScene scene)
 {
-    this->scenev2 = scene;
+    this->scene = scene;
 
     initWindow();
     initVulkan();
@@ -177,7 +177,7 @@ void App::initVulkan()
 
     // Load Scene
     //this->loadScene(this->scene);
-    this->loadSceneV2(this->scenev2);
+    this->loadScene(this->scene);
 
     this->cullingSceneManager = CullingSceneManager::getInstance();
     this->cullingSceneManager->InitializeCullingSceneResources();
@@ -472,9 +472,9 @@ void App::initVulkan()
     /**/
 }
 
-void App::loadSceneV2(QEScenev2 scenev2)
+void App::loadScene(QEScene scene)
 {
-    scenev2.DeserializeScene();
+    scene.DeserializeScene();
 
     this->cameraEditor = CameraEditor::getInstance();
     this->cameraEditor->QEStart();
@@ -487,14 +487,14 @@ void App::loadSceneV2(QEScenev2 scenev2)
 
     // Initialize the atmophere system
     this->atmosphereSystem = AtmosphereSystem::getInstance();
-    this->atmosphereSystem->LoadAtmosphereDto(scenev2.atmosphereDto, this->cameraEditor);
+    this->atmosphereSystem->LoadAtmosphereDto(scene.atmosphereDto, this->cameraEditor);
 }
 
 void App::saveScene()
 {
-    scenev2.cameraEditor = CameraEditor::getInstance();
-    this->scenev2.atmosphereDto = this->atmosphereSystem->CreateAtmosphereDto();
-    this->scenev2.SerializeScene();
+    scene.cameraEditor = CameraEditor::getInstance();
+    this->scene.atmosphereDto = this->atmosphereSystem->CreateAtmosphereDto();
+    this->scene.SerializeScene();
 }
 
 void App::mainLoop()

@@ -54,7 +54,7 @@
 #include <Particles/ParticleSystemManager.h>
 #include <AtmosphereSystem.h>
 #include <CapsuleCollider.h>
-#include <QEScenev2.h>
+#include <QEScene.h>
 
 using namespace std;
 
@@ -94,13 +94,13 @@ class App
 public:
     App();
     ~App();
-    void run(QEScenev2 scene);
+    void run(QEScene scene);
 
     void initWindow();
     void init_imgui();
 private:
     void initVulkan();
-    void loadSceneV2(QEScenev2 scene);
+    void loadScene(QEScene scene);
     void saveScene();
     void mainLoop();
     void computeFrame();
@@ -141,7 +141,7 @@ private:
 
     //RayTracingModule        raytracingModule;
 
-    QEScenev2     scenev2;
+    QEScene     scene;
 
     QECamera*     cameraEditor;
     LightManager*       lightManager {};
