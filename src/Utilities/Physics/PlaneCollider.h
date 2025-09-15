@@ -12,6 +12,8 @@ protected:
     REFLECT_PROPERTY(glm::vec3, Orientation)
 
 public:
+    void QEStart() override;
+
     PlaneCollider();
     PlaneCollider(const float& newSize, const glm::vec3& newOrientation);
     const float GetSize();

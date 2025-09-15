@@ -1,4 +1,5 @@
 ﻿#include <QECharacterController.h>
+#include <GUIWindow.h>
 #include <PhysicsModule.h>
 #include <Timer.h>
 #include <QEGameObject.h>
@@ -172,6 +173,11 @@ btVector3 QECharacterController::GetPosition()
 
 void QECharacterController::ProcessInput()
 {
+    if (window == nullptr)
+    {
+        return;
+    }
+
     btVector3 dir(0, 0, 0);
     const float moveSpeed = 5.0f;
 
@@ -194,6 +200,7 @@ void QECharacterController::ProcessInput()
 void QECharacterController::QEStart()
 {
     QEGameComponent::QEStart();
+    this->AddGLFWWindow(GUIWindow::getInstance()->window);
 }
 
 void QECharacterController::QEInit()

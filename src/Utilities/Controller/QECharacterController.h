@@ -55,7 +55,7 @@ class QECharacterController : public QEGameComponent
         REFLECT_PROPERTY(float, jumpForce)
         REFLECT_PROPERTY(float, maxStepAngle)
         REFLECT_PROPERTY(btVector3, groundNormal)
-        GLFWwindow* window;
+        GLFWwindow* window = nullptr;
         std::shared_ptr<QECollider> colliderPtr;
         std::shared_ptr<PhysicsBody> physicBodyPtr;
 

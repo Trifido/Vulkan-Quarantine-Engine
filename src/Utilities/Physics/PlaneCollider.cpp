@@ -1,13 +1,20 @@
 #include <Collider.h>
 #include <PlaneCollider.h>
+#include <QEGameObject.h>
 
 PlaneCollider::PlaneCollider()
 {
-    this->SetPlane(1.0f,glm::vec3(1.0f));
 }
 
 PlaneCollider::PlaneCollider(const float& newSize, const glm::vec3& newOrientation)
 {
+    this->SetPlane(this->Size, this->Orientation);
+}
+
+void PlaneCollider::QEStart()
+{
+    QECollider::QEStart();
+
     this->SetPlane(this->Size, this->Orientation);
 }
 

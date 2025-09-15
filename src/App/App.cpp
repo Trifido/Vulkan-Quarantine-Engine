@@ -199,7 +199,7 @@ void App::initVulkan()
     //const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
     //const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
 
-    //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Idle_Character.gltf").generic_string();
+    auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Idle_Character.gltf").generic_string();
     //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Golem/Meshes/scene.gltf").generic_string();
     //auto characterPath2 = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf").generic_string();
 
@@ -211,9 +211,7 @@ void App::initVulkan()
     character->AddComponent<QEGeometryComponent>(geometryComponent);
     character->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
     character->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>(PhysicBodyType::RIGID_BODY));
-    character->AddComponent<QECollider>(std::make_shared<CapsuleCollider>(0.35f, 1.7f));
-    auto characterCollider = character->GetComponent<QECollider>();
-    characterCollider->LocalDisplacement = glm::vec3(0.0f, 0.85f, 0.0f);
+    character->AddComponent<QECollider>(std::make_shared<CapsuleCollider>());
 
     auto characterPBody = character->GetComponent<PhysicsBody>();
     characterPBody->Mass = 70.0f;
@@ -472,31 +470,6 @@ void App::initVulkan()
     //exportToFile(yaml, "wallGameObject.yaml");
     //std::cout << yaml << std::endl;
     /**/
-}
-
-void App::loadScene(QEScene scene)
-{
-    // Initialize the camera editor
-    this->cameraEditor = CameraEditor::getInstance();
-    this->cameraEditor->QEStart();
-    //this->cameraEditor->LoadCameraDto(this->mainWindow->width, this->mainWindow->height, this->scene.cameraEditor);
-
-    // Initialize the materials
-    this->materialManager->LoadMaterialDtos(this->scene.materialDtos);
-
-    // Initialize the game object manager & the game objects
-    cout << "QEGameObject loading..." << endl;
-    this->gameObjectManager->LoadGameObjectDtos(this->scene.gameObjectDtos);
-
-    // Initialize the light manager & the lights
-    this->lightManager->AddDirShadowMapShader(materialManager->csm_shader);
-    this->lightManager->AddOmniShadowMapShader(materialManager->omni_shadow_mapping_shader);
-    this->lightManager->SetCamera(this->cameraEditor);
-    this->lightManager->LoadLightDtos(this->scene.lightDtos);
-
-    // Initialize the atmophere system
-    this->atmosphereSystem = AtmosphereSystem::getInstance();
-    this->atmosphereSystem->LoadAtmosphereDto(this->scene.atmosphere, this->cameraEditor);
 }
 
 void App::loadSceneV2(QEScenev2 scenev2)

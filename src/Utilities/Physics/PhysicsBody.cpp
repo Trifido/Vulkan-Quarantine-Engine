@@ -57,7 +57,7 @@ void PhysicsBody::Initialize()
     glm::vec3 scale = this->transform->Scale;
     this->collider->colShape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
 
-    glm::vec3 position = this->transform->Position + this->collider->LocalDisplacement;
+    glm::vec3 position = this->transform->Position;
     startTransform.setOrigin(btVector3(position.x, position.y, position.z));
 
     auto quat = this->transform->Orientation;
@@ -72,8 +72,16 @@ void PhysicsBody::Initialize()
     }
 
     //Create RigidBody object
-    btRigidBody::btRigidBodyConstructionInfo rbInfo(this->Mass, myMotionState, this->collider->colShape, this->localInertia);
-    this->body = new btRigidBody(rbInfo);
+    if (this->collider->compound == nullptr)
+    {
+        btRigidBody::btRigidBodyConstructionInfo rbInfo(this->Mass, myMotionState, this->collider->colShape, this->localInertia);
+        this->body = new btRigidBody(rbInfo);
+    }
+    else
+    {
+        btRigidBody::btRigidBodyConstructionInfo rbInfo(this->Mass, myMotionState, this->collider->compound, this->localInertia);
+        this->body = new btRigidBody(rbInfo);
+    }
 
     //Add new rigidBody to physicsModule
     auto physicsModule = PhysicsModule::getInstance();
@@ -94,9 +102,6 @@ void PhysicsBody::copyTransformtoGLM()
 
         //Update glm::matrix
         glm::mat4 m = bulletToGlm(trans);
-        m[3][0] -= this->collider->LocalDisplacement.x;
-        m[3][1] -= this->collider->LocalDisplacement.y;
-        m[3][2] -= this->collider->LocalDisplacement.z;
         this->transform->SetModel(m);
     }
 }

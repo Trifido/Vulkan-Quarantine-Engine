@@ -11,12 +11,15 @@ protected:
     REFLECT_PROPERTY(float, height)
 
 public:
+    void QEStart() override;
+
     CapsuleCollider();
     CapsuleCollider(float newRadius, float newHeight);
 
     float GetRadius() const { return radius; }
     float GetHeight() const { return height; }
 
+private:
     void SetSize(float newRadius, float newHeight);
 };
 

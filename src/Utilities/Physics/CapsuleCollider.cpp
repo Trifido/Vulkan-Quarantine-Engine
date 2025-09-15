@@ -1,24 +1,39 @@
 #include "CapsuleCollider.h"
+#include <AABBObject.h>
+#include <QEGameObject.h>
+
+void CapsuleCollider::QEStart()
+{
+    QECollider::QEStart();
+
+    auto boundingBox = this->Owner->GetComponent<AABBObject>();
+    if (boundingBox != nullptr)
+    {
+        this->compound = new btCompoundShape();
+        this->SetSize(glm::min(boundingBox->Size.x, boundingBox->Size.z) * 0.75f, boundingBox->Size.y);
+        this->SetColliderPivot(boundingBox->Center);
+    }
+}
 
 CapsuleCollider::CapsuleCollider() : QECollider()
 {
-    this->SetSize(0.5f, 2.0f);
 }
 
 CapsuleCollider::CapsuleCollider(float newRadius, float newHeight)
 {
-    this->SetSize(newRadius, newHeight);
+    this->radius = newRadius;
+    this->height = newHeight;
 }
 
 void CapsuleCollider::SetSize(float newRadius, float totalHeight)
 {
     this->radius = newRadius;
-    this->height = std::max(0.0f, totalHeight - 2.0f * newRadius);
+    this->height = std::max(0.0f, totalHeight);
 
     if (this->colShape != nullptr)
         delete this->colShape;
 
-    colShape = new btCapsuleShape(this->radius, this->height);
+    colShape = new btCapsuleShape(this->radius, this->height - (2.0f * this->radius));
     colShape->setMargin(CollisionMargin);
     colShape->setLocalScaling(btVector3(1, 1, 1));
     colShape->setUserPointer(this);

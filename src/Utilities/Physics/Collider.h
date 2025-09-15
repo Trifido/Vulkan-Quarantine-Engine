@@ -11,15 +11,18 @@ protected:
     REFLECTABLE_DERIVED_COMPONENT(QECollider, QEGameComponent)
 public:
     btCollisionShape* colShape = nullptr;
+    btCompoundShape* compound = nullptr;
 
     REFLECT_PROPERTY(float, CollisionMargin)
-    REFLECT_PROPERTY(glm::vec3, LocalDisplacement)
 
     QECollider();
     void QEStart() override;
     void QEInit() override;
     void QEUpdate() override;
     void QEDestroy() override;
+
+protected:
+    void SetColliderPivot(glm::vec3 displacement);
 };
 
 #endif 

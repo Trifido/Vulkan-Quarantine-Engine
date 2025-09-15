@@ -53,7 +53,6 @@
 #include <ShadowPipelineManager.h>
 #include <Particles/ParticleSystemManager.h>
 #include <AtmosphereSystem.h>
-#include <QEScene.h>
 #include <CapsuleCollider.h>
 #include <QEScenev2.h>
 
@@ -101,7 +100,6 @@ public:
     void init_imgui();
 private:
     void initVulkan();
-    void loadScene(QEScene scene);
     void loadSceneV2(QEScenev2 scene);
     void saveScene();
     void mainLoop();
@@ -143,7 +141,6 @@ private:
 
     //RayTracingModule        raytracingModule;
 
-    QEScene     scene;
     QEScenev2     scenev2;
 
     QECamera*     cameraEditor;

@@ -39,8 +39,8 @@ std::shared_ptr<AABBObject> CullingSceneManager::GenerateAABB(std::pair<glm::vec
     auto aabbPtr = this->aabb_objects.back();
     aabbPtr->min = aabbData.first;
     aabbPtr->max = aabbData.second;
-    aabbPtr->Size = (aabbData.second + aabbData.first) * 0.5f;
-    aabbPtr->Center = (aabbData.first - aabbData.second) * 0.5f;
+    aabbPtr->Size = aabbData.second - aabbData.first;
+    aabbPtr->Center = (aabbData.first + aabbData.second) * 0.5f;
     aabbPtr->AddTransform(transform_ptr);
     aabbPtr->CreateBuffers();
 

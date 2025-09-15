@@ -4,7 +4,6 @@
 
 #include <filesystem>
 #include <string>
-#include <QEScene.h>
 #include <QEScenev2.h>
 
 const static std::string PROJECTS_FOLDER_PATH = "../../QEProjects";
@@ -30,7 +29,6 @@ public:
     static bool ImportMeshFile(const fs::path& inputFile);
     static fs::path GetMaterialFolderPath();
 
-    static bool InitializeDefaultQEScene(QEScene& scene);
     static bool InitializeDefaultQEScenev2(QEScenev2& scene);
 };
 

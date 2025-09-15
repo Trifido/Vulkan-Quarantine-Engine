@@ -11,7 +11,6 @@
 
 #include "App.h"
 #include <QEProjectManager.h>
-#include <QEScene.h>
 #include <stdio.h>
 #define FULL_SCREEN false
 

@@ -20,7 +20,6 @@ public:
     string sceneName;
     QECamera* cameraEditor = NULL;
     AtmosphereDto atmosphereDto;
-    //vector<QEGameObject> GameObjects;
 
 public:
     QEScenev2();
