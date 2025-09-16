@@ -25,7 +25,8 @@ void DeviceModule::pickPhysicalDevice(const VkInstance &newInstance, VkSurfaceKH
     uint32_t deviceCount = 0;
     vkEnumeratePhysicalDevices(newInstance, &deviceCount, nullptr);
 
-    if (deviceCount == 0) {
+    if (deviceCount == 0)
+    {
         std::cout << "failed to find GPUs with Vulkan support!\n";
         throw std::runtime_error("failed to find GPUs with Vulkan support!");
     }
@@ -33,15 +34,18 @@ void DeviceModule::pickPhysicalDevice(const VkInstance &newInstance, VkSurfaceKH
     std::vector<VkPhysicalDevice> devices(deviceCount);
     vkEnumeratePhysicalDevices(newInstance, &deviceCount, devices.data());
 
-    for (const auto& nDevice : devices) {
-        if (isDeviceSuitable(nDevice, surface)) {
+    for (const auto& nDevice : devices)
+    {
+        if (isDeviceSuitable(nDevice, surface))
+        {
             physicalDevice = nDevice;
             msaaSamples = getMaxUsableSampleCount();
             break;
         }
     }
 
-    if (physicalDevice == VK_NULL_HANDLE) {
+    if (physicalDevice == VK_NULL_HANDLE)
+    {
         std::cout << "failed to find a suitable GPU!\n";
         throw std::runtime_error("failed to find a suitable GPU!");
     }
@@ -49,106 +53,165 @@ void DeviceModule::pickPhysicalDevice(const VkInstance &newInstance, VkSurfaceKH
     this->InitializeMeshShaderExtension();
 }
 
-void DeviceModule::createLogicalDevice(VkSurfaceKHR &surface, QueueModule& nQueueModule)
+void DeviceModule::createLogicalDevice(VkSurfaceKHR& surface, QueueModule& nQueueModule)
 {
+    // --- Queues ---
     QueueFamilyIndices indices = QueueFamilyIndices::findQueueFamilies(physicalDevice, surface);
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-    std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value(), indices.computeFamily.value() };
+    std::set<uint32_t> uniqueQueueFamilies =
+    {
+        indices.graphicsFamily.value(),
+        indices.presentFamily.value(),
+        indices.computeFamily.value()
+    };
     float queuePriority = 1.0f;
 
-    for (uint32_t queueFamily : uniqueQueueFamilies) {
-        VkDeviceQueueCreateInfo queueCreateInfo{};
-        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        queueCreateInfo.queueFamilyIndex = queueFamily;
-        queueCreateInfo.queueCount = 1;
-        queueCreateInfo.pQueuePriorities = &queuePriority;
-        queueCreateInfos.push_back(queueCreateInfo);
+    for (uint32_t queueFamily : uniqueQueueFamilies)
+    {
+        VkDeviceQueueCreateInfo q{};
+        q.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        q.queueFamilyIndex = queueFamily;
+        q.queueCount = 1;
+        q.pQueuePriorities = &queuePriority;
+        queueCreateInfos.push_back(q);
     }
 
-    physicalDeviceFeatures.samplerAnisotropy = VK_TRUE;
-    physicalDeviceFeatures.sampleRateShading = VK_TRUE;
-    physicalDeviceFeatures.fillModeNonSolid = VK_TRUE;
+    // --- FEATURES ---
+    // Core features2
+    VkPhysicalDeviceFeatures2 feats2{};
+    feats2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 
-    VkPhysicalDeviceMaintenance4Features maintenance4Feature = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_FEATURES };
-    maintenance4Feature.maintenance4 = VK_TRUE;
-    maintenance4Feature.pNext = &indexing_features;
+    // Descriptor indexing (bindless)
+    VkPhysicalDeviceDescriptorIndexingFeatures indexing{};
+    indexing.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
 
-    //8 bit storage features
-    VkPhysicalDevice8BitStorageFeatures device8BitFeature = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES };
-    device8BitFeature.storageBuffer8BitAccess = VK_TRUE;
-    device8BitFeature.storagePushConstant8 = VK_TRUE;
-    device8BitFeature.pNext = &maintenance4Feature;
+    // Maintenance4
+    VkPhysicalDeviceMaintenance4Features maintenance4{};
+    maintenance4.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_FEATURES;
 
-    //Bindless features
-    VkPhysicalDeviceFeatures2 physical_features2 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
-    physical_features2.features.samplerAnisotropy = VK_TRUE;
-    physical_features2.features.sampleRateShading = VK_TRUE;
-    physical_features2.features.fillModeNonSolid = VK_TRUE;
+    // 8-bit storage
+    VkPhysicalDevice8BitStorageFeatures storage8{};
+    storage8.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES;
 
-    vkGetPhysicalDeviceFeatures2(physicalDevice, &physical_features2);
+    // Mesh shaders (EXT)
+    VkPhysicalDeviceMeshShaderFeaturesEXT mesh{};
+    mesh.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT;
 
-    if (this->bindless_supported) {
-        this->indexing_features.descriptorBindingPartiallyBound = VK_TRUE;
-        this->indexing_features.runtimeDescriptorArray = VK_TRUE;
+    // Buffer Device Address (KHR/core)
+    VkPhysicalDeviceBufferDeviceAddressFeatures bda{};
+    bda.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
 
-        physical_features2.pNext = &device8BitFeature;
+    feats2.pNext = &bda;
+    bda.pNext = &mesh;
+    mesh.pNext = &storage8;
+    storage8.pNext = &maintenance4;
+    maintenance4.pNext = &indexing;
+    indexing.pNext = nullptr;
+
+    vkGetPhysicalDeviceFeatures2(physicalDevice, &feats2);
+
+    // Core features
+    VkPhysicalDeviceFeatures core{};
+    core.samplerAnisotropy = feats2.features.samplerAnisotropy;
+    core.sampleRateShading = feats2.features.sampleRateShading;
+    core.fillModeNonSolid = feats2.features.fillModeNonSolid;
+    core.wideLines = feats2.features.wideLines;
+
+    // Optional Bindless opcional 
+    if (this->bindless_supported)
+    {
+        indexing.descriptorBindingPartiallyBound = indexing.descriptorBindingPartiallyBound ? VK_TRUE : VK_FALSE;
+        indexing.runtimeDescriptorArray = indexing.runtimeDescriptorArray ? VK_TRUE : VK_FALSE;
     }
-    //Mesh shader features
-    VkPhysicalDeviceMeshShaderFeaturesEXT mesh_shaders_feature = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT };
-    mesh_shaders_feature.taskShader = VK_TRUE;
-    mesh_shaders_feature.meshShader = VK_TRUE;
-    mesh_shaders_feature.pNext = &physical_features2;
-
-    //Raytracing features
-    VkPhysicalDeviceBufferDeviceAddressFeaturesEXT bufferDeviceAddressFeatures = {};
-    bufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_EXT;
-    bufferDeviceAddressFeatures.pNext = &mesh_shaders_feature;
-    bufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
-    bufferDeviceAddressFeatures.bufferDeviceAddressCaptureReplay = VK_TRUE;
-    bufferDeviceAddressFeatures.bufferDeviceAddressMultiDevice = VK_TRUE;
-
-    VkPhysicalDeviceRayTracingPipelineFeaturesKHR rayTracingPipelineFeatures = {};
-    rayTracingPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
-    rayTracingPipelineFeatures.pNext = &bufferDeviceAddressFeatures;
-    rayTracingPipelineFeatures.rayTracingPipeline = VK_TRUE;
-
-    VkPhysicalDeviceAccelerationStructureFeaturesKHR accelerationStructureFeatures = {};
-    accelerationStructureFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
-    accelerationStructureFeatures.pNext = &rayTracingPipelineFeatures;
-    accelerationStructureFeatures.accelerationStructure = VK_TRUE;
-    accelerationStructureFeatures.accelerationStructureCaptureReplay = VK_TRUE;
-    accelerationStructureFeatures.accelerationStructureIndirectBuild = VK_FALSE;
-    accelerationStructureFeatures.accelerationStructureHostCommands = VK_FALSE;
-    accelerationStructureFeatures.descriptorBindingAccelerationStructureUpdateAfterBind = VK_FALSE;
-    
-
-    VkDeviceCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
-    createInfo.pQueueCreateInfos = queueCreateInfos.data();
-    createInfo.pNext = &accelerationStructureFeatures;
-
-    createInfo.pEnabledFeatures = NULL;// &physicalDeviceFeatures;
-    createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
-    createInfo.ppEnabledExtensionNames = deviceExtensions.data();
-
-    if (enableValidationLayers) {
-        createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-        createInfo.ppEnabledLayerNames = validationLayers.data();
-    }
-    else {
-        createInfo.enabledLayerCount = 0;
+    else
+    {
+        indexing = {};
+        indexing.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
     }
 
-    if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
+    // Maintenance4
+    maintenance4.maintenance4 = maintenance4.maintenance4 ? VK_TRUE : VK_FALSE;
+
+    // 8-bit storage
+    storage8.storageBuffer8BitAccess = storage8.storageBuffer8BitAccess ? VK_TRUE : VK_FALSE;
+    storage8.storagePushConstant8 = storage8.storagePushConstant8 ? VK_TRUE : VK_FALSE;
+
+    /*
+    if (GetModuleHandleA("renderdoc.dll") != nullptr) {
+        mesh.taskShader = VK_FALSE;
+        mesh.meshShader = VK_FALSE;
+    } else {
+        mesh.taskShader = mesh.taskShader ? VK_TRUE : VK_FALSE;
+        mesh.meshShader = mesh.meshShader ? VK_TRUE : VK_FALSE;
+    }
+    */
+
+    mesh.taskShader = mesh.taskShader ? VK_TRUE : VK_FALSE;
+    mesh.meshShader = mesh.meshShader ? VK_TRUE : VK_FALSE;
+
+    // Buffer Device Address (KHR/core)
+    bda.bufferDeviceAddress = bda.bufferDeviceAddress ? VK_TRUE : VK_FALSE;
+
+
+    std::vector<const char*> enabledExtensions = deviceExtensions;
+    auto removeExt = [&](const char* name) {
+        enabledExtensions.erase(
+            std::remove_if(enabledExtensions.begin(), enabledExtensions.end(),
+                [&](const char* s) { return std::strcmp(s, name) == 0; }),
+            enabledExtensions.end()
+        );
+    };
+
+    if (!mesh.meshShader || !mesh.taskShader)
+    {
+        removeExt(VK_EXT_MESH_SHADER_EXTENSION_NAME);
+    }
+    if (!bda.bufferDeviceAddress)
+    {
+        removeExt(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+    }
+
+    feats2.features = core;
+    feats2.pNext = &bda;
+    bda.pNext = &mesh;
+    mesh.pNext = &storage8;
+    storage8.pNext = &maintenance4;
+    maintenance4.pNext = &indexing;
+    indexing.pNext = nullptr;
+
+    VkDeviceCreateInfo ci{};
+    ci.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    ci.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+    ci.pQueueCreateInfos = queueCreateInfos.data();
+    ci.enabledExtensionCount = static_cast<uint32_t>(enabledExtensions.size());
+    ci.ppEnabledExtensionNames = enabledExtensions.data();
+
+    ci.pNext = &feats2;
+    ci.pEnabledFeatures = nullptr;
+
+    if (enableValidationLayers)
+    {
+        ci.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+        ci.ppEnabledLayerNames = validationLayers.data();
+    }
+    else
+    {
+        ci.enabledLayerCount = 0;
+    }
+
+    VkResult r = vkCreateDevice(physicalDevice, &ci, nullptr, &device);
+    if (r != VK_SUCCESS)
+    {
         throw std::runtime_error("failed to create logical device!");
     }
 
+    // --- Result Queues ---
     vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &nQueueModule.graphicsQueue);
     vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &nQueueModule.presentQueue);
     vkGetDeviceQueue(device, indices.computeFamily.value(), 0, &nQueueModule.computeQueue);
 }
+
 
 void DeviceModule::cleanup()
 {

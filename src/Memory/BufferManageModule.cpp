@@ -22,23 +22,63 @@ void BufferManageModule::createBuffer(VkDeviceSize size, VkBufferUsageFlags usag
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     if (vkCreateBuffer(deviceModule.device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create vertex buffer!");
+        throw std::runtime_error("failed to create buffer!");
     }
 
     VkMemoryRequirements memRequirements;
     vkGetBufferMemoryRequirements(deviceModule.device, buffer, &memRequirements);
 
+    uint32_t memoryTypeIndex = IMT::findMemoryType(memRequirements.memoryTypeBits, properties, deviceModule.physicalDevice);
+
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = IMT::findMemoryType(memRequirements.memoryTypeBits, properties, deviceModule.physicalDevice);
+    allocInfo.memoryTypeIndex = memoryTypeIndex;
+    allocInfo.pNext = nullptr;
 
-    if (vkAllocateMemory(deviceModule.device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
-        throw std::runtime_error("failed to allocate vertex buffer memory!");
+    const bool wantsDeviceAddress = (usage & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT) != 0;
+
+    VkMemoryAllocateFlagsInfo allocFlagsInfo{};
+    if (wantsDeviceAddress)
+    {
+        VkPhysicalDeviceBufferDeviceAddressFeatures bdaFeat{};
+        bdaFeat.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
+        VkPhysicalDeviceFeatures2 feats2{};
+        feats2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        feats2.pNext = &bdaFeat;
+
+        vkGetPhysicalDeviceFeatures2(deviceModule.physicalDevice, &feats2);
+
+        if (bdaFeat.bufferDeviceAddress == VK_TRUE)
+        {
+            allocFlagsInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
+            allocFlagsInfo.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
+            allocFlagsInfo.pNext = nullptr;
+            allocInfo.pNext = &allocFlagsInfo;
+        }
+        else
+        {
+            vkDestroyBuffer(deviceModule.device, buffer, nullptr);
+            throw std::runtime_error("Buffer requests VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT but device doesn't have bufferDeviceAddress enabled");
+        }
     }
 
-    vkBindBufferMemory(deviceModule.device, buffer, bufferMemory, 0);
+    // Allocate memory
+    if (vkAllocateMemory(deviceModule.device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
+    {
+        vkDestroyBuffer(deviceModule.device, buffer, nullptr);
+        throw std::runtime_error("failed to allocate buffer memory!");
+    }
+
+    // Bind memory
+    if (vkBindBufferMemory(deviceModule.device, buffer, bufferMemory, 0) != VK_SUCCESS)
+    {
+        vkFreeMemory(deviceModule.device, bufferMemory, nullptr);
+        vkDestroyBuffer(deviceModule.device, buffer, nullptr);
+        throw std::runtime_error("failed to bind buffer memory!");
+    }
 }
+
 
 void BufferManageModule::createSharedBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory, DeviceModule& deviceModule)
 {
