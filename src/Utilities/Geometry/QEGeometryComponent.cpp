@@ -205,13 +205,13 @@ void QEGeometryComponent::CreateAnimationVertexBuffers()
     animationBufferMemory.resize(mesh.MeshData.size());
     for (int i = 0; i < mesh.MeshData.size(); i++)
     {
-        VkDeviceSize bufferSize = sizeof(mesh.MeshData[i].AnimationData[0]) * mesh.MeshData[i].AnimationData.size();
+        VkDeviceSize bufferSize = sizeof(mesh.MeshData[i].AnimationVertexData[0]) * mesh.MeshData[i].AnimationVertexData.size();
         if (bufferSize == 0)
         {
             return;
         }
         VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-        CreateGeometryBuffer(bufferSize, usageFlags, mesh.MeshData[i].AnimationData.data(), animationBuffer[i], animationBufferMemory[i]);
+        CreateGeometryBuffer(bufferSize, usageFlags, mesh.MeshData[i].AnimationVertexData.data(), animationBuffer[i], animationBufferMemory[i]);
     }
 }
 

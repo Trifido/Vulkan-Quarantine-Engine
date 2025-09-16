@@ -22,7 +22,7 @@ struct QEMeshData
     size_t NumFaces = 0;
     size_t NumIndices = 0;
     std::vector<Vertex> Vertices;
-    std::vector<AnimationVertexData> AnimationData;
+    std::vector<AnimationVertexData> AnimationVertexData;
     std::vector<unsigned int> Indices;
     std::string MaterialID = "default";
     glm::mat4 ModelTransform = glm::mat4(1.0);

@@ -117,7 +117,7 @@ void MeshImporter::ExtractBoneWeightForVertices(QEMeshData& data, aiMesh* mesh, 
 
                 assert(vertexId <= data.Vertices.size());
 
-                SetVertexBoneData(data.AnimationData[vertexId], boneID, weight);
+                SetVertexBoneData(data.AnimationVertexData[vertexId], boneID, weight);
             }
         }
     }
@@ -274,7 +274,7 @@ QEMeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene, std::un
     data.NumIndices = mesh->mNumFaces * 3;
 
     data.Vertices.resize(data.NumVertices);
-    data.AnimationData.resize(data.NumVertices);
+    data.AnimationVertexData.resize(data.NumVertices);
     data.HasAnimation = scene->HasAnimations();
 
     for (unsigned int i = 0; i < data.NumVertices; i++)
@@ -324,7 +324,7 @@ QEMeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene, std::un
         }
 
         data.Vertices.at(i) = vertex;
-        data.AnimationData.at(i) = animData;
+        data.AnimationVertexData.at(i) = animData;
     }
 
     // process indices
