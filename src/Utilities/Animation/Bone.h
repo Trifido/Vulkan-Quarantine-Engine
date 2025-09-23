@@ -7,6 +7,11 @@
 #include <string>
 #include <assimp/anim.h>
 
+namespace YAML {
+    template <typename T>
+    struct convert;   // forward declaration
+}
+
 struct KeyPosition
 {
     glm::vec3 position;

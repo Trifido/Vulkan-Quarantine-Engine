@@ -3,9 +3,10 @@
 #ifndef ANIMATION_RESOURCES_IMPORTER_H
 #define ANIMATION_RESOURCES_IMPORTER_H
 
-#include <glm/glm.hpp>
-#include <Bone.h>
 #include <unordered_map>
+#include <glm/glm.hpp>
+#include <yaml-cpp/yaml.h> 
+#include <Bone.h>
 
 struct BoneInfo
 {

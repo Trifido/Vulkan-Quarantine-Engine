@@ -1,5 +1,5 @@
 #include "AnimationResources.h"
-#include "glm_yaml_conversions.h" 
+#include <AnimationYamlHelper.h>
 
 YAML::Node AnimationData::Serialize(const AnimationData& data)
 {
