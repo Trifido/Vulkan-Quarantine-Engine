@@ -32,6 +32,9 @@ struct AnimationData
     AnimationNode animationNodeData;
     double m_Duration = 0.0;
     double m_TicksPerSecond = 0.0;
+
+    static YAML::Node Serialize(const AnimationData& data);
+    static AnimationData Deserialize(const YAML::Node& node);
 };
 
 static inline glm::mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& from)

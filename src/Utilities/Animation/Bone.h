@@ -54,6 +54,8 @@ public:
     int GetPositionIndex(float animationTime);
     int GetRotationIndex(float animationTime);
     int GetScaleIndex(float animationTime);
+
+    friend struct YAML::convert<Bone>;
 };
 
 #endif
