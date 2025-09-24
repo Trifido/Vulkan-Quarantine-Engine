@@ -147,10 +147,12 @@ bool QEProjectManager::ImportMeshFile(const fs::path& inputFile)
     CreateFolder(modelFolderPath, MESH_FOLDER);
     CreateFolder(modelFolderPath, TEXTURE_FOLDER);
     CreateFolder(modelFolderPath, MATERIAL_FOLDER);
+    CreateFolder(modelFolderPath, ANIMATION_FOLDER);
 
     fs::path outputMaterialFolderPath = modelFolderPath / MATERIAL_FOLDER;
     fs::path outputTextureFolderPath = modelFolderPath / TEXTURE_FOLDER;
     fs::path outputMeshPath = modelFolderPath / MESH_FOLDER / filename;
+    fs::path outputAnimationFolderPath = modelFolderPath / ANIMATION_FOLDER;
 
     outputMeshPath.replace_extension(".gltf");
 
@@ -158,7 +160,8 @@ bool QEProjectManager::ImportMeshFile(const fs::path& inputFile)
         inputFile.string(),
         outputMeshPath.string(),
         outputMaterialFolderPath.string(),
-        outputTextureFolderPath.string()
+        outputTextureFolderPath.string(),
+        outputAnimationFolderPath.string()
     );
 }
 

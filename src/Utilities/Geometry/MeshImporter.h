@@ -44,7 +44,12 @@ private:
     static void ExtractAndUpdateMaterials(aiScene* scene, const std::string& outputTextureFolder, const std::string& outputMaterialPath, const std::string& modelDirectory);
     static void RemoveOnlyEmbeddedTextures(aiScene* scene);
 public:
-    static bool LoadAndExportModel(const std::string& inputPath, const std::string& outputMeshPath, const std::string& outputMaterialPath, const std::string& outputTexturePath);
+    static bool LoadAndExportModel(
+        const std::string& inputPath,
+        const std::string& outputMeshPath,
+        const std::string& outputMaterialPath,
+        const std::string& outputTexturePath,
+        const std::string& outputAnimationPath);
 };
 
 #endif // !MESH_H

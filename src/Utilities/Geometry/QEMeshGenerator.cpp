@@ -467,7 +467,27 @@ QEMesh MeshGenerator::GenerateQEMesh()
 
     if (!mesh.BonesInfoMap.empty())
     {
-        mesh.AnimationData = AnimationImporter::ImportAnimation(dataPath, mesh.BonesInfoMap, mesh.BonesInfoMap.size());
+        fs::path filepath = fs::path(dataPath);
+        fs::path animfilepath = filepath.parent_path().parent_path() / "Animations";
+
+        std::vector<fs::path> glbFiles = AnimationImporter::ListGlbInDir(animfilepath);
+
+        for (const auto& glb : glbFiles)
+        {
+            std::vector<AnimationData> animations = AnimationImporter::LoadAnimation(glb.string(), mesh.BonesInfoMap);
+
+            if (!animations.empty())
+            {
+                for (int i = 0; i < animations.size(); i++)
+                {
+                    mesh.AnimationData.push_back(animations.at(i));
+                }
+            }
+            else
+            {
+                std::cerr << "Fallo cargando animación: " << glb << "\n";
+            }
+        }
     }
 
     mesh.BoundingBox = mesh.MeshData[0].BoundingBox;

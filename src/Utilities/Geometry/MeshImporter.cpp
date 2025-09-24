@@ -757,6 +757,7 @@ void MeshImporter::RemoveOnlyEmbeddedTextures(aiScene* scene)
         scene->mTextures = new aiTexture * [scene->mNumTextures];
 
         for (size_t i = 0; i < texturesToKeep.size(); i++) {
+        {
             scene->mTextures[i] = texturesToKeep[i];
         }
     }
@@ -766,7 +767,12 @@ void MeshImporter::RemoveOnlyEmbeddedTextures(aiScene* scene)
     }
 }
 
-bool MeshImporter::LoadAndExportModel(const std::string& inputPath, const std::string& outputMeshPath, const std::string& outputMaterialPath, const std::string& outputTexturePath)
+bool MeshImporter::LoadAndExportModel(
+    const std::string& inputPath,
+    const std::string& outputMeshPath,
+    const std::string& outputMaterialPath,
+    const std::string& outputTexturePath,
+    const std::string& outputAnimationPath)
 {
     unsigned int flags = aiProcess_EmbedTextures | aiProcess_Triangulate | aiProcess_GenNormals;
     Assimp::Importer importer;
@@ -777,21 +783,17 @@ bool MeshImporter::LoadAndExportModel(const std::string& inputPath, const std::s
         return false;
     }
 
+    // Exportar animaciones, si tiene...
+    AnimationImporter::ImportAnimation(scene, outputAnimationPath);
+
     // Comprobar si tiene materiales y texturas
     if (scene->HasMaterials())
     {
-        std::cout << "El modelo tiene " << scene->mNumMaterials << " materiales." << std::endl;
-
         std::string modelDirectory = filesystem::path(inputPath).parent_path().string();
 
         ExtractAndUpdateTextures(const_cast<aiScene*>(scene), outputTexturePath, modelDirectory);
 
         ExtractAndUpdateMaterials(const_cast<aiScene*>(scene), outputTexturePath, outputMaterialPath, modelDirectory);
-    }
-
-    // Comprobar si tiene animaciones
-    if (scene->HasAnimations()) {
-        std::cout << "El modelo tiene " << scene->mNumAnimations << " animaciones." << std::endl;
     }
 
     // Exportar a glTF 2.0

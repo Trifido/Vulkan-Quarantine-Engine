@@ -48,5 +48,4 @@ static inline glm::mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& from)
     to[0][3] = from.d1; to[1][3] = from.d2; to[2][3] = from.d3; to[3][3] = from.d4;
     return to;
 }
-
 #endif

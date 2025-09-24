@@ -78,7 +78,6 @@ int main(int, char**)
     QEProjectManager::CreateQEProject("QEExample");
     QEScene scene{};
     QEProjectManager::InitializeDefaultQEScene(scene);
-    //QEProjectManager::ImportMeshFile();
     App app;
     app.run(scene);
     return 0;

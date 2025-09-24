@@ -14,6 +14,7 @@ const static std::string MATERIALS_FOLDER = "QEMaterials";
 const static std::string MESH_FOLDER = "Meshes";
 const static std::string TEXTURE_FOLDER = "Textures";
 const static std::string MATERIAL_FOLDER = "Materials";
+const static std::string ANIMATION_FOLDER = "Animations";
 
 namespace fs = std::filesystem;
 class QEProjectManager
