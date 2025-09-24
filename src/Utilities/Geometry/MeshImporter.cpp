@@ -756,7 +756,7 @@ void MeshImporter::RemoveOnlyEmbeddedTextures(aiScene* scene)
         scene->mNumTextures = static_cast<unsigned int>(texturesToKeep.size());
         scene->mTextures = new aiTexture * [scene->mNumTextures];
 
-        for (size_t i = 0; i < texturesToKeep.size(); i++) {
+        for (size_t i = 0; i < texturesToKeep.size(); i++)
         {
             scene->mTextures[i] = texturesToKeep[i];
         }
