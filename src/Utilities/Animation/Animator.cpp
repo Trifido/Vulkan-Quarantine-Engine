@@ -78,24 +78,51 @@ std::shared_ptr<ComputeNode> Animator::GetComputeNode(std::string id)
     return this->computeNodes[id];
 }
 
-void Animator::UpdateAnimation(float dt)
+void Animator::UpdateAnimation(float dt, bool loop)
 {
     m_DeltaTime = dt;
-    if (m_CurrentAnimation != nullptr)
+    if (!m_CurrentAnimation) return;
+
+    float tps = m_CurrentAnimation->GetTicksPerSecond();
+    if (tps <= 0.0f) tps = 25.0f;
+
+    m_CurrentTime += tps * dt;
+
+    const float duration = m_CurrentAnimation->GetDuration();
+
+    if (loop)
     {
-        m_CurrentTime += m_CurrentAnimation->GetTicksPerSecond() * dt;
-        m_CurrentTime = fmod(m_CurrentTime, m_CurrentAnimation->GetDuration());
-        CalculateBoneTransform(&m_CurrentAnimation->GetRootNode(), glm::mat4(1.0f));
-        this->UpdateUBOAnimation();
+        if (duration > 0.0f)
+        {
+            m_CurrentTime = std::fmod(m_CurrentTime, duration);
+            if (m_CurrentTime < 0.0f) m_CurrentTime += duration;
+        }
+        else
+        {
+            m_CurrentTime = 0.0f;
+        }
     }
+    else if (m_CurrentTime >= duration)
+    {
+        m_CurrentTime = std::max(0.0f, std::nextafter(duration, 0.0f));
+    }
+
+    auto rootNode = m_CurrentAnimation->GetRootNode();
+    CalculateBoneTransform(&rootNode, glm::mat4(1.0f));
+    this->UpdateUBOAnimation();
 }
 
 void Animator::PlayAnimation(std::shared_ptr<Animation> pAnimation)
 {
+    if (pAnimation == m_CurrentAnimation)
+        return;
+
     m_CurrentTime = 0.0f;
     m_CurrentAnimation = pAnimation;
 
-    CalculateBoneTransform(&m_CurrentAnimation->GetRootNode(), glm::mat4(1.0f));
+    auto rootNode = m_CurrentAnimation->GetRootNode();
+
+    CalculateBoneTransform(&rootNode, glm::mat4(1.0f));
 
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {

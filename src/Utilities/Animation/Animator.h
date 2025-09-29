@@ -32,7 +32,7 @@ public:
     void InitializeDescriptorsComputeNodes();
     std::shared_ptr<ComputeNode> GetComputeNode(std::string id);
     void UpdateUBOAnimation();
-    void UpdateAnimation(float dt);
+    void UpdateAnimation(float dt, bool loop);
     void PlayAnimation(std::shared_ptr<Animation> pAnimation);
     void CalculateBoneTransform(const AnimationNode* node, glm::mat4 parentTransform);
     std::shared_ptr<std::vector<glm::mat4>> GetFinalBoneMatrices();

@@ -28,6 +28,7 @@ public:
     static bool CreateScene(const std::string& sceneName = "DefaultScene");
     static bool CreateYamlScene(const std::string& sceneName = "DefaultScene");
     static bool ImportMeshFile(const fs::path& inputFile);
+    static bool ImportAnimationFile(const fs::path& inputFile, const fs::path& folderPath);
     static fs::path GetMaterialFolderPath();
 
     static bool InitializeDefaultQEScene(QEScene& scene);

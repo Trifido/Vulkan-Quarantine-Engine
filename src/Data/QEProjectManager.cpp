@@ -165,6 +165,23 @@ bool QEProjectManager::ImportMeshFile(const fs::path& inputFile)
     );
 }
 
+bool QEProjectManager::ImportAnimationFile(const fs::path& inputFile, const fs::path& folderPath)
+{
+    if (!fs::exists(inputFile))
+    {
+        std::cerr << "Error al abrir el archivo: " << inputFile << std::endl;
+        return false;
+    }
+
+    if (!fs::exists(folderPath))
+    {
+        std::cerr << "Error al abrir el archivo: " << folderPath << std::endl;
+        return false;
+    }
+
+    return AnimationImporter::ImportAnimation(inputFile.string(), folderPath.string());
+}
+
 fs::path QEProjectManager::GetMaterialFolderPath()
 {
     return fs::path(CURRENT_PROJECT_PATH / ASSETS_FOLDER / MATERIALS_FOLDER);

@@ -3,6 +3,7 @@
 #include <assimp/postprocess.h>
 #include <assimp/Importer.hpp>
 #include <assimp/Exporter.hpp>
+#include <SanitizerHelper.h>
 
 std::vector<AnimationData> AnimationImporter::LoadAnimation(std::string animationFilepath, std::unordered_map<std::string, BoneInfo> m_BoneInfoMap)
 {
@@ -186,7 +187,7 @@ static aiAnimation* CloneAnimation(const aiAnimation* src)
     return dst;
 }
 
-static void DestroyScene(aiScene* scn)
+void AnimationImporter::DestroyScene(aiScene* scn)
 {
     if (!scn) return;
 
@@ -216,7 +217,7 @@ bool AnimationImporter::ImportAnimation(const std::string& inputPath, const std:
     Assimp::Importer importer;
     const aiScene* srcScene = importer.ReadFile(inputPath, flags);
 
-    if (!srcScene || (srcScene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) || !srcScene->mRootNode)
+    if (!srcScene || !srcScene->mRootNode)
     {
         std::fprintf(stderr, "ASSIMP ERROR: %s\n", importer.GetErrorString());
         return false;
@@ -256,6 +257,8 @@ bool AnimationImporter::ImportAnimation(const aiScene* srcScene, const std::stri
         outScene->mNumAnimations = 1;
         outScene->mAnimations = new aiAnimation * [1];
         outScene->mAnimations[0] = CloneAnimation(srcAnim);
+
+        SanitizerHelper::SanitizeSceneNames(outScene);
 
         // Nombre de archivo: usa el nombre de la animación si existe
         std::string animName = srcAnim->mName.length > 0

@@ -175,6 +175,13 @@ void App::initVulkan()
     //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Golem/scene.gltf");
     //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Idle_Character.glb");
 
+    // Import animations
+    //QEProjectManager::ImportAnimationFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Idle_Character.glb",
+    //    std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Animations"));
+
+    QEProjectManager::ImportAnimationFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Jumping.glb",
+        std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Animations"));
+
     // Load Scene
     //this->loadScene(this->scene);
     this->loadScene(this->scene);
@@ -199,12 +206,12 @@ void App::initVulkan()
     //const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
     //const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
 
-    //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Idle_Character.gltf").generic_string();
+    auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Idle_Character.gltf").generic_string();
     //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Golem/Meshes/scene.gltf").generic_string();
     //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf").generic_string();
 
     // CHARACTER CONTROLLER
-    /*
+    /**/
     std::shared_ptr<QEGeometryComponent> geometryComponent = make_shared<QEGeometryComponent>(std::make_unique<MeshGenerator>(characterPath));
 
     std::shared_ptr<QEGameObject> character = std::make_shared<QEGameObject>();
@@ -233,7 +240,7 @@ void App::initVulkan()
     //model->_Material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
     //this->gameObjectManager->AddGameObject(model, "modelRaptoid");
 
-    /*
+    /**/
 
     auto defaultMat = this->materialManager->GetMaterial("defaultPrimitiveMat");
     auto floorMatInstance = defaultMat->CreateMaterialInstance();
@@ -305,68 +312,9 @@ void App::initVulkan()
     wallPBody->CollisionMask = CollisionFlag::COL_PLAYER;
 
     wall->AddComponent<QECollider>(std::make_shared<BoxCollider>());
-    this->gameObjectManager->AddGameObject(wall, "wall");
-    /*
-    // CHARACTER CONTROLLER
-    std::shared_ptr<QEGameObject> character = std::make_shared<QEGameObject>(QEGameObject(PRIMITIVE_TYPE::CAPSULE_TYPE));
-    character->_Transform->SetPosition(glm::vec3(0.0f, 0.5f, 0.0f));
-    character->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
-    character->AddPhysicBody(std::make_shared<PhysicBody>(PhysicBodyType::RIGID_BODY));
-    character->AddCollider(std::make_shared<CapsuleCollider>());
-    character->physicBody->Mass = 70.0f;
-    character->physicBody->CollisionGroup = CollisionFlag::COL_PLAYER;
-    character->physicBody->CollisionMask = CollisionFlag::COL_SCENE;
-    character->AddCharacterController(std::make_shared<QECharacterController>());
-    character->characterController->SetJumpForce(9.0f);
-
-    this->gameObjectManager->AddGameObject(character, "character");
+    //this->gameObjectManager->AddGameObject(wall, "wall");
     /**/
 
-//DEMOD
-/*
-    //Creamos la textura
-    //textureManager->AddTexture("diffuse_brick", CustomTexture(TEXTURE_WALL_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
-    //textureManager->AddTexture("normal_brick", CustomTexture(TEXTURE_WALL_NORMAL_PATH, TEXTURE_TYPE::NORMAL_TYPE));
-    //textureManager->AddTexture("test", CustomTexture(TEXTURE_TEST_PATH, TEXTURE_TYPE::DIFFUSE_TYPE));
-
-    std::shared_ptr<QEGameObject> cube = std::make_shared<QEGameObject>(QEGameObject(PRIMITIVE_TYPE::CUBE_TYPE));
-    cube->_Transform->SetPosition(glm::vec3(0.0f, 10.0f, 0.0f));
-    cube->_Transform->SetOrientation(glm::vec3(0.0f, 0.0f, 65.0f));
-
-    std::shared_ptr<QEGameObject> plano = std::make_shared<QEGameObject>(QEGameObject(PRIMITIVE_TYPE::PLANE_TYPE));
-    plano->_Transform->SetOrientation(glm::vec3(0.0f, 0.0f, 45.0f));
-    plano->_Transform->SetPosition(glm::vec3(0.0f, 3.0f, 0.0f));
-    plano->_Transform->SetScale(glm::vec3(5.0f, 1.0f, 5.0f));
-
-    std::shared_ptr<QEGameObject> floor = std::make_shared<QEGameObject>(QEGameObject(PRIMITIVE_TYPE::PLANE_TYPE));
-    floor->_Transform->SetPosition(glm::vec3(0.0f, -0.10f, 0.0f));
-    floor->_Transform->SetScale(glm::vec3(50.0f, 1.0f, 50.0f));
-
-    //Creamos el shader module para el material
-    //std::shared_ptr<ShaderModule> shader_ptr = std::make_shared<ShaderModule>(ShaderModule("../../resources/shaders/vert.spv", "../../resources/shaders/frag.spv"));
-    //shader_ptr->createShaderBindings();
-    //this->shaderManager->AddShader("shader", shader_ptr);
-
-    ////Creamos el material
-    //std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(Material(this->shaderManager->GetShader("shader"), renderPassModule->renderPass));
-    //mat_ptr->AddNullTexture(textureManager->GetTexture("NULL"));
-    //mat_ptr->AddTexture(textureManager->GetTexture("diffuse_brick"));
-    //mat_ptr->AddTexture(textureManager->GetTexture("normal_brick"));
-
-    //std::shared_ptr<Material> mat_ptr2 = std::make_shared<Material>(Material(this->shaderManager->GetShader("shader"), renderPassModule->renderPass));
-    //mat_ptr2->AddNullTexture(textureManager->GetTexture("NULL"));
-    //mat_ptr2->AddTexture(textureManager->GetTexture("test"));
-
-    //materialManager->AddMaterial("mat", mat_ptr);
-    //materialManager->AddMaterial("mat2", mat_ptr2);
-
-    //Linkamos el material al gameobject
-    //cube->AddMaterial(materialManager->GetMaterial("mat"));
-    //plano->AddMaterial(materialManager->GetMaterial("mat"));
-    //floor->AddMaterial(materialManager->GetMaterial("mat2"));
-
-    
-/**/
     // END -------------------------- Mesh & Material -------------------------------
 
     // INIT ------------------------- Lights ----------------------------------------
@@ -427,36 +375,36 @@ void App::initVulkan()
 
     // END -------------------------- Lights ----------------------------------------
 
-    // Initialize Physics
-    /*
-    std::shared_ptr<PhysicBody> rigidBody = std::make_shared<PhysicBody>(PhysicBody(PhysicBodyType::RIGID_BODY));
-    rigidBody->Mass = 10.0f;// 0.001f;
-    cube->AddPhysicBody(rigidBody);
-    std::shared_ptr<BoxCollider> boxCollider = std::make_shared<BoxCollider>();
-    cube->AddCollider(boxCollider);
-
-    std::shared_ptr<PhysicBody> staticBody = std::make_shared<PhysicBody>();
-    plano->AddPhysicBody(staticBody);
-    std::shared_ptr<PlaneCollider> planeCollider = std::make_shared<PlaneCollider>();
-    planeCollider->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
-    plano->AddCollider(planeCollider);
-
-    std::shared_ptr<PhysicBody> staticBody2 = std::make_shared<PhysicBody>();
-    floor->AddPhysicBody(staticBody2);
-    std::shared_ptr<PlaneCollider> planeCollider2 = std::make_shared<PlaneCollider>();
-    planeCollider2->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
-    floor->AddCollider(planeCollider2);
-
-    this->gameObjectManager->AddGameObject(cube, "cube");
-    this->gameObjectManager->AddGameObject(plano, "planoInclinado");
-    this->gameObjectManager->AddGameObject(floor, "floor");
-    /**/
-
     this->physicsModule->SetGravity(-20.0f);
 
     // Initialize Managers
 
     this->gameObjectManager->StartQEGameObjects();
+
+    // Initialize animation states for character controller
+    auto animationComponent = character->GetComponent<AnimationComponent>();
+
+    AnimationState idleState =
+    {
+        .Id = "Idle",
+        .Loop = true,
+        .AnimationClip = "Idle",
+        .FromState = "",
+        .ToState = ""
+    };
+
+    AnimationState jumpState =
+    {
+        .Id = "Jumping",
+        .Loop = false,
+        .AnimationClip = "Jumping",
+        .FromState = "",
+        .ToState = "Idle"
+    };
+
+    animationComponent->AddAnimationState(idleState, true);
+    animationComponent->AddAnimationState(jumpState);
+
     this->gameObjectManager->UpdateQEGameObjects();
 
     this->lightManager->InitializeShadowMaps();
@@ -529,9 +477,6 @@ void App::mainLoop()
         if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false))
         {
             saveScene();
-            //this->scene.cameraEditor = this->cameraEditor->CreateCameraDto();
-            //this->scene.atmosphere = this->atmosphereSystem->CreateAtmosphereDto();
-            //this->scene.SaveScene();
         }
 
         if (ImGui::IsKeyDown(ImGuiKey_J))

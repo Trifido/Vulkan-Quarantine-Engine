@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include "MaterialData.h"
 #include "Material.h"
+#include <SanitizerHelper.h>
 
 void MeshImporter::RecreateNormals(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices)
 {
@@ -803,12 +804,16 @@ bool MeshImporter::LoadAndExportModel(
     aiCopyScene(scene, &editableScene);
     RemoveOnlyEmbeddedTextures(editableScene);
 
+    SanitizerHelper::SanitizeSceneNames(editableScene);
+
     if (exporter.Export(editableScene, "gltf2", outputMeshPath) != AI_SUCCESS)
     {
         std::cerr << "Error al exportar a glTF: " << exporter.GetErrorString() << std::endl;
+        AnimationImporter::DestroyScene(editableScene);
         return false;
     }
 
+    AnimationImporter::DestroyScene(editableScene);
     std::cout << "Exportación exitosa: " << outputMeshPath << std::endl;
     return true;
 }

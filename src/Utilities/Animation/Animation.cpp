@@ -17,3 +17,7 @@ Bone* Animation::FindBone(const std::string& name)
 
     return nullptr;
 }
+
+float Animation::GetTicksPerSecond() { return static_cast<float>(animationData.m_TicksPerSecond); }
+float Animation::GetDuration() { return static_cast<float>(animationData.m_Duration); }
+const AnimationNode& Animation::GetRootNode() { return animationData.animationNodeData; }

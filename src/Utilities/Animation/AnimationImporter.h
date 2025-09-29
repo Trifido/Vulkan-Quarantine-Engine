@@ -22,6 +22,7 @@ public:
     static bool ImportAnimation(const std::string& inputPath, const std::string& outputDir);
     static bool ImportAnimation(const aiScene* srcScene, const std::string& outputDir);
     static std::vector<fs::path> ListGlbInDir(const fs::path& dir);
+    static void DestroyScene(aiScene* scn);
 };
 
 #endif

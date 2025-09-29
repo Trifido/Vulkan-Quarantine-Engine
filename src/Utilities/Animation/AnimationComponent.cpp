@@ -49,6 +49,19 @@ std::shared_ptr<Animation> AnimationComponent::GetAnimation(std::string name)
     return nullptr;
 }
 
+void AnimationComponent::AddAnimationState(AnimationState state, bool isEntryState)
+{
+    if (this->_states.find(state.Id) == this->_states.end())
+    {
+        this->_states[state.Id] = state;
+
+        if (isEntryState)
+        {
+            this->currentState = state;
+        }
+    }
+}
+
 void AnimationComponent::ChangeAnimation()
 {
     idAnimation++;
@@ -104,7 +117,7 @@ void AnimationComponent::QEStart()
 
 void AnimationComponent::QEUpdate()
 {
-    this->animator->UpdateAnimation(Timer::DeltaTime);
+    this->animator->UpdateAnimation(Timer::DeltaTime, currentState.Loop);
 }
 
 void AnimationComponent::QEDestroy()
@@ -115,8 +128,17 @@ void AnimationComponent::QEDestroy()
 
 void AnimationComponent::QEInit()
 {
-    auto animation = this->_animations.begin()->second;
-    this->animator->PlayAnimation(animation);
+    auto entryState = this->_states.find(this->currentState.Id);
+    if (entryState != this->_states.end())
+    {
+        string animationClip = entryState->second.AnimationClip;
+        auto entryAnimation  = this->_animations.find(animationClip);
+
+        if (entryAnimation != this->_animations.end())
+        {
+            this->animator->PlayAnimation(entryAnimation->second);
+        }
+    }
 
     QEGameComponent::QEInit();
 }
