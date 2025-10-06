@@ -179,8 +179,8 @@ void App::initVulkan()
     //QEProjectManager::ImportAnimationFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Idle_Character.glb",
     //    std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Animations"));
 
-    QEProjectManager::ImportAnimationFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Jumping.glb",
-        std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Animations"));
+    //QEProjectManager::ImportAnimationFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Hurricane.glb",
+    //    std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Animations"));
 
     // Load Scene
     //this->loadScene(this->scene);
@@ -384,26 +384,37 @@ void App::initVulkan()
     // Initialize animation states for character controller
     auto animationComponent = character->GetComponent<AnimationComponent>();
 
-    AnimationState idleState =
-    {
-        .Id = "Idle",
-        .Loop = true,
-        .AnimationClip = "Idle",
-        .FromState = "",
-        .ToState = ""
-    };
+    // States
+    animationComponent->AddAnimationState({ "Idle", true, "Idle" }, /*isEntry*/ true);
+    animationComponent->AddAnimationState({ "Walk", true, "Walking" });
+    animationComponent->AddAnimationState({ "Attack", false, "Punch" });
 
-    AnimationState jumpState =
-    {
-        .Id = "Jumping",
-        .Loop = false,
-        .AnimationClip = "Jumping",
-        .FromState = "",
-        .ToState = "Idle"
-    };
+    // Parameters
+    animationComponent->SetFloat("speed", 0.0f);
+    animationComponent->SetTrigger("attack");
+    animationComponent->ResetTrigger("attack");
 
-    animationComponent->AddAnimationState(idleState, true);
-    animationComponent->AddAnimationState(jumpState);
+    //Transitions
+    animationComponent->AddTransition({
+        .fromState = "Idle", .toState = "Walk",
+        .conditions = {{"speed", QEOp::Greater, 0.1f}},
+        .priority = 10, .hasExitTime = false
+    });
+    animationComponent->AddTransition({
+        .fromState = "Walk", .toState = "Idle",
+        .conditions = {{"speed", QEOp::Less, 0.05f}},
+        .priority = 10, .hasExitTime = true, .exitTimeNormalized = 0.2f
+    });
+    animationComponent->AddTransition({
+        .fromState = "Idle", .toState = "Attack",
+        .conditions = {{"attack", QEOp::Equal, 1.f}}, // trigger
+        .priority = 100, .hasExitTime = false
+    });
+    animationComponent->AddTransition({
+        .fromState = "Attack", .toState = "Idle",
+        .conditions = {}, .priority = 10,
+        .hasExitTime = true, .exitTimeNormalized = 1.0f
+    });
 
     this->gameObjectManager->UpdateQEGameObjects();
 

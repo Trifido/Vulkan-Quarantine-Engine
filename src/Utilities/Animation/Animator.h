@@ -32,6 +32,12 @@ public:
     void InitializeDescriptorsComputeNodes();
     std::shared_ptr<ComputeNode> GetComputeNode(std::string id);
     void UpdateUBOAnimation();
+
+    float GetTimeTicks() const;
+    float GetDurationTicks() const;
+    float GetTicksPerSecond() const;
+    float GetNormalizedTime() const;
+
     void UpdateAnimation(float dt, bool loop);
     void PlayAnimation(std::shared_ptr<Animation> pAnimation);
     void CalculateBoneTransform(const AnimationNode* node, glm::mat4 parentTransform);

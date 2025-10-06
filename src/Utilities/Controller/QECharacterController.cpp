@@ -195,6 +195,13 @@ void QECharacterController::ProcessInput()
     {
         Jump();
     }
+
+    bool isPressed = glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS;
+    if (isPressed && !this->isPressedAttackButton)
+    {
+        this->animationComponentPtr->SetTrigger("attack");
+    }
+    this->isPressedAttackButton = isPressed;
 }
 
 void QECharacterController::QEStart()
@@ -207,6 +214,12 @@ void QECharacterController::QEInit()
 {
     auto physicsBody = this->Owner->GetComponent<PhysicsBody>();
     auto collider = this->Owner->GetComponent<QECollider>();
+    auto animationComponent = this->Owner->GetComponent<AnimationComponent>();
+
+    if (animationComponent != NULL)
+    {
+        this->animationComponentPtr = animationComponent;
+    }
 
     if (collider != NULL && physicsBody != NULL)
     {

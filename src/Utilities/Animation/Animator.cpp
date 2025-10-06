@@ -78,6 +78,18 @@ std::shared_ptr<ComputeNode> Animator::GetComputeNode(std::string id)
     return this->computeNodes[id];
 }
 
+float Animator::GetTimeTicks() const { return m_CurrentTime; }
+
+float Animator::GetDurationTicks() const { return m_CurrentAnimation ? m_CurrentAnimation->GetDuration() : 0.0f; }
+
+float Animator::GetTicksPerSecond() const { return m_CurrentAnimation ? std::max(m_CurrentAnimation->GetTicksPerSecond(), 1.0f) : 25.0f; }
+
+float Animator::GetNormalizedTime() const
+{
+    float d = GetDurationTicks();
+    return d > 0.0f ? m_CurrentTime / d : 0.0f;
+}
+
 void Animator::UpdateAnimation(float dt, bool loop)
 {
     m_DeltaTime = dt;

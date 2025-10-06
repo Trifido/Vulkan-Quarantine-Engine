@@ -5,15 +5,7 @@
 #include "QEGameComponent.h"
 #include <Animation/Animation.h>
 #include <Animator.h>
-
-struct AnimationState
-{
-    string Id;
-    bool Loop;
-    string AnimationClip;
-    string FromState;
-    string ToState;
-};
+#include <AnimationStateData.h>
 
 class AnimationComponent : public QEGameComponent
 {
@@ -23,8 +15,21 @@ public:
 private:
     std::unordered_map<std::string, AnimationState> _states;
     std::unordered_map<std::string, std::shared_ptr<Animation>> _animations;
+    std::unordered_map<std::string, QEParam> _params;
     size_t numAnimations = 0;
     AnimationState currentState;
+
+    std::unordered_map<std::string, std::vector<QETransition>> _transitionsFrom;
+    std::string _entryStateId;
+
+private:
+    QEParam& ensureParam_(const std::string& name, QEParamType desired);
+    void ChangeState(const std::string& toId);
+    bool CheckCondition(const QECondition& c);
+    bool AreAllConditionsTrue(const QETransition& t);
+    const QETransition* FindValidTransition();
+    bool ExitTimeOk(const QETransition& t, const AnimationState& st);
+    void ConsumeTriggersUsed(const QETransition& t);
 
 public:
     AnimationComponent();
@@ -33,11 +38,13 @@ public:
     std::shared_ptr<Animation> GetAnimation(std::string name);
 
     void AddAnimationState(AnimationState state, bool isEntryState = false);
+    void AddTransition(const QETransition& t);
+    void SetBool(const std::string& name, bool v);
+    void SetInt(const std::string& name, int v);
+    void SetFloat(const std::string& name, float v);
+    void SetTrigger(const std::string& name);
+    void ResetTrigger(const std::string& name);
 
-    //DEMO
-    std::vector<std::shared_ptr<Animation>> animationVector;
-    int idAnimation = 0;
-    void ChangeAnimation();
     void CleanLastResources();
 
     void QEStart() override;

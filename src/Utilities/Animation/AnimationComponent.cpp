@@ -19,8 +19,6 @@ void AnimationComponent::AddAnimation(std::shared_ptr<Animation> animation_ptr)
     }
 
     this->numAnimations++;
-
-    animationVector.push_back(animation_ptr);
 }
 
 void AnimationComponent::AddAnimation(Animation animation)
@@ -35,8 +33,6 @@ void AnimationComponent::AddAnimation(Animation animation)
     }
 
     this->numAnimations++;
-
-    animationVector.push_back(std::make_shared<Animation>(animation));
 }
 
 std::shared_ptr<Animation> AnimationComponent::GetAnimation(std::string name)
@@ -62,12 +58,176 @@ void AnimationComponent::AddAnimationState(AnimationState state, bool isEntrySta
     }
 }
 
-void AnimationComponent::ChangeAnimation()
+void AnimationComponent::AddTransition(const QETransition& t)
 {
-    idAnimation++;
-    idAnimation %= numAnimations;
+    _transitionsFrom[t.fromState].push_back(t);
+    auto& v = _transitionsFrom[t.fromState];
+    std::sort(v.begin(), v.end(), [](const auto& a, const auto& b) { return a.priority > b.priority; });
+}
 
-    this->animator->ChangeAnimation(animationVector.at(idAnimation));
+QEParam& AnimationComponent::ensureParam_(const std::string& name, QEParamType desired)
+{
+    auto it = _params.find(name);
+    if (it == _params.end())
+    {
+        QEParam p{};
+        p.type = desired;
+        p.value.i = 0;
+        p.trigger = false;
+        auto [it2, _] = _params.emplace(name, p);
+        return it2->second;
+    }
+
+    QEParam& p = it->second;
+    if (p.type != desired)
+    {
+        const char* fromT =
+            p.type == QEParamType::Bool ? "Bool" :
+            p.type == QEParamType::Int ? "Int" :
+            p.type == QEParamType::Float ? "Float" :
+            /*Trigger*/                      "Trigger";
+        const char* toT =
+            desired == QEParamType::Bool ? "Bool" :
+            desired == QEParamType::Int ? "Int" :
+            desired == QEParamType::Float ? "Float" :
+            "Trigger";
+
+        LogTypeChange(name, fromT, toT);
+        p.type = desired;
+        p.value.i = 0;
+        p.trigger = false;
+    }
+    return p;
+}
+
+void AnimationComponent::ChangeState(const std::string& toId)
+{
+    auto it = _states.find(toId);
+    if (it == _states.end()) { std::cerr << "State not found: " << toId << "\n"; return; }
+
+    currentState = it->second;
+
+    auto clip = GetAnimation(currentState.AnimationClip);
+    if (clip)
+    {
+        animator->PlayAnimation(clip);
+    }
+}
+
+bool AnimationComponent::CheckCondition(const QECondition& c)
+{
+    auto it = _params.find(c.param);
+    if (it == _params.end()) return false;
+
+    const QEParam& p = it->second;
+    auto cmp = [&](float a, float b)
+        {
+        switch (c.op) {
+        case QEOp::Equal:         return a == b;
+        case QEOp::NotEqual:      return a != b;
+        case QEOp::Greater:       return a > b;
+        case QEOp::Less:          return a < b;
+        case QEOp::GreaterEqual:  return a >= b;
+        case QEOp::LessEqual:     return a <= b;
+        }
+        return false;
+        };
+
+    switch (p.type)
+    {
+        case QEParamType::Bool:    return cmp(p.value.b ? 1.f : 0.f, c.value);
+        case QEParamType::Int:     return cmp((float)p.value.i, c.value);
+        case QEParamType::Float:   return cmp(p.value.f, c.value);
+        case QEParamType::Trigger: return p.trigger;
+    }
+
+    return false;
+}
+
+bool AnimationComponent::AreAllConditionsTrue(const QETransition& t)
+{
+    for (auto& c : t.conditions) if (!CheckCondition(c)) return false;
+    return true;
+}
+
+bool AnimationComponent::ExitTimeOk(const QETransition& t, const AnimationState& st)
+{
+    if (!t.hasExitTime) return true;
+    float dur = this->animator->GetDurationTicks();
+    if (dur <= 0.f) return true;
+
+    if (!st.Loop)
+    {
+        const float eps = std::max(1e-4f, dur * 1e-5f);
+        return this->animator->GetTimeTicks() >= (dur - eps);
+    }
+    else
+    {
+        return this->animator->GetNormalizedTime() >= t.exitTimeNormalized;
+    }
+}
+
+const QETransition* AnimationComponent::FindValidTransition()
+{
+    auto it = _transitionsFrom.find(currentState.Id);
+    if (it == _transitionsFrom.end()) return nullptr;
+
+    for (const auto& t : it->second)
+    {
+        if (!ExitTimeOk(t, currentState)) continue;
+        if (!AreAllConditionsTrue(t)) continue;
+        std::cout << "ToState: " + t.toState << std::endl;
+        return &t;
+    }
+    return nullptr;
+}
+
+void AnimationComponent::ConsumeTriggersUsed(const QETransition& t)
+{
+    for(const auto& c : t.conditions)
+    {
+        auto it = _params.find(c.param);
+        if (it != _params.end() && it->second.type == QEParamType::Trigger)
+        {
+            it->second.trigger = false;
+        }
+    }
+}
+
+void AnimationComponent::SetBool(const std::string& name, bool v)
+{
+    QEParam& p = ensureParam_(name, QEParamType::Bool);
+    p.value.b = v;
+}
+
+void AnimationComponent::SetInt(const std::string& name, int v)
+{
+    QEParam& p = ensureParam_(name, QEParamType::Int);
+    p.value.i = v;
+}
+
+void AnimationComponent::SetFloat(const std::string& name, float v)
+{
+    QEParam& p = ensureParam_(name, QEParamType::Float);
+    p.value.f = v;
+}
+
+void AnimationComponent::SetTrigger(const std::string& name)
+{
+    QEParam& p = ensureParam_(name, QEParamType::Trigger);
+    p.trigger = true;
+
+
+    std::cout << "Set Trigger\n";
+}
+
+void AnimationComponent::ResetTrigger(const std::string& name)
+{
+    auto it = _params.find(name);
+    if (it != _params.end() && it->second.type == QEParamType::Trigger)
+    {
+        it->second.trigger = false;
+    }
 }
 
 void AnimationComponent::CleanLastResources()
@@ -118,6 +278,12 @@ void AnimationComponent::QEStart()
 void AnimationComponent::QEUpdate()
 {
     this->animator->UpdateAnimation(Timer::DeltaTime, currentState.Loop);
+
+    if (auto* tr = FindValidTransition())
+    {
+        ConsumeTriggersUsed(*tr);
+        ChangeState(tr->toState);
+    }
 }
 
 void AnimationComponent::QEDestroy()

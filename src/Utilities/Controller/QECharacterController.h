@@ -9,6 +9,7 @@
 #include <btBulletDynamicsCommon.h>
 #include <GLFW/glfw3.h>
 #include <memory>
+#include <AnimationComponent.h>
 
 struct IgnoreSelfCallback : public btCollisionWorld::ClosestConvexResultCallback
 {
@@ -58,6 +59,11 @@ class QECharacterController : public QEGameComponent
         GLFWwindow* window = nullptr;
         std::shared_ptr<QECollider> colliderPtr;
         std::shared_ptr<PhysicsBody> physicBodyPtr;
+        std::shared_ptr<AnimationComponent> animationComponentPtr;
+
+    private:
+        //Buttons
+        bool isPressedAttackButton = false;
 
     private:
         void CheckIfGrounded();
