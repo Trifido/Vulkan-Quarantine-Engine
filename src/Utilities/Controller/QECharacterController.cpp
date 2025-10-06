@@ -171,6 +171,16 @@ btVector3 QECharacterController::GetPosition()
     return trans.getOrigin();
 }
 
+void QECharacterController::KeyInputTrigger(int key, int action, bool& lastAction, string animationState)
+{
+    bool isPressed = glfwGetKey(window, key) == action;
+    if (isPressed && !lastAction)
+    {
+        this->animationComponentPtr->SetTrigger(animationState);
+    }
+    lastAction = isPressed;
+}
+
 void QECharacterController::ProcessInput()
 {
     if (window == nullptr)
@@ -193,15 +203,11 @@ void QECharacterController::ProcessInput()
 
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
     {
-        Jump();
+        //Jump();
     }
 
-    bool isPressed = glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS;
-    if (isPressed && !this->isPressedAttackButton)
-    {
-        this->animationComponentPtr->SetTrigger("attack");
-    }
-    this->isPressedAttackButton = isPressed;
+    this->KeyInputTrigger(GLFW_KEY_F, GLFW_PRESS, this->isPressedAttackButton, "attack");
+    this->KeyInputTrigger(GLFW_KEY_SPACE, GLFW_PRESS, this->isPressedJumpButton, "jump");
 }
 
 void QECharacterController::QEStart()

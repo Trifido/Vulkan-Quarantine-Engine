@@ -100,12 +100,24 @@ QEParam& AnimationComponent::ensureParam_(const std::string& name, QEParamType d
     return p;
 }
 
+void AnimationComponent::ClearAllTriggers()
+{
+    for (auto& kv : _params)
+    {
+        QEParam& p = kv.second;
+        if (p.type == QEParamType::Trigger)
+            p.trigger = false;
+    }
+}
+
 void AnimationComponent::ChangeState(const std::string& toId)
 {
     auto it = _states.find(toId);
     if (it == _states.end()) { std::cerr << "State not found: " << toId << "\n"; return; }
 
     currentState = it->second;
+
+    ClearAllTriggers();
 
     auto clip = GetAnimation(currentState.AnimationClip);
     if (clip)
@@ -138,7 +150,13 @@ bool AnimationComponent::CheckCondition(const QECondition& c)
         case QEParamType::Bool:    return cmp(p.value.b ? 1.f : 0.f, c.value);
         case QEParamType::Int:     return cmp((float)p.value.i, c.value);
         case QEParamType::Float:   return cmp(p.value.f, c.value);
-        case QEParamType::Trigger: return p.trigger;
+        case QEParamType::Trigger:
+        {
+            if (p.trigger)
+                _triggersUsedThisFrame.insert(c.param);
+
+            return p.trigger;
+        }
     }
 
     return false;
@@ -212,22 +230,68 @@ void AnimationComponent::SetFloat(const std::string& name, float v)
     p.value.f = v;
 }
 
-void AnimationComponent::SetTrigger(const std::string& name)
+void AnimationComponent::SetTrigger(const std::string& name, bool value)
 {
     QEParam& p = ensureParam_(name, QEParamType::Trigger);
-    p.trigger = true;
-
-
+    p.trigger = value;
     std::cout << "Set Trigger\n";
 }
 
-void AnimationComponent::ResetTrigger(const std::string& name)
+bool AnimationComponent::GetBool(const std::string& name) const
 {
     auto it = _params.find(name);
-    if (it != _params.end() && it->second.type == QEParamType::Trigger)
-    {
-        it->second.trigger = false;
+    if (it == _params.end()) return false;
+
+    const QEParam& p = it->second;
+    if (p.type != QEParamType::Bool) {
+        std::cerr << "[Animator] Warning: GetBool('" << name
+            << "') llamado sobre parámetro no-bool.\n";
+        return false;
     }
+    return p.value.b;
+}
+
+int AnimationComponent::GetInt(const std::string& name) const
+{
+    auto it = _params.find(name);
+    if (it == _params.end()) return 0;
+
+    const QEParam& p = it->second;
+    if (p.type != QEParamType::Int) {
+        std::cerr << "[Animator] Warning: GetInt('" << name
+            << "') llamado sobre parámetro no-int.\n";
+        return 0;
+    }
+    return p.value.i;
+}
+
+float AnimationComponent::GetFloat(const std::string& name) const
+{
+    auto it = _params.find(name);
+    if (it == _params.end()) return 0.0f;
+
+    const QEParam& p = it->second;
+    if (p.type != QEParamType::Float) {
+        std::cerr << "[Animator] Warning: GetFloat('" << name
+            << "') llamado sobre parámetro no-float.\n";
+        return 0.0f;
+    }
+    return p.value.f;
+}
+
+bool AnimationComponent::IsTriggerSet(const std::string& name) const
+{
+    auto it = _params.find(name);
+    if (it == _params.end()) return false;
+
+    const QEParam& p = it->second;
+    if (p.type != QEParamType::Trigger)
+    {
+        std::cerr << "[Animator] Warning: IsTriggerSet('" << name
+            << "') llamado sobre parámetro no-trigger.\n";
+        return false;
+    }
+    return p.trigger; // true si el trigger está activo
 }
 
 void AnimationComponent::CleanLastResources()
@@ -284,6 +348,14 @@ void AnimationComponent::QEUpdate()
         ConsumeTriggersUsed(*tr);
         ChangeState(tr->toState);
     }
+
+    for (const std::string& tname : _triggersUsedThisFrame)
+    {
+        auto it = _params.find(tname);
+        if (it != _params.end() && it->second.type == QEParamType::Trigger)
+            it->second.trigger = false;
+    }
+    _triggersUsedThisFrame.clear();
 }
 
 void AnimationComponent::QEDestroy()

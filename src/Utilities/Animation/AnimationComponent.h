@@ -21,9 +21,11 @@ private:
 
     std::unordered_map<std::string, std::vector<QETransition>> _transitionsFrom;
     std::string _entryStateId;
+    std::unordered_set<std::string> _triggersUsedThisFrame;
 
 private:
     QEParam& ensureParam_(const std::string& name, QEParamType desired);
+    void ClearAllTriggers();
     void ChangeState(const std::string& toId);
     bool CheckCondition(const QECondition& c);
     bool AreAllConditionsTrue(const QETransition& t);
@@ -42,8 +44,12 @@ public:
     void SetBool(const std::string& name, bool v);
     void SetInt(const std::string& name, int v);
     void SetFloat(const std::string& name, float v);
-    void SetTrigger(const std::string& name);
-    void ResetTrigger(const std::string& name);
+    void SetTrigger(const std::string& name, bool value = true);
+
+    bool GetBool(const std::string& name) const;
+    int  GetInt(const std::string& name) const;
+    float GetFloat(const std::string& name) const;
+    bool IsTriggerSet(const std::string& name) const;
 
     void CleanLastResources();
 

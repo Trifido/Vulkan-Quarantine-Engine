@@ -388,11 +388,12 @@ void App::initVulkan()
     animationComponent->AddAnimationState({ "Idle", true, "Idle" }, /*isEntry*/ true);
     animationComponent->AddAnimationState({ "Walk", true, "Walking" });
     animationComponent->AddAnimationState({ "Attack", false, "Punch" });
+    animationComponent->AddAnimationState({ "Jump", false, "Jumping" });
 
     // Parameters
     animationComponent->SetFloat("speed", 0.0f);
-    animationComponent->SetTrigger("attack");
-    animationComponent->ResetTrigger("attack");
+    animationComponent->SetTrigger("attack", false);
+    animationComponent->SetTrigger("jump", false);
 
     //Transitions
     animationComponent->AddTransition({
@@ -405,6 +406,7 @@ void App::initVulkan()
         .conditions = {{"speed", QEOp::Less, 0.05f}},
         .priority = 10, .hasExitTime = true, .exitTimeNormalized = 0.2f
     });
+
     animationComponent->AddTransition({
         .fromState = "Idle", .toState = "Attack",
         .conditions = {{"attack", QEOp::Equal, 1.f}}, // trigger
@@ -412,6 +414,17 @@ void App::initVulkan()
     });
     animationComponent->AddTransition({
         .fromState = "Attack", .toState = "Idle",
+        .conditions = {}, .priority = 10,
+        .hasExitTime = true, .exitTimeNormalized = 1.0f
+    });
+
+    animationComponent->AddTransition({
+        .fromState = "Idle", .toState = "Jump",
+        .conditions = {{"jump", QEOp::Equal, 1.f}}, // trigger
+        .priority = 10, .hasExitTime = false
+    });
+    animationComponent->AddTransition({
+        .fromState = "Jump", .toState = "Idle",
         .conditions = {}, .priority = 10,
         .hasExitTime = true, .exitTimeNormalized = 1.0f
     });

@@ -64,6 +64,7 @@ class QECharacterController : public QEGameComponent
     private:
         //Buttons
         bool isPressedAttackButton = false;
+        bool isPressedJumpButton = false;
 
     private:
         void CheckIfGrounded();
@@ -71,6 +72,7 @@ class QECharacterController : public QEGameComponent
         void Move(const btVector3& direction, float speed);
         bool CanMove(const btVector3& direction, float distance, btVector3& outAdjustedDir);
         void Initialize();
+        void KeyInputTrigger(int key, int action, bool& lastAction, string animationState);
 
     public:
         QECharacterController();
