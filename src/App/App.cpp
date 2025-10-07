@@ -19,7 +19,6 @@ App::App()
 
     this->sessionManager = QESessionManager::getInstance();
     this->physicsModule = PhysicsModule::getInstance();  
-    this->editorManager = EditorObjectManager::getInstance();  
     this->graphicsPipelineManager = GraphicsPipelineManager::getInstance();  
     this->shadowPipelineManager = ShadowPipelineManager::getInstance();  
     this->computePipelineManager = ComputePipelineManager::getInstance();  
@@ -185,21 +184,9 @@ void App::initVulkan()
     //    std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Animations"));
 
     // Load Scene
-    //this->loadScene(this->scene);
     this->loadScene(this->scene);
 
-    this->cullingSceneManager = CullingSceneManager::getInstance();
-    this->cullingSceneManager->InitializeCullingSceneResources();
-    this->cullingSceneManager->AddFrustumComponent(this->sessionManager->ActiveCamera()->frustumComponent);
-    this->cullingSceneManager->DebugMode = false;
-
-    this->physicsModule->InitializeDebugResources();
-    this->physicsModule->debugDrawer->DebugMode = false;
-
-    // Inicializamos los componentes del editor
-    std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
-    this->editorManager->AddEditorObject(grid_ptr, "editor:grid");
-    grid_ptr->IsRenderable = true;
+    this->sessionManager->SetupEditor();
 
     auto absPath = std::filesystem::absolute("../../resources/models").generic_string();
 
@@ -454,6 +441,7 @@ void App::loadScene(QEScene scene)
 {
     scene.DeserializeScene();
 
+    // Initialize active camera resources
     this->sessionManager->ActiveCamera()->QEStart();
 
     // Initialize the light manager & the lights
@@ -495,7 +483,7 @@ void App::mainLoop()
         this->sessionManager->ActiveCamera()->CameraController((float)Timer::DeltaTime);
 
         // UPDATE CULLING SCENE
-        this->cullingSceneManager->UpdateCullingScene();
+        this->sessionManager->UpdateCullingScene();
 
         // UPDATE LIGHT SYSTEM
         this->lightManager->Update();
@@ -615,8 +603,8 @@ void App::cleanUp()
     this->atmosphereSystem->Cleanup();
     this->gameObjectManager->ReleaseAllGameObjects();
     this->particleSystemManager->Cleanup();
-    this->editorManager->Cleanup();
-    this->cullingSceneManager->CleanUp();
+    this->sessionManager->CleanEditorResources();
+    this->sessionManager->CleanCullingResources();
     this->physicsModule->CleanupDebugDrawer();
 
     this->textureManager->Clean();
@@ -682,9 +670,6 @@ void App::cleanManagers()
     this->gameObjectManager->ResetInstance();
     this->gameObjectManager = nullptr;
 
-    this->cullingSceneManager->ResetInstance();
-    this->cullingSceneManager = nullptr;
-
     this->particleSystemManager->CleanLastResources();
     this->particleSystemManager->ResetInstance();
     this->particleSystemManager = nullptr;
@@ -692,10 +677,6 @@ void App::cleanManagers()
     this->textureManager->CleanLastResources();
     this->textureManager->ResetInstance();
     this->textureManager = nullptr;
-
-    this->editorManager->CleanLastResources();
-    this->editorManager->ResetInstance();
-    this->editorManager = nullptr;
 
     this->keyboard_ptr->CleanLastResources();
     this->keyboard_ptr->ResetInstance();

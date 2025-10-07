@@ -1,6 +1,6 @@
 #include "DescriptorBuffer.h"
 #include "SynchronizationModule.h"
-#include <CameraEditor.h>
+#include <QESessionManager.h>
 
 DescriptorBuffer::DescriptorBuffer()
 {
@@ -100,7 +100,7 @@ void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
 
             if (binding.first == "CameraUniform")
             {
-                this->camera = CameraEditor::getInstance();
+                this->camera = QESessionManager::getInstance()->ActiveCamera();
                 poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                 poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
                 idx++;

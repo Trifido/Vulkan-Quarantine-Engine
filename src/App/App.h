@@ -38,10 +38,6 @@
 #include "LightManager.h"
 #include "Particles/ParticleSystem.h"
 
-// Editor
-#include <../Editor/EditorObjectManager.h>
-#include <CameraEditor.h>
-
 // Keyboard controller
 #include "KeyboardController.h"
 
@@ -156,11 +152,7 @@ private:
     ComputePipelineManager* computePipelineManager{};
     ShadowPipelineManager* shadowPipelineManager{};
     ParticleSystemManager* particleSystemManager{};
-    CullingSceneManager* cullingSceneManager{};
     AtmosphereSystem*   atmosphereSystem{};
 
     KeyboardController* keyboard_ptr {};
-
-    // Editor
-    EditorObjectManager* editorManager {};
 };

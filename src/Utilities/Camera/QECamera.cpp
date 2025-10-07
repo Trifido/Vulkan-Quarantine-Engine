@@ -6,6 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <SynchronizationModule.h>
 #include <Timer.h>
+#include <QESessionManager.h>
 
 float glm_vec3_dot(glm::vec3 a, glm::vec3 b) {
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
@@ -19,6 +20,16 @@ float glm_vec3_norm(glm::vec3 v) {
     return sqrtf(glm_vec3_norm2(v));
 }
 
+QECamera::QECamera()
+{
+    QEGameComponent::QEGameComponent();
+
+    auto sessionManager = QESessionManager::getInstance();
+    sessionManager->RegisterSceneCamera(this);
+
+    QECamera::QECamera(WIDTH, HEIGHT, CameraDto());
+}
+
 QECamera::QECamera(const float width, const float height, const CameraDto& cameraDto)
 {
     QEGameComponent::QEGameComponent();
@@ -28,10 +39,10 @@ QECamera::QECamera(const float width, const float height, const CameraDto& camer
 
 bool QECamera::LoadCameraDto(const float width, const float height, const CameraDto& cameraDto)
 {
-
     this->cameraFront = cameraDto.front;
-    this->cameraPos = cameraDto.position;// glm::vec3(0.0f, 10.0f, 10.0f);
+    this->cameraPos = cameraDto.position;
     this->cameraUp = cameraDto.up;
+    this->cameraRight = glm::vec3(1.0f, 0.0f, 0.0f);
     this->nearPlane = cameraDto.nearPlane;
     this->farPlane = cameraDto.farPlane;
     this->fov = cameraDto.fov;
@@ -46,6 +57,9 @@ bool QECamera::LoadCameraDto(const float width, const float height, const Camera
     
     this->pitch = cameraDto.pitchSaved;
     this->yaw = cameraDto.yawSaved;
+
+    this->cameraSpeed = 10.0f;
+    this->firstMouse = true;
 
     return true;
 }
@@ -278,14 +292,6 @@ void QECamera::QEStart()
     this->cameraUniform = std::make_shared<CameraUniform>();
     this->cameraUBO = std::make_shared<UniformBufferObject>();
     this->cameraUBO->CreateUniformBuffer(sizeof(CameraUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
-
-    cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-    cameraRight = glm::vec3(1.0f, 0.0f, 0.0f);
-    cameraSpeed = 10.0f;
-    firstMouse = true;
-    lastX = 1280.0f / 2.0;
-    lastY = 720.0 / 2.0;
-    fov = 45.0f;
 }
 
 void QECamera::QEInit()

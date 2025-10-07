@@ -56,7 +56,7 @@ protected:
     void UpdateFrustumPlanes();
 
 public:
-    QECamera() = default;
+    QECamera();
     QECamera(const float width, const float height, const CameraDto& cameraDto = CameraDto());
     bool LoadCameraDto(const float width, const float height, const CameraDto& cameraDto);
     CameraDto CreateCameraDto();
