@@ -2,7 +2,7 @@
 #include <MaterialManager.h>
 #include <filesystem>
 
-void CullingSceneManager::AddCameraFrustum(std::shared_ptr<FrustumComponent> frustum)
+void CullingSceneManager::AddFrustumComponent(std::shared_ptr<FrustumComponent> frustum)
 {
     this->cameraFrustum = frustum;
 }

@@ -22,7 +22,7 @@ AtmosphereSystem::~AtmosphereSystem()
     this->deviceModule = nullptr;
 }
 
-void AtmosphereSystem::LoadAtmosphereDto(AtmosphereDto atmosphereDto, QECamera* cameraPtr)
+void AtmosphereSystem::LoadAtmosphereDto(AtmosphereDto atmosphereDto)
 {
     this->sunLight = std::static_pointer_cast<QESunLight>(this->lightManager->GetLight(SUN_NAME));
     if (this->sunLight == nullptr)
@@ -34,19 +34,22 @@ void AtmosphereSystem::LoadAtmosphereDto(AtmosphereDto atmosphereDto, QECamera* 
 
     this->atmosphereType = static_cast<AtmosphereType>(atmosphereDto.environmentType);
     this->IsInitialized = atmosphereDto.hasAtmosphere;
+}
 
+void AtmosphereSystem::AddCamera(QECamera* cameraPtr)
+{
     switch (this->atmosphereType)
     {
-    case AtmosphereType::CUBEMAP:
-        this->InitializeAtmosphere(this->atmosphereType, nullptr, 0, cameraPtr);
-        break;
-    case AtmosphereType::SPHERICALMAP:
-        this->InitializeAtmosphere(this->atmosphereType, nullptr, 0, cameraPtr);
-        break;
-    default:
-    case AtmosphereType::PHYSICALLY_BASED_SKY:
-        this->InitializeAtmosphere(cameraPtr);
-        break;
+        case AtmosphereType::CUBEMAP:
+            this->InitializeAtmosphere(this->atmosphereType, nullptr, 0, cameraPtr);
+            break;
+        case AtmosphereType::SPHERICALMAP:
+            this->InitializeAtmosphere(this->atmosphereType, nullptr, 0, cameraPtr);
+            break;
+        default:
+        case AtmosphereType::PHYSICALLY_BASED_SKY:
+            this->InitializeAtmosphere(cameraPtr);
+            break;
     }
 }
 

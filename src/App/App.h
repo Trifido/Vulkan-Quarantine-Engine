@@ -55,6 +55,7 @@
 #include <AtmosphereSystem.h>
 #include <CapsuleCollider.h>
 #include <QEScene.h>
+#include <QESessionManager.h>
 
 using namespace std;
 
@@ -94,7 +95,7 @@ class App
 public:
     App();
     ~App();
-    void run(QEScene scene);
+    void run(QEScene scene, bool isEditorMode);
 
     void initWindow();
     void init_imgui();
@@ -115,6 +116,7 @@ private:
 public:
     GUIWindow*              mainWindow;
     bool                    framebufferResized = false;
+
 private:
     VulkanInstance          vulkanInstance {};
     VulkanLayerAndExtension layerExtensionModule {};
@@ -143,7 +145,7 @@ private:
 
     QEScene     scene;
 
-    QECamera*     cameraEditor;
+    QESessionManager*   sessionManager{};
     LightManager*       lightManager {};
     ShaderManager*      shaderManager{};
     MaterialManager*    materialManager {};

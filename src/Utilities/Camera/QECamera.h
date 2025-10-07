@@ -24,6 +24,7 @@ private:
     std::shared_ptr<CameraUniform> cameraUniform;
     glm::vec4 normalize_plane(glm::vec4 plane);
     bool isInputUpdated = true;
+    bool allowEditorControls = false;
 
 protected:
     REFLECT_PROPERTY(float, nearPlane)
@@ -59,6 +60,7 @@ public:
     QECamera(const float width, const float height, const CameraDto& cameraDto = CameraDto());
     bool LoadCameraDto(const float width, const float height, const CameraDto& cameraDto);
     CameraDto CreateCameraDto();
+    void SetEditorControlsEnabled(bool v) { allowEditorControls = v; }
     void CameraController(float deltaTime);
     float GetFOV() { return fov; }
     float* GetRawFOV() { return &fov; }

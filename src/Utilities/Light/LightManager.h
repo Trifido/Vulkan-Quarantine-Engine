@@ -110,7 +110,7 @@ public:
     void CleanLightUBO();
     void CleanLastResources();
     void CleanShadowMapResources();
-    void SetCamera(QECamera* camera_ptr);
+    void AddCamera(QECamera* camera_ptr);
 };
 
 #endif

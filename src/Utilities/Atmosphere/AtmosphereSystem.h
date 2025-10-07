@@ -91,7 +91,8 @@ public:
         return nullptr; // o un meta vacío si no usas campos “normales”
     }
 
-    void LoadAtmosphereDto(AtmosphereDto atmosphereDto, QECamera* cameraPtr);
+    void LoadAtmosphereDto(AtmosphereDto atmosphereDto);
+    void AddCamera(QECamera* cameraPtr);
     AtmosphereDto CreateAtmosphereDto();
     void AddTextureResources(const string* texturePaths, uint32_t numTextures);
     void InitializeAtmosphere(QECamera* cameraPtr);

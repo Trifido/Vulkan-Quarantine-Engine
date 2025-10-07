@@ -22,7 +22,7 @@ public:
     bool DebugMode = true;
 
 public:
-    void AddCameraFrustum(std::shared_ptr<FrustumComponent> frustum);
+    void AddFrustumComponent(std::shared_ptr<FrustumComponent> frustum);
     void InitializeCullingSceneResources();
     std::shared_ptr<AABBObject> GenerateAABB(std::pair<glm::vec3, glm::vec3> aabbData, std::shared_ptr<Transform> transform_ptr);
     void CleanUp();

@@ -377,7 +377,7 @@ void LightManager::CleanShadowMapResources()
     this->CSMDescritors->Clean();
 }
 
-void LightManager::SetCamera(QECamera* camera_ptr)
+void LightManager::AddCamera(QECamera* camera_ptr)
 {
     this->camera = camera_ptr;
 }

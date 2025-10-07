@@ -17,6 +17,7 @@ App::App()
     this->queueModule = QueueModule::getInstance();  
     this->deviceModule = DeviceModule::getInstance();  
 
+    this->sessionManager = QESessionManager::getInstance();
     this->physicsModule = PhysicsModule::getInstance();  
     this->editorManager = EditorObjectManager::getInstance();  
     this->graphicsPipelineManager = GraphicsPipelineManager::getInstance();  
@@ -29,9 +30,10 @@ App::~App()
 
 }
 
-void App::run(QEScene scene)
+void App::run(QEScene scene, bool isEditorMode)
 {
     this->scene = scene;
+    this->sessionManager->SetEditorMode(isEditorMode);
 
     initWindow();
     initVulkan();
@@ -188,7 +190,7 @@ void App::initVulkan()
 
     this->cullingSceneManager = CullingSceneManager::getInstance();
     this->cullingSceneManager->InitializeCullingSceneResources();
-    this->cullingSceneManager->AddCameraFrustum(this->cameraEditor->frustumComponent);
+    this->cullingSceneManager->AddFrustumComponent(this->sessionManager->ActiveCamera()->frustumComponent);
     this->cullingSceneManager->DebugMode = false;
 
     this->physicsModule->InitializeDebugResources();
@@ -209,6 +211,10 @@ void App::initVulkan()
     auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Idle_Character.gltf").generic_string();
     //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Golem/Meshes/scene.gltf").generic_string();
     //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf").generic_string();
+
+    // THIRD PERSON CAMERA
+    //std::shared_ptr<QEGameObject> cameraObject = std::make_shared<QEGameObject>();
+    //cameraObject->AddComponent(std::make_shared<QECamera>());
 
     // CHARACTER CONTROLLER
     /**/
@@ -448,23 +454,23 @@ void App::loadScene(QEScene scene)
 {
     scene.DeserializeScene();
 
-    this->cameraEditor = CameraEditor::getInstance();
-    this->cameraEditor->QEStart();
+    this->sessionManager->ActiveCamera()->QEStart();
 
     // Initialize the light manager & the lights
     this->lightManager->AddDirShadowMapShader(materialManager->csm_shader);
     this->lightManager->AddOmniShadowMapShader(materialManager->omni_shadow_mapping_shader);
-    this->lightManager->SetCamera(this->cameraEditor);
+    this->lightManager->AddCamera(this->sessionManager->ActiveCamera());
     //this->lightManager->LoadLightDtos(this->scene.lightDtos);
 
     // Initialize the atmophere system
     this->atmosphereSystem = AtmosphereSystem::getInstance();
-    this->atmosphereSystem->LoadAtmosphereDto(scene.atmosphereDto, this->cameraEditor);
+    this->atmosphereSystem->LoadAtmosphereDto(scene.atmosphereDto);
+    this->atmosphereSystem->AddCamera(this->sessionManager->ActiveCamera());
 }
 
 void App::saveScene()
 {
-    scene.cameraEditor = CameraEditor::getInstance();
+    this->scene.cameraEditor = this->sessionManager->EditorCamera();
     this->scene.atmosphereDto = this->atmosphereSystem->CreateAtmosphereDto();
     this->scene.SerializeScene();
 }
@@ -485,7 +491,8 @@ void App::mainLoop()
                 
         // INPUT EVENTS
         this->keyboard_ptr->ReadKeyboardEvents();
-        this->cameraEditor->CameraController((float)Timer::DeltaTime);
+
+        this->sessionManager->ActiveCamera()->CameraController((float)Timer::DeltaTime);
 
         // UPDATE CULLING SCENE
         this->cullingSceneManager->UpdateCullingScene();
@@ -544,7 +551,7 @@ void App::mainLoop()
             this->drawFrame();
         }
 
-        this->cameraEditor->ResetModifiedField();
+        this->sessionManager->ActiveCamera()->ResetModifiedField();
         /*
         {
             //imgui new frame
@@ -599,7 +606,7 @@ void App::cleanUp()
     //this->framebufferModule.cleanupShadowBuffer();
     this->swapchainModule->CleanScreenDataResources();
 
-    this->cameraEditor->CleanCameraUBO();
+    this->sessionManager->CleanCameras();
     this->materialManager->CleanPipelines();
     this->computePipelineManager->CleanComputePipeline();
     this->computeNodeManager->Cleanup();
@@ -706,8 +713,7 @@ void App::cleanManagers()
     this->lightManager->ResetInstance();
     this->lightManager = nullptr;
 
-    delete this->cameraEditor;
-    this->cameraEditor = nullptr;
+    this->sessionManager->FreeCameraResources();
 
     this->antialiasingModule->CleanLastResources();
     this->antialiasingModule->ResetInstance();
@@ -817,8 +823,7 @@ void App::recreateSwapchain()
     swapchainModule->createSwapChain(windowSurface.getSurface(), mainWindow->getWindow());
 
     //Actualizamos el formato de la cámara
-    this->cameraEditor->UpdateViewportSize(swapchainModule->swapChainExtent);
-    this->cameraEditor->UpdateCamera();
+    this->sessionManager->UpdateViewportSize();
 
     //Actualizamos la resolución de la atmosfera
     this->atmosphereSystem->UpdateAtmopshereResolution();

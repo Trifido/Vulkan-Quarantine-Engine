@@ -22,13 +22,6 @@ float glm_vec3_norm(glm::vec3 v) {
 QECamera::QECamera(const float width, const float height, const CameraDto& cameraDto)
 {
     QEGameComponent::QEGameComponent();
-    this->deviceModule = DeviceModule::getInstance();
-
-    this->frustumComponent = std::make_shared<FrustumComponent>();
-
-    this->cameraUniform = std::make_shared<CameraUniform>();
-    this->cameraUBO = std::make_shared<UniformBufferObject>();
-    this->cameraUBO->CreateUniformBuffer(sizeof(CameraUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 
     this->LoadCameraDto(width, height, cameraDto);
 }
@@ -49,7 +42,7 @@ bool QECamera::LoadCameraDto(const float width, const float height, const Camera
     this->lastX = WIDTH / 2.0f;
     this->lastY = HEIGHT / 2.0f;
 
-    this->UpdateCamera();
+    this->isInputUpdated = true;
     
     this->pitch = cameraDto.pitchSaved;
     this->yaw = cameraDto.yawSaved;
@@ -280,6 +273,12 @@ void QECamera::QEStart()
 {
     QEGameComponent::QEStart();
 
+    this->deviceModule = DeviceModule::getInstance();
+    this->frustumComponent = std::make_shared<FrustumComponent>();
+    this->cameraUniform = std::make_shared<CameraUniform>();
+    this->cameraUBO = std::make_shared<UniformBufferObject>();
+    this->cameraUBO->CreateUniformBuffer(sizeof(CameraUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+
     cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
     cameraRight = glm::vec3(1.0f, 0.0f, 0.0f);
     cameraSpeed = 10.0f;
@@ -296,7 +295,8 @@ void QECamera::QEInit()
 
 void QECamera::QEUpdate()
 {
-    CameraController(Timer::DeltaTime);
+    if (allowEditorControls)
+        CameraController(Timer::DeltaTime);
 }
 
 void QECamera::QEDestroy()
