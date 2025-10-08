@@ -1,5 +1,6 @@
 #include "QEScene.h"
 #include <GameObjectManager.h>
+#include <QESessionManager.h>
 
 QEScene::QEScene()
 {
@@ -38,7 +39,7 @@ bool QEScene::SerializeScene()
     auto lightManager = LightManager::getInstance();
 
     YAML::Node root;
-    root["CameraEditor"] = serializeComponent(cameraEditor);
+    root["CameraEditor"] = serializeComponent(cameraEditor.get());
     root["AtmosphereDto"] = SerializeAtmosphere(atmosphereDto);
     root["Materials"] = materialManager->SerializeMaterials();
     root["GameObjects"] = gameObjectManager->SerializeGameObjects();
@@ -86,8 +87,8 @@ bool QEScene::DeserializeScene()
     // CameraEditor
     if (auto n = root["CameraEditor"])
     {
-        cameraEditor = CameraEditor::getInstance();
-        deserializeComponent(cameraEditor, n);
+        cameraEditor = QESessionManager::getInstance()->EditorCamera();
+        deserializeComponent(cameraEditor.get(), n);
         cameraEditor->UpdateCamera();
     }
     else

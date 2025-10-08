@@ -22,12 +22,11 @@ float glm_vec3_norm(glm::vec3 v) {
 
 QECamera::QECamera()
 {
-    QEGameComponent::QEGameComponent();
-
     auto sessionManager = QESessionManager::getInstance();
-    sessionManager->RegisterSceneCamera(this);
+    sessionManager->SetFindNewSceneCamera(this->id);
 
-    QECamera::QECamera(WIDTH, HEIGHT, CameraDto());
+    auto swapchainModule = SwapChainModule::getInstance();
+    this->LoadCameraDto(swapchainModule->swapChainExtent.width, swapchainModule->swapChainExtent.height, CameraDto());
 }
 
 QECamera::QECamera(const float width, const float height, const CameraDto& cameraDto)

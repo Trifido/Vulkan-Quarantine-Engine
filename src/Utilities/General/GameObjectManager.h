@@ -39,6 +39,8 @@ public:
     void StartQEGameObjects();
     void UpdateQEGameObjects();
     void DestroyQEGameObjects();
+
+    std::shared_ptr<QEGameComponent> FindGameComponentInScene(std::string id);
 };
 
 #endif

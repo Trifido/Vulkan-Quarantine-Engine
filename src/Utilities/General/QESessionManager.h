@@ -4,7 +4,7 @@
 #define QE_SESSION_MANAGER
 
 #include "QESingleton.h"
-#include <CameraEditor.h>
+#include <QECamera.h>
 
 class QESessionManager : public QESingleton<QESessionManager>
 {
@@ -12,9 +12,13 @@ private:
     friend class QESingleton<QESessionManager>;
     bool _isEditor = true;
     bool _isDebugMode = false;
-    QECamera* _activeCamera = nullptr;
-    QECamera* _editorCamera = nullptr;
-    QECamera* _gameCamera = nullptr;
+    std::shared_ptr<QECamera> _activeCamera = nullptr;
+    std::shared_ptr<QECamera> _editorCamera = nullptr;
+    std::shared_ptr<QECamera> _gameCamera = nullptr;
+
+private:
+    bool _newSceneCamera = false;
+    std::string newCameraID = "";
 
 public:
     QESessionManager();
@@ -23,9 +27,11 @@ public:
     const bool IsDebugMode() { return _isDebugMode; }
     void SetEditorMode(bool value);
     void SetDebugMode(bool value);
-    void RegisterSceneCamera(QECamera* camera);
-    QECamera* ActiveCamera() { return _activeCamera; }
-    QECamera* EditorCamera() { return _editorCamera; }
+    void RegisterActiveSceneCamera();
+    void UpdateCameraReferences();
+    std::shared_ptr<QECamera> ActiveCamera() { return _activeCamera; }
+    std::shared_ptr<QECamera> EditorCamera() { return _editorCamera; }
+    void SetFindNewSceneCamera(std::string cameraID);
 
     void CleanCameras();
     void FreeCameraResources();
@@ -36,6 +42,8 @@ public:
 
     void UpdateCullingScene();
     void CleanCullingResources();
+
+    void FindNewSceneCamera();
 };
 
 #endif // !QE_SESSION_MANAGER

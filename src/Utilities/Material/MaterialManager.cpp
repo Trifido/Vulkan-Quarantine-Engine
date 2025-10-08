@@ -1,7 +1,6 @@
 #include "MaterialManager.h"
 #include "Material.h"
 
-#include <CameraEditor.h>
 #include <RenderPassModule.h>
 
 #include "ShaderManager.h"

@@ -266,6 +266,23 @@ void GameObjectManager::DestroyQEGameObjects()
     }
 }
 
+std::shared_ptr<QEGameComponent> GameObjectManager::FindGameComponentInScene(std::string id)
+{
+    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
+    {
+        for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
+        {
+            for (auto component : model.second->components)
+            {
+                if (component->id == id)
+                    return component;
+            }
+        }
+    }
+
+    return nullptr;
+}
+
 std::vector<GameObjectDto> GameObjectManager::GetGameObjectDtos(std::ifstream& file)
 {
     // Read the game objects

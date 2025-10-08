@@ -200,8 +200,12 @@ void App::initVulkan()
     //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf").generic_string();
 
     // THIRD PERSON CAMERA
-    //std::shared_ptr<QEGameObject> cameraObject = std::make_shared<QEGameObject>();
-    //cameraObject->AddComponent(std::make_shared<QECamera>());
+    std::shared_ptr<QEGameObject> cameraObject = std::make_shared<QEGameObject>();
+    cameraObject->AddComponent(std::make_shared<QECamera>());
+    this->gameObjectManager->AddGameObject(cameraObject, "cameraObject");
+    auto cameraComponent = cameraObject->GetComponent<QECamera>();
+    cameraComponent->cameraFront = glm::vec3(0.0134427, -0.270601, 0.962598);
+    cameraComponent->cameraPos = glm::vec3(-0.715416, 1.89489, -2.56881);
 
     // CHARACTER CONTROLLER
     /**/
@@ -367,6 +371,8 @@ void App::initVulkan()
     //spotLight->SetDistanceEffect(100.0f);
 
     // END -------------------------- Lights ----------------------------------------
+
+    this->sessionManager->RegisterActiveSceneCamera();
 
     this->physicsModule->SetGravity(-20.0f);
 

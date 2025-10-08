@@ -49,7 +49,7 @@ private:
 
     DeviceModule* deviceModule = nullptr;
     SwapChainModule* swapChainModule = nullptr;
-    QECamera* camera = nullptr;
+    std::shared_ptr<QECamera> camera = nullptr;
 
     uint32_t currentNumLights = 0;
     std::unordered_map<std::string, std::shared_ptr<QELight>> _lights;
@@ -110,7 +110,7 @@ public:
     void CleanLightUBO();
     void CleanLastResources();
     void CleanShadowMapResources();
-    void AddCamera(QECamera* camera_ptr);
+    void AddCamera(std::shared_ptr<QECamera> camera_ptr);
 };
 
 #endif

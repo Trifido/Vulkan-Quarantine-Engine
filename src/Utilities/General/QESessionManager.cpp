@@ -1,13 +1,15 @@
 #include "QESessionManager.h"
 #include <SwapChainModule.h>
+#include <GameObjectManager.h>
 #include <EditorObjectManager.h>
 #include <CullingSceneManager.h>
 #include <PhysicsModule.h>
 #include <Grid.h>
+#include <AtmosphereSystem.h>
 
 QESessionManager::QESessionManager()
 {
-    this->_editorCamera = CameraEditor::getInstance();
+    this->_editorCamera = std::make_shared<QECamera>(1280.0f, 720.0f, CameraDto());
 }
 
 void QESessionManager::SetEditorMode(bool value)
@@ -27,15 +29,41 @@ void QESessionManager::SetDebugMode(bool value)
     physicsModule->debugDrawer->DebugMode = value;
 }
 
-void QESessionManager::RegisterSceneCamera(QECamera* camera)
+void QESessionManager::RegisterActiveSceneCamera()
 {
-    auto swapchainModule = SwapChainModule::getInstance();
-    _gameCamera = camera;
-    _gameCamera->UpdateViewportSize(swapchainModule->swapChainExtent);
+    this->FindNewSceneCamera();
 
-    if (!_isEditor)
+    if (this->_gameCamera != NULL)
     {
-        _activeCamera = _gameCamera;
+        if (!_isEditor)
+        {
+            _activeCamera = _gameCamera;
+            _activeCamera->QEStart();
+        }
+
+        this->_newSceneCamera = false;
+
+        this->UpdateCameraReferences();
+    }
+}
+
+void QESessionManager::UpdateCameraReferences()
+{
+    auto lightManager = LightManager::getInstance();
+    auto atmosphereSystem = AtmosphereSystem::getInstance();
+    auto cullingSceneManager = CullingSceneManager::getInstance();
+
+    lightManager->AddCamera(this->_activeCamera);
+    atmosphereSystem->SetCamera(this->_activeCamera);
+    cullingSceneManager->AddFrustumComponent(_activeCamera->frustumComponent);
+}
+
+void QESessionManager::SetFindNewSceneCamera(std::string cameraID)
+{
+    if (cameraID != this->newCameraID)
+    {
+        this->newCameraID = cameraID;
+        this->_newSceneCamera = true;
     }
 }
 
@@ -46,8 +74,7 @@ void QESessionManager::CleanCameras()
 
 void QESessionManager::FreeCameraResources()
 {
-    delete this->_editorCamera;
-    this->_editorCamera = nullptr;
+    this->_editorCamera.reset();
 }
 
 void QESessionManager::UpdateViewportSize()
@@ -94,4 +121,13 @@ void QESessionManager::CleanCullingResources()
     auto cullingSceneManager = CullingSceneManager::getInstance();
     cullingSceneManager->CleanUp();
     cullingSceneManager->ResetInstance();
+}
+
+void QESessionManager::FindNewSceneCamera()
+{
+    auto gameObjectManager = GameObjectManager::getInstance();
+
+    // Ensure the returned object is of the correct type before assignment
+    auto foundCamera = gameObjectManager->FindGameComponentInScene(this->newCameraID);
+    this->_gameCamera = std::dynamic_pointer_cast<QECamera>(foundCamera);
 }

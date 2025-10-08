@@ -2,7 +2,6 @@
 #ifndef QE_SCENEV2_H
 #define QE_SCENEV2_H
 
-#include <Camera/CameraEditor.h>
 #include <QEGameObject.h>
 #include <AtmosphereDto.h>
 #include <vector>
@@ -18,7 +17,7 @@ private:
 
 public:
     string sceneName;
-    QECamera* cameraEditor = NULL;
+    std::shared_ptr<QECamera> cameraEditor = NULL;
     AtmosphereDto atmosphereDto;
 
 public:

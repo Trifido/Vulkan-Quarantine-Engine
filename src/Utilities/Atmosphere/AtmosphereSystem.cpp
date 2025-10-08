@@ -36,7 +36,7 @@ void AtmosphereSystem::LoadAtmosphereDto(AtmosphereDto atmosphereDto)
     this->IsInitialized = atmosphereDto.hasAtmosphere;
 }
 
-void AtmosphereSystem::AddCamera(QECamera* cameraPtr)
+void AtmosphereSystem::AddCamera(std::shared_ptr<QECamera> cameraPtr)
 {
     switch (this->atmosphereType)
     {
@@ -86,7 +86,7 @@ void AtmosphereSystem::AddTextureResources(const string* texturePaths, uint32_t 
     this->CreateDescriptorSet();
 }
 
-void AtmosphereSystem::InitializeAtmosphere(QECamera* cameraPtr)
+void AtmosphereSystem::InitializeAtmosphere(std::shared_ptr<QECamera> cameraPtr)
 {
     this->SetUpResources(cameraPtr);
     this->UpdateSun();
@@ -94,7 +94,7 @@ void AtmosphereSystem::InitializeAtmosphere(QECamera* cameraPtr)
     this->CreateDescriptorSet();
 }
 
-void AtmosphereSystem::SetUpResources(QECamera* cameraPtr)
+void AtmosphereSystem::SetUpResources(std::shared_ptr<QECamera> cameraPtr)
 {
     this->Cleanup();
     this->CleanLastResources();
@@ -170,7 +170,7 @@ void AtmosphereSystem::SetUpResources(QECamera* cameraPtr)
     this->_Mesh->QEStart();
 }
 
-void AtmosphereSystem::InitializeAtmosphere(AtmosphereType type, const string* texturePaths, uint32_t numTextures, QECamera* cameraPtr)
+void AtmosphereSystem::InitializeAtmosphere(AtmosphereType type, const string* texturePaths, uint32_t numTextures, std::shared_ptr<QECamera> cameraPtr)
 {
     if (this->atmosphereType == type) return;
 
@@ -183,7 +183,7 @@ void AtmosphereSystem::InitializeAtmosphere(AtmosphereType type, const string* t
     this->AddTextureResources(texturePaths, numTextures);
 }
 
-void AtmosphereSystem::SetCamera(QECamera* cameraPtr)
+void AtmosphereSystem::SetCamera(std::shared_ptr<QECamera> cameraPtr)
 {
     this->camera = cameraPtr;
 }

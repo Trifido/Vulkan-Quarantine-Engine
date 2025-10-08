@@ -84,12 +84,12 @@ void LightManager::AddNewLight(std::shared_ptr<QELight> light_ptr, std::string& 
             if (light_ptr->lightType == LightType::SUN_LIGHT)
             {
                 this->DirLights.push_back(std::static_pointer_cast<QESunLight>(light_ptr));
-                this->DirLights.back()->Setup(this->renderPassModule->DirShadowMappingRenderPass, this->camera);
+                this->DirLights.back()->Setup(this->renderPassModule->DirShadowMappingRenderPass, this->camera.get());
             }
             else
             {
                 this->DirLights.push_back(std::static_pointer_cast<QEDirectionalLight>(light_ptr));
-                this->DirLights.back()->Setup(this->renderPassModule->DirShadowMappingRenderPass, this->camera);
+                this->DirLights.back()->Setup(this->renderPassModule->DirShadowMappingRenderPass, this->camera.get());
             }
             this->DirLights.back()->idxShadowMap = (uint32_t)this->DirLights.size() - 1;
 
@@ -377,7 +377,7 @@ void LightManager::CleanShadowMapResources()
     this->CSMDescritors->Clean();
 }
 
-void LightManager::AddCamera(QECamera* camera_ptr)
+void LightManager::AddCamera(std::shared_ptr<QECamera> camera_ptr)
 {
     this->camera = camera_ptr;
 }

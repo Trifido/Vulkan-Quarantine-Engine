@@ -20,7 +20,7 @@ private:
     VkDescriptorImageInfo outputImageInfo;
     std::shared_ptr<DeltaTimeUniform> deltaTimeUniform;
     std::shared_ptr<SunUniform> sunUniform;
-    QECamera* camera = nullptr;
+    std::shared_ptr<QECamera> camera = nullptr;
 
     uint32_t _numSSBOs = 0;
 
