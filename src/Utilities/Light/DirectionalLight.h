@@ -4,7 +4,6 @@
 
 #include "Light.h"
 #include "CSMResources.h"
-#include <QECamera.h>
 
 class DescriptorBuffer;
 
@@ -14,14 +13,13 @@ class QEDirectionalLight : public QELight
 
 private:
     REFLECT_PROPERTY(float, cascadeSplitLambda)
-    QECamera* camera = nullptr;
 
 public:
     std::shared_ptr<CSMResources> shadowMappingResourcesPtr = nullptr;
 
 public:
     QEDirectionalLight();
-    void Setup(std::shared_ptr<VkRenderPass> renderPass, QECamera* camera);
+    void Setup(std::shared_ptr<VkRenderPass> renderPass);
     void UpdateUniform() override;
     void CleanShadowMapResources();
     void UpdateCascades();

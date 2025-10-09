@@ -6,7 +6,6 @@
 #include <memory>
 #include <fstream>
 #include <Light/Light.h>
-#include <QECamera.h>
 #include <SwapChainModule.h>
 #include <ShaderModule.h>
 #include <RenderPassModule.h>
@@ -49,7 +48,6 @@ private:
 
     DeviceModule* deviceModule = nullptr;
     SwapChainModule* swapChainModule = nullptr;
-    std::shared_ptr<QECamera> camera = nullptr;
 
     uint32_t currentNumLights = 0;
     std::unordered_map<std::string, std::shared_ptr<QELight>> _lights;
@@ -110,7 +108,6 @@ public:
     void CleanLightUBO();
     void CleanLastResources();
     void CleanShadowMapResources();
-    void AddCamera(std::shared_ptr<QECamera> camera_ptr);
 };
 
 #endif

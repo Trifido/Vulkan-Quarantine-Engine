@@ -1,5 +1,6 @@
 #include "DirectionalLight.h"
 #include <SynchronizationModule.h>
+#include <QESessionManager.h>
 
 QEDirectionalLight::QEDirectionalLight() : QELight()
 {
@@ -15,9 +16,8 @@ QEDirectionalLight::QEDirectionalLight() : QELight()
     this->transform->SetOrientation(glm::vec3(90.0f, 0.0f, 0.0f));
 }
 
-void QEDirectionalLight::Setup(std::shared_ptr<VkRenderPass> renderPass, QECamera* camera)
+void QEDirectionalLight::Setup(std::shared_ptr<VkRenderPass> renderPass)
 {
-    this->camera = camera;
     this->shadowMappingResourcesPtr = std::make_shared<CSMResources>(renderPass);
 }
 
@@ -34,9 +34,10 @@ void QEDirectionalLight::UpdateUniform()
 
 void QEDirectionalLight::UpdateCascades()
 {
+    auto activeCamera = QESessionManager::getInstance()->ActiveCamera();
     float cascadeSplitPtr[SHADOW_MAP_CASCADE_COUNT];
-    float nearClip = camera->GetNear();
-    float farClip = camera->GetFar();
+    float nearClip = activeCamera->GetNear();
+    float farClip = activeCamera->GetFar();
     float clipRange = farClip - nearClip;
 
     float minZ = nearClip;
@@ -73,7 +74,7 @@ void QEDirectionalLight::UpdateCascades()
         };
 
         // Project frustum corners into world space
-        glm::mat4 invCam = glm::inverse(camera->VP);
+        glm::mat4 invCam = glm::inverse(activeCamera->VP);
         for (uint32_t j = 0; j < 8; j++)
         {
             glm::vec4 invCorner = invCam * glm::vec4(frustumCorners[j], 1.0);

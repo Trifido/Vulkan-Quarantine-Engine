@@ -5,7 +5,6 @@
 #include <CullingSceneManager.h>
 #include <PhysicsModule.h>
 #include <Grid.h>
-#include <AtmosphereSystem.h>
 
 QESessionManager::QESessionManager()
 {
@@ -42,20 +41,7 @@ void QESessionManager::RegisterActiveSceneCamera()
         }
 
         this->_newSceneCamera = false;
-
-        this->UpdateCameraReferences();
     }
-}
-
-void QESessionManager::UpdateCameraReferences()
-{
-    auto lightManager = LightManager::getInstance();
-    auto atmosphereSystem = AtmosphereSystem::getInstance();
-    auto cullingSceneManager = CullingSceneManager::getInstance();
-
-    lightManager->AddCamera(this->_activeCamera);
-    atmosphereSystem->SetCamera(this->_activeCamera);
-    cullingSceneManager->AddFrustumComponent(_activeCamera->frustumComponent);
 }
 
 void QESessionManager::SetFindNewSceneCamera(std::string cameraID)
@@ -91,16 +77,19 @@ void QESessionManager::SetupEditor()
     auto editorManager = EditorObjectManager::getInstance();
 
     cullingSceneManager->InitializeCullingSceneResources();
-    cullingSceneManager->AddFrustumComponent(_activeCamera->frustumComponent);
     cullingSceneManager->DebugMode = _isDebugMode;
 
     physicsModule->InitializeDebugResources();
     physicsModule->debugDrawer->DebugMode = _isDebugMode;
 
     // Inicializamos los componentes del editor
-    std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
-    editorManager->AddEditorObject(grid_ptr, "editor:grid");
-    grid_ptr->IsRenderable = _isEditor;
+    _isEditor = true;
+    if (_isEditor)
+    {
+        std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
+        editorManager->AddEditorObject(grid_ptr, "editor:grid");
+        grid_ptr->IsRenderable = _isEditor;
+    }
 }
 
 void QESessionManager::CleanEditorResources()

@@ -377,7 +377,6 @@ void App::initVulkan()
     this->physicsModule->SetGravity(-20.0f);
 
     // Initialize Managers
-
     this->gameObjectManager->StartQEGameObjects();
 
     // Initialize animation states for character controller
@@ -431,6 +430,7 @@ void App::initVulkan()
     this->gameObjectManager->UpdateQEGameObjects();
 
     this->lightManager->InitializeShadowMaps();
+    this->atmosphereSystem->InitializeAtmosphereResources();
 
     this->commandPoolModule->Render(&framebufferModule);
     this->synchronizationModule.createSyncObjects();
@@ -453,13 +453,10 @@ void App::loadScene(QEScene scene)
     // Initialize the light manager & the lights
     this->lightManager->AddDirShadowMapShader(materialManager->csm_shader);
     this->lightManager->AddOmniShadowMapShader(materialManager->omni_shadow_mapping_shader);
-    this->lightManager->AddCamera(this->sessionManager->ActiveCamera());
-    //this->lightManager->LoadLightDtos(this->scene.lightDtos);
 
     // Initialize the atmophere system
     this->atmosphereSystem = AtmosphereSystem::getInstance();
     this->atmosphereSystem->LoadAtmosphereDto(scene.atmosphereDto);
-    this->atmosphereSystem->AddCamera(this->sessionManager->ActiveCamera());
 }
 
 void App::saveScene()

@@ -5,7 +5,6 @@
 
 #include "CustomTexture.h"
 #include "ShaderModule.h"
-#include "QECamera.h"
 #include "LightManager.h"
 #include "UBO.h"
 #include <MaterialData.h>
@@ -19,7 +18,6 @@ private:
     DeviceModule*   deviceModule = nullptr;
     LightManager*   lightManager = nullptr;
     SwapChainModule* swapChainModule = nullptr;
-    std::shared_ptr<QECamera>   camera = nullptr;
     std::shared_ptr<Meshlet> meshlets_ptr = nullptr;
 
     VkDescriptorPool                descriptorPool;
@@ -31,6 +29,11 @@ private:
 
     std::vector<VkDescriptorBufferInfo> buffersInfo;
     std::vector<VkDescriptorImageInfo> imageInfo;
+
+private:
+    // Common camera resources
+    std::shared_ptr<UniformBufferObject> cameraUBO;
+    bool hasCameraUniform = false;
 
 public:
     std::vector<VkDescriptorSet>    descriptorSets;
@@ -55,6 +58,7 @@ public:
     DescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr);
     void SetMeshletBuffers(std::shared_ptr<Meshlet> meshlets_ptr);
     void InitializeDescriptorSets(std::shared_ptr<ShaderModule> shader_ptr);
+    void SyncCameraUBO(uint32_t frameIdx);
     //void InitializeShadowMapDescritorSets(std::shared_ptr<ShaderModule> shader_ptr, std::shared_ptr<UniformBufferObject> lightUniformBuffer, VkDeviceSize sizeBuffer);
     VkDescriptorSet* getDescriptorSet(size_t id) { return &descriptorSets.at(id); }
     void CleanLastResources();

@@ -1,11 +1,7 @@
 #include "CullingSceneManager.h"
 #include <MaterialManager.h>
 #include <filesystem>
-
-void CullingSceneManager::AddFrustumComponent(std::shared_ptr<FrustumComponent> frustum)
-{
-    this->cameraFrustum = frustum;
-}
+#include <QESessionManager.h>
 
 void CullingSceneManager::InitializeCullingSceneResources()
 {
@@ -87,12 +83,13 @@ void CullingSceneManager::DrawDebug(VkCommandBuffer& commandBuffer, uint32_t idx
 
 void CullingSceneManager::UpdateCullingScene()
 {
-    if (this->cameraFrustum->IsComputeCullingActive())
+    auto activeCamera = QESessionManager::getInstance()->ActiveCamera();
+    if (activeCamera->frustumComponent->IsComputeCullingActive())
     {
         for (unsigned int i = 0; i < this->aabb_objects.size(); i++)
         {
-            aabb_objects.at(i)->isGameObjectVisible = this->cameraFrustum->isAABBInside(*this->aabb_objects.at(i));
+            aabb_objects.at(i)->isGameObjectVisible = activeCamera->frustumComponent->isAABBInside(*this->aabb_objects.at(i));
         }
-        this->cameraFrustum->ActivateComputeCulling(false);
+        activeCamera->frustumComponent->ActivateComputeCulling(false);
     }
 }

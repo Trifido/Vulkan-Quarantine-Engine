@@ -289,8 +289,8 @@ void QECamera::QEStart()
     this->deviceModule = DeviceModule::getInstance();
     this->frustumComponent = std::make_shared<FrustumComponent>();
     this->cameraUniform = std::make_shared<CameraUniform>();
-    this->cameraUBO = std::make_shared<UniformBufferObject>();
-    this->cameraUBO->CreateUniformBuffer(sizeof(CameraUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+
+    this->UpdateCamera();
 }
 
 void QECamera::QEInit()

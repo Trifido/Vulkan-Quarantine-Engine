@@ -33,7 +33,6 @@ void ComputeDescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shade
             }
             else if (binding.first == "CameraUniform")
             {
-                this->camera = QESessionManager::getInstance()->ActiveCamera();
                 poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                 poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
                 idx++;
@@ -258,7 +257,8 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
 
             if (binding.first == "CameraUniform")
             {
-                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->camera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform), frameIdx);
+                auto camera = QESessionManager::getInstance()->ActiveCamera();
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, camera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform), frameIdx);
                 idx++;
             }
 
@@ -470,8 +470,6 @@ void ComputeDescriptorBuffer::Cleanup()
         this->outputTexture.reset();
         this->outputTexture = nullptr;
     }
-
-    this->camera = nullptr;
 
     this->deltaTimeUniform.reset();
     this->deltaTimeUniform = nullptr;

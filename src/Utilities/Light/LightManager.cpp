@@ -5,6 +5,7 @@
 #include "SpotLight.h"
 #include <SynchronizationModule.h>
 #include <SunLight.h>
+#include <QESessionManager.h>
 
 bool compareDistance(const LightMap& a, const LightMap& b)
 {
@@ -84,12 +85,12 @@ void LightManager::AddNewLight(std::shared_ptr<QELight> light_ptr, std::string& 
             if (light_ptr->lightType == LightType::SUN_LIGHT)
             {
                 this->DirLights.push_back(std::static_pointer_cast<QESunLight>(light_ptr));
-                this->DirLights.back()->Setup(this->renderPassModule->DirShadowMappingRenderPass, this->camera.get());
+                this->DirLights.back()->Setup(this->renderPassModule->DirShadowMappingRenderPass);
             }
             else
             {
                 this->DirLights.push_back(std::static_pointer_cast<QEDirectionalLight>(light_ptr));
-                this->DirLights.back()->Setup(this->renderPassModule->DirShadowMappingRenderPass, this->camera.get());
+                this->DirLights.back()->Setup(this->renderPassModule->DirShadowMappingRenderPass);
             }
             this->DirLights.back()->idxShadowMap = (uint32_t)this->DirLights.size() - 1;
 
@@ -377,11 +378,6 @@ void LightManager::CleanShadowMapResources()
     this->CSMDescritors->Clean();
 }
 
-void LightManager::AddCamera(std::shared_ptr<QECamera> camera_ptr)
-{
-    this->camera = camera_ptr;
-}
-
 void LightManager::AddLight(std::shared_ptr<QELight> light_ptr, std::string& name)
 {
     this->lightBuffer.push_back(*light_ptr->uniform);
@@ -403,22 +399,24 @@ void LightManager::AddLight(std::shared_ptr<QELight> light_ptr, std::string& nam
 
 void LightManager::SortingLights()
 {
+    auto activeCamera = QESessionManager::getInstance()->ActiveCamera();
+
     this->sortedLight.clear();
     this->sortedLight.reserve(this->lightBuffer.size());
     this->lights_index.clear();
     this->lights_index.reserve(this->lightBuffer.size());
 
-    float near = *this->camera->GetRawNearPlane();
-    float far = *this->camera->GetRawFarPlane();
+    float near = *activeCamera->GetRawNearPlane();
+    float far = *activeCamera->GetRawFarPlane();
     for (uint32_t i = 0; i < this->lightBuffer.size(); i++)
     {
         glm::vec4 position = glm::vec4(this->lightBuffer.at(i).position, 1.0f);
-        glm::vec4 p_min = position + glm::vec4(this->camera->cameraFront * -this->lightBuffer.at(i).radius, 0.0f);
-        glm::vec4 p_max = position + glm::vec4(this->camera->cameraFront * this->lightBuffer.at(i).radius, 0.0f);
+        glm::vec4 p_min = position + glm::vec4(activeCamera->cameraFront * -this->lightBuffer.at(i).radius, 0.0f);
+        glm::vec4 p_max = position + glm::vec4(activeCamera->cameraFront * this->lightBuffer.at(i).radius, 0.0f);
 
-        glm::vec4 projected_position = this->camera->view * position;
-        glm::vec4 projected_p_min = this->camera->view * p_min;
-        glm::vec4 projected_p_max = this->camera->view * p_max;
+        glm::vec4 projected_position = activeCamera->view * position;
+        glm::vec4 projected_p_min = activeCamera->view * p_min;
+        glm::vec4 projected_p_max = activeCamera->view * p_max;
 
         this->sortedLight.push_back({
                 .id = i,
@@ -481,6 +479,7 @@ void LightManager::ComputeLightsLUT()
 
 void LightManager::ComputeLightTiles()
 {
+    auto activeCamera = QESessionManager::getInstance()->ActiveCamera();
     uint32_t tileXCount = swapChainModule->swapChainExtent.width / swapChainModule->TILE_SIZE;
     uint32_t tileYCount = swapChainModule->swapChainExtent.height / swapChainModule->TILE_SIZE;
 
@@ -511,7 +510,7 @@ void LightManager::ComputeLightTiles()
     this->light_tiles_bits.clear();
     this->light_tiles_bits.resize(tiles_entry_count, 0u);
 
-    float near_z = *this->camera->GetRawNearPlane();
+    float near_z = *activeCamera->GetRawNearPlane();
     float tile_size_inv = 1.0f / newTileSize;
 
     uint32_t tile_stride = tile_x_count * NUM_WORDS;
@@ -524,7 +523,7 @@ void LightManager::ComputeLightTiles()
         glm::vec4 pos{ light.position.x, light.position.y, light.position.z, 1.0f };
         float radius = light.radius;
 
-        glm::vec4 view_space_pos = camera->view * pos;
+        glm::vec4 view_space_pos = activeCamera->view * pos;
         glm::vec2 cx{ view_space_pos.x, view_space_pos.z };
         const float tx_squared = glm::dot(cx, cx) - (radius * radius);
         glm::vec2 vx{ sqrtf(tx_squared), radius };
@@ -541,8 +540,8 @@ void LightManager::ComputeLightTiles()
         glm::mat2 ytransf_max{ vy.x, -vy.y, vy.y, vy.x };
         glm::vec2 maxy = ytransf_max * cy;
 
-        glm::vec4 aabb{ minx.x / minx.y * this->camera->projection[0][0], miny.x / miny.y * this->camera->projection[1][1],
-                    maxx.x / maxx.y * this->camera->projection[0][0], maxy.x / maxy.y * this->camera->projection[1][1] };
+        glm::vec4 aabb{ minx.x / minx.y * activeCamera->projection[0][0], miny.x / miny.y * activeCamera->projection[1][1],
+                    maxx.x / maxx.y * activeCamera->projection[0][0], maxy.x / maxy.y * activeCamera->projection[1][1] };
 
 
         // Build view space AABB and project it, then calculate screen AABB
@@ -554,13 +553,13 @@ void LightManager::ComputeLightTiles()
             corner = corner + glm::vec3(pos);
 
             // transform in view space
-            glm::vec4 corner_vs = this->camera->view * glm::vec4(corner, 1.f);
+            glm::vec4 corner_vs = activeCamera->view * glm::vec4(corner, 1.f);
             // adjust z on the near plane.
             // visible Z is negative, thus corner vs will be always negative, but near is positive.
             // get positive Z and invert ad the end.
             corner_vs.z = glm::max(near_z, corner_vs.z);
 
-            glm::vec4 corner_ndc = this->camera->projection * corner_vs;
+            glm::vec4 corner_ndc = activeCamera->projection * corner_vs;
             corner_ndc = corner_ndc / corner_ndc.w;
 
             // clamp

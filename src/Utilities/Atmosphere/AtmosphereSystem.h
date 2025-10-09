@@ -5,7 +5,6 @@
 #include <DeviceModule.h>
 #include <ShaderModule.h>
 #include <CustomTexture.h>
-#include <QECamera.h>
 #include <LightManager.h>
 #include <QESingleton.h>
 #include <Compute/ComputeNodeManager.h>
@@ -30,7 +29,6 @@ private:
     friend class QESingleton<AtmosphereSystem>; // Permitir acceso al constructor
 
     DeviceModule* deviceModule;
-    std::shared_ptr<QECamera> camera = nullptr;
     LightManager* lightManager = nullptr;
     ComputeNodeManager* computeNodeManager;
     SwapChainModule* swapChainModule;
@@ -77,7 +75,7 @@ private:
     VkDescriptorBufferInfo GetBufferInfo(VkBuffer buffer, VkDeviceSize bufferSize);
     void SetDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, uint32_t idBuffer, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize);
     void SetSamplerDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding, std::shared_ptr<CustomTexture> texture, VkDescriptorImageInfo& imageInfo);
-    void SetUpResources(std::shared_ptr<QECamera> cameraPtr);
+    void SetUpResources();
 
 public:
     AtmosphereSystem();
@@ -92,12 +90,11 @@ public:
     }
 
     void LoadAtmosphereDto(AtmosphereDto atmosphereDto);
-    void AddCamera(std::shared_ptr<QECamera> cameraPtr);
+    void InitializeAtmosphereResources();
     AtmosphereDto CreateAtmosphereDto();
     void AddTextureResources(const string* texturePaths, uint32_t numTextures);
-    void InitializeAtmosphere(std::shared_ptr<QECamera> cameraPtr);
-    void InitializeAtmosphere(AtmosphereType type, const string* texturePaths, uint32_t numTextures, std::shared_ptr<QECamera> cameraPtr);
-    void SetCamera(std::shared_ptr<QECamera> cameraPtr);
+    void InitializeAtmosphere();
+    void InitializeAtmosphere(AtmosphereType type, const string* texturePaths, uint32_t numTextures);
     void DrawCommand(VkCommandBuffer& commandBuffer, uint32_t frameIdx);
     void Cleanup();
     void CleanLastResources();

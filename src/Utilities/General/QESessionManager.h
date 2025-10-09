@@ -28,7 +28,6 @@ public:
     void SetEditorMode(bool value);
     void SetDebugMode(bool value);
     void RegisterActiveSceneCamera();
-    void UpdateCameraReferences();
     std::shared_ptr<QECamera> ActiveCamera() { return _activeCamera; }
     std::shared_ptr<QECamera> EditorCamera() { return _editorCamera; }
     void SetFindNewSceneCamera(std::string cameraID);

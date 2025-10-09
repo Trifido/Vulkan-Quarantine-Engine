@@ -146,13 +146,3 @@ void BufferManageModule::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDe
 
     vkFreeCommandBuffers(deviceModule.device, commandPool, 1, &commandBuffer);
 }
-
-//void BufferManageModule::updateUniformBufferCamera(uint32_t currentImage, VkExtent2D extent, Camera& camera)
-//{
-//    void* data;
-//    vkMapMemory(deviceModule->device, uniformBuffersMemory[currentImage], 0, sizeof(Camera), 0, &data);
-//    memcpy(data, &camera, sizeof(Camera));
-//    vkUnmapMemory(deviceModule->device, uniformBuffersMemory[currentImage]);
-//}
-
-

@@ -6,6 +6,7 @@
 #include <yaml-cpp/yaml.h>
 #include <yaml-cpp/node/convert.h> 
 #include "glm_yaml_conversions.h"
+#include <QESessionManager.h>
 
 AtmosphereSystem::AtmosphereSystem()
 {
@@ -36,20 +37,20 @@ void AtmosphereSystem::LoadAtmosphereDto(AtmosphereDto atmosphereDto)
     this->IsInitialized = atmosphereDto.hasAtmosphere;
 }
 
-void AtmosphereSystem::AddCamera(std::shared_ptr<QECamera> cameraPtr)
+void AtmosphereSystem::InitializeAtmosphereResources()
 {
     switch (this->atmosphereType)
     {
-        case AtmosphereType::CUBEMAP:
-            this->InitializeAtmosphere(this->atmosphereType, nullptr, 0, cameraPtr);
-            break;
-        case AtmosphereType::SPHERICALMAP:
-            this->InitializeAtmosphere(this->atmosphereType, nullptr, 0, cameraPtr);
-            break;
-        default:
-        case AtmosphereType::PHYSICALLY_BASED_SKY:
-            this->InitializeAtmosphere(cameraPtr);
-            break;
+    case AtmosphereType::CUBEMAP:
+        this->InitializeAtmosphere(this->atmosphereType, nullptr, 0);
+        break;
+    case AtmosphereType::SPHERICALMAP:
+        this->InitializeAtmosphere(this->atmosphereType, nullptr, 0);
+        break;
+    default:
+    case AtmosphereType::PHYSICALLY_BASED_SKY:
+        this->InitializeAtmosphere();
+        break;
     }
 }
 
@@ -86,20 +87,18 @@ void AtmosphereSystem::AddTextureResources(const string* texturePaths, uint32_t 
     this->CreateDescriptorSet();
 }
 
-void AtmosphereSystem::InitializeAtmosphere(std::shared_ptr<QECamera> cameraPtr)
+void AtmosphereSystem::InitializeAtmosphere()
 {
-    this->SetUpResources(cameraPtr);
+    this->SetUpResources();
     this->UpdateSun();
     this->CreateDescriptorPool();
     this->CreateDescriptorSet();
 }
 
-void AtmosphereSystem::SetUpResources(std::shared_ptr<QECamera> cameraPtr)
+void AtmosphereSystem::SetUpResources()
 {
     this->Cleanup();
     this->CleanLastResources();
-
-    this->camera = cameraPtr;
 
     auto shaderManager = ShaderManager::getInstance();
 
@@ -170,22 +169,17 @@ void AtmosphereSystem::SetUpResources(std::shared_ptr<QECamera> cameraPtr)
     this->_Mesh->QEStart();
 }
 
-void AtmosphereSystem::InitializeAtmosphere(AtmosphereType type, const string* texturePaths, uint32_t numTextures, std::shared_ptr<QECamera> cameraPtr)
+void AtmosphereSystem::InitializeAtmosphere(AtmosphereType type, const string* texturePaths, uint32_t numTextures)
 {
     if (this->atmosphereType == type) return;
 
     this->atmosphereType = type;
 
-    this->SetUpResources(cameraPtr);
+    this->SetUpResources();
 
     this->CreateDescriptorPool();
 
     this->AddTextureResources(texturePaths, numTextures);
-}
-
-void AtmosphereSystem::SetCamera(std::shared_ptr<QECamera> cameraPtr)
-{
-    this->camera = cameraPtr;
 }
 
 void AtmosphereSystem::CreateDescriptorPool()
@@ -242,22 +236,23 @@ void AtmosphereSystem::CreateDescriptorSet()
     int numBuffers = (this->atmosphereType != AtmosphereType::PHYSICALLY_BASED_SKY) ? 1 : 3;
     this->buffersInfo.resize(numBuffers);
 
+    auto activeCamera = QESessionManager::getInstance()->ActiveCamera();
+
     for (size_t frameIdx = 0; frameIdx < MAX_FRAMES_IN_FLIGHT; frameIdx++)
     {
         std::vector<VkWriteDescriptorSet> descriptorWrites;
         descriptorWrites.resize(numWrites);
 
-
         if (this->atmosphereType != AtmosphereType::PHYSICALLY_BASED_SKY)
         {
-            this->SetDescriptorWrite(descriptorWrites[0], this->descriptorSets[frameIdx], 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, this->camera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform));
+            this->SetDescriptorWrite(descriptorWrites[0], this->descriptorSets[frameIdx], 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, activeCamera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform));
             this->SetSamplerDescriptorWrite(descriptorWrites[1], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, this->environmentTexture, this->imageInfo_1);
         }
         else
         {
             this->SetSamplerDescriptorWrite(descriptorWrites[0], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, this->TLUT_ComputeNode->computeDescriptor->outputTexture, this->imageInfo_1);
             this->SetSamplerDescriptorWrite(descriptorWrites[1], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, this->SVLUT_ComputeNode->computeDescriptor->outputTexture, this->imageInfo_2);
-            this->SetDescriptorWrite(descriptorWrites[2], this->descriptorSets[frameIdx], 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, this->camera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform));
+            this->SetDescriptorWrite(descriptorWrites[2], this->descriptorSets[frameIdx], 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, activeCamera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform));
             this->SetDescriptorWrite(descriptorWrites[3], this->descriptorSets[frameIdx], 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3, this->resolutionUBO->uniformBuffers[frameIdx], sizeof(ScreenResolutionUniform));
             this->SetDescriptorWrite(descriptorWrites[4], this->descriptorSets[frameIdx], 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4, this->sunLight->sunUBO->uniformBuffers[frameIdx], sizeof(SunUniform));
         }
