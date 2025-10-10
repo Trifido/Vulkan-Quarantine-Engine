@@ -29,10 +29,11 @@ QECamera::QECamera()
     this->LoadCameraDto(swapchainModule->swapChainExtent.width, swapchainModule->swapChainExtent.height, CameraDto());
 }
 
-QECamera::QECamera(const float width, const float height, const CameraDto& cameraDto)
+QECamera::QECamera(const float width, const float height, const CameraDto& cameraDto, bool isEditor)
 {
     QEGameComponent::QEGameComponent();
 
+    this->allowEditorControls = isEditor;
     this->LoadCameraDto(width, height, cameraDto);
 }
 
@@ -73,8 +74,11 @@ CameraDto QECamera::CreateCameraDto()
     };
 }
 
-void QECamera::CameraController(float deltaTime)
+void QECamera::EditorCameraController(float deltaTime)
 {
+    if (!this->allowEditorControls)
+        return;
+
     EditorScroll();
     EditorRotate();
 
@@ -241,8 +245,6 @@ void QECamera::QEInit()
 
 void QECamera::QEUpdate()
 {
-    if (allowEditorControls)
-        CameraController(Timer::DeltaTime);
 }
 
 void QECamera::QEDestroy()

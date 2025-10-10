@@ -10,7 +10,7 @@
 QESessionManager::QESessionManager()
 {
     auto deviceModule = DeviceModule::getInstance();
-    this->_editorCamera = std::make_shared<QECamera>(1280.0f, 720.0f, CameraDto());
+    this->_editorCamera = std::make_shared<QECamera>(1280.0f, 720.0f, CameraDto(), true);
     this->cameraUBO = std::make_shared<UniformBufferObject>();
     this->cameraUBO->CreateUniformBuffer(sizeof(CameraUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 }
@@ -64,7 +64,7 @@ void QESessionManager::FreeCameraResources()
 
 void QESessionManager::UpdateActiveCamera(float deltaTime)
 {
-    _activeCamera->CameraController(deltaTime);
+    _activeCamera->EditorCameraController(deltaTime);
 
     if (_activeCamera->IsModified())
     {

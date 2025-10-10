@@ -55,11 +55,11 @@ protected:
 
 public:
     QECamera();
-    QECamera(const float width, const float height, const CameraDto& cameraDto = CameraDto());
+    QECamera(const float width, const float height, const CameraDto& cameraDto = CameraDto(), bool isEditor = false);
     bool LoadCameraDto(const float width, const float height, const CameraDto& cameraDto);
     CameraDto CreateCameraDto();
     void SetEditorControlsEnabled(bool v) { allowEditorControls = v; }
-    void CameraController(float deltaTime);
+    void EditorCameraController(float deltaTime);
     float GetFOV() { return fov; }
     float* GetRawFOV() { return &fov; }
     float GetNear() { return nearPlane; }
