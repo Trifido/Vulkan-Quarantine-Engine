@@ -18,12 +18,11 @@ class FrustumComponent;
 class QECamera : public QEGameComponent
 {
     REFLECTABLE_COMPONENT(QECamera)
-    //REFLECTABLE_DERIVED_COMPONENT(QECamera, QEGameComponent)
 private:
     DeviceModule* deviceModule = nullptr;
     std::shared_ptr<CameraUniform> cameraUniform;
     glm::vec4 normalize_plane(glm::vec4 plane);
-    bool isInputUpdated = true;
+    bool _cameraModified = true;
     bool allowEditorControls = false;
 
 protected:
@@ -45,7 +44,6 @@ public:
     REFLECT_PROPERTY(glm::vec3, cameraFront)
 
     std::shared_ptr<FrustumComponent> frustumComponent;
-    std::shared_ptr<UniformBufferObject> cameraUBO;
     float WIDTH, HEIGHT;
     glm::mat4 view;
     glm::mat4 projection;
@@ -70,9 +68,9 @@ public:
     float* GetRawFarPlane() { return &farPlane; }
     float* GetRawCameraPosition() { return &cameraPos[0]; }
     float* GetRawCameraFront() { return &cameraFront[0]; }
+    CameraUniform* GetCameraUniform() { return this->cameraUniform.get(); }
     void UpdateViewportSize(VkExtent2D size);
     void UpdateCamera();
-    void CleanCameraUBO();
     bool IsModified();
     void ResetModifiedField();
 
@@ -82,10 +80,8 @@ public:
     void QEDestroy() override;
 
 private:
-    void CheckCameraAttributes(float* positionCamera, float* frontCamera, float fov, float nearPlane, float farPlane);
     void EditorScroll();
     void EditorRotate();
-    void InvertPitch(float heightPos);
     void UpdateUBOCamera();
 };
 

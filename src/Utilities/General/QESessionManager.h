@@ -16,6 +16,8 @@ private:
     std::shared_ptr<QECamera> _editorCamera = nullptr;
     std::shared_ptr<QECamera> _gameCamera = nullptr;
 
+    std::shared_ptr<UniformBufferObject> cameraUBO;
+
 private:
     bool _newSceneCamera = false;
     std::string newCameraID = "";
@@ -30,10 +32,12 @@ public:
     void RegisterActiveSceneCamera();
     std::shared_ptr<QECamera> ActiveCamera() { return _activeCamera; }
     std::shared_ptr<QECamera> EditorCamera() { return _editorCamera; }
+    std::shared_ptr<UniformBufferObject> GetCameraUBO() { return this->cameraUBO; }
     void SetFindNewSceneCamera(std::string cameraID);
 
     void CleanCameras();
     void FreeCameraResources();
+    void UpdateActiveCamera(float deltaTime);
     void UpdateViewportSize();
 
     void SetupEditor();

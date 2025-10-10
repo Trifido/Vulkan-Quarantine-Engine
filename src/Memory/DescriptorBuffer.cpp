@@ -102,10 +102,6 @@ void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
                 poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                 poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
                 idx++;
-
-                hasCameraUniform = true;
-                cameraUBO = std::make_shared<UniformBufferObject>();
-                cameraUBO->CreateUniformBuffer(sizeof(CameraUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
             }
             else if (binding.first == "SunUniform")
             {
@@ -308,6 +304,7 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
         {
             if (binding.first == "CameraUniform")
             {
+                auto cameraUBO = QESessionManager::getInstance()->GetCameraUBO();
                 this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform), frameIdx);
                 idx++;
             }
@@ -451,17 +448,6 @@ void DescriptorBuffer::InitializeDescriptorSets(std::shared_ptr<ShaderModule> sh
         descriptorWrites = this->GetDescriptorWrites(shader_ptr, (uint32_t)i);
         vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
-}
-
-void DescriptorBuffer::SyncCameraUBO(uint32_t frameIdx) {
-    if (!hasCameraUniform) return;
-
-    auto activeCamera = QESessionManager::getInstance()->ActiveCamera();
-
-    void* data;
-    vkMapMemory(deviceModule->device, cameraUBO->uniformBuffersMemory[frameIdx], 0, sizeof(CameraUniform), 0, &data);
-    memcpy(data, activeCamera->cameraUniform.get(), sizeof(CameraUniform));
-    vkUnmapMemory(deviceModule->device, cameraUBO->uniformBuffersMemory[frameIdx]);
 }
 
 void DescriptorBuffer::CleanDescriptorSetPool()

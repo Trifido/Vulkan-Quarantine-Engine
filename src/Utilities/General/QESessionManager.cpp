@@ -5,10 +5,14 @@
 #include <CullingSceneManager.h>
 #include <PhysicsModule.h>
 #include <Grid.h>
+#include <SynchronizationModule.h>
 
 QESessionManager::QESessionManager()
 {
+    auto deviceModule = DeviceModule::getInstance();
     this->_editorCamera = std::make_shared<QECamera>(1280.0f, 720.0f, CameraDto());
+    this->cameraUBO = std::make_shared<UniformBufferObject>();
+    this->cameraUBO->CreateUniformBuffer(sizeof(CameraUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 }
 
 void QESessionManager::SetEditorMode(bool value)
@@ -53,14 +57,29 @@ void QESessionManager::SetFindNewSceneCamera(std::string cameraID)
     }
 }
 
-void QESessionManager::CleanCameras()
-{
-    this->_activeCamera->CleanCameraUBO();
-}
-
 void QESessionManager::FreeCameraResources()
 {
     this->_editorCamera.reset();
+}
+
+void QESessionManager::UpdateActiveCamera(float deltaTime)
+{
+    _activeCamera->CameraController(deltaTime);
+
+    if (_activeCamera->IsModified())
+    {
+        auto deviceModule = DeviceModule::getInstance();
+        auto cameraUniform = this->_activeCamera->GetCameraUniform();
+        for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
+        {
+            void* data;
+            vkMapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame], 0, sizeof(CameraUniform), 0, &data);
+            memcpy(data, static_cast<const void*>(cameraUniform), sizeof(CameraUniform));
+            vkUnmapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame]);
+        }
+    }
+
+    _activeCamera->ResetModifiedField();
 }
 
 void QESessionManager::UpdateViewportSize()
@@ -82,8 +101,6 @@ void QESessionManager::SetupEditor()
     physicsModule->InitializeDebugResources();
     physicsModule->debugDrawer->DebugMode = _isDebugMode;
 
-    // Inicializamos los componentes del editor
-    _isEditor = true;
     if (_isEditor)
     {
         std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
@@ -98,6 +115,19 @@ void QESessionManager::CleanEditorResources()
     editorManager->Cleanup();
     editorManager->CleanLastResources();
     editorManager->ResetInstance();
+}
+
+void QESessionManager::CleanCameras()
+{
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        if (this->cameraUBO != nullptr)
+        {
+            auto deviceModule = DeviceModule::getInstance();
+            vkDestroyBuffer(deviceModule->device, this->cameraUBO->uniformBuffers[i], nullptr);
+            vkFreeMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[i], nullptr);
+        }
+    }
 }
 
 void QESessionManager::UpdateCullingScene()

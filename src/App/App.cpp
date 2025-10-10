@@ -17,7 +17,6 @@ App::App()
     this->queueModule = QueueModule::getInstance();  
     this->deviceModule = DeviceModule::getInstance();  
 
-    this->sessionManager = QESessionManager::getInstance();
     this->physicsModule = PhysicsModule::getInstance();  
     this->graphicsPipelineManager = GraphicsPipelineManager::getInstance();  
     this->shadowPipelineManager = ShadowPipelineManager::getInstance();  
@@ -32,7 +31,7 @@ App::~App()
 void App::run(QEScene scene, bool isEditorMode)
 {
     this->scene = scene;
-    this->sessionManager->SetEditorMode(isEditorMode);
+    this->isRunEditor = isEditorMode;
 
     initWindow();
     initVulkan();
@@ -161,6 +160,9 @@ void App::initVulkan()
     CSMResources::queueModule = this->queueModule;
 
     // INIT ------------------------- Mesh & Material -------------------------------
+    this->sessionManager = QESessionManager::getInstance();
+    this->sessionManager->SetEditorMode(this->isRunEditor);
+
     this->shaderManager = ShaderManager::getInstance();
     this->textureManager = TextureManager::getInstance();
     this->lightManager = LightManager::getInstance();
@@ -483,7 +485,7 @@ void App::mainLoop()
         // INPUT EVENTS
         this->keyboard_ptr->ReadKeyboardEvents();
 
-        this->sessionManager->ActiveCamera()->CameraController((float)Timer::DeltaTime);
+        this->sessionManager->UpdateActiveCamera((float)Timer::DeltaTime);
 
         // UPDATE CULLING SCENE
         this->sessionManager->UpdateCullingScene();
@@ -541,8 +543,6 @@ void App::mainLoop()
             this->computeFrame();
             this->drawFrame();
         }
-
-        this->sessionManager->ActiveCamera()->ResetModifiedField();
         /*
         {
             //imgui new frame
