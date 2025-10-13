@@ -17,7 +17,7 @@ private:
     std::shared_ptr<AnimationComponent> animationComponent = nullptr;
     std::shared_ptr<QEGeometryComponent> geometryComponent = nullptr;
     std::vector<std::shared_ptr<QEMaterial>>& materialComponents;
-    std::shared_ptr<Transform> transformComponent = nullptr;
+    std::shared_ptr<QETransform> transformComponent = nullptr;
 
 public:
     REFLECT_PROPERTY(bool, IsMeshShaderPipeline)

@@ -28,7 +28,7 @@ void CullingSceneManager::InitializeCullingSceneResources()
     }
 }
 
-std::shared_ptr<AABBObject> CullingSceneManager::GenerateAABB(std::pair<glm::vec3, glm::vec3> aabbData, std::shared_ptr<Transform> transform_ptr)
+std::shared_ptr<AABBObject> CullingSceneManager::GenerateAABB(std::pair<glm::vec3, glm::vec3> aabbData, std::shared_ptr<QETransform> transform_ptr)
 {
     this->aabb_objects.push_back(std::make_shared<AABBObject>());
 
@@ -74,7 +74,7 @@ void CullingSceneManager::DrawDebug(VkCommandBuffer& commandBuffer, uint32_t idx
             vkCmdBindIndexBuffer(commandBuffer, this->aabb_objects.at(i)->indexBuffer[0], 0, VK_INDEX_TYPE_UINT32);
 
             VkShaderStageFlagBits stages = VK_SHADER_STAGE_ALL;
-            vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, stages, 0, sizeof(PushConstantStruct), &this->aabb_objects.at(i)->GetTransform()->GetModel());
+            vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, stages, 0, sizeof(PushConstantStruct), &this->aabb_objects.at(i)->GetTransform()->GetWorldMatrix());
 
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->aabb_objects.at(i)->indices.size()), 1, 0, 0, 0);
         }

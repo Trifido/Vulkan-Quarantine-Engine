@@ -202,12 +202,12 @@ void App::initVulkan()
     //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf").generic_string();
 
     // THIRD PERSON CAMERA
-    std::shared_ptr<QEGameObject> cameraObject = std::make_shared<QEGameObject>();
-    cameraObject->AddComponent(std::make_shared<QECamera>());
-    this->gameObjectManager->AddGameObject(cameraObject, "cameraObject");
-    auto cameraComponent = cameraObject->GetComponent<QECamera>();
-    cameraComponent->cameraFront = glm::vec3(0.0134427, -0.270601, 0.962598);
-    cameraComponent->cameraPos = glm::vec3(-0.715416, 1.89489, -2.56881);
+    //std::shared_ptr<QEGameObject> cameraObject = std::make_shared<QEGameObject>();
+    //cameraObject->AddComponent(std::make_shared<QECamera>());
+    //this->gameObjectManager->AddGameObject(cameraObject, "cameraObject");
+    //auto cameraComponent = cameraObject->GetComponent<QECamera>();
+    //cameraComponent->cameraFront = glm::vec3(0.0134427, -0.270601, 0.962598);
+    //cameraComponent->cameraPos = glm::vec3(-0.715416, 1.89489, -2.56881);
 
     // CHARACTER CONTROLLER
     /**/
@@ -251,9 +251,9 @@ void App::initVulkan()
     floor->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
     floor->AddComponent<QEMaterial>(floorMatInstance);
     
-    auto floorTransform = floor->GetComponent<Transform>();
-    floorTransform->SetPosition(glm::vec3(0.0f, -0.01f, 0.0f));
-    floorTransform->SetScale(glm::vec3(10.0f, 1.0f, 10.0f));
+    auto floorTransform = floor->GetComponent<QETransform>();
+    floorTransform->SetLocalPosition(glm::vec3(0.0f, -0.01f, 0.0f));
+    floorTransform->SetLocalScale(glm::vec3(10.0f, 1.0f, 10.0f));
 
     floorMatInstance->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.2f, 0.7f));
     floorMatInstance->materialData.SetMaterialField("Specular", glm::vec3(0.0f, 0.0f, 0.0f));
@@ -276,10 +276,10 @@ void App::initVulkan()
     ramp->AddComponent<QEGeometryComponent>(geometryCubeComponent);
     ramp->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
     ramp->AddComponent<QEMaterial>(rampMatInstance);
-    auto rampTransform = ramp->GetComponent<Transform>();
-    rampTransform->SetPosition(glm::vec3(0.0f, -0.5f, -10.0f));
-    rampTransform->SetOrientation(glm::vec3(70.0f, 0.0f, 0.0f));
-    rampTransform->SetScale(glm::vec3(3.0f, 10.0f, 3.0f));
+    auto rampTransform = ramp->GetComponent<QETransform>();
+    rampTransform->SetLocalPosition(glm::vec3(0.0f, -0.5f, -10.0f));
+    rampTransform->SetLocalEulerDegrees(glm::vec3(70.0f, 0.0f, 0.0f));
+    rampTransform->SetLocalScale(glm::vec3(3.0f, 10.0f, 3.0f));
 
     rampMatInstance->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
 
@@ -298,10 +298,10 @@ void App::initVulkan()
     wall->AddComponent<QEGeometryComponent>(geometryWallComponent);
     wall->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
     wall->AddComponent<QEMaterial>(wallMatInstance);
-    auto wallTransform = wall->GetComponent<Transform>();
-    wallTransform->SetPosition(glm::vec3(3.0f, 0.5f, 0.0f));
-    wallTransform->SetOrientation(glm::vec3(0.0f, 0.0f, 0.0f));
-    wallTransform->SetScale(glm::vec3(4.0f, 0.5f, 4.0f));
+    auto wallTransform = wall->GetComponent<QETransform>();
+    wallTransform->SetLocalPosition(glm::vec3(3.0f, 0.5f, 0.0f));
+    wallTransform->SetLocalEulerDegrees(glm::vec3(0.0f, 0.0f, 0.0f));
+    wallTransform->SetLocalScale(glm::vec3(4.0f, 0.5f, 4.0f));
 
     wallMatInstance->materialData.SetMaterialField("Diffuse", glm::vec3(0.8f, 0.2f, 0.2f));
 
@@ -503,27 +503,24 @@ void App::mainLoop()
             saveScene();
         }
 
+        glm::vec3 newDir = sunLight->transform->Forward();
         if (ImGui::IsKeyDown(ImGuiKey_J))
         {
-            glm::vec3 newDir = sunLight->transform->ForwardVector;
             newDir.x += 0.001f;
             sunLight->SetLightDirection(newDir);
         }
         if (ImGui::IsKeyDown(ImGuiKey_L))
         {
-            glm::vec3 newDir = sunLight->transform->ForwardVector;
             newDir.x -= 0.001f;
             sunLight->SetLightDirection(newDir);
         }
         if (ImGui::IsKeyDown(ImGuiKey_I))
         {
-            glm::vec3 newDir = sunLight->transform->ForwardVector;
             newDir.y += 0.001f;
             sunLight->SetLightDirection(newDir);
         }
         if (ImGui::IsKeyDown(ImGuiKey_K))
         {
-            glm::vec3 newDir = sunLight->transform->ForwardVector;
             newDir.y -= 0.001f;
             sunLight->SetLightDirection(newDir);
         }

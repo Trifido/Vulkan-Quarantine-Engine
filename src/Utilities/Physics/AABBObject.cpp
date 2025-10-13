@@ -61,12 +61,12 @@ void AABBObject::CleanResources()
     QEDestroy();
 }
 
-void AABBObject::AddTransform(std::shared_ptr<Transform> modelTransform)
+void AABBObject::AddTransform(std::shared_ptr<QETransform> modelTransform)
 {
     this->transform = modelTransform;
 }
 
-const std::shared_ptr<Transform> AABBObject::GetTransform()
+const std::shared_ptr<QETransform> AABBObject::GetTransform()
 {
     return this->transform;
 }

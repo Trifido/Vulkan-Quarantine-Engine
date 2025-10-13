@@ -32,7 +32,7 @@
 
 //  Utilities
 #include "QEGameObject.h"
-#include "Transform.h"
+#include "QETransform.h"
 #include "Material.h"
 #include "QECamera.h"
 #include "LightManager.h"

@@ -114,7 +114,7 @@ void QELight::QEInit()
         return;
     }
 
-    this->transform = this->Owner->GetComponent<Transform>();
+    this->transform = this->Owner->GetComponent<QETransform>();
 }
 
 void QELight::QEStart()

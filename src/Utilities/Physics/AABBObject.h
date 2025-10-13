@@ -7,14 +7,14 @@
 #include <vector>
 #include <glm/glm.hpp>
 
-#include "Transform.h"
+#include "QETransform.h"
 #include "QEGeometryComponent.h"
 
 class AABBObject : public QEGeometryComponent
 {
     REFLECTABLE_DERIVED_COMPONENT(AABBObject, QEGameComponent)
 private:
-    std::shared_ptr<Transform> transform;
+    std::shared_ptr<QETransform> transform;
 
 public:
     REFLECT_PROPERTY(glm::vec3, min)
@@ -34,8 +34,8 @@ public:
     AABBObject();
     void CreateBuffers();
     void CleanResources();
-    void AddTransform(std::shared_ptr<Transform> modelTransform);
-    const std::shared_ptr<Transform> GetTransform();
+    void AddTransform(std::shared_ptr<QETransform> modelTransform);
+    const std::shared_ptr<QETransform> GetTransform();
 
     void QEStart() override;
     void QEInit() override;

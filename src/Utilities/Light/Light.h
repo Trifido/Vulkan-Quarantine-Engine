@@ -2,7 +2,7 @@
 #ifndef QELIGHT_H
 #define QELIGHT_H
 
-#include "Transform.h"
+#include "QETransform.h"
 #include "DeviceModule.h"
 #include <LightType.h>
 #include <QEGameComponent.h>
@@ -30,7 +30,7 @@ protected:
     REFLECT_PROPERTY(float, radius)
 
 public:
-    std::shared_ptr<Transform> transform;
+    std::shared_ptr<QETransform> transform;
     std::shared_ptr<LightUniform> uniform;
 
     bool ResourcesInitialized = false;

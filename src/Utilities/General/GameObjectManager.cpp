@@ -79,7 +79,7 @@ void GameObjectManager::CSMCommand(VkCommandBuffer& commandBuffer, uint32_t idx,
             continue;
 
         PushConstantCSMStruct shadowParameters = {};
-        shadowParameters.model = model.second->GetComponent<Transform>()->GetModel();
+        shadowParameters.model = model.second->GetComponent<QETransform>()->GetWorldMatrix();
         shadowParameters.cascadeIndex = cascadeIndex;
 
         vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantCSMStruct), &shadowParameters);
@@ -95,12 +95,12 @@ void GameObjectManager::OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32
         if (meshRenderer == nullptr)
             continue;
 
-        auto transform = model.second->GetComponent<Transform>();
+        auto transform = model.second->GetComponent<QETransform>();
         glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), -lightPosition);
 
         PushConstantOmniShadowStruct shadowParameters = {};
-        shadowParameters.lightModel = translationMatrix * transform->GetModel();
-        shadowParameters.model = transform->GetModel();
+        shadowParameters.lightModel = translationMatrix * transform->GetWorldMatrix();
+        shadowParameters.model = transform->GetWorldMatrix();
         shadowParameters.view = viewParameter;
 
         vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantOmniShadowStruct), &shadowParameters);
@@ -154,13 +154,13 @@ void GameObjectManager::SaveGameObjects(std::ofstream& file)
                 matPath = mat->Name;
             }
 
-            auto transform = model.second->GetComponent<Transform>();
+            auto transform = model.second->GetComponent<QETransform>();
             auto mesh = model.second->GetComponent<QEGeometryComponent>();
 
             GameObjectDto gameObjectDto(
                 model.second->ID(),
                 model.first,
-                transform->GetModel(),
+                transform->GetWorldMatrix(),
                 "",
                 matPath);
             gameObjectDtos.push_back(gameObjectDto);

@@ -1,12 +1,10 @@
 #include "QECamera.h"
-
 #include <FrustumComponent.h>
-
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <SynchronizationModule.h>
 #include <Timer.h>
 #include <QESessionManager.h>
+#include "QEGameObject.h"
 
 float glm_vec3_dot(glm::vec3 a, glm::vec3 b) {
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
@@ -22,209 +20,113 @@ float glm_vec3_norm(glm::vec3 v) {
 
 QECamera::QECamera()
 {
+    QEGameComponent::QEGameComponent();
     auto sessionManager = QESessionManager::getInstance();
     sessionManager->SetFindNewSceneCamera(this->id);
 
+    this->_near = 0.1f;
+    this->_far = 500.0f;
+    this->_fov = 45.0f;
+
     auto swapchainModule = SwapChainModule::getInstance();
-    this->LoadCameraDto(swapchainModule->swapChainExtent.width, swapchainModule->swapChainExtent.height, CameraDto());
+    UpdateViewportSize(swapchainModule->swapChainExtent);
 }
 
-QECamera::QECamera(const float width, const float height, const CameraDto& cameraDto, bool isEditor)
+QECamera::QECamera(const float width, const float height)
 {
     QEGameComponent::QEGameComponent();
+    this->Width = width;
+    this->Height = height;
 
-    this->allowEditorControls = isEditor;
-    this->LoadCameraDto(width, height, cameraDto);
-}
+    this->_near = 0.1f;
+    this->_far = 500.0f;
+    this->_fov = 45.0f;
 
-bool QECamera::LoadCameraDto(const float width, const float height, const CameraDto& cameraDto)
-{
-    this->cameraFront = cameraDto.front;
-    this->cameraPos = cameraDto.position;
-    this->cameraUp = cameraDto.up;
-    this->cameraRight = glm::vec3(1.0f, 0.0f, 0.0f);
-    this->nearPlane = cameraDto.nearPlane;
-    this->farPlane = cameraDto.farPlane;
-    this->fov = cameraDto.fov;
-
-    this->WIDTH = width;
-    this->HEIGHT = height;
-
-    this->lastX = WIDTH / 2.0f;
-    this->lastY = HEIGHT / 2.0f;
-
-    this->_cameraModified = true;
-    
-    this->pitch = cameraDto.pitchSaved;
-    this->yaw = cameraDto.yawSaved;
-
-    this->cameraSpeed = 10.0f;
-    this->firstMouse = true;
-
-    return true;
-}
-
-CameraDto QECamera::CreateCameraDto()
-{
-    return
+    VkExtent2D size =
     {
-        cameraPos, cameraFront, cameraUp,
-        nearPlane, farPlane, fov,
-        pitch, yaw
+        .width = (uint32_t)width,
+        .height = (uint32_t)height
     };
-}
 
-void QECamera::EditorCameraController(float deltaTime)
-{
-    if (!this->allowEditorControls)
-        return;
-
-    EditorScroll();
-    EditorRotate();
-
-    if (ImGui::IsKeyPressed(ImGuiKey_UpArrow) ||
-        (ImGui::GetIO().KeyShift && ImGui::IsKeyDown(ImGuiKey_W)))
-    {
-        cameraPos += cameraSpeed * deltaTime * cameraFront;
-        this->_cameraModified = true;
-    }
-
-    if (ImGui::IsKeyPressed(ImGuiKey_DownArrow) ||
-        (ImGui::GetIO().KeyShift && ImGui::IsKeyDown(ImGuiKey_S)))
-    {
-        cameraPos -= cameraSpeed * deltaTime * cameraFront;
-        this->_cameraModified = true;
-    }
-
-    if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow) ||
-        (ImGui::GetIO().KeyShift && ImGui::IsKeyDown(ImGuiKey_A)))
-    {
-        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * deltaTime * cameraSpeed;
-        this->_cameraModified = true;
-    }
-
-    if (ImGui::IsKeyPressed(ImGuiKey_RightArrow) ||
-        (ImGui::GetIO().KeyShift && ImGui::IsKeyDown(ImGuiKey_D)))
-    {
-        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * deltaTime * cameraSpeed;
-        this->_cameraModified = true;
-    }
-
-    if (this->_cameraModified)
-    {
-        this->UpdateCamera();
-    }
-}
-
-void QECamera::EditorScroll()
-{
-    if (ImGui::GetIO().MouseWheel != 0.0f && ImGui::GetIO().KeyShift)
-    {
-        if (fov >= 1.0f && fov <= 45.0f)
-            fov -= ImGui::GetIO().MouseWheel;
-        if (fov <= 1.0f)
-            fov = 1.0f;
-        if (fov >= 45.0f)
-            fov = 45.0f;
-
-        this->_cameraModified = true;
-    }
-}
-
-void QECamera::EditorRotate()
-{
-    if (ImGui::GetIO().KeyShift && ImGui::IsMouseDown(1))
-    {
-        ImGuiIO& io = ImGui::GetIO();
-
-        if (firstMouse)
-        {
-            lastX = io.MousePos.x;
-            lastY = io.MousePos.y;
-            firstMouse = false;
-            return;
-        }
-        
-        float xoffset = io.MousePos.x - lastX;
-        float yoffset = lastY - io.MousePos.y; // reversed since y-coordinates go from bottom to top
-        lastX = io.MousePos.x;
-        lastY = io.MousePos.y;
-
-        float sensitivity = 0.1f; // change this value to your liking
-        xoffset *= sensitivity;
-        yoffset *= sensitivity;
-
-        yaw += xoffset;
-        pitch += yoffset;
-
-        // make sure that when pitch is out of bounds, screen doesn't get flipped
-        pitch = glm::clamp(pitch, -89.0f, 89.0f);
-
-        float yawDegrees = glm::radians(yaw);
-        float pitchDegrees = glm::radians(pitch);
-
-        glm::vec3 front;
-        front.x = cos(yawDegrees) * cos(pitchDegrees);
-        front.y = sin(pitchDegrees);
-        front.z = sin(yawDegrees) * cos(pitchDegrees);
-
-        cameraFront = glm::normalize(front);
-
-        this->_cameraModified = true;
-    }
-    else
-    {
-        firstMouse = true;
-    }
+    UpdateViewportSize(size);
 }
 
 void QECamera::UpdateViewportSize(VkExtent2D size)
 {
-    this->WIDTH = (float)size.width;
-    this->HEIGHT = (float)size.height;
+    this->Width = (float)size.width;
+    this->Height = (float)size.height;
+    _dirtyData = true;
 }
 
 void QECamera::UpdateCamera()
 {
-    this->view = glm::lookAt(this->cameraPos, this->cameraPos + this->cameraFront, this->cameraUp);
-    this->projection = glm::perspective(glm::radians(fov), (float)this->WIDTH / (float)this->HEIGHT, this->nearPlane, this->farPlane);
-    this->projection[1][1] *= -1;
-    this->VP = this->projection * this->view;
+    glm::vec3 pos = _OwnerTransform ? _OwnerTransform->GetWorldPosition() : glm::vec3(0.0f);
+    glm::quat rot = _OwnerTransform ? _OwnerTransform->GetWorldRotation() : glm::quat(1, 0, 0, 0);
 
-    this->UpdateUniform();
+    // 2) View = R^T * T^-1   (conjugado del quat = R^T)
+    glm::mat4 Rinv = glm::toMat4(glm::conjugate(rot));
+    glm::mat4 Tinv = glm::translate(glm::mat4(1.0f), -pos);
+    CameraData->View = Rinv * Tinv;
 
-    this->frustumComponent->ActivateComputeCulling(true);
+    // 3) Proyección (Vulkan: flip Y)
+    UpdateProjectionIfNeeded();
+
+    // 4) Derivados
+    CameraData->WPosition = glm::vec4(pos, 1.0f);
+    CameraData->Viewproj = CameraData->Projection * CameraData->View;
+
+    UpdateFrustumPlanes();
+    if (_frustumComponent) _frustumComponent->ActivateComputeCulling(true);
 }
 
-void QECamera::UpdateUniform()
+glm::vec4 QECamera::normalize_plane(glm::vec4 p)
 {
-    this->cameraUniform->projection = this->projection;
-    this->cameraUniform->view = this->view;
-    this->cameraUniform->viewproj = this->VP;
-    this->cameraUniform->position = glm::vec4(this->cameraPos, 1.0f);
-
-    this->UpdateFrustumPlanes();
+    glm::vec3 n(p.x, p.y, p.z);
+    float len = glm::length(n);
+    if (len < 1e-6f) return p;      // avoid NaN
+    return p / len;
 }
 
-glm::vec4 QECamera::normalize_plane(glm::vec4 plane) {
-    float len = glm_vec3_norm({ plane.x, plane.y, plane.z });
+void QECamera::UpdateProjectionIfNeeded()
+{
+    if (_projCache.fov == _fov && _projCache.n == _near && _projCache.f == _far &&
+        _projCache.w == Width && _projCache.h == Height) return;
 
-    float value = 1.0f / len;
-    plane *= value;
-    return plane;
+    const float aspect = glm::max(0.0001f, Width / glm::max(Height, 0.0001f));
+    CameraData->Projection = glm::perspective(glm::radians(_fov), aspect, _near, _far);
+    CameraData->Projection[1][1] *= -1.0f;
+    _projCache = { _fov, _near, _far, Width, Height };
 }
 
 void QECamera::UpdateFrustumPlanes()
 {
-    glm::mat4 viewprojectionTranspose = glm::transpose(this->VP);
-    this->cameraUniform->frustumPlanes[0] = normalize_plane(viewprojectionTranspose[3] + viewprojectionTranspose[0]);
-    this->cameraUniform->frustumPlanes[1] = normalize_plane(viewprojectionTranspose[3] - viewprojectionTranspose[0]);
-    this->cameraUniform->frustumPlanes[2] = normalize_plane(viewprojectionTranspose[3] + viewprojectionTranspose[1]);
-    this->cameraUniform->frustumPlanes[3] = normalize_plane(viewprojectionTranspose[3] - viewprojectionTranspose[1]);
-    this->cameraUniform->frustumPlanes[4] = normalize_plane(viewprojectionTranspose[3] + viewprojectionTranspose[2]);
-    this->cameraUniform->frustumPlanes[5] = normalize_plane(viewprojectionTranspose[3] - viewprojectionTranspose[2]);
+    glm::mat4 viewprojectionTranspose = glm::transpose(this->CameraData->Viewproj);
+    this->CameraData->FrustumPlanes[0] = normalize_plane(viewprojectionTranspose[3] + viewprojectionTranspose[0]);
+    this->CameraData->FrustumPlanes[1] = normalize_plane(viewprojectionTranspose[3] - viewprojectionTranspose[0]);
+    this->CameraData->FrustumPlanes[2] = normalize_plane(viewprojectionTranspose[3] + viewprojectionTranspose[1]);
+    this->CameraData->FrustumPlanes[3] = normalize_plane(viewprojectionTranspose[3] - viewprojectionTranspose[1]);
+    this->CameraData->FrustumPlanes[4] = normalize_plane(viewprojectionTranspose[3] + viewprojectionTranspose[2]);
+    this->CameraData->FrustumPlanes[5] = normalize_plane(viewprojectionTranspose[3] - viewprojectionTranspose[2]);
 
-    this->frustumComponent->RecreateFrustum(this->VP);
+    this->_frustumComponent->RecreateFrustum(this->CameraData->Viewproj);
+}
+
+void QECamera::SetNear(float newValue)
+{
+    _dirtyData = true;
+    _near = newValue;
+}
+
+void QECamera::SetFar(float newValue)
+{
+    _dirtyData = true;
+    _far = newValue;
+}
+
+void QECamera::SetFOV(float newValue)
+{
+    _dirtyData = true;
+    _fov = newValue;
 }
 
 void QECamera::QEStart()
@@ -232,33 +134,41 @@ void QECamera::QEStart()
     QEGameComponent::QEStart();
 
     this->deviceModule = DeviceModule::getInstance();
-    this->frustumComponent = std::make_shared<FrustumComponent>();
-    this->cameraUniform = std::make_shared<CameraUniform>();
-
-    this->UpdateCamera();
+    this->_frustumComponent = std::make_shared<FrustumComponent>();
+    this->CameraData = std::make_shared<CameraUniform>();
 }
 
 void QECamera::QEInit()
 {
     QEGameComponent::QEInit();
+
+    _OwnerTransform = this->Owner->GetComponent<QETransform>();
+    this->UpdateCamera();
 }
 
 void QECamera::QEUpdate()
 {
+    bool transformChanged = false;
+
+    if (_OwnerTransform)
+    {
+        uint32_t v = _OwnerTransform->GetWorldVersion();
+        if (v != _lastTransformVersion)
+        {
+            _lastTransformVersion = v;
+            transformChanged = true;
+        }
+    }
+
+    if (_dirtyData || transformChanged)
+    {
+        UpdateCamera();
+        _dirtyData = false;
+    }
 }
 
 void QECamera::QEDestroy()
 {
     QEGameComponent::QEDestroy();
-}
-
-bool QECamera::IsModified()
-{
-    return this->_cameraModified;
-}
-
-void QECamera::ResetModifiedField()
-{
-    this->_cameraModified = false;
 }
 

@@ -4,7 +4,6 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
-#include <CameraDto.h>
 #include <AtmosphereDto.h>
 #include <MeshImporter.h>
 

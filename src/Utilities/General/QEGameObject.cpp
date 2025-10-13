@@ -11,7 +11,7 @@ QEGameObject::QEGameObject()
 void QEGameObject::QEStart()
 {
     auto geometryComponent = this->GetComponent<QEGeometryComponent>();
-    auto transform = this->GetComponent<Transform>();
+    auto transform = this->GetComponent<QETransform>();
 
     if (geometryComponent != nullptr)
     {
@@ -194,5 +194,5 @@ void QEGameObject::InitializeResources()
     this->materialManager = MaterialManager::getInstance();
     this->cullingSceneManager = CullingSceneManager::getInstance();
 
-    AddComponent<Transform>(std::make_shared<Transform>());
+    AddComponent<QETransform>(std::make_shared<QETransform>());
 }

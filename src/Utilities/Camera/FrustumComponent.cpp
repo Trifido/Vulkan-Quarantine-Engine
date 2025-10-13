@@ -48,7 +48,7 @@ void FrustumComponent::RecreateFrustum(glm::mat4 viewProjection)
 
 bool FrustumComponent::isAABBInside(AABBObject& box)
 {
-    auto model = box.GetTransform()->GetModel();
+    auto model = box.GetTransform()->GetWorldMatrix();
     glm::vec4 min = model * glm::vec4(box.min, 1.0f);
     glm::vec4 max = model * glm::vec4(box.max, 1.0f);
 

@@ -19,7 +19,7 @@ void QEMeshRenderer::QEInit()
     animationComponent = this->Owner->GetComponent<AnimationComponent>();
     geometryComponent = this->Owner->GetComponent<QEGeometryComponent>();
     materialComponents = this->Owner->GetMaterials();
-    transformComponent = this->Owner->GetComponent<Transform>();
+    transformComponent = this->Owner->GetComponent<QETransform>();
 
     if (this->IsMeshShaderPipeline)
     {
@@ -82,7 +82,7 @@ void QEMeshRenderer::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx
         //auto material = MaterialManager::getInstance()->GetMaterial();
         material->BindDescriptors(commandBuffer, idx);
 
-        vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantStruct), &this->transformComponent->GetModel());
+        vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantStruct), &this->transformComponent->GetWorldMatrix());
 
         if (this->IsMeshShaderPipeline)
         {

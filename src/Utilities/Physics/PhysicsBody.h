@@ -2,7 +2,7 @@
 #ifndef PHYSICS_BODY_H
 #define PHYSICS_BODY_H
 
-#include <Transform.h>
+#include "QETransform.h"
 #include <Collider.h>
 #include <glm/matrix.hpp>
 #include <btBulletDynamicsCommon.h>
@@ -13,7 +13,7 @@ class PhysicsBody : public QEGameComponent
     REFLECTABLE_DERIVED_COMPONENT(PhysicsBody, QEGameComponent)
 private:
     btVector3 localInertia;
-    std::shared_ptr<Transform> transform;
+    std::shared_ptr<QETransform> transform;
     std::shared_ptr<QECollider> collider;
 public:
     btRigidBody* body;

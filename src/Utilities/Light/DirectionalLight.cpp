@@ -10,10 +10,10 @@ QEDirectionalLight::QEDirectionalLight() : QELight()
 
     if (this->transform == nullptr)
     {
-        this->transform = std::make_shared<Transform>();
+        this->transform = std::make_shared<QETransform>();
     }
-    this->transform->SetPosition(glm::vec3(0.0f, 10.0f, 0.0f));
-    this->transform->SetOrientation(glm::vec3(90.0f, 0.0f, 0.0f));
+    this->transform->SetLocalPosition(glm::vec3(0.0f, 10.0f, 0.0f));
+    this->transform->SetLocalEulerDegrees(glm::vec3(90.0f, 0.0f, 0.0f));
 }
 
 void QEDirectionalLight::Setup(std::shared_ptr<VkRenderPass> renderPass)
@@ -25,8 +25,8 @@ void QEDirectionalLight::UpdateUniform()
 {
     QELight::UpdateUniform();
 
-    this->uniform->position = this->transform->Position;
-    this->uniform->direction = this->transform->ForwardVector;
+    this->uniform->position = this->transform->GetWorldPosition();
+    this->uniform->direction = this->transform->Forward();
 
     this->UpdateCascades();
     this->shadowMappingResourcesPtr->UpdateOffscreenUBOShadowMap();
@@ -74,7 +74,7 @@ void QEDirectionalLight::UpdateCascades()
         };
 
         // Project frustum corners into world space
-        glm::mat4 invCam = glm::inverse(activeCamera->VP);
+        glm::mat4 invCam = glm::inverse(activeCamera->CameraData->Viewproj);
         for (uint32_t j = 0; j < 8; j++)
         {
             glm::vec4 invCorner = invCam * glm::vec4(frustumCorners[j], 1.0);
@@ -107,7 +107,7 @@ void QEDirectionalLight::UpdateCascades()
         glm::vec3 maxExtents = glm::vec3(radius);
         glm::vec3 minExtents = -maxExtents;
 
-        glm::vec3 lightDir = this->transform->ForwardVector;
+        glm::vec3 lightDir = this->transform->Forward();
 
         glm::vec3 eye = frustumCenter - lightDir * maxExtents.z;
 

@@ -263,7 +263,7 @@ void LightManager::SaveLights(std::ofstream& file)
 
         float radius = light->GetDistanceEffect();
         file.write(reinterpret_cast<const char*>(&radius), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&light->transform->GetModel()), sizeof(glm::mat4));
+        file.write(reinterpret_cast<const char*>(&light->transform->GetWorldMatrix()), sizeof(glm::mat4));
         file.write(reinterpret_cast<const char*>(&light->diffuse), sizeof(glm::vec3));
         file.write(reinterpret_cast<const char*>(&light->specular), sizeof(glm::vec3));
         file.write(reinterpret_cast<const char*>(&light->cutOff), sizeof(float));
@@ -406,17 +406,17 @@ void LightManager::SortingLights()
     this->lights_index.clear();
     this->lights_index.reserve(this->lightBuffer.size());
 
-    float near = *activeCamera->GetRawNearPlane();
-    float far = *activeCamera->GetRawFarPlane();
+    float near = activeCamera->GetNear();
+    float far = activeCamera->GetFar();
     for (uint32_t i = 0; i < this->lightBuffer.size(); i++)
     {
         glm::vec4 position = glm::vec4(this->lightBuffer.at(i).position, 1.0f);
         glm::vec4 p_min = position + glm::vec4(activeCamera->cameraFront * -this->lightBuffer.at(i).radius, 0.0f);
         glm::vec4 p_max = position + glm::vec4(activeCamera->cameraFront * this->lightBuffer.at(i).radius, 0.0f);
 
-        glm::vec4 projected_position = activeCamera->view * position;
-        glm::vec4 projected_p_min = activeCamera->view * p_min;
-        glm::vec4 projected_p_max = activeCamera->view * p_max;
+        glm::vec4 projected_position = activeCamera->CameraData->View * position;
+        glm::vec4 projected_p_min = activeCamera->CameraData->View * p_min;
+        glm::vec4 projected_p_max = activeCamera->CameraData->View * p_max;
 
         this->sortedLight.push_back({
                 .id = i,
@@ -510,7 +510,7 @@ void LightManager::ComputeLightTiles()
     this->light_tiles_bits.clear();
     this->light_tiles_bits.resize(tiles_entry_count, 0u);
 
-    float near_z = *activeCamera->GetRawNearPlane();
+    float near_z = activeCamera->GetNear();
     float tile_size_inv = 1.0f / newTileSize;
 
     uint32_t tile_stride = tile_x_count * NUM_WORDS;
@@ -523,7 +523,7 @@ void LightManager::ComputeLightTiles()
         glm::vec4 pos{ light.position.x, light.position.y, light.position.z, 1.0f };
         float radius = light.radius;
 
-        glm::vec4 view_space_pos = activeCamera->view * pos;
+        glm::vec4 view_space_pos = activeCamera->CameraData->View * pos;
         glm::vec2 cx{ view_space_pos.x, view_space_pos.z };
         const float tx_squared = glm::dot(cx, cx) - (radius * radius);
         glm::vec2 vx{ sqrtf(tx_squared), radius };
@@ -540,8 +540,8 @@ void LightManager::ComputeLightTiles()
         glm::mat2 ytransf_max{ vy.x, -vy.y, vy.y, vy.x };
         glm::vec2 maxy = ytransf_max * cy;
 
-        glm::vec4 aabb{ minx.x / minx.y * activeCamera->projection[0][0], miny.x / miny.y * activeCamera->projection[1][1],
-                    maxx.x / maxx.y * activeCamera->projection[0][0], maxy.x / maxy.y * activeCamera->projection[1][1] };
+        glm::vec4 aabb{ minx.x / minx.y * activeCamera->CameraData->Projection[0][0], miny.x / miny.y * activeCamera->CameraData->Projection[1][1],
+                    maxx.x / maxx.y * activeCamera->CameraData->Projection[0][0], maxy.x / maxy.y * activeCamera->CameraData->Projection[1][1] };
 
 
         // Build view space AABB and project it, then calculate screen AABB
@@ -553,13 +553,13 @@ void LightManager::ComputeLightTiles()
             corner = corner + glm::vec3(pos);
 
             // transform in view space
-            glm::vec4 corner_vs = activeCamera->view * glm::vec4(corner, 1.f);
+            glm::vec4 corner_vs = activeCamera->CameraData->View * glm::vec4(corner, 1.f);
             // adjust z on the near plane.
             // visible Z is negative, thus corner vs will be always negative, but near is positive.
             // get positive Z and invert ad the end.
             corner_vs.z = glm::max(near_z, corner_vs.z);
 
-            glm::vec4 corner_ndc = activeCamera->projection * corner_vs;
+            glm::vec4 corner_ndc = activeCamera->CameraData->Projection * corner_vs;
             corner_ndc = corner_ndc / corner_ndc.w;
 
             // clamp

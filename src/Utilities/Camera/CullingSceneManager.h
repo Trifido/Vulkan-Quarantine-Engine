@@ -5,7 +5,7 @@
 
 #include <vector>
 #include <FrustumComponent.h>
-#include <Transform.h>
+#include "QETransform.h"
 #include <Material.h>
 #include <QESingleton.h>
 
@@ -22,7 +22,7 @@ public:
 
 public:
     void InitializeCullingSceneResources();
-    std::shared_ptr<AABBObject> GenerateAABB(std::pair<glm::vec3, glm::vec3> aabbData, std::shared_ptr<Transform> transform_ptr);
+    std::shared_ptr<AABBObject> GenerateAABB(std::pair<glm::vec3, glm::vec3> aabbData, std::shared_ptr<QETransform> transform_ptr);
     void CleanUp();
     void DrawDebug(VkCommandBuffer& commandBuffer, uint32_t idx);
     void UpdateCullingScene();

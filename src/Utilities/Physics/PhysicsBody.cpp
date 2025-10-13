@@ -54,13 +54,13 @@ void PhysicsBody::Initialize()
     btTransform startTransform;
     startTransform.setIdentity();
 
-    glm::vec3 scale = this->transform->Scale;
+    glm::vec3 scale = this->transform->GetWorldScale();
     this->collider->colShape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
 
-    glm::vec3 position = this->transform->Position;
+    glm::vec3 position = this->transform->GetWorldPosition();
     startTransform.setOrigin(btVector3(position.x, position.y, position.z));
 
-    auto quat = this->transform->Orientation;
+    auto quat = this->transform->GetWorldRotation();
     btQuaternion btQuat(quat.x, quat.y, quat.z, quat.w);
     startTransform.setRotation(btQuat);
 
@@ -155,7 +155,7 @@ void PhysicsBody::QEInit()
         return;
 
     this->collider = this->Owner->GetComponent<QECollider>();
-    this->transform = this->Owner->GetComponent<Transform>();
+    this->transform = this->Owner->GetComponent<QETransform>();
 
     if (this->collider && this->transform)
     {

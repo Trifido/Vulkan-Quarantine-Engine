@@ -3,7 +3,7 @@
 #define QE_CHARACTER_CONTROLLER
 
 #include <QEGameComponent.h>
-#include <Transform.h>
+#include "QETransform.h"
 #include <PhysicsBody.h>
 #include <Collider.h>
 #include <btBulletDynamicsCommon.h>
