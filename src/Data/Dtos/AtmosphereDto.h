@@ -17,7 +17,7 @@ struct AtmosphereDto
     AtmosphereDto()
         : hasAtmosphere(true),
         environmentType(2),
-        sunDirection{ 0.0f, -0.1f, 0.1f },
+        sunDirection{ -45.0f, 45.0f, 0.0f },
         sunIntensity(100.0f)
     {
     }

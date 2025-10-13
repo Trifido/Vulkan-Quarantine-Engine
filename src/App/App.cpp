@@ -324,9 +324,9 @@ void App::initVulkan()
         //std::shared_ptr<QEGameObject> pointLight = std::make_shared<QEGameObject>();
         //auto pointLight1 = this->lightManager->CreateLight(LightType::POINT_LIGHT, "LuzPuntual");
         //pointLight->AddComponent(pointLight1);
-        //auto pointLightTransform = pointLight->GetComponent<Transform>();
-        //pointLightTransform->SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
-        //pointLightTransform->SetOrientation(glm::vec3(45.0f, 0.0f, 0.0f));
+        //auto pointLightTransform = pointLight->GetComponent<QETransform>();
+        //pointLightTransform->SetLocalPosition(glm::vec3(0.0f, 5.0f, 2.0f));
+        //pointLightTransform->SetLocalEulerDegrees(glm::vec3(45.0f, 0.0f, 0.0f));
         //pointLight1->diffuse = glm::vec3(0.0f, 1.0f, 0.0f);
         //pointLight1->specular = glm::vec3(0.0f, 1.0f, 0.0f);
         //pointLight1->SetDistanceEffect(100.0f);
@@ -349,6 +349,17 @@ void App::initVulkan()
 
     // DIRECTIONAL LIGHTS
     {
+        //std::shared_ptr<QEGameObject> directionalLightGO = std::make_shared<QEGameObject>();
+        //auto dirLight = this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "LuzDireccional");
+        //directionalLightGO->AddComponent(dirLight);
+        //auto dirLightTransform = directionalLightGO->GetComponent<QETransform>();
+        //dirLightTransform->SetLocalPosition(glm::vec3(0.0f, 5.0f, 2.0f));
+        //dirLightTransform->SetLocalEulerDegrees(glm::vec3(-45.0f, -90.0f, 0.0f));
+        //dirLight->diffuse = glm::vec3(1.0f, 1.0f, 0.0f);
+        //dirLight->specular = glm::vec3(0.0f, 1.0f, 0.0f);
+        //dirLight->SetDistanceEffect(100.0f);
+        //this->gameObjectManager->AddGameObject(directionalLightGO, "LuzDireccionalGO");
+
         //this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
         //auto dirlight = this->lightManager->GetLight("DirectionalLight0");
         //dirlight->diffuse = glm::vec3(0.6f);
