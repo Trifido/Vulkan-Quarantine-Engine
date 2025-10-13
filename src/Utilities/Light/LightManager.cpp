@@ -6,6 +6,7 @@
 #include <SynchronizationModule.h>
 #include <SunLight.h>
 #include <QESessionManager.h>
+#include <QEGameObject.h>
 
 bool compareDistance(const LightMap& a, const LightMap& b)
 {
@@ -195,25 +196,6 @@ void LightManager::DeleteLight(std::shared_ptr<QELight> light_ptr, std::string& 
     }
 
     this->currentNumLights--;
-}
-
-void LightManager::LoadLightDtos(const std::vector<LightDto>& lightDtos)
-{
-    for (const auto& lightDto : lightDtos)
-    {
-        this->CreateLight(lightDto.lightType, lightDto.name);
-
-        auto light = this->GetLight(lightDto.name);
-        if (light)
-        {
-            light->transform->SetModel(lightDto.worldTransform);
-            light->diffuse = lightDto.diffuse;
-            light->specular = lightDto.specular;
-            light->SetDistanceEffect(lightDto.radius);
-            light->cutOff = lightDto.cutOff;
-            light->outerCutoff = lightDto.outerCutoff;
-        }
-    }
 }
 
 std::vector<LightDto> LightManager::GetLightDtos(std::ifstream& file)
@@ -408,11 +390,12 @@ void LightManager::SortingLights()
 
     float near = activeCamera->GetNear();
     float far = activeCamera->GetFar();
+    auto cameraTransform = activeCamera->Owner->GetComponent<QETransform>();
     for (uint32_t i = 0; i < this->lightBuffer.size(); i++)
     {
         glm::vec4 position = glm::vec4(this->lightBuffer.at(i).position, 1.0f);
-        glm::vec4 p_min = position + glm::vec4(activeCamera->cameraFront * -this->lightBuffer.at(i).radius, 0.0f);
-        glm::vec4 p_max = position + glm::vec4(activeCamera->cameraFront * this->lightBuffer.at(i).radius, 0.0f);
+        glm::vec4 p_min = position + glm::vec4(cameraTransform->Forward() * -this->lightBuffer.at(i).radius, 0.0f);
+        glm::vec4 p_max = position + glm::vec4(cameraTransform->Forward() * this->lightBuffer.at(i).radius, 0.0f);
 
         glm::vec4 projected_position = activeCamera->CameraData->View * position;
         glm::vec4 projected_p_min = activeCamera->CameraData->View * p_min;

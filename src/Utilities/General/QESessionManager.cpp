@@ -6,6 +6,7 @@
 #include <PhysicsModule.h>
 #include <Grid.h>
 #include <SynchronizationModule.h>
+#include <QECameraController.h>
 
 QESessionManager::QESessionManager()
 {
@@ -19,6 +20,20 @@ void QESessionManager::SetEditorMode(bool value)
 {
     this->_isEditor = value;
     this->_activeCamera = (_isEditor || _gameCamera == nullptr) ? _editorCamera : _gameCamera;
+
+    if (value)
+    {
+        auto gameObjectManager = GameObjectManager::getInstance();
+        std::shared_ptr<QEGameObject> cameraObject = std::make_shared<QEGameObject>();
+        cameraObject->AddComponent(this->_editorCamera);
+        cameraObject->AddComponent(std::make_shared<QECameraController>());
+
+        auto cameraTransform = cameraObject->GetComponent<QETransform>();
+        cameraTransform->SetLocalEulerDegrees(glm::vec3(-45.0f, 0.0f, 0.0f));
+        cameraTransform->SetLocalPosition(glm::vec3(0.0f, 10.0f, 10.0f));
+
+        gameObjectManager->AddGameObject(cameraObject, "cameraObject");
+    }
 }
 
 void QESessionManager::SetDebugMode(bool value)
@@ -64,9 +79,7 @@ void QESessionManager::FreeCameraResources()
 
 void QESessionManager::UpdateActiveCamera(float deltaTime)
 {
-    _activeCamera->EditorCameraController(deltaTime);
-
-    if (_activeCamera->IsModified())
+    if (_activeCamera != nullptr)
     {
         auto deviceModule = DeviceModule::getInstance();
         for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
@@ -77,8 +90,6 @@ void QESessionManager::UpdateActiveCamera(float deltaTime)
             vkUnmapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame]);
         }
     }
-
-    _activeCamera->ResetModifiedField();
 }
 
 void QESessionManager::UpdateViewportSize()

@@ -84,12 +84,12 @@ void CullingSceneManager::DrawDebug(VkCommandBuffer& commandBuffer, uint32_t idx
 void CullingSceneManager::UpdateCullingScene()
 {
     auto activeCamera = QESessionManager::getInstance()->ActiveCamera();
-    if (activeCamera->frustumComponent->IsComputeCullingActive())
+    if (activeCamera->_frustumComponent->IsComputeCullingActive())
     {
         for (unsigned int i = 0; i < this->aabb_objects.size(); i++)
         {
-            aabb_objects.at(i)->isGameObjectVisible = activeCamera->frustumComponent->isAABBInside(*this->aabb_objects.at(i));
+            aabb_objects.at(i)->isGameObjectVisible = activeCamera->_frustumComponent->isAABBInside(*this->aabb_objects.at(i));
         }
-        activeCamera->frustumComponent->ActivateComputeCulling(false);
+        activeCamera->_frustumComponent->ActivateComputeCulling(false);
     }
 }

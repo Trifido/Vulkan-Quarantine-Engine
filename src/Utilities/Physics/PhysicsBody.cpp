@@ -102,7 +102,7 @@ void PhysicsBody::copyTransformtoGLM()
 
         //Update glm::matrix
         glm::mat4 m = bulletToGlm(trans);
-        this->transform->SetModel(m);
+        this->transform->SetFromMatrix(m);
     }
 }
 

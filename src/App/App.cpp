@@ -161,7 +161,6 @@ void App::initVulkan()
 
     // INIT ------------------------- Mesh & Material -------------------------------
     this->sessionManager = QESessionManager::getInstance();
-    this->sessionManager->SetEditorMode(this->isRunEditor);
 
     this->shaderManager = ShaderManager::getInstance();
     this->textureManager = TextureManager::getInstance();
@@ -172,6 +171,9 @@ void App::initVulkan()
     this->computeNodeManager = ComputeNodeManager::getInstance();
     this->computeNodeManager->InitializeComputeResources();
     this->particleSystemManager = ParticleSystemManager::getInstance();
+
+    //Editor resources initialization
+    this->sessionManager->SetEditorMode(this->isRunEditor);
 
     // Import meshes
     //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Raptoid/scene.gltf");

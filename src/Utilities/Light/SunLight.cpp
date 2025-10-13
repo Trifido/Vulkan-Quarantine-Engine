@@ -28,10 +28,10 @@ void QESunLight::UpdateSun()
 
 void QESunLight::SetLightDirection(glm::vec3 dir)
 {
-    this->transform->ForwardVector = glm::normalize(dir);
-    this->uniformData.Direction = this->transform->ForwardVector;
+    this->transform->SetLocalEulerDegrees(dir);
+    this->uniformData.Direction = this->transform->Forward();
 
-    float elevation = -glm::clamp(this->transform->ForwardVector.y, -1.0f, 1.0f);
+    float elevation = -glm::clamp(this->uniformData.Direction.y, -1.0f, 1.0f);
     float colorIntensity = glm::clamp(elevation, 0.0f, 1.0f);
     this->uniformData.Intensity = this->baseIntensity * colorIntensity;
 

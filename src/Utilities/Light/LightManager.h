@@ -97,7 +97,6 @@ public:
     void AddOmniShadowMapShader(std::shared_ptr<ShaderModule> omni_shadow_mapping_shader);
     std::shared_ptr<QELight> CreateLight(LightType type, std::string name);
     void DeleteLight(std::shared_ptr<QELight> light_ptr, std::string& name);
-    void LoadLightDtos(const std::vector <LightDto>& lightDtos);
     static std::vector <LightDto> GetLightDtos(std::ifstream& file);
     void SaveLights(std::ofstream& file);
     std::shared_ptr<QELight> GetLight(std::string name);

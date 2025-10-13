@@ -23,6 +23,7 @@ public:
     REFLECT_PROPERTY(bool, EditorControls)
 
 private:
+    void GetYawPitchFromForward(const glm::vec3& fwd, float& yawDeg, float& pitchDeg);
     void EditorCameraController(float dt);
     void EditorScroll(float dt);
     void EditorRotate(float dt);

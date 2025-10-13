@@ -116,6 +116,23 @@ void QETransform::RotateWorld(const glm::quat& dq)
     }
 }
 
+void QETransform::SetFromMatrix(const glm::mat4& m)
+{
+    glm::vec3 skew;
+    glm::vec4 perspective;
+    glm::vec3 translation, scale;
+    glm::quat rotation;
+
+    glm::decompose(m, scale, rotation, translation, skew, perspective);
+
+    localPosition = translation;
+    localRotation = glm::normalize(rotation);
+    localScale = scale;
+
+    localDirty = true;
+    MarkWorldDirty();
+}
+
 // -------- Parenting
 void QETransform::AddChild(const std::shared_ptr<QETransform>& child)
 {

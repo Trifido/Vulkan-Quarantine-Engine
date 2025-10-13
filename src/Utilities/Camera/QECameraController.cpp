@@ -36,6 +36,15 @@ void QECameraController::QEDestroy()
     QEGameComponent::QEDestroy();
 }
 
+void QECameraController::GetYawPitchFromForward(const glm::vec3& fwd, float& yawDeg, float& pitchDeg)
+{
+    glm::vec3 f = glm::normalize(fwd);
+    float yaw = std::atan2(-f.x, -f.z);
+    float pitch = std::atan2(f.y, std::sqrt(f.x * f.x + f.z * f.z));
+    yawDeg = glm::degrees(yaw);
+    pitchDeg = glm::degrees(pitch);
+}
+
 void QECameraController::EditorCameraController(float dt)
 {
     if (!this->EditorControls)
@@ -97,32 +106,35 @@ void QECameraController::EditorRotate(float dt)
     {
         if (firstMouse)
         {
-            lastX = io.MousePos.x;
-            lastY = io.MousePos.y;
+            GetYawPitchFromForward(_OwnerTransform->Forward(), yawDeg, pitchDeg);
             firstMouse = false;
             return;
         }
 
-        float xoffset = io.MousePos.x - lastX;
-        float yoffset = lastY - io.MousePos.y; // reversed since y-coordinates go from bottom to top
-        lastX = io.MousePos.x;
-        lastY = io.MousePos.y;
-
-        float dxDeg = xoffset * MouseSensitivity;
-        float dyDeg = yoffset * MouseSensitivity;
+        float dxDeg = -io.MouseDelta.x * MouseSensitivity;
+        float dyDeg = -io.MouseDelta.y * MouseSensitivity;
 
         yawDeg += dxDeg;
-        pitchDeg += dyDeg;
-        pitchDeg = std::clamp(pitchDeg, -89.0f, 89.0f);
+        pitchDeg = std::clamp(pitchDeg + dyDeg, -89.0f, 89.0f);
 
-        glm::quat qYawWorld = glm::angleAxis(glm::radians(dxDeg), glm::vec3(0, 1, 0));
-        glm::quat qPitchLocal = glm::angleAxis(glm::radians(dyDeg), _OwnerTransform->Right());
+        glm::quat qYaw = glm::angleAxis(glm::radians(yawDeg), glm::vec3(0, 1, 0));
+        glm::vec3 right = qYaw * glm::vec3(1, 0, 0);
+        glm::quat qPitch = glm::angleAxis(glm::radians(pitchDeg), right);
+        glm::quat q = glm::normalize(qPitch * qYaw);
 
-        _OwnerTransform->RotateWorld(qYawWorld);
-        _OwnerTransform->RotateLocal(qPitchLocal);
+        if (auto p = _OwnerTransform->GetParent())
+        {
+            glm::quat pw = p->GetWorldRotation();
+            glm::quat qLocal = glm::normalize(glm::inverse(pw) * q);
+            _OwnerTransform->SetLocalRotation(qLocal);
+        }
+        else
+        {
+            _OwnerTransform->SetLocalRotation(q);
+        }
     }
     else
     {
-        firstMouse = true;
+        firstMouse = true; // al soltar RMB o Shift, la próxima vez resincronizamos
     }
 }

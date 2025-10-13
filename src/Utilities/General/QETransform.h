@@ -46,6 +46,7 @@ public:
     void TranslateWorld(const glm::vec3& d);            // en mundo
     void RotateLocal(const glm::quat& dq);              // q * localRot
     void RotateWorld(const glm::quat& dq);              // world rot
+    void SetFromMatrix(const glm::mat4& m);
 
     // Parenting
     void SetParent(std::shared_ptr<QETransform> newParent, bool keepWorld = true);
