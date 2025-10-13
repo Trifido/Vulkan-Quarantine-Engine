@@ -204,12 +204,12 @@ void App::initVulkan()
     //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf").generic_string();
 
     // THIRD PERSON CAMERA
-    //std::shared_ptr<QEGameObject> cameraObject = std::make_shared<QEGameObject>();
-    //cameraObject->AddComponent(std::make_shared<QECamera>());
-    //this->gameObjectManager->AddGameObject(cameraObject, "cameraObject");
-    //auto cameraComponent = cameraObject->GetComponent<QECamera>();
-    //cameraComponent->cameraFront = glm::vec3(0.0134427, -0.270601, 0.962598);
-    //cameraComponent->cameraPos = glm::vec3(-0.715416, 1.89489, -2.56881);
+    std::shared_ptr<QEGameObject> cameraObject = std::make_shared<QEGameObject>();
+    cameraObject->AddComponent(std::make_shared<QECamera>());
+    this->gameObjectManager->AddGameObject(cameraObject, "cameraObject");
+    auto cameraTransform = cameraObject->GetComponent<QETransform>();
+    //cameraTransform->SetLocalPosition(glm::vec3(-0.715416, 1.89489, -2.56881));
+    //cameraTransform->SetLocalEulerDegrees(glm::vec3(-15.7f, 180.0f, 0.0f));
 
     // CHARACTER CONTROLLER
     /**/
