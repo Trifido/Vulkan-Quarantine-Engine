@@ -49,6 +49,18 @@ void PhysicsBody::UpdateTransform()
     }
 }
 
+inline bool PhysicsBody::closePos(const btVector3& a, const btVector3& b, btScalar eps)
+{
+    return (a - b).length2() <= eps * eps;
+}
+
+inline bool PhysicsBody::closeRot(const btQuaternion& a, btQuaternion b, btScalar angleEpsRad)
+{
+    if (a.dot(b) < 0) b = btQuaternion(-b.x(), -b.y(), -b.z(), -b.w());
+    btQuaternion d = a.inverse() * b;
+    return btFabs(d.getAngle()) <= angleEpsRad;
+}
+
 void PhysicsBody::Initialize()
 {
     btTransform startTransform;
@@ -95,15 +107,27 @@ void PhysicsBody::Initialize()
 
 void PhysicsBody::copyTransformtoGLM()
 {
-    btTransform trans;
-    if (this->body && this->body->getMotionState())
-    {
-        this->body->getMotionState()->getWorldTransform(trans);
+    if (!this->body) return;
 
-        //Update glm::matrix
-        glm::mat4 m = bulletToGlm(trans);
-        this->transform->SetFromMatrix(m);
-    }
+    if (!this->body->isKinematicObject() && !this->body->isActive())
+        return;
+
+    btTransform trans = this->body->getInterpolationWorldTransform();
+
+    const btVector3& newPos = trans.getOrigin();
+    const btQuaternion& newRot = trans.getRotation();
+
+    bool changed = !hasLastTrans
+        || !closePos(lastTrans.getOrigin(), newPos, posEps)
+        || !closeRot(lastTrans.getRotation(), newRot, angEps);
+
+    if (!changed) return;
+
+    glm::mat4 m = bulletToGlm(trans);
+    this->transform->SetFromMatrix(m);
+
+    lastTrans = trans;
+    hasLastTrans = true;
 }
 
 glm::mat4 PhysicsBody::bulletToGlm(const btTransform& t)

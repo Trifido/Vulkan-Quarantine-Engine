@@ -12,9 +12,16 @@ class PhysicsBody : public QEGameComponent
 {
     REFLECTABLE_DERIVED_COMPONENT(PhysicsBody, QEGameComponent)
 private:
-    btVector3 localInertia;
     std::shared_ptr<QETransform> transform;
     std::shared_ptr<QECollider> collider;
+    btVector3 localInertia;
+    btTransform lastTrans;
+    bool hasLastTrans = false;
+
+    // Epsilons para comparación
+    float posEps = 0.0005f;    // ~0.5 mm
+    float angEps = 0.0015f;    // ~0.086 rad
+
 public:
     btRigidBody* body;
     REFLECT_PROPERTY(PhysicBodyType, Type)
@@ -36,6 +43,9 @@ private:
     void Initialize();
     void copyTransformtoGLM();
     void UpdateTransform();
+
+    static inline bool closePos(const btVector3& a, const btVector3& b, btScalar eps);
+    static inline bool closeRot(const btQuaternion& a, btQuaternion b, btScalar angleEpsRad);
 
     glm::mat4 bulletToGlm(const btTransform& t);
     glm::vec3 bulletToGlm(const btVector3& v);
