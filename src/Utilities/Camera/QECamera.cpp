@@ -131,11 +131,14 @@ void QECamera::SetFOV(float newValue)
 
 void QECamera::QEStart()
 {
-    QEGameComponent::QEStart();
+    if (!_QEStarted)
+    {
+        QEGameComponent::QEStart();
 
-    this->deviceModule = DeviceModule::getInstance();
-    this->_frustumComponent = std::make_shared<FrustumComponent>();
-    this->CameraData = std::make_shared<CameraUniform>();
+        this->deviceModule = DeviceModule::getInstance();
+        this->_frustumComponent = std::make_shared<FrustumComponent>();
+        this->CameraData = std::make_shared<CameraUniform>();
+    }
 }
 
 void QECamera::QEInit()

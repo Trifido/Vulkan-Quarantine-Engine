@@ -208,8 +208,8 @@ void App::initVulkan()
     cameraObject->AddComponent(std::make_shared<QECamera>());
     this->gameObjectManager->AddGameObject(cameraObject, "cameraObject");
     auto cameraTransform = cameraObject->GetComponent<QETransform>();
-    //cameraTransform->SetLocalPosition(glm::vec3(-0.715416, 1.89489, -2.56881));
-    //cameraTransform->SetLocalEulerDegrees(glm::vec3(-15.7f, 180.0f, 0.0f));
+    cameraTransform->SetLocalPosition(glm::vec3(-0.715416, 1.89489, -2.56881));
+    cameraTransform->SetLocalEulerDegrees(glm::vec3(-15.7f, 180.0f, 0.0f));
 
     // CHARACTER CONTROLLER
     /**/
@@ -220,6 +220,8 @@ void App::initVulkan()
     character->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
     character->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>(PhysicBodyType::RIGID_BODY));
     character->AddComponent<QECollider>(std::make_shared<CapsuleCollider>());
+
+    character->AddChild(cameraObject, true);
 
     auto characterPBody = character->GetComponent<PhysicsBody>();
     characterPBody->Mass = 70.0f;

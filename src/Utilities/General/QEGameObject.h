@@ -45,6 +45,9 @@ public:
     YAML::Node ToYaml() const;
     static std::shared_ptr<QEGameObject> FromYaml(const YAML::Node& node);
 
+    void AddChild(const std::shared_ptr<QEGameObject>& child, bool keepWorldTransform);
+    void RemoveChild(const std::shared_ptr<QEGameObject>& child);
+
     template<typename T>
     bool AddComponent(std::shared_ptr<T> component_ptr)
     {

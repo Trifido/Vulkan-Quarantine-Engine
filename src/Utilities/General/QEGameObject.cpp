@@ -187,6 +187,49 @@ std::shared_ptr<QEGameObject> QEGameObject::FromYaml(const YAML::Node& node)
     return go;
 }
 
+void QEGameObject::AddChild(const std::shared_ptr<QEGameObject>& child, bool keepWorldTransform)
+{
+    if (!child) return;
+
+    if (child.get() == this ||
+        std::find_if(childs.begin(), childs.end(),
+            [&](auto& c) { return c.get() == child.get(); }) != childs.end())
+        return;
+
+    child->parent = this;
+    childs.push_back(child);
+
+    auto transform = this->GetComponent<QETransform>();
+    auto childTransform = child->GetComponent<QETransform>();
+
+    if (transform && childTransform)
+    {
+        childTransform->SetParent(transform, keepWorldTransform);
+    }
+
+    //child->QEStart();
+}
+
+void QEGameObject::RemoveChild(const std::shared_ptr<QEGameObject>& child)
+{
+    if (!child) return;
+
+    auto it = std::remove_if(childs.begin(), childs.end(),
+        [&](auto& c) { return c.get() == child.get(); });
+
+    if (it != childs.end())
+    {
+        childs.erase(it, childs.end());
+        child->parent = nullptr;
+
+        auto childTransform = child->GetComponent<QETransform>();
+        if (childTransform)
+        {
+            childTransform->SetParent(nullptr, true);
+        }
+    }
+}
+
 void QEGameObject::InitializeResources()
 {
     this->deviceModule = DeviceModule::getInstance();

@@ -36,8 +36,16 @@ void GameObjectManager::AddGameObject(std::shared_ptr<QEGameObject> object_ptr, 
         if (!object_ptr->childs.empty())
         {
             auto matChild = object_ptr->childs[0]->GetMaterial();
-            unsigned int childLayer = matChild->layer;
-            this->_objects[childLayer][name] = object_ptr;
+
+            if (matChild != nullptr)
+            {
+                unsigned int childLayer = matChild->layer;
+                this->_objects[childLayer][name] = object_ptr;
+            }
+            else
+            {
+                this->_objects[(unsigned int)RenderLayer::SOLID][name] = object_ptr;
+            }
         }
         else
         {
