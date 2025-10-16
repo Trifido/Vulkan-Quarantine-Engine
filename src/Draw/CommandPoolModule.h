@@ -12,6 +12,7 @@
 #include <OmniShadowResources.h>
 #include <FrameBufferModule.h>
 #include <AtmosphereSystem.h>
+#include <CullingSceneManager.h>
 #include <PhysicsModule.h>
 #include <QESingleton.h>
 

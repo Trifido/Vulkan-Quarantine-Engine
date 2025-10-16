@@ -220,6 +220,7 @@ void App::initVulkan()
     character->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
     character->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>(PhysicBodyType::RIGID_BODY));
     character->AddComponent<QECollider>(std::make_shared<CapsuleCollider>());
+    character->AddComponent<AnimationComponent>(std::make_shared<AnimationComponent>());
 
     character->AddChild(cameraObject, true);
 
@@ -389,13 +390,6 @@ void App::initVulkan()
 
     // END -------------------------- Lights ----------------------------------------
 
-    this->sessionManager->RegisterActiveSceneCamera();
-
-    this->physicsModule->SetGravity(-20.0f);
-
-    // Initialize Managers
-    this->gameObjectManager->StartQEGameObjects();
-
     // Initialize animation states for character controller
     auto animationComponent = character->GetComponent<AnimationComponent>();
 
@@ -444,20 +438,13 @@ void App::initVulkan()
         .hasExitTime = true, .exitTimeNormalized = 1.0f
     });
 
-    this->gameObjectManager->UpdateQEGameObjects();
-
+    this->sessionManager->RegisterActiveSceneCamera();
+    this->physicsModule->SetGravity(-20.0f);
     this->lightManager->InitializeShadowMaps();
     this->atmosphereSystem->InitializeAtmosphereResources();
-
-    this->commandPoolModule->Render(&framebufferModule);
     this->synchronizationModule.createSyncObjects();
 
     init_imgui();
-
-    //auto yaml = wall->ToYaml();
-    //exportToFile(yaml, "wallGameObject.yaml");
-    //std::cout << yaml << std::endl;
-    /**/
 }
 
 void App::loadScene(QEScene scene)
@@ -491,6 +478,9 @@ void App::mainLoop()
     {
         glfwPollEvents();
         this->timer->UpdateDeltaTime();
+
+        // Start GameObjects 
+        this->gameObjectManager->StartQEGameObjects();
 
         //PHYSIC SYSTEM
         this->physicsModule->ComputePhysics((float)Timer::DeltaTime);

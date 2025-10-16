@@ -1,5 +1,6 @@
 #include "QEGameObject.h"
 #include <AnimationComponent.h>
+#include <CullingSceneManager.h>
 
 QEGameObject::QEGameObject()
 {
@@ -10,6 +11,13 @@ QEGameObject::QEGameObject()
 
 void QEGameObject::QEStart()
 {
+    if (_isStarted)
+    {
+        return;
+    }
+
+    _isStarted = true;
+
     auto geometryComponent = this->GetComponent<QEGeometryComponent>();
     auto transform = this->GetComponent<QETransform>();
 
@@ -20,8 +28,8 @@ void QEGameObject::QEStart()
         // Set the AABB component
         auto mesh = geometryComponent->GetMesh();
 
-
-        auto aabbCulling = this->cullingSceneManager->GenerateAABB(mesh->BoundingBox, transform);
+        auto cullingSceneManager = CullingSceneManager::getInstance();
+        auto aabbCulling = cullingSceneManager->GenerateAABB(mesh->BoundingBox, transform);
         this->AddComponent<AABBObject>(aabbCulling);
 
         //Set the materials
@@ -59,8 +67,13 @@ void QEGameObject::QEStart()
         //Set the animations
         if (mesh->AnimationData.size())
         {
-            this->AddComponent<AnimationComponent>(std::make_shared<AnimationComponent>());
             auto animationComponent = this->GetComponent<AnimationComponent>();
+
+            if (animationComponent == nullptr)
+            {
+                this->AddComponent<AnimationComponent>(std::make_shared<AnimationComponent>());
+                animationComponent = this->GetComponent<AnimationComponent>();
+            }
 
             for (auto anim : mesh->AnimationData)
             {
@@ -97,6 +110,13 @@ void QEGameObject::QEUpdate()
 
 void QEGameObject::QEDestroy()
 {
+    if (_isDestroyed)
+    {
+        return;
+    }
+
+    _isDestroyed = true;
+
     for (auto gameComponent : this->components)
     {
         gameComponent->QEDestroy();
@@ -235,7 +255,6 @@ void QEGameObject::InitializeResources()
     this->deviceModule = DeviceModule::getInstance();
     this->queueModule = QueueModule::getInstance();
     this->materialManager = MaterialManager::getInstance();
-    this->cullingSceneManager = CullingSceneManager::getInstance();
 
     AddComponent<QETransform>(std::make_shared<QETransform>());
 }

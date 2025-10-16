@@ -2,10 +2,10 @@
 #ifndef QE_GAME_OBJECT_H
 #define QE_GAME_OBJECT_H
 
-#include <CullingSceneManager.h>
 #include <Numbered.h>
 #include <GameObjectDto.h>
 #include <QECharacterController.h>
+#include <Material.h>
 #include <yaml-cpp/yaml.h>
 
 typedef class QEGameObject QEGameObject;
@@ -15,7 +15,8 @@ class QEGameObject : Numbered
     friend class CullingSceneManager;
 
 private:
-    CullingSceneManager* cullingSceneManager = nullptr;
+    bool _isStarted = false;
+    bool _isDestroyed = false;
     std::vector<std::string> bindedMaterials;
 
 protected:
