@@ -183,10 +183,9 @@ void QECharacterController::KeyInputTrigger(int key, int action, bool& lastActio
 
 void QECharacterController::ProcessInput()
 {
-    if (window == nullptr)
-    {
-        return;
-    }
+    if (window == nullptr) return;
+
+    if (ImGui::GetIO().WantCaptureKeyboard) return;
 
     btVector3 dir(0, 0, 0);
     const float moveSpeed = 5.0f;
@@ -221,6 +220,7 @@ void QECharacterController::QEInit()
     auto physicsBody = this->Owner->GetComponent<PhysicsBody>();
     auto collider = this->Owner->GetComponent<QECollider>();
     auto animationComponent = this->Owner->GetComponent<AnimationComponent>();
+    this->springArmPtr = this->Owner->GetComponentInChildren<QESpringArmComponent>(false);
 
     if (animationComponent != NULL)
     {

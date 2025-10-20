@@ -104,6 +104,38 @@ public:
         return nullptr;
     }
 
+    template<typename T>
+    std::shared_ptr<T> GetComponentInChildren(bool includeSelf = true)
+    {
+        if (includeSelf)
+        {
+            if (auto found = GetComponent<T>())
+                return found;
+        }
+
+        auto tr = GetComponent<QETransform>();
+        if (!tr)
+            return nullptr;
+
+        for (auto& child : tr->GetChildren())
+        {
+            if (!child)
+                continue;
+
+            auto childGO = child->Owner;
+            if (!childGO)
+                continue;
+
+            if (auto found = childGO->GetComponent<T>())
+                return found;
+
+            if (auto foundDeep = childGO->GetComponentInChildren<T>(false))
+                return foundDeep;
+        }
+
+        return nullptr;
+    }
+
     std::shared_ptr<QEMaterial> GetMaterial(const std::string& matID = "") const
     {
         if (materials.empty())

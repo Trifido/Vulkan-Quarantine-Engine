@@ -9,6 +9,7 @@
 #include "../Editor/Grid.h"
 #include <QEProjectManager.h>
 #include <QEMeshRenderer.h>
+#include <QESpringArmComponent.h>
 
 App::App()  
 { 
@@ -203,13 +204,18 @@ void App::initVulkan()
     //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Golem/Meshes/scene.gltf").generic_string();
     //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf").generic_string();
 
-    // THIRD PERSON CAMERA
+    // THIRD PERSON CAMERA && SPRING ARM
     std::shared_ptr<QEGameObject> cameraObject = std::make_shared<QEGameObject>();
     cameraObject->AddComponent(std::make_shared<QECamera>());
     this->gameObjectManager->AddGameObject(cameraObject, "cameraObject");
     auto cameraTransform = cameraObject->GetComponent<QETransform>();
     cameraTransform->SetLocalPosition(glm::vec3(-0.715416, 1.89489, -2.56881));
     cameraTransform->SetLocalEulerDegrees(glm::vec3(-15.7f, 180.0f, 0.0f));
+
+    std::shared_ptr<QEGameObject> springArmObject = std::make_shared<QEGameObject>();
+    springArmObject->AddComponent(std::make_shared<QESpringArmComponent>());
+    this->gameObjectManager->AddGameObject(springArmObject, "springArmObject");
+    springArmObject->AddChild(cameraObject, true);
 
     // CHARACTER CONTROLLER
     /**/
@@ -221,8 +227,7 @@ void App::initVulkan()
     character->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>(PhysicBodyType::RIGID_BODY));
     character->AddComponent<QECollider>(std::make_shared<CapsuleCollider>());
     character->AddComponent<AnimationComponent>(std::make_shared<AnimationComponent>());
-
-    character->AddChild(cameraObject, true);
+    character->AddChild(springArmObject, true);
 
     auto characterPBody = character->GetComponent<PhysicsBody>();
     characterPBody->Mass = 70.0f;

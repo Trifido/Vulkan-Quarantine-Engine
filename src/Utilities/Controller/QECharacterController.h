@@ -10,6 +10,7 @@
 #include <GLFW/glfw3.h>
 #include <memory>
 #include <AnimationComponent.h>
+#include <QESpringArmComponent.h>
 
 struct IgnoreSelfCallback : public btCollisionWorld::ClosestConvexResultCallback
 {
@@ -60,6 +61,7 @@ class QECharacterController : public QEGameComponent
         std::shared_ptr<QECollider> colliderPtr;
         std::shared_ptr<PhysicsBody> physicBodyPtr;
         std::shared_ptr<AnimationComponent> animationComponentPtr;
+        std::shared_ptr<QESpringArmComponent> springArmPtr;
 
     private:
         //Buttons

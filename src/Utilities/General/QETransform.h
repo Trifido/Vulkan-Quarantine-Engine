@@ -51,6 +51,7 @@ public:
     // Parenting
     void SetParent(std::shared_ptr<QETransform> newParent, bool keepWorld = true);
     std::shared_ptr<QETransform> GetParent() const { return parent.lock(); }
+    std::vector<std::shared_ptr<QETransform>> GetChildren() const { return children; }
     void AddChild(const std::shared_ptr<QETransform>& child);
 
     // Getters matrices
