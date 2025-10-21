@@ -3,6 +3,7 @@
 #include <PhysicsModule.h>
 #include <Timer.h>
 #include <QEGameObject.h>
+#include <CameraHelper.h>
 
 void QECharacterController::Initialize()
 {
@@ -187,22 +188,73 @@ void QECharacterController::ProcessInput()
 
     if (ImGui::GetIO().WantCaptureKeyboard) return;
 
-    btVector3 dir(0, 0, 0);
-    const float moveSpeed = 5.0f;
 
-    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_PRESS)
-    {
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) dir += btVector3(0, 0, -1);
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) dir += btVector3(0, 0, 1);
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) dir += btVector3(-1, 0, 0);
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) dir += btVector3(1, 0, 0);
+    // 0) Lee WASD como intención en 2D (x = lateral, y = adelante)
+    float ix = 0.0f, iz = 0.0f;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) ix -= 1.0f;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) ix += 1.0f;
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) iz += 1.0f; // W = hacia adelante (forward = -Z)
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) iz -= 1.0f;
+
+    // Sin intención -> frena lateral (conserva Y de la física)
+    if (ix == 0.0f && iz == 0.0f) {
+        btVector3 currentVel = this->physicBodyPtr->body->getLinearVelocity();
+        this->physicBodyPtr->body->setLinearVelocity(btVector3(0, currentVel.y(), 0));
+        return;
     }
 
-    Move(dir, moveSpeed);
+    // 1) Toma la rotación de cámara (desde el spring arm)
+    glm::quat camRot = glm::quat(1, 0, 0, 0);
+    if (springArmPtr) {
+        camRot = springArmPtr->GetCameraWorldRotation();
+    }
+    else {
+        // fallback: si no hay springArm, usa rot propia o del GO
+        auto tr = Owner->GetComponent<QETransform>();
+        camRot = tr ? tr->GetWorldRotation() : glm::quat(1, 0, 0, 0);
+    }
 
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-    {
-        //Jump();
+    // 2) Basis de cámara y dirección en mundo desde input
+    glm::vec3 fwd = CamForward(camRot);
+    glm::vec3 right = CamRight(camRot);
+
+    // Ignora el componente vertical de cámara; mueve en plano
+    fwd.y = 0.0f; right.y = 0.0f;
+    if (glm::length2(fwd) < 1e-6f) fwd = glm::vec3(0, 0, -1);
+    if (glm::length2(right) < 1e-6f) right = glm::vec3(1, 0, 0);
+    fwd = glm::normalize(fwd);
+    right = glm::normalize(right);
+
+    glm::vec3 wishDir = glm::normalize(right * ix + fwd * iz);
+
+    // 3) Proyecta sobre el plano del suelo si estás en pendiente
+    glm::vec3 groundN(0, 1, 0);
+    if (isGrounded) {
+        groundN = glm::vec3(groundNormal.x(), groundNormal.y(), groundNormal.z());
+        if (glm::length2(groundN) > 1e-6f) groundN = glm::normalize(groundN);
+        else groundN = glm::vec3(0, 1, 0);
+        wishDir = ProjectOnPlane(wishDir, groundN);
+        if (glm::length2(wishDir) > 1e-6f) wishDir = glm::normalize(wishDir);
+    }
+
+    // 4) Mueve usando tu pipeline actual
+    const float moveSpeed = 5.0f;
+    btVector3 dirBT(wishDir.x, wishDir.y, wishDir.z);
+    Move(dirBT, moveSpeed);
+
+    // 5) (Opcional) Girar el personaje hacia la dirección de movimiento
+    //     Si tu malla tiene animación/mesh separado, puedes rotar solo el visual.
+    if (glm::length2(wishDir) > 1e-6f) {
+        auto tr = Owner->GetComponent<QETransform>();
+        if (tr) {
+            // Yaw en RH con forward = -Z: yaw = atan2(x, -z)
+            float targetYaw = std::atan2(wishDir.x, -wishDir.z);
+            glm::quat targetRot = glm::angleAxis(targetYaw, glm::vec3(0, 1, 0));
+            // Slerp suave
+            glm::quat current = tr->GetWorldRotation();
+            glm::quat newQ = glm::slerp(current, targetRot, 1.0f - std::exp(-10.0f * Timer::DeltaTime));
+            tr->SetLocalRotation(newQ); // si tu SetLocalRotation es local, asegúrate de que el GO no tenga padre rotado; si lo tiene, usa SetFromMatrix con world.
+        }
     }
 
     this->KeyInputTrigger(GLFW_KEY_F, GLFW_PRESS, this->isPressedAttackButton, "attack");
