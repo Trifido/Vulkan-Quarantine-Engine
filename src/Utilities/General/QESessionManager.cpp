@@ -24,7 +24,7 @@ void QESessionManager::SetEditorMode(bool value)
     if (value)
     {
         auto gameObjectManager = GameObjectManager::getInstance();
-        std::shared_ptr<QEGameObject> cameraObject = std::make_shared<QEGameObject>();
+        std::shared_ptr<QEGameObject> cameraObject = std::make_shared<QEGameObject>("CameraEditor");
         cameraObject->AddComponent(this->_editorCamera);
         cameraObject->AddComponent(std::make_shared<QECameraController>());
 
@@ -32,7 +32,7 @@ void QESessionManager::SetEditorMode(bool value)
         cameraTransform->SetLocalEulerDegrees(glm::vec3(-45.0f, 0.0f, 0.0f));
         cameraTransform->SetLocalPosition(glm::vec3(0.0f, 10.0f, 10.0f));
 
-        gameObjectManager->AddGameObject(cameraObject, "cameraObject");
+        gameObjectManager->AddGameObject(cameraObject);
     }
 }
 

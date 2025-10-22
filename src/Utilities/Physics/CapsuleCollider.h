@@ -12,6 +12,7 @@ protected:
 
 public:
     void QEStart() override;
+    void QEInit() override;
 
     CapsuleCollider();
     CapsuleCollider(float newRadius, float newHeight);

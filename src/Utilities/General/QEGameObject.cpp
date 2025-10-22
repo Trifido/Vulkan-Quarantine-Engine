@@ -2,9 +2,9 @@
 #include <AnimationComponent.h>
 #include <CullingSceneManager.h>
 
-QEGameObject::QEGameObject()
+QEGameObject::QEGameObject(string name)
 {
-    this->Name = "QEGameObject";
+    this->Name = (name.empty()) ? ID() : name;
     this->childs.resize(0);
     this->InitializeResources();
 }
@@ -21,6 +21,7 @@ void QEGameObject::QEStart()
     auto geometryComponent = this->GetComponent<QEGeometryComponent>();
     auto transform = this->GetComponent<QETransform>();
 
+    // Set Visual Components
     if (geometryComponent != nullptr)
     {
         geometryComponent->QEStart();

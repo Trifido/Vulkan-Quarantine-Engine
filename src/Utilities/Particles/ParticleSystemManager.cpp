@@ -29,7 +29,7 @@ void ParticleSystemManager::AddParticleSystem(std::shared_ptr<ParticleSystem> ob
 {
     name = CheckName(name);
     this->_particleSystems[name] = object_ptr;
-    this->gameObjectManager->AddGameObject(object_ptr, name);
+    this->gameObjectManager->AddGameObject(object_ptr);
 }
 
 std::shared_ptr<ParticleSystem> ParticleSystemManager::GetParticleSystem(std::string name)

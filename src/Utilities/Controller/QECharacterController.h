@@ -67,6 +67,7 @@ class QECharacterController : public QEGameComponent
         //Buttons
         bool isPressedAttackButton = false;
         bool isPressedJumpButton = false;
+        std::shared_ptr<QETransform> visualTr;
 
     private:
         void CheckIfGrounded();

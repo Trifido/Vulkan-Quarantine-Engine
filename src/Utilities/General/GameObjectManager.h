@@ -15,15 +15,16 @@ class GameObjectManager : public QESingleton<GameObjectManager>
 private:
     friend class QESingleton<GameObjectManager>;
     std::unordered_map<unsigned int, std::unordered_map<std::string, std::shared_ptr<QEGameObject>>> _objects;
-    std::unordered_map<std::string, std::shared_ptr<QEGameObject>> _physicObjects;
     RenderLayerModule renderLayers;
 
 private:
     std::string CheckName(std::string nameGameObject);
+    unsigned int DecideRenderLayer(std::shared_ptr<QEGameObject> go, unsigned int defaultLayer);
+    void RegisterSingle(std::shared_ptr<QEGameObject> go, std::string name);
 
 public:
     GameObjectManager() = default;
-    void AddGameObject(std::shared_ptr<QEGameObject> object_ptr, std::string name);
+    void AddGameObject(std::shared_ptr<QEGameObject> object_ptr);
     std::shared_ptr<QEGameObject> GetGameObject(std::string name);
     void DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
     void CSMCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex);

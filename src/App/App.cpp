@@ -205,40 +205,90 @@ void App::initVulkan()
     //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf").generic_string();
 
     // THIRD PERSON CAMERA && SPRING ARM
-    std::shared_ptr<QEGameObject> cameraObject = std::make_shared<QEGameObject>();
+    std::shared_ptr<QEGameObject> cameraObject = std::make_shared<QEGameObject>("ThirdPersonCamera");
     cameraObject->AddComponent(std::make_shared<QECamera>());
-    this->gameObjectManager->AddGameObject(cameraObject, "cameraObject");
+    //this->gameObjectManager->AddGameObject(cameraObject, "cameraObject");
     auto cameraTransform = cameraObject->GetComponent<QETransform>();
     cameraTransform->SetLocalPosition(glm::vec3(-0.715416, 1.89489, -2.56881));
     cameraTransform->SetLocalEulerDegrees(glm::vec3(-15.7f, 180.0f, 0.0f));
 
-    std::shared_ptr<QEGameObject> springArmObject = std::make_shared<QEGameObject>();
+    std::shared_ptr<QEGameObject> springArmObject = std::make_shared<QEGameObject>("SpringArm");
     springArmObject->AddComponent(std::make_shared<QESpringArmComponent>());
-    this->gameObjectManager->AddGameObject(springArmObject, "springArmObject");
+    //this->gameObjectManager->AddGameObject(springArmObject, "springArmObject");
     springArmObject->AddChild(cameraObject, true);
 
     // CHARACTER CONTROLLER
-    /**/
-    std::shared_ptr<QEGeometryComponent> geometryComponent = make_shared<QEGeometryComponent>(std::make_unique<MeshGenerator>(characterPath));
+    std::shared_ptr<QEGameObject> characterGO = std::make_shared<QEGameObject>("Character");
+    characterGO->AddComponent<QECollider>(std::make_shared<CapsuleCollider>());
+    characterGO->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>(PhysicBodyType::RIGID_BODY));
+    characterGO->AddComponent<QECharacterController>(std::make_shared<QECharacterController>());
 
-    std::shared_ptr<QEGameObject> character = std::make_shared<QEGameObject>();
-    character->AddComponent<QEGeometryComponent>(geometryComponent);
-    character->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
-    character->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>(PhysicBodyType::RIGID_BODY));
-    character->AddComponent<QECollider>(std::make_shared<CapsuleCollider>());
-    character->AddComponent<AnimationComponent>(std::make_shared<AnimationComponent>());
-    character->AddChild(springArmObject, true);
-
-    auto characterPBody = character->GetComponent<PhysicsBody>();
+    auto characterPBody = characterGO->GetComponent<PhysicsBody>();
     characterPBody->Mass = 70.0f;
     characterPBody->CollisionGroup = CollisionFlag::COL_PLAYER;
     characterPBody->CollisionMask = CollisionFlag::COL_SCENE;
 
-    character->AddComponent<QECharacterController>(std::make_shared<QECharacterController>());
-    auto characterController = character->GetComponent<QECharacterController>();
+    auto characterController = characterGO->GetComponent<QECharacterController>();
     characterController->SetJumpForce(9.0f);
     characterController->AddGLFWWindow(this->mainWindow->getWindow());
-    this->gameObjectManager->AddGameObject(character, "character");
+
+    shared_ptr<QEGameObject> visualCharacter = make_shared<QEGameObject>("MeshCharacter");
+    visualCharacter->AddComponent<QEGeometryComponent>(make_shared<QEGeometryComponent>(std::make_unique<MeshGenerator>(characterPath)));
+    visualCharacter->AddComponent<QEMeshRenderer>(make_shared<QEMeshRenderer>());
+    visualCharacter->AddComponent<AnimationComponent>(make_shared<AnimationComponent>());
+
+    // Initialize animation states for character controller
+    auto animationComponent = visualCharacter->GetComponent<AnimationComponent>();
+
+    // States
+    animationComponent->AddAnimationState({ "Idle", true, "Idle" }, /*isEntry*/ true);
+    animationComponent->AddAnimationState({ "Walk", true, "Walking" });
+    animationComponent->AddAnimationState({ "Attack", false, "Punch" });
+    animationComponent->AddAnimationState({ "Jump", false, "Jumping" });
+
+    // Parameters
+    animationComponent->SetFloat("speed", 0.0f);
+    animationComponent->SetTrigger("attack", false);
+    animationComponent->SetTrigger("jump", false);
+
+    //Transitions
+    animationComponent->AddTransition({
+        .fromState = "Idle", .toState = "Walk",
+        .conditions = {{"speed", QEOp::Greater, 0.1f}},
+        .priority = 10, .hasExitTime = false
+        });
+    animationComponent->AddTransition({
+        .fromState = "Walk", .toState = "Idle",
+        .conditions = {{"speed", QEOp::Less, 0.05f}},
+        .priority = 10, .hasExitTime = true, .exitTimeNormalized = 0.2f
+        });
+
+    animationComponent->AddTransition({
+        .fromState = "Idle", .toState = "Attack",
+        .conditions = {{"attack", QEOp::Equal, 1.f}}, // trigger
+        .priority = 100, .hasExitTime = false
+        });
+    animationComponent->AddTransition({
+        .fromState = "Attack", .toState = "Idle",
+        .conditions = {}, .priority = 10,
+        .hasExitTime = true, .exitTimeNormalized = 1.0f
+        });
+
+    animationComponent->AddTransition({
+        .fromState = "Idle", .toState = "Jump",
+        .conditions = {{"jump", QEOp::Equal, 1.f}}, // trigger
+        .priority = 10, .hasExitTime = false
+        });
+    animationComponent->AddTransition({
+        .fromState = "Jump", .toState = "Idle",
+        .conditions = {}, .priority = 10,
+        .hasExitTime = true, .exitTimeNormalized = 1.0f
+        });
+
+    characterGO->AddChild(visualCharacter, true);
+    characterGO->AddChild(springArmObject, true);
+
+    this->gameObjectManager->AddGameObject(characterGO);
     /**/
 
     //model->_Transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
@@ -255,7 +305,7 @@ void App::initVulkan()
     auto floorMatInstance = defaultMat->CreateMaterialInstance();
     this->materialManager->AddMaterial(floorMatInstance);
     
-    std::shared_ptr<QEGameObject> floor = std::make_shared<QEGameObject>();
+    std::shared_ptr<QEGameObject> floor = std::make_shared<QEGameObject>("floor");
     std::shared_ptr<QEGeometryComponent> geometryFloorComponent = make_shared<QEGeometryComponent>(std::make_unique<FloorGenerator>());
     floor->AddComponent<QEGeometryComponent>(geometryFloorComponent);
     floor->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
@@ -269,19 +319,19 @@ void App::initVulkan()
     floorMatInstance->materialData.SetMaterialField("Specular", glm::vec3(0.0f, 0.0f, 0.0f));
     floorMatInstance->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
     
+    floor->AddComponent<QECollider>(std::make_shared<PlaneCollider>());
     floor->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>());
     auto floorPBody = floor->GetComponent<PhysicsBody>();
     floorPBody->CollisionGroup = CollisionFlag::COL_SCENE;
     floorPBody->CollisionMask = CollisionFlag::COL_PLAYER;
-    floor->AddComponent<QECollider>(std::make_shared<PlaneCollider>());
 
     auto floorCollider = floor->GetComponent<QECollider>();
     std::static_pointer_cast<PlaneCollider>(floorCollider)->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
-    this->gameObjectManager->AddGameObject(floor, "floor");  
+    this->gameObjectManager->AddGameObject(floor);  
 
     auto rampMatInstance = defaultMat->CreateMaterialInstance();
     this->materialManager->AddMaterial(rampMatInstance);
-    std::shared_ptr<QEGameObject> ramp = std::make_shared<QEGameObject>();
+    std::shared_ptr<QEGameObject> ramp = std::make_shared<QEGameObject>("ramp");
     std::shared_ptr<QEGeometryComponent> geometryCubeComponent = make_shared<QEGeometryComponent>(std::make_unique<CubeGenerator>());
     ramp->AddComponent<QEGeometryComponent>(geometryCubeComponent);
     ramp->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
@@ -299,11 +349,11 @@ void App::initVulkan()
     rampPBody->CollisionMask = CollisionFlag::COL_PLAYER;
 
     ramp->AddComponent<BoxCollider>(std::make_shared<BoxCollider>());
-    this->gameObjectManager->AddGameObject(ramp, "ramp");
+    this->gameObjectManager->AddGameObject(ramp);
     
     auto wallMatInstance = defaultMat->CreateMaterialInstance();
     this->materialManager->AddMaterial(wallMatInstance);
-    std::shared_ptr<QEGameObject> wall = std::make_shared<QEGameObject>();
+    std::shared_ptr<QEGameObject> wall = std::make_shared<QEGameObject>("wall");
     std::shared_ptr<QEGeometryComponent> geometryWallComponent = make_shared<QEGeometryComponent>(std::make_unique<CubeGenerator>());
     wall->AddComponent<QEGeometryComponent>(geometryWallComponent);
     wall->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
@@ -315,12 +365,12 @@ void App::initVulkan()
 
     wallMatInstance->materialData.SetMaterialField("Diffuse", glm::vec3(0.8f, 0.2f, 0.2f));
 
+    wall->AddComponent<QECollider>(std::make_shared<BoxCollider>());
     wall->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>());
     auto wallPBody = wall->GetComponent<PhysicsBody>();
     wallPBody->CollisionGroup = CollisionFlag::COL_SCENE;
     wallPBody->CollisionMask = CollisionFlag::COL_PLAYER;
 
-    wall->AddComponent<QECollider>(std::make_shared<BoxCollider>());
     //this->gameObjectManager->AddGameObject(wall, "wall");
     /**/
 
@@ -395,54 +445,6 @@ void App::initVulkan()
 
     // END -------------------------- Lights ----------------------------------------
 
-    // Initialize animation states for character controller
-    auto animationComponent = character->GetComponent<AnimationComponent>();
-
-    // States
-    animationComponent->AddAnimationState({ "Idle", true, "Idle" }, /*isEntry*/ true);
-    animationComponent->AddAnimationState({ "Walk", true, "Walking" });
-    animationComponent->AddAnimationState({ "Attack", false, "Punch" });
-    animationComponent->AddAnimationState({ "Jump", false, "Jumping" });
-
-    // Parameters
-    animationComponent->SetFloat("speed", 0.0f);
-    animationComponent->SetTrigger("attack", false);
-    animationComponent->SetTrigger("jump", false);
-
-    //Transitions
-    animationComponent->AddTransition({
-        .fromState = "Idle", .toState = "Walk",
-        .conditions = {{"speed", QEOp::Greater, 0.1f}},
-        .priority = 10, .hasExitTime = false
-    });
-    animationComponent->AddTransition({
-        .fromState = "Walk", .toState = "Idle",
-        .conditions = {{"speed", QEOp::Less, 0.05f}},
-        .priority = 10, .hasExitTime = true, .exitTimeNormalized = 0.2f
-    });
-
-    animationComponent->AddTransition({
-        .fromState = "Idle", .toState = "Attack",
-        .conditions = {{"attack", QEOp::Equal, 1.f}}, // trigger
-        .priority = 100, .hasExitTime = false
-    });
-    animationComponent->AddTransition({
-        .fromState = "Attack", .toState = "Idle",
-        .conditions = {}, .priority = 10,
-        .hasExitTime = true, .exitTimeNormalized = 1.0f
-    });
-
-    animationComponent->AddTransition({
-        .fromState = "Idle", .toState = "Jump",
-        .conditions = {{"jump", QEOp::Equal, 1.f}}, // trigger
-        .priority = 10, .hasExitTime = false
-    });
-    animationComponent->AddTransition({
-        .fromState = "Jump", .toState = "Idle",
-        .conditions = {}, .priority = 10,
-        .hasExitTime = true, .exitTimeNormalized = 1.0f
-    });
-
     this->sessionManager->RegisterActiveSceneCamera();
     this->physicsModule->SetGravity(-20.0f);
     this->lightManager->InitializeShadowMaps();
@@ -487,10 +489,10 @@ void App::mainLoop()
         // Start GameObjects 
         this->gameObjectManager->StartQEGameObjects();
 
+        this->gameObjectManager->UpdateQEGameObjects();
+
         //PHYSIC SYSTEM
         this->physicsModule->ComputePhysics((float)Timer::DeltaTime);
-
-        this->gameObjectManager->UpdateQEGameObjects();
                 
         // INPUT EVENTS
         this->keyboard_ptr->ReadKeyboardEvents();

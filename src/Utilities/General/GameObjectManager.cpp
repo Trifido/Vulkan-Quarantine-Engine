@@ -26,42 +26,44 @@ std::string GameObjectManager::CheckName(std::string nameGameObject)
     return newName;
 }
 
-void GameObjectManager::AddGameObject(std::shared_ptr<QEGameObject> object_ptr, std::string name)
+unsigned int GameObjectManager::DecideRenderLayer(std::shared_ptr<QEGameObject> go, unsigned int defaultLayer)
+{
+    if (auto mat = go->GetMaterial()) return mat->layer;
+
+    if (!go->childs.empty())
+    {
+        if (auto matChild = go->childs[0]->GetMaterial())
+            return matChild->layer;
+    }
+
+    return defaultLayer;
+}
+
+void GameObjectManager::RegisterSingle(std::shared_ptr<QEGameObject> go, std::string name)
 {
     name = CheckName(name);
 
-    auto mat = object_ptr->GetMaterial();
-    if (mat == nullptr)
-    {
-        if (!object_ptr->childs.empty())
-        {
-            auto matChild = object_ptr->childs[0]->GetMaterial();
+    const unsigned int layer = DecideRenderLayer(go, (unsigned int)RenderLayer::SOLID);
+    this->_objects[layer][name] = go;
+}
 
-            if (matChild != nullptr)
-            {
-                unsigned int childLayer = matChild->layer;
-                this->_objects[childLayer][name] = object_ptr;
-            }
-            else
-            {
-                this->_objects[(unsigned int)RenderLayer::SOLID][name] = object_ptr;
-            }
-        }
-        else
-        {
-            this->_objects[(unsigned int)RenderLayer::SOLID][name] = object_ptr;
-        }
-    }
-    else
-    {
-        this->_objects[mat->layer][name] = object_ptr;
-    }
+void GameObjectManager::AddGameObject(std::shared_ptr<QEGameObject> object_ptr)
+{
+    RegisterSingle(object_ptr, object_ptr->Name);
 
-    auto physicBody = object_ptr->GetComponent<PhysicsBody>();
-    if (physicBody != nullptr)
-    {
-        this->_physicObjects[name] = object_ptr;
-    }
+    std::function<void(std::shared_ptr<QEGameObject>)> dfs =
+        [&](std::shared_ptr<QEGameObject> node)
+        {
+            for (size_t i = 0; i < node->childs.size(); ++i) {
+                auto& child = node->childs[i];
+                if (!child) continue;
+
+                RegisterSingle(child, child->Name);
+                dfs(child);
+            }
+        };
+
+    dfs(object_ptr);
 }
 
 void GameObjectManager::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
@@ -130,7 +132,6 @@ void GameObjectManager::ReleaseAllGameObjects()
 void GameObjectManager::CleanLastResources()
 {
     this->_objects.clear();
-    this->_physicObjects.clear();
 }
 
 std::shared_ptr<QEGameObject> GameObjectManager::GetGameObject(std::string name)
@@ -237,7 +238,7 @@ void GameObjectManager::DeserializeGameObjects(YAML::Node gameObjects)
     for (auto gameObjectData : gameObjects)
     {
         std::shared_ptr<QEGameObject> gameObject = QEGameObject::FromYaml(gameObjectData);
-        this->AddGameObject(gameObject, gameObject->Name);
+        this->AddGameObject(gameObject);
     }
 }
 

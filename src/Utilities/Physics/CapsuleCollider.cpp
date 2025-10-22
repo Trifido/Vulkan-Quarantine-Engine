@@ -5,14 +5,22 @@
 void CapsuleCollider::QEStart()
 {
     QECollider::QEStart();
+}
 
-    auto boundingBox = this->Owner->GetComponent<AABBObject>();
+void CapsuleCollider::QEInit()
+{
+    if (QEInitialized()) return;
+
+    auto boundingBox = this->Owner->GetComponentInChildren<AABBObject>(true);
+
     if (boundingBox != nullptr)
     {
         this->compound = new btCompoundShape();
         this->SetSize(glm::min(boundingBox->Size.x, boundingBox->Size.z) * 0.75f, boundingBox->Size.y);
         this->SetColliderPivot(boundingBox->Center);
     }
+
+    QECollider::QEInit();
 }
 
 CapsuleCollider::CapsuleCollider() : QECollider()

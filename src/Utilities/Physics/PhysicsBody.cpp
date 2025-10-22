@@ -178,7 +178,7 @@ void PhysicsBody::QEInit()
     if (this->Owner == nullptr)
         return;
 
-    this->collider = this->Owner->GetComponent<QECollider>();
+    this->collider = this->Owner->GetComponentInChildren<QECollider>(true);
     this->transform = this->Owner->GetComponent<QETransform>();
 
     if (this->collider && this->transform)

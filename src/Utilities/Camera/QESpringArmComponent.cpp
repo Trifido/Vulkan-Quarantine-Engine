@@ -1,4 +1,4 @@
-#include "QESpringArmComponent.h"
+ï»¿#include "QESpringArmComponent.h"
 #include <Timer.h>
 #include <QEGameObject.h>
 #include <QECamera.h>
@@ -109,7 +109,7 @@ bool QESpringArmComponent::SphereSweep(const glm::vec3& start,
         return false;
     }
 
-    // 1) Shape y márgenes
+    // 1) Shape y mÃ¡rgenes
     // Importante: pon margen a 0.0f para que el radio sea EXACTO.
     static thread_local btSphereShape sphere(1.0f);
     sphere.setUnscaledRadius(btScalar(radius));
@@ -122,11 +122,11 @@ bool QESpringArmComponent::SphereSweep(const glm::vec3& start,
     // 3) Callback de resultado con filtros
     ClosestNotMeConvexResultCallback cb(ToBt(start), ToBt(end));
 
-    // Configura grupos/máscaras si usas flags de colisión (opcional)
+    // Configura grupos/mÃ¡scaras si usas flags de colisiÃ³n (opcional)
     // cb.m_collisionFilterGroup = (short)CollisionFlag::CameraProbe;
     // cb.m_collisionFilterMask  = (short)CollisionFlag::WorldStatic | (short)CollisionFlag::WorldDynamic;
 
-    // Ignora el rigidbody del player y el de la cámara si existen
+    // Ignora el rigidbody del player y el de la cÃ¡mara si existen
     // (Sustituye estas llamadas por tu forma de acceder a los cuerpos)
     auto playerRB = Owner->GetComponent<PhysicsBody>();
     if (playerRB)
@@ -204,10 +204,10 @@ void QESpringArmComponent::QEUpdate()
     m_currentArmLen = SmoothExp(m_currentArmLen, TargetArmLength, PosLagSpeed, dt);
 
     // 3) Punto final deseado del brazo
-    glm::vec3 fwd = m_smoothedRot * glm::vec3(0, 0, -1); // cámara mira -Z local
+    glm::vec3 fwd = m_smoothedRot * glm::vec3(0, 0, -1); // cÃ¡mara mira -Z local
     glm::vec3 desiredCamPos = m_smoothedPivot + SocketOffset - fwd * m_currentArmLen;
 
-    // 4) Colisión del brazo (opcional)
+    // 4) ColisiÃ³n del brazo (opcional)
     glm::vec3 start = m_smoothedPivot + SocketOffset;
     glm::vec3 end = desiredCamPos;
     if (DoCollisionTest)
@@ -238,7 +238,16 @@ void QESpringArmComponent::QEUpdate()
             {
                 glm::mat4 T = glm::translate(glm::mat4(1), m_camPos);
                 glm::mat4 R = glm::toMat4(m_camRot);
-                camTr->SetFromMatrix(T * R);
+                glm::mat4 worldCam = T * R;
+
+                // World del padre (SpringArmGO)
+                auto armTr = Owner->GetComponent<QETransform>();
+                glm::mat4 parentWorld = armTr ? armTr->GetWorldMatrix() : glm::mat4(1);
+
+                // LOCAL = inv(parentWorld) * WORLD
+                glm::mat4 localCam = glm::inverse(parentWorld) * worldCam;
+
+                camTr->SetFromMatrix(localCam);
             }
         }
     }

@@ -35,7 +35,7 @@ private:
     void InitializeResources();
 
 public:
-    QEGameObject();
+    QEGameObject(string name = "");
     //QEGameObject(const GameObjectDto& gameObjectDto);
     inline std::string ID() const { return id; }
 

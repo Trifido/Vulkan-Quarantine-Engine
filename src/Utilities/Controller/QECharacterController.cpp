@@ -186,18 +186,24 @@ void QECharacterController::ProcessInput()
 {
     if (window == nullptr) return;
 
-    if (ImGui::GetIO().WantCaptureKeyboard) return;
+    if (!ImGui::GetIO().WantCaptureKeyboard)
+    {
+        this->KeyInputTrigger(GLFW_KEY_F, GLFW_PRESS, this->isPressedAttackButton, "attack");
+        this->KeyInputTrigger(GLFW_KEY_SPACE, GLFW_PRESS, this->isPressedJumpButton, "jump");
+    }
 
+    if (ImGui::GetIO().WantCaptureKeyboard) return;
 
     // 0) Lee WASD como intención en 2D (x = lateral, y = adelante)
     float ix = 0.0f, iz = 0.0f;
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) ix -= 1.0f;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) ix += 1.0f;
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) iz += 1.0f; // W = hacia adelante (forward = -Z)
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) iz += 1.0f;
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) iz -= 1.0f;
 
     // Sin intención -> frena lateral (conserva Y de la física)
-    if (ix == 0.0f && iz == 0.0f) {
+    if (ix == 0.0f && iz == 0.0f)
+    {
         btVector3 currentVel = this->physicBodyPtr->body->getLinearVelocity();
         this->physicBodyPtr->body->setLinearVelocity(btVector3(0, currentVel.y(), 0));
         return;
@@ -242,23 +248,13 @@ void QECharacterController::ProcessInput()
     btVector3 dirBT(wishDir.x, wishDir.y, wishDir.z);
     Move(dirBT, moveSpeed);
 
-    // 5) (Opcional) Girar el personaje hacia la dirección de movimiento
-    //     Si tu malla tiene animación/mesh separado, puedes rotar solo el visual.
-    if (glm::length2(wishDir) > 1e-6f) {
-        auto tr = Owner->GetComponent<QETransform>();
-        if (tr) {
-            // Yaw en RH con forward = -Z: yaw = atan2(x, -z)
-            float targetYaw = std::atan2(wishDir.x, -wishDir.z);
-            glm::quat targetRot = glm::angleAxis(targetYaw, glm::vec3(0, 1, 0));
-            // Slerp suave
-            glm::quat current = tr->GetWorldRotation();
-            glm::quat newQ = glm::slerp(current, targetRot, 1.0f - std::exp(-10.0f * Timer::DeltaTime));
-            tr->SetLocalRotation(newQ); // si tu SetLocalRotation es local, asegúrate de que el GO no tenga padre rotado; si lo tiene, usa SetFromMatrix con world.
-        }
+    if (visualTr && glm::length2(wishDir) > 1e-6f)
+    {
+        float targetYaw = std::atan2(wishDir.x, -wishDir.z);
+        glm::quat targetRot = glm::angleAxis(targetYaw, glm::vec3(0, 1, 0));
+        glm::quat newQ = glm::slerp(visualTr->localRotation, targetRot, 1.0f - std::exp(-10.0f * Timer::DeltaTime));
+        visualTr->SetLocalRotation(newQ);
     }
-
-    this->KeyInputTrigger(GLFW_KEY_F, GLFW_PRESS, this->isPressedAttackButton, "attack");
-    this->KeyInputTrigger(GLFW_KEY_SPACE, GLFW_PRESS, this->isPressedJumpButton, "jump");
 }
 
 void QECharacterController::QEStart()
@@ -271,8 +267,9 @@ void QECharacterController::QEInit()
 {
     auto physicsBody = this->Owner->GetComponent<PhysicsBody>();
     auto collider = this->Owner->GetComponent<QECollider>();
-    auto animationComponent = this->Owner->GetComponent<AnimationComponent>();
+    auto animationComponent = this->Owner->GetComponentInChildren<AnimationComponent>(true);
     this->springArmPtr = this->Owner->GetComponentInChildren<QESpringArmComponent>(false);
+    this->visualTr = Owner->GetComponentInChildren<QETransform>(false);
 
     if (animationComponent != NULL)
     {
