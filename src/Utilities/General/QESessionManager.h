@@ -37,7 +37,7 @@ public:
 
     void CleanCameras();
     void FreeCameraResources();
-    void UpdateActiveCamera(float deltaTime);
+    void UpdateActiveCameraGPUData();
     void UpdateViewportSize();
 
     void SetupEditor();

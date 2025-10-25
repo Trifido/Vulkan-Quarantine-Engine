@@ -44,6 +44,7 @@ void QESessionManager::SetDebugMode(bool value)
     cullingSceneManager->DebugMode = value;
 
     auto physicsModule = PhysicsModule::getInstance();
+    physicsModule->InitializeDebugResources();
     physicsModule->debugDrawer->DebugMode = value;
 }
 
@@ -77,7 +78,7 @@ void QESessionManager::FreeCameraResources()
     this->_editorCamera.reset();
 }
 
-void QESessionManager::UpdateActiveCamera(float deltaTime)
+void QESessionManager::UpdateActiveCameraGPUData()
 {
     if (_activeCamera != nullptr)
     {

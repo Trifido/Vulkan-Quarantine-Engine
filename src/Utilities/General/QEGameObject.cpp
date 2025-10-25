@@ -105,6 +105,7 @@ void QEGameObject::QEUpdate()
         {
             gameComponent->QEInit();
         }
+
         gameComponent->QEUpdate();
     }
 }

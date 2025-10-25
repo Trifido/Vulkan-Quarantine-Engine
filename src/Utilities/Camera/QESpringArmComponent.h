@@ -15,9 +15,9 @@ struct SweepHit
 
 struct CameraMouseSettings
 {
-    float sensX = 0.32f;
-    float sensY = 0.32f;
-    bool  invertY = true;
+    float sensX = 0.12f;
+    float sensY = 0.12f;
+    bool  invertY = false;
 };
 
 class QESpringArmComponent : public QEGameComponent

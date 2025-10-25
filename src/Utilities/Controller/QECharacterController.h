@@ -80,7 +80,6 @@ class QECharacterController : public QEGameComponent
     public:
         QECharacterController();
         void AddGLFWWindow(GLFWwindow* window) { this->window = window; }
-        void Update();
         btVector3 GetPosition();
         void ProcessInput();
         void SetAirControlFactor(float factor) { airControlFactor = factor; }

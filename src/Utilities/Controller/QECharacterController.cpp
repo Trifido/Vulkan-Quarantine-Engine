@@ -158,13 +158,6 @@ QECharacterController::QECharacterController()
     groundNormal = btVector3(0, 1, 0);
 }
 
-// Actualizar la física (para simular la física del personaje)
-void QECharacterController::Update()
-{
-    this->CheckIfGrounded();
-}
-
-// Obtener la posición del personaje
 btVector3 QECharacterController::GetPosition()
 {
     btTransform trans;
@@ -244,7 +237,7 @@ void QECharacterController::ProcessInput()
     }
 
     // 4) Mueve usando tu pipeline actual
-    const float moveSpeed = 5.0f;
+    const float moveSpeed = 1.0f;
     btVector3 dirBT(wishDir.x, wishDir.y, wishDir.z);
     Move(dirBT, moveSpeed);
 

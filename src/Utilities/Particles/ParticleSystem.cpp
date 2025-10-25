@@ -6,10 +6,10 @@
 #include <ShaderManager.h>
 #include <SwapChainModule.h>
 #include <BufferManageModule.h>
+#include <Timer.h>
 
 ParticleSystem::ParticleSystem() : QEGameObject()
 {
-    this->timer = Timer::getInstance();
     this->computeNodeManager = ComputeNodeManager::getInstance();
     swapchainModule = SwapChainModule::getInstance();
     auto shaderManager = ShaderManager::getInstance();
@@ -197,7 +197,7 @@ void ParticleSystem::SetNewParticlesUBO(uint32_t newParticles, uint32_t nFrame)
         vkUnmapMemory(deviceModule->device, this->computeNodeEmitParticles->computeDescriptor->ubos["UniformNewParticles"]->uniformBuffersMemory[currentFrame]);
 
         vkMapMemory(deviceModule->device, this->computeNodeUpdateParticles->computeDescriptor->ubos["UniformDeltaTime"]->uniformBuffersMemory[currentFrame], 0, this->computeNodeUpdateParticles->computeDescriptor->uboSizes["UniformDeltaTime"], 0, &data);
-        memcpy(data, static_cast<const void*>(&this->timer->DeltaTime), this->computeNodeUpdateParticles->computeDescriptor->uboSizes["UniformDeltaTime"]);
+        memcpy(data, static_cast<const void*>(&Timer::getInstance()->DeltaTime), this->computeNodeUpdateParticles->computeDescriptor->uboSizes["UniformDeltaTime"]);
         vkUnmapMemory(deviceModule->device, this->computeNodeUpdateParticles->computeDescriptor->ubos["UniformDeltaTime"]->uniformBuffersMemory[currentFrame]);
     }
 }
@@ -205,7 +205,7 @@ void ParticleSystem::SetNewParticlesUBO(uint32_t newParticles, uint32_t nFrame)
 void ParticleSystem::GenerateParticles()
 {
     this->ParticlesPerSpawn = 0;
-    this->acumulativeTimer += this->timer->DeltaTime;
+    this->acumulativeTimer += Timer::getInstance()->DeltaTime;
 
     unsigned int particlesToSpawn = static_cast<uint32_t>(this->acumulativeTimer / this->SpawnTime);
     this->acumulativeTimer = std::fmod(this->acumulativeTimer, this->SpawnTime);
@@ -218,7 +218,7 @@ void ParticleSystem::GenerateParticles()
 
     //if (!this->isAlreadySpawnZero)
     {
-        this->SetNewParticlesUBO(this->ParticlesPerSpawn, this->timer->LimitFrameCounter);
+        this->SetNewParticlesUBO(this->ParticlesPerSpawn, Timer::getInstance()->LimitFrameCounter);
     }
 
     if (particlesToSpawn < 1)

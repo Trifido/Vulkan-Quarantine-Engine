@@ -30,7 +30,7 @@ QESpringArmComponent::QESpringArmComponent()
     this->TargetOffset = { 0.0f, 1.6f, 0.0f };
     this->SocketOffset = { 0.0f, 0.3f, 0.0f };
 
-    this->DoCollisionTest = true;
+    this->DoCollisionTest = false;
     this->ProbeRadius = 0.2f;
 
     this->PosLagSpeed = 12.0f;

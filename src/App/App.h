@@ -130,7 +130,6 @@ private:
     DepthBufferModule*      depthBufferModule;
     AntiAliasingModule*     antialiasingModule;
     RenderPassModule*       renderPassModule;
-    Timer*                  timer;
 
     bool show_demo_window = true;
     bool show_another_window = true;

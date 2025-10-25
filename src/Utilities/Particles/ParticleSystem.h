@@ -6,7 +6,6 @@
 #include "QEGameObject.h"
 #include "Compute/ComputeNode.h"
 #include <Compute/ComputeNodeManager.h>
-#include <Timer.h>
 #include <Animator.h>
 
 struct NewParticlesUBO
@@ -22,7 +21,6 @@ private:
     SwapChainModule* swapchainModule;
     std::shared_ptr<ComputeNode> computeNodeEmitParticles;
     std::shared_ptr<ComputeNode> computeNodeUpdateParticles;
-    Timer* timer;
     float acumulativeTimer = 0.0f;
 
     uint32_t currentParticlesNum = 0;

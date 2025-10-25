@@ -2,19 +2,38 @@
 #include <GLFW/glfw3.h>
 
 float Timer::DeltaTime = 0;
+float Timer::FixedDelta = 0;
+uint32_t Timer::LimitFrameCounter = 0;
 
 Timer::Timer()
 {
-    this->DeltaTime = this->lastFrame = 0;
-    this->FrameCounter = this->LimitFrameCounter = 0;
+    _frameCounter = LimitFrameCounter = 0;
+    _currentFrame = 0.0f;
+    DeltaTime = _accumulator = _lastFrame = 0.0f;
+    FixedDelta = 1.0f / 60.0f;
 }
 
 void Timer::UpdateDeltaTime()
 {
-    currentFrame = static_cast<float>(glfwGetTime());
-    DeltaTime = currentFrame - lastFrame;
-    lastFrame = currentFrame;
-    FrameCounter++;
+    _currentFrame = static_cast<float>(glfwGetTime());
+    DeltaTime = _currentFrame - _lastFrame;
+    _lastFrame = _currentFrame;
+
+    DeltaTime = std::clamp(DeltaTime, 0.0f, 0.1f);
+    _frameCounter++;
     LimitFrameCounter++;
-    LimitFrameCounter &= 0xFFFFFF; // Limita a 24 bits (16,777,215 frames)
+    LimitFrameCounter &= 0xFFFFFF;
+}
+
+int Timer::ComputeFixedSteps()
+{
+    _accumulator += DeltaTime;
+    int steps = 0;
+    while (_accumulator >= FixedDelta)
+    {
+        steps++;
+        _accumulator -= FixedDelta;
+    }
+    _renderAlpha = _accumulator / FixedDelta;
+    return steps;
 }

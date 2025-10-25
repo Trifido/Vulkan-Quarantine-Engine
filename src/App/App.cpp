@@ -13,7 +13,6 @@
 
 App::App()  
 { 
-    this->timer = Timer::getInstance();  
     this->keyboard_ptr = KeyboardController::getInstance();  
     this->queueModule = QueueModule::getInstance();  
     this->deviceModule = DeviceModule::getInstance();  
@@ -175,6 +174,7 @@ void App::initVulkan()
 
     //Editor resources initialization
     this->sessionManager->SetEditorMode(this->isRunEditor);
+    this->sessionManager->SetDebugMode(true);
 
     // Import meshes
     //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Raptoid/scene.gltf");
@@ -207,14 +207,12 @@ void App::initVulkan()
     // THIRD PERSON CAMERA && SPRING ARM
     std::shared_ptr<QEGameObject> cameraObject = std::make_shared<QEGameObject>("ThirdPersonCamera");
     cameraObject->AddComponent(std::make_shared<QECamera>());
-    //this->gameObjectManager->AddGameObject(cameraObject, "cameraObject");
     auto cameraTransform = cameraObject->GetComponent<QETransform>();
     cameraTransform->SetLocalPosition(glm::vec3(-0.715416, 1.89489, -2.56881));
     cameraTransform->SetLocalEulerDegrees(glm::vec3(-15.7f, 180.0f, 0.0f));
 
     std::shared_ptr<QEGameObject> springArmObject = std::make_shared<QEGameObject>("SpringArm");
     springArmObject->AddComponent(std::make_shared<QESpringArmComponent>());
-    //this->gameObjectManager->AddGameObject(springArmObject, "springArmObject");
     springArmObject->AddChild(cameraObject, true);
 
     // CHARACTER CONTROLLER
@@ -327,7 +325,7 @@ void App::initVulkan()
 
     auto floorCollider = floor->GetComponent<QECollider>();
     std::static_pointer_cast<PlaneCollider>(floorCollider)->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
-    this->gameObjectManager->AddGameObject(floor);  
+    this->gameObjectManager->AddGameObject(floor);
 
     auto rampMatInstance = defaultMat->CreateMaterialInstance();
     this->materialManager->AddMaterial(rampMatInstance);
@@ -479,25 +477,22 @@ void App::saveScene()
 
 void App::mainLoop()
 {
-    bool changeAnimation = true;
-
     while (!glfwWindowShouldClose(mainWindow->getWindow()))
     {
         glfwPollEvents();
-        this->timer->UpdateDeltaTime();
+
+        Timer::getInstance()->UpdateDeltaTime();
+        int physicsSteps = Timer::getInstance()->ComputeFixedSteps();
 
         // Start GameObjects 
         this->gameObjectManager->StartQEGameObjects();
 
-        this->gameObjectManager->UpdateQEGameObjects();
-
         //PHYSIC SYSTEM
-        this->physicsModule->ComputePhysics((float)Timer::DeltaTime);
-                
-        // INPUT EVENTS
-        this->keyboard_ptr->ReadKeyboardEvents();
+        for (int i = 0; i < physicsSteps; ++i)
+            physicsModule->ComputePhysics(Timer::getInstance()->FixedDelta);
 
-        this->sessionManager->UpdateActiveCamera((float)Timer::DeltaTime);
+        // UPDATE GameObjects 
+        this->gameObjectManager->UpdateQEGameObjects();
 
         // UPDATE CULLING SCENE
         this->sessionManager->UpdateCullingScene();
@@ -507,7 +502,9 @@ void App::mainLoop()
 
         // UPDATE ATMOSPHERE
         this->atmosphereSystem->UpdateSun();
-        auto sunLight = std::static_pointer_cast<QESunLight>(this->lightManager->GetLight("QESunLight"));
+
+        // UPDATE CAMERA DATA
+        this->sessionManager->UpdateActiveCameraGPUData();
 
         ImGuiIO& io = ImGui::GetIO();
         if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false))
@@ -515,79 +512,18 @@ void App::mainLoop()
             saveScene();
         }
 
-        glm::vec3 newDir = sunLight->transform->Forward();
-        if (ImGui::IsKeyDown(ImGuiKey_J))
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        ImGui::Render();
+
+        if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         {
-            newDir.x += 0.001f;
-            sunLight->SetLightDirection(newDir);
-        }
-        if (ImGui::IsKeyDown(ImGuiKey_L))
-        {
-            newDir.x -= 0.001f;
-            sunLight->SetLightDirection(newDir);
-        }
-        if (ImGui::IsKeyDown(ImGuiKey_I))
-        {
-            newDir.y += 0.001f;
-            sunLight->SetLightDirection(newDir);
-        }
-        if (ImGui::IsKeyDown(ImGuiKey_K))
-        {
-            newDir.y -= 0.001f;
-            sunLight->SetLightDirection(newDir);
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
         }
 
-        {
-            ImGui_ImplGlfw_NewFrame();
-            ImGui::NewFrame();
-
-            ImGui::Render();
-
-            if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-            {
-                ImGui::UpdatePlatformWindows();
-                ImGui::RenderPlatformWindowsDefault();
-            }
-
-            this->computeFrame();
-            this->drawFrame();
-        }
-        /*
-        {
-            //imgui new frame
-            ImGui_ImplVulkan_NewFrame();
-            ImGui_ImplGlfw_NewFrame();
-            ImGui::NewFrame();
-
-            //imgui commands
-            //ImGui::ShowDemoWindow(&show_demo_window);
-
-            mainWindow.renderMainWindow();
-
-            // Game Rendering Window
-            ImGui::Begin("GameWindow");
-            {
-                // Using a Child allow to fill all the space of the window.
-                // It also alows customization
-                ImGui::BeginChild("GameRender");
-                // Get the size of the child (i.e. the whole draw size of the windows).
-                ImVec2 wsize = ImGui::GetWindowSize();
-                // Because I use the texture from OpenGL, I need to invert the V from the UV.
-                auto tex = model->descriptorModule->getDescriptorSet()[1];
-                ImGui::Image((ImTextureID)tex, wsize, ImVec2(0, 1), ImVec2(1, 0));
-                ImGui::EndChild();
-            }
-            ImGui::End();
-
-            ImGui::Render();
-            drawFrame();
-
-            if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-            {
-                ImGui::UpdatePlatformWindows();
-                ImGui::RenderPlatformWindowsDefault();
-            }
-        }*/
+        this->computeFrame();
+        this->drawFrame();
     }
     vkDeviceWaitIdle(deviceModule->device);
 
