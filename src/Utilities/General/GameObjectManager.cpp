@@ -251,6 +251,14 @@ void GameObjectManager::StartQEGameObjects()
             model.second->QEStart();
         }
     }
+
+    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
+    {
+        for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
+        {
+            model.second->QEInit();
+        }
+    }
 }
 
 void GameObjectManager::UpdateQEGameObjects()

@@ -22,6 +22,10 @@ private:
     float posEps = 0.0005f;    // ~0.5 mm
     float angEps = 0.0015f;    // ~0.086 rad
 
+    btTransform prevTrans;      // snapshot del paso fijo anterior
+    btTransform currTrans;      // estado tras el último paso fijo
+    bool hasCurr = false;       // si ya está inicializado
+
 public:
     btRigidBody* body;
     REFLECT_PROPERTY(PhysicBodyType, Type)
@@ -55,6 +59,16 @@ private:
     btVector3 glmToBullet(const glm::vec3& v);
     btMatrix3x3 glmToBullet(const glm::mat3& m);
     btQuaternion glmToBullet(const glm::quat& q);
+
+    // Inicializa prev/curr a partir del QETransform (primer frame)
+    void InitializeFromTransform();
+    // Llamar ANTES de cada substep/stepSimulation (snapshot prev = curr)
+    void SnapshotPrev();
+    // Llamar DESPUÉS de cada substep/stepSimulation (actualiza curr desde Bullet)
+    void FetchCurrFromBullet();
+    // Obtener pose interpolada (para cámara/render)
+    void GetInterpolated(float alpha, glm::vec3& outPos, glm::quat& outRot) const;
+    glm::mat4 GetInterpolatedMatrix(float alpha) const;
 };
 
 #endif

@@ -24,11 +24,11 @@ void PhysicsModule::AddRigidBody(btRigidBody* body)
     this->dynamicsWorld->addRigidBody(body);
 }
 
-void PhysicsModule::ComputePhysics(float deltaTime)
+void PhysicsModule::ComputePhysics(float fixedDt)
 {
     if (this->dynamicsWorld)
     {
-        this->dynamicsWorld->stepSimulation(deltaTime, 10);
+        dynamicsWorld->stepSimulation(fixedDt, 0, fixedDt);
     }
 
     this->UpdateDebugDrawer();

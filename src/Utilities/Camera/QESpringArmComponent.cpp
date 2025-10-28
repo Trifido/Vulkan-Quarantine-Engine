@@ -75,26 +75,19 @@ static glm::quat YawPitchToQuat(float yawDeg, float pitchDeg)
 
 glm::quat QESpringArmComponent::ComputeDesiredRotation() const
 {
-    glm::quat base = glm::quat(1, 0, 0, 0);
-    if (InheritYaw || InheritPitch || InheritRoll)
-    {
-        auto tr = Owner->GetComponent<QETransform>();
-        auto parent = tr ? tr->GetParent() : nullptr;
-        base = parent ? parent->GetWorldRotation() : (tr ? tr->GetWorldRotation() : glm::quat(1, 0, 0, 0));
-    }
-    glm::quat orbit = YawPitchToQuat(Yaw, Pitch);
-    return base * orbit;
+    glm::vec3 basePos; glm::quat baseRot;
+    GetParentInterpolatedTRS(basePos, baseRot);
+
+    glm::quat inherit = (InheritYaw || InheritPitch || InheritRoll) ? baseRot
+        : glm::quat(1, 0, 0, 0);
+    return inherit * YawPitchToQuat(Yaw, Pitch);
 }
 
 glm::vec3 QESpringArmComponent::ComputePivotWorldPos() const
 {
-    auto tr = Owner->GetComponent<QETransform>();
-    auto parent = tr ? tr->GetParent() : nullptr;
-    glm::vec3 basePos = parent ? parent->GetWorldPosition() : (tr ? tr->GetWorldPosition() : glm::vec3(0));
-    glm::quat baseRot = parent ? parent->GetWorldRotation() : (tr ? tr->GetWorldRotation() : glm::quat(1, 0, 0, 0));
-
-    glm::vec3 worldOffset = glm::mat3_cast(baseRot) * TargetOffset;
-    return basePos + worldOffset;
+    glm::vec3 basePos; glm::quat baseRot;
+    GetParentInterpolatedTRS(basePos, baseRot);
+    return basePos + (glm::mat3_cast(baseRot) * TargetOffset);
 }
 
 bool QESpringArmComponent::SphereSweep(const glm::vec3& start,
@@ -177,9 +170,6 @@ void QESpringArmComponent::AddZoomInput(float dLen)
 void QESpringArmComponent::QEStart()
 {
     if (QEStarted()) return;
-
-    this->m_smoothedPivot = ComputePivotWorldPos();
-    this->m_smoothedRot = ComputeDesiredRotation();
 }
 
 void QESpringArmComponent::QEUpdate()
@@ -199,13 +189,14 @@ void QESpringArmComponent::QEUpdate()
     glm::quat desiredRot = ComputeDesiredRotation();
 
     // 2) Suavizados
-    m_smoothedPivot = SmoothExpVec3(m_smoothedPivot, desiredPivot, PosLagSpeed, dt);
-    m_smoothedRot = SmoothExpQuat(m_smoothedRot, desiredRot, RotLagSpeed, dt);
+    glm::vec3 pivot = desiredPivot;
+    glm::quat rotBase = desiredRot;
     m_currentArmLen = SmoothExp(m_currentArmLen, TargetArmLength, PosLagSpeed, dt);
 
     // 3) Punto final deseado del brazo
-    glm::vec3 fwd = m_smoothedRot * glm::vec3(0, 0, -1); // cámara mira -Z local
-    glm::vec3 desiredCamPos = m_smoothedPivot + SocketOffset - fwd * m_currentArmLen;
+    glm::vec3 fwd = rotBase * glm::vec3(0, 0, -1);
+    glm::vec3 socket = pivot + SocketOffset;
+    glm::vec3 desiredCamPos = socket - fwd * std::clamp(TargetArmLength, MinArmLength, MaxArmLength);
 
     // 4) Colisión del brazo (opcional)
     glm::vec3 start = m_smoothedPivot + SocketOffset;
@@ -226,8 +217,10 @@ void QESpringArmComponent::QEUpdate()
         }
     }
 
-    m_camPos = desiredCamPos;
-    m_camRot = m_smoothedRot;
+    float kPos = 1.0f - std::exp(-PosLagSpeed * dt);
+    float kRot = 1.0f - std::exp(-RotLagSpeed * dt);
+    m_camPos = glm::mix(m_camPos, desiredCamPos, kPos);
+    m_camRot = glm::slerp(m_camRot, rotBase, kRot);
 
     if (auto tr = Owner->GetComponent<QETransform>())
     {
@@ -250,5 +243,59 @@ void QESpringArmComponent::QEUpdate()
                 camTr->SetFromMatrix(localCam);
             }
         }
+    }
+}
+
+bool QESpringArmComponent::GetParentRB(btRigidBody*& outRB) const
+{
+    outRB = nullptr;
+
+    if (auto parentGO = Owner->parent)
+    {
+        if (auto pb = parentGO->GetComponent<PhysicsBody>())
+        {
+            if (pb->body)
+            {
+                outRB = pb->body;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void QESpringArmComponent::GetParentInterpolatedTRS(glm::vec3& pos, glm::quat& rot) const
+{
+    btRigidBody* rb = nullptr;
+    float alpha = Timer::getInstance()->RenderAlpha;
+
+    if (GetParentRB(rb)) {
+        const btTransform prev = rb->getInterpolationWorldTransform();
+
+        btTransform curr;
+        if (rb->getMotionState()) rb->getMotionState()->getWorldTransform(curr);
+        else                      curr = rb->getWorldTransform();
+
+        const btVector3 p = prev.getOrigin().lerp(curr.getOrigin(), alpha);
+        const btQuaternion q = prev.getRotation().slerp(curr.getRotation(), alpha);
+
+        pos = { p.getX(), p.getY(), p.getZ() };
+        rot = { q.getW(), q.getX(), q.getY(), q.getZ() };
+        return;
+    }
+
+    // Fallback: sin rigid body → usa transform del padre
+    if (auto tr = Owner->GetComponent<QETransform>()) {
+        if (auto parent = tr->GetParent()) {
+            pos = parent->GetWorldPosition();
+            rot = parent->GetWorldRotation();
+            return;
+        }
+        pos = tr->GetWorldPosition();
+        rot = tr->GetWorldRotation();
+    }
+    else {
+        pos = glm::vec3(0);
+        rot = glm::quat(1, 0, 0, 0);
     }
 }

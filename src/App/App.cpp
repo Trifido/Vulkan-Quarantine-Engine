@@ -10,6 +10,7 @@
 #include <QEProjectManager.h>
 #include <QEMeshRenderer.h>
 #include <QESpringArmComponent.h>
+#include <DebugController.h>
 
 App::App()  
 { 
@@ -218,17 +219,12 @@ void App::initVulkan()
     // CHARACTER CONTROLLER
     std::shared_ptr<QEGameObject> characterGO = std::make_shared<QEGameObject>("Character");
     characterGO->AddComponent<QECollider>(std::make_shared<CapsuleCollider>());
-    characterGO->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>(PhysicBodyType::RIGID_BODY));
+    characterGO->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>(PhysicBodyType::KINEMATIC_BODY));
     characterGO->AddComponent<QECharacterController>(std::make_shared<QECharacterController>());
 
     auto characterPBody = characterGO->GetComponent<PhysicsBody>();
-    characterPBody->Mass = 70.0f;
     characterPBody->CollisionGroup = CollisionFlag::COL_PLAYER;
     characterPBody->CollisionMask = CollisionFlag::COL_SCENE;
-
-    auto characterController = characterGO->GetComponent<QECharacterController>();
-    characterController->SetJumpForce(9.0f);
-    characterController->AddGLFWWindow(this->mainWindow->getWindow());
 
     shared_ptr<QEGameObject> visualCharacter = make_shared<QEGameObject>("MeshCharacter");
     visualCharacter->AddComponent<QEGeometryComponent>(make_shared<QEGeometryComponent>(std::make_unique<MeshGenerator>(characterPath)));
@@ -347,27 +343,27 @@ void App::initVulkan()
     rampPBody->CollisionMask = CollisionFlag::COL_PLAYER;
 
     ramp->AddComponent<BoxCollider>(std::make_shared<BoxCollider>());
-    this->gameObjectManager->AddGameObject(ramp);
+    // this->gameObjectManager->AddGameObject(ramp);
     
-    auto wallMatInstance = defaultMat->CreateMaterialInstance();
-    this->materialManager->AddMaterial(wallMatInstance);
-    std::shared_ptr<QEGameObject> wall = std::make_shared<QEGameObject>("wall");
-    std::shared_ptr<QEGeometryComponent> geometryWallComponent = make_shared<QEGeometryComponent>(std::make_unique<CubeGenerator>());
-    wall->AddComponent<QEGeometryComponent>(geometryWallComponent);
-    wall->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
-    wall->AddComponent<QEMaterial>(wallMatInstance);
-    auto wallTransform = wall->GetComponent<QETransform>();
-    wallTransform->SetLocalPosition(glm::vec3(3.0f, 0.5f, 0.0f));
-    wallTransform->SetLocalEulerDegrees(glm::vec3(0.0f, 0.0f, 0.0f));
-    wallTransform->SetLocalScale(glm::vec3(4.0f, 0.5f, 4.0f));
+    //auto wallMatInstance = defaultMat->CreateMaterialInstance();
+    //this->materialManager->AddMaterial(wallMatInstance);
+    //std::shared_ptr<QEGameObject> wall = std::make_shared<QEGameObject>("wall");
+    //std::shared_ptr<QEGeometryComponent> geometryWallComponent = make_shared<QEGeometryComponent>(std::make_unique<CubeGenerator>());
+    //wall->AddComponent<QEGeometryComponent>(geometryWallComponent);
+    //wall->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
+    //wall->AddComponent<QEMaterial>(wallMatInstance);
+    //auto wallTransform = wall->GetComponent<QETransform>();
+    //wallTransform->SetLocalPosition(glm::vec3(3.0f, 0.5f, 0.0f));
+    //wallTransform->SetLocalEulerDegrees(glm::vec3(0.0f, 0.0f, 0.0f));
+    //wallTransform->SetLocalScale(glm::vec3(4.0f, 0.5f, 4.0f));
 
-    wallMatInstance->materialData.SetMaterialField("Diffuse", glm::vec3(0.8f, 0.2f, 0.2f));
+    //wallMatInstance->materialData.SetMaterialField("Diffuse", glm::vec3(0.8f, 0.2f, 0.2f));
 
-    wall->AddComponent<QECollider>(std::make_shared<BoxCollider>());
-    wall->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>());
-    auto wallPBody = wall->GetComponent<PhysicsBody>();
-    wallPBody->CollisionGroup = CollisionFlag::COL_SCENE;
-    wallPBody->CollisionMask = CollisionFlag::COL_PLAYER;
+    //wall->AddComponent<QECollider>(std::make_shared<BoxCollider>());
+    //wall->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>());
+    //auto wallPBody = wall->GetComponent<PhysicsBody>();
+    //wallPBody->CollisionGroup = CollisionFlag::COL_SCENE;
+    //wallPBody->CollisionMask = CollisionFlag::COL_PLAYER;
 
     //this->gameObjectManager->AddGameObject(wall, "wall");
     /**/
@@ -482,12 +478,12 @@ void App::mainLoop()
         glfwPollEvents();
 
         Timer::getInstance()->UpdateDeltaTime();
-        int physicsSteps = Timer::getInstance()->ComputeFixedSteps();
 
         // Start GameObjects 
         this->gameObjectManager->StartQEGameObjects();
 
         //PHYSIC SYSTEM
+        int physicsSteps = Timer::getInstance()->ComputeFixedSteps();
         for (int i = 0; i < physicsSteps; ++i)
             physicsModule->ComputePhysics(Timer::getInstance()->FixedDelta);
 

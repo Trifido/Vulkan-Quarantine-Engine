@@ -20,16 +20,7 @@ PhysicsBody::PhysicsBody(const PhysicBodyType& type)
 void PhysicsBody::UpdateType(const PhysicBodyType &type)
 {
     this->Type = type;
-
-    if (this->Type == PhysicBodyType::RIGID_BODY)
-    {
-        this->Mass = 1.0f;
-    }
-    else
-    {
-        this->Mass = 0.0f;
-    }
-
+    this->Mass = (this->Type == PhysicBodyType::RIGID_BODY) ? 1.0f : 0.0f;
     this->UpdateInertia(glm::vec3(0.0f));
 }
 
@@ -79,30 +70,50 @@ void PhysicsBody::Initialize()
     btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
 
     if (this->Type == PhysicBodyType::RIGID_BODY)
-    {
         this->collider->colShape->calculateLocalInertia(this->Mass, this->localInertia);
+
+    btRigidBody::btRigidBodyConstructionInfo rbInfo(
+        this->Mass,
+        myMotionState,
+        (this->collider->compound ? (btCollisionShape*)this->collider->compound : (btCollisionShape*)this->collider->colShape),
+        this->localInertia
+    );
+
+    this->body = new btRigidBody(rbInfo);
+
+    switch (this->Type)
+    {
+        default:
+        case PhysicBodyType::STATIC_BODY:
+            this->body->setCollisionFlags(btCollisionObject::CF_STATIC_OBJECT);
+            break;
+        case PhysicBodyType::RIGID_BODY:
+            this->body->setActivationState(DISABLE_DEACTIVATION);
+            this->body->setSleepingThresholds(0.f, 0.f);
+            break;
+        case PhysicBodyType::KINEMATIC_BODY:
+            body->setCollisionFlags(body->getCollisionFlags()
+                | btCollisionObject::CF_KINEMATIC_OBJECT
+                | btCollisionObject::CF_CHARACTER_OBJECT); // opcional
+            body->setActivationState(DISABLE_DEACTIVATION);
+            body->setMassProps(0, btVector3(0, 0, 0));
+            body->setLinearVelocity(btVector3(0, 0, 0)); // no usar velocities del solver
+            body->setAngularVelocity(btVector3(0, 0, 0));
+            break;
     }
 
-    //Create RigidBody object
-    if (this->collider->compound == nullptr)
-    {
-        btRigidBody::btRigidBodyConstructionInfo rbInfo(this->Mass, myMotionState, this->collider->colShape, this->localInertia);
-        this->body = new btRigidBody(rbInfo);
-    }
-    else
-    {
-        btRigidBody::btRigidBodyConstructionInfo rbInfo(this->Mass, myMotionState, this->collider->compound, this->localInertia);
-        this->body = new btRigidBody(rbInfo);
-    }
-
-    //Add new rigidBody to physicsModule
+    // Registra en el mundo
     auto physicsModule = PhysicsModule::getInstance();
-    physicsModule->dynamicsWorld->addRigidBody(body, this->CollisionGroup, this->CollisionMask);
+    physicsModule->dynamicsWorld->addRigidBody(this->body, this->CollisionGroup, this->CollisionMask);
 
-    if (this->Type == PhysicBodyType::STATIC_BODY)
-    {
-        this->body->setCollisionFlags(btCollisionObject::CF_STATIC_OBJECT);
-    }
+    // Inicializa prev/curr con el transform inicial
+    currTrans = startTransform;
+    prevTrans = startTransform;
+    hasCurr = true;
+
+    // Para tu lógica previa basada en lastTrans:
+    lastTrans = startTransform;
+    hasLastTrans = true;
 }
 
 void PhysicsBody::copyTransformtoGLM()
@@ -190,10 +201,79 @@ void PhysicsBody::QEInit()
 
 void PhysicsBody::QEUpdate()
 {
-    this->UpdateTransform();
+    if (!this->body) return;
+
+    if (this->Type == PhysicBodyType::KINEMATIC_BODY)
+    {
+        glm::mat4 wm = transform->GetWorldMatrix();
+        btTransform t = glmToBullet(wm);
+        if (body->getMotionState()) body->getMotionState()->setWorldTransform(t);
+        body->setWorldTransform(t);
+    }
+    else if (this->Type == PhysicBodyType::RIGID_BODY)
+    {
+        this->copyTransformtoGLM();
+    }
 }
 
 void PhysicsBody::QEDestroy()
 {
     QEGameComponent::QEDestroy();
+}
+
+
+void PhysicsBody::InitializeFromTransform()
+{
+    glm::mat4 wm = this->transform->GetWorldMatrix();
+    currTrans = glmToBullet(wm);
+    prevTrans = currTrans;
+    hasCurr = true;
+}
+
+void PhysicsBody::SnapshotPrev()
+{
+    if (!hasCurr) InitializeFromTransform();
+    prevTrans = currTrans;
+}
+
+void PhysicsBody::FetchCurrFromBullet()
+{
+    if (!this->body) return;
+
+    // Si usas MotionState (sí), el estado "actual" del step está en getWorldTransform()
+    btTransform t;
+    this->body->getMotionState()->getWorldTransform(t);
+    currTrans = t;
+    hasCurr = true;
+
+    // (Opcional pero recomendable) Mantén sincronizado el QETransform con "curr"
+    // para lógica no interpolada que lea del transform:
+    glm::mat4 m = bulletToGlm(currTrans);
+    this->transform->SetFromMatrix(m);
+
+    // Guarda también para copy/epsilon, si lo sigues usando:
+    lastTrans = currTrans;
+    hasLastTrans = true;
+}
+
+void PhysicsBody::GetInterpolated(float alpha, glm::vec3& outPos, glm::quat& outRot) const
+{
+    // Asegura que existe curr; si no, cae a identity
+    btVector3 p0 = prevTrans.getOrigin();
+    btVector3 p1 = currTrans.getOrigin();
+    btQuaternion q0 = prevTrans.getRotation();
+    btQuaternion q1 = currTrans.getRotation();
+
+    btVector3 p = p0.lerp(p1, alpha);
+    btQuaternion q = q0.slerp(q1, alpha);
+
+    outPos = glm::vec3(p.x(), p.y(), p.z());
+    outRot = glm::quat(q.w(), q.x(), q.y(), q.z()); 
+}
+
+glm::mat4 PhysicsBody::GetInterpolatedMatrix(float alpha) const
+{
+    glm::vec3 pos; glm::quat rot;
+    GetInterpolated(alpha, pos, rot);
+    return glm::translate(glm::mat4(1.0f), pos) * glm::mat4_cast(rot);
 }

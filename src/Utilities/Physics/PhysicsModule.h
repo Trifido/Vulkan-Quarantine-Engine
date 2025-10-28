@@ -36,7 +36,7 @@ public:
     float GetGravity() const { return gravity; }
     void SetGravity(float gravity);
     void AddRigidBody(btRigidBody* body);
-    void ComputePhysics(float deltaTime);
+    void ComputePhysics(float fixedDt);
     void CleanupDebugDrawer();
     void InitializeDebugResources();
 

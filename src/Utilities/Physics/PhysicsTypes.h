@@ -7,6 +7,7 @@ enum PhysicBodyType
 {
     STATIC_BODY = 0,
     RIGID_BODY = 1 << 0,
+    KINEMATIC_BODY = 1 << 1,
 };
 
 enum CollisionFlag

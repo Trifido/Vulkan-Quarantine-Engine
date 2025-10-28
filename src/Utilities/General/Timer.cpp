@@ -1,8 +1,9 @@
 #include "Timer.h"
 #include <GLFW/glfw3.h>
 
-float Timer::DeltaTime = 0;
-float Timer::FixedDelta = 0;
+float Timer::DeltaTime = 0.0f;
+float Timer::FixedDelta = 0.0f;
+float Timer::RenderAlpha = 0.0f;
 uint32_t Timer::LimitFrameCounter = 0;
 
 Timer::Timer()
@@ -34,6 +35,6 @@ int Timer::ComputeFixedSteps()
         steps++;
         _accumulator -= FixedDelta;
     }
-    _renderAlpha = _accumulator / FixedDelta;
+    RenderAlpha = _accumulator / FixedDelta;
     return steps;
 }

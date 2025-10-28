@@ -14,11 +14,11 @@ private:
 public:
     static float DeltaTime;
     static float FixedDelta;
+    static float RenderAlpha;
     static uint32_t LimitFrameCounter;
 
 private:
     float _accumulator;
-    float _renderAlpha;
     float _lastFrame;
     float _currentFrame;
     long long unsigned int _frameCounter;

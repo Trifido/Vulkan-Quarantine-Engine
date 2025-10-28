@@ -40,6 +40,7 @@ public:
     inline std::string ID() const { return id; }
 
     void QEStart();
+    void QEInit();
     void QEUpdate();
     void QEDestroy();
 

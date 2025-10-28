@@ -97,6 +97,19 @@ void QEGameObject::QEStart()
     }
 }
 
+void QEGameObject::QEInit()
+{
+    for (auto gameComponent : this->components)
+    {
+        if (!gameComponent->QEStarted() || gameComponent->QEInitialized())
+        {
+            continue;
+        }
+
+        gameComponent->QEInit();
+    }
+}
+
 void QEGameObject::QEUpdate()
 {
     for (auto gameComponent : this->components)
