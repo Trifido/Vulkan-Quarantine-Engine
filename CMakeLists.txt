@@ -4,10 +4,8 @@ project(QuarantineEngine)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Usar /MDd y /MD en MSVC
-if (MSVC)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
-endif()
+# Usar /MDd y /MD
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
 include(FetchContent)
 include(GNUInstallDirs)
@@ -96,6 +94,14 @@ set(BUILD_BULLET2_DEMOS OFF CACHE BOOL "" FORCE)
 set(BUILD_UNIT_TESTS OFF CACHE BOOL "" FORCE)
 set(BUILD_EXTRAS OFF CACHE BOOL "" FORCE)
 add_subdirectory(extern/bullet3 EXCLUDE_FROM_ALL)
+
+set(USE_STATIC_MSVC_RUNTIME_LIBRARY OFF CACHE BOOL "" FORCE)
+set(JPH_BUILD_SHARED_LIBRARY ON CACHE BOOL "" FORCE)
+set(JPH_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(JPH_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
+set(JPH_BUILD_DOCUMENTATION OFF CACHE BOOL "" FORCE)
+set(CPP_RTTI_ENABLED ON CACHE BOOL "" FORCE)
+add_subdirectory(extern/jolt/Build EXCLUDE_FROM_ALL)
 
 set(ASSIMP_BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -233,6 +239,7 @@ target_link_libraries(QuarantineEngine
   assimp
   BulletDynamics
   BulletCollision
+  Jolt
   LinearMath
   SPIRV-Reflect
   meshoptimizer
@@ -270,6 +277,7 @@ if(WIN32)
   add_custom_command(TARGET QuarantineEngine POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       $<TARGET_FILE:assimp>
+      $<TARGET_FILE:Jolt>
       $<TARGET_FILE:meshoptimizer>
       $<TARGET_FILE:yaml-cpp>
       $<TARGET_FILE:glfw>
