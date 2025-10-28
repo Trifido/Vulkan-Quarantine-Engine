@@ -45,7 +45,7 @@ void QESessionManager::SetDebugMode(bool value)
 
     auto physicsModule = PhysicsModule::getInstance();
     physicsModule->InitializeDebugResources();
-    physicsModule->debugDrawer->DebugMode = value;
+    physicsModule->DebugDrawer->SetEnabled(value);
 }
 
 void QESessionManager::RegisterActiveSceneCamera()
@@ -110,7 +110,7 @@ void QESessionManager::SetupEditor()
     cullingSceneManager->DebugMode = _isDebugMode;
 
     physicsModule->InitializeDebugResources();
-    physicsModule->debugDrawer->DebugMode = _isDebugMode;
+    physicsModule->DebugDrawer->SetEnabled(_isDebugMode);
 
     if (_isEditor)
     {

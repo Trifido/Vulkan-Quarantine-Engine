@@ -1,9 +1,10 @@
 #include "Collider.h"
 
+using namespace JPH;
+
 QECollider::QECollider()
 {
     colShape = nullptr;
-    compound = nullptr;
     CollisionMargin = 0.04f;
 }
 
@@ -28,18 +29,17 @@ void QECollider::QEDestroy()
 
 void QECollider::SetColliderPivot(glm::vec3 displacement)
 {
-    btTransform localTransform;
-    localTransform.setIdentity();
-    localTransform.setOrigin(btVector3(displacement.x, displacement.y, displacement.z));
+    if (!colShape) return;
 
-    auto numchildShape = compound->getNumChildShapes();
-    if (numchildShape == 0)
-    {
-        compound->addChildShape(localTransform, colShape);
-    }
-    else
-    {
-        compound->removeChildShape(0);
-        compound->addChildShape(localTransform, colShape);
+    RotatedTranslatedShapeSettings s(
+        Vec3(displacement.x, displacement.y, displacement.z),
+        Quat::sIdentity(),
+        colShape
+    );
+
+    if (auto res = s.Create(); res.IsValid())
+        colShape = res.Get();
+    else {
+        // opcional: loggear res.GetError()
     }
 }

@@ -1,60 +1,28 @@
-﻿#include <QECharacterController.h>
-#include <GUIWindow.h>
+﻿#include "QECharacterController.h"
+
+#include <QEGameObject.h>
+#include <QETransform.h>
+#include <Collider.h>
+#include <PhysicsBody.h>
 #include <PhysicsModule.h>
 #include <Timer.h>
-#include <QEGameObject.h>
-#include <CameraHelper.h>
-#include <CapsuleCollider.h>
+
+#include <Jolt/Core/TempAllocator.h>
+#include <Jolt/Physics/Collision/BroadPhase/BroadPhaseLayer.h>
+#include <Jolt/Physics/Collision/Shape/Shape.h>
+#include <Jolt/Renderer/DebugRenderer.h>
+#include <imgui.h>
 
 QECharacterController::QECharacterController()
 {
-    _moveSpeed = 5.0f;   
-    _sprintSpeed = 8.0f;
-    _gravity = -9.81f;   
-    _jumpSpeed = 6.5f;
-    _maxSlopeCos = std::cos(glm::radians(50.0f));
-    _vY = 0.0f;
-    _grounded = false;
-    _capsuleRadius = 0.35f;
-    _capsuleHalfHeight = 0.90f;
-}
+    MoveSpeed = 5.0f;
+    SprintSpeed = 8.0f;
+    JumpSpeed = 6.5f;
+    GravityY = -9.81f;
+    MaxSlopeDeg = 50.0f;
 
-btTransform QECharacterController::GlmToBt(const glm::vec3& p, const glm::quat& q) const
-{
-    btTransform t;
-    t.setIdentity();
-    t.setOrigin(btVector3(p.x, p.y, p.z));
-    t.setRotation(btQuaternion(q.x, q.y, q.z, q.w));
-    return t;
-}
-
-void QECharacterController::EnsureKinematicFlags()
-{
-    if (!physicBodyPtr || !physicBodyPtr->body) return;
-
-    auto* rb = physicBodyPtr->body;
-
-    int flags = rb->getCollisionFlags();
-    if ((flags & btCollisionObject::CF_KINEMATIC_OBJECT) == 0)
-    {
-        rb->setCollisionFlags(flags | btCollisionObject::CF_KINEMATIC_OBJECT);
-        rb->setActivationState(DISABLE_DEACTIVATION);
-        rb->setSleepingThresholds(0.f, 0.f);
-        rb->setMassProps(0.f, btVector3(0, 0, 0));
-    }
-}
-
-void QECharacterController::SyncTransformToBullet() const
-{
-    if (!physicBodyPtr || !physicBodyPtr->body) return;
-
-    glm::mat4 wm = transform->GetWorldMatrix();
-    glm::vec3 p = glm::vec3(wm[3]);
-    glm::quat q = transform->GetWorldRotation();
-    btTransform t = GlmToBt(p, q);
-
-    if (auto* ms = physicBodyPtr->body->getMotionState()) ms->setWorldTransform(t);
-    physicBodyPtr->body->setWorldTransform(t);
+    mSettings.mBackFaceMode = JPH::EBackFaceMode::IgnoreBackFaces;
+    mSettings.mEnhancedInternalEdgeRemoval = true;
 }
 
 void QECharacterController::QEStart()
@@ -66,178 +34,144 @@ void QECharacterController::QEInit()
 {
     if (QEInitialized()) return;
 
-    transform = Owner->GetComponent<QETransform>();
-    colliderPtr = Owner->GetComponentInChildren<QECollider>(true);
-    physicBodyPtr = Owner->GetComponent<PhysicsBody>();
+    mTransform = Owner->GetComponent<QETransform>();
+    mCollider = Owner->GetComponentInChildren<QECollider>(true);
+    mPhysBody = Owner->GetComponent<PhysicsBody>(); // opcional
 
-    if (auto caps = std::dynamic_pointer_cast<CapsuleCollider>(colliderPtr))
-    {
-        _capsuleRadius = caps->GetRadius();
-        _capsuleHalfHeight = caps->GetHeight() * 0.5f;
-    }
-
-    EnsureKinematicFlags();
+    BuildOrUpdateCharacter();
 
     QEGameComponent::QEInit();
 }
 
-// ----------------- Input horizontal (WASD) -----------------
-glm::vec3 QECharacterController::ReadInputHorizontal(float dt) const
+void QECharacterController::QEDestroy()
+{
+    mCharacter = nullptr;
+    QEGameComponent::QEDestroy();
+}
+
+void QECharacterController::BuildOrUpdateCharacter()
+{
+    auto* pm = PhysicsModule::getInstance();
+    JPH::PhysicsSystem& system = pm->World();
+
+    if (!mCollider || mCollider->colShape == nullptr)
+        return;
+
+    mSettings.mShape = mCollider->colShape;
+    mSettings.mMaxSlopeAngle = JPH::DegreesToRadians(MaxSlopeDeg);
+
+    // 2) Si no existe el character: créalo
+    if (mCharacter == nullptr)
+    {
+        const glm::vec3 p = mTransform ? mTransform->GetWorldPosition() : glm::vec3(0);
+        const glm::quat q = mTransform ? mTransform->GetWorldRotation() : glm::quat(1, 0, 0, 0);
+
+        mCharacter = new JPH::CharacterVirtual(
+            &mSettings,
+            ToJPH(p),
+            ToJPH(q),
+            &system
+        );
+
+        // Pose inicial desde el transform
+        const glm::vec3 p = mTransform ? mTransform->GetWorldPosition() : glm::vec3(0);
+        const glm::quat q = mTransform ? mTransform->GetWorldRotation() : glm::quat(1, 0, 0, 0);
+        mCharacter->SetPosition(ToJPH(p));
+        mCharacter->SetRotation(ToJPH(q));
+    }
+    else
+    {
+        // (Opcional) si cambiaste la shape en runtime:
+        JPH::TempAllocatorImpl temp_alloc(16 * 1024);
+        mCharacter->SetShape(mSettings.mShape.GetPtr(), /*maxPenDepth*/ 0.05f,
+            pm->GetBroadPhaseLayerFilter(),
+            pm->GetObjectLayerFilter(),
+            pm->GetBodyFilterSelfIgnore(mPhysBody ? mPhysBody->body : JPH::BodyID()),
+            JPH::ShapeFilter(), temp_alloc); // firma SetShape(...) :contentReference[oaicite:2]{index=2}
+    }
+}
+
+glm::vec3 QECharacterController::ReadMoveInput(float dt) const
 {
     glm::vec3 dir(0);
+    // Sustituye por tu sistema real de input; aquí un ejemplo con ImGui keys
     if (ImGui::IsKeyDown(ImGuiKey_W)) dir += glm::vec3(0, 0, -1);
     if (ImGui::IsKeyDown(ImGuiKey_S)) dir += glm::vec3(0, 0, 1);
     if (ImGui::IsKeyDown(ImGuiKey_A)) dir += glm::vec3(-1, 0, 0);
     if (ImGui::IsKeyDown(ImGuiKey_D)) dir += glm::vec3(1, 0, 0);
+
     if (glm::length2(dir) > 0) dir = glm::normalize(dir);
 
-    float spd = ImGui::IsKeyDown(ImGuiKey_ModShift) ? _sprintSpeed : _moveSpeed;
-    return dir * spd * dt;
+    const float spd = ImGui::IsKeyDown(ImGuiKey_ModShift) ? SprintSpeed : MoveSpeed;
+    return dir * spd; // *dt NO: la velocity es en m/s, el step se hace en Update(...)
 }
 
-bool QECharacterController::CheckGrounded(bool* outOnSlope)
+void QECharacterController::SyncFromCharacter()
 {
-    const float snap = 0.2f;
-    glm::vec3 pos = transform->GetWorldPosition();
-    glm::vec3 down = pos - glm::vec3(0, snap, 0);
+    if (!mTransform || mCharacter == nullptr) return;
 
-    glm::vec3 p, n; float f;
-    bool hit = CapsuleSweep(pos, down, p, n, f);
+    const glm::vec3 pos = ToGLM(mCharacter->GetPosition());
+    const glm::quat rot = ToGLM(mCharacter->GetRotation()); // puedes limitar a yaw si prefieres
 
-    if (outOnSlope && hit) {
-        n = glm::normalize(n);
-        *outOnSlope = (n.y >= _maxSlopeCos);
-    }
-    return _grounded = hit;
+    mTransform->TranslateWorld(pos);
+    mTransform->RotateWorld(rot);
 }
 
-bool QECharacterController::CapsuleSweep(
-    const glm::vec3& start,
-    const glm::vec3& end,
-    glm::vec3& hitPoint,
-    glm::vec3& hitNormal,
-    float& hitFrac) const
-{
-    auto* world = PhysicsModule::getInstance()->dynamicsWorld;
-    if (!world || !colliderPtr || !colliderPtr->colShape)
-        return false;
-
-    // 1) Shape del collider (tu cápsula real)
-    btConvexShape* convex = static_cast<btConvexShape*>(colliderPtr->colShape);
-    if (!convex)
-        return false; // solo convexos sirven para sweeps
-
-    // 2) Prepara el sweep
-    btTransform from, to;
-    from.setIdentity();
-    from.setOrigin(btVector3(start.x, start.y, start.z));
-    to.setIdentity();
-    to.setOrigin(btVector3(end.x, end.y, end.z));
-
-    const btCollisionObject* selfObj = (physicBodyPtr && physicBodyPtr->body)
-        ? static_cast<const btCollisionObject*>(physicBodyPtr->body)
-        : nullptr;
-
-    IgnoreSelfConvexResult cb(from.getOrigin(), to.getOrigin(), selfObj);
-
-    cb.m_collisionFilterGroup = physicBodyPtr->CollisionGroup;
-    cb.m_collisionFilterMask = physicBodyPtr->CollisionMask;
-
-    // 3) Ejecutar el sweep
-    world->convexSweepTest(convex, from, to, cb);
-
-    if (!cb.hasHit())
-        return false;
-
-    // 4) Resultado
-    hitFrac = static_cast<float>(cb.m_closestHitFraction);
-    const btVector3& p = cb.m_hitPointWorld;
-    btVector3 n = cb.m_hitNormalWorld;
-    n.normalize();
-
-    hitPoint = { p.x(), p.y(), p.z() };
-    hitNormal = { n.x(), n.y(), n.z() };
-    return true;
-}
-
-// ----------------- Movimiento kinematic -----------------
-void QECharacterController::ApplyKinematicMove(const glm::vec3& desiredDelta)
-{
-    glm::vec3 start = transform->GetWorldPosition();
-    glm::vec3 delta = desiredDelta;
-    const float backoff = 0.001f;
-
-    for (int it = 0; it < 2; ++it) { // 2 iteraciones suele bastar
-        glm::vec3 end = start + delta;
-        glm::vec3 hitP, hitN; float frac;
-
-        if (CapsuleSweep(start, end, hitP, hitN, frac)) {
-            float useFrac = glm::max(0.0f, frac - backoff);
-            glm::vec3 reached = start + delta * useFrac;
-
-            glm::vec3 n = glm::normalize(hitN);
-            glm::vec3 remaining = delta * (1.0f - useFrac);
-            glm::vec3 slide = remaining - n * glm::dot(remaining, n);
-
-            transform->TranslateWorld(reached - start);
-            start = transform->GetWorldPosition();
-            delta = slide;
-        }
-        else {
-            transform->TranslateWorld(delta);
-            break;
-        }
-    }
-    SyncTransformToBullet();
-}
-
+// --- Main update: velocidad -> Update(...) -> copiar transform ---
 void QECharacterController::QEUpdate()
 {
-    float dt = Timer::DeltaTime;
-    if (!transform || dt <= 0.0f) return;
+    if (!mCharacter || !mTransform) return;
 
-    // 1) Horizontal
-    glm::vec3 horiz = ReadInputHorizontal(dt);
+    const float dt = Timer::DeltaTime;
+    if (dt <= 0.0f) return;
 
-    // 2) Ground & salto
-    bool onSlope = false;
-    bool wasGrounded = _grounded;
-    _grounded = CheckGrounded(&onSlope);
+    auto* pm = PhysicsModule::getInstance();
 
-    if (_grounded)
+    // 1) Horizontal deseado
+    const glm::vec3 wish = ReadMoveInput(dt);
+
+    // 2) Ground state antes de modificar
+    const bool wasGrounded = mCharacter->IsSupported(); // CharacterBase::IsSupported() :contentReference[oaicite:3]{index=3}
+
+    // 3) Vertical + salto
+    //    - En CharacterVirtual la gravedad debes aplicarla tú al vector velocidad. :contentReference[oaicite:4]{index=4}
+    if (wasGrounded)
     {
+        // salto (un único impulso)
         if (ImGui::IsKeyPressed(ImGuiKey_Space))
-        {
-            _vY = _jumpSpeed;       // impulso
-            _grounded = false;
-        }
-        else {
-            _vY = std::min(_vY, 0.0f); // pegado al suelo
-        }
+            mVelocity.y = JumpSpeed;
+        else
+            mVelocity.y = std::min(mVelocity.y, 0.0f);
     }
-    else {
-        _vY += _gravity * dt;       // gravedad manual
+    else
+    {
+        mVelocity.y += GravityY * dt; // GravityY negativa
     }
 
-    // 3) Delta total
-    glm::vec3 delta = horiz;
-    delta.y += _vY * dt;
+    // 4) Mezcla final de velocidad
+    mVelocity.x = wish.x;
+    mVelocity.z = wish.z;
 
-    // 4) Aplicar con sweep (bloquea paredes y hace slide)
-    ApplyKinematicMove(delta);
+    // 5) SetLinearVelocity y Update
+    mCharacter->SetLinearVelocity(JPH::Vec3(mVelocity.x, mVelocity.y, mVelocity.z)); // :contentReference[oaicite:5]{index=5}
 
-    if (_grounded && _vY <= 0.0f) {
-        glm::vec3 pos = transform->GetWorldPosition();
-        glm::vec3 p, n; float f;
-        if (CapsuleSweep(pos, pos - glm::vec3(0, 0.2f, 0), p, n, f)) {
-            transform->TranslateWorld(glm::vec3(0, -(0.2f * f), 0)); // encaja suave
-            _vY = 0.0f;
-            SyncTransformToBullet();
-        }
-    }
-}
+    // Nota: El parámetro gravedad del Update solo se usa para empujar hacia abajo cuando vas sobre un body moviéndose. :contentReference[oaicite:6]{index=6}
+    JPH::TempAllocatorImpl temp_alloc(32 * 1024);
+    mCharacter->Update(dt,
+        JPH::Vec3(0.0f, GravityY, 0.0f),
+        pm->GetBroadPhaseLayerFilter(),
+        pm->GetObjectLayerFilter(),
+        pm->GetBodyFilterSelfIgnore(mPhysBody ? mPhysBody->body : JPH::BodyID()),
+        JPH::ShapeFilter(),
+        temp_alloc); // firma Update(...) :contentReference[oaicite:7]{index=7}
 
-void QECharacterController::QEDestroy()
-{
-    QEGameComponent::QEDestroy();
+    // 6) Estado de suelo tras mover
+    mGrounded = mCharacter->IsSupported();
+
+    // 7) Copiar transform
+    SyncFromCharacter();
+
+    // (Opcional) mantener pegado al suelo extra:
+    // mCharacter->StickToFloor(/*stepDown*/ 0.3f, pm->GetBroadPhaseLayerFilter(), pm->GetObjectLayerFilter(),
+    //                          pm->GetBodyFilterSelfIgnore(...), JPH::ShapeFilter(), temp_alloc); // ver docs: 'project onto the floor' :contentReference[oaicite:8]{index=8}
 }

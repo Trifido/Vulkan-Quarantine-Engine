@@ -11,6 +11,9 @@
 #include <QEMeshRenderer.h>
 #include <QESpringArmComponent.h>
 #include <DebugController.h>
+#include <PlaneCollider.h>
+#include <BoxCollider.h>
+#include "PhysicsBody.h"
 
 App::App()  
 { 
@@ -220,7 +223,7 @@ void App::initVulkan()
     std::shared_ptr<QEGameObject> characterGO = std::make_shared<QEGameObject>("Character");
     characterGO->AddComponent<QECollider>(std::make_shared<CapsuleCollider>());
     characterGO->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>(PhysicBodyType::KINEMATIC_BODY));
-    characterGO->AddComponent<QECharacterController>(std::make_shared<QECharacterController>());
+    //characterGO->AddComponent<QECharacterController>(std::make_shared<QECharacterController>());
 
     auto characterPBody = characterGO->GetComponent<PhysicsBody>();
     characterPBody->CollisionGroup = CollisionFlag::COL_PLAYER;

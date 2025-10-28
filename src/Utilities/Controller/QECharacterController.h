@@ -3,66 +3,52 @@
 #define QE_CHARACTER_CONTROLLER
 
 #include <QEGameComponent.h>
-#include "QETransform.h"
-#include <PhysicsBody.h>
-#include <Collider.h>
-#include <btBulletDynamicsCommon.h>
-#include <GLFW/glfw3.h>
+#include <QETransform.h>
 #include <memory>
-#include <AnimationComponent.h>
-#include <QESpringArmComponent.h>
 
+// Jolt
+#include <Jolt/Jolt.h>
+#include <Jolt/Physics/PhysicsSystem.h>
+#include <Jolt/Physics/Character/CharacterVirtual.h>
+#include <Jolt/Physics/Collision/Shape/Shape.h>
 
-// Callback para ignorar tu propio cuerpo
-struct IgnoreSelfConvexResult : public btCollisionWorld::ClosestConvexResultCallback {
-    const btCollisionObject* ignore = nullptr;
-    IgnoreSelfConvexResult(const btVector3& from, const btVector3& to, const btCollisionObject* ig = nullptr)
-        : btCollisionWorld::ClosestConvexResultCallback(from, to), ignore(ig) {}
-
-    bool needsCollision(btBroadphaseProxy* proxy0) const override {
-        if (!btCollisionWorld::ClosestConvexResultCallback::needsCollision(proxy0))
-            return false;
-        return proxy0->m_clientObject != ignore;
-    }
-};
+class QECollider;
+class PhysicsModule;
+class AnimationComponent;
+class PhysicsBody;
 
 class QECharacterController : public QEGameComponent
 {
     REFLECTABLE_DERIVED_COMPONENT(QECharacterController, QEGameComponent)
     private:
-        REFLECT_PROPERTY(std::string, colliderID)
-        REFLECT_PROPERTY(std::string, physicBodyID)
+        REFLECT_PROPERTY(float, MoveSpeed)       // m/s
+        REFLECT_PROPERTY(float, SprintSpeed)     // m/s
+        REFLECT_PROPERTY(float, JumpSpeed)       // m/s
+        REFLECT_PROPERTY(float, GravityY)        // m/s^2 (negativo)
+        REFLECT_PROPERTY(float, MaxSlopeDeg)     // grados (p.e. 50)
 
-        REFLECT_PROPERTY(float, _moveSpeed)
-        REFLECT_PROPERTY(float, _sprintSpeed)
-        REFLECT_PROPERTY(float, _gravity)
-        REFLECT_PROPERTY(float, _jumpSpeed)
-        REFLECT_PROPERTY(float, _maxSlopeCos)
+        bool   mGrounded = false;
+        glm::vec3 mVelocity{ 0.0f };
 
-        REFLECT_PROPERTY(bool, _grounded)
-        float _vY;
-        float _capsuleRadius;
-        float _capsuleHalfHeight;
-
-        std::shared_ptr<QETransform> transform;
-        std::shared_ptr<QECollider> colliderPtr;
-        std::shared_ptr<PhysicsBody> physicBodyPtr;
+        std::shared_ptr<QETransform>        mTransform;
+        std::shared_ptr<QECollider>         mCollider;
+        std::shared_ptr<PhysicsBody>        mPhysBody;
         std::shared_ptr<AnimationComponent> animationComponentPtr;
 
+        // Character de Jolt
+        JPH::Ref<JPH::CharacterVirtual>     mCharacter;
+        JPH::CharacterVirtualSettings       mSettings;
+
     private:
-        // Movimiento
-        glm::vec3 ReadInputHorizontal(float dt) const;
-        void      ApplyKinematicMove(const glm::vec3& desiredDelta);
+        // Aux
+        static inline JPH::Quat  ToJPH(const glm::quat& q) { return JPH::Quat(q.x, q.y, q.z, q.w); }
+        static inline JPH::RVec3 ToJPH(const glm::vec3& v) { return JPH::RVec3((double)v.x, (double)v.y, (double)v.z); }
+        static inline glm::vec3  ToGLM(const JPH::RVec3& v) { return glm::vec3((float)v.GetX(), (float)v.GetY(), (float)v.GetZ()); }
+        static inline glm::quat  ToGLM(const JPH::Quat& q) { return glm::quat(q.GetW(), q.GetX(), q.GetY(), q.GetZ()); }
 
-        // Colisiones
-        bool      CapsuleSweep(const glm::vec3& start, const glm::vec3& end,
-            glm::vec3& hitPoint, glm::vec3& hitNormal, float& hitFrac) const;
-        bool      CheckGrounded(bool* outOnSlope = nullptr);
-
-        // Utilidades
-        void      EnsureKinematicFlags();
-        void      SyncTransformToBullet() const;
-        btTransform GlmToBt(const glm::vec3& p, const glm::quat& q) const;
+        glm::vec3 ReadMoveInput(float dt) const;
+        void      BuildOrUpdateCharacter();   // crea mCharacter si falta o actualiza shape/pose
+        void      SyncFromCharacter();
 
     public:
         QECharacterController();

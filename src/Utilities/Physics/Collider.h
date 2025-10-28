@@ -3,15 +3,17 @@
 #define COLLIDER_H
 
 #include "QEGameComponent.h"
-#include "btBulletDynamicsCommon.h"
+
+#include <Jolt/Jolt.h>
+#include <Jolt/Physics/Collision/Shape/Shape.h>
+#include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
 
 class QECollider : public QEGameComponent
 {
 protected:
     REFLECTABLE_DERIVED_COMPONENT(QECollider, QEGameComponent)
 public:
-    btCollisionShape* colShape = nullptr;
-    btCompoundShape* compound = nullptr;
+    JPH::Ref<JPH::Shape> colShape = nullptr;
 
     REFLECT_PROPERTY(float, CollisionMargin)
 

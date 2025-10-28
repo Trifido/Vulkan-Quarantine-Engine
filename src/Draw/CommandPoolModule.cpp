@@ -122,7 +122,7 @@ void CommandPoolModule::setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t
     this->gameObjectManager->DrawCommand(commandBuffers[iCBuffer], iCBuffer);
     this->editorManager->DrawCommnad(commandBuffers[iCBuffer], iCBuffer);
     this->cullingSceneManager->DrawDebug(commandBuffers[iCBuffer], iCBuffer);
-    this->physicsModule->debugDrawer->DrawDebug(commandBuffers[iCBuffer], iCBuffer);
+    this->physicsModule->DebugDrawer->DrawDebug(commandBuffers[iCBuffer], iCBuffer);
 
     if (ImGui::GetDrawData() != nullptr)
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[iCBuffer]);

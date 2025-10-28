@@ -2,6 +2,10 @@
 #include <AABBObject.h>
 #include <QEGameObject.h>
 
+#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+
+using namespace JPH;
+
 void CapsuleCollider::QEStart()
 {
     QECollider::QEStart();
@@ -15,8 +19,10 @@ void CapsuleCollider::QEInit()
 
     if (boundingBox != nullptr)
     {
-        this->compound = new btCompoundShape();
-        this->SetSize(glm::min(boundingBox->Size.x, boundingBox->Size.z) * 0.75f, boundingBox->Size.y);
+        float r = glm::min(boundingBox->Size.x, boundingBox->Size.z) * 0.75f;
+        float h = boundingBox->Size.y;
+
+        this->SetSize(r, h);
         this->SetColliderPivot(boundingBox->Center);
     }
 
@@ -35,14 +41,17 @@ CapsuleCollider::CapsuleCollider(float newRadius, float newHeight)
 
 void CapsuleCollider::SetSize(float newRadius, float totalHeight)
 {
-    this->radius = newRadius;
-    this->height = std::max(0.0f, totalHeight);
+    radius = newRadius;
+    height = std::max(0.0f, totalHeight);
 
-    if (this->colShape != nullptr)
-        delete this->colShape;
+    float cylinderHeight = glm::max(0.0f, height - 2.0f * radius);
+    float halfHeight = 0.5f * cylinderHeight;
+    float effectiveRadius = radius + CollisionMargin;
 
-    colShape = new btCapsuleShape(this->radius, this->height - (2.0f * this->radius));
-    colShape->setMargin(CollisionMargin);
-    colShape->setLocalScaling(btVector3(1, 1, 1));
-    colShape->setUserPointer(this);
+    CapsuleShapeSettings settings(halfHeight, effectiveRadius);
+
+    if (auto res = settings.Create(); res.IsValid())
+        colShape = res.Get();
+    else
+        colShape = nullptr;
 }

@@ -1,25 +1,50 @@
-#include "BulletDebugDrawer.h"
+#include "JoltDebugRenderer.h"
 #include "Material.h"
 #include <BufferManageModule.h>
+#include "PhysicsModule.h"
 
-DeviceModule* BulletDebugDrawer::deviceModule_ptr;
+DeviceModule* JoltDebugRenderer::deviceModule_ptr;
 
-BulletDebugDrawer::BulletDebugDrawer() : btIDebugDraw()
+JoltDebugRenderer::JoltDebugRenderer()
 {
     deviceModule_ptr = DeviceModule::getInstance();
 }
 
-void BulletDebugDrawer::drawLine(const btVector3& from, const btVector3& to, const btVector3& color)
+void JoltDebugRenderer::DrawLine(JPH::RVec3Arg a, JPH::RVec3Arg b, JPH::ColorArg col)
 {
-    glm::vec4 positionFrom = { from.x(), from.y(), from.z(), 1.0f };
-    glm::vec4 positionTo = { to.x(), to.y(), to.z(), 1.0f };
-    glm::vec4 colorVec = { color.x(), color.y(), color.z(), 1.0f };
-
-    lineVertices.push_back(DebugVertex(positionFrom, debugColor));
-    lineVertices.push_back(DebugVertex(positionTo, debugColor));
+    glm::vec4 c = toRGBA(col);
+    lineVertices.emplace_back(toVec4(a), c);
+    lineVertices.emplace_back(toVec4(b), c);
 }
 
-void BulletDebugDrawer::UpdateBuffers()
+void JoltDebugRenderer::DrawLine(JPH::RVec3Arg a, JPH::ColorArg ca,
+    JPH::RVec3Arg b, JPH::ColorArg cb)
+{
+    lineVertices.emplace_back(toVec4(a), toRGBA(ca));
+    lineVertices.emplace_back(toVec4(b), toRGBA(cb));
+}
+
+void JoltDebugRenderer::DrawTriangle(JPH::RVec3Arg v1, JPH::ColorArg c1,
+    JPH::RVec3Arg v2, JPH::ColorArg c2,
+    JPH::RVec3Arg v3, JPH::ColorArg c3)
+{
+    // Wireframe = 3 líneas
+    DrawLine(v1, c1, v2, c2);
+    DrawLine(v2, c2, v3, c3);
+    DrawLine(v3, c3, v1, c1);
+}
+
+JPH::DebugRenderer::Batch JoltDebugRenderer::CreateTriangleBatch(const JPH::DebugRenderer::Vertex* inVertices, int inVertexCount, const JPH::uint32* inIndices, int inIndexCount)
+{
+    return JPH::DebugRenderer::Batch();
+}
+
+JPH::DebugRenderer::Batch JoltDebugRenderer::CreateTriangleBatch(const JPH::DebugRenderer::Triangle* inTriangles, int inTriangleCount)
+{
+    return JPH::DebugRenderer::Batch();
+}
+
+void JoltDebugRenderer::UpdateBuffers()
 {
     if (lineVertices.empty())
         return;
@@ -34,12 +59,12 @@ void BulletDebugDrawer::UpdateBuffers()
     }
 }
 
-void BulletDebugDrawer::clear()
+void JoltDebugRenderer::clear()
 {
     lineVertices.clear();
 }
 
-void BulletDebugDrawer::cleanup()
+void JoltDebugRenderer::cleanup()
 {
     if (lineVertexMemory != VK_NULL_HANDLE)
     {
@@ -50,7 +75,7 @@ void BulletDebugDrawer::cleanup()
     }
 }
 
-void BulletDebugDrawer::createVertexBuffer()
+void JoltDebugRenderer::createVertexBuffer()
 {
     if (lineVertices.empty())
         return;
@@ -61,7 +86,7 @@ void BulletDebugDrawer::createVertexBuffer()
     this->updateVertexBuffer();
 }
 
-void BulletDebugDrawer::updateVertexBuffer()
+void JoltDebugRenderer::updateVertexBuffer()
 {
     if (lineVertices.empty())
         return;
@@ -99,7 +124,42 @@ void BulletDebugDrawer::updateVertexBuffer()
     vkFreeMemory(deviceModule_ptr->device, stagingMemory, nullptr);
 }
 
-void BulletDebugDrawer::InitializeDebugResources()
+void JoltDebugRenderer::DrawDebug(VkCommandBuffer& commandBuffer, uint32_t idx)
+{
+    if (this->m_enabled && !this->lineVertices.empty())
+    {
+        auto pipelineModule = this->shader_debug_ptr->PipelineModule;
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
+
+        vkCmdSetDepthTestEnable(commandBuffer, false);
+        vkCmdSetCullMode(commandBuffer, false);
+
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, this->material_debug_ptr->descriptor->getDescriptorSet(idx), 0, nullptr);
+
+        VkDeviceSize offset = 0;
+        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &this->lineVertexBuffer, &offset);
+
+        vkCmdDraw(commandBuffer, static_cast<uint32_t>(lineVertices.size()), 1, 0, 0);
+    }
+}
+
+inline glm::vec4 JoltDebugRenderer::toRGBA(JPH::ColorArg col)
+{
+    const float inv = 1.0f / 255.0f;
+    const uint32_t u = col.GetUInt32(); // 0xRRGGBBAA en Jolt
+    const float r = ((u >> 24) & 0xFF) * inv;
+    const float g = ((u >> 16) & 0xFF) * inv;
+    const float b = ((u >> 8) & 0xFF) * inv;
+    const float a = (u & 0xFF) * inv;
+    return glm::vec4(r, g, b, a);
+}
+
+inline glm::vec4 JoltDebugRenderer::toVec4(JPH::RVec3Arg p)
+{
+    return glm::vec4((float)p.GetX(), (float)p.GetY(), (float)p.GetZ(), 1.0f);
+}
+
+void JoltDebugRenderer::InitializeDebugResources()
 {
     ShaderManager* shaderManager = ShaderManager::getInstance();
 
@@ -122,23 +182,4 @@ void BulletDebugDrawer::InitializeDebugResources()
     }
 
     this->createVertexBuffer();
-}
-
-void BulletDebugDrawer::DrawDebug(VkCommandBuffer& commandBuffer, uint32_t idx)
-{
-    if (this->DebugMode && !this->lineVertices.empty())
-    {
-        auto pipelineModule = this->shader_debug_ptr->PipelineModule;
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
-
-        vkCmdSetDepthTestEnable(commandBuffer, false);
-        vkCmdSetCullMode(commandBuffer, false);
-
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, this->material_debug_ptr->descriptor->getDescriptorSet(idx), 0, nullptr);
-
-        VkDeviceSize offset = 0;
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &this->lineVertexBuffer, &offset);
-
-        vkCmdDraw(commandBuffer, static_cast<uint32_t>(lineVertices.size()), 1, 0, 0);
-    }
 }

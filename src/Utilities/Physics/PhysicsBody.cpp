@@ -1,7 +1,11 @@
 #include <PhysicsBody.h>
-#include <LinearMath/btVector3.h>
 #include <PhysicsModule.h>
 #include <QEGameObject.h>
+
+#include <jolt/Jolt.h>
+#include <Jolt/Physics/Body/BodyCreationSettings.h>
+
+using namespace JPH;
 
 PhysicsBody::PhysicsBody()
 {
@@ -24,12 +28,26 @@ void PhysicsBody::UpdateType(const PhysicBodyType &type)
     this->UpdateInertia(glm::vec3(0.0f));
 }
 
+// Helpers de comparación (versión glm)
+static inline bool closePos(const glm::vec3& a, const glm::vec3& b, float eps)
+{
+    glm::vec3 d = a - b;
+    return glm::dot(d, d) <= eps * eps;
+}
+
+static inline bool closeRot(const glm::quat& a, glm::quat b, float angleEpsRad)
+{
+    if (glm::dot(a, b) < 0.0f) b = glm::quat(-b.w, -b.x, -b.y, -b.z);
+    glm::quat d = glm::inverse(a) * b;
+    // angle from quaternion (approx)
+    float angle = 2.0f * acosf(glm::clamp(d.w, -1.0f, 1.0f));
+    return fabsf(angle) <= angleEpsRad;
+}
+
+
 void PhysicsBody::UpdateInertia(const glm::vec3 &localInertia)
 {
     this->Inertia = localInertia;
-    this->localInertia[0] = this->Inertia.x;
-    this->localInertia[1] = this->Inertia.y;
-    this->localInertia[2] = this->Inertia.z;
 }
 
 void PhysicsBody::UpdateTransform()
@@ -40,144 +58,80 @@ void PhysicsBody::UpdateTransform()
     }
 }
 
-inline bool PhysicsBody::closePos(const btVector3& a, const btVector3& b, btScalar eps)
-{
-    return (a - b).length2() <= eps * eps;
-}
-
-inline bool PhysicsBody::closeRot(const btQuaternion& a, btQuaternion b, btScalar angleEpsRad)
-{
-    if (a.dot(b) < 0) b = btQuaternion(-b.x(), -b.y(), -b.z(), -b.w());
-    btQuaternion d = a.inverse() * b;
-    return btFabs(d.getAngle()) <= angleEpsRad;
-}
-
 void PhysicsBody::Initialize()
 {
-    btTransform startTransform;
-    startTransform.setIdentity();
+    // Requisitos: collider + transform válidos
+    if (!collider || !collider->colShape || !transform) return;
 
-    glm::vec3 scale = this->transform->GetWorldScale();
-    this->collider->colShape->setLocalScaling(btVector3(scale.x, scale.y, scale.z));
+    // Pose inicial desde tu QETransform
+    glm::vec3 pos = transform->GetWorldPosition();
+    glm::quat rot = transform->GetWorldRotation();
+    Vec3 jpos = toJPH(pos);
+    Quat jrot = toJPH(rot);
 
-    glm::vec3 position = this->transform->GetWorldPosition();
-    startTransform.setOrigin(btVector3(position.x, position.y, position.z));
-
-    auto quat = this->transform->GetWorldRotation();
-    btQuaternion btQuat(quat.x, quat.y, quat.z, quat.w);
-    startTransform.setRotation(btQuat);
-
-    btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
-
-    if (this->Type == PhysicBodyType::RIGID_BODY)
-        this->collider->colShape->calculateLocalInertia(this->Mass, this->localInertia);
-
-    btRigidBody::btRigidBodyConstructionInfo rbInfo(
-        this->Mass,
-        myMotionState,
-        (this->collider->compound ? (btCollisionShape*)this->collider->compound : (btCollisionShape*)this->collider->colShape),
-        this->localInertia
-    );
-
-    this->body = new btRigidBody(rbInfo);
-
+    // MotionType mapeado desde tu enum
+    EMotionType motion = EMotionType::Static;
     switch (this->Type)
     {
-        default:
+        case PhysicBodyType::RIGID_BODY:    motion = EMotionType::Dynamic;   break;
+        case PhysicBodyType::KINEMATIC_BODY:motion = EMotionType::Kinematic; break;
         case PhysicBodyType::STATIC_BODY:
-            this->body->setCollisionFlags(btCollisionObject::CF_STATIC_OBJECT);
-            break;
-        case PhysicBodyType::RIGID_BODY:
-            this->body->setActivationState(DISABLE_DEACTIVATION);
-            this->body->setSleepingThresholds(0.f, 0.f);
-            break;
-        case PhysicBodyType::KINEMATIC_BODY:
-            body->setCollisionFlags(body->getCollisionFlags()
-                | btCollisionObject::CF_KINEMATIC_OBJECT
-                | btCollisionObject::CF_CHARACTER_OBJECT); // opcional
-            body->setActivationState(DISABLE_DEACTIVATION);
-            body->setMassProps(0, btVector3(0, 0, 0));
-            body->setLinearVelocity(btVector3(0, 0, 0)); // no usar velocities del solver
-            body->setAngularVelocity(btVector3(0, 0, 0));
-            break;
+        default:                            motion = EMotionType::Static;    break;
     }
 
-    // Registra en el mundo
-    auto physicsModule = PhysicsModule::getInstance();
-    physicsModule->dynamicsWorld->addRigidBody(this->body, this->CollisionGroup, this->CollisionMask);
+    // Layer simple (ajústalo a tu sistema de capas/filtros Jolt)
+    // 0: estático, 1: dinámico, 2: kinematic
+    ObjectLayer layer = (motion == EMotionType::Static) ? 0 : (motion == EMotionType::Dynamic ? 1 : 2);
 
-    // Inicializa prev/curr con el transform inicial
-    currTrans = startTransform;
-    prevTrans = startTransform;
+    BodyCreationSettings s(
+        collider->colShape,     // Ref<Shape>
+        RVec3(jpos.GetX(), jpos.GetY(), jpos.GetZ()),
+        jrot,
+        motion,
+        layer
+    );
+
+    if (motion == EMotionType::Dynamic)
+    {
+        s.mOverrideMassProperties = EOverrideMassProperties::CalculateInertia;
+        s.mMassPropertiesOverride.mMass = glm::max(0.0001f, this->Mass);
+    }
+
+    // Crea + añade el body
+    JPH::BodyID id = PhysicsModule::getInstance()->AddRigidBody(s, JPH::EActivation::Activate);
+    this->body = id;
+
+    // Inicializa prev/curr con la pose inicial
+    currPos = pos; currRot = rot;
+    prevPos = pos; prevRot = rot;
     hasCurr = true;
-
-    // Para tu lógica previa basada en lastTrans:
-    lastTrans = startTransform;
-    hasLastTrans = true;
 }
 
 void PhysicsBody::copyTransformtoGLM()
 {
-    if (!this->body) return;
+    if (this->body.IsInvalid()) return;
 
-    if (!this->body->isKinematicObject() && !this->body->isActive())
-        return;
+    // Lee la pose interpolada actual (center of mass transform)
+    RMat44 m = PhysicsModule::getInstance()->Bodies().GetCenterOfMassTransform(this->body);
+    RVec3 p = m.GetTranslation();
+    Quat q = m.GetRotation().GetQuaternion();
 
-    btTransform trans = this->body->getInterpolationWorldTransform();
+    glm::vec3 newPos = toGLM(p);
+    glm::quat newRot = toGLM(q);
 
-    const btVector3& newPos = trans.getOrigin();
-    const btQuaternion& newRot = trans.getRotation();
-
-    bool changed = !hasLastTrans
-        || !closePos(lastTrans.getOrigin(), newPos, posEps)
-        || !closeRot(lastTrans.getRotation(), newRot, angEps);
+    bool changed = !hasCurr
+        || !closePos(currPos, newPos, posEps)
+        || !closeRot(currRot, newRot, angEps);
 
     if (!changed) return;
 
-    glm::mat4 m = bulletToGlm(trans);
-    this->transform->SetFromMatrix(m);
+    transform->TranslateWorld(newPos);
+    transform->RotateWorld(newRot);
 
-    lastTrans = trans;
-    hasLastTrans = true;
+    currPos = newPos;
+    currRot = newRot;
+    hasCurr = true;
 }
-
-glm::mat4 PhysicsBody::bulletToGlm(const btTransform& t)
-{
-    glm::mat4 m(0.0f);
-    const btMatrix3x3& basis = t.getBasis();
-    // rotation
-    for (int r = 0; r < 3; r++)
-    {
-        for (int c = 0; c < 3; c++)
-        {
-            m[c][r] = basis[r][c];
-        }
-    }
-    // traslation
-    btVector3 origin = t.getOrigin();
-    m[3][0] = origin.getX();
-    m[3][1] = origin.getY();
-    m[3][2] = origin.getZ();
-    // unit scale
-    m[0][3] = 0.0f;
-    m[1][3] = 0.0f;
-    m[2][3] = 0.0f;
-    m[3][3] = 1.0f;
-    return m;
-}
-
-btTransform PhysicsBody::glmToBullet(const glm::mat4& m)
-{
-    glm::mat3 m3(m);
-    return btTransform(glmToBullet(m3), glmToBullet(glm::vec3(m[3][0], m[3][1], m[3][2])));
-}
-
-glm::vec3 PhysicsBody::bulletToGlm(const btVector3& v) { return glm::vec3(v.getX(), v.getY(), v.getZ()); }
-glm::quat PhysicsBody::bulletToGlm(const btQuaternion& q) { return glm::quat(q.getW(), q.getX(), q.getY(), q.getZ()); }
-
-btVector3 PhysicsBody::glmToBullet(const glm::vec3& v) { return btVector3(v.x, v.y, v.z); }
-btMatrix3x3 PhysicsBody::glmToBullet(const glm::mat3& m) { return btMatrix3x3(m[0][0], m[1][0], m[2][0], m[0][1], m[1][1], m[2][1], m[0][2], m[1][2], m[2][2]); }
-btQuaternion PhysicsBody::glmToBullet(const glm::quat& q) { return btQuaternion(q.x, q.y, q.z, q.w); }
 
 void PhysicsBody::QEStart()
 {
@@ -201,79 +155,54 @@ void PhysicsBody::QEInit()
 
 void PhysicsBody::QEUpdate()
 {
-    if (!this->body) return;
+    if (this->Owner == nullptr) return;
 
-    if (this->Type == PhysicBodyType::KINEMATIC_BODY)
+    this->collider = this->Owner->GetComponentInChildren<QECollider>(true);
+    this->transform = this->Owner->GetComponent<QETransform>();
+
+    if (this->collider && this->transform)
     {
-        glm::mat4 wm = transform->GetWorldMatrix();
-        btTransform t = glmToBullet(wm);
-        if (body->getMotionState()) body->getMotionState()->setWorldTransform(t);
-        body->setWorldTransform(t);
-    }
-    else if (this->Type == PhysicBodyType::RIGID_BODY)
-    {
-        this->copyTransformtoGLM();
+        this->Initialize();
+        QEGameComponent::QEInit();
     }
 }
 
 void PhysicsBody::QEDestroy()
 {
+    // Quitar y destruir el body si sigue vivo
+    if (this->body.IsInvalid())
+    {
+        QEGameComponent::QEDestroy();
+        return;
+    }
+
+    auto& bi = PhysicsModule::getInstance()->Bodies();
+    bi.RemoveBody(this->body);
+    bi.DestroyBody(this->body);
+    this->body = BodyID();
+
     QEGameComponent::QEDestroy();
 }
 
+// -------- conversiones --------
 
-void PhysicsBody::InitializeFromTransform()
+inline JPH::Vec3 PhysicsBody::toJPH(const glm::vec3& v)
 {
-    glm::mat4 wm = this->transform->GetWorldMatrix();
-    currTrans = glmToBullet(wm);
-    prevTrans = currTrans;
-    hasCurr = true;
+    return JPH::Vec3(v.x, v.y, v.z);
 }
 
-void PhysicsBody::SnapshotPrev()
+inline JPH::Quat PhysicsBody::toJPH(const glm::quat& q)
 {
-    if (!hasCurr) InitializeFromTransform();
-    prevTrans = currTrans;
+    // glm: w,x,y,z  |  Jolt: x,y,z,w
+    return JPH::Quat(q.x, q.y, q.z, q.w);
 }
 
-void PhysicsBody::FetchCurrFromBullet()
+inline glm::vec3 PhysicsBody::toGLM(const JPH::Vec3& v)
 {
-    if (!this->body) return;
-
-    // Si usas MotionState (sí), el estado "actual" del step está en getWorldTransform()
-    btTransform t;
-    this->body->getMotionState()->getWorldTransform(t);
-    currTrans = t;
-    hasCurr = true;
-
-    // (Opcional pero recomendable) Mantén sincronizado el QETransform con "curr"
-    // para lógica no interpolada que lea del transform:
-    glm::mat4 m = bulletToGlm(currTrans);
-    this->transform->SetFromMatrix(m);
-
-    // Guarda también para copy/epsilon, si lo sigues usando:
-    lastTrans = currTrans;
-    hasLastTrans = true;
+    return glm::vec3(v.GetX(), v.GetY(), v.GetZ());
 }
 
-void PhysicsBody::GetInterpolated(float alpha, glm::vec3& outPos, glm::quat& outRot) const
+inline glm::quat PhysicsBody::toGLM(const JPH::Quat& q)
 {
-    // Asegura que existe curr; si no, cae a identity
-    btVector3 p0 = prevTrans.getOrigin();
-    btVector3 p1 = currTrans.getOrigin();
-    btQuaternion q0 = prevTrans.getRotation();
-    btQuaternion q1 = currTrans.getRotation();
-
-    btVector3 p = p0.lerp(p1, alpha);
-    btQuaternion q = q0.slerp(q1, alpha);
-
-    outPos = glm::vec3(p.x(), p.y(), p.z());
-    outRot = glm::quat(q.w(), q.x(), q.y(), q.z()); 
-}
-
-glm::mat4 PhysicsBody::GetInterpolatedMatrix(float alpha) const
-{
-    glm::vec3 pos; glm::quat rot;
-    GetInterpolated(alpha, pos, rot);
-    return glm::translate(glm::mat4(1.0f), pos) * glm::mat4_cast(rot);
+    return glm::quat(q.GetW(), q.GetX(), q.GetY(), q.GetZ());
 }

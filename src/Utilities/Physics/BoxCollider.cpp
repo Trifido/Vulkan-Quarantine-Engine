@@ -1,5 +1,7 @@
-#include <Collider.h>
 #include <BoxCollider.h>
+#include <Jolt/Physics/Collision/Shape/BoxShape.h>
+
+using namespace JPH;
 
 BoxCollider::BoxCollider()
 {
@@ -18,13 +20,13 @@ const glm::vec3 BoxCollider::GetSize()
 
 void BoxCollider::SetSize(const glm::vec3& value)
 {
-    this->Size = value;
+    Size = value;
 
-    if (this->colShape != nullptr)
-    {
-        delete this->colShape;
-        this->colShape = nullptr;
-    }
-    this->colShape = new btBoxShape(btVector3(this->Size.x, this->Size.y, this->Size.z));
-    this->colShape->setMargin(this->CollisionMargin);
+    BoxShapeSettings settings(Vec3(Size.x, Size.y, Size.z));
+    settings.mConvexRadius = CollisionMargin;
+
+    if (auto res = settings.Create(); res.IsValid())
+        colShape = res.Get();
+    else
+        colShape = nullptr;
 }

@@ -5,8 +5,16 @@
 #include "QETransform.h"
 #include <Collider.h>
 #include <glm/matrix.hpp>
-#include <btBulletDynamicsCommon.h>
 #include "PhysicsTypes.h"
+
+// Jolt
+#include <Jolt/Jolt.h> // SIEMPRE primero
+#include <Jolt/Physics/Body/BodyID.h>
+#include <Jolt/Physics/Body/BodyLockInterface.h>
+#include <Jolt/Physics/Body/BodyInterface.h>
+#include <Jolt/Math/Quat.h>
+#include <Jolt/Math/Vec3.h>
+#include <Jolt/Math/Mat44.h>
 
 class PhysicsBody : public QEGameComponent
 {
@@ -14,25 +22,24 @@ class PhysicsBody : public QEGameComponent
 private:
     std::shared_ptr<QETransform> transform;
     std::shared_ptr<QECollider> collider;
-    btVector3 localInertia;
-    btTransform lastTrans;
-    bool hasLastTrans = false;
 
-    // Epsilons para comparación
-    float posEps = 0.0005f;    // ~0.5 mm
-    float angEps = 0.0015f;    // ~0.086 rad
+    // Estado previo/actual para interpolación (adaptado desde tu versión Bullet)
+    glm::vec3 prevPos{}, currPos{};
+    glm::quat prevRot{}, currRot{};
+    bool hasCurr{ false };
 
-    btTransform prevTrans;      // snapshot del paso fijo anterior
-    btTransform currTrans;      // estado tras el último paso fijo
-    bool hasCurr = false;       // si ya está inicializado
+    // Epsilons para comparación (igual que tenías)
+    float posEps = 0.0005f;
+    float angEps = 0.0015f;
 
 public:
-    btRigidBody* body;
+    JPH::BodyID body = JPH::BodyID();
     REFLECT_PROPERTY(PhysicBodyType, Type)
     REFLECT_PROPERTY(float, Mass)
     REFLECT_PROPERTY(glm::vec3, Inertia)
     REFLECT_PROPERTY(CollisionFlag, CollisionGroup)
     REFLECT_PROPERTY(CollisionFlag, CollisionMask)
+
 public:
     PhysicsBody();
     PhysicsBody(const PhysicBodyType& type);
@@ -48,27 +55,10 @@ private:
     void copyTransformtoGLM();
     void UpdateTransform();
 
-    static inline bool closePos(const btVector3& a, const btVector3& b, btScalar eps);
-    static inline bool closeRot(const btQuaternion& a, btQuaternion b, btScalar angleEpsRad);
-
-    glm::mat4 bulletToGlm(const btTransform& t);
-    glm::vec3 bulletToGlm(const btVector3& v);
-    glm::quat bulletToGlm(const btQuaternion& q);
-
-    btTransform glmToBullet(const glm::mat4& m);
-    btVector3 glmToBullet(const glm::vec3& v);
-    btMatrix3x3 glmToBullet(const glm::mat3& m);
-    btQuaternion glmToBullet(const glm::quat& q);
-
-    // Inicializa prev/curr a partir del QETransform (primer frame)
-    void InitializeFromTransform();
-    // Llamar ANTES de cada substep/stepSimulation (snapshot prev = curr)
-    void SnapshotPrev();
-    // Llamar DESPUÉS de cada substep/stepSimulation (actualiza curr desde Bullet)
-    void FetchCurrFromBullet();
-    // Obtener pose interpolada (para cámara/render)
-    void GetInterpolated(float alpha, glm::vec3& outPos, glm::quat& outRot) const;
-    glm::mat4 GetInterpolatedMatrix(float alpha) const;
+    static inline JPH::Vec3  toJPH(const glm::vec3& v);
+    static inline JPH::Quat  toJPH(const glm::quat& q);
+    static inline glm::vec3  toGLM(const JPH::Vec3& v);
+    static inline glm::quat  toGLM(const JPH::Quat& q);
 };
 
 #endif
