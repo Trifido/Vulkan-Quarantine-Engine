@@ -8,7 +8,7 @@
 #include "PhysicsTypes.h"
 
 // Jolt
-#include <Jolt/Jolt.h> // SIEMPRE primero
+#include <Jolt/Jolt.h>
 #include <Jolt/Physics/Body/BodyID.h>
 #include <Jolt/Physics/Body/BodyLockInterface.h>
 #include <Jolt/Physics/Body/BodyInterface.h>
@@ -23,12 +23,12 @@ private:
     std::shared_ptr<QETransform> transform;
     std::shared_ptr<QECollider> collider;
 
-    // Estado previo/actual para interpolación (adaptado desde tu versión Bullet)
+    // Estado previo/actual para interpolación
     glm::vec3 prevPos{}, currPos{};
     glm::quat prevRot{}, currRot{};
     bool hasCurr{ false };
 
-    // Epsilons para comparación (igual que tenías)
+    // Epsilons
     float posEps = 0.0005f;
     float angEps = 0.0015f;
 
@@ -38,7 +38,6 @@ public:
     REFLECT_PROPERTY(float, Mass)
     REFLECT_PROPERTY(glm::vec3, Inertia)
     REFLECT_PROPERTY(CollisionFlag, CollisionGroup)
-    REFLECT_PROPERTY(CollisionFlag, CollisionMask)
 
 public:
     PhysicsBody();
@@ -54,6 +53,7 @@ private:
     void Initialize();
     void copyTransformtoGLM();
     void UpdateTransform();
+    JPH::ObjectLayer ResolveObjectLayer(const PhysicBodyType type, const CollisionFlag group);
 
     static inline JPH::Vec3  toJPH(const glm::vec3& v);
     static inline JPH::Quat  toJPH(const glm::quat& q);

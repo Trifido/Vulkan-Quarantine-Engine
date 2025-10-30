@@ -4,22 +4,31 @@
 #include <QECamera.h>
 #include <QETransform.h>
 #include <PhysicsModule.h>
-#include <BulletGLM.h>
+#include <glm/common.hpp>
 
-struct ClosestNotMeConvexResultCallback : public btCollisionWorld::ClosestConvexResultCallback {
-    std::unordered_set<const btCollisionObject*> ignored;
+#include <Jolt/Jolt.h>
+#include <Jolt/Physics/PhysicsSystem.h>
+#include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Collision/Shape/ScaledShape.h>
+#include <Jolt/Physics/Collision/BroadPhase/BroadPhase.h>
+#include <Jolt/Physics/Collision/CollideShape.h>
+#include <Jolt/Physics/Collision/ShapeCast.h>
 
-    ClosestNotMeConvexResultCallback(const btVector3& from, const btVector3& to)
-        : btCollisionWorld::ClosestConvexResultCallback(from, to) {}
-
-    btScalar addSingleResult(btCollisionWorld::LocalConvexResult& convexResult, bool normalInWorldSpace) override {
-        if (convexResult.m_hitCollisionObject &&
-            ignored.count(convexResult.m_hitCollisionObject) > 0) {
-            return 1.0f;
+namespace {
+    // Colisiona sólo con la escena (ajusta a tus necesidades)
+    struct SceneOnlyLayerFilter final : JPH::ObjectLayerFilter {
+        bool ShouldCollide(JPH::ObjectLayer l) const override {
+            return l == Layers::SCENE_STATIC || l == Layers::SCENE_MOVING;
         }
-        return btCollisionWorld::ClosestConvexResultCallback::addSingleResult(convexResult, normalInWorldSpace);
-    }
-};
+    };
+
+    // Ignora al body del jugador/cámara si existe
+    struct IgnoreBodyFilter final : JPH::BodyFilter {
+        JPH::BodyID ignore;
+        explicit IgnoreBodyFilter(JPH::BodyID id) : ignore(id) {}
+        bool ShouldCollide(const JPH::BodyID& other) const override { return other != ignore; }
+    };
+}
 
 QESpringArmComponent::QESpringArmComponent()
 {
@@ -90,66 +99,13 @@ glm::vec3 QESpringArmComponent::ComputePivotWorldPos() const
     return basePos + (glm::mat3_cast(baseRot) * TargetOffset);
 }
 
-bool QESpringArmComponent::SphereSweep(const glm::vec3& start,
+bool QESpringArmComponent::SphereSweep(
+    const glm::vec3& start,
     const glm::vec3& end,
     float radius,
     SweepHit& outHit) const
 {
-    auto physicsSystem = PhysicsModule::getInstance();
-    if (!physicsSystem->dynamicsWorld)
-    {
-        outHit = {};
-        return false;
-    }
-
-    // 1) Shape y márgenes
-    // Importante: pon margen a 0.0f para que el radio sea EXACTO.
-    static thread_local btSphereShape sphere(1.0f);
-    sphere.setUnscaledRadius(btScalar(radius));
-    sphere.setMargin(0.0f);
-
-    // 2) Transforms de inicio/fin (rot identidad: esfera no depende de rot)
-    btTransform fromXf; fromXf.setIdentity(); fromXf.setOrigin(ToBt(start));
-    btTransform toXf;   toXf.setIdentity();   toXf.setOrigin(ToBt(end));
-
-    // 3) Callback de resultado con filtros
-    ClosestNotMeConvexResultCallback cb(ToBt(start), ToBt(end));
-
-    // Configura grupos/máscaras si usas flags de colisión (opcional)
-    // cb.m_collisionFilterGroup = (short)CollisionFlag::CameraProbe;
-    // cb.m_collisionFilterMask  = (short)CollisionFlag::WorldStatic | (short)CollisionFlag::WorldDynamic;
-
-    // Ignora el rigidbody del player y el de la cámara si existen
-    // (Sustituye estas llamadas por tu forma de acceder a los cuerpos)
-    auto playerRB = Owner->GetComponent<PhysicsBody>();
-    if (playerRB)
-    {
-        cb.ignored.insert(playerRB->body);
-    }
-
-    // 4) Lanza el sweep
-    physicsSystem->dynamicsWorld->convexSweepTest(&sphere, fromXf, toXf, cb);
-
-    if (!cb.hasHit()) { outHit = {}; return false; }
-
-    // 5) Construye el resultado
-    outHit.hit = true;
-    outHit.distance = glm::clamp(float(cb.m_closestHitFraction) * glm::length(end - start), 0.0f, glm::length(end - start));
-    // Punto de impacto en mundo
-    glm::vec3 ray = (end - start);
-    glm::vec3 hitPos = start + (ray * float(cb.m_closestHitFraction));
-    outHit.point = hitPos;
-
-    // Normal
-    if (cb.m_hitNormalWorld.length2() > 0.0)
-    {
-        outHit.normal = ToGlm(cb.m_hitNormalWorld) * 1.0f;
-    }
-    else
-    {
-        outHit.normal = glm::normalize(start - end);
-    }
-    return true;
+    return false;
 }
 
 void QESpringArmComponent::AddYawInput(float dDeg)
@@ -192,11 +148,12 @@ void QESpringArmComponent::QEUpdate()
     glm::vec3 pivot = desiredPivot;
     glm::quat rotBase = desiredRot;
     m_currentArmLen = SmoothExp(m_currentArmLen, TargetArmLength, PosLagSpeed, dt);
+    m_smoothedPivot = SmoothExpVec3(m_smoothedPivot, desiredPivot, PosLagSpeed, dt);
 
     // 3) Punto final deseado del brazo
     glm::vec3 fwd = rotBase * glm::vec3(0, 0, -1);
-    glm::vec3 socket = pivot + SocketOffset;
-    glm::vec3 desiredCamPos = socket - fwd * std::clamp(TargetArmLength, MinArmLength, MaxArmLength);
+    glm::vec3 socket = m_smoothedPivot + SocketOffset;
+    glm::vec3 desiredCamPos = socket - fwd * std::clamp(m_currentArmLen, MinArmLength, MaxArmLength);
 
     // 4) Colisión del brazo (opcional)
     glm::vec3 start = m_smoothedPivot + SocketOffset;
@@ -246,45 +203,8 @@ void QESpringArmComponent::QEUpdate()
     }
 }
 
-bool QESpringArmComponent::GetParentRB(btRigidBody*& outRB) const
-{
-    outRB = nullptr;
-
-    if (auto parentGO = Owner->parent)
-    {
-        if (auto pb = parentGO->GetComponent<PhysicsBody>())
-        {
-            if (pb->body)
-            {
-                outRB = pb->body;
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
 void QESpringArmComponent::GetParentInterpolatedTRS(glm::vec3& pos, glm::quat& rot) const
 {
-    btRigidBody* rb = nullptr;
-    float alpha = Timer::getInstance()->RenderAlpha;
-
-    if (GetParentRB(rb)) {
-        const btTransform prev = rb->getInterpolationWorldTransform();
-
-        btTransform curr;
-        if (rb->getMotionState()) rb->getMotionState()->getWorldTransform(curr);
-        else                      curr = rb->getWorldTransform();
-
-        const btVector3 p = prev.getOrigin().lerp(curr.getOrigin(), alpha);
-        const btQuaternion q = prev.getRotation().slerp(curr.getRotation(), alpha);
-
-        pos = { p.getX(), p.getY(), p.getZ() };
-        rot = { q.getW(), q.getX(), q.getY(), q.getZ() };
-        return;
-    }
-
-    // Fallback: sin rigid body → usa transform del padre
     if (auto tr = Owner->GetComponent<QETransform>()) {
         if (auto parent = tr->GetParent()) {
             pos = parent->GetWorldPosition();

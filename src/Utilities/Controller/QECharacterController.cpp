@@ -8,10 +8,30 @@
 #include <Timer.h>
 
 #include <Jolt/Core/TempAllocator.h>
-#include <Jolt/Physics/Collision/BroadPhase/BroadPhaseLayer.h>
-#include <Jolt/Physics/Collision/Shape/Shape.h>
-#include <Jolt/Renderer/DebugRenderer.h>
+#include <Jolt/Physics/Character/CharacterVirtual.h>
 #include <imgui.h>
+
+// --- Helpers locales para filtros ---
+namespace
+{
+    static const struct AllLayersFilter final : JPH::ObjectLayerFilter {
+        bool ShouldCollide(JPH::ObjectLayer) const override { return true; }
+    } kAllLayersFilter;
+
+    struct BodyFilterSelfIgnore final : JPH::BodyFilter {
+        JPH::BodyID ignore;
+        explicit BodyFilterSelfIgnore(JPH::BodyID id) : ignore(id) {}
+        bool ShouldCollide(const JPH::BodyID& other) const override { return other != ignore; }
+    };
+
+    inline JPH::DefaultBroadPhaseLayerFilter MakeBPFilter() {
+        auto* pm = PhysicsModule::getInstance();
+        return JPH::DefaultBroadPhaseLayerFilter(
+            pm->GetObjectVsBPLFilter(),
+            Layers::PLAYER
+        );
+    }
+}
 
 QECharacterController::QECharacterController()
 {
@@ -51,20 +71,27 @@ void QECharacterController::QEDestroy()
 
 void QECharacterController::BuildOrUpdateCharacter()
 {
-    auto* pm = PhysicsModule::getInstance();
-    JPH::PhysicsSystem& system = pm->World();
+    if (mSettings.mShape == mLastShape)
+        return; // nada que actualizar
+
+    mLastShape = mSettings.mShape;
 
     if (!mCollider || mCollider->colShape == nullptr)
         return;
 
+    // Actualiza settings a partir del collider / opciones
     mSettings.mShape = mCollider->colShape;
     mSettings.mMaxSlopeAngle = JPH::DegreesToRadians(MaxSlopeDeg);
+    mSettings.mBackFaceMode = JPH::EBackFaceMode::IgnoreBackFaces;
+    mSettings.mEnhancedInternalEdgeRemoval = true;
 
-    // 2) Si no existe el character: créalo
+    // Crear character si no existe
     if (mCharacter == nullptr)
     {
         const glm::vec3 p = mTransform ? mTransform->GetWorldPosition() : glm::vec3(0);
         const glm::quat q = mTransform ? mTransform->GetWorldRotation() : glm::quat(1, 0, 0, 0);
+
+        JPH::PhysicsSystem& system = PhysicsModule::getInstance()->World();
 
         mCharacter = new JPH::CharacterVirtual(
             &mSettings,
@@ -72,26 +99,26 @@ void QECharacterController::BuildOrUpdateCharacter()
             ToJPH(q),
             &system
         );
+        return;
+    }
 
-        // Pose inicial desde el transform
-        const glm::vec3 p = mTransform ? mTransform->GetWorldPosition() : glm::vec3(0);
-        const glm::quat q = mTransform ? mTransform->GetWorldRotation() : glm::quat(1, 0, 0, 0);
-        mCharacter->SetPosition(ToJPH(p));
-        mCharacter->SetRotation(ToJPH(q));
-    }
-    else
-    {
-        // (Opcional) si cambiaste la shape en runtime:
-        JPH::TempAllocatorImpl temp_alloc(16 * 1024);
-        mCharacter->SetShape(mSettings.mShape.GetPtr(), /*maxPenDepth*/ 0.05f,
-            pm->GetBroadPhaseLayerFilter(),
-            pm->GetObjectLayerFilter(),
-            pm->GetBodyFilterSelfIgnore(mPhysBody ? mPhysBody->body : JPH::BodyID()),
-            JPH::ShapeFilter(), temp_alloc); // firma SetShape(...) :contentReference[oaicite:2]{index=2}
-    }
+    JPH::TempAllocatorImpl temp_alloc(32 * 1024);
+
+    auto bp_filter = MakeBPFilter();
+    BodyFilterSelfIgnore body_filter(mPhysBody ? mPhysBody->body : JPH::BodyID());
+
+    mCharacter->SetShape(
+        mSettings.mShape.GetPtr(),
+        0.05f,
+        bp_filter,
+        kAllLayersFilter,
+        body_filter,
+        JPH::ShapeFilter(),
+        temp_alloc
+    );
 }
 
-glm::vec3 QECharacterController::ReadMoveInput(float dt) const
+glm::vec3 QECharacterController::ReadMoveInput() const
 {
     glm::vec3 dir(0);
     // Sustituye por tu sistema real de input; aquí un ejemplo con ImGui keys
@@ -103,7 +130,7 @@ glm::vec3 QECharacterController::ReadMoveInput(float dt) const
     if (glm::length2(dir) > 0) dir = glm::normalize(dir);
 
     const float spd = ImGui::IsKeyDown(ImGuiKey_ModShift) ? SprintSpeed : MoveSpeed;
-    return dir * spd; // *dt NO: la velocity es en m/s, el step se hace en Update(...)
+    return dir * spd;
 }
 
 void QECharacterController::SyncFromCharacter()
@@ -125,19 +152,15 @@ void QECharacterController::QEUpdate()
     const float dt = Timer::DeltaTime;
     if (dt <= 0.0f) return;
 
-    auto* pm = PhysicsModule::getInstance();
+    // 1) Input horizontal deseado
+    const glm::vec3 wish = ReadMoveInput();
 
-    // 1) Horizontal deseado
-    const glm::vec3 wish = ReadMoveInput(dt);
+    // 2) Estado de suelo antes de integrar
+    const bool wasGrounded = mCharacter->IsSupported();
 
-    // 2) Ground state antes de modificar
-    const bool wasGrounded = mCharacter->IsSupported(); // CharacterBase::IsSupported() :contentReference[oaicite:3]{index=3}
-
-    // 3) Vertical + salto
-    //    - En CharacterVirtual la gravedad debes aplicarla tú al vector velocidad. :contentReference[oaicite:4]{index=4}
+    // 3) Integración vertical + salto
     if (wasGrounded)
     {
-        // salto (un único impulso)
         if (ImGui::IsKeyPressed(ImGuiKey_Space))
             mVelocity.y = JumpSpeed;
         else
@@ -148,30 +171,28 @@ void QECharacterController::QEUpdate()
         mVelocity.y += GravityY * dt; // GravityY negativa
     }
 
-    // 4) Mezcla final de velocidad
+    // 4) Mezcla final de velocidad (X/Z del input, Y integrada)
     mVelocity.x = wish.x;
     mVelocity.z = wish.z;
 
-    // 5) SetLinearVelocity y Update
-    mCharacter->SetLinearVelocity(JPH::Vec3(mVelocity.x, mVelocity.y, mVelocity.z)); // :contentReference[oaicite:5]{index=5}
+    mCharacter->SetLinearVelocity(JPH::Vec3(mVelocity.x, mVelocity.y, mVelocity.z));
 
-    // Nota: El parámetro gravedad del Update solo se usa para empujar hacia abajo cuando vas sobre un body moviéndose. :contentReference[oaicite:6]{index=6}
+    // 5) Update del character con filtros
     JPH::TempAllocatorImpl temp_alloc(32 * 1024);
-    mCharacter->Update(dt,
+    auto bp_filter = MakeBPFilter();
+    BodyFilterSelfIgnore body_filter(mPhysBody ? mPhysBody->body : JPH::BodyID());
+
+    mCharacter->Update(
+        dt,
         JPH::Vec3(0.0f, GravityY, 0.0f),
-        pm->GetBroadPhaseLayerFilter(),
-        pm->GetObjectLayerFilter(),
-        pm->GetBodyFilterSelfIgnore(mPhysBody ? mPhysBody->body : JPH::BodyID()),
+        bp_filter,
+        kAllLayersFilter,
+        body_filter,
         JPH::ShapeFilter(),
-        temp_alloc); // firma Update(...) :contentReference[oaicite:7]{index=7}
+        temp_alloc
+    );
 
-    // 6) Estado de suelo tras mover
+    // 6) Estado de suelo y sincronización de transform
     mGrounded = mCharacter->IsSupported();
-
-    // 7) Copiar transform
     SyncFromCharacter();
-
-    // (Opcional) mantener pegado al suelo extra:
-    // mCharacter->StickToFloor(/*stepDown*/ 0.3f, pm->GetBroadPhaseLayerFilter(), pm->GetObjectLayerFilter(),
-    //                          pm->GetBodyFilterSelfIgnore(...), JPH::ShapeFilter(), temp_alloc); // ver docs: 'project onto the floor' :contentReference[oaicite:8]{index=8}
 }

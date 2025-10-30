@@ -11,14 +11,12 @@ PhysicsBody::PhysicsBody()
 {
     this->UpdateType(PhysicBodyType::STATIC_BODY);
     this->CollisionGroup = CollisionFlag::COL_NOTHING;
-    this->CollisionMask = CollisionFlag::COL_NOTHING;
 }
 
 PhysicsBody::PhysicsBody(const PhysicBodyType& type)
 {
     this->UpdateType(type);
     this->CollisionGroup = CollisionFlag::COL_NOTHING;
-    this->CollisionMask = CollisionFlag::COL_NOTHING;
 }
 
 void PhysicsBody::UpdateType(const PhysicBodyType &type)
@@ -58,6 +56,26 @@ void PhysicsBody::UpdateTransform()
     }
 }
 
+JPH::ObjectLayer PhysicsBody::ResolveObjectLayer(const PhysicBodyType type, const CollisionFlag group)
+{
+    const bool moving = (type != PhysicBodyType::STATIC_BODY);
+
+    if (group == CollisionFlag::COL_SCENE)
+        return moving ? Layers::SCENE_MOVING : Layers::SCENE_STATIC;
+
+    if (group == CollisionFlag::COL_PLAYER)
+        return Layers::PLAYER;
+
+    if (group == CollisionFlag::COL_ENEMY)
+        return Layers::ENEMY;
+
+    if (group == CollisionFlag::COL_TRIGGER)
+        return moving ? Layers::TRIGGER_MOVING : Layers::TRIGGER_STATIC;
+
+    // Fallback
+    return moving ? Layers::SCENE_MOVING : Layers::SCENE_STATIC;
+}
+
 void PhysicsBody::Initialize()
 {
     // Requisitos: collider + transform válidos
@@ -81,15 +99,20 @@ void PhysicsBody::Initialize()
 
     // Layer simple (ajústalo a tu sistema de capas/filtros Jolt)
     // 0: estático, 1: dinámico, 2: kinematic
-    ObjectLayer layer = (motion == EMotionType::Static) ? 0 : (motion == EMotionType::Dynamic ? 1 : 2);
+    JPH::ObjectLayer layer = ResolveObjectLayer(this->Type, this->CollisionGroup);
 
     BodyCreationSettings s(
-        collider->colShape,     // Ref<Shape>
+        collider->colShape,
         RVec3(jpos.GetX(), jpos.GetY(), jpos.GetZ()),
         jrot,
         motion,
         layer
     );
+
+    if (this->CollisionGroup == CollisionFlag::COL_TRIGGER)
+    {
+        s.mIsSensor = true;
+    }
 
     if (motion == EMotionType::Dynamic)
     {
@@ -98,8 +121,7 @@ void PhysicsBody::Initialize()
     }
 
     // Crea + añade el body
-    JPH::BodyID id = PhysicsModule::getInstance()->AddRigidBody(s, JPH::EActivation::Activate);
-    this->body = id;
+    this->body = PhysicsModule::getInstance()->AddRigidBody(s, JPH::EActivation::Activate);
 
     // Inicializa prev/curr con la pose inicial
     currPos = pos; currRot = rot;

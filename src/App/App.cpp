@@ -223,11 +223,10 @@ void App::initVulkan()
     std::shared_ptr<QEGameObject> characterGO = std::make_shared<QEGameObject>("Character");
     characterGO->AddComponent<QECollider>(std::make_shared<CapsuleCollider>());
     characterGO->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>(PhysicBodyType::KINEMATIC_BODY));
-    //characterGO->AddComponent<QECharacterController>(std::make_shared<QECharacterController>());
+    characterGO->AddComponent<QECharacterController>(std::make_shared<QECharacterController>());
 
     auto characterPBody = characterGO->GetComponent<PhysicsBody>();
     characterPBody->CollisionGroup = CollisionFlag::COL_PLAYER;
-    characterPBody->CollisionMask = CollisionFlag::COL_SCENE;
 
     shared_ptr<QEGameObject> visualCharacter = make_shared<QEGameObject>("MeshCharacter");
     visualCharacter->AddComponent<QEGeometryComponent>(make_shared<QEGeometryComponent>(std::make_unique<MeshGenerator>(characterPath)));
@@ -320,7 +319,6 @@ void App::initVulkan()
     floor->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>());
     auto floorPBody = floor->GetComponent<PhysicsBody>();
     floorPBody->CollisionGroup = CollisionFlag::COL_SCENE;
-    floorPBody->CollisionMask = CollisionFlag::COL_PLAYER;
 
     auto floorCollider = floor->GetComponent<QECollider>();
     std::static_pointer_cast<PlaneCollider>(floorCollider)->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -343,7 +341,6 @@ void App::initVulkan()
     ramp->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>());
     auto rampPBody = ramp->GetComponent<PhysicsBody>();
     rampPBody->CollisionGroup = CollisionFlag::COL_SCENE;
-    rampPBody->CollisionMask = CollisionFlag::COL_PLAYER;
 
     ramp->AddComponent<BoxCollider>(std::make_shared<BoxCollider>());
     // this->gameObjectManager->AddGameObject(ramp);

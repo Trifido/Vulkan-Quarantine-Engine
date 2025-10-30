@@ -38,7 +38,7 @@ class QECharacterController : public QEGameComponent
         // Character de Jolt
         JPH::Ref<JPH::CharacterVirtual>     mCharacter;
         JPH::CharacterVirtualSettings       mSettings;
-
+        JPH::ShapeRefC mLastShape;
     private:
         // Aux
         static inline JPH::Quat  ToJPH(const glm::quat& q) { return JPH::Quat(q.x, q.y, q.z, q.w); }
@@ -46,7 +46,7 @@ class QECharacterController : public QEGameComponent
         static inline glm::vec3  ToGLM(const JPH::RVec3& v) { return glm::vec3((float)v.GetX(), (float)v.GetY(), (float)v.GetZ()); }
         static inline glm::quat  ToGLM(const JPH::Quat& q) { return glm::quat(q.GetW(), q.GetX(), q.GetY(), q.GetZ()); }
 
-        glm::vec3 ReadMoveInput(float dt) const;
+        glm::vec3 ReadMoveInput() const;
         void      BuildOrUpdateCharacter();   // crea mCharacter si falta o actualiza shape/pose
         void      SyncFromCharacter();
 

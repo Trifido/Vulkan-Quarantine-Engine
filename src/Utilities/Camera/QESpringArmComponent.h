@@ -66,7 +66,7 @@ private:
     static float  SmoothExp(float current, float target, float speed, float dt);
     static glm::vec3 SmoothExpVec3(glm::vec3 c, glm::vec3 t, float speed, float dt);
     static glm::quat SmoothExpQuat(glm::quat c, glm::quat t, float speed, float dt);
-    bool GetParentRB(btRigidBody*& outRB) const;
+
     void GetParentInterpolatedTRS(glm::vec3& pos, glm::quat& rot) const;
 
 public:

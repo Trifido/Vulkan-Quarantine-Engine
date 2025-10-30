@@ -11,11 +11,17 @@ namespace
     class BPLayerInterface final : public BroadPhaseLayerInterface
     {
     public:
-        BPLayerInterface()
-        {
-            mMap[0] = JPH::BroadPhaseLayer(BPL_STATIC);
-            mMap[1] = JPH::BroadPhaseLayer(BPL_MOVING);
-            mMap[2] = JPH::BroadPhaseLayer(BPL_MOVING);
+        BPLayerInterface() {
+            for (int i = 0; i < 32; ++i) mMap[i] = JPH::BroadPhaseLayer(BPL_MOVING);
+
+            // Mapeos explícitos
+            mMap[Layers::SCENE_STATIC] = JPH::BroadPhaseLayer(BPL_STATIC);
+            mMap[Layers::TRIGGER_STATIC] = JPH::BroadPhaseLayer(BPL_STATIC);
+
+            mMap[Layers::SCENE_MOVING] = JPH::BroadPhaseLayer(BPL_MOVING);
+            mMap[Layers::PLAYER] = JPH::BroadPhaseLayer(BPL_MOVING);
+            mMap[Layers::ENEMY] = JPH::BroadPhaseLayer(BPL_MOVING);
+            mMap[Layers::TRIGGER_MOVING] = JPH::BroadPhaseLayer(BPL_MOVING);
         }
 
         uint GetNumBroadPhaseLayers() const override
@@ -28,41 +34,58 @@ namespace
             return BroadPhaseLayer(mMap[inLayer]);
         }
 
-#if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
         const char* GetBroadPhaseLayerName(BroadPhaseLayer inLayer) const override
         {
-            const auto idx = (JPH::BroadPhaseLayer::Type)inLayer;
-            switch (idx)
-            {
-                case (JPH::BroadPhaseLayer::Type)BPL_STATIC:
-                    return "STATIC";
-                case (JPH::BroadPhaseLayer::Type)BPL_MOVING:
-                    return "MOVING";
-                default:
-                    return "UNKNOWN";
-            }
+            if (inLayer == BroadPhaseLayer(BPL_STATIC)) return "STATIC";
+            if (inLayer == BroadPhaseLayer(BPL_MOVING)) return "MOVING";
+            return "UNKNOWN";
         }
-#endif
+
     private:
         JPH::BroadPhaseLayer mMap[32]{};
     };
 
     class ObjectVsBroadPhaseFilter final : public ObjectVsBroadPhaseLayerFilter {
     public:
-        bool ShouldCollide(ObjectLayer inLayer1, BroadPhaseLayer inLayer2) const override {
-            if (inLayer1 == 0) return inLayer2 == JPH::BroadPhaseLayer(BPL_MOVING); // estático ve a moving
-            if (inLayer1 == 1) return true;                   // dinámico con todo
-            if (inLayer1 == 2) return inLayer2 != JPH::BroadPhaseLayer(BPL_STATIC) ? true : true; // ajusta a tus reglas
-            return false;
+        bool ShouldCollide(ObjectLayer inLayer, BroadPhaseLayer inBPL) const override {
+            // Static sólo prueba contra MOVING
+            if (inBPL == JPH::BroadPhaseLayer(BPL_STATIC))
+                return (
+                    inLayer == Layers::PLAYER ||
+                    inLayer == Layers::ENEMY ||
+                    inLayer == Layers::SCENE_MOVING ||
+                    inLayer == Layers::TRIGGER_MOVING
+                    );
+
+            // MOVING contra todo (estático + móviles)
+            return true;
         }
     };
 
     class ObjectLayerPairFilterEx final : public ObjectLayerPairFilter {
     public:
-        bool ShouldCollide(ObjectLayer a, ObjectLayer b) const override {
-            // ejemplo: evita character-character si quieres
-            if (a == 2 && b == 2) return true; // o false si no quieres colisión entre chars
-            return true;
+        bool ShouldCollide(ObjectLayer a, ObjectLayer b) const override
+        {
+            // Tabla conceptual (simétrica):
+            // - PLAYER colisiona con SCENE y ENEMY, NO con TRIGGER
+            // - ENEMY colisiona con SCENE y PLAYER, NO con TRIGGER
+            // - SCENE colisiona con PLAYER, ENEMY, NO con TRIGGER
+            // - TRIGGER detecta a PLAYER/ENEMY/SCENE pero como sensor (mIsSensor ya evita respuesta)
+            auto isScene = [](ObjectLayer l) { return l == Layers::SCENE_STATIC || l == Layers::SCENE_MOVING; };
+            auto isTrigger = [](ObjectLayer l) { return l == Layers::TRIGGER_STATIC || l == Layers::TRIGGER_MOVING; };
+
+            // Triggers: dejan pasar para "detectar" (si quieres que NO generen contacto, ya lo evita mIsSensor)
+            if (isTrigger(a) || isTrigger(b)) return true;
+
+            // Reglas “máscaras”:
+            if ((a == Layers::PLAYER && isScene(b)) || (b == Layers::PLAYER && isScene(a))) return true;
+            if ((a == Layers::PLAYER && b == Layers::ENEMY) || (b == Layers::PLAYER && a == Layers::ENEMY)) return true;
+
+            // Escena con Enemigo
+            if ((isScene(a) && b == Layers::ENEMY) || (isScene(b) && a == Layers::ENEMY)) return true;
+
+            // Si nada aplica, no colisionan
+            return false;
         }
     };
 }
@@ -82,9 +105,9 @@ PhysicsModule::PhysicsModule()
     );
 
     // Capas y filtros
-    static BPLayerInterface            broadphase_layers;
-    static ObjectVsBroadPhaseFilter    ovb_filter;
-    static ObjectLayerPairFilterEx     pair_filter;
+    m_broadphaseLayers = std::make_unique<BPLayerInterface>();
+    m_objectVsBPLFilter = std::make_unique<ObjectVsBroadPhaseFilter>();
+    m_pairFilter = std::make_unique<ObjectLayerPairFilterEx>();
 
     // Init del PhysicsSystem
     constexpr uint32 max_bodies = 8192;
@@ -97,9 +120,9 @@ PhysicsModule::PhysicsModule()
         num_body_mutexes,
         max_body_pairs,
         max_contact_constraints,
-        broadphase_layers,
-        ovb_filter,
-        pair_filter
+        *m_broadphaseLayers,
+        *m_objectVsBPLFilter,
+        *m_pairFilter
     );
 
     // Gravedad (estándar del mundo, distinta de la que uses para CharacterVirtual)
@@ -182,7 +205,6 @@ void PhysicsModule::UpdateDebugDrawer()
     // 3) subir a GPU
     DebugDrawer->UpdateBuffers();
 }
-
 
 void PhysicsModule::InitializeDebugResources()
 {

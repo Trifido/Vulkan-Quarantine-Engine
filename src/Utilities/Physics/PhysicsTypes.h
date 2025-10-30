@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef PHYSICS_TUPES_H
-#define PHYSICS_TUPES_H
+#ifndef PHYSICS_TYPES_H
+#define PHYSICS_TYPES_H
 
 enum PhysicBodyType
 {
@@ -21,4 +21,4 @@ enum CollisionFlag
     COL_ALL = -1
 };
 
-#endif // !PHYSICS_TUPES_H
+#endif // !PHYSICS_TYPES_H
