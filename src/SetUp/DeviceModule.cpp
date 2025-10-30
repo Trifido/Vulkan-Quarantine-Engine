@@ -95,8 +95,18 @@ void DeviceModule::createLogicalDevice(VkSurfaceKHR& surface, QueueModule& nQueu
     storage8.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES;
 
     // Mesh shaders (EXT)
-    VkPhysicalDeviceMeshShaderFeaturesEXT mesh{};
+    VkPhysicalDeviceFragmentShadingRateFeaturesKHR fsr = {};
+    fsr.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR;
+    fsr.primitiveFragmentShadingRate = VK_TRUE;
+    fsr.attachmentFragmentShadingRate = VK_TRUE;
+    fsr.pipelineFragmentShadingRate = VK_TRUE;
+
+    VkPhysicalDeviceMeshShaderFeaturesEXT mesh = {};
     mesh.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT;
+    mesh.pNext = &fsr;
+    mesh.meshShader = VK_TRUE;
+    mesh.taskShader = VK_TRUE;
+    mesh.primitiveFragmentShadingRateMeshShader = VK_TRUE;
 
     // Buffer Device Address (KHR/core)
     VkPhysicalDeviceBufferDeviceAddressFeatures bda{};
@@ -117,6 +127,7 @@ void DeviceModule::createLogicalDevice(VkSurfaceKHR& surface, QueueModule& nQueu
     core.sampleRateShading = feats2.features.sampleRateShading;
     core.fillModeNonSolid = feats2.features.fillModeNonSolid;
     core.wideLines = feats2.features.wideLines;
+    core.vertexPipelineStoresAndAtomics = true;
 
     // Optional Bindless opcional 
     if (this->bindless_supported)
@@ -175,7 +186,8 @@ void DeviceModule::createLogicalDevice(VkSurfaceKHR& surface, QueueModule& nQueu
     feats2.features = core;
     feats2.pNext = &bda;
     bda.pNext = &mesh;
-    mesh.pNext = &storage8;
+    mesh.pNext = &fsr;
+    fsr.pNext = &storage8;
     storage8.pNext = &maintenance4;
     maintenance4.pNext = &indexing;
     indexing.pNext = nullptr;
