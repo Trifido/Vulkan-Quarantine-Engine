@@ -36,7 +36,7 @@ void PlaneCollider::SetPlane(const float& newSize, const glm::vec3& newOrientati
 
     // Crea un "suelo" plano usando una caja enorme muy delgada
     BoxShapeSettings settings(
-        Vec3(Size, 0.1f, Size)
+        Vec3(1000.0f, Size, 1000.0f)
     );
     settings.mConvexRadius = 0.0f;
 

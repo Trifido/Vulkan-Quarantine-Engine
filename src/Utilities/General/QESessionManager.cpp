@@ -44,7 +44,11 @@ void QESessionManager::SetDebugMode(bool value)
     cullingSceneManager->DebugMode = value;
 
     auto physicsModule = PhysicsModule::getInstance();
-    physicsModule->InitializeDebugResources();
+
+    if (physicsModule->DebugDrawer == nullptr)
+    {
+        physicsModule->InitializeDebugResources();
+    }
     physicsModule->DebugDrawer->SetEnabled(value);
 }
 
@@ -109,7 +113,11 @@ void QESessionManager::SetupEditor()
     cullingSceneManager->InitializeCullingSceneResources();
     cullingSceneManager->DebugMode = _isDebugMode;
 
-    physicsModule->InitializeDebugResources();
+    if (physicsModule->DebugDrawer == nullptr)
+    {
+        physicsModule->InitializeDebugResources();
+    }
+
     physicsModule->DebugDrawer->SetEnabled(_isDebugMode);
 
     if (_isEditor)

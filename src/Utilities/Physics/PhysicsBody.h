@@ -52,6 +52,7 @@ public:
 private:
     void Initialize();
     void copyTransformtoGLM();
+    void RebuildScaledShapeFromCollider();
     void UpdateTransform();
     JPH::ObjectLayer ResolveObjectLayer(const PhysicBodyType type, const CollisionFlag group);
 

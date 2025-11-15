@@ -131,8 +131,6 @@ PhysicsModule::PhysicsModule()
 
 PhysicsModule::~PhysicsModule()
 {
-    ClearAllBodies();
-
     delete Factory::sInstance;
     Factory::sInstance = nullptr;
 }
@@ -159,24 +157,6 @@ void PhysicsModule::RemoveRigidBody(BodyID id)
 void PhysicsModule::ComputePhysics(float fixedDt)
 {
     m_system.Update(fixedDt, /*collisionSteps*/1, m_temp.get(), m_jobs.get());
-
-    UpdateDebugDrawer();
-}
-
-void PhysicsModule::ClearAllBodies()
-{
-    auto& bi = Bodies();
-
-    for (auto it = m_bodies.rbegin(); it != m_bodies.rend(); ++it)
-    {
-        BodyID id = *it;
-
-        if (id.IsInvalid()) continue;
-        bi.RemoveBody(id);
-        bi.DestroyBody(id);
-    }
-
-    m_bodies.clear();
 }
 
 void PhysicsModule::SetGravity(float gravityY)
@@ -196,7 +176,7 @@ void PhysicsModule::UpdateDebugDrawer()
     // 2) pedirle al mundo que “dibuje” hacia nuestro renderer
     JPH::BodyManager::DrawSettings draw;
     // draw.mDrawShape = true;     // por defecto ya dibuja shapes
-    // draw.mDrawBodyTransforms = false;
+    draw.mDrawWorldTransform = true;
     // draw.mDrawCenterOfMassTransform = false;
     // (activa lo que necesites)
 

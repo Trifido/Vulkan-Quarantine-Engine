@@ -4,6 +4,14 @@
 
 #include <jolt/Jolt.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
+#include <BoxCollider.h>
+#include <SphereCollider.h>
+#include <CapsuleCollider.h>
+#include <PlaneCollider.h>
+#include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
+#include <Jolt/Physics/Collision/Shape/BoxShape.h>
+#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+#include <Jolt/Physics/Collision/Shape/SphereShape.h>
 
 using namespace JPH;
 
@@ -81,9 +89,14 @@ void PhysicsBody::Initialize()
     // Requisitos: collider + transform válidos
     if (!collider || !collider->colShape || !transform) return;
 
+    RebuildScaledShapeFromCollider();
+
+    if (!collider->colShape) return;
+
     // Pose inicial desde tu QETransform
     glm::vec3 pos = transform->GetWorldPosition();
     glm::quat rot = transform->GetWorldRotation();
+
     Vec3 jpos = toJPH(pos);
     Quat jrot = toJPH(rot);
 
@@ -155,6 +168,114 @@ void PhysicsBody::copyTransformtoGLM()
     hasCurr = true;
 }
 
+void PhysicsBody::RebuildScaledShapeFromCollider()
+{
+    using namespace JPH;
+
+    if (!collider || !transform)
+        return;
+
+    Vec3 pivotPos = Vec3::sZero();
+    Quat pivotRot = Quat::sIdentity();
+    Ref<Shape> originalShape = collider->colShape;
+
+    if (originalShape && originalShape->GetSubType() == EShapeSubType::RotatedTranslated)
+    {
+        const RotatedTranslatedShape* rt =
+            static_cast<const RotatedTranslatedShape*>(originalShape.GetPtr());
+
+        pivotPos = rt->GetPosition();
+        pivotRot = rt->GetRotation();
+    }
+
+    glm::vec3 worldScale = transform->GetWorldScale();
+    Ref<Shape> newShape;
+
+    // --- BOX ---
+    if (auto box = std::dynamic_pointer_cast<BoxCollider>(collider))
+    {
+        glm::vec3 halfBase = box->GetSize();
+        glm::vec3 halfScaled = halfBase * worldScale;
+
+        BoxShapeSettings settings(Vec3(halfScaled.x, halfScaled.y, halfScaled.z));
+        settings.mConvexRadius = collider->CollisionMargin;
+
+        if (auto res = settings.Create(); res.IsValid())
+            newShape = res.Get();
+    }
+    // --- SPHERE ---
+    else if (auto sphere = std::dynamic_pointer_cast<SphereCollider>(collider))
+    {
+        float rBase = sphere->GetRadius();
+        float rScale = glm::max(glm::max(glm::abs(worldScale.x), glm::abs(worldScale.y)), glm::abs(worldScale.z));
+        float rScaled = rBase * rScale;
+        float effectiveRadius = rScaled + collider->CollisionMargin;
+
+        SphereShapeSettings settings(effectiveRadius);
+        if (auto res = settings.Create(); res.IsValid())
+            newShape = res.Get();
+    }
+    // --- CAPSULE (eje Y) ---
+    else if (auto cap = std::dynamic_pointer_cast<CapsuleCollider>(collider))
+    {
+        float rBase = cap->GetRadius();
+        float hBase = cap->GetHeight();
+
+        float rScale = glm::max(glm::abs(worldScale.x), glm::abs(worldScale.z));
+        float hScale = glm::abs(worldScale.y);
+
+        float rScaled = rBase * rScale;
+        float hScaled = hBase * hScale;
+
+        float cylinderHeight = glm::max(0.0f, hScaled - 2.0f * rScaled);
+        float halfHeight = 0.5f * cylinderHeight;
+        float effectiveRadius = rScaled + collider->CollisionMargin;
+
+        CapsuleShapeSettings settings(halfHeight, effectiveRadius);
+        if (auto res = settings.Create(); res.IsValid())
+            newShape = res.Get();
+    }
+    // --- PLANE ---
+    else if (auto plane = std::dynamic_pointer_cast<PlaneCollider>(collider))
+    {
+        float thickness = plane->GetSize();
+
+        // Escalamos sólo en XZ; el grosor se mantiene constante
+        float scaleXZ = glm::max(glm::abs(worldScale.x), glm::abs(worldScale.z));
+
+        BoxShapeSettings settings(Vec3(1000.0f, thickness, 1000.0f));
+        settings.mConvexRadius = 0.0f;
+
+        if (auto res = settings.Create(); res.IsValid())
+            newShape = res.Get();
+    }
+
+    // Si no hemos podido crear nada, invalidamos la shape
+    if (!newShape)
+    {
+        collider->colShape = nullptr;
+        return;
+    }
+
+    // 3) Volver a aplicar el pivot, si existía
+    bool hasPivot =
+        !pivotPos.IsClose(Vec3::sZero()) ||
+        !pivotRot.IsClose(Quat::sIdentity());
+
+    if (hasPivot)
+    {
+        RotatedTranslatedShapeSettings ts(pivotPos, pivotRot, newShape);
+        if (auto res2 = ts.Create(); res2.IsValid())
+            collider->colShape = res2.Get();
+        else
+            collider->colShape = nullptr;
+    }
+    else
+    {
+        collider->colShape = newShape;
+    }
+}
+
 void PhysicsBody::QEStart()
 {
     QEGameComponent::QEStart();
@@ -182,7 +303,7 @@ void PhysicsBody::QEUpdate()
     this->collider = this->Owner->GetComponentInChildren<QECollider>(true);
     this->transform = this->Owner->GetComponent<QETransform>();
 
-    if (this->collider && this->transform)
+    if (this->collider && this->transform && !this->QEInitialized())
     {
         this->Initialize();
         QEGameComponent::QEInit();

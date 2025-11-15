@@ -343,7 +343,7 @@ void App::initVulkan()
     rampPBody->CollisionGroup = CollisionFlag::COL_SCENE;
 
     ramp->AddComponent<BoxCollider>(std::make_shared<BoxCollider>());
-    // this->gameObjectManager->AddGameObject(ramp);
+    this->gameObjectManager->AddGameObject(ramp);
     
     //auto wallMatInstance = defaultMat->CreateMaterialInstance();
     //this->materialManager->AddMaterial(wallMatInstance);
@@ -486,6 +486,7 @@ void App::mainLoop()
         int physicsSteps = Timer::getInstance()->ComputeFixedSteps();
         for (int i = 0; i < physicsSteps; ++i)
             physicsModule->ComputePhysics(Timer::getInstance()->FixedDelta);
+        physicsModule->UpdateDebugDrawer();
 
         // UPDATE GameObjects 
         this->gameObjectManager->UpdateQEGameObjects();

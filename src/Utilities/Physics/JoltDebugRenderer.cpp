@@ -7,6 +7,7 @@ DeviceModule* JoltDebugRenderer::deviceModule_ptr;
 
 JoltDebugRenderer::JoltDebugRenderer()
 {
+    Initialize();
     deviceModule_ptr = DeviceModule::getInstance();
 }
 
@@ -34,14 +35,17 @@ void JoltDebugRenderer::DrawTriangle(JPH::RVec3Arg v1, JPH::ColorArg c1,
     DrawLine(v3, c3, v1, c1);
 }
 
-JPH::DebugRenderer::Batch JoltDebugRenderer::CreateTriangleBatch(const JPH::DebugRenderer::Vertex* inVertices, int inVertexCount, const JPH::uint32* inIndices, int inIndexCount)
+void JoltDebugRenderer::DrawTriangle(JPH::RVec3Arg inV1, JPH::RVec3Arg inV2, JPH::RVec3Arg inV3, JPH::ColorArg inColor, ECastShadow inCastShadow)
 {
-    return JPH::DebugRenderer::Batch();
-}
+    glm::vec4 c = toRGBA(inColor);
+    lineVertices.emplace_back(toVec4(inV1), c);
+    lineVertices.emplace_back(toVec4(inV2), c);
 
-JPH::DebugRenderer::Batch JoltDebugRenderer::CreateTriangleBatch(const JPH::DebugRenderer::Triangle* inTriangles, int inTriangleCount)
-{
-    return JPH::DebugRenderer::Batch();
+    lineVertices.emplace_back(toVec4(inV2), c);
+    lineVertices.emplace_back(toVec4(inV3), c);
+
+    lineVertices.emplace_back(toVec4(inV3), c);
+    lineVertices.emplace_back(toVec4(inV1), c);
 }
 
 void JoltDebugRenderer::UpdateBuffers()

@@ -12,9 +12,9 @@
 
 // Jolt
 #include <Jolt/Jolt.h>
-#include <Jolt/Renderer/DebugRenderer.h>
+#include <Jolt/Renderer/DebugRendererSimple.h>
 
-class JoltDebugRenderer : public JPH::DebugRenderer
+class JoltDebugRenderer : public JPH::DebugRendererSimple
 {
 private:
     static DeviceModule* deviceModule_ptr;
@@ -44,19 +44,13 @@ public:
 
     void DrawTriangle(JPH::RVec3Arg v1, JPH::ColorArg c1, JPH::RVec3Arg v2, JPH::ColorArg c2, JPH::RVec3Arg v3, JPH::ColorArg c3);
 
-    void DrawTriangle(JPH::RVec3Arg, JPH::RVec3Arg, JPH::RVec3Arg, JPH::ColorArg, JPH::DebugRenderer::ECastShadow) override {}
+    void DrawTriangle(JPH::RVec3Arg inV1,
+        JPH::RVec3Arg inV2,
+        JPH::RVec3Arg inV3,
+        JPH::ColorArg inColor,
+        ECastShadow inCastShadow) override;
 
     void DrawText3D(JPH::RVec3Arg, const JPH::string_view&, JPH::ColorArg, float) override {}
-
-    void DrawGeometry(JPH::RMat44Arg, const JPH::AABox&, float, JPH::ColorArg, const JPH::DebugRenderer::GeometryRef&, JPH::DebugRenderer::ECullMode, JPH::DebugRenderer::ECastShadow, JPH::DebugRenderer::EDrawMode) override {}
-
-    JPH::DebugRenderer::Batch CreateTriangleBatch(const JPH::DebugRenderer::Vertex* inVertices,
-        int inVertexCount,
-        const JPH::uint32* inIndices,
-        int inIndexCount) override;
-
-    JPH::DebugRenderer::Batch CreateTriangleBatch(const JPH::DebugRenderer::Triangle* inTriangles,
-        int inTriangleCount) override;
 
     void SetEnabled(bool b) { m_enabled = b; }
     bool IsEnabled() const { return m_enabled; }

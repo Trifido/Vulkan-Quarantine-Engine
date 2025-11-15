@@ -45,12 +45,10 @@ private:
 public:
     JoltDebugRenderer* DebugDrawer = nullptr;
 
-private:
-    void ClearAllBodies();
-    void UpdateDebugDrawer();
-
 public:
     PhysicsModule();
+
+    void UpdateDebugDrawer();
 
     // Getters de filtros para CharacterVirtual::Update(...)
     const JPH::BroadPhaseLayerInterface& GetBPLayerInterface()   const { return *m_broadphaseLayers; }
