@@ -16,6 +16,7 @@ class QECollider;
 class PhysicsModule;
 class AnimationComponent;
 class PhysicsBody;
+class QESpringArmComponent;
 
 class QECharacterController : public QEGameComponent
 {
@@ -30,10 +31,11 @@ class QECharacterController : public QEGameComponent
         bool   mGrounded = false;
         glm::vec3 mVelocity{ 0.0f };
 
-        std::shared_ptr<QETransform>        mTransform;
-        std::shared_ptr<QECollider>         mCollider;
-        std::shared_ptr<PhysicsBody>        mPhysBody;
-        std::shared_ptr<AnimationComponent> animationComponentPtr;
+        std::shared_ptr<QETransform>        mTransform = nullptr;
+        std::shared_ptr<QECollider>         mCollider = nullptr;
+        std::shared_ptr<PhysicsBody>        mPhysBody = nullptr;
+        std::shared_ptr<AnimationComponent> animationComponentPtr = nullptr;
+        std::shared_ptr<QESpringArmComponent> mSpringArm = nullptr;
 
         // Character de Jolt
         JPH::Ref<JPH::CharacterVirtual>     mCharacter;

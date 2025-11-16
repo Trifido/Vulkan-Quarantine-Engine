@@ -5,6 +5,7 @@
 #include <Collider.h>
 #include <PhysicsBody.h>
 #include <PhysicsModule.h>
+#include <QESpringArmComponent.h>
 #include <Timer.h>
 
 #include <Jolt/Core/TempAllocator.h>
@@ -77,6 +78,7 @@ void QECharacterController::QEInit()
     mTransform = Owner->GetComponent<QETransform>();
     mCollider = Owner->GetComponentInChildren<QECollider>(true);
     mPhysBody = Owner->GetComponent<PhysicsBody>();
+    mSpringArm = Owner->GetComponentInChildren<QESpringArmComponent>(true);
 
     BuildOrUpdateCharacter();
 
@@ -141,14 +143,35 @@ void QECharacterController::BuildOrUpdateCharacter()
 
 glm::vec3 QECharacterController::ReadMoveInput() const
 {
-    glm::vec3 dir(0);
+    glm::vec2 move(0.0f);
+    if (ImGui::IsKeyDown(ImGuiKey_W)) move.y += 1.0f;  // adelante
+    if (ImGui::IsKeyDown(ImGuiKey_S)) move.y -= 1.0f;  // atrás
+    if (ImGui::IsKeyDown(ImGuiKey_D)) move.x += 1.0f;  // derecha
+    if (ImGui::IsKeyDown(ImGuiKey_A)) move.x -= 1.0f;  // izquierda
 
-    if (ImGui::IsKeyDown(ImGuiKey_W)) dir += glm::vec3(0, 0, -1);
-    if (ImGui::IsKeyDown(ImGuiKey_S)) dir += glm::vec3(0, 0, 1);
-    if (ImGui::IsKeyDown(ImGuiKey_A)) dir += glm::vec3(-1, 0, 0);
-    if (ImGui::IsKeyDown(ImGuiKey_D)) dir += glm::vec3(1, 0, 0);
+    if (move.x == 0.0f && move.y == 0.0f)
+        return glm::vec3(0.0f);
 
-    if (glm::length2(dir) > 0) dir = glm::normalize(dir);
+    glm::vec3 fwd(0, 0, -1);
+    glm::vec3 right(1, 0, 0);
+
+    if (mSpringArm)
+    {
+        glm::quat camRot = mSpringArm->GetCameraWorldRotation();
+
+        fwd = camRot * glm::vec3(0, 0, -1);
+
+        fwd.y = 0.0f;
+        if (glm::length2(fwd) > 0.0f)
+            fwd = glm::normalize(fwd);
+
+        right = glm::normalize(glm::cross(fwd, glm::vec3(0, 1, 0)));
+    }
+
+    glm::vec3 dir = fwd * move.y + right * move.x;
+
+    if (glm::length2(dir) > 0.0f)
+        dir = glm::normalize(dir);
 
     const float spd = ImGui::IsKeyDown(ImGuiKey_ModShift) ? SprintSpeed : MoveSpeed;
     return dir * spd;

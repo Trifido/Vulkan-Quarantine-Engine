@@ -229,6 +229,9 @@ void App::initVulkan()
     visualCharacter->AddComponent<QEMeshRenderer>(make_shared<QEMeshRenderer>());
     visualCharacter->AddComponent<AnimationComponent>(make_shared<AnimationComponent>());
 
+    auto visualTransform = visualCharacter->GetComponent<QETransform>();
+    visualTransform->SetLocalRotation(glm::angleAxis(glm::radians(180.0f), glm::vec3(0, 1, 0)));
+
     // Initialize animation states for character controller
     auto animationComponent = visualCharacter->GetComponent<AnimationComponent>();
 
