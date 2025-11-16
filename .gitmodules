@@ -1,9 +1,6 @@
 [submodule "extern/jolt"]
 	path = extern/jolt
 	url = https://github.com/jrouwe/JoltPhysics.git
-[submodule "extern/bullet3"]
-	path = extern/bullet3
-	url = https://github.com/bulletphysics/bullet3.git
 [submodule "extern/assimp"]
 	path = extern/assimp
 	url = https://github.com/assimp/assimp.git

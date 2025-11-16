@@ -89,12 +89,6 @@ FetchContent_MakeAvailable(yaml-cpp)
 # Submodules as libraries
 # ------------------------------
 
-set(BUILD_SHARED_LIBS OFF)
-set(BUILD_BULLET2_DEMOS OFF CACHE BOOL "" FORCE)
-set(BUILD_UNIT_TESTS OFF CACHE BOOL "" FORCE)
-set(BUILD_EXTRAS OFF CACHE BOOL "" FORCE)
-add_subdirectory(extern/bullet3 EXCLUDE_FROM_ALL)
-
 set(USE_STATIC_MSVC_RUNTIME_LIBRARY OFF CACHE BOOL "" FORCE)
 set(JPH_BUILD_SHARED_LIBRARY ON CACHE BOOL "" FORCE)
 set(JPH_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -216,7 +210,6 @@ target_include_directories(QuarantineEngine PRIVATE
   ${IMGUI_DIR}
   ${IMGUI_DIR}/backends
   ${CMAKE_SOURCE_DIR}/extern/assimp/include
-  ${CMAKE_SOURCE_DIR}/extern/bullet3/src
   ${CMAKE_SOURCE_DIR}/extern/SPIRV-Reflect
   ${CMAKE_SOURCE_DIR}/extern
   ${Vulkan_INCLUDE_DIR}
@@ -237,8 +230,6 @@ target_link_libraries(QuarantineEngine
   imgui
   Vulkan::Vulkan
   assimp
-  BulletDynamics
-  BulletCollision
   Jolt
   LinearMath
   SPIRV-Reflect
@@ -263,7 +254,7 @@ function(hide_from_vs TARGET_NAME)
 endfunction()
 
 foreach(TARGET_NAME
-  glfw imgui assimp BulletDynamics BulletCollision LinearMath
+  glfw imgui assimp LinearMath
   SPIRV-Reflect meshoptimizer glm zlibstatic yaml-cpp
 )
   hide_from_vs(${TARGET_NAME})
@@ -302,8 +293,6 @@ if (MSVC)
     glm
     stb
     assimp
-    BulletDynamics
-    BulletCollision
     LinearMath
     SPIRV-Reflect
     meshoptimizer
