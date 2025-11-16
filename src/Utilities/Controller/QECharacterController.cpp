@@ -11,7 +11,6 @@
 #include <Jolt/Physics/Character/CharacterVirtual.h>
 #include <imgui.h>
 
-// --- Helpers locales para filtros ---
 namespace
 {
     static const struct AllLayersFilter final : JPH::ObjectLayerFilter {
@@ -56,7 +55,7 @@ void QECharacterController::QEInit()
 
     mTransform = Owner->GetComponent<QETransform>();
     mCollider = Owner->GetComponentInChildren<QECollider>(true);
-    mPhysBody = Owner->GetComponent<PhysicsBody>(); // opcional
+    mPhysBody = Owner->GetComponent<PhysicsBody>();
 
     BuildOrUpdateCharacter();
 
@@ -71,21 +70,20 @@ void QECharacterController::QEDestroy()
 
 void QECharacterController::BuildOrUpdateCharacter()
 {
-    if (mSettings.mShape == mLastShape)
-        return; // nada que actualizar
-
-    mLastShape = mSettings.mShape;
-
     if (!mCollider || mCollider->colShape == nullptr)
         return;
 
-    // Actualiza settings a partir del collider / opciones
-    mSettings.mShape = mCollider->colShape;
+    JPH::ShapeRefC newShape = mCollider->colShape;
+
+    if (newShape == mLastShape && mCharacter != nullptr)
+        return;
+
+    mLastShape = newShape;
+    mSettings.mShape = newShape;
     mSettings.mMaxSlopeAngle = JPH::DegreesToRadians(MaxSlopeDeg);
     mSettings.mBackFaceMode = JPH::EBackFaceMode::IgnoreBackFaces;
     mSettings.mEnhancedInternalEdgeRemoval = true;
 
-    // Crear character si no existe
     if (mCharacter == nullptr)
     {
         const glm::vec3 p = mTransform ? mTransform->GetWorldPosition() : glm::vec3(0);
@@ -102,8 +100,7 @@ void QECharacterController::BuildOrUpdateCharacter()
         return;
     }
 
-    JPH::TempAllocatorImpl temp_alloc(32 * 1024);
-
+    JPH::TempAllocatorImpl temp_alloc(4 * 1024 * 1024);
     auto bp_filter = MakeBPFilter();
     BodyFilterSelfIgnore body_filter(mPhysBody ? mPhysBody->body : JPH::BodyID());
 
@@ -121,7 +118,7 @@ void QECharacterController::BuildOrUpdateCharacter()
 glm::vec3 QECharacterController::ReadMoveInput() const
 {
     glm::vec3 dir(0);
-    // Sustituye por tu sistema real de input; aquí un ejemplo con ImGui keys
+
     if (ImGui::IsKeyDown(ImGuiKey_W)) dir += glm::vec3(0, 0, -1);
     if (ImGui::IsKeyDown(ImGuiKey_S)) dir += glm::vec3(0, 0, 1);
     if (ImGui::IsKeyDown(ImGuiKey_A)) dir += glm::vec3(-1, 0, 0);
@@ -135,30 +132,40 @@ glm::vec3 QECharacterController::ReadMoveInput() const
 
 void QECharacterController::SyncFromCharacter()
 {
-    if (!mTransform || mCharacter == nullptr) return;
+    if (!mTransform || mCharacter == nullptr)
+        return;
 
-    const glm::vec3 pos = ToGLM(mCharacter->GetPosition());
-    const glm::quat rot = ToGLM(mCharacter->GetRotation()); // puedes limitar a yaw si prefieres
+    const glm::vec3 desiredPos = ToGLM(mCharacter->GetPosition());
+    const glm::quat desiredRot = ToGLM(mCharacter->GetRotation());
 
-    mTransform->TranslateWorld(pos);
-    mTransform->RotateWorld(rot);
+    const glm::vec3 currentPos = mTransform->GetWorldPosition();
+    const glm::quat currentRot = mTransform->GetWorldRotation();
+
+    glm::vec3 deltaPos = desiredPos - currentPos;
+    mTransform->TranslateWorld(deltaPos);
+
+    glm::quat deltaRot = desiredRot * glm::inverse(currentRot);
+    mTransform->RotateWorld(deltaRot);
 }
 
-// --- Main update: velocidad -> Update(...) -> copiar transform ---
 void QECharacterController::QEUpdate()
 {
-    if (!mCharacter || !mTransform) return;
+    if (!mCharacter)
+    {
+        BuildOrUpdateCharacter();
+        if (!mCharacter)
+            return;
+    }
+
+    if (!mTransform) return;
 
     const float dt = Timer::DeltaTime;
     if (dt <= 0.0f) return;
 
-    // 1) Input horizontal deseado
     const glm::vec3 wish = ReadMoveInput();
 
-    // 2) Estado de suelo antes de integrar
     const bool wasGrounded = mCharacter->IsSupported();
 
-    // 3) Integración vertical + salto
     if (wasGrounded)
     {
         if (ImGui::IsKeyPressed(ImGuiKey_Space))
@@ -168,17 +175,15 @@ void QECharacterController::QEUpdate()
     }
     else
     {
-        mVelocity.y += GravityY * dt; // GravityY negativa
+        mVelocity.y += GravityY * dt;
     }
 
-    // 4) Mezcla final de velocidad (X/Z del input, Y integrada)
     mVelocity.x = wish.x;
     mVelocity.z = wish.z;
 
     mCharacter->SetLinearVelocity(JPH::Vec3(mVelocity.x, mVelocity.y, mVelocity.z));
 
-    // 5) Update del character con filtros
-    JPH::TempAllocatorImpl temp_alloc(32 * 1024);
+    JPH::TempAllocatorImpl temp_alloc(4 * 1024 * 1024);
     auto bp_filter = MakeBPFilter();
     BodyFilterSelfIgnore body_filter(mPhysBody ? mPhysBody->body : JPH::BodyID());
 
@@ -192,7 +197,6 @@ void QECharacterController::QEUpdate()
         temp_alloc
     );
 
-    // 6) Estado de suelo y sincronización de transform
     mGrounded = mCharacter->IsSupported();
     SyncFromCharacter();
 }
