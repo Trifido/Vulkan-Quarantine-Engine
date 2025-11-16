@@ -231,7 +231,6 @@ target_link_libraries(QuarantineEngine
   Vulkan::Vulkan
   assimp
   Jolt
-  LinearMath
   SPIRV-Reflect
   meshoptimizer
   yaml-cpp  
@@ -254,7 +253,7 @@ function(hide_from_vs TARGET_NAME)
 endfunction()
 
 foreach(TARGET_NAME
-  glfw imgui assimp LinearMath
+  glfw imgui assimp
   SPIRV-Reflect meshoptimizer glm zlibstatic yaml-cpp
 )
   hide_from_vs(${TARGET_NAME})
@@ -293,7 +292,6 @@ if (MSVC)
     glm
     stb
     assimp
-    LinearMath
     SPIRV-Reflect
     meshoptimizer
     imgui
