@@ -44,6 +44,27 @@ QECharacterController::QECharacterController()
     mSettings.mEnhancedInternalEdgeRemoval = true;
 }
 
+void QECharacterController::DebugDraw(JPH::DebugRenderer& renderer)
+{
+    if (!mCharacter)
+        return;
+
+    const JPH::Shape* shape = mCharacter->GetShape();
+    if (!shape)
+        return;
+
+    JPH::RMat44 center_of_mass = mCharacter->GetCenterOfMassTransform();
+
+    shape->Draw(
+        &renderer,
+        center_of_mass,
+        JPH::Vec3::sReplicate(1.0f),
+        JPH::Color::sGreen,
+        false,
+        true
+    );
+}
+
 void QECharacterController::QEStart()
 {
     QEGameComponent::QEStart();
@@ -59,11 +80,14 @@ void QECharacterController::QEInit()
 
     BuildOrUpdateCharacter();
 
+    PhysicsModule::getInstance()->RegisterCharacter(this);
+
     QEGameComponent::QEInit();
 }
 
 void QECharacterController::QEDestroy()
 {
+    PhysicsModule::getInstance()->UnregisterCharacter(this);
     mCharacter = nullptr;
     QEGameComponent::QEDestroy();
 }

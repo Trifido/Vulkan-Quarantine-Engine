@@ -28,6 +28,8 @@ namespace Layers
     };
 }
 
+class QECharacterController;
+
 class PhysicsModule : public QESingleton<PhysicsModule>
 {
 private:
@@ -38,6 +40,7 @@ private:
     JPH::PhysicsSystem m_system;
     JPH::Vec3 m_gravity = JPH::Vec3(0.0f, -10.0f, 0.0f);
     std::vector<JPH::BodyID> m_bodies;
+    std::vector<QECharacterController*> m_characters;
 
     std::unique_ptr<JPH::BroadPhaseLayerInterface> m_broadphaseLayers;
     std::unique_ptr<JPH::ObjectVsBroadPhaseLayerFilter> m_objectVsBPLFilter;
@@ -75,6 +78,8 @@ public:
 
     JPH::BodyID AddRigidBody(const JPH::BodyCreationSettings& settings, JPH::EActivation act = JPH::EActivation::Activate);
     void RemoveRigidBody(JPH::BodyID id);
+    void RegisterCharacter(QECharacterController* cc);
+    void UnregisterCharacter(QECharacterController* cc);
 
     // Debug Renderer
     void InitializeDebugResources();

@@ -222,11 +222,7 @@ void App::initVulkan()
     // CHARACTER CONTROLLER
     std::shared_ptr<QEGameObject> characterGO = std::make_shared<QEGameObject>("Character");
     characterGO->AddComponent<QECollider>(std::make_shared<CapsuleCollider>());
-    characterGO->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>(PhysicBodyType::KINEMATIC_BODY));
     characterGO->AddComponent<QECharacterController>(std::make_shared<QECharacterController>());
-
-    auto characterPBody = characterGO->GetComponent<PhysicsBody>();
-    characterPBody->CollisionGroup = CollisionFlag::COL_PLAYER;
 
     shared_ptr<QEGameObject> visualCharacter = make_shared<QEGameObject>("MeshCharacter");
     visualCharacter->AddComponent<QEGeometryComponent>(make_shared<QEGeometryComponent>(std::make_unique<MeshGenerator>(characterPath)));

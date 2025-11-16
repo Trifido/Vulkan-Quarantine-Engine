@@ -1,6 +1,7 @@
 #include "PhysicsModule.h"
 #include <iostream>
 #include <algorithm>
+#include <QECharacterController.h>
 
 using namespace JPH;
 
@@ -154,6 +155,19 @@ void PhysicsModule::RemoveRigidBody(BodyID id)
     if (it != m_bodies.end()) m_bodies.erase(it);
 }
 
+void PhysicsModule::RegisterCharacter(QECharacterController* cc)
+{
+    if (!cc) return;
+    m_characters.push_back(cc);
+}
+
+void PhysicsModule::UnregisterCharacter(QECharacterController* cc)
+{
+    auto it = std::find(m_characters.begin(), m_characters.end(), cc);
+    if (it != m_characters.end())
+        m_characters.erase(it);
+}
+
 void PhysicsModule::ComputePhysics(float fixedDt)
 {
     m_system.Update(fixedDt, /*collisionSteps*/1, m_temp.get(), m_jobs.get());
@@ -170,19 +184,19 @@ void PhysicsModule::UpdateDebugDrawer()
     if (!DebugDrawer->IsEnabled())
         return;
 
-    // 1) limpiar líneas previas
     DebugDrawer->clear();
 
-    // 2) pedirle al mundo que “dibuje” hacia nuestro renderer
     JPH::BodyManager::DrawSettings draw;
-    // draw.mDrawShape = true;     // por defecto ya dibuja shapes
     draw.mDrawWorldTransform = true;
-    // draw.mDrawCenterOfMassTransform = false;
-    // (activa lo que necesites)
 
     m_system.DrawBodies(draw, DebugDrawer);
 
-    // 3) subir a GPU
+    for (QECharacterController* cc : m_characters)
+    {
+        if (cc)
+            cc->DebugDraw(*DebugDrawer);
+    }
+
     DebugDrawer->UpdateBuffers();
 }
 
