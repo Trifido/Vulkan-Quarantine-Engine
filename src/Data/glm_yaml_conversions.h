@@ -2,10 +2,12 @@
 #include <yaml-cpp/yaml.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
-#include <btBulletDynamicsCommon.h>
 #include <vector>
 
 #include "AtmosphereDto.h"
+
+#include <Jolt/Jolt.h>
+#include <Jolt/Math/Vec3.h>
 
 namespace YAML {
 
@@ -48,8 +50,9 @@ namespace YAML {
     };
 
     template<>
-    struct convert<btVector3> {
-        static Node encode(const btVector3& v) {
+    struct convert<JPH::Vec3> {
+        static Node encode(const JPH::Vec3& v)
+        {
             Node node;
             node.SetStyle(YAML::EmitterStyle::Flow);
             node.push_back(v[0]);
@@ -58,11 +61,13 @@ namespace YAML {
             return node;
         }
 
-        static bool decode(const Node& node, btVector3& v) {
+        static bool decode(const Node& node, JPH::Vec3& v)
+        {
             if (!node.IsSequence() || node.size() != 3) return false;
-            v[0] = node[0].as<float>();
-            v[1] = node[1].as<float>();
-            v[2] = node[2].as<float>();
+            float x = node[0].as<float>();
+            float y = node[1].as<float>();
+            float z = node[2].as<float>();
+            v = JPH::Vec3(x, y, z);
             return true;
         }
     };
