@@ -50,7 +50,6 @@ public:
 
     void UpdateDebugDrawer();
 
-    // Getters de filtros para CharacterVirtual::Update(...)
     const JPH::BroadPhaseLayerInterface& GetBPLayerInterface()   const { return *m_broadphaseLayers; }
     const JPH::ObjectVsBroadPhaseLayerFilter& GetObjectVsBPLFilter()  const { return *m_objectVsBPLFilter; }
     const JPH::ObjectLayerPairFilter& GetObjectLayerPairFilter() const { return *m_pairFilter; }

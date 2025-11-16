@@ -66,25 +66,25 @@ namespace
     public:
         bool ShouldCollide(ObjectLayer a, ObjectLayer b) const override
         {
-            // Tabla conceptual (simétrica):
-            // - PLAYER colisiona con SCENE y ENEMY, NO con TRIGGER
-            // - ENEMY colisiona con SCENE y PLAYER, NO con TRIGGER
-            // - SCENE colisiona con PLAYER, ENEMY, NO con TRIGGER
-            // - TRIGGER detecta a PLAYER/ENEMY/SCENE pero como sensor (mIsSensor ya evita respuesta)
             auto isScene = [](ObjectLayer l) { return l == Layers::SCENE_STATIC || l == Layers::SCENE_MOVING; };
             auto isTrigger = [](ObjectLayer l) { return l == Layers::TRIGGER_STATIC || l == Layers::TRIGGER_MOVING; };
 
-            // Triggers: dejan pasar para "detectar" (si quieres que NO generen contacto, ya lo evita mIsSensor)
+            // Triggers: siempre dejan pasar para detectar
             if (isTrigger(a) || isTrigger(b)) return true;
 
-            // Reglas “máscaras”:
+            // Escena con escena (STATIC <-> MOVING, MOVING <-> MOVING, etc.)
+            if (isScene(a) && isScene(b))
+                return true;
+
+            // PLAYER con SCENE
             if ((a == Layers::PLAYER && isScene(b)) || (b == Layers::PLAYER && isScene(a))) return true;
+
+            // PLAYER con ENEMY
             if ((a == Layers::PLAYER && b == Layers::ENEMY) || (b == Layers::PLAYER && a == Layers::ENEMY)) return true;
 
-            // Escena con Enemigo
+            // SCENE con ENEMY
             if ((isScene(a) && b == Layers::ENEMY) || (isScene(b) && a == Layers::ENEMY)) return true;
 
-            // Si nada aplica, no colisionan
             return false;
         }
     };

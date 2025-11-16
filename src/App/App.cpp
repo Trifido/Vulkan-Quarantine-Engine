@@ -344,29 +344,26 @@ void App::initVulkan()
 
     ramp->AddComponent<BoxCollider>(std::make_shared<BoxCollider>());
     this->gameObjectManager->AddGameObject(ramp);
-    
-    //auto wallMatInstance = defaultMat->CreateMaterialInstance();
-    //this->materialManager->AddMaterial(wallMatInstance);
-    //std::shared_ptr<QEGameObject> wall = std::make_shared<QEGameObject>("wall");
-    //std::shared_ptr<QEGeometryComponent> geometryWallComponent = make_shared<QEGeometryComponent>(std::make_unique<CubeGenerator>());
-    //wall->AddComponent<QEGeometryComponent>(geometryWallComponent);
-    //wall->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
-    //wall->AddComponent<QEMaterial>(wallMatInstance);
-    //auto wallTransform = wall->GetComponent<QETransform>();
-    //wallTransform->SetLocalPosition(glm::vec3(3.0f, 0.5f, 0.0f));
-    //wallTransform->SetLocalEulerDegrees(glm::vec3(0.0f, 0.0f, 0.0f));
-    //wallTransform->SetLocalScale(glm::vec3(4.0f, 0.5f, 4.0f));
+    /*
+    auto wallMatInstance = defaultMat->CreateMaterialInstance();
+    wallMatInstance->materialData.SetMaterialField("Diffuse", glm::vec3(0.8f, 0.2f, 0.2f));
+    this->materialManager->AddMaterial(wallMatInstance);
+    std::shared_ptr<QEGameObject> wall = std::make_shared<QEGameObject>("wall");
+    std::shared_ptr<QEGeometryComponent> geometryWallComponent = make_shared<QEGeometryComponent>(std::make_unique<CubeGenerator>());
+    wall->AddComponent<QEGeometryComponent>(geometryWallComponent);
+    wall->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
+    wall->AddComponent<QEMaterial>(wallMatInstance);
+    auto wallTransform = wall->GetComponent<QETransform>();
+    wallTransform->SetLocalPosition(glm::vec3(3.0f, 10.5f, 0.0f));
+    wallTransform->SetLocalEulerDegrees(glm::vec3(0.0f, 0.0f, 0.0f));
+    wallTransform->SetLocalScale(glm::vec3(4.0f, 0.5f, 4.0f));
 
-    //wallMatInstance->materialData.SetMaterialField("Diffuse", glm::vec3(0.8f, 0.2f, 0.2f));
-
-    //wall->AddComponent<QECollider>(std::make_shared<BoxCollider>());
-    //wall->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>());
-    //auto wallPBody = wall->GetComponent<PhysicsBody>();
-    //wallPBody->CollisionGroup = CollisionFlag::COL_SCENE;
-    //wallPBody->CollisionMask = CollisionFlag::COL_PLAYER;
-
-    //this->gameObjectManager->AddGameObject(wall, "wall");
-    /**/
+    wall->AddComponent<QECollider>(std::make_shared<BoxCollider>());
+    wall->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>());
+    auto wallPBody = wall->GetComponent<PhysicsBody>();
+    wallPBody->CollisionGroup = CollisionFlag::COL_SCENE;
+    this->gameObjectManager->AddGameObject(wall);
+    */
 
     // END -------------------------- Mesh & Material -------------------------------
 

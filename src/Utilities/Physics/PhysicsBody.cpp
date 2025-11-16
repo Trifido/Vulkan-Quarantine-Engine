@@ -34,7 +34,6 @@ void PhysicsBody::UpdateType(const PhysicBodyType &type)
     this->UpdateInertia(glm::vec3(0.0f));
 }
 
-// Helpers de comparación (versión glm)
 static inline bool closePos(const glm::vec3& a, const glm::vec3& b, float eps)
 {
     glm::vec3 d = a - b;
@@ -45,7 +44,6 @@ static inline bool closeRot(const glm::quat& a, glm::quat b, float angleEpsRad)
 {
     if (glm::dot(a, b) < 0.0f) b = glm::quat(-b.w, -b.x, -b.y, -b.z);
     glm::quat d = glm::inverse(a) * b;
-    // angle from quaternion (approx)
     float angle = 2.0f * acosf(glm::clamp(d.w, -1.0f, 1.0f));
     return fabsf(angle) <= angleEpsRad;
 }
@@ -86,21 +84,18 @@ JPH::ObjectLayer PhysicsBody::ResolveObjectLayer(const PhysicBodyType type, cons
 
 void PhysicsBody::Initialize()
 {
-    // Requisitos: collider + transform válidos
     if (!collider || !collider->colShape || !transform) return;
 
     RebuildScaledShapeFromCollider();
 
     if (!collider->colShape) return;
 
-    // Pose inicial desde tu QETransform
     glm::vec3 pos = transform->GetWorldPosition();
     glm::quat rot = transform->GetWorldRotation();
 
     Vec3 jpos = toJPH(pos);
     Quat jrot = toJPH(rot);
 
-    // MotionType mapeado desde tu enum
     EMotionType motion = EMotionType::Static;
     switch (this->Type)
     {
@@ -110,8 +105,6 @@ void PhysicsBody::Initialize()
         default:                            motion = EMotionType::Static;    break;
     }
 
-    // Layer simple (ajústalo a tu sistema de capas/filtros Jolt)
-    // 0: estático, 1: dinámico, 2: kinematic
     JPH::ObjectLayer layer = ResolveObjectLayer(this->Type, this->CollisionGroup);
 
     BodyCreationSettings s(
@@ -133,10 +126,8 @@ void PhysicsBody::Initialize()
         s.mMassPropertiesOverride.mMass = glm::max(0.0001f, this->Mass);
     }
 
-    // Crea + añade el body
     this->body = PhysicsModule::getInstance()->AddRigidBody(s, JPH::EActivation::Activate);
 
-    // Inicializa prev/curr con la pose inicial
     currPos = pos; currRot = rot;
     prevPos = pos; prevRot = rot;
     hasCurr = true;
@@ -144,12 +135,12 @@ void PhysicsBody::Initialize()
 
 void PhysicsBody::copyTransformtoGLM()
 {
-    if (this->body.IsInvalid()) return;
+    if (this->body.IsInvalid() || !transform)
+        return;
 
-    // Lee la pose interpolada actual (center of mass transform)
     RMat44 m = PhysicsModule::getInstance()->Bodies().GetCenterOfMassTransform(this->body);
     RVec3 p = m.GetTranslation();
-    Quat q = m.GetRotation().GetQuaternion();
+    Quat  q = m.GetRotation().GetQuaternion();
 
     glm::vec3 newPos = toGLM(p);
     glm::quat newRot = toGLM(q);
@@ -158,10 +149,22 @@ void PhysicsBody::copyTransformtoGLM()
         || !closePos(currPos, newPos, posEps)
         || !closeRot(currRot, newRot, angEps);
 
-    if (!changed) return;
+    if (!changed)
+        return;
 
-    transform->TranslateWorld(newPos);
-    transform->RotateWorld(newRot);
+    glm::vec3 worldScale = transform->GetWorldScale();
+    glm::mat4 worldM = glm::translate(glm::mat4(1.0f), newPos)
+        * glm::mat4_cast(newRot)
+        * glm::scale(glm::mat4(1.0f), worldScale);
+
+    glm::mat4 localM = worldM;
+    if (auto parent = transform->GetParent())
+    {
+        glm::mat4 parentWorld = parent->GetWorldMatrix();
+        localM = glm::inverse(parentWorld) * worldM;
+    }
+
+    transform->SetFromMatrix(localM);
 
     currPos = newPos;
     currRot = newRot;
@@ -240,7 +243,6 @@ void PhysicsBody::RebuildScaledShapeFromCollider()
     {
         float thickness = plane->GetSize();
 
-        // Escalamos sólo en XZ; el grosor se mantiene constante
         float scaleXZ = glm::max(glm::abs(worldScale.x), glm::abs(worldScale.z));
 
         BoxShapeSettings settings(Vec3(1000.0f, thickness, 1000.0f));
@@ -250,14 +252,12 @@ void PhysicsBody::RebuildScaledShapeFromCollider()
             newShape = res.Get();
     }
 
-    // Si no hemos podido crear nada, invalidamos la shape
     if (!newShape)
     {
         collider->colShape = nullptr;
         return;
     }
 
-    // 3) Volver a aplicar el pivot, si existía
     bool hasPivot =
         !pivotPos.IsClose(Vec3::sZero()) ||
         !pivotRot.IsClose(Quat::sIdentity());
@@ -308,11 +308,15 @@ void PhysicsBody::QEUpdate()
         this->Initialize();
         QEGameComponent::QEInit();
     }
+
+    if (this->QEInitialized())
+    {
+        UpdateTransform();
+    }
 }
 
 void PhysicsBody::QEDestroy()
 {
-    // Quitar y destruir el body si sigue vivo
     if (this->body.IsInvalid())
     {
         QEGameComponent::QEDestroy();
@@ -326,8 +330,6 @@ void PhysicsBody::QEDestroy()
 
     QEGameComponent::QEDestroy();
 }
-
-// -------- conversiones --------
 
 inline JPH::Vec3 PhysicsBody::toJPH(const glm::vec3& v)
 {
