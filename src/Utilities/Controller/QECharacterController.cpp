@@ -6,6 +6,7 @@
 #include <PhysicsBody.h>
 #include <PhysicsModule.h>
 #include <QESpringArmComponent.h>
+#include <AnimationComponent.h>
 #include <Timer.h>
 
 #include <Jolt/Core/TempAllocator.h>
@@ -35,7 +36,7 @@ namespace
 
 QECharacterController::QECharacterController()
 {
-    MoveSpeed = 5.0f;
+    MoveSpeed = 3.0f;
     SprintSpeed = 8.0f;
     JumpSpeed = 6.5f;
     GravityY = -9.81f;
@@ -79,6 +80,7 @@ void QECharacterController::QEInit()
     mCollider = Owner->GetComponentInChildren<QECollider>(true);
     mPhysBody = Owner->GetComponent<PhysicsBody>();
     mSpringArm = Owner->GetComponentInChildren<QESpringArmComponent>(true);
+    animationComponentPtr = Owner->GetComponentInChildren<AnimationComponent>(true);
 
     BuildOrUpdateCharacter();
 
@@ -209,7 +211,28 @@ void QECharacterController::QEUpdate()
     const float dt = Timer::DeltaTime;
     if (dt <= 0.0f) return;
 
+    const bool w = ImGui::IsKeyDown(ImGuiKey_W);
+    const bool s = ImGui::IsKeyDown(ImGuiKey_S);
+    const bool a = ImGui::IsKeyDown(ImGuiKey_A);
+    const bool d = ImGui::IsKeyDown(ImGuiKey_D);
+
     const glm::vec3 wish = ReadMoveInput();
+
+    if (animationComponentPtr) // ya lo tienes en tu clase
+    {
+        // speed normalizado 0..1 (recomendado para umbrales estables)
+        glm::vec2 xz(wish.x, wish.z);
+        float speed01 = glm::length(xz) / (ImGui::IsKeyDown(ImGuiKey_ModShift) ? SprintSpeed : MoveSpeed);
+        speed01 = glm::clamp(speed01, 0.0f, 1.0f);
+
+        // forward: W/S explícito (no depende de cámara)
+        float forward = 0.0f;
+        if (w && !s) forward = 1.0f;
+        else if (s && !w) forward = -1.0f;
+
+        animationComponentPtr->SetFloat("speed", speed01);
+        animationComponentPtr->SetFloat("forward", forward);
+    }
 
     const bool wasGrounded = mCharacter->IsSupported();
 

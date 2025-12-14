@@ -189,9 +189,6 @@ void App::initVulkan()
     //QEProjectManager::ImportAnimationFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Idle_Character.glb",
     //    std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Animations"));
 
-    //QEProjectManager::ImportAnimationFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Hurricane.glb",
-    //    std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Animations"));
-
     // Load Scene
     this->loadScene(this->scene);
 
@@ -237,25 +234,58 @@ void App::initVulkan()
 
     // States
     animationComponent->AddAnimationState({ "Idle", true, "Idle" }, /*isEntry*/ true);
-    animationComponent->AddAnimationState({ "Walk", true, "Walking" });
+    animationComponent->AddAnimationState({ "WalkFwd", true, "WalkingForward" });
+    animationComponent->AddAnimationState({ "WalkBack", true, "WalkingBackward" });
+    animationComponent->AddAnimationState({ "WalkLeft", true, "WalkLeft" });
+    animationComponent->AddAnimationState({ "WalkRight", true, "WalkRight" });
     animationComponent->AddAnimationState({ "Attack", false, "Punch" });
     animationComponent->AddAnimationState({ "Jump", false, "Jumping" });
 
     // Parameters
     animationComponent->SetFloat("speed", 0.0f);
+    animationComponent->SetFloat("forward", 0.0f);   // -1 back, +1 fwd
     animationComponent->SetTrigger("attack", false);
     animationComponent->SetTrigger("jump", false);
 
     //Transitions
+    // Idle -> WalkFwd
     animationComponent->AddTransition({
-        .fromState = "Idle", .toState = "Walk",
-        .conditions = {{"speed", QEOp::Greater, 0.1f}},
+        .fromState = "Idle", .toState = "WalkFwd",
+        .conditions = {{"speed", QEOp::Greater, 0.1f}, {"forward", QEOp::Greater, 0.1f}},
         .priority = 10, .hasExitTime = false
         });
+
+    // WalkFwd -> Idle
     animationComponent->AddTransition({
-        .fromState = "Walk", .toState = "Idle",
+        .fromState = "WalkFwd", .toState = "Idle",
         .conditions = {{"speed", QEOp::Less, 0.05f}},
         .priority = 10, .hasExitTime = true, .exitTimeNormalized = 0.2f
+        });
+
+    // Idle -> WalkBack
+    animationComponent->AddTransition({
+        .fromState = "Idle", .toState = "WalkBack",
+        .conditions = {{"speed", QEOp::Greater, 0.1f}, {"forward", QEOp::Less, -0.1f}},
+        .priority = 10, .hasExitTime = false
+        });
+
+    // WalkBack -> Idle
+    animationComponent->AddTransition({
+        .fromState = "WalkBack", .toState = "Idle",
+        .conditions = {{"speed", QEOp::Less, 0.05f}},
+        .priority = 10, .hasExitTime = true, .exitTimeNormalized = 0.2f
+        });
+
+    // WalkFwd <-> WalkBack (si cambias W por S en marcha)
+    animationComponent->AddTransition({
+        .fromState = "WalkFwd", .toState = "WalkBack",
+        .conditions = {{"forward", QEOp::Less, -0.1f}},
+        .priority = 20, .hasExitTime = false
+        });
+    animationComponent->AddTransition({
+        .fromState = "WalkBack", .toState = "WalkFwd",
+        .conditions = {{"forward", QEOp::Greater, 0.1f}},
+        .priority = 20, .hasExitTime = false
         });
 
     animationComponent->AddTransition({
