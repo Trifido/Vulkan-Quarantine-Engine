@@ -1,0 +1,276 @@
+CameraEditor:
+  type: QECamera
+  id: frAQBc8Wsa1x
+  _near: 0.1
+  _far: 500
+  _fov: 45
+  Width: 1280
+  Height: 720
+AtmosphereDto:
+  hasAtmosphere: true
+  environmentType: 2
+  sunDirection: [-0.5, -0.7071068, -0.49999994]
+  sunIntensity: 70.710686
+Materials:
+  - ../../QEProjects\QEExample\QEAssets\QEMaterials\defaultPrimitiveMat.qemat
+  - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorDebugAABB.qemat
+  - ../../QEProjects\QEExample\QEAssets\QEMaterials\defaultParticlesMat.qemat
+  - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorDebugCollider.qemat
+  - ../../QEProjects\QEExample\QEAssets\QEModels\Character\Materials\Alpha_Joints_MAT.qemat
+  - ../../QEProjects\QEExample\QEAssets\QEMaterials\QEMatInst_defaultPrimitiveMat.qemat
+  - ../../QEProjects\QEExample\QEAssets\QEMaterials\QEMatInst_defaultPrimitiveMat_1.qemat
+  - ../../QEProjects\QEExample\QEAssets\QEModels\Character\Materials\Alpha_Body_MAT.qemat
+GameObjects:
+  - id: gJ03OhmWvn7M
+    name: Character
+    components:
+      - type: QETransform
+        id: Ir9oDUTOX7NY
+        localPosition: [0.013844507, 0.04010247, 0.02530848]
+        localRotation: [0, 0, 0, 1]
+        localScale: [1, 1, 1]
+        parentId: ""
+      - type: CapsuleCollider
+        id: EkZgzUny1swO
+        CollisionMargin: 0.04
+        radius: 0.2732013
+        height: 1.8047343
+      - type: QECharacterController
+        id: bdYSEvWRBLzZ
+        MoveSpeed: 3
+        SprintSpeed: 8
+        JumpSpeed: 6.5
+        GravityY: -9.81
+        MaxSlopeDeg: 50
+    children:
+      - id: 02h67YrlvBnd
+        name: MeshCharacter
+        components:
+          - type: QETransform
+            id: n4cXPaoaKk5l
+            localPosition: [0, 0, 0]
+            localRotation: [0, 1, 0, -4.371139e-08]
+            localScale: [1, 1, 1]
+            parentId: ""
+          - type: QEGeometryComponent
+            id: Qn33hfNWPgr8
+            _name: Idle_Character
+            _filepath: C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Idle_Character.gltf
+          - type: QEMeshRenderer
+            id: 81nP7VxEE4Fd
+            IsMeshShaderPipeline: false
+          - type: QEGameComponent
+            id: gcL9fOPyc98b
+          - type: AABBObject
+            id: quubpCzI71MR
+            min: [-0.9734263, -0.00010226601, -0.16051078]
+            max: [0.97342354, 1.8046321, 0.20375758]
+            Size: [1.9468498, 1.8047343, 0.36426836]
+            Center: [-1.3709068e-06, 0.9022649, 0.021623403]
+            isGameObjectVisible: true
+        materials:
+          - Alpha_Joints_MAT
+          - Alpha_Body_MAT
+      - id: 8arF3SLLny30
+        name: SpringArm
+        components:
+          - type: QETransform
+            id: KKziHtRbOE2u
+            localPosition: [0, 0, 0]
+            localRotation: [0, 0, 0, 1]
+            localScale: [1, 1, 1]
+            parentId: ""
+          - type: QESpringArmComponent
+            id: 8qvJP3B6Uiu1
+            TargetArmLength: 3
+            MinArmLength: 1
+            MaxArmLength: 6
+            TargetOffset: [0, 1.6, 0]
+            SocketOffset: [0, 0.3, 0]
+            DoCollisionTest: false
+            ProbeRadius: 0.2
+            PosLagSpeed: 12
+            RotLagSpeed: 12
+            Yaw: 28.68
+            Pitch: -19.24
+            MinPitch: -80
+            MaxPitch: 60
+            InheritYaw: false
+            InheritPitch: false
+            InheritRoll: false
+        children:
+          - id: TqVaAUnJvUmH
+            name: ThirdPersonCamera
+            components:
+              - type: QETransform
+                id: VQGsTmvHeuSE
+                localPosition: [1.3456566, 2.888577, 2.4599304]
+                localRotation: [-0.16190617, 0.24419257, 0.041389756, 0.955219]
+                localScale: [1, 1, 1]
+                parentId: ""
+              - type: QECamera
+                id: BMSPh2Q6dQAj
+                _near: 0.1
+                _far: 500
+                _fov: 45
+                Width: 1410
+                Height: 775
+  - id: 02h67YrlvBnd
+    name: MeshCharacter
+    components:
+      - type: QETransform
+        id: n4cXPaoaKk5l
+        localPosition: [0, 0, 0]
+        localRotation: [0, 1, 0, -4.371139e-08]
+        localScale: [1, 1, 1]
+        parentId: ""
+      - type: QEGeometryComponent
+        id: Qn33hfNWPgr8
+        _name: Idle_Character
+        _filepath: C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Idle_Character.gltf
+      - type: QEMeshRenderer
+        id: 81nP7VxEE4Fd
+        IsMeshShaderPipeline: false
+      - type: QEGameComponent
+        id: gcL9fOPyc98b
+      - type: AABBObject
+        id: quubpCzI71MR
+        min: [-0.9734263, -0.00010226601, -0.16051078]
+        max: [0.97342354, 1.8046321, 0.20375758]
+        Size: [1.9468498, 1.8047343, 0.36426836]
+        Center: [-1.3709068e-06, 0.9022649, 0.021623403]
+        isGameObjectVisible: true
+    materials:
+      - Alpha_Joints_MAT
+      - Alpha_Body_MAT
+  - id: 8arF3SLLny30
+    name: SpringArm
+    components:
+      - type: QETransform
+        id: KKziHtRbOE2u
+        localPosition: [0, 0, 0]
+        localRotation: [0, 0, 0, 1]
+        localScale: [1, 1, 1]
+        parentId: ""
+      - type: QESpringArmComponent
+        id: 8qvJP3B6Uiu1
+        TargetArmLength: 3
+        MinArmLength: 1
+        MaxArmLength: 6
+        TargetOffset: [0, 1.6, 0]
+        SocketOffset: [0, 0.3, 0]
+        DoCollisionTest: false
+        ProbeRadius: 0.2
+        PosLagSpeed: 12
+        RotLagSpeed: 12
+        Yaw: 28.68
+        Pitch: -19.24
+        MinPitch: -80
+        MaxPitch: 60
+        InheritYaw: false
+        InheritPitch: false
+        InheritRoll: false
+    children:
+      - id: TqVaAUnJvUmH
+        name: ThirdPersonCamera
+        components:
+          - type: QETransform
+            id: VQGsTmvHeuSE
+            localPosition: [1.3456566, 2.888577, 2.4599304]
+            localRotation: [-0.16190617, 0.24419257, 0.041389756, 0.955219]
+            localScale: [1, 1, 1]
+            parentId: ""
+          - type: QECamera
+            id: BMSPh2Q6dQAj
+            _near: 0.1
+            _far: 500
+            _fov: 45
+            Width: 1410
+            Height: 775
+  - id: TqVaAUnJvUmH
+    name: ThirdPersonCamera
+    components:
+      - type: QETransform
+        id: VQGsTmvHeuSE
+        localPosition: [1.3456566, 2.888577, 2.4599304]
+        localRotation: [-0.16190617, 0.24419257, 0.041389756, 0.955219]
+        localScale: [1, 1, 1]
+        parentId: ""
+      - type: QECamera
+        id: BMSPh2Q6dQAj
+        _near: 0.1
+        _far: 500
+        _fov: 45
+        Width: 1410
+        Height: 775
+  - id: Q4GTOPwD7kkq
+    name: floor
+    components:
+      - type: QETransform
+        id: PqQ5PNEEfuTl
+        localPosition: [0, -0.01, 0]
+        localRotation: [0, 0, 0, 1]
+        localScale: [10, 1, 10]
+        parentId: ""
+      - type: QEGeometryComponent
+        id: CH9WpIYaPHWf
+        _name: FloorPrimitive
+        _filepath: QECore
+      - type: QEMeshRenderer
+        id: UTjlTOSj3iH7
+        IsMeshShaderPipeline: false
+      - type: PlaneCollider
+        id: JTRsbYH133Ty
+        CollisionMargin: 0.04
+        Size: 0.01
+        Orientation: [0, 1, 0]
+      - type: PhysicsBody
+        id: WLIB4G3sV0yk
+        Type: 0
+        Mass: 0
+        Inertia: [0, 0, 0]
+        CollisionGroup: 4
+      - type: AABBObject
+        id: Cm3ORYkfrjRZ
+        min: [-1, -0.001, -1]
+        max: [1, 0.001, 1]
+        Size: [2, 0.002, 2]
+        Center: [0, 0, 0]
+        isGameObjectVisible: true
+    materials:
+      - QEMatInst_defaultPrimitiveMat
+  - id: CytJR8Cu6XFp
+    name: ramp
+    components:
+      - type: QETransform
+        id: tEIP68v8ZdV6
+        localPosition: [0, -0.5, -10]
+        localRotation: [0.57357645, 0, 0, 0.81915206]
+        localScale: [3, 10, 3]
+        parentId: ""
+      - type: QEGeometryComponent
+        id: 0GXAPZHAD2vQ
+        _name: CubePrimitive
+        _filepath: QECore
+      - type: QEMeshRenderer
+        id: kWrpqiwdo3Hr
+        IsMeshShaderPipeline: false
+      - type: PhysicsBody
+        id: dt6z3lSTpgTp
+        Type: 0
+        Mass: 0
+        Inertia: [0, 0, 0]
+        CollisionGroup: 4
+      - type: BoxCollider
+        id: RpRVcwo6HM8u
+        CollisionMargin: 0.04
+        Size: [0.5, 0.5, 0.5]
+      - type: AABBObject
+        id: Ddw6LcpX33e1
+        min: [-0.5, -0.5, -0.5]
+        max: [0.5, 0.5, 0.5]
+        Size: [1, 1, 1]
+        Center: [0, 0, 0]
+        isGameObjectVisible: true
+    materials:
+      - QEMatInst_defaultPrimitiveMat_1
