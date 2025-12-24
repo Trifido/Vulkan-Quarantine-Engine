@@ -12,7 +12,9 @@ protected:
 
 public:
     void QEStart() override;
+    bool TryAutoFit();
     void QEInit() override;
+    void QEUpdate() override;
 
     CapsuleCollider();
     CapsuleCollider(float newRadius, float newHeight);

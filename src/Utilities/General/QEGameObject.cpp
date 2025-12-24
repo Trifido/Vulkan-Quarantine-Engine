@@ -145,8 +145,13 @@ YAML::Node QEGameObject::ToYaml() const
     node["name"] = this->Name;  
 
     auto comps = node["components"];
-    for (const auto& comp : components)  
+    for (const auto& comp : components)
+    {
+        if (!comp->IsSerializable())
+            continue;
+
         comps.push_back(serializeComponent(comp.get()));
+    }
 
     auto mats = node["materials"];
     for (const auto& mat : materials)
@@ -194,7 +199,15 @@ std::shared_ptr<QEGameObject> QEGameObject::FromYaml(const YAML::Node& node)
             // binario: convertir a shared_ptr y bind
             std::shared_ptr<QEGameComponent> sptr(uptr.release());
             sptr->BindGameObject(go.get());
-            go->components.push_back(sptr);
+
+            if (auto tr = std::dynamic_pointer_cast<QETransform>(sptr))
+            {
+                go->AddComponent<QETransform>(tr);
+            }
+            else
+            {
+                go->components.push_back(sptr);
+            }
         }
     }
 
@@ -213,8 +226,7 @@ std::shared_ptr<QEGameObject> QEGameObject::FromYaml(const YAML::Node& node)
             auto child = QEGameObject::FromYaml(chnode);
             if (child)
             {
-                child->parent = go.get();
-                go->childs.push_back(child);
+                go->AddChild(child, /*keepWorldTransform=*/true);
             }
         }
     }

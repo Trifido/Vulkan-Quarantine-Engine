@@ -87,6 +87,12 @@ public:
 
             components.push_back(component_ptr);
             component_ptr->BindGameObject(this);
+
+            if constexpr (std::is_same_v<T, QETransform>)
+            {
+                component_ptr->SetSelf(component_ptr);
+            }
+
             return true;
         }
     }

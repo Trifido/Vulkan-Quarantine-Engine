@@ -137,24 +137,31 @@ void QETransform::SetFromMatrix(const glm::mat4& m)
 void QETransform::AddChild(const std::shared_ptr<QETransform>& child)
 {
     if (!child) return;
-    child->SetParent(shared_from_this(), /*keepWorld=*/true);
+    child->SetParent(GetPtr(), /*keepWorld=*/true);
 }
 
 void QETransform::SetParent(std::shared_ptr<QETransform> newParent, bool keepWorld)
 {
+    auto self = _self.lock();
+    if (!self)
+    {
+        std::cerr << "[QETransform] SetParent called but self not set.\n";
+        return;
+    }
+
     glm::mat4 currentWorld = GetWorldMatrix();
 
     if (auto p = parent.lock())
     {
         auto& vec = p->children;
-        vec.erase(std::remove(vec.begin(), vec.end(), std::static_pointer_cast<QETransform>(shared_from_this())), vec.end());
+        vec.erase(std::remove(vec.begin(), vec.end(), self), vec.end());
     }
     parent.reset();
 
     if (newParent)
     {
         parent = newParent;
-        newParent->children.push_back(std::static_pointer_cast<QETransform>(shared_from_this()));
+        newParent->children.push_back(self);
     }
 
     if (keepWorld)
@@ -162,7 +169,6 @@ void QETransform::SetParent(std::shared_ptr<QETransform> newParent, bool keepWor
         glm::mat4 parentWorld = newParent ? newParent->GetWorldMatrix() : glm::mat4(1.0f);
         glm::mat4 newLocal = glm::inverse(parentWorld) * currentWorld;
 
-        // descomponer TRS
         glm::vec3 skew; glm::vec4 persp;
         glm::vec3 t, s;
         glm::quat r;

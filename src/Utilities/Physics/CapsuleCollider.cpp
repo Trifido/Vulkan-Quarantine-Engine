@@ -11,22 +11,36 @@ void CapsuleCollider::QEStart()
     QECollider::QEStart();
 }
 
+bool CapsuleCollider::TryAutoFit()
+{
+    auto tr = Owner->GetComponent<QETransform>();
+    std::cout << "Children transforms: " << (tr ? tr->GetChildren().size() : 0) << "\n";
+
+    auto boundingBox = Owner->GetComponentInChildren<AABBObject>(true);
+    if (!boundingBox) return false;
+
+    float r = glm::min(boundingBox->Size.x, boundingBox->Size.z) * 0.75f;
+    float h = boundingBox->Size.y;
+
+    SetSize(r, h);
+    SetColliderPivot(boundingBox->Center);
+    return true;
+}
+
 void CapsuleCollider::QEInit()
 {
     if (QEInitialized()) return;
 
-    auto boundingBox = this->Owner->GetComponentInChildren<AABBObject>(true);
-
-    if (boundingBox != nullptr)
-    {
-        float r = glm::min(boundingBox->Size.x, boundingBox->Size.z) * 0.75f;
-        float h = boundingBox->Size.y;
-
-        this->SetSize(r, h);
-        this->SetColliderPivot(boundingBox->Center);
-    }
-
+    _autoFitted = TryAutoFit();
     QECollider::QEInit();
+}
+
+void CapsuleCollider::QEUpdate()
+{
+    if (!_autoFitted)
+        _autoFitted = TryAutoFit();
+
+    QECollider::QEUpdate();
 }
 
 CapsuleCollider::CapsuleCollider() : QECollider()

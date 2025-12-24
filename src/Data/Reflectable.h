@@ -21,6 +21,7 @@ struct SerializableComponent
     virtual ~SerializableComponent() = default;
     virtual const std::string& getTypeName() const = 0;
     virtual struct QEMetaType* meta() const = 0;
+    virtual bool IsSerializable() const { return true; }
 };
 
 class QEGameComponent; // forward

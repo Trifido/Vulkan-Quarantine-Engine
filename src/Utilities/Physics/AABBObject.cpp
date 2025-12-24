@@ -79,10 +79,17 @@ void AABBObject::QEStart()
     }
 
     QEGameComponent::QEStart();
+
+    QEGameComponent::QEInit();
 }
 
 void AABBObject::QEInit()
 {
+    if (_QEInitialized)
+    {
+        return;
+    }
+
     QEGameComponent::QEInit();
 }
 

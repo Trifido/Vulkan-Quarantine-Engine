@@ -12,6 +12,7 @@ class QECollider : public QEGameComponent
 {
 protected:
     REFLECTABLE_DERIVED_COMPONENT(QECollider, QEGameComponent)
+    bool _autoFitted = false;
 public:
     JPH::Ref<JPH::Shape> colShape = nullptr;
 

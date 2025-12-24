@@ -509,12 +509,6 @@ void App::mainLoop()
 {
     while (!glfwWindowShouldClose(mainWindow->getWindow()))
     {
-        ImGuiIO& io = ImGui::GetIO();
-        if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false))
-        {
-            saveScene();
-        }
-
         glfwPollEvents();
 
         Timer::getInstance()->UpdateDeltaTime();
@@ -542,6 +536,12 @@ void App::mainLoop()
 
         // UPDATE CAMERA DATA
         this->sessionManager->UpdateActiveCameraGPUData();
+
+        ImGuiIO& io = ImGui::GetIO();
+        if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false))
+        {
+            saveScene();
+        }
 
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();

@@ -7,7 +7,7 @@
 #include <glm/gtc/quaternion.hpp>
 #include <UBO.h>
 
-class QETransform : public QEGameComponent, public std::enable_shared_from_this<QETransform>
+class QETransform : public QEGameComponent
 {
     REFLECTABLE_COMPONENT(QETransform)
 public:
@@ -17,6 +17,7 @@ public:
     REFLECT_PROPERTY(std::string, parentId)
 
 private:
+    std::weak_ptr<QETransform> _self;
     glm::mat4 localMatrix{ 1.0f };
     glm::mat4 worldMatrix{ 1.0f };
     uint32_t worldVersion = 1;
@@ -32,8 +33,11 @@ private:
     void MarkWorldDirty();
 
 public:
+
     QETransform();
-    std::shared_ptr<QETransform> GetPtr() { return shared_from_this(); }
+    void SetSelf(const std::shared_ptr<QETransform>& self) { _self = self; }
+    std::shared_ptr<QETransform> GetPtr() { return _self.lock(); }
+    void SetParent(std::shared_ptr<QETransform> newParent, bool keepWorld = true);
 
     // Setters locales
     void SetLocalPosition(const glm::vec3& p);
@@ -49,7 +53,6 @@ public:
     void SetFromMatrix(const glm::mat4& m);
 
     // Parenting
-    void SetParent(std::shared_ptr<QETransform> newParent, bool keepWorld = true);
     std::shared_ptr<QETransform> GetParent() const { return parent.lock(); }
     std::vector<std::shared_ptr<QETransform>> GetChildren() const { return children; }
     void AddChild(const std::shared_ptr<QETransform>& child);

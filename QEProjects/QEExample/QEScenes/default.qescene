@@ -16,8 +16,8 @@ Materials:
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorDebugAABB.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\defaultParticlesMat.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorDebugCollider.qemat
-  - ../../QEProjects\QEExample\QEAssets\QEMaterials\QEMatInst_defaultPrimitiveMat.qemat
   - ../../QEProjects\QEExample\QEAssets\QEModels\Character\Materials\Alpha_Joints_MAT.qemat
+  - ../../QEProjects\QEExample\QEAssets\QEMaterials\QEMatInst_defaultPrimitiveMat.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\QEMatInst_defaultPrimitiveMat_1.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\QEMatInst_defaultPrimitiveMat_2.qemat
   - ../../QEProjects\QEExample\QEAssets\QEModels\Character\Materials\Alpha_Body_MAT.qemat
@@ -27,8 +27,8 @@ GameObjects:
     components:
       - type: QETransform
         id: lPGtfUR2IZ2m
-        localPosition: [-0.3160656, 10.521629, 10.530203]
-        localRotation: [-0.33132106, -0.24938223, -0.09126106, 0.9053763]
+        localPosition: [0, 10, 10]
+        localRotation: [-0.38268346, 0, 0, 0.9238795]
         localScale: [1, 1, 1]
         parentId: ""
       - type: QECamera
@@ -48,7 +48,7 @@ GameObjects:
     components:
       - type: QETransform
         id: 02h67YrlvBnd
-        localPosition: [0.015220922, 0.04010247, 0.029414373]
+        localPosition: [0.012840994, 0.04010247, 0.025598673]
         localRotation: [0, 0, 0, 1]
         localScale: [1, 1, 1]
         parentId: ""
@@ -84,9 +84,9 @@ GameObjects:
           - type: QEAnimationComponent
             id: PqQ5PNEEfuTl
             currentState:
-              Id: Idle
+              Id: WalkBack
               Loop: true
-              AnimationClip: Idle
+              AnimationClip: WalkingBackward
             States:
               - Id: Idle
                 Loop: true
@@ -202,13 +202,6 @@ GameObjects:
                 exitTimeNormalized: 1
                 conditions:
                   []
-          - type: AABBObject
-            id: ECM9T0ci76Ro
-            min: [-0.9734263, -0.00010226601, -0.16051078]
-            max: [0.97342354, 1.8046321, 0.20375758]
-            Size: [1.9468498, 1.8047343, 0.36426836]
-            Center: [-1.3709068e-06, 0.9022649, 0.021623403]
-            isGameObjectVisible: true
         materials:
           - Alpha_Joints_MAT
           - Alpha_Body_MAT
@@ -232,8 +225,8 @@ GameObjects:
             ProbeRadius: 0.2
             PosLagSpeed: 12
             RotLagSpeed: 12
-            Yaw: -25.320017
-            Pitch: -12.399984
+            Yaw: 26.640001
+            Pitch: -9.76
             MinPitch: -80
             MaxPitch: 60
             InheritYaw: false
@@ -245,9 +238,9 @@ GameObjects:
             components:
               - type: QETransform
                 id: 8arF3SLLny30
-                localPosition: [1.3257709, 2.5993176, 2.5620468]
-                localRotation: [-0.11403464, 0.2348646, 0.027756484, 0.96491677]
-                localScale: [0.99999994, 0.99999994, 1]
+                localPosition: [1.3129727, 2.4085708, 2.6174214]
+                localRotation: [-0.08278178, 0.22955123, 0.019598996, 0.9695717]
+                localScale: [1, 1, 0.99999994]
                 parentId: ""
               - type: QECamera
                 id: KKziHtRbOE2u
@@ -256,6 +249,38 @@ GameObjects:
                 _fov: 45
                 Width: 1410
                 Height: 775
+  - id: gqVNBeg10gAI
+    name: wall
+    components:
+      - type: QETransform
+        id: 4OMrxF2ltRPW
+        localPosition: [3, 10.5, 0]
+        localRotation: [0, 0, 0, 1]
+        localScale: [4, 0.5, 4]
+        parentId: ""
+      - type: QEGeometryComponent
+        id: acKwhzQyw8by
+        _name: CubePrimitive
+        _filepath: QECore
+      - type: QEMeshRenderer
+        id: xIFwOQfxFYy0
+        IsMeshShaderPipeline: false
+      - type: BoxCollider
+        id: quubpCzI71MR
+        CollisionMargin: 0.04
+        Size: [0.5, 0.5, 0.5]
+      - type: PhysicsBody
+        id: VOgDko8fnPYl
+        Type: 0
+        Mass: 0
+        Inertia: [0, 0, 0]
+        CollisionGroup: 4
+      - type: QEGeometryComponent
+        id: ERoC0nE0pAli
+        _name: ""
+        _filepath: ""
+    materials:
+      - QEMatInst_defaultPrimitiveMat_2
   - id: UTjlTOSj3iH7
     name: floor
     components:
@@ -283,50 +308,12 @@ GameObjects:
         Mass: 0
         Inertia: [0, 0, 0]
         CollisionGroup: 4
-      - type: AABBObject
+      - type: QEGeometryComponent
         id: 9Mk6pyZdABIG
-        min: [-1, -0.001, -1]
-        max: [1, 0.001, 1]
-        Size: [2, 0.002, 2]
-        Center: [0, 0, 0]
-        isGameObjectVisible: true
+        _name: ""
+        _filepath: ""
     materials:
       - QEMatInst_defaultPrimitiveMat
-  - id: gqVNBeg10gAI
-    name: wall
-    components:
-      - type: QETransform
-        id: 4OMrxF2ltRPW
-        localPosition: [3, 10.5, 0]
-        localRotation: [0, 0, 0, 1]
-        localScale: [4, 0.5, 4]
-        parentId: ""
-      - type: QEGeometryComponent
-        id: acKwhzQyw8by
-        _name: CubePrimitive
-        _filepath: QECore
-      - type: QEMeshRenderer
-        id: xIFwOQfxFYy0
-        IsMeshShaderPipeline: false
-      - type: BoxCollider
-        id: quubpCzI71MR
-        CollisionMargin: 0.04
-        Size: [0.5, 0.5, 0.5]
-      - type: PhysicsBody
-        id: VOgDko8fnPYl
-        Type: 0
-        Mass: 0
-        Inertia: [0, 0, 0]
-        CollisionGroup: 4
-      - type: AABBObject
-        id: ERoC0nE0pAli
-        min: [-0.5, -0.5, -0.5]
-        max: [0.5, 0.5, 0.5]
-        Size: [1, 1, 1]
-        Center: [0, 0, 0]
-        isGameObjectVisible: false
-    materials:
-      - QEMatInst_defaultPrimitiveMat_2
   - id: kWrpqiwdo3Hr
     name: ramp
     components:
@@ -353,12 +340,9 @@ GameObjects:
         id: 6qr7J1hAkTkU
         CollisionMargin: 0.04
         Size: [0.5, 0.5, 0.5]
-      - type: AABBObject
+      - type: QEGeometryComponent
         id: pASsMZ6uUeHJ
-        min: [-0.5, -0.5, -0.5]
-        max: [0.5, 0.5, 0.5]
-        Size: [1, 1, 1]
-        Center: [0, 0, 0]
-        isGameObjectVisible: true
+        _name: ""
+        _filepath: ""
     materials:
       - QEMatInst_defaultPrimitiveMat_1
