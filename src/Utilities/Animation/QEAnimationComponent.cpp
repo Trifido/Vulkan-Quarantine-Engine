@@ -50,6 +50,7 @@ void QEAnimationComponent::AddAnimationState(AnimationState state, bool isEntryS
     if (this->_states.find(state.Id) == this->_states.end())
     {
         this->_states[state.Id] = state;
+        States.push_back(state);
 
         if (isEntryState)
         {
@@ -63,6 +64,7 @@ void QEAnimationComponent::AddTransition(const QETransition& t)
     _transitionsFrom[t.fromState].push_back(t);
     auto& v = _transitionsFrom[t.fromState];
     std::sort(v.begin(), v.end(), [](const auto& a, const auto& b) { return a.priority > b.priority; });
+    Transitions.push_back(t);
 }
 
 QEParam& QEAnimationComponent::ensureParam_(const std::string& name, QEParamType desired)
@@ -366,6 +368,26 @@ void QEAnimationComponent::QEDestroy()
 
 void QEAnimationComponent::QEInit()
 {
+    if (_states.empty())
+    {
+        for (const auto& s : States) {
+            _states[s.Id] = s;
+        }
+    }
+
+    if (_transitionsFrom.empty())
+    {
+        for (const auto& t : Transitions)
+        {
+            _transitionsFrom[t.fromState].push_back(t);
+        }
+        for (auto& kv : _transitionsFrom)
+        {
+            auto& v = kv.second;
+            std::sort(v.begin(), v.end(), [](const auto& a, const auto& b) { return a.priority > b.priority; });
+        }
+    }
+
     auto entryState = this->_states.find(this->currentState.Id);
     if (entryState != this->_states.end())
     {

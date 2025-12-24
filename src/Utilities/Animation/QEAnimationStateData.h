@@ -5,6 +5,7 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
 
 enum class QEParamType { Bool, Int, Float, Trigger };
 

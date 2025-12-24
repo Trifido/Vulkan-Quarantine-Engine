@@ -14,14 +14,17 @@ public:
     std::shared_ptr<Animator> animator;
 
 private:
+    REFLECT_PROPERTY(std::string, _entryStateId)
+    REFLECT_PROPERTY(AnimationState, currentState)
+    REFLECT_PROPERTY(std::vector<AnimationState>, States)
     std::unordered_map<std::string, AnimationState> _states;
-    std::unordered_map<std::string, std::shared_ptr<Animation>> _animations;
-    std::unordered_map<std::string, QEParam> _params;
-    size_t numAnimations = 0;
-    AnimationState currentState;
-
+    REFLECT_PROPERTY(std::vector<QETransition>, Transitions)
     std::unordered_map<std::string, std::vector<QETransition>> _transitionsFrom;
-    std::string _entryStateId;
+
+    std::unordered_map<std::string, std::shared_ptr<Animation>> _animations;
+    size_t numAnimations = 0;
+    std::unordered_map<std::string, QEParam> _params;
+
     std::unordered_set<std::string> _triggersUsedThisFrame;
 
 private:

@@ -1,3 +1,11 @@
+CameraEditor:
+  type: QECamera
+  id: frAQBc8Wsa1x
+  _near: 0.1
+  _far: 500
+  _fov: 45
+  Width: 1280
+  Height: 720
 AtmosphereDto:
   hasAtmosphere: true
   environmentType: 2
@@ -11,50 +19,192 @@ Materials:
   - ../../QEProjects\QEExample\QEAssets\QEModels\Character\Materials\Alpha_Joints_MAT.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\QEMatInst_defaultPrimitiveMat.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\QEMatInst_defaultPrimitiveMat_1.qemat
+  - ../../QEProjects\QEExample\QEAssets\QEMaterials\QEMatInst_defaultPrimitiveMat_2.qemat
   - ../../QEProjects\QEExample\QEAssets\QEModels\Character\Materials\Alpha_Body_MAT.qemat
 GameObjects:
-  - id: gJ03OhmWvn7M
+  - id: YT3CEW8K69rk
+    name: CameraEditor
+    components:
+      - type: QETransform
+        id: lPGtfUR2IZ2m
+        localPosition: [0, 10, 10]
+        localRotation: [-0.38268346, 0, 0, 0.9238795]
+        localScale: [1, 1, 1]
+        parentId: ""
+      - type: QECamera
+        id: frAQBc8Wsa1x
+        _near: 0.1
+        _far: 500
+        _fov: 45
+        Width: 1280
+        Height: 720
+      - type: QECameraController
+        id: B1S7NLt2nQfj
+        Speed: 10
+        MouseSensitivity: 0.1
+        EditorControls: true
+  - id: bdYSEvWRBLzZ
     name: Character
     components:
       - type: QETransform
-        id: Ir9oDUTOX7NY
-        localPosition: [-0.0135636125, 0.04010247, 0.027180606]
+        id: 02h67YrlvBnd
+        localPosition: [-0.012818268, 0.04010247, 0.027092757]
         localRotation: [0, 0, 0, 1]
         localScale: [1, 1, 1]
         parentId: ""
       - type: CapsuleCollider
-        id: EkZgzUny1swO
+        id: n4cXPaoaKk5l
         CollisionMargin: 0.04
         radius: 0.2732013
         height: 1.8047343
       - type: QECharacterController
-        id: bdYSEvWRBLzZ
+        id: Qn33hfNWPgr8
         MoveSpeed: 3
         SprintSpeed: 8
         JumpSpeed: 6.5
         GravityY: -9.81
         MaxSlopeDeg: 50
     children:
-      - id: 02h67YrlvBnd
+      - id: 81nP7VxEE4Fd
         name: MeshCharacter
         components:
           - type: QETransform
-            id: n4cXPaoaKk5l
+            id: gcL9fOPyc98b
             localPosition: [0, 0, 0]
             localRotation: [0, 1, 0, -4.371139e-08]
             localScale: [1, 1, 1]
             parentId: ""
           - type: QEGeometryComponent
-            id: Qn33hfNWPgr8
+            id: I89qTPFtysL1
             _name: Idle_Character
             _filepath: C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Idle_Character.gltf
           - type: QEMeshRenderer
-            id: 81nP7VxEE4Fd
+            id: Q4GTOPwD7kkq
             IsMeshShaderPipeline: false
-          - type: QEGameComponent
-            id: gcL9fOPyc98b
+          - type: QEAnimationComponent
+            id: PqQ5PNEEfuTl
+            _entryStateId: ""
+            currentState:
+              Id: Idle
+              Loop: true
+              AnimationClip: Idle
+            States:
+              - Id: Idle
+                Loop: true
+                AnimationClip: Idle
+              - Id: WalkFwd
+                Loop: true
+                AnimationClip: WalkingForward
+              - Id: WalkBack
+                Loop: true
+                AnimationClip: WalkingBackward
+              - Id: WalkLeft
+                Loop: true
+                AnimationClip: WalkLeft
+              - Id: WalkRight
+                Loop: true
+                AnimationClip: WalkRight
+              - Id: Attack
+                Loop: false
+                AnimationClip: Punch
+              - Id: Jump
+                Loop: false
+                AnimationClip: Jumping
+            Transitions:
+              - from: Idle
+                to: WalkFwd
+                priority: 10
+                hasExitTime: false
+                exitTimeNormalized: 1
+                conditions:
+                  - param: speed
+                    op: Greater
+                    value: 0.1
+                  - param: forward
+                    op: Greater
+                    value: 0.1
+              - from: WalkFwd
+                to: Idle
+                priority: 10
+                hasExitTime: true
+                exitTimeNormalized: 0.2
+                conditions:
+                  - param: speed
+                    op: Less
+                    value: 0.05
+              - from: Idle
+                to: WalkBack
+                priority: 10
+                hasExitTime: false
+                exitTimeNormalized: 1
+                conditions:
+                  - param: speed
+                    op: Greater
+                    value: 0.1
+                  - param: forward
+                    op: Less
+                    value: -0.1
+              - from: WalkBack
+                to: Idle
+                priority: 10
+                hasExitTime: true
+                exitTimeNormalized: 0.2
+                conditions:
+                  - param: speed
+                    op: Less
+                    value: 0.05
+              - from: WalkFwd
+                to: WalkBack
+                priority: 20
+                hasExitTime: false
+                exitTimeNormalized: 1
+                conditions:
+                  - param: forward
+                    op: Less
+                    value: -0.1
+              - from: WalkBack
+                to: WalkFwd
+                priority: 20
+                hasExitTime: false
+                exitTimeNormalized: 1
+                conditions:
+                  - param: forward
+                    op: Greater
+                    value: 0.1
+              - from: Idle
+                to: Attack
+                priority: 100
+                hasExitTime: false
+                exitTimeNormalized: 1
+                conditions:
+                  - param: attack
+                    op: Equal
+                    value: 1
+              - from: Attack
+                to: Idle
+                priority: 10
+                hasExitTime: true
+                exitTimeNormalized: 1
+                conditions:
+                  []
+              - from: Idle
+                to: Jump
+                priority: 10
+                hasExitTime: false
+                exitTimeNormalized: 1
+                conditions:
+                  - param: jump
+                    op: Equal
+                    value: 1
+              - from: Jump
+                to: Idle
+                priority: 10
+                hasExitTime: true
+                exitTimeNormalized: 1
+                conditions:
+                  []
           - type: AABBObject
-            id: quubpCzI71MR
+            id: ECM9T0ci76Ro
             min: [-0.9734263, -0.00010226601, -0.16051078]
             max: [0.97342354, 1.8046321, 0.20375758]
             Size: [1.9468498, 1.8047343, 0.36426836]
@@ -63,17 +213,17 @@ GameObjects:
         materials:
           - Alpha_Joints_MAT
           - Alpha_Body_MAT
-      - id: 8arF3SLLny30
+      - id: gJ03OhmWvn7M
         name: SpringArm
         components:
           - type: QETransform
-            id: KKziHtRbOE2u
+            id: Ir9oDUTOX7NY
             localPosition: [0, 0, 0]
             localRotation: [0, 0, 0, 1]
             localScale: [1, 1, 1]
             parentId: ""
           - type: QESpringArmComponent
-            id: 8qvJP3B6Uiu1
+            id: EkZgzUny1swO
             TargetArmLength: 3
             MinArmLength: 1
             MaxArmLength: 6
@@ -83,59 +233,94 @@ GameObjects:
             ProbeRadius: 0.2
             PosLagSpeed: 12
             RotLagSpeed: 12
-            Yaw: -26.520021
-            Pitch: -7.9600105
+            Yaw: -25.320013
+            Pitch: -22.240019
             MinPitch: -80
             MaxPitch: 60
             InheritYaw: false
             InheritPitch: false
             InheritRoll: false
         children:
-          - id: TqVaAUnJvUmH
+          - id: y4KjsfSXF4YP
             name: ThirdPersonCamera
             components:
               - type: QETransform
-                id: VQGsTmvHeuSE
-                localPosition: [-1.313239, 2.3154454, 2.6316469]
-                localRotation: [-0.067557886, -0.22881731, -0.015920224, 0.97099185]
-                localScale: [0.99999994, 1, 1]
+                id: 8arF3SLLny30
+                localPosition: [-1.1749177, 3.0354617, 2.4833126]
+                localRotation: [-0.18817568, -0.21505046, -0.042269215, 0.95736957]
+                localScale: [1, 1, 1]
                 parentId: ""
               - type: QECamera
-                id: BMSPh2Q6dQAj
+                id: KKziHtRbOE2u
                 _near: 0.1
                 _far: 500
                 _fov: 45
                 Width: 1410
                 Height: 775
-  - id: Q4GTOPwD7kkq
-    name: floor
+  - id: gqVNBeg10gAI
+    name: wall
     components:
       - type: QETransform
-        id: PqQ5PNEEfuTl
-        localPosition: [0, -0.01, 0]
+        id: 4OMrxF2ltRPW
+        localPosition: [3, 10.5, 0]
         localRotation: [0, 0, 0, 1]
-        localScale: [10, 1, 10]
+        localScale: [4, 0.5, 4]
         parentId: ""
       - type: QEGeometryComponent
-        id: CH9WpIYaPHWf
-        _name: FloorPrimitive
+        id: acKwhzQyw8by
+        _name: CubePrimitive
         _filepath: QECore
       - type: QEMeshRenderer
-        id: UTjlTOSj3iH7
+        id: xIFwOQfxFYy0
         IsMeshShaderPipeline: false
-      - type: PlaneCollider
-        id: JTRsbYH133Ty
+      - type: BoxCollider
+        id: quubpCzI71MR
         CollisionMargin: 0.04
-        Size: 0.01
-        Orientation: [0, 1, 0]
+        Size: [0.5, 0.5, 0.5]
       - type: PhysicsBody
-        id: WLIB4G3sV0yk
+        id: VOgDko8fnPYl
         Type: 0
         Mass: 0
         Inertia: [0, 0, 0]
         CollisionGroup: 4
       - type: AABBObject
-        id: Cm3ORYkfrjRZ
+        id: ERoC0nE0pAli
+        min: [-0.5, -0.5, -0.5]
+        max: [0.5, 0.5, 0.5]
+        Size: [1, 1, 1]
+        Center: [0, 0, 0]
+        isGameObjectVisible: false
+    materials:
+      - QEMatInst_defaultPrimitiveMat_2
+  - id: UTjlTOSj3iH7
+    name: floor
+    components:
+      - type: QETransform
+        id: JTRsbYH133Ty
+        localPosition: [0, -0.01, 0]
+        localRotation: [0, 0, 0, 1]
+        localScale: [10, 1, 10]
+        parentId: ""
+      - type: QEGeometryComponent
+        id: WLIB4G3sV0yk
+        _name: FloorPrimitive
+        _filepath: QECore
+      - type: QEMeshRenderer
+        id: Pds7HX27KbNC
+        IsMeshShaderPipeline: false
+      - type: PlaneCollider
+        id: CytJR8Cu6XFp
+        CollisionMargin: 0.04
+        Size: 0.01
+        Orientation: [0, 1, 0]
+      - type: PhysicsBody
+        id: tEIP68v8ZdV6
+        Type: 0
+        Mass: 0
+        Inertia: [0, 0, 0]
+        CollisionGroup: 4
+      - type: AABBObject
+        id: 9Mk6pyZdABIG
         min: [-1, -0.001, -1]
         max: [1, 0.001, 1]
         Size: [2, 0.002, 2]
@@ -143,34 +328,34 @@ GameObjects:
         isGameObjectVisible: true
     materials:
       - QEMatInst_defaultPrimitiveMat
-  - id: CytJR8Cu6XFp
+  - id: kWrpqiwdo3Hr
     name: ramp
     components:
       - type: QETransform
-        id: tEIP68v8ZdV6
+        id: dt6z3lSTpgTp
         localPosition: [0, -0.5, -10]
         localRotation: [0.57357645, 0, 0, 0.81915206]
         localScale: [3, 10, 3]
         parentId: ""
       - type: QEGeometryComponent
-        id: 0GXAPZHAD2vQ
+        id: RpRVcwo6HM8u
         _name: CubePrimitive
         _filepath: QECore
       - type: QEMeshRenderer
-        id: kWrpqiwdo3Hr
+        id: A8D9eE4ZADtm
         IsMeshShaderPipeline: false
       - type: PhysicsBody
-        id: dt6z3lSTpgTp
+        id: vWvN20LBHSkD
         Type: 0
         Mass: 0
         Inertia: [0, 0, 0]
         CollisionGroup: 4
       - type: BoxCollider
-        id: RpRVcwo6HM8u
+        id: 6qr7J1hAkTkU
         CollisionMargin: 0.04
         Size: [0.5, 0.5, 0.5]
       - type: AABBObject
-        id: Ddw6LcpX33e1
+        id: pASsMZ6uUeHJ
         min: [-0.5, -0.5, -0.5]
         max: [0.5, 0.5, 0.5]
         Size: [1, 1, 1]

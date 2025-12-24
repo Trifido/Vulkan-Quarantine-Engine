@@ -15,16 +15,16 @@
 #include <BoxCollider.h>
 #include "PhysicsBody.h"
 
-App::App()  
-{ 
-    this->keyboard_ptr = KeyboardController::getInstance();  
-    this->queueModule = QueueModule::getInstance();  
-    this->deviceModule = DeviceModule::getInstance();  
+App::App()
+{
+    this->keyboard_ptr = KeyboardController::getInstance();
+    this->queueModule = QueueModule::getInstance();
+    this->deviceModule = DeviceModule::getInstance();
 
-    this->physicsModule = PhysicsModule::getInstance();  
-    this->graphicsPipelineManager = GraphicsPipelineManager::getInstance();  
-    this->shadowPipelineManager = ShadowPipelineManager::getInstance();  
-    this->computePipelineManager = ComputePipelineManager::getInstance();  
+    this->physicsModule = PhysicsModule::getInstance();
+    this->graphicsPipelineManager = GraphicsPipelineManager::getInstance();
+    this->shadowPipelineManager = ShadowPipelineManager::getInstance();
+    this->computePipelineManager = ComputePipelineManager::getInstance();
 }
 
 App::~App()
@@ -227,89 +227,89 @@ void App::initVulkan()
 
     */
     // Initialize animation states for character controller
-    auto visualCharacter = gameObjectManager->GetGameObject("MeshCharacter");
-    auto animationComponent = visualCharacter->GetComponent<QEAnimationComponent>();
+    //auto visualCharacter = gameObjectManager->GetGameObject("MeshCharacter");
+    //auto animationComponent = visualCharacter->GetComponent<QEAnimationComponent>();
 
-    // States
-    animationComponent->AddAnimationState({ "Idle", true, "Idle" }, /*isEntry*/ true);
-    animationComponent->AddAnimationState({ "WalkFwd", true, "WalkingForward" });
-    animationComponent->AddAnimationState({ "WalkBack", true, "WalkingBackward" });
-    animationComponent->AddAnimationState({ "WalkLeft", true, "WalkLeft" });
-    animationComponent->AddAnimationState({ "WalkRight", true, "WalkRight" });
-    animationComponent->AddAnimationState({ "Attack", false, "Punch" });
-    animationComponent->AddAnimationState({ "Jump", false, "Jumping" });
+    //// States
+    //animationComponent->AddAnimationState({ "Idle", true, "Idle" }, /*isEntry*/ true);
+    //animationComponent->AddAnimationState({ "WalkFwd", true, "WalkingForward" });
+    //animationComponent->AddAnimationState({ "WalkBack", true, "WalkingBackward" });
+    //animationComponent->AddAnimationState({ "WalkLeft", true, "WalkLeft" });
+    //animationComponent->AddAnimationState({ "WalkRight", true, "WalkRight" });
+    //animationComponent->AddAnimationState({ "Attack", false, "Punch" });
+    //animationComponent->AddAnimationState({ "Jump", false, "Jumping" });
 
-    // Parameters
-    animationComponent->SetFloat("speed", 0.0f);
-    animationComponent->SetFloat("forward", 0.0f);   // -1 back, +1 fwd
-    animationComponent->SetTrigger("attack", false);
-    animationComponent->SetTrigger("jump", false);
+    //// Parameters
+    //animationComponent->SetFloat("speed", 0.0f);
+    //animationComponent->SetFloat("forward", 0.0f);   // -1 back, +1 fwd
+    //animationComponent->SetTrigger("attack", false);
+    //animationComponent->SetTrigger("jump", false);
 
-    //Transitions
-    // Idle -> WalkFwd
-    animationComponent->AddTransition({
-        .fromState = "Idle", .toState = "WalkFwd",
-        .conditions = {{"speed", QEOp::Greater, 0.1f}, {"forward", QEOp::Greater, 0.1f}},
-        .priority = 10, .hasExitTime = false
-        });
+    ////Transitions
+    //// Idle -> WalkFwd
+    //animationComponent->AddTransition({
+    //    .fromState = "Idle", .toState = "WalkFwd",
+    //    .conditions = {{"speed", QEOp::Greater, 0.1f}, {"forward", QEOp::Greater, 0.1f}},
+    //    .priority = 10, .hasExitTime = false
+    //    });
 
-    // WalkFwd -> Idle
-    animationComponent->AddTransition({
-        .fromState = "WalkFwd", .toState = "Idle",
-        .conditions = {{"speed", QEOp::Less, 0.05f}},
-        .priority = 10, .hasExitTime = true, .exitTimeNormalized = 0.2f
-        });
+    //// WalkFwd -> Idle
+    //animationComponent->AddTransition({
+    //    .fromState = "WalkFwd", .toState = "Idle",
+    //    .conditions = {{"speed", QEOp::Less, 0.05f}},
+    //    .priority = 10, .hasExitTime = true, .exitTimeNormalized = 0.2f
+    //    });
 
-    // Idle -> WalkBack
-    animationComponent->AddTransition({
-        .fromState = "Idle", .toState = "WalkBack",
-        .conditions = {{"speed", QEOp::Greater, 0.1f}, {"forward", QEOp::Less, -0.1f}},
-        .priority = 10, .hasExitTime = false
-        });
+    //// Idle -> WalkBack
+    //animationComponent->AddTransition({
+    //    .fromState = "Idle", .toState = "WalkBack",
+    //    .conditions = {{"speed", QEOp::Greater, 0.1f}, {"forward", QEOp::Less, -0.1f}},
+    //    .priority = 10, .hasExitTime = false
+    //    });
 
-    // WalkBack -> Idle
-    animationComponent->AddTransition({
-        .fromState = "WalkBack", .toState = "Idle",
-        .conditions = {{"speed", QEOp::Less, 0.05f}},
-        .priority = 10, .hasExitTime = true, .exitTimeNormalized = 0.2f
-        });
+    //// WalkBack -> Idle
+    //animationComponent->AddTransition({
+    //    .fromState = "WalkBack", .toState = "Idle",
+    //    .conditions = {{"speed", QEOp::Less, 0.05f}},
+    //    .priority = 10, .hasExitTime = true, .exitTimeNormalized = 0.2f
+    //    });
 
-    // WalkFwd <-> WalkBack (si cambias W por S en marcha)
-    animationComponent->AddTransition({
-        .fromState = "WalkFwd", .toState = "WalkBack",
-        .conditions = {{"forward", QEOp::Less, -0.1f}},
-        .priority = 20, .hasExitTime = false
-        });
-    animationComponent->AddTransition({
-        .fromState = "WalkBack", .toState = "WalkFwd",
-        .conditions = {{"forward", QEOp::Greater, 0.1f}},
-        .priority = 20, .hasExitTime = false
-        });
+    //// WalkFwd <-> WalkBack (si cambias W por S en marcha)
+    //animationComponent->AddTransition({
+    //    .fromState = "WalkFwd", .toState = "WalkBack",
+    //    .conditions = {{"forward", QEOp::Less, -0.1f}},
+    //    .priority = 20, .hasExitTime = false
+    //    });
+    //animationComponent->AddTransition({
+    //    .fromState = "WalkBack", .toState = "WalkFwd",
+    //    .conditions = {{"forward", QEOp::Greater, 0.1f}},
+    //    .priority = 20, .hasExitTime = false
+    //    });
 
-    animationComponent->AddTransition({
-        .fromState = "Idle", .toState = "Attack",
-        .conditions = {{"attack", QEOp::Equal, 1.f}}, // trigger
-        .priority = 100, .hasExitTime = false
-        });
-    animationComponent->AddTransition({
-        .fromState = "Attack", .toState = "Idle",
-        .conditions = {}, .priority = 10,
-        .hasExitTime = true, .exitTimeNormalized = 1.0f
-        });
+    //animationComponent->AddTransition({
+    //    .fromState = "Idle", .toState = "Attack",
+    //    .conditions = {{"attack", QEOp::Equal, 1.f}}, // trigger
+    //    .priority = 100, .hasExitTime = false
+    //    });
+    //animationComponent->AddTransition({
+    //    .fromState = "Attack", .toState = "Idle",
+    //    .conditions = {}, .priority = 10,
+    //    .hasExitTime = true, .exitTimeNormalized = 1.0f
+    //    });
 
-    animationComponent->AddTransition({
-        .fromState = "Idle", .toState = "Jump",
-        .conditions = {{"jump", QEOp::Equal, 1.f}}, // trigger
-        .priority = 10, .hasExitTime = false
-        });
-    animationComponent->AddTransition({
-        .fromState = "Jump", .toState = "Idle",
-        .conditions = {}, .priority = 10,
-        .hasExitTime = true, .exitTimeNormalized = 1.0f
-        });
+    //animationComponent->AddTransition({
+    //    .fromState = "Idle", .toState = "Jump",
+    //    .conditions = {{"jump", QEOp::Equal, 1.f}}, // trigger
+    //    .priority = 10, .hasExitTime = false
+    //    });
+    //animationComponent->AddTransition({
+    //    .fromState = "Jump", .toState = "Idle",
+    //    .conditions = {}, .priority = 10,
+    //    .hasExitTime = true, .exitTimeNormalized = 1.0f
+    //    });
 
 
-    animationComponent->animator->PlayAnimation(animationComponent->GetAnimation("Idle"));
+    //animationComponent->animator->PlayAnimation(animationComponent->GetAnimation("Idle"));
 
     //characterGO->AddChild(visualCharacter, true);
     //characterGO->AddChild(springArmObject, true);
@@ -330,13 +330,13 @@ void App::initVulkan()
     auto defaultMat = this->materialManager->GetMaterial("defaultPrimitiveMat");
     auto floorMatInstance = defaultMat->CreateMaterialInstance();
     this->materialManager->AddMaterial(floorMatInstance);
-    
+
     std::shared_ptr<QEGameObject> floor = std::make_shared<QEGameObject>("floor");
     std::shared_ptr<QEGeometryComponent> geometryFloorComponent = make_shared<QEGeometryComponent>(std::make_unique<FloorGenerator>());
     floor->AddComponent<QEGeometryComponent>(geometryFloorComponent);
     floor->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
     floor->AddComponent<QEMaterial>(floorMatInstance);
-    
+
     auto floorTransform = floor->GetComponent<QETransform>();
     floorTransform->SetLocalPosition(glm::vec3(0.0f, -0.01f, 0.0f));
     floorTransform->SetLocalScale(glm::vec3(10.0f, 1.0f, 10.0f));
@@ -344,7 +344,7 @@ void App::initVulkan()
     floorMatInstance->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.2f, 0.7f));
     floorMatInstance->materialData.SetMaterialField("Specular", glm::vec3(0.0f, 0.0f, 0.0f));
     floorMatInstance->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
-    
+
     floor->AddComponent<QECollider>(std::make_shared<PlaneCollider>());
     floor->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>());
     auto floorPBody = floor->GetComponent<PhysicsBody>();
@@ -393,7 +393,7 @@ void App::initVulkan()
     auto wallPBody = wall->GetComponent<PhysicsBody>();
     wallPBody->CollisionGroup = CollisionFlag::COL_SCENE;
     this->gameObjectManager->AddGameObject(wall);
-    
+
 
     // END -------------------------- Mesh & Material -------------------------------
 

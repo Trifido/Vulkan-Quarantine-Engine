@@ -8,6 +8,35 @@
 #include "glm_yaml_conversions.h"
 #include <QEAnimationResources.h>
 #include <Bone.h>
+#include <QEAnimationStateData.h>
+
+namespace QEAnimYaml
+{
+    // --- QEOp <-> string ---
+    inline const char* ToString(QEOp op)
+    {
+        switch (op) {
+        case QEOp::Equal:        return "Equal";
+        case QEOp::NotEqual:     return "NotEqual";
+        case QEOp::Greater:      return "Greater";
+        case QEOp::Less:         return "Less";
+        case QEOp::GreaterEqual: return "GreaterEqual";
+        case QEOp::LessEqual:    return "LessEqual";
+        }
+        return "Equal";
+    }
+
+    inline QEOp OpFromString(const std::string& s)
+    {
+        if (s == "Equal")        return QEOp::Equal;
+        if (s == "NotEqual")     return QEOp::NotEqual;
+        if (s == "Greater")      return QEOp::Greater;
+        if (s == "Less")         return QEOp::Less;
+        if (s == "GreaterEqual") return QEOp::GreaterEqual;
+        if (s == "LessEqual")    return QEOp::LessEqual;
+        return QEOp::Equal;
+    }
+}
 
 namespace YAML
 {
@@ -198,6 +227,97 @@ namespace YAML
             b.m_NumPositions = static_cast<int>(b.m_Positions.size());
             b.m_NumRotations = static_cast<int>(b.m_Rotations.size());
             b.m_NumScalings = static_cast<int>(b.m_Scales.size());
+
+            return true;
+        }
+    };
+
+    template<> struct convert<AnimationState> {
+        static Node encode(const AnimationState& rhs)
+        {
+            Node node;
+            node["Id"] = rhs.Id;
+            node["Loop"] = rhs.Loop;
+            node["AnimationClip"] = rhs.AnimationClip;
+            return node;
+        }
+
+        static bool decode(const Node& node, AnimationState& rhs)
+        {
+            if (!node || !node.IsMap()) return false;
+
+            // Id es obligatorio
+            if (!node["Id"]) return false;
+            rhs.Id = node["Id"].as<std::string>();
+
+            // opcionales con default
+            rhs.Loop = node["Loop"] ? node["Loop"].as<bool>() : true;
+            rhs.AnimationClip = node["AnimationClip"] ? node["AnimationClip"].as<std::string>() : "";
+
+            return true;
+        }
+    };
+
+    template<>
+    struct convert<QECondition>
+    {
+        static Node encode(const QECondition& rhs)
+        {
+            Node node;
+            node["param"] = rhs.param;
+            node["op"] = QEAnimYaml::ToString(rhs.op);
+            node["value"] = rhs.value;
+            return node;
+        }
+
+        static bool decode(const Node& node, QECondition& rhs)
+        {
+            if (!node || !node.IsMap()) return false;
+            if (!node["param"] || !node["op"]) return false;
+
+            rhs.param = node["param"].as<std::string>();
+            rhs.op = QEAnimYaml::OpFromString(node["op"].as<std::string>());
+            rhs.value = node["value"] ? node["value"].as<float>() : 0.0f;
+            return true;
+        }
+    };
+
+    template<>
+    struct convert<QETransition>
+    {
+        static Node encode(const QETransition& rhs)
+        {
+            Node node;
+            node["from"] = rhs.fromState;
+            node["to"] = rhs.toState;
+            node["priority"] = rhs.priority;
+            node["hasExitTime"] = rhs.hasExitTime;
+            node["exitTimeNormalized"] = rhs.exitTimeNormalized;
+
+            // conditions: seq
+            Node conds(NodeType::Sequence);
+            for (const auto& c : rhs.conditions) conds.push_back(c); // uses convert<QECondition>
+            node["conditions"] = conds;
+
+            return node;
+        }
+
+        static bool decode(const Node& node, QETransition& rhs)
+        {
+            if (!node || !node.IsMap()) return false;
+            if (!node["from"] || !node["to"]) return false;
+
+            rhs.fromState = node["from"].as<std::string>();
+            rhs.toState = node["to"].as<std::string>();
+            rhs.priority = node["priority"] ? node["priority"].as<int>() : 0;
+            rhs.hasExitTime = node["hasExitTime"] ? node["hasExitTime"].as<bool>() : false;
+            rhs.exitTimeNormalized = node["exitTimeNormalized"] ? node["exitTimeNormalized"].as<float>() : 1.0f;
+
+            rhs.conditions.clear();
+            if (auto conds = node["conditions"]; conds && conds.IsSequence())
+            {
+                rhs.conditions = conds.as<std::vector<QECondition>>(); // uses convert<QECondition>
+            }
 
             return true;
         }
