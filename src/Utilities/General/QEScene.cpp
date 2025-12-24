@@ -85,16 +85,16 @@ bool QEScene::DeserializeScene()
     }
 
     // CameraEditor
-    if (auto n = root["CameraEditor"])
-    {
-        cameraEditor = QESessionManager::getInstance()->EditorCamera();
-        deserializeComponent(cameraEditor.get(), n);
-        cameraEditor->UpdateCamera();
-    }
-    else
-    {
-        std::cerr << "Warning: nodo 'CameraEditor' no encontrado en YAML.\n";
-    }
+    //if (auto n = root["CameraEditor"])
+    //{
+    //    cameraEditor = QESessionManager::getInstance()->EditorCamera();
+    //    deserializeComponent(cameraEditor.get(), n);
+    //    cameraEditor->UpdateCamera();
+    //}
+    //else
+    //{
+    //    std::cerr << "Warning: nodo 'CameraEditor' no encontrado en YAML.\n";
+    //}
 
     // AtmosphereDto
     if (auto n = root["AtmosphereDto"])

@@ -4,7 +4,7 @@
 
 #include <map>
 #include <Bone.h>
-#include <AnimationResources.h>
+#include <QEAnimationResources.h>
 
 class Animation
 {

@@ -6,7 +6,7 @@
 #include <memory>
 #include <glm/glm.hpp>
 #include <Animation/Animation.h>
-#include <AnimationResources.h>
+#include <QEAnimationResources.h>
 #include <DescriptorBuffer.h>
 #include <Compute/ComputeNodeManager.h>
 

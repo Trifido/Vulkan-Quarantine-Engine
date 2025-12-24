@@ -14,7 +14,7 @@
 
 class QECollider;
 class PhysicsModule;
-class AnimationComponent;
+class QEAnimationComponent;
 class PhysicsBody;
 class QESpringArmComponent;
 
@@ -34,7 +34,7 @@ class QECharacterController : public QEGameComponent
         std::shared_ptr<QETransform>        mTransform = nullptr;
         std::shared_ptr<QECollider>         mCollider = nullptr;
         std::shared_ptr<PhysicsBody>        mPhysBody = nullptr;
-        std::shared_ptr<AnimationComponent> animationComponentPtr = nullptr;
+        std::shared_ptr<QEAnimationComponent> animationComponentPtr = nullptr;
         std::shared_ptr<QESpringArmComponent> mSpringArm = nullptr;
 
         // Character de Jolt

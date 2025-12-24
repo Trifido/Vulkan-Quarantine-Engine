@@ -12,7 +12,7 @@
 #include <MaterialManager.h>
 #include <ShaderManager.h>
 #include <TextureManager.h>
-#include <AnimationResources.h>
+#include <QEAnimationResources.h>
 #include <QEMeshData.h>
 
 namespace fs = std::filesystem;

@@ -4,7 +4,7 @@
 
 #include <assimp/scene.h>
 #include <map>
-#include <AnimationResources.h>
+#include <QEAnimationResources.h>
 #include <filesystem>
 #include <iostream>
 

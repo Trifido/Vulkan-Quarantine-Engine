@@ -6,7 +6,7 @@
 #include <yaml-cpp/yaml.h>
 #include <glm/glm.hpp>
 #include "glm_yaml_conversions.h"
-#include <AnimationResources.h>
+#include <QEAnimationResources.h>
 #include <Bone.h>
 
 namespace YAML

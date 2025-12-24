@@ -8,7 +8,7 @@
 #include <unordered_map>
 
 #include "Vertex.h"
-#include "AnimationResources.h"
+#include "QEAnimationResources.h"
 
 struct AnimationVertexData
 {

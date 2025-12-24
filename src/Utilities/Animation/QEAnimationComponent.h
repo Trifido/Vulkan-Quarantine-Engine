@@ -5,10 +5,11 @@
 #include "QEGameComponent.h"
 #include <Animation/Animation.h>
 #include <Animator.h>
-#include <AnimationStateData.h>
+#include <QEAnimationStateData.h>
 
-class AnimationComponent : public QEGameComponent
+class QEAnimationComponent : public QEGameComponent
 {
+    REFLECTABLE_COMPONENT(QEAnimationComponent)
 public:
     std::shared_ptr<Animator> animator;
 
@@ -34,7 +35,7 @@ private:
     void ConsumeTriggersUsed(const QETransition& t);
 
 public:
-    AnimationComponent();
+    QEAnimationComponent();
     void AddAnimation(std::shared_ptr<Animation> animation_ptr);
     void AddAnimation(Animation animation);
     std::shared_ptr<Animation> GetAnimation(std::string name);

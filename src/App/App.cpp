@@ -176,9 +176,6 @@ void App::initVulkan()
     this->computeNodeManager->InitializeComputeResources();
     this->particleSystemManager = ParticleSystemManager::getInstance();
 
-    //Editor resources initialization
-    this->sessionManager->SetEditorMode(this->isRunEditor);
-    this->sessionManager->SetDebugMode(true);
 
     // Import meshes
     //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Raptoid/scene.gltf");
@@ -192,8 +189,7 @@ void App::initVulkan()
     // Load Scene
     this->loadScene(this->scene);
 
-    this->sessionManager->SetupEditor();
-
+    /*
     auto absPath = std::filesystem::absolute("../../resources/models").generic_string();
 
     //const std::string absolute_path = absPath + "/cyber_warrior/scene.gltf";
@@ -229,8 +225,10 @@ void App::initVulkan()
     auto visualTransform = visualCharacter->GetComponent<QETransform>();
     visualTransform->SetLocalRotation(glm::angleAxis(glm::radians(180.0f), glm::vec3(0, 1, 0)));
 
+    */
     // Initialize animation states for character controller
-    auto animationComponent = visualCharacter->GetComponent<AnimationComponent>();
+    auto visualCharacter = gameObjectManager->GetGameObject("MeshCharacter");
+    auto animationComponent = visualCharacter->GetComponent<QEAnimationComponent>();
 
     // States
     animationComponent->AddAnimationState({ "Idle", true, "Idle" }, /*isEntry*/ true);
@@ -310,11 +308,14 @@ void App::initVulkan()
         .hasExitTime = true, .exitTimeNormalized = 1.0f
         });
 
-    characterGO->AddChild(visualCharacter, true);
-    characterGO->AddChild(springArmObject, true);
 
-    this->gameObjectManager->AddGameObject(characterGO);
-    /**/
+    animationComponent->animator->PlayAnimation(animationComponent->GetAnimation("Idle"));
+
+    //characterGO->AddChild(visualCharacter, true);
+    //characterGO->AddChild(springArmObject, true);
+
+    //this->gameObjectManager->AddGameObject(characterGO);
+    /*
 
     //model->_Transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
     //model->transform->SetOrientation(glm::vec3(-90.0f, 180.0f, 0.0f));
@@ -324,7 +325,7 @@ void App::initVulkan()
     //model->_Material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
     //this->gameObjectManager->AddGameObject(model, "modelRaptoid");
 
-    /**/
+    /*
 
     auto defaultMat = this->materialManager->GetMaterial("defaultPrimitiveMat");
     auto floorMatInstance = defaultMat->CreateMaterialInstance();
@@ -392,7 +393,7 @@ void App::initVulkan()
     auto wallPBody = wall->GetComponent<PhysicsBody>();
     wallPBody->CollisionGroup = CollisionFlag::COL_SCENE;
     this->gameObjectManager->AddGameObject(wall);
-    */
+    
 
     // END -------------------------- Mesh & Material -------------------------------
 
@@ -465,7 +466,7 @@ void App::initVulkan()
 
     // END -------------------------- Lights ----------------------------------------
 
-    this->sessionManager->RegisterActiveSceneCamera();
+    */
     this->physicsModule->SetGravity(-20.0f);
     this->lightManager->InitializeShadowMaps();
     this->atmosphereSystem->InitializeAtmosphereResources();
@@ -478,9 +479,16 @@ void App::loadScene(QEScene scene)
 {
     scene.DeserializeScene();
 
+    this->gameObjectManager->StartQEGameObjects();
+    this->sessionManager->RegisterActiveSceneCamera();
+
+    //Editor resources initialization
+    this->sessionManager->SetEditorMode(this->isRunEditor);
+    this->sessionManager->SetDebugMode(true);
+    this->sessionManager->SetupEditor();
+
     // Initialize active camera resources
     this->sessionManager->ActiveCamera()->QEStart();
-
     // Initialize the light manager & the lights
     this->lightManager->AddDirShadowMapShader(materialManager->csm_shader);
     this->lightManager->AddOmniShadowMapShader(materialManager->omni_shadow_mapping_shader);

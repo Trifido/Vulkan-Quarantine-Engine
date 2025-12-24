@@ -21,8 +21,6 @@ float glm_vec3_norm(glm::vec3 v) {
 QECamera::QECamera()
 {
     QEGameComponent::QEGameComponent();
-    auto sessionManager = QESessionManager::getInstance();
-    sessionManager->SetFindNewSceneCamera(this->id);
 
     this->_near = 0.1f;
     this->_far = 500.0f;
@@ -134,6 +132,9 @@ void QECamera::QEStart()
     if (!_QEStarted)
     {
         QEGameComponent::QEStart();
+
+        auto sessionManager = QESessionManager::getInstance();
+        sessionManager->SetFindNewSceneCamera(this->id);
 
         this->deviceModule = DeviceModule::getInstance();
         this->_frustumComponent = std::make_shared<FrustumComponent>();

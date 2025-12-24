@@ -1,5 +1,5 @@
 #include "QEGameObject.h"
-#include <AnimationComponent.h>
+#include <QEAnimationComponent.h>
 #include <CullingSceneManager.h>
 
 QEGameObject::QEGameObject(string name)
@@ -68,12 +68,12 @@ void QEGameObject::QEStart()
         //Set the animations
         if (mesh->AnimationData.size())
         {
-            auto animationComponent = this->GetComponent<AnimationComponent>();
+            auto animationComponent = this->GetComponent<QEAnimationComponent>();
 
             if (animationComponent == nullptr)
             {
-                this->AddComponent<AnimationComponent>(std::make_shared<AnimationComponent>());
-                animationComponent = this->GetComponent<AnimationComponent>();
+                this->AddComponent<QEAnimationComponent>(std::make_shared<QEAnimationComponent>());
+                animationComponent = this->GetComponent<QEAnimationComponent>();
             }
 
             for (auto anim : mesh->AnimationData)

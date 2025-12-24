@@ -112,6 +112,8 @@ bool QEProjectManager::CreateYamlScene(const std::string& sceneName)
 
         if (!fs::exists(CURRENT_DEFAULT_SCENE_PATH))
         {
+            std::ofstream file(CURRENT_DEFAULT_SCENE_PATH, std::ios::binary | std::ios::trunc);
+            file.close();
             return true;
         }
     }

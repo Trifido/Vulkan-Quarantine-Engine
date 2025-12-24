@@ -1,4 +1,4 @@
-#include "AnimationResources.h"
+#include "QEAnimationResources.h"
 #include <AnimationYamlHelper.h>
 
 YAML::Node AnimationData::Serialize(const AnimationData& data)

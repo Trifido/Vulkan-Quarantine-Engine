@@ -16,7 +16,7 @@ void QEMeshRenderer::QEStart()
 
 void QEMeshRenderer::QEInit()
 {
-    animationComponent = this->Owner->GetComponent<AnimationComponent>();
+    animationComponent = this->Owner->GetComponent<QEAnimationComponent>();
     geometryComponent = this->Owner->GetComponent<QEGeometryComponent>();
     materialComponents = this->Owner->GetMaterials();
     transformComponent = this->Owner->GetComponent<QETransform>();

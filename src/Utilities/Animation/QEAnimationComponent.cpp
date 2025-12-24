@@ -1,13 +1,13 @@
-#include "AnimationComponent.h"
+#include "QEAnimationComponent.h"
 #include <QEGameObject.h>
 #include <Timer.h>
 
-AnimationComponent::AnimationComponent()
+QEAnimationComponent::QEAnimationComponent()
 {
     this->animator = std::make_shared<Animator>();
 }
 
-void AnimationComponent::AddAnimation(std::shared_ptr<Animation> animation_ptr)
+void QEAnimationComponent::AddAnimation(std::shared_ptr<Animation> animation_ptr)
 {
     if (this->_animations.find(animation_ptr->name) == _animations.end())
     {
@@ -21,7 +21,7 @@ void AnimationComponent::AddAnimation(std::shared_ptr<Animation> animation_ptr)
     this->numAnimations++;
 }
 
-void AnimationComponent::AddAnimation(Animation animation)
+void QEAnimationComponent::AddAnimation(Animation animation)
 {
     if (this->_animations.find(animation.name) == _animations.end())
     {
@@ -35,7 +35,7 @@ void AnimationComponent::AddAnimation(Animation animation)
     this->numAnimations++;
 }
 
-std::shared_ptr<Animation> AnimationComponent::GetAnimation(std::string name)
+std::shared_ptr<Animation> QEAnimationComponent::GetAnimation(std::string name)
 {
     auto it = _animations.find(name);
 
@@ -45,7 +45,7 @@ std::shared_ptr<Animation> AnimationComponent::GetAnimation(std::string name)
     return nullptr;
 }
 
-void AnimationComponent::AddAnimationState(AnimationState state, bool isEntryState)
+void QEAnimationComponent::AddAnimationState(AnimationState state, bool isEntryState)
 {
     if (this->_states.find(state.Id) == this->_states.end())
     {
@@ -58,14 +58,14 @@ void AnimationComponent::AddAnimationState(AnimationState state, bool isEntrySta
     }
 }
 
-void AnimationComponent::AddTransition(const QETransition& t)
+void QEAnimationComponent::AddTransition(const QETransition& t)
 {
     _transitionsFrom[t.fromState].push_back(t);
     auto& v = _transitionsFrom[t.fromState];
     std::sort(v.begin(), v.end(), [](const auto& a, const auto& b) { return a.priority > b.priority; });
 }
 
-QEParam& AnimationComponent::ensureParam_(const std::string& name, QEParamType desired)
+QEParam& QEAnimationComponent::ensureParam_(const std::string& name, QEParamType desired)
 {
     auto it = _params.find(name);
     if (it == _params.end())
@@ -100,7 +100,7 @@ QEParam& AnimationComponent::ensureParam_(const std::string& name, QEParamType d
     return p;
 }
 
-void AnimationComponent::ClearAllTriggers()
+void QEAnimationComponent::ClearAllTriggers()
 {
     for (auto& kv : _params)
     {
@@ -110,7 +110,7 @@ void AnimationComponent::ClearAllTriggers()
     }
 }
 
-void AnimationComponent::ChangeState(const std::string& toId)
+void QEAnimationComponent::ChangeState(const std::string& toId)
 {
     auto it = _states.find(toId);
     if (it == _states.end()) { std::cerr << "State not found: " << toId << "\n"; return; }
@@ -126,7 +126,7 @@ void AnimationComponent::ChangeState(const std::string& toId)
     }
 }
 
-bool AnimationComponent::CheckCondition(const QECondition& c)
+bool QEAnimationComponent::CheckCondition(const QECondition& c)
 {
     auto it = _params.find(c.param);
     if (it == _params.end()) return false;
@@ -162,13 +162,13 @@ bool AnimationComponent::CheckCondition(const QECondition& c)
     return false;
 }
 
-bool AnimationComponent::AreAllConditionsTrue(const QETransition& t)
+bool QEAnimationComponent::AreAllConditionsTrue(const QETransition& t)
 {
     for (auto& c : t.conditions) if (!CheckCondition(c)) return false;
     return true;
 }
 
-bool AnimationComponent::ExitTimeOk(const QETransition& t, const AnimationState& st)
+bool QEAnimationComponent::ExitTimeOk(const QETransition& t, const AnimationState& st)
 {
     if (!t.hasExitTime) return true;
     float dur = this->animator->GetDurationTicks();
@@ -185,7 +185,7 @@ bool AnimationComponent::ExitTimeOk(const QETransition& t, const AnimationState&
     }
 }
 
-const QETransition* AnimationComponent::FindValidTransition()
+const QETransition* QEAnimationComponent::FindValidTransition()
 {
     auto it = _transitionsFrom.find(currentState.Id);
     if (it == _transitionsFrom.end()) return nullptr;
@@ -200,7 +200,7 @@ const QETransition* AnimationComponent::FindValidTransition()
     return nullptr;
 }
 
-void AnimationComponent::ConsumeTriggersUsed(const QETransition& t)
+void QEAnimationComponent::ConsumeTriggersUsed(const QETransition& t)
 {
     for(const auto& c : t.conditions)
     {
@@ -212,32 +212,32 @@ void AnimationComponent::ConsumeTriggersUsed(const QETransition& t)
     }
 }
 
-void AnimationComponent::SetBool(const std::string& name, bool v)
+void QEAnimationComponent::SetBool(const std::string& name, bool v)
 {
     QEParam& p = ensureParam_(name, QEParamType::Bool);
     p.value.b = v;
 }
 
-void AnimationComponent::SetInt(const std::string& name, int v)
+void QEAnimationComponent::SetInt(const std::string& name, int v)
 {
     QEParam& p = ensureParam_(name, QEParamType::Int);
     p.value.i = v;
 }
 
-void AnimationComponent::SetFloat(const std::string& name, float v)
+void QEAnimationComponent::SetFloat(const std::string& name, float v)
 {
     QEParam& p = ensureParam_(name, QEParamType::Float);
     p.value.f = v;
 }
 
-void AnimationComponent::SetTrigger(const std::string& name, bool value)
+void QEAnimationComponent::SetTrigger(const std::string& name, bool value)
 {
     QEParam& p = ensureParam_(name, QEParamType::Trigger);
     p.trigger = value;
     std::cout << "Set Trigger\n";
 }
 
-bool AnimationComponent::GetBool(const std::string& name) const
+bool QEAnimationComponent::GetBool(const std::string& name) const
 {
     auto it = _params.find(name);
     if (it == _params.end()) return false;
@@ -251,7 +251,7 @@ bool AnimationComponent::GetBool(const std::string& name) const
     return p.value.b;
 }
 
-int AnimationComponent::GetInt(const std::string& name) const
+int QEAnimationComponent::GetInt(const std::string& name) const
 {
     auto it = _params.find(name);
     if (it == _params.end()) return 0;
@@ -265,7 +265,7 @@ int AnimationComponent::GetInt(const std::string& name) const
     return p.value.i;
 }
 
-float AnimationComponent::GetFloat(const std::string& name) const
+float QEAnimationComponent::GetFloat(const std::string& name) const
 {
     auto it = _params.find(name);
     if (it == _params.end()) return 0.0f;
@@ -279,7 +279,7 @@ float AnimationComponent::GetFloat(const std::string& name) const
     return p.value.f;
 }
 
-bool AnimationComponent::IsTriggerSet(const std::string& name) const
+bool QEAnimationComponent::IsTriggerSet(const std::string& name) const
 {
     auto it = _params.find(name);
     if (it == _params.end()) return false;
@@ -294,7 +294,7 @@ bool AnimationComponent::IsTriggerSet(const std::string& name) const
     return p.trigger; // true si el trigger está activo
 }
 
-void AnimationComponent::CleanLastResources()
+void QEAnimationComponent::CleanLastResources()
 {
     if (this->animator != nullptr)
     {
@@ -307,9 +307,9 @@ void AnimationComponent::CleanLastResources()
     }
 }
 
-void AnimationComponent::QEStart()
+void QEAnimationComponent::QEStart()
 {
-    auto animationComponent = this->Owner->GetComponent<AnimationComponent>();
+    auto animationComponent = this->Owner->GetComponent<QEAnimationComponent>();
     if (animationComponent != nullptr)
     {
         auto meshComponent = this->Owner->GetComponent<QEGeometryComponent>();
@@ -339,7 +339,7 @@ void AnimationComponent::QEStart()
     QEGameComponent::QEStart();
 }
 
-void AnimationComponent::QEUpdate()
+void QEAnimationComponent::QEUpdate()
 {
     this->animator->UpdateAnimation(Timer::DeltaTime, currentState.Loop);
 
@@ -358,13 +358,13 @@ void AnimationComponent::QEUpdate()
     _triggersUsedThisFrame.clear();
 }
 
-void AnimationComponent::QEDestroy()
+void QEAnimationComponent::QEDestroy()
 {
     this->CleanLastResources();
     QEGameComponent::QEDestroy();
 }
 
-void AnimationComponent::QEInit()
+void QEAnimationComponent::QEInit()
 {
     auto entryState = this->_states.find(this->currentState.Id);
     if (entryState != this->_states.end())

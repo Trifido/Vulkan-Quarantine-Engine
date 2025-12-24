@@ -6,7 +6,7 @@
 #include <PhysicsBody.h>
 #include <PhysicsModule.h>
 #include <QESpringArmComponent.h>
-#include <AnimationComponent.h>
+#include <QEAnimationComponent.h>
 #include <Timer.h>
 
 #include <Jolt/Core/TempAllocator.h>
@@ -80,7 +80,7 @@ void QECharacterController::QEInit()
     mCollider = Owner->GetComponentInChildren<QECollider>(true);
     mPhysBody = Owner->GetComponent<PhysicsBody>();
     mSpringArm = Owner->GetComponentInChildren<QESpringArmComponent>(true);
-    animationComponentPtr = Owner->GetComponentInChildren<AnimationComponent>(true);
+    animationComponentPtr = Owner->GetComponentInChildren<QEAnimationComponent>(true);
 
     BuildOrUpdateCharacter();
 

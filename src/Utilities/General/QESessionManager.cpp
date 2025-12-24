@@ -21,7 +21,7 @@ void QESessionManager::SetEditorMode(bool value)
     this->_isEditor = value;
     this->_activeCamera = (_isEditor || _gameCamera == nullptr) ? _editorCamera : _gameCamera;
 
-    if (value)
+    if (value || _gameCamera == nullptr)
     {
         auto gameObjectManager = GameObjectManager::getInstance();
         std::shared_ptr<QEGameObject> cameraObject = std::make_shared<QEGameObject>("CameraEditor");

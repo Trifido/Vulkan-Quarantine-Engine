@@ -3,7 +3,7 @@
 #define SKELETAL_COMPONENT_H
 
 #include <QEGameComponent.h>
-#include <AnimationResources.h>
+#include <QEAnimationResources.h>
 
 class SkeletalComponent : public QEGameComponent
 {
