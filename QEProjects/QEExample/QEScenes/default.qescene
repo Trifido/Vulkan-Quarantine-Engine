@@ -9,8 +9,8 @@ CameraEditor:
 AtmosphereDto:
   hasAtmosphere: true
   environmentType: 2
-  sunDirection: [-0.5, -0.7071068, -0.49999994]
-  sunIntensity: 70.710686
+  sunEulerDegrees: [-45.000004, -45.000004, 0]
+  sunBaseIntensity: 100
 Materials:
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\defaultPrimitiveMat.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorDebugAABB.qemat

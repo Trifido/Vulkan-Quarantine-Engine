@@ -11,22 +11,22 @@ struct AtmosphereDto
 {
     bool hasAtmosphere;
     int environmentType;
-    glm::vec3 sunDirection;
-    float sunIntensity;
+    glm::vec3 sunEulerDegrees;
+    float sunBaseIntensity;
 
     AtmosphereDto()
         : hasAtmosphere(true),
         environmentType(2),
-        sunDirection{ -45.0f, 45.0f, 0.0f },
-        sunIntensity(100.0f)
+        sunEulerDegrees{ -45.0f, 45.0f, 0.0f },
+        sunBaseIntensity(100.0f)
     {
     }
 
-    AtmosphereDto(bool hasAtmosphere, int environmentType, glm::vec3 sunDirection, float sunIntensity)
+    AtmosphereDto(bool hasAtmosphere, int environmentType, glm::vec3 sunEulerDegrees, float sunBaseIntensity)
         : hasAtmosphere(hasAtmosphere),
         environmentType(environmentType),
-        sunDirection(sunDirection),
-        sunIntensity(sunIntensity)
+        sunEulerDegrees(sunEulerDegrees),
+        sunBaseIntensity(sunBaseIntensity)
     {
     }
 };
@@ -39,8 +39,8 @@ namespace YAML {
             Node n;
             n["hasAtmosphere"] = rhs.hasAtmosphere;
             n["environmentType"] = rhs.environmentType;
-            n["sunDirection"] = rhs.sunDirection;
-            n["sunIntensity"] = rhs.sunIntensity;
+            n["sunEulerDegrees"] = rhs.sunEulerDegrees;
+            n["sunBaseIntensity"] = rhs.sunBaseIntensity;
             return n;
         }
 
@@ -50,8 +50,8 @@ namespace YAML {
 
             rhs.hasAtmosphere = n["hasAtmosphere"] ? n["hasAtmosphere"].as<bool>() : def.hasAtmosphere;
             rhs.environmentType = n["environmentType"] ? n["environmentType"].as<int>() : def.environmentType;
-            rhs.sunDirection = n["sunDirection"] ? n["sunDirection"].as<glm::vec3>() : def.sunDirection;
-            rhs.sunIntensity = n["sunIntensity"] ? n["sunIntensity"].as<float>() : def.sunIntensity;
+            rhs.sunEulerDegrees = n["sunEulerDegrees"] ? n["sunEulerDegrees"].as<glm::vec3>() : def.sunEulerDegrees;
+            rhs.sunBaseIntensity = n["sunBaseIntensity"] ? n["sunBaseIntensity"].as<float>() : def.sunBaseIntensity;
             return true;
         }
     };

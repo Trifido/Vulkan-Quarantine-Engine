@@ -26,9 +26,10 @@ void QESunLight::UpdateSun()
     }
 }
 
-void QESunLight::SetLightDirection(glm::vec3 dir)
+void QESunLight::SetSunEulerDegrees(const glm::vec3& eulerDeg)
 {
-    this->transform->SetLocalEulerDegrees(dir);
+    this->transform->SetLocalEulerDegrees(eulerDeg);
+
     glm::vec3 directionToSun = this->transform->Forward();
     this->uniformData.Direction = directionToSun;
 
@@ -36,7 +37,7 @@ void QESunLight::SetLightDirection(glm::vec3 dir)
     float colorIntensity = glm::clamp(elevation, 0.0f, 1.0f);
     this->uniformData.Intensity = this->baseIntensity * colorIntensity;
 
-    glm::vec3 sunsetColor = glm::vec3(1.0f, 0.4f, 0.2f); 
+    glm::vec3 sunsetColor = glm::vec3(1.0f, 0.4f, 0.2f);
     glm::vec3 dayColor = glm::vec3(1.0f, 1.0f, 0.9f);
 
     this->diffuse = glm::mix(sunsetColor, dayColor, colorIntensity) * colorIntensity;

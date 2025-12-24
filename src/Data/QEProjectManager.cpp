@@ -80,8 +80,8 @@ bool QEProjectManager::CreateScene(const std::string& sceneName)
                 AtmosphereDto atmosphere;
                 file.write(reinterpret_cast<const char*>(&atmosphere.hasAtmosphere), sizeof(bool));
                 file.write(reinterpret_cast<const char*>(&atmosphere.environmentType), sizeof(int));
-                file.write(reinterpret_cast<const char*>(&atmosphere.sunDirection), sizeof(glm::vec3));
-                file.write(reinterpret_cast<const char*>(&atmosphere.sunIntensity), sizeof(float));
+                file.write(reinterpret_cast<const char*>(&atmosphere.sunEulerDegrees), sizeof(glm::vec3));
+                file.write(reinterpret_cast<const char*>(&atmosphere.sunBaseIntensity), sizeof(float));
 
                 int numMaterials = 0;
                 file.write(reinterpret_cast<const char*>(&numMaterials), sizeof(int));

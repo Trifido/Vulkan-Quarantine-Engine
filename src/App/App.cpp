@@ -484,7 +484,7 @@ void App::loadScene(QEScene scene)
 
     //Editor resources initialization
     this->sessionManager->SetEditorMode(this->isRunEditor);
-    this->sessionManager->SetDebugMode(true);
+    this->sessionManager->SetDebugMode(false);
     this->sessionManager->SetupEditor();
 
     // Initialize active camera resources

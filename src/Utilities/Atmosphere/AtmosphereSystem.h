@@ -100,8 +100,6 @@ public:
     void CleanLastResources();
     void UpdateSun();
     void UpdateAtmopshereResolution();
-    YAML::Node serialize() const;
-    void deserialize(const YAML::Node& node);
 };
 
 #endif // !ATMOSPHERE_SYSTEM_H

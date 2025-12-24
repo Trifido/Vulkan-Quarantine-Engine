@@ -17,7 +17,7 @@ public:
 public:
     QESunLight();
     void UpdateSun();
-    void SetLightDirection(glm::vec3 dir);
+    void SetSunEulerDegrees(const glm::vec3& eulerDeg);
 };
 
 #endif // !SUN_LIGHT_H
