@@ -84,9 +84,9 @@ GameObjects:
           - type: QEAnimationComponent
             id: PqQ5PNEEfuTl
             currentState:
-              Id: WalkBack
+              Id: Idle
               Loop: true
-              AnimationClip: WalkingBackward
+              AnimationClip: Idle
             States:
               - Id: Idle
                 Loop: true
