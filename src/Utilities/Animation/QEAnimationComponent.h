@@ -14,7 +14,6 @@ public:
     std::shared_ptr<Animator> animator;
 
 private:
-    REFLECT_PROPERTY(std::string, _entryStateId)
     REFLECT_PROPERTY(AnimationState, currentState)
     REFLECT_PROPERTY(std::vector<AnimationState>, States)
     std::unordered_map<std::string, AnimationState> _states;
