@@ -62,7 +62,7 @@ GameObjects:
         MoveSpeed: 3
         SprintSpeed: 8
         JumpSpeed: 6.5
-        GravityY: -9.81
+        GravityY: -19.81
         MaxSlopeDeg: 50
     children:
       - id: 81nP7VxEE4Fd
@@ -84,9 +84,9 @@ GameObjects:
           - type: QEAnimationComponent
             id: PqQ5PNEEfuTl
             currentState:
-              Id: WalkBack
+              Id: Idle
               Loop: true
-              AnimationClip: WalkingBackward
+              AnimationClip: Idle
             States:
               - Id: Idle
                 Loop: true
@@ -216,7 +216,7 @@ GameObjects:
             parentId: ""
           - type: QESpringArmComponent
             id: EkZgzUny1swO
-            TargetArmLength: 3
+            TargetArmLength: 4
             MinArmLength: 1
             MaxArmLength: 6
             TargetOffset: [0, 1.6, 0]
