@@ -37,19 +37,17 @@ class QECharacterController : public QEGameComponent
         std::shared_ptr<QEAnimationComponent> animationComponentPtr = nullptr;
         std::shared_ptr<QESpringArmComponent> mSpringArm = nullptr;
 
-        // Character de Jolt
         JPH::Ref<JPH::CharacterVirtual>     mCharacter;
         JPH::CharacterVirtualSettings       mSettings;
         JPH::ShapeRefC mLastShape;
     private:
-        // Aux
         static inline JPH::Quat  ToJPH(const glm::quat& q) { return JPH::Quat(q.x, q.y, q.z, q.w); }
         static inline JPH::RVec3 ToJPH(const glm::vec3& v) { return JPH::RVec3((double)v.x, (double)v.y, (double)v.z); }
         static inline glm::vec3  ToGLM(const JPH::RVec3& v) { return glm::vec3((float)v.GetX(), (float)v.GetY(), (float)v.GetZ()); }
         static inline glm::quat  ToGLM(const JPH::Quat& q) { return glm::quat(q.GetW(), q.GetX(), q.GetY(), q.GetZ()); }
 
         glm::vec3 ReadMoveInput() const;
-        void      BuildOrUpdateCharacter();   // crea mCharacter si falta o actualiza shape/pose
+        void      BuildOrUpdateCharacter();
         void      SyncFromCharacter();
 
     public:
