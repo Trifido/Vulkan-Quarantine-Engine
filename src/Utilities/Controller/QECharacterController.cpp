@@ -237,30 +237,31 @@ void QECharacterController::QEUpdate()
     mVelocity.x = wishVel.x;
     mVelocity.z = wishVel.z;
 
-    glm::vec3 planar = glm::vec3(wishVel.x, 0.0f, wishVel.z);
-    if (glm::length2(planar) > 0.0001f)
+    mCharacter->SetLinearVelocity(JPH::Vec3(mVelocity.x, mVelocity.y, mVelocity.z));
+
+    // Rotations
+    auto camTransform = mSpringArm->Owner->GetComponentInChildren<QETransform>(false);
+
+    auto cameraDir = camTransform->Forward();
+    cameraDir.y = 0.0f;
+    cameraDir = glm::normalize(cameraDir);
+
+    auto characterDir = mTransform->Forward();
+    characterDir.y = 0.0f;
+    characterDir = glm::normalize(characterDir);
+
+    if (ImGui::IsKeyPressed(ImGuiKey_W))
     {
-        planar = glm::normalize(planar);
+        float targetYaw = std::atan2(-cameraDir.x, -cameraDir.z);
 
-        // Nota: con forward = (0,0,-1), el yaw puede calcularse así:
-        // yaw = atan2(dir.x, -dir.z)
-        float targetYaw = std::atan2(planar.x, -planar.z);
+        glm::quat newRot = glm::angleAxis(
+            targetYaw,
+            glm::vec3(0.0f, 1.0f, 0.0f)
+        );
 
-        // Saca yaw actual del character
-        glm::quat q = ToGLM(mCharacter->GetRotation());
-        float currentYaw = QEHelper::YawFromQuat(q);
-
-        // Step limitado por TurnSpeedDeg
-        float maxStep = glm::radians(TurnSpeedDeg) * dt;
-        float newYaw = QEHelper::MoveTowardsAngle(currentYaw, targetYaw, maxStep);
-
-        glm::quat newRot = glm::angleAxis(newYaw, glm::vec3(0, 1, 0));
-
-        // IMPORTANTÍSIMO: impón la rotación al character
         mCharacter->SetRotation(ToJPH(newRot));
     }
 
-    mCharacter->SetLinearVelocity(JPH::Vec3(mVelocity.x, mVelocity.y, mVelocity.z));
 
     JPH::TempAllocatorImpl temp_alloc(4 * 1024 * 1024);
     auto bp_filter = MakeBPFilter();
@@ -280,36 +281,14 @@ void QECharacterController::QEUpdate()
 
     SyncFromCharacter();
 
+    characterDir = mTransform->Forward();
+    characterDir.y = 0.0f;
+    characterDir = glm::normalize(characterDir);
+
     auto pos = mTransform->GetWorldPosition();
-    auto dir = mTransform->Forward();
-    auto endPos = pos + dir * 2.0f;
+    auto endPosCamera = pos + cameraDir * 2.0f;
+    auto endPosCharacter = pos + characterDir * 2.0f;
 
-    QEDebugSystem::getInstance()->AddLine(pos, endPos, glm::vec4(1.0, 0.0, 0.0, 1.0));
-}
-
-
-void QECharacterController::DebugCheckSync() const
-{
-    if (!mTransform || !mCharacter) return;
-
-    glm::vec3 goPos = mTransform->GetWorldPosition();
-    glm::vec3 jpPos = ToGLM(mCharacter->GetPosition());
-
-    float posErr = glm::length(goPos - jpPos);
-
-    glm::quat goRot = mTransform->GetWorldRotation();
-    glm::quat jpRot = ToGLM(mCharacter->GetRotation());
-
-    float goYaw = QEHelper::YawFromQuat(goRot);
-    float jpYaw = QEHelper::YawFromQuat(jpRot);
-
-    float yawErrDeg = glm::degrees(std::abs(QEHelper::WrapPi(goYaw - jpYaw)));
-
-    // Umbrales típicos
-    // posErr > 1 cm o yawErr > 1 grado => desync visible
-    if (posErr > 0.01f || yawErrDeg > 1.0f)
-    {
-        // log o ImGui
-        std::cout << "DESYNC\n";
-    }
+    QEDebugSystem::getInstance()->AddLine(pos, endPosCamera, glm::vec4(0.0, 1.0, 0.0, 1.0));
+    QEDebugSystem::getInstance()->AddLine(pos, endPosCharacter, glm::vec4(1.0, 0.0, 0.0, 1.0));
 }

@@ -55,7 +55,6 @@ class QECharacterController : public QEGameComponent
         QECharacterController();
 
         void DebugDraw(JPH::DebugRenderer& renderer);
-        void DebugCheckSync() const;
 
         void QEStart() override;
         void QEInit() override;
