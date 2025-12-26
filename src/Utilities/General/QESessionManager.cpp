@@ -3,10 +3,10 @@
 #include <GameObjectManager.h>
 #include <EditorObjectManager.h>
 #include <CullingSceneManager.h>
-#include <PhysicsModule.h>
 #include <Grid.h>
 #include <SynchronizationModule.h>
 #include <QECameraController.h>
+#include <DebugSystem/QEDebugSystem.h>
 
 QESessionManager::QESessionManager()
 {
@@ -43,13 +43,8 @@ void QESessionManager::SetDebugMode(bool value)
     auto cullingSceneManager = CullingSceneManager::getInstance();
     cullingSceneManager->DebugMode = value;
 
-    auto physicsModule = PhysicsModule::getInstance();
-
-    if (physicsModule->DebugDrawer == nullptr)
-    {
-        physicsModule->InitializeDebugResources();
-    }
-    physicsModule->DebugDrawer->SetEnabled(value);
+    auto debugSystem = QEDebugSystem::getInstance();
+    debugSystem->SetEnabled(value);
 }
 
 void QESessionManager::RegisterActiveSceneCamera()
@@ -107,18 +102,13 @@ void QESessionManager::UpdateViewportSize()
 void QESessionManager::SetupEditor()
 {
     auto cullingSceneManager = CullingSceneManager::getInstance();
-    auto physicsModule = PhysicsModule::getInstance();
     auto editorManager = EditorObjectManager::getInstance();
 
     cullingSceneManager->InitializeCullingSceneResources();
     cullingSceneManager->DebugMode = _isDebugMode;
 
-    if (physicsModule->DebugDrawer == nullptr)
-    {
-        physicsModule->InitializeDebugResources();
-    }
-
-    physicsModule->DebugDrawer->SetEnabled(_isDebugMode);
+    auto debugSystem = QEDebugSystem::getInstance();
+    debugSystem->SetEnabled(_isDebugMode);
 
     if (_isEditor)
     {

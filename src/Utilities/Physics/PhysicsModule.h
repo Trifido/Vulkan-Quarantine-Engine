@@ -51,7 +51,7 @@ public:
 public:
     PhysicsModule();
 
-    void UpdateDebugDrawer();
+    void UpdateDebugPhysicsDrawer();
 
     const JPH::BroadPhaseLayerInterface& GetBPLayerInterface()   const { return *m_broadphaseLayers; }
     const JPH::ObjectVsBroadPhaseLayerFilter& GetObjectVsBPLFilter()  const { return *m_objectVsBPLFilter; }
@@ -80,10 +80,6 @@ public:
     void RemoveRigidBody(JPH::BodyID id);
     void RegisterCharacter(QECharacterController* cc);
     void UnregisterCharacter(QECharacterController* cc);
-
-    // Debug Renderer
-    void InitializeDebugResources();
-    void CleanupDebugDrawer();
 
     ~PhysicsModule();
 };

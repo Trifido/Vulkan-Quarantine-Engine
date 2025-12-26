@@ -3,12 +3,8 @@
 #ifndef JOLT_DEBUG_RENDERER_H
 #define JOLT_DEBUG_RENDERER_H
 
-#include <DeviceModule.h>
-#include <MaterialManager.h>
 #include <Vertex.h>
-#include <glm/glm.hpp>
-#include <vector>
-#include <vulkan/vulkan.hpp>
+#include <DebugSystem/QEDebugSystem.h>
 
 // Jolt
 #include <Jolt/Jolt.h>
@@ -17,22 +13,11 @@
 class JoltDebugRenderer : public JPH::DebugRendererSimple
 {
 private:
-    static DeviceModule* deviceModule_ptr;
-    VkBuffer lineVertexBuffer = VK_NULL_HANDLE;
-    VkDeviceMemory lineVertexMemory = VK_NULL_HANDLE;
-    std::vector<DebugVertex> lineVertices;
+    QEDebugSystem* debugSystem = nullptr;
 
     glm::vec4 debugColor = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
 
-    std::shared_ptr<ShaderModule> shader_debug_ptr = nullptr;
-    std::shared_ptr<QEMaterial> material_debug_ptr = nullptr;
-
-    bool m_enabled = false;
-
 private:
-    void createVertexBuffer();
-    void updateVertexBuffer();
-
     static inline glm::vec4 toRGBA(JPH::ColorArg col);
     static inline glm::vec4 toVec4(JPH::RVec3Arg p);
 public:
@@ -51,16 +36,6 @@ public:
         ECastShadow inCastShadow) override;
 
     void DrawText3D(JPH::RVec3Arg, const JPH::string_view&, JPH::ColorArg, float) override {}
-
-    void SetEnabled(bool b) { m_enabled = b; }
-    bool IsEnabled() const { return m_enabled; }
-
-    void DrawDebug(VkCommandBuffer& commandBuffer, uint32_t idx);
-    void InitializeDebugResources();
-
-    void UpdateBuffers();
-    void clear();
-    void cleanup();
 
     JPH::DebugRenderer& JoltIf() { return *this; }
 };

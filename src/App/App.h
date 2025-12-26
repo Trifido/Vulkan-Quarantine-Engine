@@ -130,6 +130,7 @@ private:
     DepthBufferModule*      depthBufferModule;
     AntiAliasingModule*     antialiasingModule;
     RenderPassModule*       renderPassModule;
+    QEDebugSystem*          debugSystem;
 
     bool show_demo_window = true;
     bool show_another_window = true;

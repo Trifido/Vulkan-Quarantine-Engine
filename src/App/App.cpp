@@ -21,7 +21,9 @@ App::App()
     this->queueModule = QueueModule::getInstance();
     this->deviceModule = DeviceModule::getInstance();
 
+    this->debugSystem = QEDebugSystem::getInstance();
     this->physicsModule = PhysicsModule::getInstance();
+
     this->graphicsPipelineManager = GraphicsPipelineManager::getInstance();
     this->shadowPipelineManager = ShadowPipelineManager::getInstance();
     this->computePipelineManager = ComputePipelineManager::getInstance();
@@ -175,6 +177,8 @@ void App::initVulkan()
     this->computeNodeManager = ComputeNodeManager::getInstance();
     this->computeNodeManager->InitializeComputeResources();
     this->particleSystemManager = ParticleSystemManager::getInstance();
+    this->debugSystem = QEDebugSystem::getInstance();
+    this->debugSystem->InitializeDebugGraphicResources();
 
 
     // Import meshes
@@ -186,8 +190,17 @@ void App::initVulkan()
     //QEProjectManager::ImportAnimationFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Idle_Character.glb",
     //    std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Animations"));
 
+    //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/AsiaTown/lion.glb");
+
     // Load Scene
     this->loadScene(this->scene);
+
+
+    //auto arcPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/AsiaTown/Meshes/lion.gltf").generic_string();
+    //std::shared_ptr<QEGameObject> arcObject = std::make_shared<QEGameObject>("Lion");
+    //arcObject->AddComponent<QEGeometryComponent>(make_shared<QEGeometryComponent>(std::make_unique<MeshGenerator>(arcPath)));
+    //arcObject->AddComponent<QEMeshRenderer>(make_shared<QEMeshRenderer>());
+    //this->gameObjectManager->AddGameObject(arcObject);
 
     /*
     auto absPath = std::filesystem::absolute("../../resources/models").generic_string();
@@ -484,7 +497,7 @@ void App::loadScene(QEScene scene)
 
     //Editor resources initialization
     this->sessionManager->SetEditorMode(this->isRunEditor);
-    this->sessionManager->SetDebugMode(false);
+    this->sessionManager->SetDebugMode(true);
     this->sessionManager->SetupEditor();
 
     // Initialize active camera resources
@@ -513,6 +526,8 @@ void App::mainLoop()
 
         Timer::getInstance()->UpdateDeltaTime();
 
+        this->debugSystem->ClearLines();
+
         // Start GameObjects 
         this->gameObjectManager->StartQEGameObjects();
 
@@ -520,7 +535,7 @@ void App::mainLoop()
         int physicsSteps = Timer::getInstance()->ComputeFixedSteps();
         for (int i = 0; i < physicsSteps; ++i)
             physicsModule->ComputePhysics(Timer::getInstance()->FixedDelta);
-        physicsModule->UpdateDebugDrawer();
+        physicsModule->UpdateDebugPhysicsDrawer();
 
         // UPDATE GameObjects 
         this->gameObjectManager->UpdateQEGameObjects();
@@ -536,6 +551,9 @@ void App::mainLoop()
 
         // UPDATE CAMERA DATA
         this->sessionManager->UpdateActiveCameraGPUData();
+
+        // UPDATE DEBUG BUFFERS
+        this->debugSystem->UpdateGraphicBuffers();
 
         ImGuiIO& io = ImGui::GetIO();
         if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false))
@@ -584,7 +602,7 @@ void App::cleanUp()
     this->particleSystemManager->Cleanup();
     this->sessionManager->CleanEditorResources();
     this->sessionManager->CleanCullingResources();
-    this->physicsModule->CleanupDebugDrawer();
+    this->debugSystem->Cleanup();
 
     this->textureManager->Clean();
 

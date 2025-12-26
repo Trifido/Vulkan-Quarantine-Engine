@@ -26,7 +26,8 @@ class QECharacterController : public QEGameComponent
         REFLECT_PROPERTY(float, SprintSpeed)     // m/s
         REFLECT_PROPERTY(float, JumpSpeed)       // m/s
         REFLECT_PROPERTY(float, GravityY)        // m/s^2 (negativo)
-        REFLECT_PROPERTY(float, MaxSlopeDeg)     // grados (p.e. 50)
+        REFLECT_PROPERTY(float, MaxSlopeDeg)     // grados
+        REFLECT_PROPERTY(float, TurnSpeedDeg)    // grados/seg
 
         bool   mGrounded = false;
         glm::vec3 mVelocity{ 0.0f };
@@ -54,6 +55,7 @@ class QECharacterController : public QEGameComponent
         QECharacterController();
 
         void DebugDraw(JPH::DebugRenderer& renderer);
+        void DebugCheckSync() const;
 
         void QEStart() override;
         void QEInit() override;

@@ -12,6 +12,7 @@
 #include <Jolt/Core/TempAllocator.h>
 #include <Jolt/Physics/Character/CharacterVirtual.h>
 #include <imgui.h>
+#include <Helpers/MathHelpers.h>
 
 namespace
 {
@@ -41,6 +42,7 @@ QECharacterController::QECharacterController()
     JumpSpeed = 6.5f;
     GravityY = -9.81f;
     MaxSlopeDeg = 50.0f;
+    TurnSpeedDeg = 540.0f;
 
     mSettings.mBackFaceMode = JPH::EBackFaceMode::IgnoreBackFaces;
     mSettings.mEnhancedInternalEdgeRemoval = true;
@@ -216,24 +218,8 @@ void QECharacterController::QEUpdate()
     const bool a = ImGui::IsKeyDown(ImGuiKey_A);
     const bool d = ImGui::IsKeyDown(ImGuiKey_D);
 
-    const glm::vec3 wish = ReadMoveInput();
-
-    if (animationComponentPtr) // ya lo tienes en tu clase
-    {
-        // speed normalizado 0..1 (recomendado para umbrales estables)
-        glm::vec2 xz(wish.x, wish.z);
-        float speed01 = glm::length(xz) / (ImGui::IsKeyDown(ImGuiKey_ModShift) ? SprintSpeed : MoveSpeed);
-        speed01 = glm::clamp(speed01, 0.0f, 1.0f);
-
-        // forward: W/S explícito (no depende de cámara)
-        float forward = 0.0f;
-        if (w && !s) forward = 1.0f;
-        else if (s && !w) forward = -1.0f;
-
-        animationComponentPtr->SetFloat("speed", speed01);
-        animationComponentPtr->SetFloat("forward", forward);
-    }
-
+    const glm::vec3 wishVel = ReadMoveInput();
+    
     const bool wasGrounded = mCharacter->IsSupported();
 
     if (wasGrounded)
@@ -248,8 +234,31 @@ void QECharacterController::QEUpdate()
         mVelocity.y += GravityY * dt;
     }
 
-    mVelocity.x = wish.x;
-    mVelocity.z = wish.z;
+    mVelocity.x = wishVel.x;
+    mVelocity.z = wishVel.z;
+
+    glm::vec3 planar = glm::vec3(wishVel.x, 0.0f, wishVel.z);
+    if (glm::length2(planar) > 0.0001f)
+    {
+        planar = glm::normalize(planar);
+
+        // Nota: con forward = (0,0,-1), el yaw puede calcularse así:
+        // yaw = atan2(dir.x, -dir.z)
+        float targetYaw = std::atan2(planar.x, -planar.z);
+
+        // Saca yaw actual del character
+        glm::quat q = ToGLM(mCharacter->GetRotation());
+        float currentYaw = QEHelper::YawFromQuat(q);
+
+        // Step limitado por TurnSpeedDeg
+        float maxStep = glm::radians(TurnSpeedDeg) * dt;
+        float newYaw = QEHelper::MoveTowardsAngle(currentYaw, targetYaw, maxStep);
+
+        glm::quat newRot = glm::angleAxis(newYaw, glm::vec3(0, 1, 0));
+
+        // IMPORTANTÍSIMO: impón la rotación al character
+        mCharacter->SetRotation(ToJPH(newRot));
+    }
 
     mCharacter->SetLinearVelocity(JPH::Vec3(mVelocity.x, mVelocity.y, mVelocity.z));
 
@@ -268,5 +277,39 @@ void QECharacterController::QEUpdate()
     );
 
     mGrounded = mCharacter->IsSupported();
+
     SyncFromCharacter();
+
+    auto pos = mTransform->GetWorldPosition();
+    auto dir = mTransform->Forward();
+    auto endPos = pos + dir * 2.0f;
+
+    QEDebugSystem::getInstance()->AddLine(pos, endPos, glm::vec4(1.0, 0.0, 0.0, 1.0));
+}
+
+
+void QECharacterController::DebugCheckSync() const
+{
+    if (!mTransform || !mCharacter) return;
+
+    glm::vec3 goPos = mTransform->GetWorldPosition();
+    glm::vec3 jpPos = ToGLM(mCharacter->GetPosition());
+
+    float posErr = glm::length(goPos - jpPos);
+
+    glm::quat goRot = mTransform->GetWorldRotation();
+    glm::quat jpRot = ToGLM(mCharacter->GetRotation());
+
+    float goYaw = QEHelper::YawFromQuat(goRot);
+    float jpYaw = QEHelper::YawFromQuat(jpRot);
+
+    float yawErrDeg = glm::degrees(std::abs(QEHelper::WrapPi(goYaw - jpYaw)));
+
+    // Umbrales típicos
+    // posErr > 1 cm o yawErr > 1 grado => desync visible
+    if (posErr > 0.01f || yawErrDeg > 1.0f)
+    {
+        // log o ImGui
+        std::cout << "DESYNC\n";
+    }
 }

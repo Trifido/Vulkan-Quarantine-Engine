@@ -128,6 +128,9 @@ PhysicsModule::PhysicsModule()
 
     // Gravedad (estándar del mundo, distinta de la que uses para CharacterVirtual)
     m_system.SetGravity(m_gravity);
+
+    // Crear renderer de debug para Jolt
+    this->DebugDrawer = new JoltDebugRenderer();
 }
 
 PhysicsModule::~PhysicsModule()
@@ -179,12 +182,11 @@ void PhysicsModule::SetGravity(float gravityY)
     m_system.SetGravity(m_gravity);
 }
 
-void PhysicsModule::UpdateDebugDrawer()
+void PhysicsModule::UpdateDebugPhysicsDrawer()
 {
-    if (!DebugDrawer->IsEnabled())
+    auto debugSystem = QEDebugSystem::getInstance();
+    if (!debugSystem->IsEnabled())
         return;
-
-    DebugDrawer->clear();
 
     JPH::BodyManager::DrawSettings draw;
     draw.mDrawWorldTransform = true;
@@ -194,33 +196,8 @@ void PhysicsModule::UpdateDebugDrawer()
     for (QECharacterController* cc : m_characters)
     {
         if (cc)
+        {
             cc->DebugDraw(*DebugDrawer);
-    }
-
-    DebugDrawer->UpdateBuffers();
-}
-
-void PhysicsModule::InitializeDebugResources()
-{
-    // Si ya existe, limpiamos
-    if (this->DebugDrawer != nullptr)
-    {
-        this->DebugDrawer->cleanup();
-        delete this->DebugDrawer;
-        this->DebugDrawer = nullptr;
-    }
-
-    // Crear renderer de debug para Jolt
-    this->DebugDrawer = new JoltDebugRenderer();
-    this->DebugDrawer->SetEnabled(true);
-    this->DebugDrawer->InitializeDebugResources();
-}
-
-
-void PhysicsModule::CleanupDebugDrawer()
-{
-    if (DebugDrawer != nullptr)
-    {
-        DebugDrawer->cleanup();
+        }
     }
 }

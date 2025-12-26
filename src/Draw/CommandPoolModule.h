@@ -13,7 +13,7 @@
 #include <FrameBufferModule.h>
 #include <AtmosphereSystem.h>
 #include <CullingSceneManager.h>
-#include <PhysicsModule.h>
+#include <DebugSystem/QEDebugSystem.h>
 #include <QESingleton.h>
 
 class CommandPoolModule : public QESingleton<CommandPoolModule>
@@ -29,7 +29,7 @@ private:
     LightManager*                   lightManager;
     RenderPassModule*               renderPassModule;
     AtmosphereSystem*               atmosphereSystem;
-    PhysicsModule*                  physicsModule;
+    QEDebugSystem*                  debugSystem;
 
     VkCommandPool                   commandPool;
     VkCommandPool                   computeCommandPool;
