@@ -51,7 +51,7 @@ class QECharacterController : public QEGameComponent
         void      BuildOrUpdateCharacter();
         void      SyncFromCharacter();
 
-        void UpdateCharacterOrientation(glm::vec3 dir);
+        void UpdateCharacterOrientation(glm::vec3 dir, const float dt);
 
     public:
         QECharacterController();

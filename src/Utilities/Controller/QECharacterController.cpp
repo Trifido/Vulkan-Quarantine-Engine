@@ -200,7 +200,7 @@ void QECharacterController::SyncFromCharacter()
     mTransform->RotateWorld(deltaRot);
 }
 
-void QECharacterController::UpdateCharacterOrientation(glm::vec3 dir)
+void QECharacterController::UpdateCharacterOrientation(glm::vec3 dir, const float dt)
 {
     glm::vec3 targetDir = glm::vec3(dir.x, 0.0f, dir.z);
     if (glm::length2(targetDir) < 1e-6f)
@@ -208,14 +208,24 @@ void QECharacterController::UpdateCharacterOrientation(glm::vec3 dir)
 
     targetDir = glm::normalize(targetDir);
 
-    float yaw = std::atan2(targetDir.x, targetDir.z);
-    glm::quat targetWorldRot = glm::angleAxis(yaw, glm::vec3(0, 1, 0));
+    const float yaw = std::atan2(targetDir.x, targetDir.z);
+    const glm::quat targetWorldRot = glm::angleAxis(yaw, glm::vec3(0, 1, 0));
 
     // Root = target * inv(offset)
-    auto visual = this->Owner->GetComponentInChildren<QETransform>(false);
-    glm::quat rootWorldRot = glm::normalize(targetWorldRot * glm::inverse(visual->localRotation));
+    auto visualTransform = this->Owner->GetComponentInChildren<QETransform>(false);
+    const glm::quat targetRootWorldRot = glm::normalize(targetWorldRot * glm::inverse(visualTransform->localRotation));
 
-    mCharacter->SetRotation(ToJPH(rootWorldRot));
+    // Rotación actual del root (mundo)
+    const glm::quat currentRootWorldRot = ToGLM(mCharacter->GetRotation());
+
+    // Interpolar con límite de velocidad angular
+    // maxTurnSpeedRad = cuántos radianes/seg puede girar el root
+    constexpr float maxTurnSpeedRad = 6.0f; // ~343°/s, ajusta
+    const float t = glm::clamp(maxTurnSpeedRad * dt, 0.0f, 1.0f);
+
+    const glm::quat newRootWorldRot = glm::normalize(glm::slerp(currentRootWorldRot, targetRootWorldRot, t));
+
+    mCharacter->SetRotation(ToJPH(newRootWorldRot));
 }
 
 void QECharacterController::QEUpdate()
@@ -256,7 +266,7 @@ void QECharacterController::QEUpdate()
     mCharacter->SetLinearVelocity(JPH::Vec3(mVelocity.x, mVelocity.y, mVelocity.z));
 
     // Orientation
-    UpdateCharacterOrientation(wishVel);
+    UpdateCharacterOrientation(wishVel, dt);
 
     JPH::TempAllocatorImpl temp_alloc(4 * 1024 * 1024);
     auto bp_filter = MakeBPFilter();
