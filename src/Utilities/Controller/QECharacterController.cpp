@@ -13,6 +13,7 @@
 #include <Jolt/Physics/Character/CharacterVirtual.h>
 #include <imgui.h>
 #include <Helpers/MathHelpers.h>
+#include <QESessionManager.h>
 
 namespace
 {
@@ -199,8 +200,28 @@ void QECharacterController::SyncFromCharacter()
     mTransform->RotateWorld(deltaRot);
 }
 
+void QECharacterController::UpdateCharacterOrientation(glm::vec3 dir)
+{
+    glm::vec3 targetDir = glm::vec3(dir.x, 0.0f, dir.z);
+    if (glm::length2(targetDir) < 1e-6f)
+        return;
+
+    targetDir = glm::normalize(targetDir);
+
+    float yaw = std::atan2(targetDir.x, targetDir.z);
+    glm::quat targetWorldRot = glm::angleAxis(yaw, glm::vec3(0, 1, 0));
+
+    // Root = target * inv(offset)
+    auto visual = this->Owner->GetComponentInChildren<QETransform>(false);
+    glm::quat rootWorldRot = glm::normalize(targetWorldRot * glm::inverse(visual->localRotation));
+
+    mCharacter->SetRotation(ToJPH(rootWorldRot));
+}
+
 void QECharacterController::QEUpdate()
 {
+    if (QESessionManager::getInstance()->IsEditor()) return;
+
     if (!mCharacter)
     {
         BuildOrUpdateCharacter();
@@ -212,11 +233,6 @@ void QECharacterController::QEUpdate()
 
     const float dt = Timer::DeltaTime;
     if (dt <= 0.0f) return;
-
-    const bool w = ImGui::IsKeyDown(ImGuiKey_W);
-    const bool s = ImGui::IsKeyDown(ImGuiKey_S);
-    const bool a = ImGui::IsKeyDown(ImGuiKey_A);
-    const bool d = ImGui::IsKeyDown(ImGuiKey_D);
 
     const glm::vec3 wishVel = ReadMoveInput();
     
@@ -239,29 +255,8 @@ void QECharacterController::QEUpdate()
 
     mCharacter->SetLinearVelocity(JPH::Vec3(mVelocity.x, mVelocity.y, mVelocity.z));
 
-    // Rotations
-    auto camTransform = mSpringArm->Owner->GetComponentInChildren<QETransform>(false);
-
-    auto cameraDir = camTransform->Forward();
-    cameraDir.y = 0.0f;
-    cameraDir = glm::normalize(cameraDir);
-
-    auto characterDir = mTransform->Forward();
-    characterDir.y = 0.0f;
-    characterDir = glm::normalize(characterDir);
-
-    if (ImGui::IsKeyPressed(ImGuiKey_W))
-    {
-        float targetYaw = std::atan2(-cameraDir.x, -cameraDir.z);
-
-        glm::quat newRot = glm::angleAxis(
-            targetYaw,
-            glm::vec3(0.0f, 1.0f, 0.0f)
-        );
-
-        mCharacter->SetRotation(ToJPH(newRot));
-    }
-
+    // Orientation
+    UpdateCharacterOrientation(wishVel);
 
     JPH::TempAllocatorImpl temp_alloc(4 * 1024 * 1024);
     auto bp_filter = MakeBPFilter();
@@ -281,10 +276,13 @@ void QECharacterController::QEUpdate()
 
     SyncFromCharacter();
 
+    auto characterDir = mTransform->Forward();
     characterDir = mTransform->Forward();
     characterDir.y = 0.0f;
     characterDir = glm::normalize(characterDir);
 
+    auto camTransform = mSpringArm->Owner->GetComponentInChildren<QETransform>(false);
+    auto cameraDir = camTransform->Forward();
     auto pos = mTransform->GetWorldPosition();
     auto endPosCamera = pos + cameraDir * 2.0f;
     auto endPosCharacter = pos + characterDir * 2.0f;
