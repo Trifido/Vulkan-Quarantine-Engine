@@ -30,6 +30,7 @@ class QECharacterController : public QEGameComponent
         REFLECT_PROPERTY(float, TurnSpeedDeg)    // grados/seg
 
         bool   mGrounded = false;
+        bool   mCrouched = false;
         glm::vec3 mVelocity{ 0.0f };
 
         std::shared_ptr<QETransform>        mTransform = nullptr;
@@ -52,6 +53,7 @@ class QECharacterController : public QEGameComponent
         void      SyncFromCharacter();
 
         void UpdateCharacterOrientation(glm::vec3 dir, const float dt);
+        void UpdateCharacterAnimation(glm::vec3 velocity);
 
     public:
         QECharacterController();

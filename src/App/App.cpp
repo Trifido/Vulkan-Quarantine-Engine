@@ -152,7 +152,6 @@ void App::initVulkan()
     //Creamos el frame buffer
     framebufferModule.createFramebuffer(renderPassModule->DefaultRenderPass);
 
-    //Añadimos requisitos para los geometryComponent
     BufferManageModule::commandPool = this->commandPoolModule->getCommandPool();
     BufferManageModule::computeCommandPool = this->commandPoolModule->getComputeCommandPool();
     BufferManageModule::graphicsQueue = this->queueModule->graphicsQueue;
@@ -165,7 +164,7 @@ void App::initVulkan()
     OmniShadowResources::queueModule = this->queueModule;
     CSMResources::queueModule = this->queueModule;
 
-    // INIT ------------------------- Mesh & Material -------------------------------
+    // INIT ------------------------- Managers -------------------------------
     this->sessionManager = QESessionManager::getInstance();
 
     this->shaderManager = ShaderManager::getInstance();
@@ -180,306 +179,169 @@ void App::initVulkan()
     this->debugSystem = QEDebugSystem::getInstance();
     this->debugSystem->InitializeDebugGraphicResources();
 
-
     // Import meshes
-    //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Raptoid/scene.gltf");
-    //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Golem/scene.gltf");
     //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Idle_Character.glb");
 
     // Import animations
-    //QEProjectManager::ImportAnimationFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Idle_Character.glb",
-    //    std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Animations"));
-
-    //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/AsiaTown/lion.glb");
+    QEProjectManager::ImportAnimationFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Jumping2.glb",
+        std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Animations"));
 
     // Load Scene
     this->loadScene(this->scene);
 
-
-    //auto arcPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/AsiaTown/Meshes/lion.gltf").generic_string();
-    //std::shared_ptr<QEGameObject> arcObject = std::make_shared<QEGameObject>("Lion");
-    //arcObject->AddComponent<QEGeometryComponent>(make_shared<QEGeometryComponent>(std::make_unique<MeshGenerator>(arcPath)));
-    //arcObject->AddComponent<QEMeshRenderer>(make_shared<QEMeshRenderer>());
-    //this->gameObjectManager->AddGameObject(arcObject);
-
-    /*
-    auto absPath = std::filesystem::absolute("../../resources/models").generic_string();
-
-    //const std::string absolute_path = absPath + "/cyber_warrior/scene.gltf";
-    //const std::string absolute_path = absPath + "/drone/mech_drone.glb";
-    //const std::string absolute_path = absPath + "/newell_teaset/teapot.obj";
-    //const std::string absolute_path = absPath + "/Raptoid/scene.gltf";
-
-    auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Idle_Character.gltf").generic_string();
-    //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Golem/Meshes/scene.gltf").generic_string();
-    //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Raptoid/Meshes/scene.gltf").generic_string();
-
-    // THIRD PERSON CAMERA && SPRING ARM
-    std::shared_ptr<QEGameObject> cameraObject = std::make_shared<QEGameObject>("ThirdPersonCamera");
-    cameraObject->AddComponent(std::make_shared<QECamera>());
-    auto cameraTransform = cameraObject->GetComponent<QETransform>();
-    cameraTransform->SetLocalPosition(glm::vec3(-0.715416, 1.89489, -2.56881));
-    cameraTransform->SetLocalEulerDegrees(glm::vec3(-15.7f, 180.0f, 0.0f));
-
-    std::shared_ptr<QEGameObject> springArmObject = std::make_shared<QEGameObject>("SpringArm");
-    springArmObject->AddComponent(std::make_shared<QESpringArmComponent>());
-    springArmObject->AddChild(cameraObject, true);
-
-    // CHARACTER CONTROLLER
-    std::shared_ptr<QEGameObject> characterGO = std::make_shared<QEGameObject>("Character");
-    characterGO->AddComponent<QECollider>(std::make_shared<CapsuleCollider>());
-    characterGO->AddComponent<QECharacterController>(std::make_shared<QECharacterController>());
-
-    shared_ptr<QEGameObject> visualCharacter = make_shared<QEGameObject>("MeshCharacter");
-    visualCharacter->AddComponent<QEGeometryComponent>(make_shared<QEGeometryComponent>(std::make_unique<MeshGenerator>(characterPath)));
-    visualCharacter->AddComponent<QEMeshRenderer>(make_shared<QEMeshRenderer>());
-    visualCharacter->AddComponent<AnimationComponent>(make_shared<AnimationComponent>());
-
-    auto visualTransform = visualCharacter->GetComponent<QETransform>();
-    visualTransform->SetLocalRotation(glm::angleAxis(glm::radians(180.0f), glm::vec3(0, 1, 0)));
-
-    */
     // Initialize animation states for character controller
-    //auto visualCharacter = gameObjectManager->GetGameObject("MeshCharacter");
-    //auto animationComponent = visualCharacter->GetComponent<QEAnimationComponent>();
+    auto visualCharacter = gameObjectManager->GetGameObject("MeshCharacter");
+    auto animationComponent = visualCharacter->GetComponent<QEAnimationComponent>();
 
     //// States
-    //animationComponent->AddAnimationState({ "Idle", true, "Idle" }, /*isEntry*/ true);
-    //animationComponent->AddAnimationState({ "WalkFwd", true, "WalkingForward" });
-    //animationComponent->AddAnimationState({ "WalkBack", true, "WalkingBackward" });
-    //animationComponent->AddAnimationState({ "WalkLeft", true, "WalkLeft" });
-    //animationComponent->AddAnimationState({ "WalkRight", true, "WalkRight" });
-    //animationComponent->AddAnimationState({ "Attack", false, "Punch" });
-    //animationComponent->AddAnimationState({ "Jump", false, "Jumping" });
+    animationComponent->AddAnimationState({ "Idle", true, "Idle" }, true);
+    animationComponent->AddAnimationState({ "Walking", true, "WalkingForward" });
+    //animationComponent->AddAnimationState({ "Jumping", false, "Jumping" });
+    animationComponent->AddAnimationState({ "Jumping", false, "Jump2" });
+    animationComponent->AddAnimationState({ "Falling", true, "Falling" });
+    animationComponent->AddAnimationState({ "Landing", false, "Landing" });
+    animationComponent->AddAnimationState({ "IdleCrouch", true, "IdleCrouch" });
+    animationComponent->AddAnimationState({ "WalkCrouch", true, "WalkCrouch" });
+    animationComponent->AddAnimationState({ "StandToCrouch", false, "StandToCrouch" });
+    animationComponent->AddAnimationState({ "CrouchToStand", false, "CrouchToStand" });
 
     //// Parameters
-    //animationComponent->SetFloat("speed", 0.0f);
-    //animationComponent->SetFloat("forward", 0.0f);   // -1 back, +1 fwd
-    //animationComponent->SetTrigger("attack", false);
-    //animationComponent->SetTrigger("jump", false);
+    animationComponent->SetFloat("speed", 0.0f);
+    animationComponent->SetFloat("forward", 0.0f);
+    animationComponent->SetTrigger("jump", false);
+    animationComponent->SetBool("falling", false);
+    animationComponent->SetBool("grounded", true);
+    animationComponent->SetTrigger("crouch", false);
 
     ////Transitions
-    //// Idle -> WalkFwd
-    //animationComponent->AddTransition({
-    //    .fromState = "Idle", .toState = "WalkFwd",
-    //    .conditions = {{"speed", QEOp::Greater, 0.1f}, {"forward", QEOp::Greater, 0.1f}},
-    //    .priority = 10, .hasExitTime = false
-    //    });
+    // Idle -> Walking
+    animationComponent->AddTransition({
+        .fromState = "Idle", .toState = "Walking",
+        .conditions = {{"speed", QEOp::Greater, 0.1f}, {"forward", QEOp::Greater, 0.1f}},
+        .priority = 10, .hasExitTime = false
+        });
 
-    //// WalkFwd -> Idle
-    //animationComponent->AddTransition({
-    //    .fromState = "WalkFwd", .toState = "Idle",
-    //    .conditions = {{"speed", QEOp::Less, 0.05f}},
-    //    .priority = 10, .hasExitTime = true, .exitTimeNormalized = 0.2f
-    //    });
+    // Walking -> Idle
+    animationComponent->AddTransition({
+        .fromState = "Walking", .toState = "Idle",
+        .conditions = {{"speed", QEOp::Less, 0.05f}},
+        .priority = 10, .hasExitTime = true, .exitTimeNormalized = 0.2f
+        });
 
-    //// Idle -> WalkBack
-    //animationComponent->AddTransition({
-    //    .fromState = "Idle", .toState = "WalkBack",
-    //    .conditions = {{"speed", QEOp::Greater, 0.1f}, {"forward", QEOp::Less, -0.1f}},
-    //    .priority = 10, .hasExitTime = false
-    //    });
+    // Walking -> Jump
+    animationComponent->AddTransition({
+        .fromState = "Walking", .toState = "Jumping",
+        .conditions = {{"jump", QEOp::Equal, 1.f}},
+        .priority = 10, .hasExitTime = false
+        });
 
-    //// WalkBack -> Idle
-    //animationComponent->AddTransition({
-    //    .fromState = "WalkBack", .toState = "Idle",
-    //    .conditions = {{"speed", QEOp::Less, 0.05f}},
-    //    .priority = 10, .hasExitTime = true, .exitTimeNormalized = 0.2f
-    //    });
+    // Idle -> Jump
+    animationComponent->AddTransition({
+        .fromState = "Idle", .toState = "Jumping",
+        .conditions = {{"jump", QEOp::Equal, 1.f}},
+        .priority = 10, .hasExitTime = false
+        });
 
-    //// WalkFwd <-> WalkBack (si cambias W por S en marcha)
-    //animationComponent->AddTransition({
-    //    .fromState = "WalkFwd", .toState = "WalkBack",
-    //    .conditions = {{"forward", QEOp::Less, -0.1f}},
-    //    .priority = 20, .hasExitTime = false
-    //    });
-    //animationComponent->AddTransition({
-    //    .fromState = "WalkBack", .toState = "WalkFwd",
-    //    .conditions = {{"forward", QEOp::Greater, 0.1f}},
-    //    .priority = 20, .hasExitTime = false
-    //    });
+    // Jump -> Falling (físico, prioritario)
+    animationComponent->AddTransition({
+      .fromState = "Jumping", .toState = "Falling",
+      .conditions = {{"falling", QEOp::Equal, 1.f}},
+      .priority = 20, .hasExitTime = false
+        });
 
-    //animationComponent->AddTransition({
-    //    .fromState = "Idle", .toState = "Attack",
-    //    .conditions = {{"attack", QEOp::Equal, 1.f}}, // trigger
-    //    .priority = 100, .hasExitTime = false
-    //    });
-    //animationComponent->AddTransition({
-    //    .fromState = "Attack", .toState = "Idle",
-    //    .conditions = {}, .priority = 10,
-    //    .hasExitTime = true, .exitTimeNormalized = 1.0f
-    //    });
+    // Jump -> Falling (fallback por fin de clip)
+    animationComponent->AddTransition({
+      .fromState = "Jumping", .toState = "Falling",
+      .conditions = {},
+      .priority = 10, .hasExitTime = true, .exitTimeNormalized = 1.0f
+        });
 
-    //animationComponent->AddTransition({
-    //    .fromState = "Idle", .toState = "Jump",
-    //    .conditions = {{"jump", QEOp::Equal, 1.f}}, // trigger
-    //    .priority = 10, .hasExitTime = false
-    //    });
-    //animationComponent->AddTransition({
-    //    .fromState = "Jump", .toState = "Idle",
-    //    .conditions = {}, .priority = 10,
-    //    .hasExitTime = true, .exitTimeNormalized = 1.0f
-    //    });
+    // Idle -> Falling (caer de un borde)
+    animationComponent->AddTransition({
+        .fromState = "Idle", .toState = "Falling",
+        .conditions = {{"grounded", QEOp::Equal, 0.f}},
+        .priority = 30, .hasExitTime = false
+        });
 
+    // Walking -> Falling (caer caminando)
+    animationComponent->AddTransition({
+        .fromState = "Walking", .toState = "Falling",
+        .conditions = {{"grounded", QEOp::Equal, 0.f}},
+        .priority = 30, .hasExitTime = false
+        });
 
-    //animationComponent->animator->PlayAnimation(animationComponent->GetAnimation("Idle"));
+    // Falling -> Landing
+    animationComponent->AddTransition({
+        .fromState = "Falling", .toState = "Landing",
+        .conditions = {{"grounded", QEOp::Equal, 1.f}}, .priority = 20,
+        .hasExitTime = false,
+        });
 
-    //characterGO->AddChild(visualCharacter, true);
-    //characterGO->AddChild(springArmObject, true);
+    // Landing -> Idle
+    animationComponent->AddTransition({
+        .fromState = "Landing", .toState = "Idle",
+        .conditions = {}, .priority = 10,
+        .hasExitTime = true,
+        });
 
-    //this->gameObjectManager->AddGameObject(characterGO);
-    /*
+    // Idle -> StandToCrouch
+    animationComponent->AddTransition({
+        .fromState = "Idle", .toState = "StandToCrouch",
+        .conditions = {{"crouch", QEOp::Equal, 1.f}},
+        .priority = 10, .hasExitTime = false,
+        });
 
-    //model->_Transform->SetPosition(glm::vec3(-3.5f, 1.3f, -2.0f));
-    //model->transform->SetOrientation(glm::vec3(-90.0f, 180.0f, 0.0f));
-    //model->_Transform->SetScale(glm::vec3(0.01f));
-    //model->_Material->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
-    //model->_Material->materialData.SetMaterialField("Specular", glm::vec3(0.5f, 0.5f, 0.5f));
-    //model->_Material->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
-    //this->gameObjectManager->AddGameObject(model, "modelRaptoid");
+    // StandToCrouch -> Idle Crouch
+    animationComponent->AddTransition({
+        .fromState = "StandToCrouch", .toState = "IdleCrouch",
+        .conditions = {},
+        .priority = 10, .hasExitTime = true
+        });
 
-    /*
+    // Idle Crouch -> CrouchToStand
+    animationComponent->AddTransition({
+        .fromState = "IdleCrouch", .toState = "CrouchToStand",
+        .conditions = {{"crouch", QEOp::Equal, 0.f}},
+        .priority = 10, .hasExitTime = false
+        });
 
-    auto defaultMat = this->materialManager->GetMaterial("defaultPrimitiveMat");
-    auto floorMatInstance = defaultMat->CreateMaterialInstance();
-    this->materialManager->AddMaterial(floorMatInstance);
+    // CrouchToStand -> Idle
+    animationComponent->AddTransition({
+        .fromState = "CrouchToStand", .toState = "Idle",
+        .conditions = {},
+        .priority = 10, .hasExitTime = true
+        });
 
-    std::shared_ptr<QEGameObject> floor = std::make_shared<QEGameObject>("floor");
-    std::shared_ptr<QEGeometryComponent> geometryFloorComponent = make_shared<QEGeometryComponent>(std::make_unique<FloorGenerator>());
-    floor->AddComponent<QEGeometryComponent>(geometryFloorComponent);
-    floor->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
-    floor->AddComponent<QEMaterial>(floorMatInstance);
+    // Idle Crouch -> WalkCrouch
+    animationComponent->AddTransition({
+        .fromState = "IdleCrouch", .toState = "WalkCrouch",
+        .conditions = {
+            {"crouch", QEOp::Equal, 1.f},
+            {"speed", QEOp::Greater, 0.1f},
+            {"forward", QEOp::Greater, 0.1f}
+        },
+        .priority = 10, .hasExitTime = false
+        });
 
-    auto floorTransform = floor->GetComponent<QETransform>();
-    floorTransform->SetLocalPosition(glm::vec3(0.0f, -0.01f, 0.0f));
-    floorTransform->SetLocalScale(glm::vec3(10.0f, 1.0f, 10.0f));
+    // WalkCrouch -> Idle Crouch
+    animationComponent->AddTransition({
+        .fromState = "WalkCrouch", .toState = "IdleCrouch",
+        .conditions = {
+            {"crouch", QEOp::Equal, 1.f},
+            {"speed", QEOp::Less, 0.05f},
+        },
+        .priority = 10, .hasExitTime = false
+        });
 
-    floorMatInstance->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.2f, 0.7f));
-    floorMatInstance->materialData.SetMaterialField("Specular", glm::vec3(0.0f, 0.0f, 0.0f));
-    floorMatInstance->materialData.SetMaterialField("Ambient", glm::vec3(0.2f));
+    // WalkCrouch -> CrouchToStand
+    animationComponent->AddTransition({
+        .fromState = "WalkCrouch", .toState = "CrouchToStand",
+        .conditions = {
+            {"crouch", QEOp::Equal, 0.f}
+        },
+        .priority = 10, .hasExitTime = false
+        });
 
-    floor->AddComponent<QECollider>(std::make_shared<PlaneCollider>());
-    floor->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>());
-    auto floorPBody = floor->GetComponent<PhysicsBody>();
-    floorPBody->CollisionGroup = CollisionFlag::COL_SCENE;
-
-    auto floorCollider = floor->GetComponent<QECollider>();
-    std::static_pointer_cast<PlaneCollider>(floorCollider)->SetPlane(0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
-    this->gameObjectManager->AddGameObject(floor);
-
-    auto rampMatInstance = defaultMat->CreateMaterialInstance();
-    this->materialManager->AddMaterial(rampMatInstance);
-    std::shared_ptr<QEGameObject> ramp = std::make_shared<QEGameObject>("ramp");
-    std::shared_ptr<QEGeometryComponent> geometryCubeComponent = make_shared<QEGeometryComponent>(std::make_unique<CubeGenerator>());
-    ramp->AddComponent<QEGeometryComponent>(geometryCubeComponent);
-    ramp->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
-    ramp->AddComponent<QEMaterial>(rampMatInstance);
-    auto rampTransform = ramp->GetComponent<QETransform>();
-    rampTransform->SetLocalPosition(glm::vec3(0.0f, -0.5f, -10.0f));
-    rampTransform->SetLocalEulerDegrees(glm::vec3(70.0f, 0.0f, 0.0f));
-    rampTransform->SetLocalScale(glm::vec3(3.0f, 10.0f, 3.0f));
-
-    rampMatInstance->materialData.SetMaterialField("Diffuse", glm::vec3(0.2f, 0.7f, 0.2f));
-
-    ramp->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>());
-    auto rampPBody = ramp->GetComponent<PhysicsBody>();
-    rampPBody->CollisionGroup = CollisionFlag::COL_SCENE;
-
-    ramp->AddComponent<BoxCollider>(std::make_shared<BoxCollider>());
-    this->gameObjectManager->AddGameObject(ramp);
-    /*
-    auto wallMatInstance = defaultMat->CreateMaterialInstance();
-    wallMatInstance->materialData.SetMaterialField("Diffuse", glm::vec3(0.8f, 0.2f, 0.2f));
-    this->materialManager->AddMaterial(wallMatInstance);
-    std::shared_ptr<QEGameObject> wall = std::make_shared<QEGameObject>("wall");
-    std::shared_ptr<QEGeometryComponent> geometryWallComponent = make_shared<QEGeometryComponent>(std::make_unique<CubeGenerator>());
-    wall->AddComponent<QEGeometryComponent>(geometryWallComponent);
-    wall->AddComponent<QEMeshRenderer>(std::make_shared<QEMeshRenderer>());
-    wall->AddComponent<QEMaterial>(wallMatInstance);
-    auto wallTransform = wall->GetComponent<QETransform>();
-    wallTransform->SetLocalPosition(glm::vec3(3.0f, 10.5f, 0.0f));
-    wallTransform->SetLocalEulerDegrees(glm::vec3(0.0f, 0.0f, 0.0f));
-    wallTransform->SetLocalScale(glm::vec3(4.0f, 0.5f, 4.0f));
-
-    wall->AddComponent<QECollider>(std::make_shared<BoxCollider>());
-    wall->AddComponent<PhysicsBody>(std::make_shared<PhysicsBody>());
-    auto wallPBody = wall->GetComponent<PhysicsBody>();
-    wallPBody->CollisionGroup = CollisionFlag::COL_SCENE;
-    this->gameObjectManager->AddGameObject(wall);
-
-
-    // END -------------------------- Mesh & Material -------------------------------
-
-    // INIT ------------------------- Lights ----------------------------------------
-    // POINT LIGHTS
-    {
-        //std::shared_ptr<QEGameObject> pointLight = std::make_shared<QEGameObject>();
-        //auto pointLight1 = this->lightManager->CreateLight(LightType::POINT_LIGHT, "LuzPuntual");
-        //pointLight->AddComponent(pointLight1);
-        //auto pointLightTransform = pointLight->GetComponent<QETransform>();
-        //pointLightTransform->SetLocalPosition(glm::vec3(0.0f, 5.0f, 2.0f));
-        //pointLightTransform->SetLocalEulerDegrees(glm::vec3(45.0f, 0.0f, 0.0f));
-        //pointLight1->diffuse = glm::vec3(0.0f, 1.0f, 0.0f);
-        //pointLight1->specular = glm::vec3(0.0f, 1.0f, 0.0f);
-        //pointLight1->SetDistanceEffect(100.0f);
-        //this->gameObjectManager->AddGameObject(pointLight, "LuzPuntualGO");
-
-        //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight2");
-        //auto pointLight2 = this->lightManager->GetLight("PointLight2");
-        //pointLight2->transform->SetPosition(glm::vec3(0.0f, 5.0f, 5.0f));
-        //pointLight2->diffuse = glm::vec3(0.3f, 0.3f, 0.7f);
-        //pointLight2->specular = glm::vec3(0.3f, 0.3f, 0.7f);
-        //pointLight2->SetDistanceEffect(100.0f);
-
-        //this->lightManager->CreateLight(LightType::POINT_LIGHT, "PointLight3");
-        //auto pointLight3 = this->lightManager->GetLight("PointLight3");
-        //pointLight3->transform->SetPosition(glm::vec3(5.0f, 5.0f, 0.0f));
-        //pointLight3->diffuse = glm::vec3(0.3f, 0.3f, 0.7f);
-        //pointLight3->specular = glm::vec3(0.3f, 0.3f, 0.7f);
-        //pointLight3->SetDistanceEffect(100.0f);
-    }
-
-    // DIRECTIONAL LIGHTS
-    {
-        //std::shared_ptr<QEGameObject> directionalLightGO = std::make_shared<QEGameObject>();
-        //auto dirLight = this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "LuzDireccional");
-        //directionalLightGO->AddComponent(dirLight);
-        //auto dirLightTransform = directionalLightGO->GetComponent<QETransform>();
-        //dirLightTransform->SetLocalPosition(glm::vec3(0.0f, 5.0f, 2.0f));
-        //dirLightTransform->SetLocalEulerDegrees(glm::vec3(-45.0f, -90.0f, 0.0f));
-        //dirLight->diffuse = glm::vec3(1.0f, 1.0f, 0.0f);
-        //dirLight->specular = glm::vec3(0.0f, 1.0f, 0.0f);
-        //dirLight->SetDistanceEffect(100.0f);
-        //this->gameObjectManager->AddGameObject(directionalLightGO, "LuzDireccionalGO");
-
-        //this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight0");
-        //auto dirlight = this->lightManager->GetLight("DirectionalLight0");
-        //dirlight->diffuse = glm::vec3(0.6f);
-        //dirlight->specular = glm::vec3(0.1f);
-        //dirlight->SetDistanceEffect(100.0f);
-
-        //this->lightManager->CreateLight(LightType::DIRECTIONAL_LIGHT, "DirectionalLight2");
-        //auto dirlight2 = this->lightManager->GetLight("DirectionalLight2");
-        //dirlight2->transform->SetOrientation(glm::vec3(45.0f, 0.0f, 0.0f));
-        //dirlight2->diffuse = glm::vec3(0.3f, 0.3f, 0.7f);
-        //dirlight2->specular = glm::vec3(0.3f, 0.3f, 0.7f);
-        //dirlight2->SetDistanceEffect(100.0f);
-    }
-
-
-    //this->lightManager->CreateLight(LightType::SPOT_LIGHT, "SpotLight0");
-    //auto spotLight = this->lightManager->GetLight("SpotLight0");
-    //spotLight->transform->SetPosition(glm::vec3(0.0f, 5.0f, 5.0f));// -5.0f));
-    //spotLight->transform->SetOrientation(glm::vec3(45.0f, 0.0f, 0.0f));
-    //spotLight->diffuse = glm::vec3(0.6f);
-    //spotLight->specular = glm::vec3(0.1f);
-    //spotLight->cutOff = glm::cos(glm::radians(32.5f));
-    //spotLight->outerCutoff = glm::cos(glm::radians(45.0f));
-    //spotLight->SetDistanceEffect(100.0f);
-
-    // END -------------------------- Lights ----------------------------------------
-
-    */
     this->physicsModule->SetGravity(-20.0f);
     this->lightManager->InitializeShadowMaps();
     this->atmosphereSystem->InitializeAtmosphereResources();
@@ -556,10 +418,10 @@ void App::mainLoop()
         this->debugSystem->UpdateGraphicBuffers();
 
         ImGuiIO& io = ImGui::GetIO();
-        if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false))
-        {
-            saveScene();
-        }
+        //if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false))
+        //{
+        //    saveScene();
+        //}
 
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();

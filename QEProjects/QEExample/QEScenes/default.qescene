@@ -83,124 +83,9 @@ GameObjects:
             IsMeshShaderPipeline: false
           - type: QEAnimationComponent
             id: PqQ5PNEEfuTl
-            currentState:
-              Id: Idle
-              Loop: true
-              AnimationClip: Idle
             States:
-              - Id: Idle
-                Loop: true
-                AnimationClip: Idle
-              - Id: WalkFwd
-                Loop: true
-                AnimationClip: WalkingForward
-              - Id: WalkBack
-                Loop: true
-                AnimationClip: WalkingBackward
-              - Id: WalkLeft
-                Loop: true
-                AnimationClip: WalkLeft
-              - Id: WalkRight
-                Loop: true
-                AnimationClip: WalkRight
-              - Id: Attack
-                Loop: false
-                AnimationClip: Punch
-              - Id: Jump
-                Loop: false
-                AnimationClip: Jumping
-            Transitions:
-              - from: Idle
-                to: WalkFwd
-                priority: 10
-                hasExitTime: false
-                exitTimeNormalized: 1
-                conditions:
-                  - param: speed
-                    op: Greater
-                    value: 0.1
-                  - param: forward
-                    op: Greater
-                    value: 0.1
-              - from: WalkFwd
-                to: Idle
-                priority: 10
-                hasExitTime: true
-                exitTimeNormalized: 0.2
-                conditions:
-                  - param: speed
-                    op: Less
-                    value: 0.05
-              - from: Idle
-                to: WalkBack
-                priority: 10
-                hasExitTime: false
-                exitTimeNormalized: 1
-                conditions:
-                  - param: speed
-                    op: Greater
-                    value: 0.1
-                  - param: forward
-                    op: Less
-                    value: -0.1
-              - from: WalkBack
-                to: Idle
-                priority: 10
-                hasExitTime: true
-                exitTimeNormalized: 0.2
-                conditions:
-                  - param: speed
-                    op: Less
-                    value: 0.05
-              - from: WalkFwd
-                to: WalkBack
-                priority: 20
-                hasExitTime: false
-                exitTimeNormalized: 1
-                conditions:
-                  - param: forward
-                    op: Less
-                    value: -0.1
-              - from: WalkBack
-                to: WalkFwd
-                priority: 20
-                hasExitTime: false
-                exitTimeNormalized: 1
-                conditions:
-                  - param: forward
-                    op: Greater
-                    value: 0.1
-              - from: Idle
-                to: Attack
-                priority: 100
-                hasExitTime: false
-                exitTimeNormalized: 1
-                conditions:
-                  - param: attack
-                    op: Equal
-                    value: 1
-              - from: Attack
-                to: Idle
-                priority: 10
-                hasExitTime: true
-                exitTimeNormalized: 1
-                conditions:
                   []
-              - from: Idle
-                to: Jump
-                priority: 10
-                hasExitTime: false
-                exitTimeNormalized: 1
-                conditions:
-                  - param: jump
-                    op: Equal
-                    value: 1
-              - from: Jump
-                to: Idle
-                priority: 10
-                hasExitTime: true
-                exitTimeNormalized: 1
-                conditions:
+            Transitions:
                   []
         materials:
           - Alpha_Joints_MAT
@@ -216,7 +101,7 @@ GameObjects:
             parentId: ""
           - type: QESpringArmComponent
             id: EkZgzUny1swO
-            TargetArmLength: 4
+            TargetArmLength: 5
             MinArmLength: 1
             MaxArmLength: 6
             TargetOffset: [0, 1.6, 0]

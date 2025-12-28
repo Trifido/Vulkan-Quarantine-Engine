@@ -40,7 +40,7 @@ QECharacterController::QECharacterController()
 {
     MoveSpeed = 3.0f;
     SprintSpeed = 8.0f;
-    JumpSpeed = 6.5f;
+    JumpSpeed = 26.5f;
     GravityY = -9.81f;
     MaxSlopeDeg = 50.0f;
     TurnSpeedDeg = 540.0f;
@@ -228,6 +228,20 @@ void QECharacterController::UpdateCharacterOrientation(glm::vec3 dir, const floa
     mCharacter->SetRotation(ToJPH(newRootWorldRot));
 }
 
+void QECharacterController::UpdateCharacterAnimation(glm::vec3 velocity)
+{
+    float vLength = glm::length(velocity);
+    animationComponentPtr->SetFloat("speed", vLength);
+    constexpr float kMoveEpsilon = 0.01f;
+    animationComponentPtr->SetFloat("forward", float(vLength > kMoveEpsilon));
+
+    if (ImGui::IsKeyReleased(ImGuiKey_LeftCtrl))
+    {
+        mCrouched = !mCrouched;
+        animationComponentPtr->SetBool("crouch", mCrouched);
+    }
+}
+
 void QECharacterController::QEUpdate()
 {
     if (QESessionManager::getInstance()->IsEditor()) return;
@@ -246,19 +260,28 @@ void QECharacterController::QEUpdate()
 
     const glm::vec3 wishVel = ReadMoveInput();
     
-    const bool wasGrounded = mCharacter->IsSupported();
+    const bool grounded = mCharacter->IsSupported();
 
-    if (wasGrounded)
-    {
-        if (ImGui::IsKeyPressed(ImGuiKey_Space))
-            mVelocity.y = JumpSpeed;
-        else
-            mVelocity.y = std::min(mVelocity.y, 0.0f);
-    }
-    else
-    {
+    // Física
+    if (!grounded)
         mVelocity.y += GravityY * dt;
+    else
+        mVelocity.y = std::min(mVelocity.y, 0.0f);
+
+    // Input de salto (evento)
+    if (grounded && ImGui::IsKeyPressed(ImGuiKey_Space))
+    {
+        animationComponentPtr->SetTrigger("jump", true);
+        mVelocity.y = JumpSpeed;
     }
+
+    // Estados para animación
+    animationComponentPtr->SetBool("grounded", grounded);
+
+    // Falling: solo cuando realmente estás bajando
+    const float fallThreshold = 0.05f;               // ajusta (0.05–0.2 típico)
+    const bool falling = (!grounded) && (mVelocity.y < -fallThreshold);
+    animationComponentPtr->SetBool("falling", falling);
 
     mVelocity.x = wishVel.x;
     mVelocity.z = wishVel.z;
@@ -286,17 +309,19 @@ void QECharacterController::QEUpdate()
 
     SyncFromCharacter();
 
-    auto characterDir = mTransform->Forward();
-    characterDir = mTransform->Forward();
-    characterDir.y = 0.0f;
-    characterDir = glm::normalize(characterDir);
+    UpdateCharacterAnimation(wishVel);
 
-    auto camTransform = mSpringArm->Owner->GetComponentInChildren<QETransform>(false);
-    auto cameraDir = camTransform->Forward();
-    auto pos = mTransform->GetWorldPosition();
-    auto endPosCamera = pos + cameraDir * 2.0f;
-    auto endPosCharacter = pos + characterDir * 2.0f;
+    //auto characterDir = mTransform->Forward();
+    //characterDir = mTransform->Forward();
+    //characterDir.y = 0.0f;
+    //characterDir = glm::normalize(characterDir);
 
-    QEDebugSystem::getInstance()->AddLine(pos, endPosCamera, glm::vec4(0.0, 1.0, 0.0, 1.0));
-    QEDebugSystem::getInstance()->AddLine(pos, endPosCharacter, glm::vec4(1.0, 0.0, 0.0, 1.0));
+    //auto camTransform = mSpringArm->Owner->GetComponentInChildren<QETransform>(false);
+    //auto cameraDir = camTransform->Forward();
+    //auto pos = mTransform->GetWorldPosition();
+    //auto endPosCamera = pos + cameraDir * 2.0f;
+    //auto endPosCharacter = pos + characterDir * 2.0f;
+
+    //QEDebugSystem::getInstance()->AddLine(pos, endPosCamera, glm::vec4(0.0, 1.0, 0.0, 1.0));
+    //QEDebugSystem::getInstance()->AddLine(pos, endPosCharacter, glm::vec4(1.0, 0.0, 0.0, 1.0));
 }
