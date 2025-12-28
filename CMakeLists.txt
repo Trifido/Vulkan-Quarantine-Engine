@@ -40,20 +40,7 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(glfw)
-set_target_properties(glfw PROPERTIES
-  OUTPUT_NAME    "glfw3"    # nombre base
-  DEBUG_POSTFIX  ""         # elimina el sufijo _Debug
-)
-
-# Excluir 'update_mappings' del build y moverlo a un folder oculto
-if (TARGET update_mappings)
-  set_target_properties(update_mappings
-    PROPERTIES
-      EXCLUDE_FROM_ALL          TRUE
-      EXCLUDE_FROM_DEFAULT_BUILD TRUE
-      FOLDER                     "Dependencies"
-  )
-endif()
+set_target_properties(glfw PROPERTIES DEBUG_POSTFIX "d")
 
 # GLM
 FetchContent_Declare(

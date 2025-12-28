@@ -79,6 +79,16 @@ Running this script will configure and generate the Visual Studio solution (x64,
 
 ## 📸 Screenshots
 
+### 🛠️ Debug Mode
+<img src="https://github.com/Trifido/Vulkan-Quarantine-Engine/assets/6890573/e3f6fbe0-0a37-46e2-b860-47258f7fccc9" width="100%"/>
+
+---
+
+### 📦 Universal GLTF Converter
+<img src="https://github.com/Trifido/Vulkan-Quarantine-Engine/assets/6890573/870372e6-1c7a-44fd-910b-d091a8731b3e" width="100%"/>
+
+---
+
 ### 🦴 GPU Animation System *(Compute Shaders)*
 <img src="https://github.com/Trifido/Vulkan-Quarantine-Engine/assets/6890573/08d68027-12a0-4d75-a26d-67d48cfe353c" width="100%"/>
 
