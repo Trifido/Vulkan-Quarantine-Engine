@@ -47,7 +47,7 @@ git submodule update --init --recursive
 | `extern/glfw`          | [GLFW 3](https://github.com/glfw/glfw)                                    | `3.4`        |
 | `extern/glm`           | [GLM](https://github.com/g-truc/glm)                                      | `1.0.1`      |
 | `extern/stb`           | [stb single-file headers](https://github.com/nothings/stb)                | `master`     |
-| `extern/bullet3`       | [Bullet Physics](https://github.com/bulletphysics/bullet3) (static build) | latest       |
+| `extern/jolt`          | [Jolt Physics](https://github.com/jrouwe/JoltPhysics)                     | latest       |
 | `extern/assimp`        | [Assimp](https://github.com/assimp/assimp)                                | latest       |
 | `extern/SPIRV-Reflect` | [SPIRV-Reflect](https://github.com/KhronosGroup/SPIRV-Reflect)            | latest       |
 | `extern/meshoptimizer` | [meshoptimizer](https://github.com/zeux/meshoptimizer)                    | latest       |
@@ -94,7 +94,7 @@ Running this script will configure and generate the Visual Studio solution (x64,
 
 ---
 
-### 🎯 Physics System ([Bullet Physics](https://pybullet.org/wordpress/))
+### 🎯 Physics System ([Jolt Physics](https://github.com/jrouwe/JoltPhysics))
 <img src="https://github.com/Trifido/Vulkan-Quarantine-Engine/assets/6890573/49e7249e-d57e-4693-9d61-8ca243906290" width="100%"/>
 
 ---
