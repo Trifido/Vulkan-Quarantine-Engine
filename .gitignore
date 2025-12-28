@@ -367,3 +367,8 @@ QEProjects/
 .gltf
 *.bin
 *.jpeg
+
+# --- Allow tracking shader files under resources/shaders ---
+# Unignore shaders directory and everything inside
+!resources/shaders/
+!resources/shaders/**

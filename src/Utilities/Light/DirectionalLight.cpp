@@ -1,37 +1,43 @@
 #include "DirectionalLight.h"
 #include <SynchronizationModule.h>
+#include <QESessionManager.h>
 
-DirectionalLight::DirectionalLight() : Light()
+QEDirectionalLight::QEDirectionalLight() : QELight()
 {
     this->lightType = LightType::DIRECTIONAL_LIGHT;
     this->radius = FLT_MAX;
+    this->cascadeSplitLambda = 0.95f;
 
-    this->transform->SetPosition(glm::vec3(0.0f, 10.0f, 0.0f));
-    this->transform->SetOrientation(glm::vec3(90.0f, 0.0f, 0.0f));
+    if (this->transform == nullptr)
+    {
+        this->transform = std::make_shared<QETransform>();
+    }
+    this->transform->SetLocalPosition(glm::vec3(0.0f, 10.0f, 0.0f));
+    this->transform->SetLocalEulerDegrees(glm::vec3(90.0f, 0.0f, 0.0f));
 }
 
-DirectionalLight::DirectionalLight(std::shared_ptr<VkRenderPass> renderPass, Camera* camera) : DirectionalLight()
+void QEDirectionalLight::Setup(std::shared_ptr<VkRenderPass> renderPass)
 {
-    this->camera = camera;
     this->shadowMappingResourcesPtr = std::make_shared<CSMResources>(renderPass);
 }
 
-void DirectionalLight::UpdateUniform()
+void QEDirectionalLight::UpdateUniform()
 {
-    Light::UpdateUniform();
+    QELight::UpdateUniform();
 
-    this->uniform->position = this->transform->Position;
-    this->uniform->direction = this->transform->ForwardVector;
+    this->uniform->position = this->transform->GetWorldPosition();
+    this->uniform->direction = this->transform->Forward();
 
     this->UpdateCascades();
     this->shadowMappingResourcesPtr->UpdateOffscreenUBOShadowMap();
 }
 
-void DirectionalLight::UpdateCascades()
+void QEDirectionalLight::UpdateCascades()
 {
+    auto activeCamera = QESessionManager::getInstance()->ActiveCamera();
     float cascadeSplitPtr[SHADOW_MAP_CASCADE_COUNT];
-    float nearClip = camera->GetNear();
-    float farClip = camera->GetFar();
+    float nearClip = activeCamera->GetNear();
+    float farClip = activeCamera->GetFar();
     float clipRange = farClip - nearClip;
 
     float minZ = nearClip;
@@ -68,7 +74,7 @@ void DirectionalLight::UpdateCascades()
         };
 
         // Project frustum corners into world space
-        glm::mat4 invCam = glm::inverse(camera->VP);
+        glm::mat4 invCam = glm::inverse(activeCamera->CameraData->Viewproj);
         for (uint32_t j = 0; j < 8; j++)
         {
             glm::vec4 invCorner = invCam * glm::vec4(frustumCorners[j], 1.0);
@@ -101,7 +107,7 @@ void DirectionalLight::UpdateCascades()
         glm::vec3 maxExtents = glm::vec3(radius);
         glm::vec3 minExtents = -maxExtents;
 
-        glm::vec3 lightDir = this->transform->ForwardVector;
+        glm::vec3 lightDir = this->transform->Forward();
 
         glm::vec3 eye = frustumCenter - lightDir * maxExtents.z;
 
@@ -116,7 +122,7 @@ void DirectionalLight::UpdateCascades()
     }
 }
 
-void DirectionalLight::CleanShadowMapResources()
+void QEDirectionalLight::CleanShadowMapResources()
 {
     this->shadowMappingResourcesPtr->Cleanup();
 }

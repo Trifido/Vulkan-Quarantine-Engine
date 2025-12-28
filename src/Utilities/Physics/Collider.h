@@ -2,18 +2,30 @@
 #ifndef COLLIDER_H
 #define COLLIDER_H
 
-#include "GameComponent.h"
-#include "btBulletDynamicsCommon.h"
+#include "QEGameComponent.h"
 
-class Collider : public GameComponent
+#include <Jolt/Jolt.h>
+#include <Jolt/Physics/Collision/Shape/Shape.h>
+#include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
+
+class QECollider : public QEGameComponent
 {
+protected:
+    REFLECTABLE_DERIVED_COMPONENT(QECollider, QEGameComponent)
+    bool _autoFitted = false;
 public:
-    btCollisionShape* colShape = nullptr;
-    float CollisionMargin = 0.04f;
-    glm::vec3 LocalDisplacement = glm::vec3(0.0f);
+    JPH::Ref<JPH::Shape> colShape = nullptr;
+
+    REFLECT_PROPERTY(float, CollisionMargin)
+
+    QECollider();
+    void QEStart() override;
+    void QEInit() override;
+    void QEUpdate() override;
+    void QEDestroy() override;
+
+protected:
+    void SetColliderPivot(glm::vec3 displacement);
 };
 
 #endif 
-
-
-

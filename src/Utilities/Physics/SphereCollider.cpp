@@ -1,5 +1,7 @@
-#include <Collider.h>
 #include "SphereCollider.h"
+#include <Jolt/Physics/Collision/Shape/SphereShape.h>
+
+using namespace JPH;
 
 SphereCollider::SphereCollider()
 {
@@ -18,9 +20,13 @@ const float SphereCollider::GetRadius()
 
 void SphereCollider::SetRadius(const float& value)
 {
-    this->Radius = value;
+    Radius = value;
 
-    if (this->colShape != nullptr)
-        delete this->colShape;
-    this->colShape = new btSphereShape(this->Radius);
+    const float effectiveRadius = Radius + CollisionMargin;
+
+    JPH::SphereShapeSettings settings(effectiveRadius);
+    if (auto res = settings.Create(); res.IsValid())
+        colShape = res.Get();
+    else
+        colShape = nullptr;
 }

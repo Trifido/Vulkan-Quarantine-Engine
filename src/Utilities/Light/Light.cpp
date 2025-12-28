@@ -1,4 +1,5 @@
 #include "Light.h"
+#include <QEGameObject.h>
 
 AttenuationData ATTENUATION_TAB[12] = {
         AttenuationData{
@@ -63,10 +64,10 @@ AttenuationData ATTENUATION_TAB[12] = {
         }
 };
 
-Light::Light()
+QELight::QELight()
 {
+    this->Name = "QELight";
     this->deviceModule = DeviceModule::getInstance();
-    this->transform = std::make_unique<Transform>();
     this->uniform = std::make_shared<LightUniform>();
 
     this->diffuse = this->specular = glm::vec3(0.0f);
@@ -79,7 +80,7 @@ Light::Light()
     this->idxShadowMap = 0;
 }
 
-void Light::UpdateUniform()
+void QELight::UpdateUniform()
 {
     this->uniform->lightType = this->lightType;
     this->uniform->specular = this->specular;
@@ -91,7 +92,7 @@ void Light::UpdateUniform()
     this->uniform->idxShadowMap = this->idxShadowMap;
 }
 
-void Light::SetDistanceEffect(float radiusEffect)
+void QELight::SetDistanceEffect(float radiusEffect)
 {
     this->radius = radiusEffect;
 
@@ -104,4 +105,20 @@ void Light::SetDistanceEffect(float radiusEffect)
             return;
         }
     }
+}
+
+void QELight::QEInit()
+{
+    if (this->Owner == nullptr)
+    {
+        return;
+    }
+
+    this->transform = this->Owner->GetComponent<QETransform>();
+}
+
+void QELight::QEStart()
+{
+    auto lightManager = LightManager::getInstance();
+    lightManager->AddNewLight(std::shared_ptr<QELight>(this, [](QELight*) {}), this->Name);
 }

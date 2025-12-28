@@ -18,7 +18,7 @@ CommandPoolModule::CommandPoolModule()
     lightManager = LightManager::getInstance();
     renderPassModule = RenderPassModule::getInstance();
     atmosphereSystem = AtmosphereSystem::getInstance();
-    physicsModule = PhysicsModule::getInstance();
+    debugSystem = QEDebugSystem::getInstance();
 
     this->ClearColor = glm::vec3(0.1f);
 }
@@ -122,7 +122,7 @@ void CommandPoolModule::setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t
     this->gameObjectManager->DrawCommand(commandBuffers[iCBuffer], iCBuffer);
     this->editorManager->DrawCommnad(commandBuffers[iCBuffer], iCBuffer);
     this->cullingSceneManager->DrawDebug(commandBuffers[iCBuffer], iCBuffer);
-    this->physicsModule->debugDrawer->DrawDebug(commandBuffers[iCBuffer], iCBuffer);
+    this->debugSystem->DrawDebugLines(commandBuffers[iCBuffer], iCBuffer);
 
     if (ImGui::GetDrawData() != nullptr)
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[iCBuffer]);
@@ -276,7 +276,7 @@ void CommandPoolModule::updateCubeMapFace(uint32_t faceIdx, std::shared_ptr<VkRe
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &lightManager->PointShadowDescritors->offscreenDescriptorSets[iCBuffer][idPointlight], 0, NULL);
 
-    this->gameObjectManager->OmniShadowCommand(commandBuffers[iCBuffer], iCBuffer, pipelineLayout, viewMatrix, pointLight->transform->Position);
+    this->gameObjectManager->OmniShadowCommand(commandBuffers[iCBuffer], iCBuffer, pipelineLayout, viewMatrix, pointLight->transform->GetWorldPosition());
 
     vkCmdEndRenderPass(commandBuffer);
 }

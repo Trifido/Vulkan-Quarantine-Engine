@@ -3,21 +3,23 @@
 #ifndef MATERIAL_MANAGER_H
 #define MATERIAL_MANAGER_H
 
-#include <Material/Material.h>
-#include <CameraEditor.h>
-#include <Material/TextureManager.h>
-#include <GraphicsPipelineModule.h>
-#include <RenderPassModule.h>
+#include <TextureManager.h>
 #include <QESingleton.h>
 #include <MaterialDto.h>
+#include <yaml-cpp/yaml.h>
+
+class QEMaterial;
+class QECamera;
+class LightManager;
+class RenderPassModule;
+class ShaderModule;
 
 class MaterialManager : public QESingleton<MaterialManager>
 {
 private:
     friend class QESingleton<MaterialManager>; // Permitir acceso al constructor
-    std::unordered_map<std::string, std::shared_ptr<Material>> _materials;
+    std::unordered_map<std::string, std::shared_ptr<QEMaterial>> _materials;
 
-    Camera*             cameraEditor;
     LightManager*       lightManager;
     RenderPassModule*   renderPassModule;
 
@@ -38,9 +40,9 @@ private:
 public:
     MaterialManager();
     void InitializeMaterialManager();
-    std::shared_ptr<Material> GetMaterial(std::string nameMaterial);
-    void AddMaterial(std::shared_ptr<Material> mat_ptr);
-    void AddMaterial(Material mat);
+    std::shared_ptr<QEMaterial> GetMaterial(std::string nameMaterial);
+    void AddMaterial(std::shared_ptr<QEMaterial> mat_ptr);
+    void AddMaterial(QEMaterial mat);
     std::string CheckName(std::string nameMaterial);
     void CreateMaterial(std::string& nameMaterial);
     void CreateMeshShaderMaterial(std::string& nameMaterial);
@@ -48,11 +50,12 @@ public:
     void CleanPipelines();
     void CleanLastResources();
     void UpdateUniforms();
-    void InitializeMaterials();
     static std::vector<MaterialDto> GetMaterialDtos(std::ifstream& file);
     static MaterialDto ReadQEMaterial(std::ifstream& file);
     void LoadMaterialDtos(std::vector<MaterialDto>& materialDtos);
     void SaveMaterials(std::ofstream& file);
+    YAML::Node SerializeMaterials();
+    void DeserializeMaterials(YAML::Node materials);
 };
 
 #endif

@@ -14,6 +14,7 @@ const static std::string MATERIALS_FOLDER = "QEMaterials";
 const static std::string MESH_FOLDER = "Meshes";
 const static std::string TEXTURE_FOLDER = "Textures";
 const static std::string MATERIAL_FOLDER = "Materials";
+const static std::string ANIMATION_FOLDER = "Animations";
 
 namespace fs = std::filesystem;
 class QEProjectManager
@@ -25,7 +26,9 @@ public:
     static bool CreateQEProject(const std::string& projectName);
     static bool CreateFolder(const fs::path& projectPath, const std::string& folderName);
     static bool CreateScene(const std::string& sceneName = "DefaultScene");
+    static bool CreateYamlScene(const std::string& sceneName = "DefaultScene");
     static bool ImportMeshFile(const fs::path& inputFile);
+    static bool ImportAnimationFile(const fs::path& inputFile, const fs::path& folderPath);
     static fs::path GetMaterialFolderPath();
 
     static bool InitializeDefaultQEScene(QEScene& scene);

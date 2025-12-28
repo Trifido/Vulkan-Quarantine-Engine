@@ -4,6 +4,23 @@
 #include <thread>
 #include <algorithm>
 
+static VkDescriptorType ToVkDescriptorType(SpvReflectDescriptorType t) {
+    switch (t) {
+    case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:                return VK_DESCRIPTOR_TYPE_SAMPLER;
+    case SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER: return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:          return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE:          return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:   return VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
+    case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:   return VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
+    case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:         return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER:         return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC: return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+    case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC: return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
+    case SPV_REFLECT_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:       return VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+    default:                                                 return VK_DESCRIPTOR_TYPE_MAX_ENUM;
+    }
+}
+
 bool compareByLocation(const InputVars& a, const InputVars& b)
 {
     return a.location < b.location;
@@ -763,7 +780,7 @@ DescriptorBindingReflect ReflectShader::GetDescriptorBinding(const SpvReflectDes
     DescriptorBindingReflect descriptor = DescriptorBindingReflect();
 
     descriptor.binding = obj.binding;
-    descriptor.type = (VkDescriptorType) obj.descriptor_type;
+    descriptor.type = ToVkDescriptorType(obj.descriptor_type);
 
     if(obj.array.dims_count > 0)
         descriptor.arraySize = obj.array.dims[0];

@@ -1,18 +1,18 @@
 #include "SpotLight.h"
 #include <SynchronizationModule.h>
 
-SpotLight::SpotLight() : Light()
+QESpotLight::QESpotLight() : QELight()
 {
     this->lightType = LightType::SPOT_LIGHT;
 
     this->cutOff = glm::cos(glm::radians(12.5f));
     this->outerCutoff = glm::cos(glm::radians(17.5f));
 
-    this->transform->SetPosition(glm::vec3(0.0f, 10.0f, 0.0f));
-    this->transform->SetOrientation(glm::vec3(90.0f, 0.0f, 0.0f));
+    this->transform->SetLocalPosition(glm::vec3(0.0f, 10.0f, 0.0f));
+    this->transform->SetLocalEulerDegrees(glm::vec3(90.0f, 0.0f, 0.0f));
 }
 
-SpotLight::SpotLight(std::shared_ptr<ShaderModule> shaderModule, std::shared_ptr<VkRenderPass> renderPass) : SpotLight()
+QESpotLight::QESpotLight(std::shared_ptr<ShaderModule> shaderModule, std::shared_ptr<VkRenderPass> renderPass) : QESpotLight()
 {
     auto size = sizeof(glm::mat4);
     //this->shadowMappingPtr = std::make_shared<OmniShadowResources>(shaderModule, renderPass, ShadowMappingMode::DIRECTIONAL_SHADOW);
@@ -24,19 +24,19 @@ SpotLight::SpotLight(std::shared_ptr<ShaderModule> shaderModule, std::shared_ptr
     //this->descriptorBuffer->InitializeShadowMapDescritorSets(shaderModule, shadowMapUBO, size);
 }
 
-void SpotLight::UpdateUniform()
+void QESpotLight::UpdateUniform()
 {
-    Light::UpdateUniform();
+    QELight::UpdateUniform();
 
     this->uniform->cutOff = this->cutOff;
     this->uniform->outerCutoff = this->outerCutoff;
-    this->uniform->position = this->transform->Position;
-    this->uniform->direction = this->transform->Rotation;
+    this->uniform->position = this->transform->GetWorldPosition();
+    this->uniform->direction = glm::normalize(this->transform->Forward());
 
-    float fov = glm::degrees(acos(this->outerCutoff));
+    float fovRadians = acos(glm::clamp(this->outerCutoff, -1.0f, 1.0f)); // en radianes
 
-    glm::mat4 lightview = glm::lookAt(this->transform->Position, this->transform->ForwardVector, this->transform->UpVector);
-    glm::mat4 lightProjection = glm::perspective(fov, 1.0f, 0.01f, this->radius);
+    glm::mat4 lightview = glm::lookAt(this->uniform->position, this->uniform->direction, this->transform->Up());
+    glm::mat4 lightProjection = glm::perspective(fovRadians, 1.0f, 0.01f, this->radius);
     glm::mat4 viewproj = lightProjection * lightview;
 
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)

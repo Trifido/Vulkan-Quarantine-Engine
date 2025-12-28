@@ -11,7 +11,6 @@
 
 #include "App.h"
 #include <QEProjectManager.h>
-#include <QEScene.h>
 #include <stdio.h>
 #define FULL_SCREEN false
 
@@ -79,8 +78,7 @@ int main(int, char**)
     QEProjectManager::CreateQEProject("QEExample");
     QEScene scene{};
     QEProjectManager::InitializeDefaultQEScene(scene);
-    //QEProjectManager::ImportMeshFile();
     App app;
-    app.run(scene);
+    app.run(scene, false);
     return 0;
 }

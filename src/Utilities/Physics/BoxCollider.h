@@ -4,10 +4,11 @@
 
 #include <Collider.h>
 
-class BoxCollider : public Collider
+class BoxCollider : public QECollider
 {
+    REFLECTABLE_DERIVED_COMPONENT(BoxCollider, QECollider)
 protected:
-    glm::vec3 Size;
+    REFLECT_PROPERTY(glm::vec3, Size)
 public:
     BoxCollider();
     BoxCollider(const glm::vec3& newSize);

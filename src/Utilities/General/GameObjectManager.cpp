@@ -1,10 +1,11 @@
-#include "GameObjectManager.h"
+﻿#include "GameObjectManager.h"
 #include <iostream>
 #include <GameObjectDto.h>
+#include <QEMeshRenderer.h>
 
 std::string GameObjectManager::CheckName(std::string nameGameObject)
 {
-    std::unordered_map<std::string, std::shared_ptr<GameObject>>::const_iterator got;
+    std::unordered_map<std::string, std::shared_ptr<QEGameObject>>::const_iterator got;
     std::string newName = nameGameObject;
     unsigned int id = 0;
 
@@ -25,30 +26,44 @@ std::string GameObjectManager::CheckName(std::string nameGameObject)
     return newName;
 }
 
-void GameObjectManager::AddGameObject(std::shared_ptr<GameObject> object_ptr, std::string name)
+unsigned int GameObjectManager::DecideRenderLayer(std::shared_ptr<QEGameObject> go, unsigned int defaultLayer)
 {
-    if (object_ptr->IsValidRender())
+    if (auto mat = go->GetMaterial()) return mat->layer;
+
+    if (!go->childs.empty())
     {
-        name = CheckName(name);
-
-        if (object_ptr->_Material == nullptr)
-        {
-            if (!object_ptr->childs.empty())
-            {
-                unsigned int childLayer = object_ptr->childs[0]->_Material->layer;
-                this->_objects[childLayer][name] = object_ptr;
-            }
-        }
-        else
-        {
-            this->_objects[object_ptr->_Material->layer][name] = object_ptr;
-        }
-
-        if (object_ptr->physicBody != nullptr)
-        {
-            this->_physicObjects[name] = object_ptr;
-        }
+        if (auto matChild = go->childs[0]->GetMaterial())
+            return matChild->layer;
     }
+
+    return defaultLayer;
+}
+
+void GameObjectManager::RegisterSingle(std::shared_ptr<QEGameObject> go, std::string name)
+{
+    name = CheckName(name);
+
+    const unsigned int layer = DecideRenderLayer(go, (unsigned int)RenderLayer::SOLID);
+    this->_objects[layer][name] = go;
+}
+
+void GameObjectManager::AddGameObject(std::shared_ptr<QEGameObject> object_ptr)
+{
+    RegisterSingle(object_ptr, object_ptr->Name);
+
+    std::function<void(std::shared_ptr<QEGameObject>)> dfs =
+        [&](std::shared_ptr<QEGameObject> node)
+        {
+            for (size_t i = 0; i < node->childs.size(); ++i) {
+                auto& child = node->childs[i];
+                if (!child) continue;
+
+                RegisterSingle(child, child->Name);
+                dfs(child);
+            }
+        };
+
+    dfs(object_ptr);
 }
 
 void GameObjectManager::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
@@ -57,7 +72,10 @@ void GameObjectManager::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx
     {
         for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
         {
-            model.second->CreateDrawCommand(commandBuffer, idx);
+            auto meshRenderer = model.second->GetComponent<QEMeshRenderer>();
+            if (meshRenderer == nullptr)
+                continue;
+            meshRenderer->SetDrawCommand(commandBuffer, idx);
         }
     }
 }
@@ -66,12 +84,16 @@ void GameObjectManager::CSMCommand(VkCommandBuffer& commandBuffer, uint32_t idx,
 {
     for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
     {
+        auto meshRenderer = model.second->GetComponent<QEMeshRenderer>();
+        if (meshRenderer == nullptr)
+            continue;
+
         PushConstantCSMStruct shadowParameters = {};
-        shadowParameters.model = model.second->_Transform->GetModel();
+        shadowParameters.model = model.second->GetComponent<QETransform>()->GetWorldMatrix();
         shadowParameters.cascadeIndex = cascadeIndex;
 
         vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantCSMStruct), &shadowParameters);
-        model.second->CreateShadowCommand(commandBuffer, idx, pipelineLayout);
+        meshRenderer->SetDrawShadowCommand(commandBuffer, idx, pipelineLayout);
     }
 }
 
@@ -79,43 +101,30 @@ void GameObjectManager::OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32
 {
     for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
     {
+        auto meshRenderer = model.second->GetComponent<QEMeshRenderer>();
+        if (meshRenderer == nullptr)
+            continue;
+
+        auto transform = model.second->GetComponent<QETransform>();
+        glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), -lightPosition);
+
         PushConstantOmniShadowStruct shadowParameters = {};
+        shadowParameters.lightModel = translationMatrix * transform->GetWorldMatrix();
+        shadowParameters.model = transform->GetWorldMatrix();
         shadowParameters.view = viewParameter;
 
-        glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), -lightPosition);
-        glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), model.second->_Transform->Scale);
-        glm::mat4 rotationMatrix = glm::toMat4(model.second->_Transform->Orientation);
-        shadowParameters.lightModel = translationMatrix * rotationMatrix * scaleMatrix;
-        shadowParameters.model = model.second->_Transform->GetModel();
-
         vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantOmniShadowStruct), &shadowParameters);
-        model.second->CreateShadowCommand(commandBuffer, idx, pipelineLayout);
+        meshRenderer->SetDrawShadowCommand(commandBuffer, idx, pipelineLayout);
     }
 }
 
-void GameObjectManager::InitializePhysics()
-{
-    for (auto model : this->_physicObjects)
-    {
-        model.second->InitializePhysics();
-    }
-}
-
-void GameObjectManager::UpdatePhysicTransforms()
-{
-    for (auto model : this->_physicObjects)
-    {
-        model.second->UpdatePhysicTransform();
-    }
-}
-
-void GameObjectManager::Cleanup()
+void GameObjectManager::ReleaseAllGameObjects()
 {
     for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
     {
         for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
         {
-            model.second->Cleanup();
+            model.second->QEDestroy();
         }
     }
 }
@@ -123,10 +132,9 @@ void GameObjectManager::Cleanup()
 void GameObjectManager::CleanLastResources()
 {
     this->_objects.clear();
-    this->_physicObjects.clear();
 }
 
-std::shared_ptr<GameObject> GameObjectManager::GetGameObject(std::string name)
+std::shared_ptr<QEGameObject> GameObjectManager::GetGameObject(std::string name)
 {
     for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
     {
@@ -140,120 +148,96 @@ std::shared_ptr<GameObject> GameObjectManager::GetGameObject(std::string name)
     return nullptr;
 }
 
-void GameObjectManager::SaveGameObjects(std::ofstream& file)
+YAML::Node GameObjectManager::SerializeGameObjects()
 {
-    std::vector<GameObjectDto> gameObjectDtos;
+    YAML::Node gameObjectsNode;
+    std::unordered_set<std::string> emittedRoots;
+
+    for (unsigned int idl = 0; idl < renderLayers.GetCount(); ++idl)
+    {
+        const unsigned int layerId = renderLayers.GetLayer(idl);
+
+        for (auto& kv : _objects[layerId])
+        {
+            auto& go = kv.second;
+            if (!go) continue;
+
+            if (go->parent != nullptr)
+                continue;
+
+            if (!emittedRoots.insert(go->ID()).second)
+                continue;
+
+            gameObjectsNode.push_back(go->ToYaml());
+        }
+    }
+
+    return gameObjectsNode;
+}
+
+void GameObjectManager::DeserializeGameObjects(YAML::Node gameObjects)
+{
+    for (auto gameObjectData : gameObjects)
+    {
+        std::shared_ptr<QEGameObject> root = QEGameObject::FromYaml(gameObjectData);
+        this->AddGameObject(root);
+    }
+}
+
+void GameObjectManager::StartQEGameObjects()
+{
     for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
     {
-        unsigned int id = this->renderLayers.GetLayer(idl);
-        for (auto model : this->_objects[id])
+        for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
         {
-            std::string matPath = "NULL_MATERIAL";
-            if (model.second->_Material != nullptr)
+            model.second->QEStart();
+        }
+    }
+
+    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
+    {
+        for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
+        {
+            model.second->QEInit();
+        }
+    }
+}
+
+void GameObjectManager::UpdateQEGameObjects()
+{
+    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
+    {
+        for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
+        {
+            model.second->QEUpdate();
+        }
+    }
+}
+
+void GameObjectManager::DestroyQEGameObjects()
+{
+    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
+    {
+        for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
+        {
+            model.second->QEDestroy();
+        }
+    }
+}
+
+std::shared_ptr<QEGameComponent> GameObjectManager::FindGameComponentInScene(std::string id)
+{
+    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
+    {
+        for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
+        {
+            for (auto component : model.second->components)
             {
-                matPath = model.second->_Material->Name;
+                if (component->id == id)
+                    return component;
             }
-
-            GameObjectDto gameObjectDto(
-                model.second->ID(),
-                model.first,
-                model.second->_Transform->GetModel(),
-                model.second->_meshImportedType,
-                model.second->_primitiveMeshType,
-                model.second->MeshFilePath,
-                matPath);
-            gameObjectDtos.push_back(gameObjectDto);
         }
     }
 
-    int numGameObjects = static_cast<int>(gameObjectDtos.size());
-    file.write(reinterpret_cast<const char*>(&numGameObjects), sizeof(int));
-
-    size_t idLength = sizeof(char) * Numbered::ID_LENGTH;
-    size_t nameLength;
-    for (int i = 0; i < gameObjectDtos.size(); i++)
-    {
-        file.write(reinterpret_cast<const char*>(&idLength), sizeof(idLength));
-        file.write(gameObjectDtos[i].Id.c_str(), static_cast<int>(idLength));
-
-        nameLength = gameObjectDtos[i].Name.length();
-        file.write(reinterpret_cast<const char*>(&nameLength), sizeof(nameLength));
-        file.write(gameObjectDtos[i].Name.c_str(), nameLength);
-
-        file.write(reinterpret_cast<const char*>(&gameObjectDtos[i].WorldTransform), sizeof(glm::mat4));
-
-        file.write(reinterpret_cast<const char*>(&gameObjectDtos[i].MeshImportedType), sizeof(int));
-
-        file.write(reinterpret_cast<const char*>(&gameObjectDtos[i].MeshPrimitiveType), sizeof(int));
-
-        size_t meshPathLength = gameObjectDtos[i].MeshPath.length();
-        file.write(reinterpret_cast<const char*>(&meshPathLength), sizeof(meshPathLength));
-        file.write(gameObjectDtos[i].MeshPath.c_str(), meshPathLength);
-
-
-        size_t matPathLength = gameObjectDtos[i].BindMaterialName.length();
-        file.write(reinterpret_cast<const char*>(&matPathLength), sizeof(matPathLength));
-
-        if (matPathLength > 0)
-        {
-            file.write(gameObjectDtos[i].BindMaterialName.c_str(), matPathLength);
-        }
-    }
-}
-
-void GameObjectManager::LoadGameObjectDtos(std::vector<GameObjectDto>& gameObjectDtos)
-{
-    // Load the GameObjects
-    for (size_t i = 0; i < gameObjectDtos.size(); i++)
-    {
-        std::shared_ptr<GameObject> gameObject = std::make_shared<GameObject>(gameObjectDtos[i]);
-        this->AddGameObject(gameObject, gameObjectDtos[i].Name);
-    }
-}
-
-std::vector<GameObjectDto> GameObjectManager::GetGameObjectDtos(std::ifstream& file)
-{
-    // Read the game objects
-    int numGameObjects;
-    file.read(reinterpret_cast<char*>(&numGameObjects), sizeof(int));
-
-    size_t idLength;
-    size_t meshPathLength;
-    size_t matPathLength;
-    size_t nameLength;
-
-    std::vector<GameObjectDto> gameObjectDtos(numGameObjects);
-    for (int i = 0; i < numGameObjects; i++)
-    {
-        file.read(reinterpret_cast<char*>(&idLength), sizeof(idLength));
-        gameObjectDtos[i].Id.resize(idLength);
-        file.read(&gameObjectDtos[i].Id[0], idLength);
-
-        file.read(reinterpret_cast<char*>(&nameLength), sizeof(nameLength));
-        gameObjectDtos[i].Id.resize(nameLength);
-        file.read(&gameObjectDtos[i].Name[0], nameLength);
-
-        file.read(reinterpret_cast<char*>(&gameObjectDtos[i].WorldTransform), sizeof(glm::mat4));
-
-        file.read(reinterpret_cast<char*>(&gameObjectDtos[i].MeshImportedType), sizeof(int));
-
-        file.read(reinterpret_cast<char*>(&gameObjectDtos[i].MeshPrimitiveType), sizeof(int));
-
-        file.read(reinterpret_cast<char*>(&meshPathLength), sizeof(meshPathLength));
-        gameObjectDtos[i].MeshPath.resize(meshPathLength);
-        file.read(&gameObjectDtos[i].MeshPath[0], meshPathLength);
-
-        file.read(reinterpret_cast<char*>(&matPathLength), sizeof(matPathLength));
-        gameObjectDtos[i].BindMaterialName.resize(matPathLength);
-        if (matPathLength > 0)
-        {
-            file.read(&gameObjectDtos[i].BindMaterialName[0], matPathLength);
-        }
-        else
-        {
-            gameObjectDtos[i].BindMaterialName = "NULL_MATERIAL";
-        }
-    }
-
-    return gameObjectDtos;
+    return nullptr;
 }

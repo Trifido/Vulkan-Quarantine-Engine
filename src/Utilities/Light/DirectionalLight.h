@@ -4,22 +4,22 @@
 
 #include "Light.h"
 #include "CSMResources.h"
-#include <Camera.h>
 
 class DescriptorBuffer;
 
-class DirectionalLight : public Light
+class QEDirectionalLight : public QELight
 {
+    REFLECTABLE_DERIVED_COMPONENT(QEDirectionalLight, QELight)
+
 private:
-    float cascadeSplitLambda = 0.95f;
-    Camera* camera = nullptr;
+    REFLECT_PROPERTY(float, cascadeSplitLambda)
 
 public:
     std::shared_ptr<CSMResources> shadowMappingResourcesPtr = nullptr;
 
 public:
-    DirectionalLight();
-    DirectionalLight(std::shared_ptr<VkRenderPass> renderPass, Camera* camera);
+    QEDirectionalLight();
+    void Setup(std::shared_ptr<VkRenderPass> renderPass);
     void UpdateUniform() override;
     void CleanShadowMapResources();
     void UpdateCascades();

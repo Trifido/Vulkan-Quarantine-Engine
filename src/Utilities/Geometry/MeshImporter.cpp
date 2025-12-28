@@ -1,29 +1,19 @@
 #include "MeshImporter.h"
 #include <fstream>
+#include <memory>
 #include <assimp/Exporter.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/config.h>
 #include <unordered_set>
-
-MeshImporter::MeshImporter()
-{
-    this->materialManager = MaterialManager::getInstance();
-    this->shaderManager = ShaderManager::getInstance();
-}
-
-void MeshImporter::CheckPaths(std::string path)
-{
-    fs::path filePath = filesystem::path(path);
-    this->fileExtension = filePath.extension().string();
-
-    this->texturePath = filePath.parent_path().parent_path().string() + "/textures/";
-}
+#include "MaterialData.h"
+#include "Material.h"
+#include <SanitizerHelper.h>
 
 void MeshImporter::RecreateNormals(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices)
 {
     for (size_t v = 0; v < vertices.size(); v++)
     {
-        vertices.at(v).norm = glm::vec4(0.0f);
+        vertices.at(v).Normal = glm::vec4(0.0f);
     }
 
     for (size_t idTr = 0; idTr < indices.size(); idTr += 3)
@@ -32,23 +22,23 @@ void MeshImporter::RecreateNormals(std::vector<Vertex>& vertices, std::vector<un
         size_t idx1 = indices[idTr + 1];
         size_t idx2 = indices[idTr + 2];
 
-        glm::vec3 pos0 = glm::vec3(vertices[idx0].pos);
-        glm::vec3 pos1 = glm::vec3(vertices[idx1].pos);
-        glm::vec3 pos2 = glm::vec3(vertices[idx2].pos);
+        glm::vec3 pos0 = glm::vec3(vertices[idx0].Position);
+        glm::vec3 pos1 = glm::vec3(vertices[idx1].Position);
+        glm::vec3 pos2 = glm::vec3(vertices[idx2].Position);
 
         glm::vec3 edge1 = pos1 - pos0;
         glm::vec3 edge2 = pos2 - pos0;
         glm::vec3 crossProduct = glm::cross(edge1, edge2);
         glm::vec4 crossProduct4 = glm::vec4(crossProduct.x, crossProduct.y, crossProduct.z, 0.0f);
 
-        vertices[idx0].norm += crossProduct4;
-        vertices[idx1].norm += crossProduct4;
-        vertices[idx2].norm += crossProduct4;
+        vertices[idx0].Normal += crossProduct4;
+        vertices[idx1].Normal += crossProduct4;
+        vertices[idx2].Normal += crossProduct4;
     }
 
     for (size_t v = 0; v < vertices.size(); v++)
     {
-        vertices.at(v).norm = glm::normalize(vertices.at(v).norm);
+        vertices.at(v).Normal = glm::normalize(vertices.at(v).Normal);
     }
 }
 
@@ -98,25 +88,22 @@ void MeshImporter::SetVertexBoneData(AnimationVertexData& animData, int boneID, 
     }
 }
 
-void MeshImporter::ExtractBoneWeightForVertices(MeshData& data, aiMesh* mesh)
+void MeshImporter::ExtractBoneWeightForVertices(QEMeshData& data, aiMesh* mesh, std::unordered_map<std::string, BoneInfo>& m_BoneInfoMap)
 {
     for (unsigned int boneIndex = 0; boneIndex < mesh->mNumBones; boneIndex++)
     {
         int boneID = -1;
         std::string boneName = mesh->mBones[boneIndex]->mName.C_Str();
 
-        if (this->m_BoneInfoMap.find(boneName) == this->m_BoneInfoMap.end())
+        if (m_BoneInfoMap.find(boneName) == m_BoneInfoMap.end())
         {
-            BoneInfo newBoneInfo;
-            newBoneInfo.id = (int)this->numBones;
-            newBoneInfo.offset = ConvertMatrixToGLMFormat(mesh->mBones[boneIndex]->mOffsetMatrix);
-            this->m_BoneInfoMap[boneName] = newBoneInfo;
-            boneID = (int)this->numBones;
-            this->numBones++;
+            glm::mat4 offset = ConvertMatrixToGLMFormat(mesh->mBones[boneIndex]->mOffsetMatrix);
+            m_BoneInfoMap[boneName] = { static_cast<uint32_t>(m_BoneInfoMap.size()), offset };
+            boneID = (int)m_BoneInfoMap.size() - 1;
         }
         else
         {
-            boneID = this->m_BoneInfoMap[boneName].id;
+            boneID = m_BoneInfoMap[boneName].id;
         }
         assert(boneID != -1);
         auto weights = mesh->mBones[boneIndex]->mWeights;
@@ -129,49 +116,49 @@ void MeshImporter::ExtractBoneWeightForVertices(MeshData& data, aiMesh* mesh)
                 int vertexId = weights[weightIndex].mVertexId;
                 float weight = weights[weightIndex].mWeight;
 
-                assert(vertexId <= data.vertices.size());
+                assert(vertexId <= data.Vertices.size());
 
-                SetVertexBoneData(data.animationData[vertexId], boneID, weight);
+                SetVertexBoneData(data.AnimationVertexData[vertexId], boneID, weight);
             }
         }
     }
 }
 
-void MeshImporter::RemapGeometry(MeshData& data)
+void MeshImporter::RemapGeometry(QEMeshData& data)
 {
-    std::vector<unsigned int> remap(data.numIndices);
+    std::vector<unsigned int> remap(data.NumIndices);
 
     std::vector<uint32_t> resultIndices;
     std::vector<Vertex> resultVertices;
 
-    size_t total_vertices = meshopt_generateVertexRemap(&remap[0], &data.indices[0], data.numIndices, &data.vertices[0], data.numIndices, sizeof(Vertex));
+    size_t total_vertices = meshopt_generateVertexRemap(&remap[0], &data.Indices[0], data.NumIndices, &data.Vertices[0], data.NumIndices, sizeof(Vertex));
 
-    data.numVertices = total_vertices;
-    resultIndices.resize(data.numIndices);
-    meshopt_remapIndexBuffer(&resultIndices[0], &data.indices[0], data.numIndices, &remap[0]);
+    data.NumVertices = total_vertices;
+    resultIndices.resize(data.NumIndices);
+    meshopt_remapIndexBuffer(&resultIndices[0], &data.Indices[0], data.NumIndices, &remap[0]);
 
     resultVertices.resize(total_vertices);
-    meshopt_remapVertexBuffer(&resultVertices[0], &data.vertices[0], data.numIndices, sizeof(Vertex), &remap[0]);
+    meshopt_remapVertexBuffer(&resultVertices[0], &data.Vertices[0], data.NumIndices, sizeof(Vertex), &remap[0]);
 
-    data.indices = resultIndices;
-    data.vertices = resultVertices;
+    data.Indices = resultIndices;
+    data.Vertices = resultVertices;
 }
 
-void MeshImporter::ComputeAABB(const glm::vec4& coord)
+void MeshImporter::ComputeAABB(const glm::vec4& coord, std::pair<glm::vec3, glm::vec3>& AABBData)
 {
-    if (this->aabbMin.x > coord.x)
-        this->aabbMin.x = coord.x;
-    if (this->aabbMin.y > coord.y)
-        this->aabbMin.y = coord.y;
-    if (this->aabbMin.z > coord.z)
-        this->aabbMin.z = coord.z;
+    if (AABBData.first.x > coord.x)
+        AABBData.first.x = coord.x;
+    if (AABBData.first.y > coord.y)
+        AABBData.first.y = coord.y;
+    if (AABBData.first.z > coord.z)
+        AABBData.first.z = coord.z;
 
-    if (this->aabbMax.x < coord.x)
-        this->aabbMax.x = coord.x;
-    if (this->aabbMax.y < coord.y)
-        this->aabbMax.y = coord.y;
-    if (this->aabbMax.z < coord.z)
-        this->aabbMax.z = coord.z;
+    if (AABBData.second.x < coord.x)
+        AABBData.second.x = coord.x;
+    if (AABBData.second.y < coord.y)
+        AABBData.second.y = coord.y;
+    if (AABBData.second.z < coord.z)
+        AABBData.second.z = coord.z;
 }
 
 void MeshImporter::RecreateTangents(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices)
@@ -183,15 +170,15 @@ void MeshImporter::RecreateTangents(std::vector<Vertex>& vertices, std::vector<u
         size_t idx2 = indices[idTr + 2];
 
 
-        glm::vec3 pos0 = glm::vec3(vertices[idx0].pos);
-        glm::vec3 pos1 = glm::vec3(vertices[idx1].pos);
-        glm::vec3 pos2 = glm::vec3(vertices[idx2].pos);
+        glm::vec3 pos0 = glm::vec3(vertices[idx0].Position);
+        glm::vec3 pos1 = glm::vec3(vertices[idx1].Position);
+        glm::vec3 pos2 = glm::vec3(vertices[idx2].Position);
 
 
         glm::vec3 edge1 = pos1 - pos0;
         glm::vec3 edge2 = pos2 - pos0;
-        glm::vec2 deltaUV1 = vertices[idx1].texCoord - vertices[idx0].texCoord;
-        glm::vec2 deltaUV2 = vertices[idx2].texCoord - vertices[idx0].texCoord;
+        glm::vec2 deltaUV1 = vertices[idx1].UV - vertices[idx0].UV;
+        glm::vec2 deltaUV2 = vertices[idx2].UV - vertices[idx0].UV;
 
         float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
 
@@ -203,100 +190,109 @@ void MeshImporter::RecreateTangents(std::vector<Vertex>& vertices, std::vector<u
         tangent.w = 0.0f;
         tangent = glm::normalize(tangent);
 
-        vertices[idx0].Tangents = tangent;
-        vertices[idx1].Tangents = tangent;
-        vertices[idx2].Tangents = tangent;
+        vertices[idx0].Tangent = tangent;
+        vertices[idx1].Tangent = tangent;
+        vertices[idx2].Tangent = tangent;
     }
 }
 
-std::vector<MeshData> MeshImporter::LoadMesh(std::string path)
+QEMesh MeshImporter::LoadMesh(std::string path)
 {
     fs::path filepath = fs::path(path);
+    std::string name = filepath.stem().string();
     fs::path matpath = filepath.parent_path().parent_path() / "Materials";
-    std::vector<MeshData> meshes;
+
+    QEMesh mesh;
+    mesh.Name = name;
+    mesh.FilePath = path;
+
     Assimp::Importer importer;
     (void)importer.SetPropertyInteger(AI_CONFIG_PP_LBW_MAX_WEIGHTS, 4);
-    scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_LimitBoneWeights);
+    auto scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_LimitBoneWeights);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
         fprintf(stderr, "ERROR::ASSIMP::%s", importer.GetErrorString());
-        return meshes;
+        return mesh;
     }
 
-    this->hasAnimation = scene->HasAnimations();
+    bool hasAnimation = scene->HasAnimations();
 
-    if (!this->hasAnimation)
+    if (!hasAnimation)
     {
         scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices | aiProcess_PopulateArmatureData);
     }
 
-    this->CheckPaths(path);
-
-    this->aabbMax = glm::vec3(-std::numeric_limits<float>::infinity());
-    this->aabbMin = glm::vec3(std::numeric_limits<float>::infinity());
+    glm::vec3 aabbMax = glm::vec3(-std::numeric_limits<float>::infinity());
+    glm::vec3 aabbMin = glm::vec3(std::numeric_limits<float>::infinity());
 
     glm::mat4 parentTransform = glm::mat4(1.0f);
-    ProcessNode(scene->mRootNode, scene, parentTransform, meshes, matpath);
+    ProcessNode(scene->mRootNode, scene, parentTransform, mesh, matpath);
 
-    return meshes;
+    mesh.MaterialRel.resize(mesh.MeshData.size());
+    for (int i = 0; i < mesh.MeshData.size(); i++)
+    {
+        mesh.MaterialRel[i] = mesh.MeshData[i].MaterialID;
+    }
+
+    return mesh;
 }
 
-void MeshImporter::ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, std::vector<MeshData>& meshes, const fs::path& matpath)
+void MeshImporter::ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, QEMesh& mesh, const fs::path& matpath)
 {
-    glm::mat4 localTransform = this->GetGLMMatrix(node->mTransformation);
+    glm::mat4 localTransform = GetGLMMatrix(node->mTransformation);
     glm::mat4 currentTransform = glm::identity<glm::mat4>();
 
     // process all the node's meshes (if any)
     for (unsigned int i = 0; i < node->mNumMeshes; i++)
     {
-        MeshData result = this->ProcessMesh(scene->mMeshes[node->mMeshes[i]], scene);
-        result.name = scene->mMeshes[node->mMeshes[i]]->mName.C_Str();
-        result.model = currentTransform;
+        QEMeshData result = ProcessMesh(scene->mMeshes[node->mMeshes[i]], scene, mesh.BonesInfoMap);
+        result.ModelTransform = currentTransform;
 
-        this->ProcessMaterial(scene->mMeshes[node->mMeshes[i]], scene, result, matpath);
+        ProcessMaterial(scene->mMeshes[node->mMeshes[i]], scene, result, matpath);
 
-        meshes.push_back(result);
+        mesh.MeshData.push_back(result);
     }
 
     // then do the same for each of its children
     for (unsigned int i = 0; i < node->mNumChildren; i++)
     {
-        this->ProcessNode(node->mChildren[i], scene, currentTransform, meshes, matpath);
+        ProcessNode(node->mChildren[i], scene, currentTransform, mesh, matpath);
     }
 }
 
-MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
+QEMeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene, std::unordered_map<std::string, BoneInfo>& m_BoneInfoMap)
 {
-    MeshData data = {};
+    QEMeshData data = {};
 
     bool existTangent = mesh->HasTangentsAndBitangents();
     bool existNormal = mesh->HasNormals();
 
     std::vector<CustomTexture> textures;
 
-    data.numVertices = mesh->mNumVertices;
-    data.numFaces = mesh->mNumFaces;
-    data.numIndices = mesh->mNumFaces * 3;
+    data.NumVertices = mesh->mNumVertices;
+    data.NumFaces = mesh->mNumFaces;
+    data.NumIndices = mesh->mNumFaces * 3;
 
-    data.vertices.resize(data.numVertices);
-    data.animationData.resize(data.numVertices);
-    for (unsigned int i = 0; i < data.numVertices; i++)
+    data.Vertices.resize(data.NumVertices);
+    data.AnimationVertexData.resize(data.NumVertices);
+    data.HasAnimation = scene->HasAnimations();
+
+    for (unsigned int i = 0; i < data.NumVertices; i++)
     {
         Vertex vertex;
         AnimationVertexData animData;
 
-        this->SetVertexBoneDataToDefault(animData);
+        SetVertexBoneDataToDefault(animData);
 
-        // process vertex positions, normals and texture coordinates
         glm::vec4 vector;
         vector.x = mesh->mVertices[i].x;
         vector.y = mesh->mVertices[i].y;
         vector.z = mesh->mVertices[i].z;
         vector.w = 1.0f;
-        vertex.pos = vector;
+        vertex.Position = vector;
 
-        this->ComputeAABB(vertex.pos);
+        ComputeAABB(vertex.Position, data.BoundingBox);
 
         if (existNormal)
         {
@@ -304,7 +300,7 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
             vector.y = mesh->mNormals[i].y;
             vector.z = mesh->mNormals[i].z;
             vector.w = 0.0f;
-            vertex.norm = vector;
+            vertex.Normal = vector;
         }
 
         if (existTangent)
@@ -313,60 +309,58 @@ MeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene)
             vector.y = mesh->mTangents[i].y;
             vector.z = mesh->mTangents[i].z;
             vector.w = 0.0f;
-            vertex.Tangents = vector;
+            vertex.Tangent = vector;
         }
 
-        if (mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
+        if (mesh->mTextureCoords[0])
         {
             glm::vec2 vec;
             vec.x = mesh->mTextureCoords[0][i].x;
             vec.y = mesh->mTextureCoords[0][i].y;
-            vertex.texCoord = vec;
+            vertex.UV = vec;
         }
         else
         {
-            vertex.texCoord = glm::vec2(0.0f, 0.0f);
+            vertex.UV = glm::vec2(0.0f, 0.0f);
         }
 
-        data.vertices.at(i) = vertex;
-        data.animationData.at(i) = animData;
+        data.Vertices.at(i) = vertex;
+        data.AnimationVertexData.at(i) = animData;
     }
 
     // process indices
-    data.numIndices = mesh->mNumFaces * mesh->mFaces[0].mNumIndices;
-    data.indices.reserve(data.numIndices);
+    data.NumIndices = mesh->mNumFaces * mesh->mFaces[0].mNumIndices;
+    data.Indices.reserve(data.NumIndices);
 
     for (unsigned int i = 0; i < mesh->mNumFaces; i++)
     {
         aiFace face = mesh->mFaces[i];
         for (unsigned int j = 0; j < face.mNumIndices; j++)
         {
-            data.indices.push_back(face.mIndices[j]);
+            data.Indices.push_back(face.mIndices[j]);
         }
     }
 
     if (!existNormal)
     {
-        this->RecreateNormals(data.vertices, data.indices);
+        RecreateNormals(data.Vertices, data.Indices);
     }
 
     if (!existTangent)
     {
-        this->RecreateTangents(data.vertices, data.indices);
+        RecreateTangents(data.Vertices, data.Indices);
     }
 
-    ExtractBoneWeightForVertices(data, mesh);
+    ExtractBoneWeightForVertices(data, mesh, m_BoneInfoMap);
 
-    this->RemapGeometry(data);
-
-    data.HasAnimation = this->hasAnimation;
+    RemapGeometry(data);
 
     return data;
 }
 
-MeshData MeshImporter::LoadRawMesh(float rawData[], unsigned int numData, unsigned int offset)
+QEMeshData MeshImporter::LoadRawMesh(float rawData[], unsigned int numData, unsigned int offset)
 {
-    MeshData data = {};
+    QEMeshData data = {};
     unsigned int NUMCOMP = offset;
     for (unsigned int i = 0; i < numData; i++)
     {
@@ -379,24 +373,24 @@ MeshData MeshImporter::LoadRawMesh(float rawData[], unsigned int numData, unsign
         vector.y = rawData[index + 1];
         vector.z = rawData[index + 2];
         vector.w = 1.0f;
-        vertex.pos = vector;
+        vertex.Position = vector;
 
         vector.x = rawData[index + 3];
         vector.y = rawData[index + 4];
         vector.z = rawData[index + 5];
         vector.w = 0.0f;
-        vertex.norm = vector;
+        vertex.Normal = vector;
 
         glm::vec2 vec;
         vec.x = rawData[index + 6];
         vec.y = rawData[index + 7];
-        vertex.texCoord = vec;
+        vertex.UV = vec;
 
-        data.vertices.push_back(vertex);
-        data.indices.push_back(i);
+        data.Vertices.push_back(vertex);
+        data.Indices.push_back(i);
     }
 
-    RecreateTangents(data.vertices, data.indices);
+    RecreateTangents(data.Vertices, data.Indices);
 
     return data;
 }
@@ -428,7 +422,7 @@ glm::mat4 MeshImporter::GetGLMMatrix(aiMatrix4x4 transform)
     return result;
 }
 
-void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData& meshData, const fs::path& matpath)
+void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, QEMeshData& meshData, const fs::path& matpath)
 {
     if (mesh->mMaterialIndex < 0)
         return;
@@ -445,7 +439,10 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
     if (ret != AI_SUCCESS) rawName = "";//Failed to find material name so makes var empty
 
     std::string materialName = rawName.C_Str();
-    std::shared_ptr<Material> mat_ptr;
+    std::shared_ptr<QEMaterial> mat_ptr;
+
+    auto materialManager = MaterialManager::getInstance();
+
     if (!materialManager->Exists(materialName))
     {
         fs::path materialPath = matpath / (materialName + ".qemat");
@@ -460,6 +457,7 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
             MaterialDto matDto = MaterialManager::ReadQEMaterial(matfile);
             matfile.close();
 
+            auto shaderManager = ShaderManager::getInstance();
             auto shader = shaderManager->GetShader(matDto.ShaderPath);
             if (shader == nullptr)
             {
@@ -469,7 +467,7 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
 
             matDto.UpdateTexturePaths(matpath);
 
-            mat_ptr = std::make_shared<Material>(Material(shader, matDto));
+            mat_ptr = std::make_shared<QEMaterial>(QEMaterial(shader, matDto));
             materialManager->AddMaterial(mat_ptr);
         }
     }
@@ -478,16 +476,8 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, MeshData&
         mat_ptr = materialManager->GetMaterial(materialName);
     }
 
-    mat_ptr->InitializeMaterialDataUBO();
-
-    meshData.materialID = materialName;
-
+    meshData.MaterialID = materialName;
     material = nullptr;
-}
-
-std::pair<glm::vec3, glm::vec3> MeshImporter::GetAABBData()
-{
-    return std::pair<glm::vec3, glm::vec3>(this->aabbMin, this->aabbMax);
 }
 
 std::string MeshImporter::GetTextureTypeName(aiTextureType type)
@@ -767,7 +757,8 @@ void MeshImporter::RemoveOnlyEmbeddedTextures(aiScene* scene)
         scene->mNumTextures = static_cast<unsigned int>(texturesToKeep.size());
         scene->mTextures = new aiTexture * [scene->mNumTextures];
 
-        for (size_t i = 0; i < texturesToKeep.size(); i++) {
+        for (size_t i = 0; i < texturesToKeep.size(); i++)
+        {
             scene->mTextures[i] = texturesToKeep[i];
         }
     }
@@ -777,7 +768,12 @@ void MeshImporter::RemoveOnlyEmbeddedTextures(aiScene* scene)
     }
 }
 
-bool MeshImporter::LoadAndExportModel(const std::string& inputPath, const std::string& outputMeshPath, const std::string& outputMaterialPath, const std::string& outputTexturePath)
+bool MeshImporter::LoadAndExportModel(
+    const std::string& inputPath,
+    const std::string& outputMeshPath,
+    const std::string& outputMaterialPath,
+    const std::string& outputTexturePath,
+    const std::string& outputAnimationPath)
 {
     unsigned int flags = aiProcess_EmbedTextures | aiProcess_Triangulate | aiProcess_GenNormals;
     Assimp::Importer importer;
@@ -788,21 +784,17 @@ bool MeshImporter::LoadAndExportModel(const std::string& inputPath, const std::s
         return false;
     }
 
+    // Exportar animaciones, si tiene...
+    AnimationImporter::ImportAnimation(scene, outputAnimationPath);
+
     // Comprobar si tiene materiales y texturas
     if (scene->HasMaterials())
     {
-        std::cout << "El modelo tiene " << scene->mNumMaterials << " materiales." << std::endl;
-
         std::string modelDirectory = filesystem::path(inputPath).parent_path().string();
 
         ExtractAndUpdateTextures(const_cast<aiScene*>(scene), outputTexturePath, modelDirectory);
 
         ExtractAndUpdateMaterials(const_cast<aiScene*>(scene), outputTexturePath, outputMaterialPath, modelDirectory);
-    }
-
-    // Comprobar si tiene animaciones
-    if (scene->HasAnimations()) {
-        std::cout << "El modelo tiene " << scene->mNumAnimations << " animaciones." << std::endl;
     }
 
     // Exportar a glTF 2.0
@@ -812,12 +804,16 @@ bool MeshImporter::LoadAndExportModel(const std::string& inputPath, const std::s
     aiCopyScene(scene, &editableScene);
     RemoveOnlyEmbeddedTextures(editableScene);
 
+    SanitizerHelper::SanitizeSceneNames(editableScene);
+
     if (exporter.Export(editableScene, "gltf2", outputMeshPath) != AI_SUCCESS)
     {
         std::cerr << "Error al exportar a glTF: " << exporter.GetErrorString() << std::endl;
+        AnimationImporter::DestroyScene(editableScene);
         return false;
     }
 
+    AnimationImporter::DestroyScene(editableScene);
     std::cout << "Exportación exitosa: " << outputMeshPath << std::endl;
     return true;
 }

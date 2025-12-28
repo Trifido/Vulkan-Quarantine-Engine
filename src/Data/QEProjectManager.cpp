@@ -4,7 +4,6 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
-#include <CameraDto.h>
 #include <AtmosphereDto.h>
 #include <MeshImporter.h>
 
@@ -31,7 +30,7 @@ bool QEProjectManager::CreateQEProject(const std::string& projectName)
         // Create materials folder
         CreateFolder(projectPath, ASSETS_FOLDER + "/" + MATERIALS_FOLDER),
         // Create scene
-        CreateScene("default")
+        CreateYamlScene("default")
     };
 
     return std::all_of(results.begin(), results.end(), [](bool r) { return r; });
@@ -78,21 +77,11 @@ bool QEProjectManager::CreateScene(const std::string& sceneName)
                 file.write(reinterpret_cast<const char*>(&sceneNameLength), sizeof(sceneNameLength));
                 file.write(filename.c_str(), sceneNameLength);
 
-                CameraDto camera;
-                file.write(reinterpret_cast<const char*>(&camera.position), sizeof(glm::vec3));
-                file.write(reinterpret_cast<const char*>(&camera.front), sizeof(glm::vec3));
-                file.write(reinterpret_cast<const char*>(&camera.up), sizeof(glm::vec3));
-                file.write(reinterpret_cast<const char*>(&camera.nearPlane), sizeof(float));
-                file.write(reinterpret_cast<const char*>(&camera.farPlane), sizeof(float));
-                file.write(reinterpret_cast<const char*>(&camera.fov), sizeof(float));
-                file.write(reinterpret_cast<const char*>(&camera.pitchSaved), sizeof(float));
-                file.write(reinterpret_cast<const char*>(&camera.yawSaved), sizeof(float));
-
                 AtmosphereDto atmosphere;
                 file.write(reinterpret_cast<const char*>(&atmosphere.hasAtmosphere), sizeof(bool));
                 file.write(reinterpret_cast<const char*>(&atmosphere.environmentType), sizeof(int));
-                file.write(reinterpret_cast<const char*>(&atmosphere.sunDirection), sizeof(glm::vec3));
-                file.write(reinterpret_cast<const char*>(&atmosphere.sunIntensity), sizeof(float));
+                file.write(reinterpret_cast<const char*>(&atmosphere.sunEulerDegrees), sizeof(glm::vec3));
+                file.write(reinterpret_cast<const char*>(&atmosphere.sunBaseIntensity), sizeof(float));
 
                 int numMaterials = 0;
                 file.write(reinterpret_cast<const char*>(&numMaterials), sizeof(int));
@@ -106,6 +95,26 @@ bool QEProjectManager::CreateScene(const std::string& sceneName)
                 file.close();
                 return true;
             }
+        }
+    }
+
+    return false;
+}
+
+bool QEProjectManager::CreateYamlScene(const std::string& sceneName)
+{
+    fs::path scenePath = CURRENT_PROJECT_PATH / SCENE_FOLDER;
+
+    if (fs::exists(scenePath))
+    {
+        std::string filename = sceneName + ".qescene";
+        CURRENT_DEFAULT_SCENE_PATH = scenePath / filename;
+
+        if (!fs::exists(CURRENT_DEFAULT_SCENE_PATH))
+        {
+            std::ofstream file(CURRENT_DEFAULT_SCENE_PATH, std::ios::binary | std::ios::trunc);
+            file.close();
+            return true;
         }
     }
 
@@ -129,10 +138,12 @@ bool QEProjectManager::ImportMeshFile(const fs::path& inputFile)
     CreateFolder(modelFolderPath, MESH_FOLDER);
     CreateFolder(modelFolderPath, TEXTURE_FOLDER);
     CreateFolder(modelFolderPath, MATERIAL_FOLDER);
+    CreateFolder(modelFolderPath, ANIMATION_FOLDER);
 
     fs::path outputMaterialFolderPath = modelFolderPath / MATERIAL_FOLDER;
     fs::path outputTextureFolderPath = modelFolderPath / TEXTURE_FOLDER;
     fs::path outputMeshPath = modelFolderPath / MESH_FOLDER / filename;
+    fs::path outputAnimationFolderPath = modelFolderPath / ANIMATION_FOLDER;
 
     outputMeshPath.replace_extension(".gltf");
 
@@ -140,8 +151,26 @@ bool QEProjectManager::ImportMeshFile(const fs::path& inputFile)
         inputFile.string(),
         outputMeshPath.string(),
         outputMaterialFolderPath.string(),
-        outputTextureFolderPath.string()
+        outputTextureFolderPath.string(),
+        outputAnimationFolderPath.string()
     );
+}
+
+bool QEProjectManager::ImportAnimationFile(const fs::path& inputFile, const fs::path& folderPath)
+{
+    if (!fs::exists(inputFile))
+    {
+        std::cerr << "Error al abrir el archivo: " << inputFile << std::endl;
+        return false;
+    }
+
+    if (!fs::exists(folderPath))
+    {
+        std::cerr << "Error al abrir el archivo: " << folderPath << std::endl;
+        return false;
+    }
+
+    return AnimationImporter::ImportAnimation(inputFile.string(), folderPath.string());
 }
 
 fs::path QEProjectManager::GetMaterialFolderPath()

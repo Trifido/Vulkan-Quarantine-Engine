@@ -27,13 +27,9 @@ std::string ParticleSystemManager::CheckName(std::string nameParticleSystem)
 
 void ParticleSystemManager::AddParticleSystem(std::shared_ptr<ParticleSystem> object_ptr, std::string name)
 {
-    if (object_ptr->IsValidRender())
-    {
-        name = CheckName(name);
-
-        this->_particleSystems[name] = object_ptr;
-        this->gameObjectManager->AddGameObject(object_ptr, name);
-    }
+    name = CheckName(name);
+    this->_particleSystems[name] = object_ptr;
+    this->gameObjectManager->AddGameObject(object_ptr);
 }
 
 std::shared_ptr<ParticleSystem> ParticleSystemManager::GetParticleSystem(std::string name)

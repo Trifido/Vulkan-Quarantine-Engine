@@ -2,74 +2,75 @@
 #ifndef QE_CHARACTER_CONTROLLER
 #define QE_CHARACTER_CONTROLLER
 
-#include <GameComponent.h>
-#include <Transform.h>
-#include <PhysicBody.h>
-#include <Collider.h>
-#include <btBulletDynamicsCommon.h>
-#include <GLFW/glfw3.h>
+#include <QEGameComponent.h>
+#include <QETransform.h>
 #include <memory>
 
-struct IgnoreSelfCallback : public btCollisionWorld::ClosestConvexResultCallback
+// Jolt
+#include <Jolt/Jolt.h>
+#include <Jolt/Physics/PhysicsSystem.h>
+#include <Jolt/Physics/Character/CharacterVirtual.h>
+#include <Jolt/Physics/Collision/Shape/Shape.h>
+
+class QECollider;
+class PhysicsModule;
+class QEAnimationComponent;
+class PhysicsBody;
+class QESpringArmComponent;
+
+class QECharacterController : public QEGameComponent
 {
-    const btCollisionObject* ignoreObject;
-    btVector3 hitNormal;  // Aquí guardamos la normal del impacto
-
-    IgnoreSelfCallback(const btVector3& from, const btVector3& to, const btCollisionObject* ignoreObj)
-        : btCollisionWorld::ClosestConvexResultCallback(from, to), ignoreObject(ignoreObj), hitNormal(btVector3(0, 0, 0)) {}
-
-    bool needsCollision(btBroadphaseProxy* proxy0) const override
-    {
-        if (!btCollisionWorld::ClosestConvexResultCallback::needsCollision(proxy0))
-            return false;
-
-        return proxy0->m_clientObject != ignoreObject;
-    }
-
-    btScalar addSingleResult(btCollisionWorld::LocalConvexResult& convexResult, bool normalInWorldSpace) override
-    {
-        if (convexResult.m_hitCollisionObject == ignoreObject)
-            return 1.0f; // Ignorar colisión con uno mismo
-
-        // Guarda la normal
-        if (normalInWorldSpace)
-            hitNormal = convexResult.m_hitNormalLocal;
-        else
-        {
-            // Si no está en espacio mundial, transformarla
-            hitNormal = convexResult.m_hitCollisionObject->getWorldTransform().getBasis() * convexResult.m_hitNormalLocal;
-        }
-
-        return ClosestConvexResultCallback::addSingleResult(convexResult, normalInWorldSpace);
-    }
-};
-
-class QECharacterController : public GameComponent
-{
+    REFLECTABLE_DERIVED_COMPONENT(QECharacterController, QEGameComponent)
     private:
-        std::shared_ptr<Collider> colliderPtr;
-        std::shared_ptr<PhysicBody> physicBodyPtr;
-        bool isGrounded = false;
-        bool canWalkOnGround = false;
-        btVector3 groundNormal = btVector3(0, 1, 0);
-        float airControlFactor = 0.8f;
-        float jumpForce = 8.0f;
-        float maxStepAngle = 35.0f;
+        REFLECT_PROPERTY(float, MoveSpeed)       // m/s
+        REFLECT_PROPERTY(float, SprintSpeed)     // m/s
+        REFLECT_PROPERTY(float, JumpSpeed)       // m/s
+        REFLECT_PROPERTY(float, GravityY)        // m/s^2 (negativo)
+        REFLECT_PROPERTY(float, MaxSlopeDeg)     // grados
+        REFLECT_PROPERTY(float, TurnSpeedDeg)    // grados/seg
+        REFLECT_PROPERTY(float, JumpAnimDelay)   // 0.0 - 1.0
 
+        bool   mGrounded = true;
+        bool   mCrouched = false;
+        glm::vec3 mVelocity{ 0.0f };
+        bool pendingJump = false;
+        bool blockAnimationDisplacement = false;
+
+        int mStartupLockFrames = 0;
+
+        std::shared_ptr<QETransform>        mTransform = nullptr;
+        std::shared_ptr<QECollider>         mCollider = nullptr;
+        std::shared_ptr<PhysicsBody>        mPhysBody = nullptr;
+        std::shared_ptr<QEAnimationComponent> animationComponentPtr = nullptr;
+        std::shared_ptr<QESpringArmComponent> mSpringArm = nullptr;
+
+        JPH::Ref<JPH::CharacterVirtual>     mCharacter;
+        JPH::CharacterVirtualSettings       mSettings;
+        JPH::ShapeRefC mLastShape;
     private:
-        void CheckIfGrounded();
-        void Jump();
-        void Move(const btVector3& direction, float speed);
-        bool CanMove(const btVector3& direction, float distance, btVector3& outAdjustedDir);
+        static inline JPH::Quat  ToJPH(const glm::quat& q) { return JPH::Quat(q.x, q.y, q.z, q.w); }
+        static inline JPH::RVec3 ToJPH(const glm::vec3& v) { return JPH::RVec3((double)v.x, (double)v.y, (double)v.z); }
+        static inline glm::vec3  ToGLM(const JPH::RVec3& v) { return glm::vec3((float)v.GetX(), (float)v.GetY(), (float)v.GetZ()); }
+        static inline glm::quat  ToGLM(const JPH::Quat& q) { return glm::quat(q.GetW(), q.GetX(), q.GetY(), q.GetZ()); }
+
+        glm::vec3 ReadMoveInput() const;
+        void      BuildOrUpdateCharacter();
+        void      SyncFromCharacter();
+
+        void UpdateCharacterOrientation(glm::vec3 dir, const float dt);
+        void UpdateCharacterAnimation(glm::vec3 velocity);
+        void UpdateJumpAnimation(const float dt);
+        void CheckBlockAnimationDisplacement();
 
     public:
-        void Initialize();
-        void BindGameObjectProperties(std::shared_ptr<PhysicBody> physicBody, std::shared_ptr<Collider> collider);
-        void Update();
-        btVector3 GetPosition();
-        static void ProcessInput(GLFWwindow* window, std::shared_ptr<QECharacterController> player);
-        void SetAirControlFactor(float factor) { airControlFactor = factor; }
-        void SetJumpForce(float force) { jumpForce = force; }
+        QECharacterController();
+
+        void DebugDraw(JPH::DebugRenderer& renderer);
+
+        void QEStart() override;
+        void QEInit() override;
+        void QEUpdate() override;
+        void QEDestroy() override;
 };
 
 #endif // !QE_CHARACTER_CONTROLLER

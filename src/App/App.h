@@ -31,18 +31,12 @@
 //#include "RayTracingModule.h"
 
 //  Utilities
-#include "GameObject.h"
-#include "Mesh.h"
-#include "Transform.h"
+#include "QEGameObject.h"
+#include "QETransform.h"
 #include "Material.h"
-#include "Camera.h"
+#include "QECamera.h"
 #include "LightManager.h"
-#include "AnimationManager.h"
 #include "Particles/ParticleSystem.h"
-
-// Editor
-#include <../Editor/EditorObjectManager.h>
-#include <CameraEditor.h>
 
 // Keyboard controller
 #include "KeyboardController.h"
@@ -55,8 +49,9 @@
 #include <ShadowPipelineManager.h>
 #include <Particles/ParticleSystemManager.h>
 #include <AtmosphereSystem.h>
-#include <QEScene.h>
 #include <CapsuleCollider.h>
+#include <QEScene.h>
+#include <QESessionManager.h>
 
 using namespace std;
 
@@ -96,14 +91,14 @@ class App
 public:
     App();
     ~App();
-    void run(QEScene scene);
+    void run(QEScene scene, bool isEditorMode);
 
-    void addWindow(GLFWwindow& window);
     void initWindow();
     void init_imgui();
 private:
     void initVulkan();
     void loadScene(QEScene scene);
+    void saveScene();
     void mainLoop();
     void computeFrame();
     void drawFrame();  
@@ -115,8 +110,9 @@ private:
     //bool createFontsTexture(VkCommandBuffer& commandBuffer);
     //void setupImguiUploadFonts();
 public:
-    GUIWindow               mainWindow;
+    GUIWindow*              mainWindow;
     bool                    framebufferResized = false;
+
 private:
     VulkanInstance          vulkanInstance {};
     VulkanLayerAndExtension layerExtensionModule {};
@@ -134,34 +130,30 @@ private:
     DepthBufferModule*      depthBufferModule;
     AntiAliasingModule*     antialiasingModule;
     RenderPassModule*       renderPassModule;
-    Timer*                  timer;
+    QEDebugSystem*          debugSystem;
 
     bool show_demo_window = true;
     bool show_another_window = true;
     bool isRender = false;
+    bool isRunEditor = true;
     //FontResourcesModule     fontModule;
 
     //RayTracingModule        raytracingModule;
 
     QEScene     scene;
 
-    Camera*     cameraEditor;
+    QESessionManager*   sessionManager{};
     LightManager*       lightManager {};
     ShaderManager*      shaderManager{};
     MaterialManager*    materialManager {};
     ComputeNodeManager* computeNodeManager{};
     TextureManager*     textureManager{};
     GameObjectManager*  gameObjectManager{};
-    AnimationManager*   animationManager{};
     GraphicsPipelineManager* graphicsPipelineManager{};
     ComputePipelineManager* computePipelineManager{};
     ShadowPipelineManager* shadowPipelineManager{};
     ParticleSystemManager* particleSystemManager{};
-    CullingSceneManager* cullingSceneManager{};
     AtmosphereSystem*   atmosphereSystem{};
 
     KeyboardController* keyboard_ptr {};
-
-    // Editor
-    EditorObjectManager* editorManager {};
 };

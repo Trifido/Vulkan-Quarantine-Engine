@@ -7,14 +7,15 @@
 
 class DescriptorBuffer;
 
-class PointLight : public Light
+class QEPointLight : public QELight
 {
+    REFLECTABLE_DERIVED_COMPONENT(QEPointLight, QELight)
 public:
     std::shared_ptr<OmniShadowResources> shadowMappingResourcesPtr = nullptr;
 
 public:
-    PointLight();
-    PointLight(std::shared_ptr<VkRenderPass> renderPass);
+    QEPointLight();
+    void Setup(std::shared_ptr<VkRenderPass> renderPass);
     void UpdateUniform() override;
     void CleanShadowMapResources();
 };

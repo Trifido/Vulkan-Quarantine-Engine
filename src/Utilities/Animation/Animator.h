@@ -6,7 +6,7 @@
 #include <memory>
 #include <glm/glm.hpp>
 #include <Animation/Animation.h>
-#include <AnimationResources.h>
+#include <QEAnimationResources.h>
 #include <DescriptorBuffer.h>
 #include <Compute/ComputeNodeManager.h>
 
@@ -29,9 +29,16 @@ public:
     Animator();
     void InitializeComputeNodes(std::vector<std::string> idChilds);
     void SetVertexBufferInComputeNode(std::string id, VkBuffer vertexBuffer, VkBuffer animationVertexBuffer, uint32_t numElements);
+    void InitializeDescriptorsComputeNodes();
     std::shared_ptr<ComputeNode> GetComputeNode(std::string id);
     void UpdateUBOAnimation();
-    void UpdateAnimation(float dt);
+
+    float GetTimeTicks() const;
+    float GetDurationTicks() const;
+    float GetTicksPerSecond() const;
+    float GetNormalizedTime() const;
+
+    void UpdateAnimation(float dt, bool loop);
     void PlayAnimation(std::shared_ptr<Animation> pAnimation);
     void CalculateBoneTransform(const AnimationNode* node, glm::mat4 parentTransform);
     std::shared_ptr<std::vector<glm::mat4>> GetFinalBoneMatrices();

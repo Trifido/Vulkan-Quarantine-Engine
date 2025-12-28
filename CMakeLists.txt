@@ -4,10 +4,8 @@ project(QuarantineEngine)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Usar /MDd y /MD en MSVC
-if (MSVC)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
-endif()
+# Usar /MDd y /MD
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
 include(FetchContent)
 include(GNUInstallDirs)
@@ -26,6 +24,9 @@ endif()
 # FetchContent dependencies
 # ------------------------------
 
+# Antes de FetchContent_Declare(glfw), fuerza GLFW como estática
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+
 # GLFW
 FetchContent_Declare(
   glfw
@@ -33,6 +34,11 @@ FetchContent_Declare(
   GIT_TAG 3.4
   GIT_SHALLOW TRUE
 )
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+
 FetchContent_MakeAvailable(glfw)
 set_target_properties(glfw PROPERTIES DEBUG_POSTFIX "d")
 
@@ -54,15 +60,29 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(stb)
 
+# yaml-cpp
+FetchContent_Declare(
+  yaml-cpp
+  GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+  GIT_TAG master
+  GIT_SHALLOW TRUE
+)
+set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(yaml-cpp)
+
 # ------------------------------
 # Submodules as libraries
 # ------------------------------
 
-set(BUILD_SHARED_LIBS OFF)
-set(BUILD_BULLET2_DEMOS OFF CACHE BOOL "" FORCE)
-set(BUILD_UNIT_TESTS OFF CACHE BOOL "" FORCE)
-set(BUILD_EXTRAS OFF CACHE BOOL "" FORCE)
-add_subdirectory(extern/bullet3 EXCLUDE_FROM_ALL)
+set(USE_STATIC_MSVC_RUNTIME_LIBRARY OFF CACHE BOOL "" FORCE)
+set(JPH_BUILD_SHARED_LIBRARY ON CACHE BOOL "" FORCE)
+set(JPH_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(JPH_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
+set(JPH_BUILD_DOCUMENTATION OFF CACHE BOOL "" FORCE)
+set(CPP_RTTI_ENABLED ON CACHE BOOL "" FORCE)
+add_subdirectory(extern/jolt/Build EXCLUDE_FROM_ALL)
 
 set(ASSIMP_BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -173,10 +193,10 @@ target_include_directories(QuarantineEngine PRIVATE
   ${glfw_SOURCE_DIR}/include
   ${glm_SOURCE_DIR}
   ${stb_SOURCE_DIR}
+  ${yaml_cpp_SOURCE_DIR}/include
   ${IMGUI_DIR}
   ${IMGUI_DIR}/backends
   ${CMAKE_SOURCE_DIR}/extern/assimp/include
-  ${CMAKE_SOURCE_DIR}/extern/bullet3/src
   ${CMAKE_SOURCE_DIR}/extern/SPIRV-Reflect
   ${CMAKE_SOURCE_DIR}/extern
   ${Vulkan_INCLUDE_DIR}
@@ -186,16 +206,21 @@ target_include_directories(QuarantineEngine PRIVATE
 # Linking
 # ------------------------------
 
+target_link_directories(QuarantineEngine PRIVATE
+  # En Debug: busca en build/lib/Debug
+  $<$<CONFIG:Debug>:${CMAKE_BINARY_DIR}/lib/Debug>
+  # En Release: busca en build/lib/Release
+  $<$<CONFIG:Release>:${CMAKE_BINARY_DIR}/lib/Release>
+)
 target_link_libraries(QuarantineEngine
   glfw
   imgui
   Vulkan::Vulkan
   assimp
-  BulletDynamics
-  BulletCollision
-  LinearMath
+  Jolt
   SPIRV-Reflect
   meshoptimizer
+  yaml-cpp  
 )
 
 # ------------------------------
@@ -215,8 +240,8 @@ function(hide_from_vs TARGET_NAME)
 endfunction()
 
 foreach(TARGET_NAME
-  glfw imgui assimp BulletDynamics BulletCollision LinearMath
-  SPIRV-Reflect meshoptimizer glm zlibstatic
+  glfw imgui assimp
+  SPIRV-Reflect meshoptimizer glm zlibstatic yaml-cpp
 )
   hide_from_vs(${TARGET_NAME})
 endforeach()
@@ -229,7 +254,10 @@ if(WIN32)
   add_custom_command(TARGET QuarantineEngine POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       $<TARGET_FILE:assimp>
+      $<TARGET_FILE:Jolt>
       $<TARGET_FILE:meshoptimizer>
+      $<TARGET_FILE:yaml-cpp>
+      $<TARGET_FILE:glfw>
       $<TARGET_FILE_DIR:QuarantineEngine>
   )
 endif()
@@ -251,9 +279,6 @@ if (MSVC)
     glm
     stb
     assimp
-    BulletDynamics
-    BulletCollision
-    LinearMath
     SPIRV-Reflect
     meshoptimizer
     imgui
@@ -261,4 +286,11 @@ if (MSVC)
   )
     exclude_from_vs_build(${dep})
   endforeach()
+
+  # Indica a Visual Studio que QuarantineEngine sea el proyecto de inicio
+  set_property(
+    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    PROPERTY VS_STARTUP_PROJECT QuarantineEngine
+  )
+
 endif()

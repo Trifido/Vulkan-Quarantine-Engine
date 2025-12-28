@@ -1,7 +1,7 @@
 #include "ComputeDescriptorBuffer.h"
 #include "SynchronizationModule.h"
 #include "Timer.h"
-#include <CameraEditor.h>
+#include <QESessionManager.h>
 
 ComputeDescriptorBuffer::ComputeDescriptorBuffer()
 {
@@ -33,7 +33,6 @@ void ComputeDescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shade
             }
             else if (binding.first == "CameraUniform")
             {
-                this->camera = CameraEditor::getInstance();
                 poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                 poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
                 idx++;
@@ -89,13 +88,10 @@ void ComputeDescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shade
             }
             else if (binding.first == "UniformAnimation")
             {
-                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                poolSizes[idx].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
                 poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+                this->_numSSBOs++;
                 idx++;
-
-                this->ubos["UniformAnimation"] = std::make_shared<UniformBufferObject>();
-                this->uboSizes["UniformAnimation"] = sizeof(glm::mat4) * 200;
-                this->ubos["UniformAnimation"]->CreateUniformBuffer(this->uboSizes["UniformAnimation"], MAX_FRAMES_IN_FLIGHT, *deviceModule);
             }
             else if (binding.first == "UniformVertexParam")
             {
@@ -258,7 +254,8 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
 
             if (binding.first == "CameraUniform")
             {
-                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->camera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform), frameIdx);
+                auto cameraUBO = QESessionManager::getInstance()->GetCameraUBO();
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform), frameIdx);
                 idx++;
             }
 
@@ -275,7 +272,7 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
             }
             if (binding.first == "UniformAnimation")
             {
-                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->ubos["UniformAnimation"]->uniformBuffers[frameIdx], this->uboSizes["UniformAnimation"], frameIdx);
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, binding.second.binding, this->ssboData[3]->uniformBuffers[frameIdx], this->ssboSize[3], frameIdx);
                 idx++;
             }
             if (binding.first == "UniformVertexParam")
@@ -470,8 +467,6 @@ void ComputeDescriptorBuffer::Cleanup()
         this->outputTexture.reset();
         this->outputTexture = nullptr;
     }
-
-    this->camera = nullptr;
 
     this->deltaTimeUniform.reset();
     this->deltaTimeUniform = nullptr;

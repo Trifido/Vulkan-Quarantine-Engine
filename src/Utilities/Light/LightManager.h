@@ -6,7 +6,6 @@
 #include <memory>
 #include <fstream>
 #include <Light/Light.h>
-#include <Camera.h>
 #include <SwapChainModule.h>
 #include <ShaderModule.h>
 #include <RenderPassModule.h>
@@ -18,12 +17,14 @@
 #include <PointShadowDescriptorsManager.h>
 #include <CSMDescriptorsManager.h>
 
+#include <ShadowPipelineModule.h>
+
 #include <QESingleton.h>
 #include <LightDto.h>
 
-class DirectionalLight;
-class SpotLight;
-class PointLight;
+class QEDirectionalLight;
+class QESpotLight;
+class QEPointLight;
 
 struct LightMap
 {
@@ -38,7 +39,7 @@ bool compareDistance(const LightMap& a, const LightMap& b);
 class LightManager : public QESingleton<LightManager>
 {
 private:
-    friend class QESingleton<LightManager>; // Permitir acceso al constructor
+    friend class QESingleton<LightManager>;
 
     const size_t MAX_NUM_LIGHT = 64;
     const uint32_t BIN_SLICES = 16;
@@ -47,10 +48,9 @@ private:
 
     DeviceModule* deviceModule = nullptr;
     SwapChainModule* swapChainModule = nullptr;
-    Camera* camera = nullptr;
 
     uint32_t currentNumLights = 0;
-    std::unordered_map<std::string, std::shared_ptr<Light>> _lights;
+    std::unordered_map<std::string, std::shared_ptr<QELight>> _lights;
     std::shared_ptr<LightManagerUniform> lightManagerUniform;
     std::vector<LightUniform> lightBuffer;
     std::vector<LightMap> sortedLight;
@@ -61,44 +61,45 @@ private:
     RenderPassModule* renderPassModule = nullptr;
 
 public:
-    std::shared_ptr<UniformBufferObject>    lightUBO = nullptr;
-    std::shared_ptr<UniformBufferObject>    lightSSBO = nullptr;
+    std::shared_ptr<UniformBufferObject>    lightUBO;
+    std::shared_ptr<UniformBufferObject>    lightSSBO;
     VkDeviceSize                            lightSSBOSize;
-    std::shared_ptr<UniformBufferObject>    lightIndexSSBO = nullptr;
+    std::shared_ptr<UniformBufferObject>    lightIndexSSBO;
     VkDeviceSize                            lightIndexSSBOSize;
-    std::shared_ptr<UniformBufferObject>    lightTilesSSBO = nullptr;
+    std::shared_ptr<UniformBufferObject>    lightTilesSSBO;
     VkDeviceSize                            lightTilesSSBOSize;
-    std::shared_ptr<UniformBufferObject>    lightBinSSBO = nullptr;
+    std::shared_ptr<UniformBufferObject>    lightBinSSBO;
     VkDeviceSize                            lightBinSSBOSize;
 
-    std::vector<std::shared_ptr<DirectionalLight>> DirLights;
-    std::vector<std::shared_ptr<SpotLight>> SpotLights;
-    std::vector<std::shared_ptr<PointLight>> PointLights;
+    std::vector<std::shared_ptr<QEDirectionalLight>> DirLights;
+    std::vector<std::shared_ptr<QESpotLight>> SpotLights;
+    std::vector<std::shared_ptr<QEPointLight>> PointLights;
 
     std::shared_ptr<PointShadowDescriptorsManager> PointShadowDescritors;
     std::shared_ptr<CSMDescriptorsManager> CSMDescritors;
-    std::shared_ptr<ShadowPipelineModule> CSMPipelineModule = nullptr;
-    std::shared_ptr<ShadowPipelineModule> OmniShadowPipelineModule = nullptr;
+    std::shared_ptr<ShadowPipelineModule> CSMPipelineModule;
+    std::shared_ptr<ShadowPipelineModule> OmniShadowPipelineModule;
 
-    std::shared_ptr<ShaderModule> CSMShaderModule = nullptr;
-    std::shared_ptr<ShaderModule> OmniShadowShaderModule = nullptr;
+    std::shared_ptr<ShaderModule> CSMShaderModule;
+    std::shared_ptr<ShaderModule> OmniShadowShaderModule;
 
 private:
-    void AddLight(std::shared_ptr<Light> light_ptr, std::string& name);
+    void AddLight(std::shared_ptr<QELight> light_ptr, std::string& name);
     void SortingLights();
     void ComputeLightsLUT();
     void ComputeLightTiles();
     void UpdateUniform();
 
 public:
+    void AddNewLight(std::shared_ptr<QELight> light_ptr, std::string& name);
     LightManager();
     void AddDirShadowMapShader(std::shared_ptr<ShaderModule> shadow_mapping_shader);
     void AddOmniShadowMapShader(std::shared_ptr<ShaderModule> omni_shadow_mapping_shader);
-    void CreateLight(LightType type, std::string name);
-    void LoadLightDtos(const std::vector <LightDto>& lightDtos);
+    std::shared_ptr<QELight> CreateLight(LightType type, std::string name);
+    void DeleteLight(std::shared_ptr<QELight> light_ptr, std::string& name);
     static std::vector <LightDto> GetLightDtos(std::ifstream& file);
     void SaveLights(std::ofstream& file);
-    std::shared_ptr<Light> GetLight(std::string name);
+    std::shared_ptr<QELight> GetLight(std::string name);
     void InitializeShadowMaps();
     void Update();
     void UpdateUBOLight();
@@ -106,7 +107,6 @@ public:
     void CleanLightUBO();
     void CleanLastResources();
     void CleanShadowMapResources();
-    void SetCamera(Camera* camera_ptr);
 };
 
 #endif

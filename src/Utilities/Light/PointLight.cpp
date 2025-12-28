@@ -1,32 +1,32 @@
 #include <PointLight.h>
 #include <numbers>
 
-PointLight::PointLight() : Light()
+QEPointLight::QEPointLight() : QELight()
 {
     this->lightType = LightType::POINT_LIGHT;
 }
 
-PointLight::PointLight(std::shared_ptr<VkRenderPass> renderPass) : PointLight()
+void QEPointLight::Setup(std::shared_ptr<VkRenderPass> renderPass)
 {
     this->shadowMappingResourcesPtr = std::make_shared<OmniShadowResources>(renderPass);
 }
 
-void PointLight::UpdateUniform()
+void QEPointLight::UpdateUniform()
 {
-    Light::UpdateUniform();
+    QELight::UpdateUniform();
 
-    this->uniform->position = this->transform->Position;
+    this->uniform->position = this->transform->GetWorldPosition();
     this->uniform->radius = this->radius;
     this->uniform->idxShadowMap = this->idxShadowMap;
 
     OmniShadowUniform omniParameters = {};
-    omniParameters.lightPos = glm::vec4(this->transform->Position, 1.0f);
+    omniParameters.lightPos = glm::vec4(this->uniform->position, 1.0f);
     omniParameters.projection = glm::perspective((float)(std::numbers::pi * 0.5), 1.0f, 0.01f, this->radius);
 
     this->shadowMappingResourcesPtr->UpdateUBOShadowMap(omniParameters);
 }
 
-void PointLight::CleanShadowMapResources()
+void QEPointLight::CleanShadowMapResources()
 {
     this->shadowMappingResourcesPtr->Cleanup();
 }

@@ -3,10 +3,10 @@
 #ifndef PARTICLE_SYSTEM_H
 #define PARTICLE_SYSTEM_H
 
-#include "GameObject.h"
+#include "QEGameObject.h"
 #include "Compute/ComputeNode.h"
 #include <Compute/ComputeNodeManager.h>
-#include <Timer.h>
+#include <Animator.h>
 
 struct NewParticlesUBO
 {
@@ -14,14 +14,13 @@ struct NewParticlesUBO
     uint32_t  frameCount;
 };
 
-class ParticleSystem : public GameObject
+class ParticleSystem : public QEGameObject
 {
 private:
     ComputeNodeManager* computeNodeManager;
     SwapChainModule* swapchainModule;
     std::shared_ptr<ComputeNode> computeNodeEmitParticles;
     std::shared_ptr<ComputeNode> computeNodeUpdateParticles;
-    Timer* timer;
     float acumulativeTimer = 0.0f;
 
     uint32_t currentParticlesNum = 0;
@@ -55,7 +54,7 @@ public:
 
 private:
     void createShaderStorageBuffers();
-    void SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator_ptr = nullptr) override;
+    void SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, std::shared_ptr<Animator> animator_ptr = nullptr);
     void InitializeDeadList();
     void InitializeParticleSystemParameters();
     void SetNewParticlesUBO(uint32_t newParticles, uint32_t nFrame);
@@ -68,8 +67,7 @@ public:
     void AddParticleTexture(std::shared_ptr<CustomTexture> texture);
     void Update();
     void cleanup();
-    void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx) override;
-    bool IsValidRender() override;
+    void CreateDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
 };
 
 #endif // !PARTICLE_SYSTEM_H

@@ -5,24 +5,30 @@
 
 #include <ComputePipelineModule.h>
 #include <ComputeDescriptorBuffer.h>
-#include "GameComponent.h"
+#include "QEGameComponent.h"
 #include "ShaderModule.h"
 #include <string>
 
 #define CEIL_DIV(x, y) (((x) + (y) - 1) / (y))
 
-class ComputeNode : public GameComponent
+class ComputeNode : public QEGameComponent
 {
+    REFLECTABLE_COMPONENT(ComputeNode)
 private:
     DeviceModule*                               deviceModule = nullptr;
     std::shared_ptr<ShaderModule>               computeShader = nullptr;
-    uint32_t widthImage, heightImage;
+
+protected:
+    REFLECT_PROPERTY(std::string, computeShaderPath)
+    REFLECT_PROPERTY(uint32_t, widthImage)
+    REFLECT_PROPERTY(uint32_t, heightImage)
 public:
     std::shared_ptr<ComputeDescriptorBuffer>    computeDescriptor = nullptr;
-    uint32_t NElements = 0;
-    bool UseDependencyBuffer = false;
-    bool OnDemandCompute = false;
-    bool Compute = true;
+
+    REFLECT_PROPERTY(uint32_t, NElements)
+    REFLECT_PROPERTY(bool, UseDependencyBuffer)
+    REFLECT_PROPERTY(bool, OnDemandCompute)
+    REFLECT_PROPERTY(bool, Compute)
 
 public:
     ComputeNode();
@@ -35,9 +41,14 @@ public:
     void InitializeComputeNode();
     void InitializeOutputTextureComputeNode(uint32_t width, uint32_t height, VkFormat format);
     void DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t currentFrame);
-    void UpdateComputeDescriptor();
+
 private:
     void UpdateOutputTextureState();
+
+    void QEStart() override;
+    void QEInit() override;
+    void QEUpdate() override;
+    void QEDestroy() override;
 };
 
 #endif // !COMPUTE_NODE_H

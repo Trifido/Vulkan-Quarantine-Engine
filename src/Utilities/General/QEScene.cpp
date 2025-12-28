@@ -1,55 +1,49 @@
 #include "QEScene.h"
-#include <fstream>
-#include <iostream>
 #include <GameObjectManager.h>
-#include <LightManager.h>
+#include <QESessionManager.h>
 
-bool QEScene::InitScene(fs::path filename)
+QEScene::QEScene()
 {
-    auto gameObjectManager = GameObjectManager::getInstance();
+}
 
-    std::ifstream file(filename, std::ios::binary);
+QEScene::QEScene(string sceneName, fs::path scenePath) : QEScene()
+{
+    this->sceneName = sceneName;
+    this->scenePath = scenePath;
+}
+
+QEScene::~QEScene()
+{
+    cameraEditor = NULL;
+}
+
+bool QEScene::InitScene(fs::path scenefile)
+{
+    std::ifstream file(scenefile, std::ios::binary);
     if (!file.is_open())
     {
-        std::cerr << "Error al abrir la escena" << filename << std::endl;
+        std::cerr << "Error al abrir la escena" << scenefile << std::endl;
         return false;
     }
 
-    this->scenePath = filename.parent_path();
+    this->scenePath = scenefile.parent_path();
+    this->sceneName = scenefile.filename().string();
 
-    // Read scene name length and name
-    size_t sceneNameLength;
-    file.read(reinterpret_cast<char*>(&sceneNameLength), sizeof(sceneNameLength));
-    sceneName.resize(sceneNameLength);
-    file.read(&sceneName[0], sceneNameLength);
-
-    // Read camera dto
-    file.read(reinterpret_cast<char*>(&cameraEditor), sizeof(CameraDto));
-
-    // Read atmosphere dto
-    file.read(reinterpret_cast<char*>(&atmosphere), sizeof(AtmosphereDto));
-
-    // Read material dtos
-    this->materialDtos = MaterialManager::GetMaterialDtos(file);
-
-    // Read game objects dtos
-    this->gameObjectDtos = gameObjectManager->GetGameObjectDtos(file);
-
-    // Read lights dtos
-    this->lightDtos = LightManager::GetLightDtos(file);
-
-    file.close();
-    std::cout << "Archivo leído correctamente: " << filename << std::endl;
+    return true;
 }
 
-bool QEScene::SaveScene()
+bool QEScene::SerializeScene()
 {
     auto gameObjectManager = GameObjectManager::getInstance();
     auto materialManager = MaterialManager::getInstance();
     auto lightManager = LightManager::getInstance();
 
-    std::string filename = this->sceneName;
-    fs::path filePath = this->scenePath / filename;
+    YAML::Node root;
+    root["AtmosphereDto"] = SerializeAtmosphere(atmosphereDto);
+    root["Materials"] = materialManager->SerializeMaterials();
+    root["GameObjects"] = gameObjectManager->SerializeGameObjects();
+
+    fs::path filePath = this->scenePath / this->sceneName;
 
     std::ofstream file(filePath, std::ios::binary | std::ios::trunc);
 
@@ -59,23 +53,78 @@ bool QEScene::SaveScene()
         return false;
     }
 
-    size_t sceneNameLength = this->sceneName.length();
-    file.write(reinterpret_cast<const char*>(&sceneNameLength), sizeof(sceneNameLength));
-    file.write(this->sceneName.c_str(), sceneNameLength);
-
-    file.write(reinterpret_cast<const char*>(&this->cameraEditor), sizeof(CameraDto));
-    file.write(reinterpret_cast<const char*>(&this->atmosphere), sizeof(AtmosphereDto));
-
-    //Save material dtos
-    materialManager->SaveMaterials(file);
-
-    // Save game objects dtos
-    gameObjectManager->SaveGameObjects(file);
-
-    // Save lights dtos
-    lightManager->SaveLights(file);
-
+    file << root;
     file.close();
+
+    return true;
+}
+
+bool QEScene::DeserializeScene()
+{
+    auto gameObjectManager = GameObjectManager::getInstance();
+    auto materialManager = MaterialManager::getInstance();
+
+    namespace fs = std::filesystem;
+    const fs::path filePath = this->scenePath / this->sceneName;
+
+    YAML::Node root;
+    try
+    {
+        root = YAML::LoadFile(filePath.string());
+    }
+    catch (const YAML::BadFile& e)
+    {
+        std::cerr << "No se pudo abrir la escena: " << filePath << " (" << e.what() << ")\n";
+        return false;
+    }
+    catch (const YAML::ParserException& e)
+    {
+        std::cerr << "YAML inválido en " << filePath << " (" << e.what() << ")\n";
+        return false;
+    }
+
+    // CameraEditor
+    //if (auto n = root["CameraEditor"])
+    //{
+    //    cameraEditor = QESessionManager::getInstance()->EditorCamera();
+    //    deserializeComponent(cameraEditor.get(), n);
+    //    cameraEditor->UpdateCamera();
+    //}
+    //else
+    //{
+    //    std::cerr << "Warning: nodo 'CameraEditor' no encontrado en YAML.\n";
+    //}
+
+    // AtmosphereDto
+    if (auto n = root["AtmosphereDto"])
+    {
+        if (!DeserializeAtmosphere(n, atmosphereDto))
+        {
+            std::cerr << "Warning: 'AtmosphereDto' no se pudo deserializar. Usando defaults.\n";
+        }
+    }
+    else
+    {
+        std::cerr << "Warning: nodo 'AtmosphereDto' no encontrado en YAML. Usando defaults.\n";
+    }
+
+    if (auto n = root["Materials"])
+    {
+        materialManager->DeserializeMaterials(n);
+    }
+    else
+    {
+        std::cerr << "Warning: nodo 'Materials' no encontrado en YAML.\n";
+    }
+
+    if (auto n = root["GameObjects"])
+    {
+        gameObjectManager->DeserializeGameObjects(n);
+    }
+    else
+    {
+        std::cerr << "Warning: nodo 'GameObjects' no encontrado en YAML.\n";
+    }
 
     return true;
 }

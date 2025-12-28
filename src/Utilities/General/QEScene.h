@@ -1,34 +1,32 @@
 #pragma once
-#ifndef QE_SCENE_H
-#define QE_SCENE_H
+#ifndef QE_SCENEV2_H
+#define QE_SCENEV2_H
 
+#include <QEGameObject.h>
+#include <AtmosphereDto.h>
 #include <vector>
 
-#include <filesystem>
-#include <AtmosphereDto.h>
-#include <CameraDto.h>
-#include <GameObjectDto.h>
-#include <MaterialDto.h>
-#include <LightDto.h>
+using namespace std;
 
-namespace fs = std::filesystem;
+namespace fs = filesystem;
+
 class QEScene
 {
 private:
     fs::path scenePath;
-public:
-    std::string sceneName;
-    CameraDto cameraEditor;
-    AtmosphereDto atmosphere;
-    std::vector<GameObjectDto> gameObjectDtos;
-    std::vector<MaterialDto> materialDtos;
-    std::vector<LightDto> lightDtos;
 
 public:
+    string sceneName;
+    std::shared_ptr<QECamera> cameraEditor = NULL;
+    AtmosphereDto atmosphereDto;
+
+public:
+    QEScene();
+    QEScene(string sceneName, fs::path scenePath);
+    ~QEScene();
     bool InitScene(fs::path filename);
-    bool SaveScene();
+    bool SerializeScene();
+    bool DeserializeScene();
 };
 
-#endif // !QESCENE_H
-
-
+#endif

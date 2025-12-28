@@ -6,10 +6,15 @@ ComputeNode::ComputeNode()
 {
     this->deviceModule = DeviceModule::getInstance();
     this->widthImage = this->heightImage = 0;
+    this->UseDependencyBuffer = false;
+    this->OnDemandCompute = false;
+    this->Compute = true;
+    this->NElements = 0;
 }
 
 ComputeNode::ComputeNode(std::string computeShaderPath) : ComputeNode(std::make_shared<ShaderModule>(computeShaderPath))
 {
+    this->computeShaderPath = computeShaderPath;
 }
 
 ComputeNode::ComputeNode(std::shared_ptr<ShaderModule> shader_ptr) : ComputeNode()
@@ -138,11 +143,6 @@ void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
     }
 }
 
-void ComputeNode::UpdateComputeDescriptor()
-{
-    this->computeDescriptor->UpdateUBODeltaTime();
-}
-
 void ComputeNode::UpdateOutputTextureState()
 {
     auto outputTexture = this->computeDescriptor->outputTexture;
@@ -163,4 +163,25 @@ void ComputeNode::UpdateOutputTextureState()
         else
             outputTexture->transitionImageLayout(outputTexture->image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, subresourceRange);
     }
+}
+
+void ComputeNode::QEStart()
+{
+    InitializeComputeNode();
+    QEGameComponent::QEStart();
+}
+
+void ComputeNode::QEUpdate()
+{
+    this->computeDescriptor->UpdateUBODeltaTime();
+}
+
+void ComputeNode::QEDestroy()
+{
+    QEGameComponent::QEDestroy();
+}
+
+void ComputeNode::QEInit()
+{
+    QEGameComponent::QEInit();
 }

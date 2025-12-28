@@ -1,27 +1,40 @@
 #include "AABBObject.h"
 #include <BufferManageModule.h>
 
-void AABBObject::createVertexBuffer()
+void AABBObject::CreateVertexBuffers()
 {
-    VkDeviceSize bufferSize;
+    vertexBuffer.resize(1);
+    vertexBufferMemory.resize(1);
 
-    bufferSize = sizeof(glm::vec4) * vertices.size();
+    VkDeviceSize bufferSize = sizeof(glm::vec4) * vertices.size();
 
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-    BufferManageModule::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory, *deviceModule_ptr);
+    if (bufferSize == 0)
+    {
+        return;
+    }
+    VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    CreateGeometryBuffer(bufferSize, usageFlags, vertices.data(), vertexBuffer[0], vertexBufferMemory[0]);
+}
 
-    void* data;
-    vkMapMemory(deviceModule_ptr->device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, vertices.data(), (size_t)bufferSize);
-    vkUnmapMemory(deviceModule_ptr->device, stagingBufferMemory);
+void AABBObject::CreateIndexBuffers()
+{
+    indexBuffer.resize(1);
+    indexBufferMemory.resize(1);
 
-    BufferManageModule::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory, *deviceModule_ptr);
+    VkDeviceSize bufferSize = sizeof(uint32_t) * indices.size();
 
-    BufferManageModule::copyBuffer(stagingBuffer, vertexBuffer, bufferSize, *deviceModule_ptr);
+    if (bufferSize == 0)
+    {
+        return;
+    }
 
-    vkDestroyBuffer(deviceModule_ptr->device, stagingBuffer, nullptr);
-    vkFreeMemory(deviceModule_ptr->device, stagingBufferMemory, nullptr);
+    VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+    CreateGeometryBuffer(bufferSize, usageFlags, indices.data(), indexBuffer[0], indexBufferMemory[0]);
+}
+
+AABBObject::AABBObject()
+{
+    isGameObjectVisible = true;
 }
 
 void AABBObject::CreateBuffers()
@@ -35,10 +48,8 @@ void AABBObject::CreateBuffers()
     0, 1, 1, 2, 2, 3, 3, 0, 0, 4, 4, 5, 5, 6, 6, 7, 7, 4, 3, 7, 2, 6, 1, 5
     };
 
-    this->numFaces = 12;
-    this->numVertices = 8;
-
-    this->InitializeMesh();
+    this->CreateVertexBuffers();
+    this->CreateIndexBuffers();
 }
 
 void AABBObject::CleanResources()
@@ -47,21 +58,51 @@ void AABBObject::CleanResources()
     this->vertices.clear();
     this->indices.clear();
 
-    this->cleanup();
+    QEDestroy();
 }
 
-void AABBObject::InitializeMesh()
-{
-    this->createVertexBuffer();
-    this->createIndexBuffer();
-}
-
-void AABBObject::AddTransform(std::shared_ptr<Transform> modelTransform)
+void AABBObject::AddTransform(std::shared_ptr<QETransform> modelTransform)
 {
     this->transform = modelTransform;
 }
 
-const std::shared_ptr<Transform> AABBObject::GetTransform()
+const std::shared_ptr<QETransform> AABBObject::GetTransform()
 {
     return this->transform;
+}
+
+void AABBObject::QEStart()
+{
+    if (_QEStarted)
+    {
+        return;
+    }
+
+    QEGameComponent::QEStart();
+
+    QEGameComponent::QEInit();
+}
+
+void AABBObject::QEInit()
+{
+    if (_QEInitialized)
+    {
+        return;
+    }
+
+    QEGameComponent::QEInit();
+}
+
+void AABBObject::QEUpdate()
+{
+}
+
+void AABBObject::QEDestroy()
+{
+    if (_QEDestroyed)
+    {
+        return;
+    }
+
+    QEGameComponent::QEDestroy();
 }

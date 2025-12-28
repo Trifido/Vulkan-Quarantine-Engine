@@ -4,7 +4,7 @@
 
 #include <map>
 #include <Bone.h>
-#include <AnimationResources.h>
+#include <QEAnimationResources.h>
 
 class Animation
 {
@@ -14,9 +14,9 @@ public:
 
 public:
     Animation(const AnimationData& animData);
-    inline float GetTicksPerSecond() { return static_cast<float>(animationData.m_TicksPerSecond); }
-    inline float GetDuration() { return static_cast<float>(animationData.m_Duration); }
-    inline const AnimationNode& GetRootNode() { return animationData.animationNodeData; }
+    float GetTicksPerSecond();
+    float GetDuration();
+    const AnimationNode& GetRootNode();
     Bone* FindBone(const std::string& name);
 };
 

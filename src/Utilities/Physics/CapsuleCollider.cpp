@@ -1,25 +1,71 @@
 #include "CapsuleCollider.h"
+#include <AABBObject.h>
+#include <QEGameObject.h>
 
-CapsuleCollider::CapsuleCollider() : Collider()
+#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+
+using namespace JPH;
+
+void CapsuleCollider::QEStart()
 {
-    this->SetSize(0.5f, 2.0f);
+    QECollider::QEStart();
+}
+
+bool CapsuleCollider::TryAutoFit()
+{
+    auto tr = Owner->GetComponent<QETransform>();
+    std::cout << "Children transforms: " << (tr ? tr->GetChildren().size() : 0) << "\n";
+
+    auto boundingBox = Owner->GetComponentInChildren<AABBObject>(true);
+    if (!boundingBox) return false;
+
+    float r = glm::min(boundingBox->Size.x, boundingBox->Size.z) * 0.75f;
+    float h = boundingBox->Size.y;
+
+    SetSize(r, h);
+    SetColliderPivot(boundingBox->Center);
+    return true;
+}
+
+void CapsuleCollider::QEInit()
+{
+    if (QEInitialized()) return;
+
+    _autoFitted = TryAutoFit();
+    QECollider::QEInit();
+}
+
+void CapsuleCollider::QEUpdate()
+{
+    if (!_autoFitted)
+        _autoFitted = TryAutoFit();
+
+    QECollider::QEUpdate();
+}
+
+CapsuleCollider::CapsuleCollider() : QECollider()
+{
 }
 
 CapsuleCollider::CapsuleCollider(float newRadius, float newHeight)
 {
-    this->SetSize(newRadius, newHeight);
+    this->radius = newRadius;
+    this->height = newHeight;
 }
 
 void CapsuleCollider::SetSize(float newRadius, float totalHeight)
 {
-    this->radius = newRadius;
-    this->height = std::max(0.0f, totalHeight - 2.0f * newRadius);
+    radius = newRadius;
+    height = std::max(0.0f, totalHeight);
 
-    if (this->colShape != nullptr)
-        delete this->colShape;
+    float cylinderHeight = glm::max(0.0f, height - 2.0f * radius);
+    float halfHeight = 0.5f * cylinderHeight;
+    float effectiveRadius = radius + CollisionMargin;
 
-    colShape = new btCapsuleShape(this->radius, this->height);
-    colShape->setMargin(CollisionMargin);
-    colShape->setLocalScaling(btVector3(1, 1, 1));
-    colShape->setUserPointer(this);
+    CapsuleShapeSettings settings(halfHeight, effectiveRadius);
+
+    if (auto res = settings.Create(); res.IsValid())
+        colShape = res.Get();
+    else
+        colShape = nullptr;
 }

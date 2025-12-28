@@ -1,13 +1,7 @@
 #include "SunLight.h"
 #include <SynchronizationModule.h>
 
-SunLight::SunLight() : DirectionalLight()
-{
-    this->lightType = LightType::SUN_LIGHT;
-}
-
-SunLight::SunLight(std::shared_ptr<VkRenderPass> renderPass, Camera* camera) :
-    DirectionalLight(renderPass, camera)
+QESunLight::QESunLight() : QEDirectionalLight()
 {
     this->lightType = LightType::SUN_LIGHT;
     this->sunUBO = std::make_shared<UniformBufferObject>();
@@ -19,7 +13,7 @@ SunLight::SunLight(std::shared_ptr<VkRenderPass> renderPass, Camera* camera) :
     this->SetDistanceEffect(100.0f);
 }
 
-void SunLight::UpdateSun()
+void QESunLight::UpdateSun()
 {
     this->UpdateUniform();
 
@@ -32,16 +26,18 @@ void SunLight::UpdateSun()
     }
 }
 
-void SunLight::SetLightDirection(glm::vec3 dir)
+void QESunLight::SetSunEulerDegrees(const glm::vec3& eulerDeg)
 {
-    this->transform->ForwardVector = glm::normalize(dir);
-    this->uniformData.Direction = this->transform->ForwardVector;
+    this->transform->SetLocalEulerDegrees(eulerDeg);
 
-    float elevation = -glm::clamp(this->transform->ForwardVector.y, -1.0f, 1.0f);
+    glm::vec3 directionToSun = this->transform->Forward();
+    this->uniformData.Direction = directionToSun;
+
+    float elevation = glm::clamp(-directionToSun.y, -1.0f, 1.0f);
     float colorIntensity = glm::clamp(elevation, 0.0f, 1.0f);
     this->uniformData.Intensity = this->baseIntensity * colorIntensity;
 
-    glm::vec3 sunsetColor = glm::vec3(1.0f, 0.4f, 0.2f); 
+    glm::vec3 sunsetColor = glm::vec3(1.0f, 0.4f, 0.2f);
     glm::vec3 dayColor = glm::vec3(1.0f, 1.0f, 0.9f);
 
     this->diffuse = glm::mix(sunsetColor, dayColor, colorIntensity) * colorIntensity;

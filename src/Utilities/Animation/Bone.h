@@ -7,6 +7,11 @@
 #include <string>
 #include <assimp/anim.h>
 
+namespace YAML {
+    template <typename T>
+    struct convert;   // forward declaration
+}
+
 struct KeyPosition
 {
     glm::vec3 position;
@@ -54,6 +59,8 @@ public:
     int GetPositionIndex(float animationTime);
     int GetRotationIndex(float animationTime);
     int GetScaleIndex(float animationTime);
+
+    friend struct YAML::convert<Bone>;
 };
 
 #endif

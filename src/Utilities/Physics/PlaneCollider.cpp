@@ -1,13 +1,21 @@
-#include <Collider.h>
 #include <PlaneCollider.h>
+#include <Jolt/Physics/Collision/Shape/BoxShape.h>
+
+using namespace JPH;
 
 PlaneCollider::PlaneCollider()
 {
-    this->SetPlane(1.0f,glm::vec3(1.0f));
 }
 
 PlaneCollider::PlaneCollider(const float& newSize, const glm::vec3& newOrientation)
 {
+    this->SetPlane(this->Size, this->Orientation);
+}
+
+void PlaneCollider::QEStart()
+{
+    QECollider::QEStart();
+
     this->SetPlane(this->Size, this->Orientation);
 }
 
@@ -23,10 +31,19 @@ const glm::vec3 PlaneCollider::GetOrientation()
 
 void PlaneCollider::SetPlane(const float& newSize, const glm::vec3& newOrientation)
 {
-    this->Size = newSize;
-    this->Orientation = newOrientation;
+    Size = newSize;
+    Orientation = newOrientation;
 
-    if (this->colShape != nullptr)
-        delete this->colShape;
-    this->colShape = new btStaticPlaneShape(btVector3(this->Orientation.x, this->Orientation.y, this->Orientation.z), this->Size);
+    // Crea un "suelo" plano usando una caja enorme muy delgada
+    BoxShapeSettings settings(
+        Vec3(1000.0f, Size, 1000.0f)
+    );
+    settings.mConvexRadius = 0.0f;
+
+    auto res = settings.Create();
+    if (res.IsValid())
+        colShape = res.Get();
+    else {
+        colShape = nullptr;
+    }
 }

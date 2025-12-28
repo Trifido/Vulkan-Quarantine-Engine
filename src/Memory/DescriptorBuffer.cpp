@@ -1,6 +1,6 @@
 #include "DescriptorBuffer.h"
 #include "SynchronizationModule.h"
-#include <CameraEditor.h>
+#include <QESessionManager.h>
 
 DescriptorBuffer::DescriptorBuffer()
 {
@@ -59,7 +59,6 @@ void DescriptorBuffer::CleanLastResources()
 {
     this->deviceModule = nullptr;
     this->lightManager = nullptr;
-    this->camera = nullptr;
     this->textures.reset();
     this->textures = nullptr;
 
@@ -100,7 +99,6 @@ void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
 
             if (binding.first == "CameraUniform")
             {
-                this->camera = CameraEditor::getInstance();
                 poolSizes[idx].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
                 poolSizes[idx].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
                 idx++;
@@ -306,7 +304,8 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
         {
             if (binding.first == "CameraUniform")
             {
-                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, this->camera->cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform), frameIdx);
+                auto cameraUBO = QESessionManager::getInstance()->GetCameraUBO();
+                this->SetDescriptorWrite(descriptorWrites[idx], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.second.binding, cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform), frameIdx);
                 idx++;
             }
             else if (binding.first == "ScreenData")

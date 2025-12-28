@@ -5,14 +5,15 @@
 #include <vulkan/vulkan.hpp>
 #include <vector>
 #include "GraphicsPipelineModule.h"
-#include "GameObject.h"
+#include "QEGameObject.h"
 #include "../Editor/EditorObjectManager.h"
 #include <GameObjectManager.h>
 #include <Compute/ComputeNodeManager.h>
 #include <OmniShadowResources.h>
 #include <FrameBufferModule.h>
 #include <AtmosphereSystem.h>
-#include <PhysicsModule.h>
+#include <CullingSceneManager.h>
+#include <DebugSystem/QEDebugSystem.h>
 #include <QESingleton.h>
 
 class CommandPoolModule : public QESingleton<CommandPoolModule>
@@ -28,7 +29,7 @@ private:
     LightManager*                   lightManager;
     RenderPassModule*               renderPassModule;
     AtmosphereSystem*               atmosphereSystem;
-    PhysicsModule*                  physicsModule;
+    QEDebugSystem*                  debugSystem;
 
     VkCommandPool                   commandPool;
     VkCommandPool                   computeCommandPool;

@@ -1,4 +1,8 @@
 #include "MaterialManager.h"
+#include "Material.h"
+
+#include <RenderPassModule.h>
+
 #include "ShaderManager.h"
 #include <GraphicsPipelineModule.h>
 #include <filesystem>
@@ -6,7 +10,7 @@
 
 std::string MaterialManager::CheckName(std::string nameMaterial)
 {
-    std::unordered_map<std::string, std::shared_ptr<Material>>::const_iterator got;
+    std::unordered_map<std::string, std::shared_ptr<QEMaterial>>::const_iterator got;
 
     std::string newName = nameMaterial;
     unsigned int id = 0;
@@ -50,7 +54,6 @@ MaterialManager::MaterialManager()
     const std::string absolute_grid_frag_shader_path = absPath + "/Grid/grid_frag.spv";
 
     this->lightManager = LightManager::getInstance();
-    this->cameraEditor = CameraEditor::getInstance();
 
     auto shaderManager = ShaderManager::getInstance();
     this->default_shader = std::make_shared<ShaderModule>(
@@ -126,18 +129,18 @@ void MaterialManager::InitializeMaterialManager()
     {
         if (this->default_particles_shader != nullptr)
         {
-            this->AddMaterial(std::make_shared<Material>(Material("defaultParticlesMat", this->default_particles_shader)));
+            this->AddMaterial(std::make_shared<QEMaterial>(QEMaterial("defaultParticlesMat", this->default_particles_shader)));
             this->_materials["defaultParticlesMat"]->layer = (int)RenderLayer::PARTICLES;
         }
     }
 }
 
-std::shared_ptr<Material> MaterialManager::GetMaterial(std::string nameMaterial)
+std::shared_ptr<QEMaterial> MaterialManager::GetMaterial(std::string nameMaterial)
 {
     if (_materials.empty())
         return nullptr;
 
-    std::unordered_map<std::string, std::shared_ptr<Material>>::const_iterator got = _materials.find(nameMaterial);
+    std::unordered_map<std::string, std::shared_ptr<QEMaterial>>::const_iterator got = _materials.find(nameMaterial);
 
     if (got == _materials.end())
         return nullptr;
@@ -145,16 +148,16 @@ std::shared_ptr<Material> MaterialManager::GetMaterial(std::string nameMaterial)
     return _materials[nameMaterial];
 }
 
-void MaterialManager::AddMaterial(std::shared_ptr<Material> mat_ptr)
+void MaterialManager::AddMaterial(std::shared_ptr<QEMaterial> mat_ptr)
 {
     std::string nameMaterial = CheckName(mat_ptr->Name);
     mat_ptr->RenameMaterial(nameMaterial);
     _materials[nameMaterial] = mat_ptr;
 }
 
-void MaterialManager::AddMaterial(Material mat)
+void MaterialManager::AddMaterial(QEMaterial mat)
 {
-    std::shared_ptr<Material> mat_ptr = std::make_shared<Material>(mat);
+    std::shared_ptr<QEMaterial> mat_ptr = std::make_shared<QEMaterial>(mat);
     std::string nameMaterial = CheckName(mat.Name);
     mat_ptr->Name = nameMaterial;
     _materials[nameMaterial] = mat_ptr;
@@ -166,7 +169,7 @@ void MaterialManager::CreateDefaultPrimitiveMaterial()
     {
         if (this->default_primitive_shader != nullptr)
         {
-            this->AddMaterial(std::make_shared<Material>(Material("defaultPrimitiveMat", this->default_primitive_shader)));
+            this->AddMaterial(std::make_shared<QEMaterial>(QEMaterial("defaultPrimitiveMat", this->default_primitive_shader)));
         }
     }
 
@@ -174,7 +177,7 @@ void MaterialManager::CreateDefaultPrimitiveMaterial()
     {
         if (this->mesh_shader_test != nullptr)
         {
-            this->AddMaterial(std::make_shared<Material>(Material("defaultMeshPrimitiveMat", this->mesh_shader_test)));
+            this->AddMaterial(std::make_shared<QEMaterial>(QEMaterial("defaultMeshPrimitiveMat", this->mesh_shader_test)));
             _materials["defaultMeshPrimitiveMat"]->SetMeshShaderPipeline(true);
         }
     }
@@ -183,19 +186,19 @@ void MaterialManager::CreateDefaultPrimitiveMaterial()
 void MaterialManager::CreateMaterial(std::string& nameMaterial)
 {
     nameMaterial = CheckName(nameMaterial);
-    this->AddMaterial(std::make_shared<Material>(Material(nameMaterial, this->default_shader)));
+    this->AddMaterial(std::make_shared<QEMaterial>(QEMaterial(nameMaterial, this->default_shader)));
 }
 
 void MaterialManager::CreateMeshShaderMaterial(std::string& nameMaterial)
 {
     nameMaterial = CheckName(nameMaterial);
-    this->AddMaterial(std::make_shared<Material>(Material(nameMaterial, this->mesh_shader_test)));
+    this->AddMaterial(std::make_shared<QEMaterial>(QEMaterial(nameMaterial, this->mesh_shader_test)));
     //_materials[nameMaterial]->SetMeshShaderPipeline(true);
 }
 
 bool MaterialManager::Exists(std::string materialName)
 {
-    std::unordered_map<std::string, std::shared_ptr<Material>>::const_iterator got = _materials.find(materialName);
+    std::unordered_map<std::string, std::shared_ptr<QEMaterial>>::const_iterator got = _materials.find(materialName);
 
     if (got == _materials.end())
         return false;
@@ -211,7 +214,6 @@ void MaterialManager::CleanPipelines()
         it.second->cleanup();
     }
     // Clean Camera & Lights UBO's
-    this->cameraEditor->CleanCameraUBO();
     this->lightManager->CleanLightUBO();
 }
 
@@ -225,7 +227,6 @@ void MaterialManager::CleanLastResources()
     }
 
     this->_materials.clear();
-    this->cameraEditor = nullptr;
     this->lightManager = nullptr;
     this->default_shader.reset();
     this->default_primitive_shader.reset();
@@ -242,14 +243,6 @@ void MaterialManager::UpdateUniforms()
     for (auto& it : _materials)
     {
         it.second->UpdateUniformData();
-    }
-}
-
-void MaterialManager::InitializeMaterials()
-{
-    for (auto it : _materials)
-    {
-        it.second->InitializeMaterial();
     }
 }
 
@@ -387,7 +380,7 @@ void MaterialManager::LoadMaterialDtos(std::vector<MaterialDto>& materialDtos)
 
         if (!this->Exists(it.Name))
         {
-            this->AddMaterial(std::make_shared<Material>(Material(shader, it)));
+            this->AddMaterial(std::make_shared<QEMaterial>(QEMaterial(shader, it)));
         }
     }
 }
@@ -409,4 +402,53 @@ void MaterialManager::SaveMaterials(std::ofstream& file)
             file.write(materialPath.c_str(), materialPathLength);
         }
     }
+}
+
+YAML::Node MaterialManager::SerializeMaterials()
+{
+    YAML::Node materialsNode;
+
+    for (auto& it : _materials)
+    {
+        std::string materialPath = it.second->SaveMaterialFile();
+        materialsNode.push_back(materialPath);
+    }
+
+    return materialsNode;
+}
+
+void MaterialManager::DeserializeMaterials(YAML::Node materials)
+{
+    std::vector<MaterialDto> materialDtos;
+
+    try
+    {
+        if (materials && materials.IsSequence())
+        {
+            for (const auto& materialPath : materials)
+            {
+                std::string matPath = materialPath.as<std::string>();
+
+                std::ifstream matfile(matPath, std::ios::binary);
+                if (!matfile.is_open())
+                {
+                    std::cerr << "Error al abrir el material " << matPath << std::endl;
+                    continue;
+                }
+
+                MaterialDto materialDto = ReadQEMaterial(matfile);
+
+                matfile.close();
+
+                materialDtos.push_back(materialDto);
+            }
+        }
+    }
+    catch (const std::bad_alloc& e)
+    {
+        std::cerr << "Error al asignar memoria para los materiales: " << e.what() << std::endl;
+        return;
+    }
+
+    this->LoadMaterialDtos(materialDtos);
 }

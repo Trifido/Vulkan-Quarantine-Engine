@@ -5,6 +5,8 @@
 #include "SpotLight.h"
 #include <SynchronizationModule.h>
 #include <SunLight.h>
+#include <QESessionManager.h>
+#include <QEGameObject.h>
 
 bool compareDistance(const LightMap& a, const LightMap& b)
 {
@@ -57,16 +59,22 @@ void LightManager::AddOmniShadowMapShader(std::shared_ptr<ShaderModule> omni_sha
     this->OmniShadowPipelineModule = this->OmniShadowShaderModule->ShadowPipelineModule;
 }
 
-void LightManager::CreateLight(LightType type, std::string name)
+void LightManager::AddNewLight(std::shared_ptr<QELight> light_ptr, std::string& name)
 {
-    switch (type)
+    if (light_ptr->ResourcesInitialized)
+    {
+        return;
+    }
+
+    switch (light_ptr->lightType)
     {
         default:
         case LightType::POINT_LIGHT:
-            this->PointLights.push_back(std::make_shared<PointLight>(this->renderPassModule->OmniShadowMappingRenderPass));
+            this->PointLights.push_back(std::static_pointer_cast<QEPointLight>(light_ptr));
+            this->PointLights.back()->Setup(this->renderPassModule->OmniShadowMappingRenderPass);
             this->PointLights.back()->idxShadowMap = (uint32_t)this->PointLights.size() - 1;
 
-            this->AddLight(std::static_pointer_cast<Light>(this->PointLights.back()), name);
+            this->AddLight(light_ptr, name);
             this->PointShadowDescritors->AddPointLightResources(
                 this->PointLights.back()->shadowMappingResourcesPtr->shadowMapUBO,
                 this->PointLights.back()->shadowMappingResourcesPtr->CubemapImageView,
@@ -75,17 +83,19 @@ void LightManager::CreateLight(LightType type, std::string name)
 
         case LightType::SUN_LIGHT:
         case LightType::DIRECTIONAL_LIGHT:
-            if (type == LightType::SUN_LIGHT)
+            if (light_ptr->lightType == LightType::SUN_LIGHT)
             {
-                this->DirLights.push_back(std::make_shared<SunLight>(this->renderPassModule->DirShadowMappingRenderPass, this->camera));
+                this->DirLights.push_back(std::static_pointer_cast<QESunLight>(light_ptr));
+                this->DirLights.back()->Setup(this->renderPassModule->DirShadowMappingRenderPass);
             }
             else
             {
-                this->DirLights.push_back(std::make_shared<DirectionalLight>(this->renderPassModule->DirShadowMappingRenderPass, this->camera));
+                this->DirLights.push_back(std::static_pointer_cast<QEDirectionalLight>(light_ptr));
+                this->DirLights.back()->Setup(this->renderPassModule->DirShadowMappingRenderPass);
             }
             this->DirLights.back()->idxShadowMap = (uint32_t)this->DirLights.size() - 1;
 
-            this->AddLight(std::static_pointer_cast<Light>(this->DirLights.back()), name);
+            this->AddLight(light_ptr, name);
             this->CSMDescritors->AddDirLightResources(
                 this->DirLights.back()->shadowMappingResourcesPtr->OffscreenShadowMapUBO,
                 this->DirLights.back()->shadowMappingResourcesPtr->CSMImageView,
@@ -95,29 +105,97 @@ void LightManager::CreateLight(LightType type, std::string name)
             break;
 
         case LightType::SPOT_LIGHT:
-            this->SpotLights.push_back(std::make_shared<SpotLight>(this->CSMShaderModule, this->renderPassModule->DirShadowMappingRenderPass));
-            this->AddLight(std::static_pointer_cast<Light>(this->SpotLights.back()), name);
+            this->SpotLights.push_back(std::dynamic_pointer_cast<QESpotLight>(light_ptr));
+            this->AddLight(light_ptr, name);
             break;
     }
+
+    light_ptr->ResourcesInitialized = true;
 }
 
-void LightManager::LoadLightDtos(const std::vector<LightDto>& lightDtos)
+std::shared_ptr<QELight> LightManager::CreateLight(LightType type, std::string name)
 {
-    for (const auto& lightDto : lightDtos)
-    {
-        this->CreateLight(lightDto.lightType, lightDto.name);
+    std::shared_ptr<QELight> newLight;
 
-        auto light = this->GetLight(lightDto.name);
-        if (light)
-        {
-            light->transform->SetModel(lightDto.worldTransform);
-            light->diffuse = lightDto.diffuse;
-            light->specular = lightDto.specular;
-            light->SetDistanceEffect(lightDto.radius);
-            light->cutOff = lightDto.cutOff;
-            light->outerCutoff = lightDto.outerCutoff;
-        }
+    switch (type)
+    {
+        default:
+        case LightType::POINT_LIGHT:
+            newLight = std::make_shared<QEPointLight>();
+            break;
+
+        case LightType::SUN_LIGHT:
+            newLight = std::make_shared<QESunLight>();
+            break;
+        case LightType::DIRECTIONAL_LIGHT:
+            newLight = std::make_shared<QEDirectionalLight>();      
+            break;
+
+        case LightType::SPOT_LIGHT:
+            newLight = std::make_shared<QESpotLight>(this->CSMShaderModule, this->renderPassModule->DirShadowMappingRenderPass);
+            break;
     }
+
+    newLight->Name = name;
+    return newLight;
+}
+
+void LightManager::DeleteLight(std::shared_ptr<QELight> light_ptr, std::string& name)
+{
+    switch (light_ptr->lightType)
+    {
+        default:
+        case LightType::POINT_LIGHT:
+            {
+                auto it = std::find_if(PointLights.begin(), PointLights.end(),
+                    [light_ptr](const auto& light) { return light->id == light_ptr->id; });
+
+                if (it != PointLights.end())
+                {
+                    int localLightPosition = static_cast<int>(std::distance(PointLights.begin(), it));
+                    PointLights.erase(it);
+                    PointShadowDescritors->DeletePointLightResources(localLightPosition);
+                }
+            }
+            break;
+        case LightType::DIRECTIONAL_LIGHT:
+        case LightType::SUN_LIGHT:
+            {
+                auto it = std::find_if(DirLights.begin(), DirLights.end(),
+                    [light_ptr](const auto& light) { return light->id == light_ptr->id; });
+
+                if (it != DirLights.end())
+                {
+                    int localLightPosition = static_cast<int>(std::distance(DirLights.begin(), it));
+                    DirLights.erase(it);
+                    CSMDescritors->DeleteDirLightResources(localLightPosition);
+                }
+            }
+            break;
+        case LightType::SPOT_LIGHT:
+            {
+                auto it = std::find_if(SpotLights.begin(), SpotLights.end(),
+                    [light_ptr](const auto& light) { return light->id == light_ptr->id; });
+
+                if (it != SpotLights.end())
+                {
+                    int localLightPosition = static_cast<int>(std::distance(SpotLights.begin(), it));
+                    SpotLights.erase(it);
+                }
+            }
+            break;
+    }
+
+    auto it = std::find_if(_lights.begin(), _lights.end(),
+        [light_ptr](const auto& light) { return light.second->id == light_ptr->id; });
+
+    if (it != _lights.end())
+    {
+        int localLightPosition = static_cast<int>(std::distance(_lights.begin(), it));
+        _lights.erase(it);
+    }
+
+    this->currentNumLights--;
 }
 
 std::vector<LightDto> LightManager::GetLightDtos(std::ifstream& file)
@@ -167,7 +245,7 @@ void LightManager::SaveLights(std::ofstream& file)
 
         float radius = light->GetDistanceEffect();
         file.write(reinterpret_cast<const char*>(&radius), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&light->transform->GetModel()), sizeof(glm::mat4));
+        file.write(reinterpret_cast<const char*>(&light->transform->GetWorldMatrix()), sizeof(glm::mat4));
         file.write(reinterpret_cast<const char*>(&light->diffuse), sizeof(glm::vec3));
         file.write(reinterpret_cast<const char*>(&light->specular), sizeof(glm::vec3));
         file.write(reinterpret_cast<const char*>(&light->cutOff), sizeof(float));
@@ -175,7 +253,7 @@ void LightManager::SaveLights(std::ofstream& file)
     }
 }
 
-std::shared_ptr<Light> LightManager::GetLight(std::string name)
+std::shared_ptr<QELight> LightManager::GetLight(std::string name)
 {
     auto it =_lights.find(name);
 
@@ -282,12 +360,7 @@ void LightManager::CleanShadowMapResources()
     this->CSMDescritors->Clean();
 }
 
-void LightManager::SetCamera(Camera* camera_ptr)
-{
-    this->camera = camera_ptr;
-}
-
-void LightManager::AddLight(std::shared_ptr<Light> light_ptr, std::string& name)
+void LightManager::AddLight(std::shared_ptr<QELight> light_ptr, std::string& name)
 {
     this->lightBuffer.push_back(*light_ptr->uniform);
 
@@ -301,27 +374,32 @@ void LightManager::AddLight(std::shared_ptr<Light> light_ptr, std::string& name)
         this->_lights[name] = light_ptr;
     }
 
+    light_ptr->Name = name;
+
     this->currentNumLights++;
 }
 
 void LightManager::SortingLights()
 {
+    auto activeCamera = QESessionManager::getInstance()->ActiveCamera();
+
     this->sortedLight.clear();
     this->sortedLight.reserve(this->lightBuffer.size());
     this->lights_index.clear();
     this->lights_index.reserve(this->lightBuffer.size());
 
-    float near = *this->camera->GetRawNearPlane();
-    float far = *this->camera->GetRawFarPlane();
+    float near = activeCamera->GetNear();
+    float far = activeCamera->GetFar();
+    auto cameraTransform = activeCamera->Owner->GetComponent<QETransform>();
     for (uint32_t i = 0; i < this->lightBuffer.size(); i++)
     {
         glm::vec4 position = glm::vec4(this->lightBuffer.at(i).position, 1.0f);
-        glm::vec4 p_min = position + glm::vec4(this->camera->cameraFront * -this->lightBuffer.at(i).radius, 0.0f);
-        glm::vec4 p_max = position + glm::vec4(this->camera->cameraFront * this->lightBuffer.at(i).radius, 0.0f);
+        glm::vec4 p_min = position + glm::vec4(cameraTransform->Forward() * -this->lightBuffer.at(i).radius, 0.0f);
+        glm::vec4 p_max = position + glm::vec4(cameraTransform->Forward() * this->lightBuffer.at(i).radius, 0.0f);
 
-        glm::vec4 projected_position = this->camera->view * position;
-        glm::vec4 projected_p_min = this->camera->view * p_min;
-        glm::vec4 projected_p_max = this->camera->view * p_max;
+        glm::vec4 projected_position = activeCamera->CameraData->View * position;
+        glm::vec4 projected_p_min = activeCamera->CameraData->View * p_min;
+        glm::vec4 projected_p_max = activeCamera->CameraData->View * p_max;
 
         this->sortedLight.push_back({
                 .id = i,
@@ -384,6 +462,7 @@ void LightManager::ComputeLightsLUT()
 
 void LightManager::ComputeLightTiles()
 {
+    auto activeCamera = QESessionManager::getInstance()->ActiveCamera();
     uint32_t tileXCount = swapChainModule->swapChainExtent.width / swapChainModule->TILE_SIZE;
     uint32_t tileYCount = swapChainModule->swapChainExtent.height / swapChainModule->TILE_SIZE;
 
@@ -414,7 +493,7 @@ void LightManager::ComputeLightTiles()
     this->light_tiles_bits.clear();
     this->light_tiles_bits.resize(tiles_entry_count, 0u);
 
-    float near_z = *this->camera->GetRawNearPlane();
+    float near_z = activeCamera->GetNear();
     float tile_size_inv = 1.0f / newTileSize;
 
     uint32_t tile_stride = tile_x_count * NUM_WORDS;
@@ -427,7 +506,7 @@ void LightManager::ComputeLightTiles()
         glm::vec4 pos{ light.position.x, light.position.y, light.position.z, 1.0f };
         float radius = light.radius;
 
-        glm::vec4 view_space_pos = camera->view * pos;
+        glm::vec4 view_space_pos = activeCamera->CameraData->View * pos;
         glm::vec2 cx{ view_space_pos.x, view_space_pos.z };
         const float tx_squared = glm::dot(cx, cx) - (radius * radius);
         glm::vec2 vx{ sqrtf(tx_squared), radius };
@@ -444,8 +523,8 @@ void LightManager::ComputeLightTiles()
         glm::mat2 ytransf_max{ vy.x, -vy.y, vy.y, vy.x };
         glm::vec2 maxy = ytransf_max * cy;
 
-        glm::vec4 aabb{ minx.x / minx.y * this->camera->projection[0][0], miny.x / miny.y * this->camera->projection[1][1],
-                    maxx.x / maxx.y * this->camera->projection[0][0], maxy.x / maxy.y * this->camera->projection[1][1] };
+        glm::vec4 aabb{ minx.x / minx.y * activeCamera->CameraData->Projection[0][0], miny.x / miny.y * activeCamera->CameraData->Projection[1][1],
+                    maxx.x / maxx.y * activeCamera->CameraData->Projection[0][0], maxy.x / maxy.y * activeCamera->CameraData->Projection[1][1] };
 
 
         // Build view space AABB and project it, then calculate screen AABB
@@ -457,13 +536,13 @@ void LightManager::ComputeLightTiles()
             corner = corner + glm::vec3(pos);
 
             // transform in view space
-            glm::vec4 corner_vs = this->camera->view * glm::vec4(corner, 1.f);
+            glm::vec4 corner_vs = activeCamera->CameraData->View * glm::vec4(corner, 1.f);
             // adjust z on the near plane.
             // visible Z is negative, thus corner vs will be always negative, but near is positive.
             // get positive Z and invert ad the end.
             corner_vs.z = glm::max(near_z, corner_vs.z);
 
-            glm::vec4 corner_ndc = this->camera->projection * corner_vs;
+            glm::vec4 corner_ndc = activeCamera->CameraData->Projection * corner_vs;
             corner_ndc = corner_ndc / corner_ndc.w;
 
             // clamp

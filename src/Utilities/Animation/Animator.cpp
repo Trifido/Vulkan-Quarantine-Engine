@@ -27,13 +27,19 @@ void Animator::InitializeComputeNodes(std::vector<std::string> idChilds)
 void Animator::UpdateUBOAnimation()
 {
     auto currentFrame = SynchronizationModule::GetCurrentFrame();
+    VkDeviceSize size = sizeof(glm::mat4) * 200;
 
     for (auto cn : computeNodes)
     {
-        void* data;
-        vkMapMemory(deviceModule->device, cn.second->computeDescriptor->ubos["UniformAnimation"]->uniformBuffersMemory[currentFrame], 0, cn.second->computeDescriptor->uboSizes["UniformAnimation"], 0, &data);
-        memcpy(data, static_cast<const void*>(this->m_FinalBoneMatrices.get()->data()), cn.second->computeDescriptor->uboSizes["UniformAnimation"]);
-        vkUnmapMemory(deviceModule->device, cn.second->computeDescriptor->ubos["UniformAnimation"]->uniformBuffersMemory[currentFrame]);
+        void* data = nullptr;
+        // ssboData[3] = paleta huesos
+        vkMapMemory(deviceModule->device,
+            cn.second->computeDescriptor->ssboData[3]->uniformBuffersMemory[currentFrame],
+            0, size, 0, &data);
+
+        memcpy(data, m_FinalBoneMatrices->data(), (size_t)size);
+        vkUnmapMemory(deviceModule->device,
+            cn.second->computeDescriptor->ssboData[3]->uniformBuffersMemory[currentFrame]);
     }
 }
 
@@ -56,6 +62,11 @@ void Animator::SetVertexBufferInComputeNode(std::string id, VkBuffer vertexBuffe
     this->computeNodes[id]->computeDescriptor->ssboData[2]->CreateSSBO(bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
     this->computeNodes[id]->computeDescriptor->ssboSize[2] = bufferSize;
 
+    // Bones palette SSBO (binding 3)
+    bufferSize = sizeof(glm::mat4) * 200;
+    this->computeNodes[id]->computeDescriptor->ssboData[3]->CreateSSBO(bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->computeNodes[id]->computeDescriptor->ssboSize[3] = bufferSize;
+
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {
         void* data;
@@ -65,38 +76,87 @@ void Animator::SetVertexBufferInComputeNode(std::string id, VkBuffer vertexBuffe
     }
 }
 
+void Animator::InitializeDescriptorsComputeNodes()
+{
+    for (auto computeNode : this->computeNodes)
+    {
+        computeNode.second->InitializeComputeNode();
+    }
+}
+
 std::shared_ptr<ComputeNode> Animator::GetComputeNode(std::string id)
 {
     return this->computeNodes[id];
 }
 
-void Animator::UpdateAnimation(float dt)
+float Animator::GetTimeTicks() const { return m_CurrentTime; }
+
+float Animator::GetDurationTicks() const { return m_CurrentAnimation ? m_CurrentAnimation->GetDuration() : 0.0f; }
+
+float Animator::GetTicksPerSecond() const { return m_CurrentAnimation ? std::max(m_CurrentAnimation->GetTicksPerSecond(), 1.0f) : 25.0f; }
+
+float Animator::GetNormalizedTime() const
+{
+    float d = GetDurationTicks();
+    return d > 0.0f ? m_CurrentTime / d : 0.0f;
+}
+
+void Animator::UpdateAnimation(float dt, bool loop)
 {
     m_DeltaTime = dt;
-    if (m_CurrentAnimation != nullptr)
+    if (!m_CurrentAnimation) return;
+
+    float tps = m_CurrentAnimation->GetTicksPerSecond();
+    if (tps <= 0.0f) tps = 25.0f;
+
+    m_CurrentTime += tps * dt;
+
+    const float duration = m_CurrentAnimation->GetDuration();
+
+    if (loop)
     {
-        m_CurrentTime += m_CurrentAnimation->GetTicksPerSecond() * dt;
-        m_CurrentTime = fmod(m_CurrentTime, m_CurrentAnimation->GetDuration());
-        CalculateBoneTransform(&m_CurrentAnimation->GetRootNode(), glm::mat4(1.0f));
-        this->UpdateUBOAnimation();
+        if (duration > 0.0f)
+        {
+            m_CurrentTime = std::fmod(m_CurrentTime, duration);
+            if (m_CurrentTime < 0.0f) m_CurrentTime += duration;
+        }
+        else
+        {
+            m_CurrentTime = 0.0f;
+        }
     }
+    else if (m_CurrentTime >= duration)
+    {
+        m_CurrentTime = std::max(0.0f, std::nextafter(duration, 0.0f));
+    }
+
+    auto rootNode = m_CurrentAnimation->GetRootNode();
+    CalculateBoneTransform(&rootNode, glm::mat4(1.0f));
+    this->UpdateUBOAnimation();
 }
 
 void Animator::PlayAnimation(std::shared_ptr<Animation> pAnimation)
 {
+    if (pAnimation == m_CurrentAnimation)
+        return;
+
     m_CurrentTime = 0.0f;
     m_CurrentAnimation = pAnimation;
 
-    CalculateBoneTransform(&m_CurrentAnimation->GetRootNode(), glm::mat4(1.0f));
+    auto rootNode = m_CurrentAnimation->GetRootNode();
+    CalculateBoneTransform(&rootNode, glm::mat4(1.0f));
+
+    // Ahora la paleta va a SSBO (binding 3) en lugar de UBO
+    VkDeviceSize bonesSize = sizeof(glm::mat4) * NUM_BONES;
 
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {
-        for (auto cn : computeNodes)
+        for (auto& cn : computeNodes)
         {
-            void* data;
-            vkMapMemory(deviceModule->device, cn.second->computeDescriptor->ubos["UniformAnimation"]->uniformBuffersMemory[currentFrame], 0, cn.second->computeDescriptor->uboSizes["UniformAnimation"], 0, &data);
-            memcpy(data, static_cast<const void*>(this->m_FinalBoneMatrices.get()->data()), cn.second->computeDescriptor->uboSizes["UniformAnimation"]);
-            vkUnmapMemory(deviceModule->device, cn.second->computeDescriptor->ubos["UniformAnimation"]->uniformBuffersMemory[currentFrame]);
+            void* data = nullptr;
+            vkMapMemory(deviceModule->device, cn.second->computeDescriptor->ssboData[3]->uniformBuffersMemory[currentFrame],  0, bonesSize, 0, &data);
+            memcpy(data, static_cast<const void*>(m_FinalBoneMatrices->data()), (size_t)bonesSize);
+            vkUnmapMemory(deviceModule->device,cn.second->computeDescriptor->ssboData[3]->uniformBuffersMemory[currentFrame]);
         }
     }
 }

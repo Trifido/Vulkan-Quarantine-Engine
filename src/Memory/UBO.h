@@ -30,11 +30,11 @@ struct LightManagerUniform
 
 struct CameraUniform
 {
-    glm::mat4 view;
-    glm::mat4 projection;
-    glm::mat4 viewproj;
-    glm::vec4 position;
-    alignas(16) glm::vec4 frustumPlanes[6];
+    glm::mat4 View;
+    glm::mat4 Projection;
+    glm::mat4 Viewproj;
+    glm::vec4 WPosition;
+    alignas(16) glm::vec4 FrustumPlanes[6];
 };
 
 struct ScreenResolutionUniform

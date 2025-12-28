@@ -5,36 +5,30 @@
 #include <DeviceModule.h>
 #include <ShaderModule.h>
 #include <CustomTexture.h>
-#include <Camera.h>
 #include <LightManager.h>
 #include <QESingleton.h>
 #include <Compute/ComputeNodeManager.h>
 #include <AtmosphereDto.h>
 #include <SunLight.h>
+#include <AtmosphereType.h>
 
 using namespace std;
 
-class AtmosphereSystem : public QESingleton<AtmosphereSystem>
+class AtmosphereSystem : public QESingleton<AtmosphereSystem>, public SerializableComponent
 {
 private:
     const std::string SUN_NAME = "QESunLight";
-    std::shared_ptr<SunLight> sunLight;
+    std::shared_ptr<QESunLight> sunLight;
+    glm::vec3 sunDirection;
+    float sunIntensity;
 
 public:
-    enum ENVIRONMENT_TYPE
-    {
-        CUBEMAP = 0,
-        SPHERICALMAP = 1,
-        PHYSICALLY_BASED_SKY = 2,
-    };
-
-    bool IsInitialized = false;
+    bool IsInitialized;
 
 private:
     friend class QESingleton<AtmosphereSystem>; // Permitir acceso al constructor
 
     DeviceModule* deviceModule;
-    Camera* camera = nullptr;
     LightManager* lightManager = nullptr;
     ComputeNodeManager* computeNodeManager;
     SwapChainModule* swapChainModule;
@@ -42,8 +36,7 @@ private:
     std::shared_ptr<CustomTexture> outputTexture;
     std::shared_ptr<UniformBufferObject> resolutionUBO = nullptr;
 
-    // Environment type
-    ENVIRONMENT_TYPE environmentType;
+    AtmosphereType atmosphereType;
 
     // Skybox shader
     const vector<string> shaderPaths = {
@@ -62,7 +55,7 @@ private:
     shared_ptr<ComputeNode> SVLUT_ComputeNode;
 
     // Mesh
-    shared_ptr<GeometryComponent> _Mesh = nullptr;
+    shared_ptr<QEGeometryComponent> _Mesh = nullptr;
 
     // Descriptor set
     vector<VkDescriptorSet> descriptorSets;
@@ -82,18 +75,26 @@ private:
     VkDescriptorBufferInfo GetBufferInfo(VkBuffer buffer, VkDeviceSize bufferSize);
     void SetDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, uint32_t idBuffer, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize);
     void SetSamplerDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding, std::shared_ptr<CustomTexture> texture, VkDescriptorImageInfo& imageInfo);
-    void SetUpResources(Camera* cameraPtr);
+    void SetUpResources();
 
 public:
     AtmosphereSystem();
     ~AtmosphereSystem();
 
-    void LoadAtmosphereDto(AtmosphereDto atmosphereDto, Camera* cameraPtr);
+    const std::string& getTypeName() const override {
+        static const std::string name = "AtmosphereSystem";
+        return name;
+    }
+    QEMetaType* meta() const override {
+        return nullptr; // o un meta vacío si no usas campos “normales”
+    }
+
+    void LoadAtmosphereDto(AtmosphereDto atmosphereDto);
+    void InitializeAtmosphereResources();
     AtmosphereDto CreateAtmosphereDto();
     void AddTextureResources(const string* texturePaths, uint32_t numTextures);
-    void InitializeAtmosphere(Camera* cameraPtr);
-    void InitializeAtmosphere(ENVIRONMENT_TYPE type, const string* texturePaths, uint32_t numTextures, Camera* cameraPtr);
-    void SetCamera(Camera* cameraPtr);
+    void InitializeAtmosphere();
+    void InitializeAtmosphere(AtmosphereType type, const string* texturePaths, uint32_t numTextures);
     void DrawCommand(VkCommandBuffer& commandBuffer, uint32_t frameIdx);
     void Cleanup();
     void CleanLastResources();

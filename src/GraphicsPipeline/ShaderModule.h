@@ -6,7 +6,7 @@
 #include <string>
 #include <vulkan/vulkan.hpp>
 #include "DeviceModule.h"
-#include "GeometryComponent.h"
+#include "QEGeometryComponent.h"
 #include <ReflectShader.h>
 #include <Numbered.h>
 #include <GraphicsPipelineManager.h>

@@ -29,12 +29,12 @@ void ComputeNodeManager::InitializeComputeResources()
 
     auto absPath = std::filesystem::absolute("../../resources/shaders/").generic_string();
 
-    const std::string absolute_emit_compute_shader_path = absPath + "Particles/emitParticles.spv";
-    const std::string absolute_update_compute_shader_path = absPath + "Particles/updateParticles.spv";
-    const std::string absolute_animation_compute_shader_path = absPath + "Animation/computeSkinning.spv";
-    const std::string transmittance_lut_compute_shader_path = absPath + "Atmosphere/transmittance_LUT.spv";
-    const std::string multi_scattering_lut_compute_shader_path = absPath + "Atmosphere/multi_scattering_LUT.spv";
-    const std::string sky_view_lut_compute_shader_path = absPath + "Atmosphere/sky_view_LUT.spv";
+    const std::string absolute_emit_compute_shader_path = absPath + "Particles/emitParticles_comp.spv";
+    const std::string absolute_update_compute_shader_path = absPath + "Particles/updateParticles_comp.spv";
+    const std::string absolute_animation_compute_shader_path = absPath + "Animation/skinning_comp.spv";
+    const std::string transmittance_lut_compute_shader_path = absPath + "Atmosphere/transmittance_LUT_comp.spv";
+    const std::string multi_scattering_lut_compute_shader_path = absPath + "Atmosphere/multi_scattering_LUT_comp.spv";
+    const std::string sky_view_lut_compute_shader_path = absPath + "Atmosphere/sky_view_LUT_comp.spv";
 
     shaderManager->AddShader(std::make_shared<ShaderModule>(ShaderModule("emit_compute_particles", absolute_emit_compute_shader_path)));
     shaderManager->AddShader(std::make_shared<ShaderModule>(ShaderModule("update_compute_particles", absolute_update_compute_shader_path)));
@@ -42,14 +42,6 @@ void ComputeNodeManager::InitializeComputeResources()
     shaderManager->AddShader(std::make_shared<ShaderModule>(ShaderModule("transmittance_lut", transmittance_lut_compute_shader_path)));
     shaderManager->AddShader(std::make_shared<ShaderModule>(ShaderModule("multi_scattering_lut", multi_scattering_lut_compute_shader_path)));
     shaderManager->AddShader(std::make_shared<ShaderModule>(ShaderModule("sky_view_lut", sky_view_lut_compute_shader_path)));
-}
-
-void ComputeNodeManager::InitializeComputeNodes()
-{
-    for (auto it : _computeNodes)
-    {
-        it.second->InitializeComputeNode();
-    }
 }
 
 void ComputeNodeManager::AddComputeNode(std::string& nameComputeNode, ComputeNode mat)
@@ -70,14 +62,6 @@ void ComputeNodeManager::AddComputeNode(std::string& nameComputeNode, std::share
 {
     nameComputeNode = CheckName(nameComputeNode);
     _computeNodes[nameComputeNode] = mat_ptr;
-}
-
-void ComputeNodeManager::UpdateComputeNodes()
-{
-    for (auto node : _computeNodes)
-    {
-        node.second->UpdateComputeDescriptor();
-    }
 }
 
 std::shared_ptr<ComputeNode> ComputeNodeManager::GetComputeNode(std::string nameComputeNode)

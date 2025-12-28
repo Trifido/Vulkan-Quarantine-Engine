@@ -34,10 +34,10 @@ layout(std430, binding = 2) buffer OutputSSBO {
    VertexOUT verticesOut[ ];
 };
 
-layout(std140, set = 0, binding = 3) uniform UniformAnimation
+layout(std430, set=0, binding=3) readonly buffer UniformAnimation
 {
-	mat4 finalBonesMatrices[200];
-} uboAnimation;
+    mat4 finalBonesMatrices[];
+} bones;
 
 layout(std140, set = 0, binding = 4) uniform UniformVertexParam
 {
@@ -55,16 +55,21 @@ void main()
         ivec4 boneIds = verticesBonesIn[index].inBoneIds;
         vec4 weights = verticesBonesIn[index].inWeights;
 
-        mat4 BoneTransform = uboAnimation.finalBonesMatrices[boneIds[0]] * weights[0] +
-                             uboAnimation.finalBonesMatrices[boneIds[1]] * weights[1] +
-                             uboAnimation.finalBonesMatrices[boneIds[2]] * weights[2] +
-                             uboAnimation.finalBonesMatrices[boneIds[3]] * weights[3];
+        mat4 BoneTransform = bones.finalBonesMatrices[boneIds[0]] * weights[0] +
+                             bones.finalBonesMatrices[boneIds[1]] * weights[1] +
+                             bones.finalBonesMatrices[boneIds[2]] * weights[2] +
+                             bones.finalBonesMatrices[boneIds[3]] * weights[3];
 
-        mat3 matrix = transpose(inverse(mat3(BoneTransform)));
+        mat3 matrix = mat3(BoneTransform);
+
+        vec3 N = normalize(matrix * verticesIn[index].inNormal.xyz);
+        vec3 T = normalize(matrix * verticesIn[index].inTangent.xyz);
+
+        T = normalize(T - dot(T, N) * N);
 
         verticesOut[index].inPosition = BoneTransform * verticesIn[index].inPosition;
         verticesOut[index].inTexCoord = verticesIn[index].inTexCoord;
-        verticesOut[index].inNormal = vec4(matrix * verticesIn[index].inNormal.xyz, 0.0);
-        verticesOut[index].inTangent = vec4(matrix * verticesIn[index].inTangent.xyz, 0.0);
+        verticesOut[index].inNormal  = vec4(N, 0.0);
+        verticesOut[index].inTangent = vec4(T, 0.0);
     }
 }

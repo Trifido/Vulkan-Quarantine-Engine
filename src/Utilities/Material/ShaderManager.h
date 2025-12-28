@@ -3,8 +3,13 @@
 #ifndef SHADER_MANAGER_H
 #define SHADER_MANAGER_H
 
-#include <ShaderModule.h>
-#include <QESingleton.h>
+#include <unordered_map>
+#include <string>
+#include <memory>
+
+#include <QESingleton.h>     // Tu singleton
+
+class ShaderModule;
 
 class ShaderManager : public QESingleton<ShaderManager>
 {
