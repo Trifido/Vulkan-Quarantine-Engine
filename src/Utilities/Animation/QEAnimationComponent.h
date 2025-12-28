@@ -49,6 +49,7 @@ public:
     void SetFloat(const std::string& name, float v);
     void SetTrigger(const std::string& name, bool value = true);
 
+    AnimationState GetCurrentState() const;
     bool GetBool(const std::string& name) const;
     int  GetInt(const std::string& name) const;
     float GetFloat(const std::string& name) const;

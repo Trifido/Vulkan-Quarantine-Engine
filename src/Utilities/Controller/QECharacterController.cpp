@@ -44,6 +44,7 @@ QECharacterController::QECharacterController()
     GravityY = -9.81f;
     MaxSlopeDeg = 50.0f;
     TurnSpeedDeg = 540.0f;
+    JumpAnimDelay = 0.55f;
 
     mSettings.mBackFaceMode = JPH::EBackFaceMode::IgnoreBackFaces;
     mSettings.mEnhancedInternalEdgeRemoval = true;
@@ -242,6 +243,56 @@ void QECharacterController::UpdateCharacterAnimation(glm::vec3 velocity)
     }
 }
 
+void QECharacterController::UpdateJumpAnimation(const float dt)
+{
+    const bool grounded = mCharacter->IsSupported();
+
+    // Física
+    if (!grounded)
+        mVelocity.y += GravityY * dt;
+    else
+        mVelocity.y = std::min(mVelocity.y, 0.0f);
+
+    // Input de salto (evento)
+    if (grounded && ImGui::IsKeyPressed(ImGuiKey_Space))
+    {
+        animationComponentPtr->SetTrigger("jump", true);
+        pendingJump = true;
+    }
+
+    if (pendingJump && animationComponentPtr->GetCurrentState().Id == "Jumping")
+    {
+        if (animationComponentPtr->animator->GetNormalizedTime() >= JumpAnimDelay)
+        {
+            if (mCharacter->IsSupported())
+                mVelocity.y = JumpSpeed;
+
+            pendingJump = false;
+            blockAnimationDisplacement = false;
+        }
+        else
+        {
+            blockAnimationDisplacement = true;
+        }
+    }
+
+    // Estados para animación
+    animationComponentPtr->SetBool("grounded", grounded);
+
+    // Falling: solo cuando realmente estás bajando
+    const float fallThreshold = 0.05f;               // ajusta (0.05–0.2 típico)
+    const bool falling = (!grounded) && (mVelocity.y < -fallThreshold);
+    animationComponentPtr->SetBool("falling", falling);
+}
+
+void QECharacterController::CheckBlockAnimationDisplacement()
+{
+        blockAnimationDisplacement =
+            animationComponentPtr->GetCurrentState().Id == "Landing" ||
+            animationComponentPtr->GetCurrentState().Id == "StandToCrouch" ||
+            animationComponentPtr->GetCurrentState().Id == "CrouchToStand";
+}
+
 void QECharacterController::QEUpdate()
 {
     if (QESessionManager::getInstance()->IsEditor()) return;
@@ -258,31 +309,12 @@ void QECharacterController::QEUpdate()
     const float dt = Timer::DeltaTime;
     if (dt <= 0.0f) return;
 
+    CheckBlockAnimationDisplacement();
+    UpdateJumpAnimation(dt);
+
+    if (blockAnimationDisplacement) return;
+
     const glm::vec3 wishVel = ReadMoveInput();
-    
-    const bool grounded = mCharacter->IsSupported();
-
-    // Física
-    if (!grounded)
-        mVelocity.y += GravityY * dt;
-    else
-        mVelocity.y = std::min(mVelocity.y, 0.0f);
-
-    // Input de salto (evento)
-    if (grounded && ImGui::IsKeyPressed(ImGuiKey_Space))
-    {
-        animationComponentPtr->SetTrigger("jump", true);
-        mVelocity.y = JumpSpeed;
-    }
-
-    // Estados para animación
-    animationComponentPtr->SetBool("grounded", grounded);
-
-    // Falling: solo cuando realmente estás bajando
-    const float fallThreshold = 0.05f;               // ajusta (0.05–0.2 típico)
-    const bool falling = (!grounded) && (mVelocity.y < -fallThreshold);
-    animationComponentPtr->SetBool("falling", falling);
-
     mVelocity.x = wishVel.x;
     mVelocity.z = wishVel.z;
 
@@ -310,18 +342,4 @@ void QECharacterController::QEUpdate()
     SyncFromCharacter();
 
     UpdateCharacterAnimation(wishVel);
-
-    //auto characterDir = mTransform->Forward();
-    //characterDir = mTransform->Forward();
-    //characterDir.y = 0.0f;
-    //characterDir = glm::normalize(characterDir);
-
-    //auto camTransform = mSpringArm->Owner->GetComponentInChildren<QETransform>(false);
-    //auto cameraDir = camTransform->Forward();
-    //auto pos = mTransform->GetWorldPosition();
-    //auto endPosCamera = pos + cameraDir * 2.0f;
-    //auto endPosCharacter = pos + characterDir * 2.0f;
-
-    //QEDebugSystem::getInstance()->AddLine(pos, endPosCamera, glm::vec4(0.0, 1.0, 0.0, 1.0));
-    //QEDebugSystem::getInstance()->AddLine(pos, endPosCharacter, glm::vec4(1.0, 0.0, 0.0, 1.0));
 }

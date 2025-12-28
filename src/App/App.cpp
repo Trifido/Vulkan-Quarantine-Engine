@@ -183,7 +183,7 @@ void App::initVulkan()
     //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Idle_Character.glb");
 
     // Import animations
-    QEProjectManager::ImportAnimationFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Jumping2.glb",
+    QEProjectManager::ImportAnimationFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Running.glb",
         std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Animations"));
 
     // Load Scene
@@ -196,8 +196,8 @@ void App::initVulkan()
     //// States
     animationComponent->AddAnimationState({ "Idle", true, "Idle" }, true);
     animationComponent->AddAnimationState({ "Walking", true, "WalkingForward" });
-    //animationComponent->AddAnimationState({ "Jumping", false, "Jumping" });
-    animationComponent->AddAnimationState({ "Jumping", false, "Jump2" });
+    animationComponent->AddAnimationState({ "Running", true, "Running" });
+    animationComponent->AddAnimationState({ "Jumping", false, "Jumping" });
     animationComponent->AddAnimationState({ "Falling", true, "Falling" });
     animationComponent->AddAnimationState({ "Landing", false, "Landing" });
     animationComponent->AddAnimationState({ "IdleCrouch", true, "IdleCrouch" });

@@ -28,10 +28,13 @@ class QECharacterController : public QEGameComponent
         REFLECT_PROPERTY(float, GravityY)        // m/s^2 (negativo)
         REFLECT_PROPERTY(float, MaxSlopeDeg)     // grados
         REFLECT_PROPERTY(float, TurnSpeedDeg)    // grados/seg
+        REFLECT_PROPERTY(float, JumpAnimDelay)   // 0.0 - 1.0
 
         bool   mGrounded = false;
         bool   mCrouched = false;
         glm::vec3 mVelocity{ 0.0f };
+        bool pendingJump = false;
+        bool blockAnimationDisplacement = false;
 
         std::shared_ptr<QETransform>        mTransform = nullptr;
         std::shared_ptr<QECollider>         mCollider = nullptr;
@@ -54,6 +57,8 @@ class QECharacterController : public QEGameComponent
 
         void UpdateCharacterOrientation(glm::vec3 dir, const float dt);
         void UpdateCharacterAnimation(glm::vec3 velocity);
+        void UpdateJumpAnimation(const float dt);
+        void CheckBlockAnimationDisplacement();
 
     public:
         QECharacterController();

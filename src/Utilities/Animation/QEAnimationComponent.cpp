@@ -239,6 +239,11 @@ void QEAnimationComponent::SetTrigger(const std::string& name, bool value)
     std::cout << "Set Trigger\n";
 }
 
+AnimationState QEAnimationComponent::GetCurrentState() const
+{
+    return currentState;
+}
+
 bool QEAnimationComponent::GetBool(const std::string& name) const
 {
     auto it = _params.find(name);
