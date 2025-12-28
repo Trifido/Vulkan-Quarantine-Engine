@@ -226,7 +226,7 @@ std::shared_ptr<QEGameObject> QEGameObject::FromYaml(const YAML::Node& node)
             auto child = QEGameObject::FromYaml(chnode);
             if (child)
             {
-                go->AddChild(child, /*keepWorldTransform=*/true);
+                go->AddChild(child, /*keepWorldTransform=*/false);
             }
         }
     }
