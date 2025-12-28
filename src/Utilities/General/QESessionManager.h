@@ -10,7 +10,7 @@ class QESessionManager : public QESingleton<QESessionManager>
 {
 private:
     friend class QESingleton<QESessionManager>;
-    bool _isEditor = true;
+    bool _isEditor = false;
     bool _isDebugMode = false;
     std::shared_ptr<QECamera> _activeCamera = nullptr;
     std::shared_ptr<QECamera> _editorCamera = nullptr;
