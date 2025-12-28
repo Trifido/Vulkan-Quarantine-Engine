@@ -179,7 +179,10 @@ glm::vec3 QECharacterController::ReadMoveInput() const
     if (glm::length2(dir) > 0.0f)
         dir = glm::normalize(dir);
 
-    const float spd = ImGui::IsKeyDown(ImGuiKey_ModShift) ? SprintSpeed : MoveSpeed;
+    const bool sprint = ImGui::IsKeyDown(ImGuiKey_ModShift);
+    animationComponentPtr->SetBool("sprint", sprint);
+
+    const float spd = sprint ? SprintSpeed : MoveSpeed;
     return dir * spd;
 }
 
@@ -247,13 +250,11 @@ void QECharacterController::UpdateJumpAnimation(const float dt)
 {
     const bool grounded = mCharacter->IsSupported();
 
-    // Física
     if (!grounded)
         mVelocity.y += GravityY * dt;
     else
         mVelocity.y = std::min(mVelocity.y, 0.0f);
 
-    // Input de salto (evento)
     if (grounded && ImGui::IsKeyPressed(ImGuiKey_Space))
     {
         animationComponentPtr->SetTrigger("jump", true);
@@ -276,11 +277,9 @@ void QECharacterController::UpdateJumpAnimation(const float dt)
         }
     }
 
-    // Estados para animación
     animationComponentPtr->SetBool("grounded", grounded);
 
-    // Falling: solo cuando realmente estás bajando
-    const float fallThreshold = 0.05f;               // ajusta (0.05–0.2 típico)
+    const float fallThreshold = 0.05f;
     const bool falling = (!grounded) && (mVelocity.y < -fallThreshold);
     animationComponentPtr->SetBool("falling", falling);
 }
@@ -295,8 +294,6 @@ void QECharacterController::CheckBlockAnimationDisplacement()
 
 void QECharacterController::QEUpdate()
 {
-    if (QESessionManager::getInstance()->IsEditor()) return;
-
     if (!mCharacter)
     {
         BuildOrUpdateCharacter();
@@ -304,10 +301,32 @@ void QECharacterController::QEUpdate()
             return;
     }
 
-    if (!mTransform) return;
-
     const float dt = Timer::DeltaTime;
     if (dt <= 0.0f) return;
+
+    if (mStartupLockFrames < 2)
+    {
+        mStartupLockFrames++;
+
+        JPH::TempAllocatorImpl temp_alloc(4 * 1024 * 1024);
+        auto bp_filter = MakeBPFilter();
+        BodyFilterSelfIgnore body_filter(mPhysBody ? mPhysBody->body : JPH::BodyID());
+
+        mCharacter->Update(
+            dt,
+            JPH::Vec3(0.0f, GravityY, 0.0f),
+            bp_filter,
+            kAllLayersFilter,
+            body_filter,
+            JPH::ShapeFilter(),
+            temp_alloc
+        );
+
+        return;
+    }
+
+    if (QESessionManager::getInstance()->IsEditor()) return;
+    if (!mTransform) return;
 
     CheckBlockAnimationDisplacement();
     UpdateJumpAnimation(dt);

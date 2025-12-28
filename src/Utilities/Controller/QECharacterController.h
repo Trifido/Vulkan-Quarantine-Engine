@@ -30,11 +30,13 @@ class QECharacterController : public QEGameComponent
         REFLECT_PROPERTY(float, TurnSpeedDeg)    // grados/seg
         REFLECT_PROPERTY(float, JumpAnimDelay)   // 0.0 - 1.0
 
-        bool   mGrounded = false;
+        bool   mGrounded = true;
         bool   mCrouched = false;
         glm::vec3 mVelocity{ 0.0f };
         bool pendingJump = false;
         bool blockAnimationDisplacement = false;
+
+        int mStartupLockFrames = 0;
 
         std::shared_ptr<QETransform>        mTransform = nullptr;
         std::shared_ptr<QECollider>         mCollider = nullptr;

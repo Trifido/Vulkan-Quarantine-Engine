@@ -129,21 +129,24 @@ void QECamera::SetFOV(float newValue)
 
 void QECamera::QEStart()
 {
-    if (!_QEStarted)
-    {
-        QEGameComponent::QEStart();
+    if (_QEStarted) return;
 
-        auto sessionManager = QESessionManager::getInstance();
-        sessionManager->SetFindNewSceneCamera(this->id);
+    auto sessionManager = QESessionManager::getInstance();
+    if (!sessionManager->IsEditor() && this->Owner->Name == sessionManager->NameCameraEditor) return;
 
-        this->deviceModule = DeviceModule::getInstance();
-        this->_frustumComponent = std::make_shared<FrustumComponent>();
-        this->CameraData = std::make_shared<CameraUniform>();
-    }
+    QEGameComponent::QEStart();
+
+    sessionManager->SetFindNewSceneCamera(this->id);
+
+    this->deviceModule = DeviceModule::getInstance();
+    this->_frustumComponent = std::make_shared<FrustumComponent>();
+    this->CameraData = std::make_shared<CameraUniform>();
 }
 
 void QECamera::QEInit()
 {
+    if (!_QEStarted || _QEInitialized) return;
+
     QEGameComponent::QEInit();
 
     _OwnerTransform = this->Owner->GetComponent<QETransform>();
@@ -152,6 +155,8 @@ void QECamera::QEInit()
 
 void QECamera::QEUpdate()
 {
+    if (!_QEInitialized) return;
+
     bool transformChanged = false;
 
     if (_OwnerTransform)

@@ -11,7 +11,6 @@
 QESessionManager::QESessionManager()
 {
     auto deviceModule = DeviceModule::getInstance();
-    this->_editorCamera = std::make_shared<QECamera>(1280.0f, 720.0f);
     this->cameraUBO = std::make_shared<UniformBufferObject>();
     this->cameraUBO->CreateUniformBuffer(sizeof(CameraUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 }
@@ -19,21 +18,28 @@ QESessionManager::QESessionManager()
 void QESessionManager::SetEditorMode(bool value)
 {
     this->_isEditor = value;
-    this->_activeCamera = (_isEditor || _gameCamera == nullptr) ? _editorCamera : _gameCamera;
 
-    if (value || _gameCamera == nullptr)
+    auto gameObjectManager = GameObjectManager::getInstance();
+    std::shared_ptr<QEGameObject> cameraObject = gameObjectManager->GetGameObject(NameCameraEditor);
+
+    if (_isEditor || _gameCamera == nullptr)
     {
-        auto gameObjectManager = GameObjectManager::getInstance();
-        std::shared_ptr<QEGameObject> cameraObject = std::make_shared<QEGameObject>("CameraEditor");
-        cameraObject->AddComponent(this->_editorCamera);
-        cameraObject->AddComponent(std::make_shared<QECameraController>());
+        if (cameraObject == nullptr)
+        {
+            cameraObject = std::make_shared<QEGameObject>(NameCameraEditor);
+            cameraObject->AddComponent(std::make_shared<QECamera>(1280.0f, 720.0f));
+            cameraObject->AddComponent(std::make_shared<QECameraController>());
 
-        auto cameraTransform = cameraObject->GetComponent<QETransform>();
-        cameraTransform->SetLocalEulerDegrees(glm::vec3(-45.0f, 0.0f, 0.0f));
-        cameraTransform->SetLocalPosition(glm::vec3(0.0f, 10.0f, 10.0f));
+            auto cameraTransform = cameraObject->GetComponent<QETransform>();
+            cameraTransform->SetLocalEulerDegrees(glm::vec3(-45.0f, 0.0f, 0.0f));
+            cameraTransform->SetLocalPosition(glm::vec3(0.0f, 10.0f, 10.0f));
 
-        gameObjectManager->AddGameObject(cameraObject);
+            gameObjectManager->AddGameObject(cameraObject);
+        }
     }
+    _editorCamera = cameraObject->GetComponentInChildren<QECamera>();
+
+    this->_activeCamera = (_isEditor || _gameCamera == nullptr) ? _editorCamera : _gameCamera;
 }
 
 void QESessionManager::SetDebugMode(bool value)

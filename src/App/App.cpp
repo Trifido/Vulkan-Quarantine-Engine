@@ -183,19 +183,19 @@ void App::initVulkan()
     //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Idle_Character.glb");
 
     // Import animations
-    QEProjectManager::ImportAnimationFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Running.glb",
-        std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Animations"));
+    //QEProjectManager::ImportAnimationFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Walking.glb",
+    //    std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Animations"));
 
     // Load Scene
     this->loadScene(this->scene);
-
+/*
     // Initialize animation states for character controller
     auto visualCharacter = gameObjectManager->GetGameObject("MeshCharacter");
     auto animationComponent = visualCharacter->GetComponent<QEAnimationComponent>();
 
     //// States
     animationComponent->AddAnimationState({ "Idle", true, "Idle" }, true);
-    animationComponent->AddAnimationState({ "Walking", true, "WalkingForward" });
+    animationComponent->AddAnimationState({ "Walking", true, "Walking" });
     animationComponent->AddAnimationState({ "Running", true, "Running" });
     animationComponent->AddAnimationState({ "Jumping", false, "Jumping" });
     animationComponent->AddAnimationState({ "Falling", true, "Falling" });
@@ -208,17 +208,46 @@ void App::initVulkan()
     //// Parameters
     animationComponent->SetFloat("speed", 0.0f);
     animationComponent->SetFloat("forward", 0.0f);
-    animationComponent->SetTrigger("jump", false);
     animationComponent->SetBool("falling", false);
     animationComponent->SetBool("grounded", true);
+    animationComponent->SetBool("sprint", false);
+    animationComponent->SetTrigger("jump", false);
     animationComponent->SetTrigger("crouch", false);
 
     ////Transitions
+    // Idle -> Running
+    animationComponent->AddTransition({
+      .fromState = "Idle", .toState = "Running",
+      .conditions = {{"speed", QEOp::Greater, 0.1f}, {"sprint", QEOp::Equal, 1.f}},
+      .priority = 20, .hasExitTime = false
+        });
+
     // Idle -> Walking
     animationComponent->AddTransition({
-        .fromState = "Idle", .toState = "Walking",
-        .conditions = {{"speed", QEOp::Greater, 0.1f}, {"forward", QEOp::Greater, 0.1f}},
-        .priority = 10, .hasExitTime = false
+      .fromState = "Idle", .toState = "Walking",
+      .conditions = {{"speed", QEOp::Greater, 0.1f}, {"sprint", QEOp::Equal, 0.f}},
+      .priority = 10, .hasExitTime = false
+        });
+
+    // Walking -> Running
+    animationComponent->AddTransition({
+      .fromState = "Walking", .toState = "Running",
+      .conditions = {{"sprint", QEOp::Equal, 1.f}, {"speed", QEOp::Greater, 0.1f}},
+      .priority = 20, .hasExitTime = false
+        });
+
+    // Running -> Walking
+    animationComponent->AddTransition({
+      .fromState = "Running", .toState = "Walking",
+      .conditions = {{"sprint", QEOp::Equal, 0.f}},
+      .priority = 20, .hasExitTime = false
+        });
+
+    // Running -> Idle
+    animationComponent->AddTransition({
+      .fromState = "Running", .toState = "Idle",
+      .conditions = {{"speed", QEOp::Less, 0.05f}},
+      .priority = 30, .hasExitTime = true, .exitTimeNormalized = 0.2f
         });
 
     // Walking -> Idle
@@ -341,7 +370,7 @@ void App::initVulkan()
         },
         .priority = 10, .hasExitTime = false
         });
-
+*/
     this->physicsModule->SetGravity(-20.0f);
     this->lightManager->InitializeShadowMaps();
     this->atmosphereSystem->InitializeAtmosphereResources();
@@ -418,10 +447,10 @@ void App::mainLoop()
         this->debugSystem->UpdateGraphicBuffers();
 
         ImGuiIO& io = ImGui::GetIO();
-        //if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false))
-        //{
-        //    saveScene();
-        //}
+        if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false) && sessionManager->IsEditor())
+        {
+            saveScene();
+        }
 
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();

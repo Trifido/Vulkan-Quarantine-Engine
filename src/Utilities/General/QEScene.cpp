@@ -39,7 +39,6 @@ bool QEScene::SerializeScene()
     auto lightManager = LightManager::getInstance();
 
     YAML::Node root;
-    root["CameraEditor"] = serializeComponent(cameraEditor.get());
     root["AtmosphereDto"] = SerializeAtmosphere(atmosphereDto);
     root["Materials"] = materialManager->SerializeMaterials();
     root["GameObjects"] = gameObjectManager->SerializeGameObjects();

@@ -1,48 +1,20 @@
-CameraEditor:
-  type: QECamera
-  id: frAQBc8Wsa1x
-  _near: 0.1
-  _far: 500
-  _fov: 45
-  Width: 1280
-  Height: 720
 AtmosphereDto:
   hasAtmosphere: true
   environmentType: 2
-  sunEulerDegrees: [-45.000004, -45.000004, 0]
+  sunEulerDegrees: [-45.000004, 45.000004, 0]
   sunBaseIntensity: 100
 Materials:
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\defaultPrimitiveMat.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorDebugAABB.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\defaultParticlesMat.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorDebugCollider.qemat
-  - ../../QEProjects\QEExample\QEAssets\QEModels\Character\Materials\Alpha_Joints_MAT.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\QEMatInst_defaultPrimitiveMat.qemat
+  - ../../QEProjects\QEExample\QEAssets\QEModels\Character\Materials\Alpha_Joints_MAT.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\QEMatInst_defaultPrimitiveMat_1.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\QEMatInst_defaultPrimitiveMat_2.qemat
   - ../../QEProjects\QEExample\QEAssets\QEModels\Character\Materials\Alpha_Body_MAT.qemat
+  - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorGrid.qemat
 GameObjects:
-  - id: YT3CEW8K69rk
-    name: CameraEditor
-    components:
-      - type: QETransform
-        id: lPGtfUR2IZ2m
-        localPosition: [0, 10, 10]
-        localRotation: [-0.38268346, 0, 0, 0.9238795]
-        localScale: [1, 1, 1]
-        parentId: ""
-      - type: QECamera
-        id: frAQBc8Wsa1x
-        _near: 0.1
-        _far: 500
-        _fov: 45
-        Width: 1280
-        Height: 720
-      - type: QECameraController
-        id: B1S7NLt2nQfj
-        Speed: 10
-        MouseSensitivity: 0.1
-        EditorControls: true
   - id: bdYSEvWRBLzZ
     name: Character
     components:
@@ -64,6 +36,8 @@ GameObjects:
         JumpSpeed: 6.5
         GravityY: -19.81
         MaxSlopeDeg: 50
+        TurnSpeedDeg: 540
+        JumpAnimDelay: 0.55
     children:
       - id: 81nP7VxEE4Fd
         name: MeshCharacter
@@ -83,10 +57,241 @@ GameObjects:
             IsMeshShaderPipeline: false
           - type: QEAnimationComponent
             id: PqQ5PNEEfuTl
+            currentState:
+              Id: Idle
+              Loop: true
+              AnimationClip: Idle
             States:
-                  []
+              - Id: Idle
+                Loop: true
+                AnimationClip: Idle
+              - Id: Walking
+                Loop: true
+                AnimationClip: Walking
+              - Id: Running
+                Loop: true
+                AnimationClip: Running
+              - Id: Jumping
+                Loop: false
+                AnimationClip: Jumping
+              - Id: Falling
+                Loop: true
+                AnimationClip: Falling
+              - Id: Landing
+                Loop: false
+                AnimationClip: Landing
+              - Id: IdleCrouch
+                Loop: true
+                AnimationClip: IdleCrouch
+              - Id: WalkCrouch
+                Loop: true
+                AnimationClip: WalkCrouch
+              - Id: StandToCrouch
+                Loop: false
+                AnimationClip: StandToCrouch
+              - Id: CrouchToStand
+                Loop: false
+                AnimationClip: CrouchToStand
             Transitions:
+              - from: Idle
+                to: Running
+                priority: 20
+                hasExitTime: false
+                exitTimeNormalized: 1
+                conditions:
+                  - param: speed
+                    op: Greater
+                    value: 0.1
+                  - param: sprint
+                    op: Equal
+                    value: 1
+              - from: Idle
+                to: Walking
+                priority: 10
+                hasExitTime: false
+                exitTimeNormalized: 1
+                conditions:
+                  - param: speed
+                    op: Greater
+                    value: 0.1
+                  - param: sprint
+                    op: Equal
+                    value: 0
+              - from: Walking
+                to: Running
+                priority: 20
+                hasExitTime: false
+                exitTimeNormalized: 1
+                conditions:
+                  - param: sprint
+                    op: Equal
+                    value: 1
+                  - param: speed
+                    op: Greater
+                    value: 0.1
+              - from: Running
+                to: Walking
+                priority: 20
+                hasExitTime: false
+                exitTimeNormalized: 1
+                conditions:
+                  - param: sprint
+                    op: Equal
+                    value: 0
+              - from: Running
+                to: Idle
+                priority: 30
+                hasExitTime: true
+                exitTimeNormalized: 0.2
+                conditions:
+                  - param: speed
+                    op: Less
+                    value: 0.05
+              - from: Walking
+                to: Idle
+                priority: 10
+                hasExitTime: true
+                exitTimeNormalized: 0.2
+                conditions:
+                  - param: speed
+                    op: Less
+                    value: 0.05
+              - from: Walking
+                to: Jumping
+                priority: 10
+                hasExitTime: false
+                exitTimeNormalized: 1
+                conditions:
+                  - param: jump
+                    op: Equal
+                    value: 1
+              - from: Idle
+                to: Jumping
+                priority: 10
+                hasExitTime: false
+                exitTimeNormalized: 1
+                conditions:
+                  - param: jump
+                    op: Equal
+                    value: 1
+              - from: Jumping
+                to: Falling
+                priority: 20
+                hasExitTime: false
+                exitTimeNormalized: 1
+                conditions:
+                  - param: falling
+                    op: Equal
+                    value: 1
+              - from: Jumping
+                to: Falling
+                priority: 10
+                hasExitTime: true
+                exitTimeNormalized: 1
+                conditions:
                   []
+              - from: Idle
+                to: Falling
+                priority: 30
+                hasExitTime: false
+                exitTimeNormalized: 1
+                conditions:
+                  - param: grounded
+                    op: Equal
+                    value: 0
+              - from: Walking
+                to: Falling
+                priority: 30
+                hasExitTime: false
+                exitTimeNormalized: 1
+                conditions:
+                  - param: grounded
+                    op: Equal
+                    value: 0
+              - from: Falling
+                to: Landing
+                priority: 20
+                hasExitTime: false
+                exitTimeNormalized: 1
+                conditions:
+                  - param: grounded
+                    op: Equal
+                    value: 1
+              - from: Landing
+                to: Idle
+                priority: 10
+                hasExitTime: true
+                exitTimeNormalized: 1
+                conditions:
+                  []
+              - from: Idle
+                to: StandToCrouch
+                priority: 10
+                hasExitTime: false
+                exitTimeNormalized: 1
+                conditions:
+                  - param: crouch
+                    op: Equal
+                    value: 1
+              - from: StandToCrouch
+                to: IdleCrouch
+                priority: 10
+                hasExitTime: true
+                exitTimeNormalized: 1
+                conditions:
+                  []
+              - from: IdleCrouch
+                to: CrouchToStand
+                priority: 10
+                hasExitTime: false
+                exitTimeNormalized: 1
+                conditions:
+                  - param: crouch
+                    op: Equal
+                    value: 0
+              - from: CrouchToStand
+                to: Idle
+                priority: 10
+                hasExitTime: true
+                exitTimeNormalized: 1
+                conditions:
+                  []
+              - from: IdleCrouch
+                to: WalkCrouch
+                priority: 10
+                hasExitTime: false
+                exitTimeNormalized: 1
+                conditions:
+                  - param: crouch
+                    op: Equal
+                    value: 1
+                  - param: speed
+                    op: Greater
+                    value: 0.1
+                  - param: forward
+                    op: Greater
+                    value: 0.1
+              - from: WalkCrouch
+                to: IdleCrouch
+                priority: 10
+                hasExitTime: false
+                exitTimeNormalized: 1
+                conditions:
+                  - param: crouch
+                    op: Equal
+                    value: 1
+                  - param: speed
+                    op: Less
+                    value: 0.05
+              - from: WalkCrouch
+                to: CrouchToStand
+                priority: 10
+                hasExitTime: false
+                exitTimeNormalized: 1
+                conditions:
+                  - param: crouch
+                    op: Equal
+                    value: 0
         materials:
           - Alpha_Joints_MAT
           - Alpha_Body_MAT
@@ -110,8 +315,8 @@ GameObjects:
             ProbeRadius: 0.2
             PosLagSpeed: 12
             RotLagSpeed: 12
-            Yaw: 26.640001
-            Pitch: -9.76
+            Yaw: -43.079998
+            Pitch: -17.200006
             MinPitch: -80
             MaxPitch: 60
             InheritYaw: false
@@ -123,9 +328,9 @@ GameObjects:
             components:
               - type: QETransform
                 id: 8arF3SLLny30
-                localPosition: [1.3129727, 2.4085708, 2.6174214]
-                localRotation: [-0.08278178, 0.22955123, 0.019598996, 0.9695717]
-                localScale: [1, 1, 0.99999994]
+                localPosition: [-3.2495236, 3.4186425, 3.514278]
+                localRotation: [-0.13909209, -0.36302254, -0.05490201, 0.9197031]
+                localScale: [1, 1, 1]
                 parentId: ""
               - type: QECamera
                 id: KKziHtRbOE2u
@@ -134,38 +339,6 @@ GameObjects:
                 _fov: 45
                 Width: 1410
                 Height: 775
-  - id: gqVNBeg10gAI
-    name: wall
-    components:
-      - type: QETransform
-        id: 4OMrxF2ltRPW
-        localPosition: [3, 0.5, 0]
-        localRotation: [0, 0, 0, 1]
-        localScale: [4, 0.5, 4]
-        parentId: ""
-      - type: QEGeometryComponent
-        id: acKwhzQyw8by
-        _name: CubePrimitive
-        _filepath: QECore
-      - type: QEMeshRenderer
-        id: xIFwOQfxFYy0
-        IsMeshShaderPipeline: false
-      - type: BoxCollider
-        id: quubpCzI71MR
-        CollisionMargin: 0.04
-        Size: [0.5, 0.5, 0.5]
-      - type: PhysicsBody
-        id: VOgDko8fnPYl
-        Type: 0
-        Mass: 0
-        Inertia: [0, 0, 0]
-        CollisionGroup: 4
-      - type: QEGeometryComponent
-        id: ERoC0nE0pAli
-        _name: ""
-        _filepath: ""
-    materials:
-      - QEMatInst_defaultPrimitiveMat_2
   - id: UTjlTOSj3iH7
     name: floor
     components:
@@ -195,10 +368,42 @@ GameObjects:
         CollisionGroup: 4
       - type: QEGeometryComponent
         id: 9Mk6pyZdABIG
-        _name: ""
-        _filepath: ""
+        _name: EmptyMesh
+        _filepath: QECore
     materials:
       - QEMatInst_defaultPrimitiveMat
+  - id: gqVNBeg10gAI
+    name: wall
+    components:
+      - type: QETransform
+        id: 4OMrxF2ltRPW
+        localPosition: [3, 0.5, 0]
+        localRotation: [0, 0, 0, 1]
+        localScale: [4, 0.5, 4]
+        parentId: ""
+      - type: QEGeometryComponent
+        id: acKwhzQyw8by
+        _name: CubePrimitive
+        _filepath: QECore
+      - type: QEMeshRenderer
+        id: xIFwOQfxFYy0
+        IsMeshShaderPipeline: false
+      - type: BoxCollider
+        id: quubpCzI71MR
+        CollisionMargin: 0.04
+        Size: [0.5, 0.5, 0.5]
+      - type: PhysicsBody
+        id: VOgDko8fnPYl
+        Type: 0
+        Mass: 0
+        Inertia: [0, 0, 0]
+        CollisionGroup: 4
+      - type: QEGeometryComponent
+        id: ERoC0nE0pAli
+        _name: EmptyMesh
+        _filepath: QECore
+    materials:
+      - QEMatInst_defaultPrimitiveMat_2
   - id: kWrpqiwdo3Hr
     name: ramp
     components:
@@ -227,7 +432,7 @@ GameObjects:
         Size: [0.5, 0.5, 0.5]
       - type: QEGeometryComponent
         id: pASsMZ6uUeHJ
-        _name: ""
-        _filepath: ""
+        _name: EmptyMesh
+        _filepath: QECore
     materials:
       - QEMatInst_defaultPrimitiveMat_1

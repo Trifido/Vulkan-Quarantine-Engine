@@ -23,6 +23,9 @@ private:
     std::string newCameraID = "";
 
 public:
+    const std::string NameCameraEditor = "QECameraEditor";
+
+public:
     QESessionManager();
 
     const bool IsEditor() { return _isEditor; }
