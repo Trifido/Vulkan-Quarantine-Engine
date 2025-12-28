@@ -60,11 +60,16 @@ void main()
                              uboAnimation.finalBonesMatrices[boneIds[2]] * weights[2] +
                              uboAnimation.finalBonesMatrices[boneIds[3]] * weights[3];
 
-        mat3 matrix = transpose(inverse(mat3(BoneTransform)));
+        mat3 matrix = mat3(BoneTransform);
+
+        vec3 N = normalize(matrix * verticesIn[index].inNormal.xyz);
+        vec3 T = normalize(matrix * verticesIn[index].inTangent.xyz);
+
+        T = normalize(T - dot(T, N) * N);
 
         verticesOut[index].inPosition = BoneTransform * verticesIn[index].inPosition;
         verticesOut[index].inTexCoord = verticesIn[index].inTexCoord;
-        verticesOut[index].inNormal = vec4(matrix * verticesIn[index].inNormal.xyz, 0.0);
-        verticesOut[index].inTangent = vec4(matrix * verticesIn[index].inTangent.xyz, 0.0);
+        verticesOut[index].inNormal  = vec4(N, 0.0);
+        verticesOut[index].inTangent = vec4(T, 0.0);
     }
 }
