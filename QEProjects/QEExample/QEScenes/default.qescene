@@ -1,20 +1,41 @@
 AtmosphereDto:
   hasAtmosphere: true
   environmentType: 2
-  sunEulerDegrees: [-45.000004, -45.000004, 0]
+  sunEulerDegrees: [-45.000004, 45.000004, 0]
   sunBaseIntensity: 100
 Materials:
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\defaultPrimitiveMat.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorDebugAABB.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\defaultParticlesMat.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorDebugCollider.qemat
-  - ../../QEProjects\QEExample\QEAssets\QEModels\Character\Materials\Alpha_Joints_MAT.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\QEMatInst_defaultPrimitiveMat.qemat
+  - ../../QEProjects\QEExample\QEAssets\QEModels\Character\Materials\Alpha_Joints_MAT.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\QEMatInst_defaultPrimitiveMat_1.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\QEMatInst_defaultPrimitiveMat_2.qemat
   - ../../QEProjects\QEExample\QEAssets\QEModels\Character\Materials\Alpha_Body_MAT.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorGrid.qemat
 GameObjects:
+  - id: YT3CEW8K69rk
+    name: QECameraEditor
+    components:
+      - type: QETransform
+        id: lPGtfUR2IZ2m
+        localPosition: [0.71473587, 4.085518, 7.84917]
+        localRotation: [-0.1993677, 0.0017102809, 0.00034796065, 0.9799232]
+        localScale: [1, 1, 1]
+        parentId: ""
+      - type: QECamera
+        id: frAQBc8Wsa1x
+        _near: 0.1
+        _far: 500
+        _fov: 45
+        Width: 1280
+        Height: 720
+      - type: QECameraController
+        id: B1S7NLt2nQfj
+        Speed: 10
+        MouseSensitivity: 0.1
+        EditorControls: true
   - id: bdYSEvWRBLzZ
     name: Character
     components:
@@ -44,7 +65,7 @@ GameObjects:
         components:
           - type: QETransform
             id: gcL9fOPyc98b
-            localPosition: [0, 0, 0]
+            localPosition: [-0.012840994, -0.04010247, -0.025598673]
             localRotation: [0, 1, 0, -4.371139e-08]
             localScale: [1, 1, 1]
             parentId: ""
@@ -86,12 +107,6 @@ GameObjects:
               - Id: WalkCrouch
                 Loop: true
                 AnimationClip: WalkCrouch
-              - Id: StandToCrouch
-                Loop: false
-                AnimationClip: StandToCrouch
-              - Id: CrouchToStand
-                Loop: false
-                AnimationClip: CrouchToStand
             Transitions:
               - from: Idle
                 to: Running
@@ -225,7 +240,7 @@ GameObjects:
                 conditions:
                   []
               - from: Idle
-                to: StandToCrouch
+                to: IdleCrouch
                 priority: 10
                 hasExitTime: false
                 exitTimeNormalized: 1
@@ -233,15 +248,8 @@ GameObjects:
                   - param: crouch
                     op: Equal
                     value: 1
-              - from: StandToCrouch
-                to: IdleCrouch
-                priority: 10
-                hasExitTime: true
-                exitTimeNormalized: 1
-                conditions:
-                  []
               - from: IdleCrouch
-                to: CrouchToStand
+                to: Idle
                 priority: 10
                 hasExitTime: false
                 exitTimeNormalized: 1
@@ -249,13 +257,6 @@ GameObjects:
                   - param: crouch
                     op: Equal
                     value: 0
-              - from: CrouchToStand
-                to: Idle
-                priority: 10
-                hasExitTime: true
-                exitTimeNormalized: 1
-                conditions:
-                  []
               - from: IdleCrouch
                 to: WalkCrouch
                 priority: 10
@@ -283,15 +284,6 @@ GameObjects:
                   - param: speed
                     op: Less
                     value: 0.05
-              - from: WalkCrouch
-                to: CrouchToStand
-                priority: 10
-                hasExitTime: false
-                exitTimeNormalized: 1
-                conditions:
-                  - param: crouch
-                    op: Equal
-                    value: 0
         materials:
           - Alpha_Joints_MAT
           - Alpha_Body_MAT
@@ -300,7 +292,7 @@ GameObjects:
         components:
           - type: QETransform
             id: Ir9oDUTOX7NY
-            localPosition: [0, 0, 0]
+            localPosition: [-0.012840994, -0.04010247, -0.025598673]
             localRotation: [0, 0, 0, 1]
             localScale: [1, 1, 1]
             parentId: ""
@@ -315,8 +307,8 @@ GameObjects:
             ProbeRadius: 0.2
             PosLagSpeed: 12
             RotLagSpeed: 12
-            Yaw: 38.52003
-            Pitch: 15.079983
+            Yaw: -43.079998
+            Pitch: -17.200006
             MinPitch: -80
             MaxPitch: 60
             InheritYaw: false
@@ -328,8 +320,8 @@ GameObjects:
             components:
               - type: QETransform
                 id: 8arF3SLLny30
-                localPosition: [3.0067081, 0.59916425, 3.7772388]
-                localRotation: [0.12387407, 0.32700354, -0.04328305, 0.93586886]
+                localPosition: [-3.2495236, 3.4186425, 3.514278]
+                localRotation: [-0.13909209, -0.36302254, -0.05490201, 0.9197031]
                 localScale: [1, 1, 1]
                 parentId: ""
               - type: QECamera
@@ -339,59 +331,6 @@ GameObjects:
                 _fov: 45
                 Width: 1410
                 Height: 775
-  - id: 9Mk6pyZdABIG
-    name: QECameraEditor
-    components:
-      - type: QETransform
-        id: pASsMZ6uUeHJ
-        localPosition: [-8.18124, 3.0344777, 2.7520232]
-        localRotation: [-0.09442875, -0.45605317, -0.04873839, 0.88358545]
-        localScale: [1, 1, 1]
-        parentId: ""
-      - type: QECamera
-        id: j8Ut6sSUOT0o
-        _near: 0.1
-        _far: 500
-        _fov: 45
-        Width: 1280
-        Height: 720
-      - type: QECameraController
-        id: WolzchUSmJqh
-        Speed: 10
-        MouseSensitivity: 0.1
-        EditorControls: true
-  - id: gqVNBeg10gAI
-    name: wall
-    components:
-      - type: QETransform
-        id: 4OMrxF2ltRPW
-        localPosition: [3, 0.5, 0]
-        localRotation: [0, 0, 0, 1]
-        localScale: [4, 0.5, 4]
-        parentId: ""
-      - type: QEGeometryComponent
-        id: acKwhzQyw8by
-        _name: CubePrimitive
-        _filepath: QECore
-      - type: QEMeshRenderer
-        id: xIFwOQfxFYy0
-        IsMeshShaderPipeline: false
-      - type: BoxCollider
-        id: quubpCzI71MR
-        CollisionMargin: 0.04
-        Size: [0.5, 0.5, 0.5]
-      - type: PhysicsBody
-        id: VOgDko8fnPYl
-        Type: 0
-        Mass: 0
-        Inertia: [0, 0, 0]
-        CollisionGroup: 4
-      - type: QEGeometryComponent
-        id: ERoC0nE0pAli
-        _name: EmptyMesh
-        _filepath: QECore
-    materials:
-      - QEMatInst_defaultPrimitiveMat_2
   - id: UTjlTOSj3iH7
     name: floor
     components:
@@ -425,6 +364,38 @@ GameObjects:
         _filepath: QECore
     materials:
       - QEMatInst_defaultPrimitiveMat
+  - id: gqVNBeg10gAI
+    name: wall
+    components:
+      - type: QETransform
+        id: 4OMrxF2ltRPW
+        localPosition: [3, 0.5, 0]
+        localRotation: [0, 0, 0, 1]
+        localScale: [4, 0.5, 4]
+        parentId: ""
+      - type: QEGeometryComponent
+        id: acKwhzQyw8by
+        _name: CubePrimitive
+        _filepath: QECore
+      - type: QEMeshRenderer
+        id: xIFwOQfxFYy0
+        IsMeshShaderPipeline: false
+      - type: BoxCollider
+        id: quubpCzI71MR
+        CollisionMargin: 0.04
+        Size: [0.5, 0.5, 0.5]
+      - type: PhysicsBody
+        id: VOgDko8fnPYl
+        Type: 0
+        Mass: 0
+        Inertia: [0, 0, 0]
+        CollisionGroup: 4
+      - type: QEGeometryComponent
+        id: ERoC0nE0pAli
+        _name: EmptyMesh
+        _filepath: QECore
+    materials:
+      - QEMatInst_defaultPrimitiveMat_2
   - id: kWrpqiwdo3Hr
     name: ramp
     components:

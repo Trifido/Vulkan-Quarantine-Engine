@@ -269,6 +269,17 @@ void App::mainLoop()
         {
             saveScene();
         }
+        if (ImGui::IsKeyReleased(ImGuiKey_C) && sessionManager->IsEditor())
+        {
+            auto visualCharacter = gameObjectManager->GetGameObject("MeshCharacter");
+            auto animationComponent = visualCharacter->GetComponent<QEAnimationComponent>();
+            float speedValue = animationComponent->GetFloat("speed");
+
+            if (speedValue > 0.1)
+                animationComponent->SetFloat("speed", -1.0);
+            else
+                animationComponent->SetFloat("speed", 1.0);
+        }
 
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -509,10 +520,10 @@ void App::recreateSwapchain()
     cleanUpSwapchain();
     swapchainModule->createSwapChain(windowSurface.getSurface(), mainWindow->getWindow());
 
-    //Actualizamos el formato de la cámara
+    //Actualizamos el formato de la cï¿½mara
     this->sessionManager->UpdateViewportSize();
 
-    //Actualizamos la resolución de la atmosfera
+    //Actualizamos la resoluciï¿½n de la atmosfera
     this->atmosphereSystem->UpdateAtmopshereResolution();
 
     //Recreamos el antialiasing module

@@ -32,7 +32,7 @@ void Animator::UpdateUBOAnimation()
     for (auto cn : computeNodes)
     {
         void* data = nullptr;
-        // ssboData[3] = paleta huesos
+
         vkMapMemory(deviceModule->device,
             cn.second->computeDescriptor->ssboData[3]->uniformBuffersMemory[currentFrame],
             0, size, 0, &data);
@@ -106,47 +106,73 @@ void Animator::UpdateAnimation(float dt, bool loop)
     m_DeltaTime = dt;
     if (!m_CurrentAnimation) return;
 
-    float tps = m_CurrentAnimation->GetTicksPerSecond();
-    if (tps <= 0.0f) tps = 25.0f;
-
-    m_CurrentTime += tps * dt;
-
-    const float duration = m_CurrentAnimation->GetDuration();
-
-    if (loop)
+    if (!mFade.active)
     {
-        if (duration > 0.0f)
-        {
-            m_CurrentTime = std::fmod(m_CurrentTime, duration);
-            if (m_CurrentTime < 0.0f) m_CurrentTime += duration;
-        }
-        else
-        {
-            m_CurrentTime = 0.0f;
-        }
-    }
-    else if (m_CurrentTime >= duration)
-    {
-        m_CurrentTime = std::max(0.0f, std::nextafter(duration, 0.0f));
+        AdvanceTime(*m_CurrentAnimation, m_CurrentTime, dt, loop);
+
+        auto rootNode = m_CurrentAnimation->GetRootNode();
+        CalculateBoneTransform(&rootNode, glm::mat4(1.0f));
+        UpdateUBOAnimation();
+        return;
     }
 
-    auto rootNode = m_CurrentAnimation->GetRootNode();
-    CalculateBoneTransform(&rootNode, glm::mat4(1.0f));
-    this->UpdateUBOAnimation();
+    // Cross-fade
+    mFade.elapsed += dt;
+    float alpha = glm::clamp(mFade.elapsed / mFade.duration, 0.0f, 1.0f);
+
+    AdvanceTime(*mFade.from, mFade.fromTime, dt, mFade.loopFrom);
+    AdvanceTime(*mFade.to, mFade.toTime, dt, mFade.loopTo);
+
+    std::vector<BoneTRS> A, B, M;
+    EvaluateLocalPoseTRS(*mFade.from, mFade.fromTime, A);
+    EvaluateLocalPoseTRS(*mFade.to, mFade.toTime, B);
+
+    M.resize(NUM_BONES);
+
+    for (int i = 0; i < NUM_BONES; ++i)
+    {
+        BoneTRS a = A[i];
+        BoneTRS b = B[i];
+
+        if (!a.valid && b.valid) a = b;
+        if (!b.valid && a.valid) b = a;
+
+        M[i].t = glm::mix(a.t, b.t, alpha);
+        M[i].s = glm::mix(a.s, b.s, alpha);
+
+        glm::quat qa = a.r;
+        glm::quat qb = b.r;
+        if (glm::dot(qa, qb) < 0.0f) qb = -qb;
+        M[i].r = glm::normalize(glm::slerp(qa, qb, alpha));
+
+        M[i].valid = a.valid || b.valid;
+    }
+
+    // Construyes paleta (usa skeleton del "to" como referencia)
+    BuildFinalFromLocalPose(*mFade.to, M);
+    UpdateUBOAnimation();
+
+    if (alpha >= 1.0f)
+    {
+        m_CurrentAnimation = mFade.to;
+        m_CurrentTime = mFade.toTime;
+        m_loop = mFade.loopTo;
+        mFade = CrossFadeState{};
+    }
 }
 
-void Animator::PlayAnimation(std::shared_ptr<Animation> pAnimation)
+void Animator::PlayAnimation(std::shared_ptr<Animation> pAnimation, bool loop)
 {
     if (pAnimation == m_CurrentAnimation)
         return;
 
     m_CurrentTime = 0.0f;
     m_CurrentAnimation = pAnimation;
+    m_loop = loop;
 
     auto rootNode = m_CurrentAnimation->GetRootNode();
     CalculateBoneTransform(&rootNode, glm::mat4(1.0f));
 
-    // Ahora la paleta va a SSBO (binding 3) en lugar de UBO
     VkDeviceSize bonesSize = sizeof(glm::mat4) * NUM_BONES;
 
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
@@ -209,4 +235,135 @@ void Animator::CleanAnimatorUBO()
 
     m_CurrentAnimation.reset();
     m_CurrentAnimation = nullptr;
+}
+
+
+glm::mat4 Animator::ComposeTRS(const BoneTRS& trs)
+{
+    return glm::translate(glm::mat4(1.0f), trs.t)
+        * glm::toMat4(trs.r)
+        * glm::scale(glm::mat4(1.0f), trs.s);
+}
+
+void Animator::AdvanceTime(const Animation& anim, float& t, float dt, bool loop)
+{
+    float tps = anim.GetTicksPerSecond();
+    if (tps <= 0.0f) tps = 25.0f;
+
+    t += tps * dt;
+
+    float duration = anim.GetDuration();
+    if (duration <= 0.0f) { t = 0.0f; return; }
+
+    if (loop)
+    {
+        t = std::fmod(t, duration);
+        if (t < 0.0f) t += duration;
+    }
+    else
+    {
+        if (t >= duration)
+            t = std::max(0.0f, std::nextafter(duration, 0.0f));
+    }
+}
+
+void Animator::CrossFadeTo(std::shared_ptr<Animation> next, float durationSec, bool loopNext, bool loopFrom)
+{
+    if (!next) return;
+
+    // Si no hay current anim, cae a PlayAnimation
+    if (!m_CurrentAnimation)
+    {
+        PlayAnimation(next, loopNext);
+        return;
+    }
+
+    // Si ya es la misma, no haces nada
+    if (next == m_CurrentAnimation && !mFade.active)
+        return;
+
+    mFade.active = true;
+    mFade.elapsed = 0.0f;
+    mFade.duration = std::max(0.001f, durationSec);
+
+    mFade.from = m_CurrentAnimation;
+    mFade.to = next;
+
+    mFade.fromTime = m_CurrentTime;
+    mFade.toTime = 0.0f;      // para idle->walk suele ser lo correcto
+
+    mFade.loopFrom = loopFrom;
+    mFade.loopTo = loopNext;
+}
+
+void Animator::EvaluateLocalPoseTRS(Animation& anim, float timeTicks, std::vector<BoneTRS>& outPose)
+{
+    outPose.assign(NUM_BONES, BoneTRS{});
+
+    std::function<void(const AnimationNode*)> dfs = [&](const AnimationNode* node)
+        {
+            const std::string& nodeName = node->name;
+
+            // Solo nos interesan nombres que existan en BoneInfoMap (tienen ID)
+            auto itInfo = anim.animationData.m_BoneInfoMap.find(nodeName);
+            if (itInfo != anim.animationData.m_BoneInfoMap.end())
+            {
+                const int idx = itInfo->second.id;
+                if (idx >= 0 && idx < NUM_BONES)
+                {
+                    if (const Bone* b = anim.FindBone(nodeName))
+                    {
+                        // SampleTRS() debe ser const (no mutar Bone)
+                        BoneTRS trs = b->SampleTRS(timeTicks);
+                        trs.valid = true;
+                        outPose[idx] = trs;
+                    }
+                    // Si no hay canal animado para ese hueso:
+                    // outPose[idx] se queda identity; la bind pose la obtendremos desde node->transformation al reconstruir global.
+                }
+            }
+
+            for (int i = 0; i < node->childrenCount; ++i)
+                dfs(&node->children[i]);
+        };
+
+    const AnimationNode& root = anim.GetRootNode();
+    dfs(&root);
+}
+
+void Animator::BuildFinalFromLocalPose(const Animation& anim, const std::vector<BoneTRS>& localPose)
+{
+    std::function<void(const AnimationNode*, const glm::mat4&)> dfs =
+        [&](const AnimationNode* node, const glm::mat4& parent)
+        {
+            const std::string& nodeName = node->name;
+
+            glm::mat4 local = node->transformation;
+
+            auto it = anim.animationData.m_BoneInfoMap.find(nodeName);
+            if (it != anim.animationData.m_BoneInfoMap.end())
+            {
+                int idx = it->second.id;
+                if (idx < NUM_BONES && localPose[idx].valid)
+                    local = ComposeTRS(localPose[idx]);
+            }
+
+            glm::mat4 global = parent * local;
+
+            if (it != anim.animationData.m_BoneInfoMap.end())
+            {
+                int idx = it->second.id;
+                if (idx < NUM_BONES)
+                {
+                    glm::mat4 offset = it->second.offset;
+                    m_FinalBoneMatrices->at(idx) = global * offset;
+                }
+            }
+
+            for (int i = 0; i < node->childrenCount; ++i)
+                dfs(&node->children[i], global);
+        };
+
+    auto root = anim.GetRootNode();
+    dfs(&root, glm::mat4(1.0f));
 }

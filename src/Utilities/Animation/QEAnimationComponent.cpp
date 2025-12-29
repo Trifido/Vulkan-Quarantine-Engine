@@ -124,8 +124,26 @@ void QEAnimationComponent::ChangeState(const std::string& toId)
     auto clip = GetAnimation(currentState.AnimationClip);
     if (clip)
     {
-        animator->PlayAnimation(clip);
+        animator->PlayAnimation(clip, it->second.Loop);
     }
+}
+
+void QEAnimationComponent::ChangeState(const std::string& toId, const QETransition& tr)
+{
+    auto it = _states.find(toId);
+    if (it == _states.end()) { std::cerr << "State not found: " << toId << "\n"; return; }
+
+    const bool prevLoop = currentState.Loop;
+    AnimationState nextState = it->second;
+
+    auto nextClip = GetAnimation(nextState.AnimationClip);
+    if (!nextClip) { std::cerr << "Clip not found: " << nextState.AnimationClip << "\n"; return; }
+
+    currentState = nextState;
+
+    animator->CrossFadeTo(nextClip, tr.blendDuration, nextState.Loop, prevLoop);
+
+    ClearAllTriggers();
 }
 
 bool QEAnimationComponent::CheckCondition(const QECondition& c)
@@ -348,12 +366,15 @@ void QEAnimationComponent::QEStart()
 
 void QEAnimationComponent::QEUpdate()
 {
-    this->animator->UpdateAnimation(Timer::DeltaTime, currentState.Loop);
+    animator->UpdateAnimation(Timer::DeltaTime, currentState.Loop);
 
-    if (auto* tr = FindValidTransition())
+    if (!animator->IsInTransition())
     {
-        ConsumeTriggersUsed(*tr);
-        ChangeState(tr->toState);
+        if (auto* tr = FindValidTransition())
+        {
+            ConsumeTriggersUsed(*tr);
+            ChangeState(tr->toState, *tr);
+        }
     }
 
     for (const std::string& tname : _triggersUsedThisFrame)
@@ -401,7 +422,7 @@ void QEAnimationComponent::QEInit()
 
         if (entryAnimation != this->_animations.end())
         {
-            this->animator->PlayAnimation(entryAnimation->second);
+            this->animator->PlayAnimation(entryAnimation->second, entryState->second.Loop);
         }
     }
 
