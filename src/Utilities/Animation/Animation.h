@@ -14,10 +14,11 @@ public:
 
 public:
     Animation(const AnimationData& animData);
-    float GetTicksPerSecond();
-    float GetDuration();
-    const AnimationNode& GetRootNode();
+    float GetTicksPerSecond() const;
+    float GetDuration() const;
+    const AnimationNode& GetRootNode() const;
     Bone* FindBone(const std::string& name);
+    const Bone* FindBone(const std::string& name) const;
 };
 
 #endif

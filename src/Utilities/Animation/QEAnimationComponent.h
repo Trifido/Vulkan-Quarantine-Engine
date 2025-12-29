@@ -30,6 +30,7 @@ private:
     QEParam& ensureParam_(const std::string& name, QEParamType desired);
     void ClearAllTriggers();
     void ChangeState(const std::string& toId);
+    void ChangeState(const std::string& toId, const QETransition& tr);
     bool CheckCondition(const QECondition& c);
     bool AreAllConditionsTrue(const QETransition& t);
     const QETransition* FindValidTransition();

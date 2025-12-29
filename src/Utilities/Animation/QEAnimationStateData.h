@@ -34,6 +34,7 @@ struct QETransition
     int   priority = 0;           // greater = first
     bool  hasExitTime = false;
     float exitTimeNormalized = 1.0f; // [0..1], p.ej 0.8
+    float blendDuration = 0.2f;
 };
 
 struct AnimationState

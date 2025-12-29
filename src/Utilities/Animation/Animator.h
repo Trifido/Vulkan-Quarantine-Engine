@@ -10,6 +10,22 @@
 #include <DescriptorBuffer.h>
 #include <Compute/ComputeNodeManager.h>
 
+struct CrossFadeState
+{
+    bool active = false;
+    float elapsed = 0.0f;
+    float duration = 0.2f;
+
+    std::shared_ptr<Animation> from = nullptr;
+    std::shared_ptr<Animation> to = nullptr;
+
+    float fromTime = 0.0f;  // ticks
+    float toTime = 0.0f;    // ticks
+
+    bool loopFrom = true;
+    bool loopTo = true;
+};
+
 class Animator
 {
 private:
@@ -20,10 +36,18 @@ private:
     std::shared_ptr<Animation> m_CurrentAnimation = nullptr;
     float m_CurrentTime;
     float m_DeltaTime;
+    bool m_loop;
 
     char* animationbuffer;
     Bone* auxiliarBone = nullptr;
     std::map<std::string, std::shared_ptr<ComputeNode>> computeNodes;
+    CrossFadeState mFade;
+
+private:
+    static glm::mat4 ComposeTRS(const BoneTRS& trs);
+    static void AdvanceTime(const Animation& anim, float& inOutTimeTicks, float dt, bool loop);
+    void EvaluateLocalPoseTRS(Animation& anim, float timeTicks, std::vector<BoneTRS>& outPose);
+    void BuildFinalFromLocalPose(const Animation& anim, const std::vector<BoneTRS>& localPose);
     
 public:
     Animator();
@@ -38,8 +62,11 @@ public:
     float GetTicksPerSecond() const;
     float GetNormalizedTime() const;
 
+    void CrossFadeTo(std::shared_ptr<Animation> next, float durationSec, bool loopNext, bool loopFrom);
+    bool IsInTransition() const { return mFade.active; }
+
     void UpdateAnimation(float dt, bool loop);
-    void PlayAnimation(std::shared_ptr<Animation> pAnimation);
+    void PlayAnimation(std::shared_ptr<Animation> pAnimation, bool loop);
     void CalculateBoneTransform(const AnimationNode* node, glm::mat4 parentTransform);
     std::shared_ptr<std::vector<glm::mat4>> GetFinalBoneMatrices();
     void CleanAnimatorUBO();
