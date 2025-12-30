@@ -180,12 +180,14 @@ void App::initVulkan()
     this->debugSystem->InitializeDebugGraphicResources();
 
     // Import meshes
-    //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Idle_Character.glb");
+    //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Street/street_asset_pack.glb");
 
     // Import animations
     //QEProjectManager::ImportAnimationFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Walking.glb",
     //    std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Animations"));
 
+    //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/FuturisticRoom/sci-fi_lab.glb");
+    //auto streetPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/FuturisticRoom/Meshes/sci-fi_lab.gltf").generic_string();
     // Load Scene
     this->loadScene(this->scene);
 
@@ -268,17 +270,6 @@ void App::mainLoop()
         if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false) && sessionManager->IsEditor())
         {
             saveScene();
-        }
-        if (ImGui::IsKeyReleased(ImGuiKey_C) && sessionManager->IsEditor())
-        {
-            auto visualCharacter = gameObjectManager->GetGameObject("MeshCharacter");
-            auto animationComponent = visualCharacter->GetComponent<QEAnimationComponent>();
-            float speedValue = animationComponent->GetFloat("speed");
-
-            if (speedValue > 0.1)
-                animationComponent->SetFloat("speed", -1.0);
-            else
-                animationComponent->SetFloat("speed", 1.0);
         }
 
         ImGui_ImplGlfw_NewFrame();

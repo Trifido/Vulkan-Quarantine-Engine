@@ -6,10 +6,11 @@
 
 QueueModule* OmniShadowResources::queueModule;
 VkCommandPool OmniShadowResources::commandPool;
+uint32_t OmniShadowResources::TextureSize;
 
 OmniShadowResources::OmniShadowResources()
 {
-    this->TextureSize = 1024;
+    this->TextureSize = 2048;
     this->shadowFormat = VK_FORMAT_D32_SFLOAT;
     this->deviceModule = DeviceModule::getInstance();
     this->swapchainModule = SwapChainModule::getInstance();
