@@ -1,4 +1,5 @@
 #include "ShadowPipelineModule.h"
+#include <CSMResources.h>
 
 ShadowPipelineModule::ShadowPipelineModule()
 {
@@ -46,17 +47,19 @@ void ShadowPipelineModule::CompileDirectionalShadowPipeline(std::vector<VkPipeli
     inputAssembly.topology = this->inputTopology;
     inputAssembly.primitiveRestartEnable = VK_FALSE;
 
+    VkExtent2D shadowExtent = { CSMResources::TextureSize , CSMResources::TextureSize };
+
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = (float)swapChainModule->swapChainExtent.width;
-    viewport.height = (float)swapChainModule->swapChainExtent.height;
+    viewport.width = shadowExtent.height;
+    viewport.height = shadowExtent.width;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
     VkRect2D scissor{};
     scissor.offset = { 0, 0 };
-    scissor.extent = swapChainModule->swapChainExtent;
+    scissor.extent = shadowExtent;
 
     VkPipelineViewportStateCreateInfo viewportState{};
     viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -75,14 +78,14 @@ void ShadowPipelineModule::CompileDirectionalShadowPipeline(std::vector<VkPipeli
     rasterizer.cullMode = VK_CULL_MODE_NONE;
     rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
-    rasterizer.depthBiasEnable = VK_TRUE;
+    rasterizer.depthBiasEnable = VK_FALSE;
     rasterizer.depthBiasConstantFactor = 0.0f; // Optional
     rasterizer.depthBiasClamp = 0.0f; // Optional
     rasterizer.depthBiasSlopeFactor = 0.0f; // Optional
 
     VkPipelineMultisampleStateCreateInfo multisampling{};
     multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    multisampling.sampleShadingEnable = VK_TRUE;
+    multisampling.sampleShadingEnable = VK_FALSE;
     multisampling.minSampleShading = .2f;
     multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
     multisampling.pSampleMask = nullptr; // Optional
@@ -98,10 +101,6 @@ void ShadowPipelineModule::CompileDirectionalShadowPipeline(std::vector<VkPipeli
     std::vector<VkDynamicState> dynamicStates = {
         VK_DYNAMIC_STATE_VIEWPORT,
         VK_DYNAMIC_STATE_SCISSOR,
-        VK_DYNAMIC_STATE_FRONT_FACE,
-        VK_DYNAMIC_STATE_DEPTH_TEST_ENABLE,
-        VK_DYNAMIC_STATE_DEPTH_WRITE_ENABLE,
-        VK_DYNAMIC_STATE_DEPTH_BIAS
     };
 
     VkPipelineDynamicStateCreateInfo dynamicState{};
@@ -169,17 +168,19 @@ void ShadowPipelineModule::CompileOmniShadowPipeline(std::vector<VkPipelineShade
     inputAssembly.topology = this->inputTopology;
     inputAssembly.primitiveRestartEnable = VK_FALSE;
 
+    VkExtent2D shadowExtent = { CSMResources::TextureSize , CSMResources::TextureSize };
+
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = (float)swapChainModule->swapChainExtent.width;
-    viewport.height = (float)swapChainModule->swapChainExtent.height;
+    viewport.width = shadowExtent.height;
+    viewport.height = shadowExtent.width;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
     VkRect2D scissor{};
     scissor.offset = { 0, 0 };
-    scissor.extent = swapChainModule->swapChainExtent;
+    scissor.extent = shadowExtent;
 
     VkPipelineViewportStateCreateInfo viewportState{};
     viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -198,14 +199,14 @@ void ShadowPipelineModule::CompileOmniShadowPipeline(std::vector<VkPipelineShade
     rasterizer.cullMode = VK_CULL_MODE_NONE;
     rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
-    rasterizer.depthBiasEnable = VK_TRUE;
+    rasterizer.depthBiasEnable = VK_FALSE;
     rasterizer.depthBiasConstantFactor = 0.0f; // Optional
     rasterizer.depthBiasClamp = 0.0f; // Optional
     rasterizer.depthBiasSlopeFactor = 0.0f; // Optional
 
     VkPipelineMultisampleStateCreateInfo multisampling{};
     multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    multisampling.sampleShadingEnable = VK_TRUE;
+    multisampling.sampleShadingEnable = VK_FALSE;
     multisampling.minSampleShading = .2f;
     multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
     multisampling.pSampleMask = nullptr; // Optional

@@ -29,17 +29,21 @@ layout(std430, push_constant) uniform PushConstants
 } constants;
 
 void main() {
-    vs_out.FragPos = (constants.model * inPosition).xyz;
-    vs_out.ViewPos = (cameraData.view * inPosition).xyz;
+    vec4 worldPos = constants.model * inPosition;
+    vs_out.FragPos = worldPos.xyz;
+    vs_out.ViewPos = (cameraData.view * worldPos).xyz;
     vs_out.TexCoords = inTexCoord;
-    vs_out.Normal = inNormal.xyz;
 
-    vec3 T = normalize(constants.model * inTangent).xyz;
-    vec3 N = normalize(constants.model * inNormal).xyz;
+    mat3 M = mat3(constants.model);
+    mat3 normalMat = transpose(inverse(M));
+
+    vec3 N = normalize(normalMat * inNormal.xyz);
+    vec3 T = normalize(M * inTangent.xyz);
     T = normalize(T - dot(T, N) * N);
-    vec3 B = cross(N, T);
-    
+    vec3 B = cross(N, T) * inTangent.w;
+
     vs_out.TBN = mat3(T, B, N);
+    vs_out.Normal = N;
 
     gl_Position = cameraData.viewproj * vec4(vs_out.FragPos, 1.0);
 }

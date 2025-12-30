@@ -17,7 +17,7 @@
 #define BIN_WIDTH ( 1.0 / NUM_BINS )
 #define MAX_NUM_LIGHTS 64
 #define NUM_WORDS ( ( MAX_NUM_LIGHTS + 31 ) / 32 )
-#define FAR_PLANE 500.0;
+#define FAR_PLANE 500.0
 
 const mat4 biasMat = mat4( 
 	0.5, 0.0, 0.0, 0.0,
@@ -150,7 +150,7 @@ vec3 GetSpecularColor();
 vec3 GetEmissiveColor();
 
 float ComputeCSMTextureProj(vec4 shadowCoord, vec2 offset, uint lightIdx, uint cascadeIndex);
-float ComputeCSMFilterPCF(vec4 sc, uint lightIdx, uint cascadeIndex);
+float ComputeCSMFilterPCF(vec4 sc, uint lightIdx, uint cascadeIndex, float NdotL);
 float ComputeCubeMapPCF(uint lightIdx, vec3 lightVec, float distance);
 
 void main()
@@ -159,7 +159,9 @@ void main()
     float z_far = FAR_PLANE;
     float z_near = 0.1;
     float linear_d = (-pos_camera_space.z - z_near) / (z_far - z_near);
+    linear_d = clamp(linear_d, 0.0, 0.999999);
     int bin_index = int( linear_d / BIN_WIDTH );
+    bin_index = clamp(bin_index, 0, int(NUM_BINS) - 1);
     uint bin_value = bins[ bin_index ];
 
     uint min_light_id = bin_value & 0xFFFF;
@@ -173,9 +175,11 @@ void main()
 
     if(uboMaterial.idxNormal > -1)
     {
-        normal = texture(texSampler[uboMaterial.idxNormal], fs_in.TexCoords).rgb;
-        normal = normal * 2.0 - 1.0;
-        normal = normalize(fs_in.TBN * normal) * uboMaterial.BumpScaling; 
+        vec3 nTS = texture(texSampler[nonuniformEXT(uboMaterial.idxNormal)], fs_in.TexCoords).xyz;
+        nTS = nTS * 2.0 - 1.0;
+        nTS.xy *= uboMaterial.BumpScaling;
+        nTS = normalize(nTS);
+        normal = normalize(fs_in.TBN * nTS);
     }
 
     //COMPUTE LIGHT
@@ -223,7 +227,7 @@ vec3 GetAlbedoColor()
 {
     vec3 colorDiffuse = uboMaterial.Diffuse.rgb;
     if(uboMaterial.idxDiffuse > -1)
-        colorDiffuse = vec3(texture(texSampler[uboMaterial.idxDiffuse], fs_in.TexCoords));
+        colorDiffuse = vec3(texture(texSampler[nonuniformEXT(uboMaterial.idxDiffuse)], fs_in.TexCoords));
 
     return colorDiffuse;
 }
@@ -232,7 +236,7 @@ vec3 GetSpecularColor()
 {
     vec3 colorSpecular = uboMaterial.Specular.rgb;
     if(uboMaterial.idxSpecular > -1)
-        colorSpecular = vec3(texture(texSampler[uboMaterial.idxSpecular], fs_in.TexCoords));
+        colorSpecular = vec3(texture(texSampler[nonuniformEXT(uboMaterial.idxSpecular)], fs_in.TexCoords));
     return colorSpecular;
 }
 
@@ -240,7 +244,7 @@ vec3 GetEmissiveColor()
 {
     vec3 emissive = uboMaterial.Emissive.rgb;
     if(uboMaterial.idxEmissive > -1)
-        emissive = vec3(texture(texSampler[uboMaterial.idxEmissive], fs_in.TexCoords));
+        emissive = vec3(texture(texSampler[nonuniformEXT(uboMaterial.idxEmissive)], fs_in.TexCoords));
     return emissive;
 }
 
@@ -260,16 +264,14 @@ vec3 ComputePointLight(LightData light, vec3 normal, vec3 albedo, vec3 specular,
     vec3 diffuse = diff * light.diffuse * albedo * attenuation;
 
     vec3 view_dir = normalize(cameraData.position.xyz - fs_in.FragPos);
-    vec3 reflectDir = reflect(-lightDir, normal);
     vec3 halfwayDir = normalize(lightDir + view_dir);  
     float spec = pow(max(dot(normal, halfwayDir), 0.0), uboMaterial.Shininess);
     vec3 specularResult = spec * light.specular * specular * attenuation;
 
-    vec3 result = diffuse + specularResult + emissive;
-
+    vec3 direct = diffuse + specularResult;
     float shadow = ComputeCubeMapPCF(light.idxShadowMap, -lightDirVector, distance);
 
-    return result * shadow;
+    return direct * shadow + emissive;
 }
 
 vec3 ComputeDirectionalLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive)
@@ -278,30 +280,43 @@ vec3 ComputeDirectionalLight(LightData light, vec3 normal, vec3 albedo, vec3 spe
     vec3 diffuse = diff * light.diffuse * albedo;
 
     vec3 view_dir = normalize(cameraData.position.xyz - fs_in.FragPos);
-    vec3 reflectDir = reflect(light.direction, normal);
     vec3 halfwayDir = normalize(-light.direction + view_dir);  
     float spec = pow(max(dot(normal, halfwayDir), 0.0), uboMaterial.Shininess);
     vec3 specularResult = spec * light.specular * specular;
 
-    vec3 result = diffuse + specularResult + emissive;
+    vec3 direct = diffuse + specularResult;
 
-    // Get cascade index for the current fragment's view position
-	uint cascadeIndex = 0;
-	for (uint i = 0; i < CSM_COUNT - 1; ++i)
-    {
-        vec4 cascadeSplit = QE_Cascade.Splits[light.idxShadowMap];
-		if (fs_in.ViewPos.z < cascadeSplit[i])
-        {	
-			cascadeIndex = i + 1;
-		}
-	}
+    float viewDepth = -fs_in.ViewPos.z;
+    vec4 s = QE_Cascade.Splits[light.idxShadowMap];
 
-    uint viewProjIndex = CSM_COUNT * light.idxShadowMap + cascadeIndex;
+    uint c0 = 0;
+    if (viewDepth > s.x) c0 = 1;
+    if (viewDepth > s.y) c0 = 2;
+    if (viewDepth > s.z) c0 = 3;
 
-	vec4 shadowCoord = (biasMat * QE_CascadeViewProj[viewProjIndex]) * vec4(fs_in.FragPos, 1.0);
-    float shadow = ComputeCSMFilterPCF(shadowCoord / shadowCoord.w, light.idxShadowMap, cascadeIndex);
+    uint c1 = min(c0 + 1u, uint(CSM_COUNT - 1));
 
-    return result * shadow;
+    float end0   = (c0 == 0u) ? s.x : (c0 == 1u) ? s.y : (c0 == 2u) ? s.z : s.w;
+    float start0 = (c0 == 0u) ? 0.0 : (c0 == 1u) ? s.x : (c0 == 2u) ? s.y : s.z;
+
+    float range0 = max(end0 - start0, 1e-4);
+    float fade = (c0 == 0u) ? (0.03 * range0) : (0.06 * range0);
+    float t      = clamp((viewDepth - (end0 - fade)) / max(fade, 1e-4), 0.0, 1.0);
+
+    uint vp0 = CSM_COUNT * light.idxShadowMap + c0;
+    uint vp1 = CSM_COUNT * light.idxShadowMap + c1;
+
+    vec4 sc0 = (biasMat * QE_CascadeViewProj[vp0]) * vec4(fs_in.FragPos, 1.0);
+    vec4 sc1 = (biasMat * QE_CascadeViewProj[vp1]) * vec4(fs_in.FragPos, 1.0);
+
+    float NdotL = max(dot(normalize(normal), normalize(-light.direction)), 0.0);
+    float sh0 = ComputeCSMFilterPCF(sc0 / sc0.w, light.idxShadowMap, c0, NdotL);
+    float sh1 = ComputeCSMFilterPCF(sc1 / sc1.w, light.idxShadowMap, c1, NdotL);
+
+    float shadow = mix(sh0, sh1, t);
+
+    return direct * shadow + emissive;
+
 }
 
 vec3 ComputeSpotLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, vec3 emissive)
@@ -319,7 +334,6 @@ vec3 ComputeSpotLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, 
     vec3 diffuseResult = diff * light.diffuse * albedo * intensity * attenuation;
 
     vec3 view_dir = normalize(cameraData.position.xyz - fs_in.FragPos);
-    vec3 reflectDir = reflect(-lightDir, normal);
     vec3 halfwayDir = normalize(lightDir + view_dir);  
     float spec = pow(max(dot(normal, halfwayDir), 0.0), uboMaterial.Shininess);
     vec3 specularResult = spec * light.specular * specular * intensity * attenuation;
@@ -327,68 +341,62 @@ vec3 ComputeSpotLight(LightData light, vec3 normal, vec3 albedo, vec3 specular, 
     return diffuseResult + specularResult + emissive;
 }
 
-float ComputeCSMTextureProj(vec4 shadowCoord, vec2 offset, uint lightIdx, uint cascadeIndex)
+float ComputeCSMTextureProj(vec4 shadowCoord, vec2 offset, uint lightIdx, uint cascadeIndex, float NdotL)
 {
-	float shadow = 1.0;
-	float bias = 0.005;
+    if (shadowCoord.x < 0.0 || shadowCoord.x > 1.0 ||
+        shadowCoord.y < 0.0 || shadowCoord.y > 1.0 ||
+        shadowCoord.z < 0.0 || shadowCoord.z > 1.0)
+        return 1.0;
 
-	if (shadowCoord.z > -1.0 && shadowCoord.z < 1.0)
-    {
-		float dist = texture(QE_DirectionalShadowmaps[lightIdx], vec3(shadowCoord.st + offset, cascadeIndex)).r;
-		if (shadowCoord.w > 0 && dist < shadowCoord.z - bias)
-        {
-			shadow = SHADOW_OPACITY;
-		}
-	}
-	return shadow;
+    float baseBias = (cascadeIndex == 0u) ? 0.00010 :
+                     (cascadeIndex == 1u) ? 0.00020 :
+                     (cascadeIndex == 2u) ? 0.00035 : 0.00050;
 
+    float closest = texture(QE_DirectionalShadowmaps[lightIdx],
+                            vec3(shadowCoord.st + offset, cascadeIndex)).r;
+
+    return (closest < shadowCoord.z - baseBias) ? SHADOW_OPACITY : 1.0;
 }
 
-float ComputeCSMFilterPCF(vec4 sc, uint lightIdx, uint cascadeIndex)
+float ComputeCSMFilterPCF(vec4 sc, uint lightIdx, uint cascadeIndex, float NdotL)
 {
-	ivec2 texDim = textureSize(QE_DirectionalShadowmaps[lightIdx], 0).xy;
-	float scale = 1.5;
-	float dx = scale * 1.0 / float(texDim.x);
-	float dy = scale * 1.0 / float(texDim.y);
+    ivec2 texDim = textureSize(QE_DirectionalShadowmaps[lightIdx], 0).xy;
 
-	float shadowFactor = 0.0;
-	int count = 0;
-	int range = 1;
-	
-	for (int x = -range; x <= range; x++)
-	{
-		for (int y = -range; y <= range; y++)
-		{
-			shadowFactor += ComputeCSMTextureProj(sc, vec2(dx*x, dy*y), lightIdx, cascadeIndex);
-			count++;
-		}
-	}
+    float scale = (cascadeIndex == 0u) ? 0.55 :
+                  (cascadeIndex == 1u) ? 0.95 : 1.50;
 
-	return shadowFactor / count;
-}
+    float dx = scale / float(texDim.x);
+    float dy = scale / float(texDim.y);
 
-float ComputeCubeMapPCF(uint lightIdx, vec3 lightVec, float distance)
-{
-    float shadow = 0.0;
-    float bias   = 0.15;
-    int samples  = 20;
-    float z_far = FAR_PLANE;
-    float viewDistance = length(cameraData.position.xyz - fs_in.FragPos);
-    float diskRadius = (1.0 + (viewDistance / z_far)) / 25.0;
+    int range = 1;
+    float sum = 0.0;
+    int count = 0;
 
-    float currentDepth = length(lightVec);
-
-    for(int i = 0; i < samples; ++i)
+    for (int x = -range; x <= range; x++)
+    for (int y = -range; y <= range; y++)
     {
-        float sampledDist = texture(QE_PointShadowCubemaps[lightIdx], lightVec + sampleOffsetDirections[i] * diskRadius).r;
-
-        if(distance <= sampledDist + EPSILON)
-        {
-            shadow += SHADOW_OPACITY;
-        }
+        sum += ComputeCSMTextureProj(sc, vec2(dx*x, dy*y), lightIdx, cascadeIndex, NdotL);
+        count++;
     }
 
-    shadow /= float(samples);
+    return sum / float(count);
+}
 
-    return shadow;
+float ComputeCubeMapPCF(uint lightIdx, vec3 lightVec, float currentDepth)
+{
+    const int samples = 20;
+    float bias = 0.01;
+    float texelAngular = 1.0 / float(textureSize(QE_PointShadowCubemaps[lightIdx], 0).x);
+    float diskRadius = texelAngular * currentDepth * 2.0;
+    float litCount = 0.0;
+
+    for (int i = 0; i < samples; ++i)
+    {
+        vec3 sampleDir = lightVec + sampleOffsetDirections[i] * diskRadius;
+        float closestDepth = texture(QE_PointShadowCubemaps[lightIdx], sampleDir).r;
+        litCount += (currentDepth <= closestDepth + bias) ? 1.0 : 0.0;
+    }
+
+    float visibility = litCount / float(samples);
+    return mix(SHADOW_OPACITY, 1.0, visibility);
 }

@@ -6,10 +6,11 @@
 
 QueueModule* CSMResources::queueModule;
 VkCommandPool CSMResources::commandPool;
+uint32_t CSMResources::TextureSize;
 
 CSMResources::CSMResources()
 {
-    this->TextureSize = 1024;
+    this->TextureSize = 2048;
     this->shadowFormat = VK_FORMAT_D32_SFLOAT;
     this->deviceModule = DeviceModule::getInstance();
     this->swapchainModule = SwapChainModule::getInstance();

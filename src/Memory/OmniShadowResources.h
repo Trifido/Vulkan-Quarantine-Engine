@@ -28,7 +28,7 @@ private:
 public:
     static QueueModule* queueModule;
     static VkCommandPool commandPool;
-    uint32_t TextureSize;
+    static uint32_t TextureSize;
     VkFormat shadowFormat;
 
     float DepthBiasConstant = 1.25f;
