@@ -79,7 +79,6 @@ void QEMeshRenderer::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx
 
         string materialID = qeMesh->MaterialRel[i];
         auto material = this->Owner->GetMaterial(materialID);
-        //auto material = MaterialManager::getInstance()->GetMaterial();
         material->BindDescriptors(commandBuffer, idx);
 
         vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantStruct), &this->transformComponent->GetWorldMatrix());
