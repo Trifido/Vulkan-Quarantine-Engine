@@ -358,10 +358,6 @@ GameObjects:
         Mass: 0
         Inertia: [0, 0, 0]
         CollisionGroup: 4
-      - type: QEGeometryComponent
-        id: 9Mk6pyZdABIG
-        _name: EmptyMesh
-        _filepath: QECore
     materials:
       - QEMatInst_defaultPrimitiveMat
   - id: gqVNBeg10gAI
@@ -390,10 +386,6 @@ GameObjects:
         Mass: 0
         Inertia: [0, 0, 0]
         CollisionGroup: 4
-      - type: QEGeometryComponent
-        id: ERoC0nE0pAli
-        _name: EmptyMesh
-        _filepath: QECore
     materials:
       - QEMatInst_defaultPrimitiveMat_2
   - id: kWrpqiwdo3Hr
@@ -422,9 +414,5 @@ GameObjects:
         id: 6qr7J1hAkTkU
         CollisionMargin: 0.04
         Size: [0.5, 0.5, 0.5]
-      - type: QEGeometryComponent
-        id: pASsMZ6uUeHJ
-        _name: EmptyMesh
-        _filepath: QECore
     materials:
       - QEMatInst_defaultPrimitiveMat_1
