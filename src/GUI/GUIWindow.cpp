@@ -192,8 +192,6 @@ void GUIWindow::framebufferResizeCallback(GLFWwindow* window, int width, int hei
 {
     height = height;
     width = width;
-    auto app = reinterpret_cast<App*>(glfwGetWindowUserPointer(window));
-    app->framebufferResized = true;
 }
 
 void GUIWindow::setupImgui()
