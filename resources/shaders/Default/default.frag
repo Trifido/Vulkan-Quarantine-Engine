@@ -38,28 +38,10 @@ layout(set = 0, binding = 0) uniform CameraUniform
     vec4 frustumPlanes[6];
 } cameraData;
 
-layout(set = 0, binding = 1) uniform UniformMaterial 
+layout(set = 0, binding = 1, std140) uniform UniformMaterial
 {
-    vec4 Diffuse;
-    vec4 Ambient;
-    vec4 Specular;
-    vec4 Emissive;
-    vec4 Transparent;
-    vec4 Reflective;
-
-    int idxDiffuse;
-    int idxNormal;
-    int idxSpecular;
-    int idxEmissive;
-    int idxHeight;
-
-    float Opacity;
-    float BumpScaling;
-    float Reflectivity;
-    float Refractivity;
-    float Shininess;
-    float Shininess_Strength;
-} uboMaterial;
+    QEMaterialData uboMaterial;
+};
 
 layout(set = 0, binding = 2) uniform UniformManagerLight
 {
@@ -68,7 +50,7 @@ layout(set = 0, binding = 2) uniform UniformManagerLight
 
 layout(set = 0, binding = 3) readonly buffer LightSSBO 
 {
-   LightData lights[];
+   QELightData lights[];
 };
 
 layout(set = 0, binding = 4) readonly buffer LightIndices 

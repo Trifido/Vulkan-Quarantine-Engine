@@ -63,6 +63,13 @@ struct InputVars
     }
 };
 
+struct ReflectedMember
+{
+    std::string name;
+    uint32_t offset = 0;
+    uint32_t size = 0;
+};
+
 bool compareByLocation(const InputVars& a, const InputVars& b);
 
 class ReflectShader
@@ -79,7 +86,7 @@ public:
     bool isShaderReflected = false;
     bool HasPointShadows = false;
     bool HasDirectionalShadows = false;
-    std::vector<std::string> materialUBOComponents;
+    std::vector<ReflectedMember> materialUBOMembers;
     std::vector<std::string> animationUBOComponents;
     VkDeviceSize materialBufferSize = 0;
     VkDeviceSize animationBufferSize = 0;

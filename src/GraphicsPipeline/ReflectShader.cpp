@@ -21,6 +21,31 @@ static VkDescriptorType ToVkDescriptorType(SpvReflectDescriptorType t) {
     }
 }
 
+static void FlattenBlockVariable(
+    const SpvReflectBlockVariable& var,
+    const std::string& prefix,
+    std::vector<ReflectedMember>& out)
+{
+    const char* rawName = var.name ? var.name : "";
+    std::string fullName = prefix.empty() ? std::string(rawName)
+        : (prefix + "." + rawName);
+
+    if (var.member_count == 0)
+    {
+        ReflectedMember m{};
+        m.name = fullName;
+        m.offset = var.offset;
+        m.size = var.size;
+        out.push_back(m);
+        return;
+    }
+
+    for (uint32_t i = 0; i < var.member_count; ++i)
+    {
+        FlattenBlockVariable(var.members[i], fullName, out);
+    }
+}
+
 bool compareByLocation(const InputVars& a, const InputVars& b)
 {
     return a.location < b.location;
@@ -715,21 +740,28 @@ void ReflectShader::CheckDescriptorSet(DescriptorSetReflect& descripReflect, con
 
 void ReflectShader::CheckUBOMaterial(SpvReflectDescriptorSet* set)
 {
-    if (!this->isUBOMaterial)
+    if (this->isUBOMaterial) return;
+
+    for (uint32_t b = 0; b < set->binding_count && !this->isUBOMaterial; b++)
     {
-        for (uint32_t b = 0; b < set->binding_count && !this->isUBOMaterial; b++)
+        const SpvReflectDescriptorBinding* binding = set->bindings[b];
+        if (!binding) continue;
+
+        if (binding->block.name == nullptr) continue;
+
+        if (binding->descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER &&
+            set->set == 0 && binding->binding == 1)
         {
-            if (set->bindings[b]->block.name != NULL)
+            this->isUBOMaterial = true;
+            this->materialBufferSize = binding->block.size;
+
+            materialUBOMembers.clear();
+            materialUBOMembers.reserve(binding->block.member_count * 8);
+
+            for (uint32_t m = 0; m < binding->block.member_count; m++)
             {
-                if (strcmp(set->bindings[b]->block.name, "uboMaterial") == 0)
-                {
-                    this->isUBOMaterial = true;
-                    this->materialBufferSize = set->bindings[b]->block.size;
-                    for (uint32_t m = 0; m < set->bindings[b]->block.member_count; m++)
-                    {
-                        materialUBOComponents.push_back(set->bindings[b]->block.members[m].name);
-                    }
-                }
+                const SpvReflectBlockVariable& mem = binding->block.members[m];
+                FlattenBlockVariable(mem, "", materialUBOMembers);
             }
         }
     }

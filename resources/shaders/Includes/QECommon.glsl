@@ -1,7 +1,7 @@
 #ifndef QE_COMMON_GLSL
 #define QE_COMMON_GLSL
 
-struct LightData 
+struct QELightData
 {
     vec3 position;
     uint lightType;
@@ -17,5 +17,27 @@ struct LightData
     uint idxShadowMap;
 };
 
+struct QEMaterialData
+{
+    vec4 Diffuse;
+    vec4 Ambient;
+    vec4 Specular;
+    vec4 Emissive;
+    vec4 Transparent;
+    vec4 Reflective;
+
+    int idxDiffuse;
+    int idxNormal;
+    int idxSpecular;
+    int idxEmissive;
+    int idxHeight;
+
+    float Opacity;
+    float BumpScaling;
+    float Reflectivity;
+    float Refractivity;
+    float Shininess;
+    float Shininess_Strength;
+};
 
 #endif

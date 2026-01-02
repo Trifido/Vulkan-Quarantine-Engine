@@ -20,7 +20,7 @@ vec3 ComputeBlinnPhong(
 }
 
 vec3 ComputePointLight(
-    LightData light,
+    QELightData light,
     vec3 fragPosWorld,
     vec3 N,
     vec3 V,
@@ -43,7 +43,7 @@ vec3 ComputePointLight(
 }
 
 vec3 ComputeDirectionalLight(
-    LightData light,
+    QELightData light,
     vec3 fragPosWorld,
     vec3 N,
     vec3 V,
@@ -78,7 +78,7 @@ vec3 ComputeDirectionalLight(
 }
 
 vec3 ComputeSpotLight(
-    LightData light,
+    QELightData light,
     vec3 fragPosWorld,
     vec3 N,
     vec3 V,
