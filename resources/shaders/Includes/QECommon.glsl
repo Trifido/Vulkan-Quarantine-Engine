@@ -40,4 +40,13 @@ struct QEMaterialData
     float Shininess_Strength;
 };
 
+struct QECameraData
+{
+	mat4 view;
+	mat4 proj;
+	mat4 viewproj;
+    vec4 position;
+    vec4 frustumPlanes[6];
+};
+
 #endif

@@ -11,7 +11,7 @@
 
 struct DescriptorBindingReflect
 {
-    VkShaderStageFlagBits stage;
+    VkShaderStageFlags stage = 0;
     uint32_t set;
     uint32_t binding;
     VkDescriptorType type;
@@ -26,10 +26,10 @@ struct DescriptorBindingReflect
 
 struct DescriptorSetReflect
 {
-    VkShaderStageFlagBits stage;
+    VkShaderStageFlags stage = 0;
     uint32_t set;
     uint32_t bindingCount;
-    DescriptorBindingReflect* bindings;
+    std::vector<DescriptorBindingReflect> bindings;
 
     bool Exist(const DescriptorBindingReflect& d)
     {
@@ -78,7 +78,7 @@ private:
     std::vector<std::string> nativesVariables;
 public:
     std::vector<InputVars> inputVariables;
-    std::unordered_map<int, std::unordered_map<std::string, DescriptorBindingReflect>> bindings;
+    std::unordered_map<uint32_t, std::unordered_map<uint32_t, DescriptorBindingReflect>> bindings;
     std::vector<DescriptorSetReflect> descriptorSetReflect;
     bool isAnimationShader = false;
     bool isUBOMaterial = false;

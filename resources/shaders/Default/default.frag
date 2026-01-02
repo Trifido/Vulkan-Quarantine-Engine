@@ -29,14 +29,10 @@ layout(location = 0) in VS_OUT {
 
 layout(location = 0) out vec4 outColor;
 
-layout(set = 0, binding = 0) uniform CameraUniform
+layout(set = 0, binding = 0, std140) uniform UniformCamera
 {
-	mat4 view;
-	mat4 proj;
-	mat4 viewproj;
-    vec4 position;
-    vec4 frustumPlanes[6];
-} cameraData;
+    QECameraData cameraData;
+};
 
 layout(set = 0, binding = 1, std140) uniform UniformMaterial
 {

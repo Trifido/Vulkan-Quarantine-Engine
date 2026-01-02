@@ -140,7 +140,7 @@ void QECamera::QEStart()
 
     this->deviceModule = DeviceModule::getInstance();
     this->_frustumComponent = std::make_shared<FrustumComponent>();
-    this->CameraData = std::make_shared<CameraUniform>();
+    this->CameraData = std::make_shared<UniformCamera>();
 }
 
 void QECamera::QEInit()

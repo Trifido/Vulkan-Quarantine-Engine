@@ -192,27 +192,26 @@ void AtmosphereSystem::CreateDescriptorPool()
 {
     std::vector<VkDescriptorPoolSize> poolSizes;
 
-    int numPool = (this->atmosphereType != AtmosphereType::PHYSICALLY_BASED_SKY) ? 2 : 1;
-    poolSizes.resize(numPool);
-    poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    poolSizes[0].descriptorCount = 1;
-
     if (this->atmosphereType != AtmosphereType::PHYSICALLY_BASED_SKY)
     {
-        poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        poolSizes[1].descriptorCount = 1;
+        poolSizes.resize(2);
+        poolSizes[0] = { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         1u * MAX_FRAMES_IN_FLIGHT };
+        poolSizes[1] = { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1u * MAX_FRAMES_IN_FLIGHT };
     }
-
-    VkDescriptorPoolCreateInfo poolInfo = {};
-    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
-    poolInfo.pPoolSizes = poolSizes.data();
-    poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-
-    if (vkCreateDescriptorPool(this->deviceModule->device, &poolInfo, nullptr, &this->descriptorPool) != VK_SUCCESS)
+    else
     {
-        throw std::runtime_error("failed to create descriptor pool!");
+        poolSizes.resize(2);
+        poolSizes[0] = { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         3u * MAX_FRAMES_IN_FLIGHT };
+        poolSizes[1] = { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2u * MAX_FRAMES_IN_FLIGHT };
     }
+
+    VkDescriptorPoolCreateInfo poolInfo{};
+    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    poolInfo.poolSizeCount = (uint32_t)poolSizes.size();
+    poolInfo.pPoolSizes = poolSizes.data();
+    poolInfo.maxSets = MAX_FRAMES_IN_FLIGHT;
+
+    vkCreateDescriptorPool(deviceModule->device, &poolInfo, nullptr, &descriptorPool);
 }
 
 void AtmosphereSystem::CreateDescriptorSet()
@@ -253,14 +252,14 @@ void AtmosphereSystem::CreateDescriptorSet()
 
         if (this->atmosphereType != AtmosphereType::PHYSICALLY_BASED_SKY)
         {
-            this->SetDescriptorWrite(descriptorWrites[0], this->descriptorSets[frameIdx], 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform));
+            this->SetDescriptorWrite(descriptorWrites[0], this->descriptorSets[frameIdx], 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, cameraUBO->uniformBuffers[frameIdx], sizeof(UniformCamera));
             this->SetSamplerDescriptorWrite(descriptorWrites[1], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, this->environmentTexture, this->imageInfo_1);
         }
         else
         {
             this->SetSamplerDescriptorWrite(descriptorWrites[0], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, this->TLUT_ComputeNode->computeDescriptor->outputTexture, this->imageInfo_1);
             this->SetSamplerDescriptorWrite(descriptorWrites[1], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, this->SVLUT_ComputeNode->computeDescriptor->outputTexture, this->imageInfo_2);
-            this->SetDescriptorWrite(descriptorWrites[2], this->descriptorSets[frameIdx], 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, cameraUBO->uniformBuffers[frameIdx], sizeof(CameraUniform));
+            this->SetDescriptorWrite(descriptorWrites[2], this->descriptorSets[frameIdx], 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, cameraUBO->uniformBuffers[frameIdx], sizeof(UniformCamera));
             this->SetDescriptorWrite(descriptorWrites[3], this->descriptorSets[frameIdx], 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3, this->resolutionUBO->uniformBuffers[frameIdx], sizeof(ScreenResolutionUniform));
             this->SetDescriptorWrite(descriptorWrites[4], this->descriptorSets[frameIdx], 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4, this->sunLight->sunUBO->uniformBuffers[frameIdx], sizeof(SunUniform));
         }

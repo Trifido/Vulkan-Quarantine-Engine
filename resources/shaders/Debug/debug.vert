@@ -1,14 +1,12 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout(set = 0, binding = 0) uniform CameraUniform
+#include "../Includes/QECommon.glsl"
+
+layout(set = 0, binding = 0, std140) uniform UniformCamera
 {
-	mat4 view;
-	mat4 proj;
-	mat4 viewproj;
-    vec4 position;
-    vec4 frustumPlanes[6];
-} cameraData;
+    QECameraData cameraData;
+};
 
 layout(location = 0) in vec4 inPosition;
 layout(location = 1) in vec4 inColor;

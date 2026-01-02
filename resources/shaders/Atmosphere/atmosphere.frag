@@ -1,17 +1,15 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
+#include "../Includes/QECommon.glsl"
+
 layout(binding = 0) uniform sampler2D InputImage;
 layout(binding = 1) uniform sampler2D InputImage_2;
 
-layout(set = 0, binding = 2) uniform CameraUniform
+layout(set = 0, binding = 2, std140) uniform UniformCamera
 {
-	mat4 view;
-	mat4 proj;
-	mat4 viewproj;
-    vec4 position;
-    vec4 frustumPlanes[6];
-} cameraData;
+    QECameraData cameraData;
+};
 
 layout(set = 0, binding = 3) uniform ScreenResolution
 {

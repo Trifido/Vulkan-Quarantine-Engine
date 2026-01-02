@@ -4,6 +4,8 @@
 #extension GL_EXT_shader_16bit_storage: require
 #extension GL_EXT_shader_8bit_storage: require
 
+#include "../Includes/QECommon.glsl"
+
 #define GPU_WARP_SIZE 32
 
 #define GPU_GROUP_SIZE GPU_WARP_SIZE
@@ -43,14 +45,11 @@ struct PBRVertex
     float boneWeights[4];
 };
 
-layout(set = 0, binding = 0) uniform CameraUniform
+layout(set = 0, binding = 0, std140) uniform UniformCamera
 {
-	mat4 view;
-	mat4 proj;
-	mat4 viewproj;
-    vec4 position;
-    vec4 frustumPlanes[6];
-} cameraData;
+    QECameraData cameraData;
+};
+
 
 layout(set = 0, binding = 2) readonly buffer MeshletVertices
 {

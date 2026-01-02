@@ -2,18 +2,16 @@
 
 layout(local_size_x = 16, local_size_y = 16) in;
 
+#include "../Includes/QECommon.glsl"
+
 layout(binding = 0, rgba32f) uniform image2D InputImage;
 layout(binding = 1, rgba32f) uniform image2D InputImage_2;
 layout(binding = 2, rgba32f) uniform image2D OutputImage;
 
-layout(set = 0, binding = 3) uniform CameraUniform
+layout(set = 0, binding = 3, std140) uniform UniformCamera
 {
-	mat4 view;
-	mat4 proj;
-	mat4 viewproj;
-    vec4 position;
-    vec4 frustumPlanes[6];
-} cameraData;
+    QECameraData cameraData;
+};
 
 layout(set = 0, binding = 4) uniform SunUniform
 {

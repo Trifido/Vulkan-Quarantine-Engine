@@ -12,7 +12,7 @@ QESessionManager::QESessionManager()
 {
     auto deviceModule = DeviceModule::getInstance();
     this->cameraUBO = std::make_shared<UniformBufferObject>();
-    this->cameraUBO->CreateUniformBuffer(sizeof(CameraUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->cameraUBO->CreateUniformBuffer(sizeof(UniformCamera), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 }
 
 void QESessionManager::SetEditorMode(bool value)
@@ -91,8 +91,8 @@ void QESessionManager::UpdateActiveCameraGPUData()
         for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
         {
             void* data;
-            vkMapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame], 0, sizeof(CameraUniform), 0, &data);
-            memcpy(data, static_cast<const void*>(this->_activeCamera->CameraData.get()), sizeof(CameraUniform));
+            vkMapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame], 0, sizeof(UniformCamera), 0, &data);
+            memcpy(data, static_cast<const void*>(this->_activeCamera->CameraData.get()), sizeof(UniformCamera));
             vkUnmapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame]);
         }
     }
