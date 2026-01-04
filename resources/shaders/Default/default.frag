@@ -4,14 +4,13 @@
 
 #include "../Includes/QECommon.glsl"
 #include "../Includes/QEBasicLights.glsl"
+#include "../Includes/QEMaterial.glsl"
 
 #define POINT_LIGHT 0
 #define DIRECTIONAL_LIGHT 1
 #define SPOT_LIGHT 2
 #define AREA_LIGHT 3
 #define SUN_LIGHT 4
-
-#define EPSILON 0.15
 
 #define NUM_BINS 16.0
 #define BIN_WIDTH ( 1.0 / NUM_BINS )
@@ -64,7 +63,7 @@ layout(set = 0, binding = 6) readonly buffer Tiles
     uint tiles[];
 };
 
-layout(set = 0, binding = 7) uniform sampler2D texSampler[5];
+layout(set = 0, binding = 7) uniform sampler2D texSampler[QE_NUM_TEX];
 
 layout(set = 0, binding = 8) uniform ScreenData 
 {
@@ -84,12 +83,6 @@ layout (set = 2, binding = 2) readonly buffer cascadeViewProjs
 {
     mat4 QE_CascadeViewProj[];
 };
-
-vec3 ComputeAmbientLight(vec3 diffuseColor);
-
-vec3 GetAlbedoColor();
-vec3 GetSpecularColor();
-vec3 GetEmissiveColor();
 
 void main()
 {
@@ -114,23 +107,11 @@ void main()
     float viewDepth = -fs_in.ViewPos.z;
     float shininess = uboMaterial.Shininess;
 
-    vec3 normal = fs_in.Normal;
-
-    if(uboMaterial.idxNormal > -1)
-    {
-        vec3 nTS = texture(texSampler[nonuniformEXT(uboMaterial.idxNormal)], fs_in.TexCoords).xyz;
-        nTS = nTS * 2.0 - 1.0;
-        nTS.xy *= uboMaterial.BumpScaling;
-        nTS = normalize(nTS);
-        normal = normalize(fs_in.TBN * nTS);
-    }
-    normal = normalize(normal);
-
-    //COMPUTE LIGHT
-    vec3 albedoColor = GetAlbedoColor();
-    vec3 specularColor = GetSpecularColor();
-    vec3 emissiveColor = GetEmissiveColor();
-    vec3 result = ComputeAmbientLight(albedoColor);
+    vec3 normal = QE_GetNormal(uboMaterial, texSampler, fs_in.TexCoords, fs_in.Normal, fs_in.TBN);
+    vec3 albedoColor = QE_GetBaseColor(uboMaterial, texSampler, fs_in.TexCoords);
+    vec3 specularColor = QE_GetSpecularColor(uboMaterial, texSampler, fs_in.TexCoords);
+    vec3 emissiveColor = QE_GetEmissiveColor(uboMaterial, texSampler, fs_in.TexCoords);
+    vec3 result = QE_ComputeAmbient(uboMaterial);
 
     vec3 resultPoint = vec3(0.0);
     vec3 resultDir = vec3(0.0);
@@ -192,34 +173,4 @@ void main()
 
     result += resultPoint + resultDir + resultSpot;
     outColor = vec4(result, uboMaterial.Opacity);
-}
-
-vec3 GetAlbedoColor()
-{
-    vec3 colorDiffuse = uboMaterial.Diffuse.rgb;
-    if(uboMaterial.idxDiffuse > -1)
-        colorDiffuse = vec3(texture(texSampler[nonuniformEXT(uboMaterial.idxDiffuse)], fs_in.TexCoords));
-
-    return colorDiffuse;
-}
-
-vec3 GetSpecularColor()
-{
-    vec3 colorSpecular = uboMaterial.Specular.rgb;
-    if(uboMaterial.idxSpecular > -1)
-        colorSpecular = vec3(texture(texSampler[nonuniformEXT(uboMaterial.idxSpecular)], fs_in.TexCoords));
-    return colorSpecular;
-}
-
-vec3 GetEmissiveColor()
-{
-    vec3 emissive = uboMaterial.Emissive.rgb;
-    if(uboMaterial.idxEmissive > -1)
-        emissive = vec3(texture(texSampler[nonuniformEXT(uboMaterial.idxEmissive)], fs_in.TexCoords));
-    return emissive;
-}
-
-vec3 ComputeAmbientLight(vec3 diffuseColor)
-{
-    return diffuseColor * uboMaterial.Ambient.rgb;
 }

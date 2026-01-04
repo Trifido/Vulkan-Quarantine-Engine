@@ -79,6 +79,8 @@ int main(int, char**)
     QEScene scene{};
     QEProjectManager::InitializeDefaultQEScene(scene);
     App app;
-    app.run(scene, false);
+    app.run(scene, true);
+
+    system("pause");
     return 0;
 }

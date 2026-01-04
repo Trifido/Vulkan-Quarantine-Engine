@@ -17,29 +17,6 @@ struct QELightData
     uint idxShadowMap;
 };
 
-struct QEMaterialData
-{
-    vec4 Diffuse;
-    vec4 Ambient;
-    vec4 Specular;
-    vec4 Emissive;
-    vec4 Transparent;
-    vec4 Reflective;
-
-    int idxDiffuse;
-    int idxNormal;
-    int idxSpecular;
-    int idxEmissive;
-    int idxHeight;
-
-    float Opacity;
-    float BumpScaling;
-    float Reflectivity;
-    float Refractivity;
-    float Shininess;
-    float Shininess_Strength;
-};
-
 struct QECameraData
 {
 	mat4 view;
