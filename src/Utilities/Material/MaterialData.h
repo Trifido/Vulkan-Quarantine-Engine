@@ -13,6 +13,7 @@
 #include <TextureManager.h>
 #include <ShaderModule.h>
 #include <UBO.h>
+#include <MaterialTextureSlot.h>
 
 #include <cstdint>
 #include <cstring>
@@ -45,8 +46,6 @@ private:
     std::string fileExtension;
     std::string texturePath;
 
-    int numTextures = 0;
-
     // Nuevo buffer “plano” para UBO
     std::vector<uint8_t> materialBuffer;
 
@@ -63,6 +62,9 @@ public:
     float Reflectivity = 0.0f;
     float Shininess_Strength = 0.0f;
     float Refractivity = 0.0f;
+    float Metallic = 0.0f;
+    float Roughness = 1.0f;
+    float AO = 1.0f;
 
     // Colors
     glm::vec4 Diffuse = glm::vec4(1.0f);
@@ -72,7 +74,7 @@ public:
     glm::vec4 Transparent = glm::vec4(1.0f);
     glm::vec4 Reflective = glm::vec4(0.0f);
 
-    static const int TOTAL_NUM_TEXTURES = 5;
+    static const int TOTAL_NUM_TEXTURES = (int)MAT_TEX_SLOT::Count;
 
     std::unordered_map<TEXTURE_TYPE, std::shared_ptr<CustomTexture>> Textures;
     std::unordered_map<TEXTURE_TYPE, int> IDTextures;

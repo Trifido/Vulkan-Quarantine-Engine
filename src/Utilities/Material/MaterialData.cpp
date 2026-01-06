@@ -37,6 +37,9 @@ std::unordered_map<std::string, WriteFn> MaterialData::BuildMaterialWriters()
     writeValue("idxSpecular", [this] { return IDTextures[TEXTURE_TYPE::SPECULAR_TYPE]; });
     writeValue("idxEmissive", [this] { return IDTextures[TEXTURE_TYPE::EMISSIVE_TYPE]; });
     writeValue("idxHeight", [this] { return IDTextures[TEXTURE_TYPE::HEIGHT_TYPE]; });
+    writeValue("idxMetallic", [this] { return IDTextures[TEXTURE_TYPE::METALNESS_TYPE]; });
+    writeValue("idxRoughness", [this] { return IDTextures[TEXTURE_TYPE::ROUGHNESS_TYPE]; });
+    writeValue("idxAO", [this] { return IDTextures[TEXTURE_TYPE::AO_TYPE]; });
 
     // floats
     writeValue("Opacity", [this] { return Opacity; });
@@ -45,6 +48,9 @@ std::unordered_map<std::string, WriteFn> MaterialData::BuildMaterialWriters()
     writeValue("Refractivity", [this] { return Refractivity; });
     writeValue("Shininess", [this] { return Shininess; });
     writeValue("Shininess_Strength", [this] { return Shininess_Strength; });
+    writeValue("Metallic", [this] { return Metallic; });
+    writeValue("Roughness", [this] { return Roughness; });
+    writeValue("AO", [this] { return AO; });
 
     return w;
 }
@@ -59,12 +65,18 @@ MaterialData::MaterialData()
     texture_vector = std::make_shared<std::vector<std::shared_ptr<CustomTexture>>>();
     texture_vector->resize(TOTAL_NUM_TEXTURES, nullptr);
 
-    // IDs por defecto
-    IDTextures[TEXTURE_TYPE::DIFFUSE_TYPE] = -1;
-    IDTextures[TEXTURE_TYPE::NORMAL_TYPE] = -1;
-    IDTextures[TEXTURE_TYPE::SPECULAR_TYPE] = -1;
-    IDTextures[TEXTURE_TYPE::EMISSIVE_TYPE] = -1;
-    IDTextures[TEXTURE_TYPE::HEIGHT_TYPE] = -1;
+    // Índices (slots)
+    IDTextures[TEXTURE_TYPE::DIFFUSE_TYPE] = (int)MAT_TEX_SLOT::BaseColor;
+    IDTextures[TEXTURE_TYPE::NORMAL_TYPE] = (int)MAT_TEX_SLOT::Normal;
+    IDTextures[TEXTURE_TYPE::EMISSIVE_TYPE] = (int)MAT_TEX_SLOT::Emissive;
+    IDTextures[TEXTURE_TYPE::HEIGHT_TYPE] = (int)MAT_TEX_SLOT::Height;
+
+    IDTextures[TEXTURE_TYPE::SPECULAR_TYPE] = (int)MAT_TEX_SLOT::Reserved7;
+
+    // PBR
+    IDTextures[TEXTURE_TYPE::METALNESS_TYPE] = (int)MAT_TEX_SLOT::Metallic;
+    IDTextures[TEXTURE_TYPE::ROUGHNESS_TYPE] = (int)MAT_TEX_SLOT::Roughness;
+    IDTextures[TEXTURE_TYPE::AO_TYPE] = (int)MAT_TEX_SLOT::AO;
 
     fillEmptyTextures();
 
@@ -187,18 +199,17 @@ std::string MaterialData::GetTexture(const aiScene* scene, aiMaterial* mat, aiTe
     return finalName;
 }
 
-std::shared_ptr<CustomTexture> MaterialData::findTextureByType(TEXTURE_TYPE newtype)
+std::shared_ptr<CustomTexture> MaterialData::findTextureByType(TEXTURE_TYPE t)
 {
-    if (newtype == TEXTURE_TYPE::NULL_TYPE)
-        return textureManager->GetTexture("NULL_TEXTURE");
+    if (t == TEXTURE_TYPE::NULL_TYPE)
+        return emptyTexture;
 
-    for (size_t id = 0; id < TOTAL_NUM_TEXTURES; ++id)
-    {
-        auto& t = texture_vector->at(id);
-        if (t && t->type == newtype)
-            return t;
-    }
-    return nullptr;
+    int slot = SlotFromType(t);
+    if (slot < 0 || slot >= TOTAL_NUM_TEXTURES)
+        return nullptr;
+
+    auto& tex = texture_vector->at((size_t)slot);
+    return tex ? tex : emptyTexture;
 }
 
 void MaterialData::fillEmptyTextures()
@@ -214,23 +225,24 @@ void MaterialData::AddTexture(const std::string& textureName, const std::shared_
 {
     if (!texture) return;
 
-    int& slot = IDTextures[texture->type];
-    if (slot >= 0 && slot < TOTAL_NUM_TEXTURES)
+    if (texture->type == TEXTURE_TYPE::NULL_TYPE)
     {
-        texture_vector->at(static_cast<size_t>(slot)) = texture;
-    }
-    else
-    {
-        if (numTextures < TOTAL_NUM_TEXTURES)
-        {
-            texture_vector->at(static_cast<size_t>(numTextures)) = texture;
-            slot = numTextures;
-            ++numTextures;
-        }
+        textureManager->AddTexture(textureName, texture);
+        return;
     }
 
-    textureManager->AddTexture(textureName, texture);
+    auto it = IDTextures.find(texture->type);
+    if (it == IDTextures.end())
+        return;
+
+    int slot = it->second;
+    if (slot < 0 || slot >= TOTAL_NUM_TEXTURES)
+        return;
+
+    texture_vector->at(static_cast<size_t>(slot)) = texture;
+
     Textures[texture->type] = texture;
+    textureManager->AddTexture(textureName, texture);
 }
 
 void MaterialData::CleanLastResources()
@@ -346,6 +358,9 @@ void MaterialData::SetMaterialField(const std::string& nameField_, float value)
     if (nameField == "Reflectivity") { Reflectivity = value;       UpdateMaterialDataRaw("Reflectivity", &Reflectivity, sizeof(Reflectivity)); return; }
     if (nameField == "Shininess_Strength") { Shininess_Strength = value; UpdateMaterialDataRaw("Shininess_Strength", &Shininess_Strength, sizeof(Shininess_Strength)); return; }
     if (nameField == "Refractivity") { Refractivity = value;       UpdateMaterialDataRaw("Refractivity", &Refractivity, sizeof(Refractivity)); return; }
+    if (nameField == "Metallic") { Metallic = value;  UpdateMaterialDataRaw("Metallic", &Metallic, sizeof(Metallic)); return; }
+    if (nameField == "Roughness") { Roughness = value; UpdateMaterialDataRaw("Roughness", &Roughness, sizeof(Roughness)); return; }
+    if (nameField == "AO") { AO = value;        UpdateMaterialDataRaw("AO", &AO, sizeof(AO)); return; }
 }
 
 void MaterialData::SetMaterialField(const std::string& nameField_, glm::vec3 value)
@@ -370,4 +385,7 @@ void MaterialData::SetMaterialField(const std::string& nameField_, int value)
     if (nameField == "idxSpecular") { IDTextures[TEXTURE_TYPE::SPECULAR_TYPE] = value; UpdateMaterialDataRaw("idxSpecular", &value, sizeof(value)); return; }
     if (nameField == "idxEmissive") { IDTextures[TEXTURE_TYPE::EMISSIVE_TYPE] = value; UpdateMaterialDataRaw("idxEmissive", &value, sizeof(value)); return; }
     if (nameField == "idxHeight") { IDTextures[TEXTURE_TYPE::HEIGHT_TYPE] = value; UpdateMaterialDataRaw("idxHeight", &value, sizeof(value)); return; }
+    if (nameField == "idxMetallic") { IDTextures[TEXTURE_TYPE::METALNESS_TYPE] = value; UpdateMaterialDataRaw("idxMetallic", &value, sizeof(value)); return; }
+    if (nameField == "idxRoughness") { IDTextures[TEXTURE_TYPE::ROUGHNESS_TYPE] = value; UpdateMaterialDataRaw("idxRoughness", &value, sizeof(value)); return; }
+    if (nameField == "idxAO") { IDTextures[TEXTURE_TYPE::AO_TYPE] = value;        UpdateMaterialDataRaw("idxAO", &value, sizeof(value)); return; }
 }

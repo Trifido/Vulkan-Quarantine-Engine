@@ -56,6 +56,9 @@ struct MaterialUniform
     int idxSpecular;
     int idxEmissive;
     int idxHeight;
+    int idxMetallic;
+    int idxRoughness;
+    int idxAO;
 
     float Opacity;
     float BumpScaling;
@@ -63,6 +66,9 @@ struct MaterialUniform
     float Refractivity;
     float Shininess;
     float Shininess_Strength;
+    float Metallic;
+    float Roughness;
+    float AO;
 };
 
 struct ParticleSystemUniform
