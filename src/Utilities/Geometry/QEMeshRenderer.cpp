@@ -52,11 +52,9 @@ void QEMeshRenderer::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx
     vkCmdSetDepthTestEnable(commandBuffer, true);
     vkCmdSetDepthWriteEnable(commandBuffer, true);
 
-
     vkCmdSetCullMode(commandBuffer, true);
     vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
 
-    //std::vector<string> materialID = this->geometryComponent->GetMesh()->MeshData[0].materialID;
     auto qeMesh = this->geometryComponent->GetMesh();
     for (int i = 0; i < this->geometryComponent->indexBuffer.size(); i++)
     {

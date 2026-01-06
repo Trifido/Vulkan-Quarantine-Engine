@@ -1,5 +1,21 @@
 #include "MaterialData.h"
 
+static uint32_t SlotBitFromType(TEXTURE_TYPE t)
+{
+    switch (t)
+    {
+    case TEXTURE_TYPE::DIFFUSE_TYPE:   return 1u << 0; // QE_SLOT_BASECOLOR
+    case TEXTURE_TYPE::NORMAL_TYPE:    return 1u << 1;
+    case TEXTURE_TYPE::METALNESS_TYPE: return 1u << 2;
+    case TEXTURE_TYPE::ROUGHNESS_TYPE: return 1u << 3;
+    case TEXTURE_TYPE::AO_TYPE:        return 1u << 4;
+    case TEXTURE_TYPE::EMISSIVE_TYPE:  return 1u << 5;
+    case TEXTURE_TYPE::HEIGHT_TYPE:    return 1u << 6;
+    case TEXTURE_TYPE::SPECULAR_TYPE:  return 1u << 7;
+    default: return 0;
+    }
+}
+
 std::string MaterialData::NormalizeMaterialMemberName(std::string name)
 {
     auto pos = name.rfind('.');
@@ -40,6 +56,9 @@ std::unordered_map<std::string, WriteFn> MaterialData::BuildMaterialWriters()
     writeValue("idxMetallic", [this] { return IDTextures[TEXTURE_TYPE::METALNESS_TYPE]; });
     writeValue("idxRoughness", [this] { return IDTextures[TEXTURE_TYPE::ROUGHNESS_TYPE]; });
     writeValue("idxAO", [this] { return IDTextures[TEXTURE_TYPE::AO_TYPE]; });
+
+    //uints
+    writeValue("texMask", [this] { return TexMask; });
 
     // floats
     writeValue("Opacity", [this] { return Opacity; });
@@ -121,13 +140,11 @@ void MaterialData::ImportAssimpTexture(const aiScene* scene, aiMaterial* materia
     texturePath = std::move(texturePath_);
     fileExtension = std::move(fileExtension_);
 
-    // Diffuse/BaseColor/Roughness fallback chain
+    // Diffuse / BaseColor
     {
-        std::string textureName = GetTexture(scene, material, aiTextureType_DIFFUSE, TEXTURE_TYPE::DIFFUSE_TYPE);
+        std::string textureName = GetTexture(scene, material, aiTextureType_BASE_COLOR, TEXTURE_TYPE::DIFFUSE_TYPE);
         if (textureName.empty())
-            textureName = GetTexture(scene, material, aiTextureType_BASE_COLOR, TEXTURE_TYPE::DIFFUSE_TYPE);
-        if (textureName.empty())
-            textureName = GetTexture(scene, material, aiTextureType_DIFFUSE_ROUGHNESS, TEXTURE_TYPE::DIFFUSE_TYPE);
+            textureName = GetTexture(scene, material, aiTextureType_DIFFUSE, TEXTURE_TYPE::DIFFUSE_TYPE);
 
         if (!textureName.empty())
             AddTexture(textureName, textureManager->GetTexture(textureName));
@@ -140,11 +157,40 @@ void MaterialData::ImportAssimpTexture(const aiScene* scene, aiMaterial* materia
             AddTexture(textureName, textureManager->GetTexture(textureName));
     }
 
-    // Normal (Normals o Height como fallback)
+    // Normal
     {
-        std::string textureName = GetTexture(scene, material, aiTextureType_NORMALS, TEXTURE_TYPE::NORMAL_TYPE);
+        std::string textureName = GetTexture(scene, material, aiTextureType_NORMAL_CAMERA, TEXTURE_TYPE::NORMAL_TYPE);
         if (textureName.empty())
-            textureName = GetTexture(scene, material, aiTextureType_HEIGHT, TEXTURE_TYPE::NORMAL_TYPE);
+            textureName = GetTexture(scene, material, aiTextureType_NORMALS, TEXTURE_TYPE::NORMAL_TYPE);
+        if (textureName.empty())
+            textureName = GetTexture(scene, material, aiTextureType_HEIGHT, TEXTURE_TYPE::NORMAL_TYPE); // tu fallback actual
+
+        if (!textureName.empty())
+            AddTexture(textureName, textureManager->GetTexture(textureName));
+    }
+
+    // Metallic
+    {
+        std::string textureName = GetTexture(scene, material, aiTextureType_METALNESS, TEXTURE_TYPE::METALNESS_TYPE);
+        if (!textureName.empty())
+            AddTexture(textureName, textureManager->GetTexture(textureName));
+    }
+
+    // Roughness
+    {
+        std::string textureName = GetTexture(scene, material, aiTextureType_DIFFUSE_ROUGHNESS, TEXTURE_TYPE::ROUGHNESS_TYPE);
+        if (textureName.empty())
+            textureName = GetTexture(scene, material, aiTextureType_MAYA_SPECULAR_ROUGHNESS, TEXTURE_TYPE::ROUGHNESS_TYPE);
+
+        if (!textureName.empty())
+            AddTexture(textureName, textureManager->GetTexture(textureName));
+    }
+
+    // Ambient Occlusion (AO)
+    {
+        std::string textureName = GetTexture(scene, material, aiTextureType_AMBIENT_OCCLUSION, TEXTURE_TYPE::AO_TYPE);
+        if (textureName.empty())
+            textureName = GetTexture(scene, material, aiTextureType_LIGHTMAP, TEXTURE_TYPE::AO_TYPE);
 
         if (!textureName.empty())
             AddTexture(textureName, textureManager->GetTexture(textureName));
@@ -153,6 +199,9 @@ void MaterialData::ImportAssimpTexture(const aiScene* scene, aiMaterial* materia
     // Emissive
     {
         std::string textureName = GetTexture(scene, material, aiTextureType_EMISSIVE, TEXTURE_TYPE::EMISSIVE_TYPE);
+        if (textureName.empty())
+            textureName = GetTexture(scene, material, aiTextureType_EMISSION_COLOR, TEXTURE_TYPE::EMISSIVE_TYPE);
+
         if (!textureName.empty())
             AddTexture(textureName, textureManager->GetTexture(textureName));
     }
@@ -229,6 +278,15 @@ void MaterialData::AddTexture(const std::string& textureName, const std::shared_
     {
         textureManager->AddTexture(textureName, texture);
         return;
+    }
+    else
+    {
+        uint32_t bit = SlotBitFromType(texture->type);
+        if (bit != 0)
+        {
+            TexMask |= bit;
+            UpdateMaterialDataRaw("texMask", &TexMask, sizeof(TexMask));
+        }
     }
 
     auto it = IDTextures.find(texture->type);

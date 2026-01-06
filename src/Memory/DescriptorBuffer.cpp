@@ -219,26 +219,18 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
     std::vector<VkWriteDescriptorSet> writes;
     writes.reserve(32);
 
-    // IMPORTANT: mantener vivos los infos a los que apuntan los VkWriteDescriptorSet
     this->buffersInfo.clear();
     this->buffersInfo.reserve(32);
 
-    // Para imágenes: aquí hay un matiz.
-    // Si tienes MÁS DE UN binding de imágenes (p.ej. texSampler[5] + otro sampler),
-    // no puedes reutilizar el mismo imageInfo vector sin separar por binding.
-    // Como en tu set0 tienes "texSampler[5]" y quizá "Texture1", lo más seguro es:
-    // - limpiar imageInfo
-    // - y en cada binding, reservar un segmento y apuntar a ese segmento.
     this->imageInfo.clear();
     this->imageInfo.reserve(64);
 
-    // Acceso a set 0
     const uint32_t TARGET_SET = 0;
     auto itSet = shader_ptr->reflectShader.bindings.find(TARGET_SET);
     if (itSet == shader_ptr->reflectShader.bindings.end())
         return writes;
 
-    const auto& setBindings = itSet->second; // map<bindingIndex, DescriptorBindingReflect>
+    const auto& setBindings = itSet->second;
 
     auto pushUBO = [&](uint32_t dstBinding, VkBuffer buffer, VkDeviceSize range)
         {

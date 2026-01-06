@@ -1,7 +1,7 @@
 #ifndef QE_PBR_LIGHTS_GLSL
 #define QE_PBR_LIGHTS_GLSL
 
-#include "QEShadows.glsl"
+#include "../QEShadows.glsl"
 #include "QEPBR.glsl"
 
 vec3 ComputePointLightPBR(

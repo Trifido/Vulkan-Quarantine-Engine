@@ -3,8 +3,8 @@
 #extension GL_EXT_nonuniform_qualifier : require
 
 #include "../Includes/QECommon.glsl"
-#include "../Includes/QEBasicLights.glsl"
-#include "../Includes/QEMaterial.glsl"
+#include "../Includes/PBR/QEPBRLights.glsl"
+#include "../Includes/PBR/QEPBRMaterial.glsl"
 
 #define POINT_LIGHT 0
 #define DIRECTIONAL_LIGHT 1
@@ -35,7 +35,7 @@ layout(set = 0, binding = 0, std140) uniform UniformCamera
 
 layout(set = 0, binding = 1, std140) uniform UniformMaterial
 {
-    QEMaterialData uboMaterial;
+    QEPBRMaterialData uboMaterial;
 };
 
 layout(set = 0, binding = 2) uniform UniformManagerLight
@@ -109,9 +109,12 @@ void main()
 
     vec3 normal = QE_GetNormal(uboMaterial, texSampler, fs_in.TexCoords, fs_in.Normal, fs_in.TBN);
     vec3 albedoColor = QE_GetBaseColor(uboMaterial, texSampler, fs_in.TexCoords);
-    vec3 specularColor = QE_GetSpecularColor(uboMaterial, texSampler, fs_in.TexCoords);
     vec3 emissiveColor = QE_GetEmissiveColor(uboMaterial, texSampler, fs_in.TexCoords);
-    vec3 result = QE_ComputeAmbient(uboMaterial);
+
+    float roughness = QE_GetRoughness(uboMaterial, texSampler, fs_in.TexCoords);
+    float metallic = QE_GetMetallic(uboMaterial, texSampler, fs_in.TexCoords);
+    float ao = QE_GetAO(uboMaterial, texSampler, fs_in.TexCoords);
+    vec3 result = QE_ComputeAmbientPBR(uboMaterial, albedoColor, metallic, ao);
 
     vec3 resultPoint = vec3(0.0);
     vec3 resultDir = vec3(0.0);
@@ -130,10 +133,9 @@ void main()
 
                 if (lights[gli].lightType == POINT_LIGHT)
                 {
-                    resultPoint += ComputePointLight(
+                    resultPoint += ComputePointLightPBR(
                         lights[gli], fragPos, normal, V,
-                        albedoColor, specularColor, emissiveColor,
-                        shininess,
+                        albedoColor, metallic, roughness,
                         QE_PointShadowCubemaps[nonuniformEXT(lights[gli].idxShadowMap)]
                     );
                 }
@@ -155,17 +157,20 @@ void main()
                     mat4 vp0 = QE_CascadeViewProj[vp0i];
                     mat4 vp1 = QE_CascadeViewProj[vp1i];
 
-                    resultDir += ComputeDirectionalLight(
+                    resultDir += ComputeDirectionalLightPBR(
                         lights[gli], fragPos, normal, V,
-                        albedoColor, specularColor, emissiveColor,
-                        shininess,
-                        QE_DirectionalShadowmaps[nonuniformEXT(si)], splits, viewDepth,
+                        albedoColor, metallic, roughness,
+                        QE_DirectionalShadowmaps[nonuniformEXT(si)],
+                        splits, viewDepth,
                         vp0, vp1, c0, c1
                     );
                 }
                 else
                 {
-                    resultSpot += ComputeSpotLight(lights[gli], fragPos, normal, V, albedoColor, specularColor, emissiveColor, shininess);
+                    resultSpot += ComputeSpotLightPBR(
+                        lights[gli], fragPos, normal, V,
+                        albedoColor, metallic, roughness
+                    );
                 }
             }
         }  

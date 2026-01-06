@@ -53,6 +53,7 @@ private:
     std::unordered_map<std::string, WriteFn> writers;
 
     bool isModified[MAX_FRAMES_IN_FLIGHT] = {};
+    uint32_t TexMask = 0;
 
 public:
     // Scalars

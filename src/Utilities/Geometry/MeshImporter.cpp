@@ -538,7 +538,9 @@ void MeshImporter::CopyTextureFile(const std::string& sourcePath, const std::str
     }
 }
 
-void MeshImporter::ExtractAndUpdateTextures(aiScene* scene, const std::string& outputTextureFolder, const std::string& modelDirectory)
+void MeshImporter::ExtractAndUpdateTextures(aiScene* scene,
+    const std::string& outputTextureFolder,
+    const std::string& modelDirectory)
 {
     std::vector<aiTextureType> textureTypes = {
         aiTextureType_DIFFUSE, aiTextureType_SPECULAR, aiTextureType_NORMALS,
@@ -548,24 +550,38 @@ void MeshImporter::ExtractAndUpdateTextures(aiScene* scene, const std::string& o
         aiTextureType_METALNESS, aiTextureType_DIFFUSE_ROUGHNESS, aiTextureType_AMBIENT_OCCLUSION
     };
 
+    const std::string parentFolder = filesystem::path(outputTextureFolder).filename().string();
+
     for (unsigned int i = 0; i < scene->mNumMaterials; i++)
     {
         aiMaterial* material = scene->mMaterials[i];
 
         for (aiTextureType type : textureTypes)
         {
-            aiString texturePath;
+            // Fase 1: snapshot del número de texturas de este tipo
+            const unsigned int texCount = material->GetTextureCount(type);
+            if (texCount == 0) continue;
 
-            unsigned int index = 0;
+            // Recopilar nuevas rutas por índice
+            std::vector<aiString> newPaths;
+            newPaths.reserve(texCount);
 
-            while (material->GetTexture(type, index, &texturePath) == AI_SUCCESS)
+            for (unsigned int j = 0; j < texCount; ++j)
             {
-                ++index;
+                aiString texturePath;
+                if (material->GetTexture(type, j, &texturePath) != AI_SUCCESS)
+                {
+                    // Mantén un placeholder vacío para no desalinear
+                    newPaths.emplace_back(aiString(""));
+                    continue;
+                }
+
                 std::string originalFilename = texturePath.C_Str();
                 std::string newTexturePath;
 
-                if (originalFilename[0] == '*')
-                {  // Textura embebida
+                if (!originalFilename.empty() && originalFilename[0] == '*')
+                {
+                    // Textura embebida
                     int textureIndex = std::stoi(originalFilename.substr(1));
                     aiTexture* embeddedTexture = scene->mTextures[textureIndex];
 
@@ -576,23 +592,29 @@ void MeshImporter::ExtractAndUpdateTextures(aiScene* scene, const std::string& o
                     if (filename.empty())
                     {
                         std::string textureTypeName = GetTextureTypeName(type);
-                        newTexturePath = outputTextureFolder + "/Texture_" + textureTypeName + "_" + std::to_string(i) + extension;
+                        newTexturePath = outputTextureFolder + "/Texture_" + textureTypeName + "_" + std::to_string(i) + "_" + std::to_string(j) + extension;
                     }
 
                     SaveTextureToFile(embeddedTexture, newTexturePath);
                 }
                 else
-                {  // Textura externa
+                {
+                    // Textura externa (ruta relativa o absoluta)
+                    // Si originalFilename ya es relativo, esto funciona; si es absoluto, puedes detectarlo aparte.
                     std::string sourceTexturePath = modelDirectory + "/" + originalFilename;
-                    newTexturePath = outputTextureFolder + "/" + originalFilename;
+                    newTexturePath = outputTextureFolder + "/" + filesystem::path(originalFilename).filename().string();
                     CopyTextureFile(sourceTexturePath, newTexturePath);
                 }
 
-                // Actualizamos la referencia en el material
-                string parentFolder = filesystem::path(outputTextureFolder).filename().string();
-                string finalPath = "../" + parentFolder + "/" + filesystem::path(newTexturePath).filename().string();
-                aiString newPath(finalPath);
-                material->AddProperty(&newPath, AI_MATKEY_TEXTURE(type, 0));
+                std::string finalPath = "../" + parentFolder + "/" + filesystem::path(newTexturePath).filename().string();
+                newPaths.emplace_back(aiString(finalPath));
+            }
+
+            // Fase 2: actualizar propiedades sin cambiar el tamaño del array
+            for (unsigned int j = 0; j < texCount; ++j)
+            {
+                if (newPaths[j].length == 0) continue;
+                material->AddProperty(&newPaths[j], AI_MATKEY_TEXTURE(type, j));
             }
         }
     }
@@ -603,11 +625,14 @@ void MeshImporter::ExtractAndUpdateMaterials(aiScene* scene, const std::string& 
     auto matManager = MaterialManager::getInstance();
 
     std::vector<std::vector<aiTextureType>> textureSlots = {
-        { aiTextureType_BASE_COLOR, aiTextureType_DIFFUSE, aiTextureType_AMBIENT }, // Diffuse
-        { aiTextureType_NORMALS, aiTextureType_HEIGHT },                            // Normal
-        { aiTextureType_SPECULAR, aiTextureType_REFLECTION },                       // Specular
-        { aiTextureType_EMISSIVE, aiTextureType_OPACITY },                          // Emissive
-        { aiTextureType_HEIGHT, aiTextureType_DISPLACEMENT }                        // Height
+        { aiTextureType_BASE_COLOR, aiTextureType_DIFFUSE },                                    // Slot 0: BaseColor
+        { aiTextureType_NORMAL_CAMERA, aiTextureType_NORMALS, aiTextureType_HEIGHT },           // Slot 1: Normal (fallback height)
+        { aiTextureType_METALNESS },                                                            // Slot 2: Metallic
+        { aiTextureType_DIFFUSE_ROUGHNESS, aiTextureType_SHININESS, aiTextureType_MAYA_SPECULAR_ROUGHNESS }, // Slot 3: Roughness
+        { aiTextureType_AMBIENT_OCCLUSION, aiTextureType_LIGHTMAP },                            // Slot 4: AO
+        { aiTextureType_EMISSION_COLOR, aiTextureType_EMISSIVE },                               // Slot 5: Emissive
+        { aiTextureType_DISPLACEMENT, aiTextureType_HEIGHT },                                   // Slot 6: Height/Displacement
+        { aiTextureType_SPECULAR, aiTextureType_REFLECTION, aiTextureType_MAYA_SPECULAR_COLOR } // Slot 7: Specular legacy
     };
 
     for (unsigned int i = 0; i < scene->mNumMaterials; i++)
@@ -676,6 +701,10 @@ void MeshImporter::ExtractAndUpdateMaterials(aiScene* scene, const std::string& 
                 file.write(reinterpret_cast<const char*>(&matData.Reflectivity), sizeof(float));
                 file.write(reinterpret_cast<const char*>(&matData.Shininess_Strength), sizeof(float));
                 file.write(reinterpret_cast<const char*>(&matData.Refractivity), sizeof(float));
+
+                file.write(reinterpret_cast<const char*>(&matData.Metallic), sizeof(float));
+                file.write(reinterpret_cast<const char*>(&matData.Roughness), sizeof(float));
+                file.write(reinterpret_cast<const char*>(&matData.AO), sizeof(float));
 
                 file.write(reinterpret_cast<const char*>(&matData.Diffuse), sizeof(glm::vec4));
                 file.write(reinterpret_cast<const char*>(&matData.Ambient), sizeof(glm::vec4));

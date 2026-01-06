@@ -42,6 +42,9 @@ QEMaterial::QEMaterial(std::shared_ptr<ShaderModule> shader_ptr, const MaterialD
     this->materialData.Reflectivity = materialDto.Reflectivity;
     this->materialData.Shininess_Strength = materialDto.Shininess_Strength;
     this->materialData.Refractivity = materialDto.Refractivity;
+    this->materialData.Metallic = materialDto.Metallic;
+    this->materialData.Roughness = materialDto.Roughness;
+    this->materialData.AO = materialDto.AO;
 
     this->materialData.Diffuse = materialDto.Diffuse;
     this->materialData.Ambient = materialDto.Ambient;
@@ -52,18 +55,24 @@ QEMaterial::QEMaterial(std::shared_ptr<ShaderModule> shader_ptr, const MaterialD
 
     std::vector<std::pair<std::string, TEXTURE_TYPE>> texturePaths =
     {
-        std::pair(materialDto.diffuseTexturePath, TEXTURE_TYPE::DIFFUSE_TYPE),
-        std::pair(materialDto.normalTexturePath, TEXTURE_TYPE::NORMAL_TYPE),
-        std::pair(materialDto.specularTexturePath, TEXTURE_TYPE::SPECULAR_TYPE),
-        std::pair(materialDto.emissiveTexturePath, TEXTURE_TYPE::EMISSIVE_TYPE),
-        std::pair(materialDto.heightTexturePath, TEXTURE_TYPE::HEIGHT_TYPE)
+        { materialDto.diffuseTexturePath,   TEXTURE_TYPE::DIFFUSE_TYPE },
+        { materialDto.normalTexturePath,    TEXTURE_TYPE::NORMAL_TYPE },
+        { materialDto.metallicTexturePath,  TEXTURE_TYPE::METALNESS_TYPE },
+        { materialDto.roughnessTexturePath, TEXTURE_TYPE::ROUGHNESS_TYPE },
+        { materialDto.aoTexturePath,        TEXTURE_TYPE::AO_TYPE },
+        { materialDto.emissiveTexturePath,  TEXTURE_TYPE::EMISSIVE_TYPE },
+        { materialDto.heightTexturePath,    TEXTURE_TYPE::HEIGHT_TYPE },
+        { materialDto.specularTexturePath,  TEXTURE_TYPE::SPECULAR_TYPE }
     };
 
-    for (const auto& texturePath : texturePaths)
+    for (const auto& tp : texturePaths)
     {
-        if (texturePath.first != "NULL_TEXTURE")
+        const std::string& path = tp.first;
+        TEXTURE_TYPE type = tp.second;
+
+        if (!path.empty() && path != "NULL_TEXTURE")
         {
-            this->materialData.AddTexture(texturePath.first, std::make_shared<CustomTexture>(texturePath.first, texturePath.second));
+            this->materialData.AddTexture(path, std::make_shared<CustomTexture>(path, type));
         }
         else
         {
@@ -224,6 +233,9 @@ std::string QEMaterial::SaveMaterialFile()
         file.write(reinterpret_cast<const char*>(&materialData.Reflectivity), sizeof(float));
         file.write(reinterpret_cast<const char*>(&materialData.Shininess_Strength), sizeof(float));
         file.write(reinterpret_cast<const char*>(&materialData.Refractivity), sizeof(float));
+        file.write(reinterpret_cast<const char*>(&materialData.Metallic), sizeof(float));
+        file.write(reinterpret_cast<const char*>(&materialData.Roughness), sizeof(float));
+        file.write(reinterpret_cast<const char*>(&materialData.AO), sizeof(float));
 
         file.write(reinterpret_cast<const char*>(&materialData.Diffuse), sizeof(glm::vec4));
         file.write(reinterpret_cast<const char*>(&materialData.Ambient), sizeof(glm::vec4));
@@ -235,9 +247,11 @@ std::string QEMaterial::SaveMaterialFile()
         // Texture paths
         int zeroLength = 0;
 
-        for (int i = 0; i < materialData.texture_vector->size(); i++)
+        const int slotCount = (int)materialData.texture_vector->size();
+        for (int slot = 0; slot < slotCount; ++slot)
         {
-            auto texture = materialData.Textures[(TEXTURE_TYPE)i];
+            auto& texture = materialData.texture_vector->at((size_t)slot);
+
             if (texture != nullptr && texture->type != TEXTURE_TYPE::NULL_TYPE)
             {
                 texture->SaveTexturePath(file);

@@ -334,24 +334,34 @@ CustomTexture::CustomTexture(unsigned int width, unsigned int height, VkFormat f
 
 void CustomTexture::createTextureImage(std::string path)
 {
+    bool allocated = false;
+
     ptrCommandPool = &commandPool;
     stbi_uc* pixels;
 
     if (path.empty())
     {
         this->texHeight = this->texWidth = 1;
-        this->texChannels = 3;
-        pixels = new unsigned char(0);
+        this->texChannels = 4;
+
+        pixels = new stbi_uc[4]{ 0,0,0,0 };
+        allocated = true;
     }
     else
     {
         pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        allocated = false;
     }
 
     mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
 
     VkDeviceSize imageSize = texWidth * texHeight * 4;
-    VkFormat imageFormat = stbi_is_hdr(path.c_str()) ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_SRGB;
+    VkFormat imageFormat;
+
+    if (path.empty())
+        imageFormat = VK_FORMAT_R8G8B8A8_UNORM;
+    else
+        imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
 
     if (!pixels) {
         throw std::runtime_error("failed to load texture image!");
@@ -367,7 +377,8 @@ void CustomTexture::createTextureImage(std::string path)
     memcpy(data, pixels, static_cast<size_t>(imageSize));
     vkUnmapMemory(deviceModule->device, stagingBufferMemory);
 
-    stbi_image_free(pixels);
+    if (allocated) delete[] pixels;
+    else stbi_image_free(pixels);
 
     createImage(texWidth, texHeight, imageFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mipLevels, 1, VK_SAMPLE_COUNT_1_BIT);
