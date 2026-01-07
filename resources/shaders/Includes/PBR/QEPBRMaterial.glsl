@@ -17,7 +17,6 @@ struct QEPBRMaterialData
     vec4 Ambient;
     vec4 Specular;
     vec4 Emissive;
-
     vec4 Transparent;
     vec4 Reflective;
 
@@ -30,24 +29,32 @@ struct QEPBRMaterialData
     int idxRoughness;
     int idxAO;
 
-    float Metallic;
-    float Roughness;
-    float AO;
+    uint texMask;
+    uint metallicChan;
+    uint roughnessChan;
+    uint aoChan;
 
     float Opacity;
     float BumpScaling;
-
     float Reflectivity;
     float Refractivity;
     float Shininess;
     float Shininess_Strength;
-
-    uint texMask;
+    float Metallic;
+    float Roughness;
+    float AO;
 };
 
 bool QE_HasTex(uint mask, uint slot)
 {
     return (mask & (1u << slot)) != 0u;
+}
+
+float QE_ReadChan(vec4 t, uint ch)
+{
+    return (ch == 0u) ? t.r :
+           (ch == 1u) ? t.g :
+           (ch == 2u) ? t.b : t.a;
 }
 
 float QE_Saturate(float x) { return clamp(x, 0.0, 1.0); }
@@ -66,7 +73,10 @@ float QE_GetMetallic(QEPBRMaterialData mat, sampler2D texSampler[QE_NUM_TEX], ve
 {
     float m = mat.Metallic;
     if (QE_HasTex(mat.texMask, QE_SLOT_METALLIC))
-        m = texture(texSampler[nonuniformEXT(mat.idxMetallic)], uv).r;
+    {
+        vec4 t = texture(texSampler[nonuniformEXT(mat.idxMetallic)], uv);
+        m = QE_ReadChan(t, mat.metallicChan);
+    }
     return QE_Saturate(m);
 }
 
@@ -74,8 +84,10 @@ float QE_GetRoughness(QEPBRMaterialData mat, sampler2D texSampler[QE_NUM_TEX], v
 {
     float r = mat.Roughness;
     if (QE_HasTex(mat.texMask, QE_SLOT_ROUGHNESS))
-        r = texture(texSampler[nonuniformEXT(mat.idxRoughness)], uv).r;
-
+    {
+        vec4 t = texture(texSampler[nonuniformEXT(mat.idxRoughness)], uv);
+        r = QE_ReadChan(t, mat.roughnessChan);
+    }
     // mínimo para estabilidad GGX
     return clamp(r, 0.045, 1.0);
 }
@@ -84,7 +96,10 @@ float QE_GetAO(QEPBRMaterialData mat, sampler2D texSampler[QE_NUM_TEX], vec2 uv)
 {
     float ao = mat.AO;
     if (QE_HasTex(mat.texMask, QE_SLOT_AO))
-        ao = texture(texSampler[nonuniformEXT(mat.idxAO)], uv).r;
+    {
+        vec4 t = texture(texSampler[nonuniformEXT(mat.idxAO)], uv);
+        ao = QE_ReadChan(t, mat.aoChan);
+    }
     return QE_Saturate(ao);
 }
 

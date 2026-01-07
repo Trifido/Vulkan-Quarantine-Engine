@@ -53,7 +53,13 @@ private:
     std::unordered_map<std::string, WriteFn> writers;
 
     bool isModified[MAX_FRAMES_IN_FLIGHT] = {};
+
+    // Presence mask: bit por slot (0..7)
     uint32_t TexMask = 0;
+    // Channel selectors: 0=R,1=G,2=B,3=A
+    uint32_t MetallicChan = 0;
+    uint32_t RoughnessChan = 0;
+    uint32_t AOChan = 0;
 
 public:
     // Scalars
@@ -118,6 +124,7 @@ public:
     void SetMaterialField(const std::string& nameField, float value);
     void SetMaterialField(const std::string& nameField, glm::vec3 value);
     void SetMaterialField(const std::string& nameField, int value);
+    void SetTextureSlot(uint32_t slot, const std::shared_ptr<CustomTexture>& tex, bool isReal);
 };
 
 #endif // MATERIAL_DATA_H

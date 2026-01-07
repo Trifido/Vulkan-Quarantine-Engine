@@ -81,6 +81,5 @@ int main(int, char**)
     App app;
     app.run(scene, true);
 
-    system("pause");
     return 0;
 }

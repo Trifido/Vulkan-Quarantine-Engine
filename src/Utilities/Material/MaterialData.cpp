@@ -59,6 +59,9 @@ std::unordered_map<std::string, WriteFn> MaterialData::BuildMaterialWriters()
 
     //uints
     writeValue("texMask", [this] { return TexMask; });
+    writeValue("metallicChan", [this] { return MetallicChan; });
+    writeValue("roughnessChan", [this] { return RoughnessChan; });
+    writeValue("aoChan", [this] { return AOChan; });
 
     // floats
     writeValue("Opacity", [this] { return Opacity; });
@@ -83,6 +86,11 @@ MaterialData::MaterialData()
 
     texture_vector = std::make_shared<std::vector<std::shared_ptr<CustomTexture>>>();
     texture_vector->resize(TOTAL_NUM_TEXTURES, nullptr);
+
+    TexMask = 0;
+    MetallicChan = 0;
+    RoughnessChan = 0;
+    AOChan = 0;
 
     // Índices (slots)
     IDTextures[TEXTURE_TYPE::DIFFUSE_TYPE] = (int)MAT_TEX_SLOT::BaseColor;
@@ -133,84 +141,86 @@ void MaterialData::ImportAssimpMaterial(aiMaterial* material)
     if (material->Get(AI_MATKEY_COLOR_REFLECTIVE, c) == AI_SUCCESS)  Reflective = ToVec4(c);
 }
 
-void MaterialData::ImportAssimpTexture(const aiScene* scene, aiMaterial* material, std::string fileExtension_, std::string texturePath_)
+void MaterialData::ImportAssimpTexture(const aiScene* scene, aiMaterial* material,
+    std::string fileExtension_, std::string texturePath_)
 {
     if (!scene || !material) return;
 
     texturePath = std::move(texturePath_);
     fileExtension = std::move(fileExtension_);
 
-    // Diffuse / BaseColor
+    // --- BaseColor ---
     {
-        std::string textureName = GetTexture(scene, material, aiTextureType_BASE_COLOR, TEXTURE_TYPE::DIFFUSE_TYPE);
-        if (textureName.empty())
-            textureName = GetTexture(scene, material, aiTextureType_DIFFUSE, TEXTURE_TYPE::DIFFUSE_TYPE);
+        std::string tex = GetTexture(scene, material, aiTextureType_BASE_COLOR, TEXTURE_TYPE::DIFFUSE_TYPE);
+        if (tex.empty())
+            tex = GetTexture(scene, material, aiTextureType_DIFFUSE, TEXTURE_TYPE::DIFFUSE_TYPE);
 
-        if (!textureName.empty())
-            AddTexture(textureName, textureManager->GetTexture(textureName));
+        if (!tex.empty())
+            AddTexture(tex, textureManager->GetTexture(tex));
     }
 
-    // Specular
+    // --- Normal ---
     {
-        std::string textureName = GetTexture(scene, material, aiTextureType_SPECULAR, TEXTURE_TYPE::SPECULAR_TYPE);
-        if (!textureName.empty())
-            AddTexture(textureName, textureManager->GetTexture(textureName));
+        std::string tex = GetTexture(scene, material, aiTextureType_NORMAL_CAMERA, TEXTURE_TYPE::NORMAL_TYPE);
+        if (tex.empty())
+            tex = GetTexture(scene, material, aiTextureType_NORMALS, TEXTURE_TYPE::NORMAL_TYPE);
+
+        if (!tex.empty())
+            AddTexture(tex, textureManager->GetTexture(tex));
     }
 
-    // Normal
+    // --- Emissive ---
     {
-        std::string textureName = GetTexture(scene, material, aiTextureType_NORMAL_CAMERA, TEXTURE_TYPE::NORMAL_TYPE);
-        if (textureName.empty())
-            textureName = GetTexture(scene, material, aiTextureType_NORMALS, TEXTURE_TYPE::NORMAL_TYPE);
-        if (textureName.empty())
-            textureName = GetTexture(scene, material, aiTextureType_HEIGHT, TEXTURE_TYPE::NORMAL_TYPE); // tu fallback actual
+        std::string tex = GetTexture(scene, material, aiTextureType_EMISSION_COLOR, TEXTURE_TYPE::EMISSIVE_TYPE);
+        if (tex.empty())
+            tex = GetTexture(scene, material, aiTextureType_EMISSIVE, TEXTURE_TYPE::EMISSIVE_TYPE);
 
-        if (!textureName.empty())
-            AddTexture(textureName, textureManager->GetTexture(textureName));
+        if (!tex.empty())
+            AddTexture(tex, textureManager->GetTexture(tex));
     }
 
-    // Metallic
+    // --- AO (glTF occlusionTexture) ---
     {
-        std::string textureName = GetTexture(scene, material, aiTextureType_METALNESS, TEXTURE_TYPE::METALNESS_TYPE);
-        if (!textureName.empty())
-            AddTexture(textureName, textureManager->GetTexture(textureName));
+        std::string tex = GetTexture(scene, material, aiTextureType_AMBIENT_OCCLUSION, TEXTURE_TYPE::AO_TYPE);
+        if (!tex.empty())
+        {
+            AOChan = 0; // glTF occlusion usa canal R
+            UpdateMaterialDataRaw("aoChan", &AOChan, sizeof(AOChan));
+
+            AddTexture(tex, textureManager->GetTexture(tex));
+        }
     }
 
-    // Roughness
+    // --- Metallic-Roughness packed (glTF) ---
     {
-        std::string textureName = GetTexture(scene, material, aiTextureType_DIFFUSE_ROUGHNESS, TEXTURE_TYPE::ROUGHNESS_TYPE);
-        if (textureName.empty())
-            textureName = GetTexture(scene, material, aiTextureType_MAYA_SPECULAR_ROUGHNESS, TEXTURE_TYPE::ROUGHNESS_TYPE);
+        std::string tex = GetTexture(scene, material, aiTextureType_GLTF_METALLIC_ROUGHNESS, TEXTURE_TYPE::METALNESS_TYPE);
 
-        if (!textureName.empty())
-            AddTexture(textureName, textureManager->GetTexture(textureName));
-    }
+        if (!tex.empty())
+        {
+            auto shared = textureManager->GetTexture(tex);
 
-    // Ambient Occlusion (AO)
-    {
-        std::string textureName = GetTexture(scene, material, aiTextureType_AMBIENT_OCCLUSION, TEXTURE_TYPE::AO_TYPE);
-        if (textureName.empty())
-            textureName = GetTexture(scene, material, aiTextureType_LIGHTMAP, TEXTURE_TYPE::AO_TYPE);
+            // 1) METALNESS
+            AddTexture(tex, shared);
 
-        if (!textureName.empty())
-            AddTexture(textureName, textureManager->GetTexture(textureName));
-    }
+            // 2) ROUGHNESS
+            int slotR = IDTextures[TEXTURE_TYPE::ROUGHNESS_TYPE];
+            texture_vector->at((size_t)slotR) = shared;
+            TexMask |= (1u << 3);
+            UpdateMaterialDataRaw("texMask", &TexMask, sizeof(TexMask));
 
-    // Emissive
-    {
-        std::string textureName = GetTexture(scene, material, aiTextureType_EMISSIVE, TEXTURE_TYPE::EMISSIVE_TYPE);
-        if (textureName.empty())
-            textureName = GetTexture(scene, material, aiTextureType_EMISSION_COLOR, TEXTURE_TYPE::EMISSIVE_TYPE);
-
-        if (!textureName.empty())
-            AddTexture(textureName, textureManager->GetTexture(textureName));
+            // Canales glTF:
+            MetallicChan = 2; // B
+            RoughnessChan = 1; // G
+            UpdateMaterialDataRaw("metallicChan", &MetallicChan, sizeof(MetallicChan));
+            UpdateMaterialDataRaw("roughnessChan", &RoughnessChan, sizeof(RoughnessChan));
+        }
     }
 
     // Height
     {
-        std::string textureName = GetTexture(scene, material, aiTextureType_HEIGHT, TEXTURE_TYPE::HEIGHT_TYPE);
-        if (!textureName.empty())
-            AddTexture(textureName, textureManager->GetTexture(textureName));
+        std::string tex = GetTexture(scene, material, aiTextureType_HEIGHT, TEXTURE_TYPE::HEIGHT_TYPE);
+        if (!tex.empty())
+            AddTexture(tex, textureManager->GetTexture(tex));
     }
 }
 
@@ -446,4 +456,14 @@ void MaterialData::SetMaterialField(const std::string& nameField_, int value)
     if (nameField == "idxMetallic") { IDTextures[TEXTURE_TYPE::METALNESS_TYPE] = value; UpdateMaterialDataRaw("idxMetallic", &value, sizeof(value)); return; }
     if (nameField == "idxRoughness") { IDTextures[TEXTURE_TYPE::ROUGHNESS_TYPE] = value; UpdateMaterialDataRaw("idxRoughness", &value, sizeof(value)); return; }
     if (nameField == "idxAO") { IDTextures[TEXTURE_TYPE::AO_TYPE] = value;        UpdateMaterialDataRaw("idxAO", &value, sizeof(value)); return; }
+}
+
+void MaterialData::SetTextureSlot(uint32_t slot, const std::shared_ptr<CustomTexture>& tex, bool isReal)
+{
+    texture_vector->at(slot) = tex;
+    if (isReal)
+    {
+        TexMask |= (1u << slot);
+        UpdateMaterialDataRaw("texMask", &TexMask, sizeof(TexMask));
+    }
 }

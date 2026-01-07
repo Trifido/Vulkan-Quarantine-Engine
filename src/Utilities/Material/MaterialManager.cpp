@@ -327,6 +327,11 @@ MaterialDto MaterialManager::ReadQEMaterial(std::ifstream& matfile)
     matfile.read(reinterpret_cast<char*>(&materialDto.Shininess_Strength), sizeof(float));
     matfile.read(reinterpret_cast<char*>(&materialDto.Refractivity), sizeof(float));
 
+    // PBR factors
+    matfile.read(reinterpret_cast<char*>(&materialDto.Metallic), sizeof(float));
+    matfile.read(reinterpret_cast<char*>(&materialDto.Roughness), sizeof(float));
+    matfile.read(reinterpret_cast<char*>(&materialDto.AO), sizeof(float));
+
     // Colors
     matfile.read(reinterpret_cast<char*>(&materialDto.Diffuse), sizeof(glm::vec4));
     matfile.read(reinterpret_cast<char*>(&materialDto.Ambient), sizeof(glm::vec4));
@@ -335,12 +340,13 @@ MaterialDto MaterialManager::ReadQEMaterial(std::ifstream& matfile)
     matfile.read(reinterpret_cast<char*>(&materialDto.Transparent), sizeof(glm::vec4));
     matfile.read(reinterpret_cast<char*>(&materialDto.Reflective), sizeof(glm::vec4));
 
-    // PBR factors (NEW)
-    matfile.read(reinterpret_cast<char*>(&materialDto.Metallic), sizeof(float));
-    matfile.read(reinterpret_cast<char*>(&materialDto.Roughness), sizeof(float));
-    matfile.read(reinterpret_cast<char*>(&materialDto.AO), sizeof(float));
+    // Mask + channels (NEW)
+    matfile.read(reinterpret_cast<char*>(&materialDto.texMask), sizeof(uint32_t));
+    matfile.read(reinterpret_cast<char*>(&materialDto.metallicChan), sizeof(uint32_t));
+    matfile.read(reinterpret_cast<char*>(&materialDto.roughnessChan), sizeof(uint32_t));
+    matfile.read(reinterpret_cast<char*>(&materialDto.aoChan), sizeof(uint32_t));
 
-    // 8 texture slots (NEW)
+    // 8 texture slots
     readString(materialDto.diffuseTexturePath);    // slot 0
     readString(materialDto.normalTexturePath);     // slot 1
     readString(materialDto.metallicTexturePath);   // slot 2
@@ -348,10 +354,11 @@ MaterialDto MaterialManager::ReadQEMaterial(std::ifstream& matfile)
     readString(materialDto.aoTexturePath);         // slot 4
     readString(materialDto.emissiveTexturePath);   // slot 5
     readString(materialDto.heightTexturePath);     // slot 6
-    readString(materialDto.specularTexturePath);   // slot 7 (legacy)
+    readString(materialDto.specularTexturePath);   // slot 7
 
     return materialDto;
 }
+
 
 void MaterialManager::LoadMaterialDtos(std::vector<MaterialDto>& materialDtos)
 {

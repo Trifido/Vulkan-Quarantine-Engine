@@ -59,6 +59,11 @@ struct MaterialDto
     std::string roughnessTexturePath = "NULL_TEXTURE";
     std::string aoTexturePath = "NULL_TEXTURE";
 
+    uint32_t texMask = 0;
+    uint32_t metallicChan = 0;
+    uint32_t roughnessChan = 0;
+    uint32_t aoChan = 0;
+
     MaterialDto() = default;
 
 
