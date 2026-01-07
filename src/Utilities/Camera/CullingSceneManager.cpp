@@ -16,7 +16,7 @@ void CullingSceneManager::InitializeCullingSceneResources()
 
     if (!matManager->Exists(nameDebugAABB))
     {
-        this->material_aabb_ptr = std::make_shared<QEMaterial>(QEMaterial(nameDebugAABB, this->shader_aabb_ptr));
+        this->material_aabb_ptr = std::make_shared<QEMaterial>(nameDebugAABB, this->shader_aabb_ptr);
         this->material_aabb_ptr->layer = (unsigned int)RenderLayer::EDITOR;
         this->material_aabb_ptr->InitializeMaterialData();
         matManager->AddMaterial(this->material_aabb_ptr);

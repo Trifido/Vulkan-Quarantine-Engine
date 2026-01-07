@@ -54,13 +54,6 @@ private:
 
     bool isModified[MAX_FRAMES_IN_FLIGHT] = {};
 
-    // Presence mask: bit por slot (0..7)
-    uint32_t TexMask = 0;
-    // Channel selectors: 0=R,1=G,2=B,3=A
-    uint32_t MetallicChan = 0;
-    uint32_t RoughnessChan = 0;
-    uint32_t AOChan = 0;
-
 public:
     // Scalars
     float Opacity = 1.0f;
@@ -72,6 +65,15 @@ public:
     float Metallic = 0.0f;
     float Roughness = 1.0f;
     float AO = 1.0f;
+    float Clearcoat = 0.0f;
+    float ClearcoatRoughness = 0.1f;
+
+    // Presence mask: bit por slot (0..7)
+    uint32_t TexMask = 0;
+    // Channel selectors: 0=R,1=G,2=B,3=A
+    uint32_t MetallicChan = 0;
+    uint32_t RoughnessChan = 0;
+    uint32_t AOChan = 0;
 
     // Colors
     glm::vec4 Diffuse = glm::vec4(1.0f);
@@ -80,6 +82,25 @@ public:
     glm::vec4 Emissive = glm::vec4(0.0f);
     glm::vec4 Transparent = glm::vec4(1.0f);
     glm::vec4 Reflective = glm::vec4(0.0f);
+
+    // --- UBO sampler indices (lo que consume el shader) ---
+    int idxDiffuse = (int)MAT_TEX_SLOT::BaseColor; // 0
+    int idxNormal = (int)MAT_TEX_SLOT::Normal;    // 1
+    int idxSpecular = (int)MAT_TEX_SLOT::Reserved7; // 7
+    int idxEmissive = (int)MAT_TEX_SLOT::Emissive;  // 5
+    int idxHeight = (int)MAT_TEX_SLOT::Height;    // 6
+    int idxMetallic = (int)MAT_TEX_SLOT::Metallic;  // 2
+    int idxRoughness = (int)MAT_TEX_SLOT::Roughness; // 3
+    int idxAO = (int)MAT_TEX_SLOT::AO;        // 4
+
+    std::string diffuseTexturePath = "NULL_TEXTURE";
+    std::string normalTexturePath = "NULL_TEXTURE";
+    std::string metallicTexturePath = "NULL_TEXTURE";
+    std::string roughnessTexturePath = "NULL_TEXTURE";
+    std::string aoTexturePath = "NULL_TEXTURE";
+    std::string emissiveTexturePath = "NULL_TEXTURE";
+    std::string heightTexturePath = "NULL_TEXTURE";
+    std::string specularTexturePath = "NULL_TEXTURE";
 
     static const int TOTAL_NUM_TEXTURES = (int)MAT_TEX_SLOT::Count;
 
@@ -110,10 +131,9 @@ private:
 public:
     MaterialData();
 
-    void AddTexture(const std::string& textureName, const std::shared_ptr<CustomTexture>& texture);
+    void AddTexture(TEXTURE_TYPE semantic, const std::string& texturePath);
 
     void ImportAssimpMaterial(aiMaterial* material);
-    void ImportAssimpTexture(const aiScene* scene, aiMaterial* material, std::string fileExtension, std::string texturePath);
 
     void InitializeUBOMaterial(std::shared_ptr<ShaderModule> shader_ptr);
     void UpdateUBOMaterial();
@@ -125,6 +145,12 @@ public:
     void SetMaterialField(const std::string& nameField, glm::vec3 value);
     void SetMaterialField(const std::string& nameField, int value);
     void SetTextureSlot(uint32_t slot, const std::shared_ptr<CustomTexture>& tex, bool isReal);
+    void ApplyDtoPacking(const MaterialDto& dto);
+
+    uint32_t GetTexMask() const { return TexMask; }
+    uint32_t GetMetallicChan() const { return MetallicChan; }
+    uint32_t GetRoughnessChan() const { return RoughnessChan; }
+    uint32_t GetAOChan() const { return AOChan; }
 };
 
 #endif // MATERIAL_DATA_H

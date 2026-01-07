@@ -66,7 +66,7 @@ void QEDebugSystem::InitializeDebugGraphicResources()
 
     if (!matManager->Exists(nameDebugAABB))
     {
-        this->material_debug_ptr = std::make_shared<QEMaterial>(QEMaterial(nameDebugAABB, this->shader_debug_ptr));
+        this->material_debug_ptr = std::make_shared<QEMaterial>(nameDebugAABB, this->shader_debug_ptr);
         this->material_debug_ptr->layer = (unsigned int)RenderLayer::EDITOR;
         this->material_debug_ptr->InitializeMaterialData();
         matManager->AddMaterial(this->material_debug_ptr);

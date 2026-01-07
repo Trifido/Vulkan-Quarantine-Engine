@@ -43,6 +43,8 @@ struct QEPBRMaterialData
     float Metallic;
     float Roughness;
     float AO;
+    float Clearcoat;
+    float ClearcoatRoughness;
 };
 
 bool QE_HasTex(uint mask, uint slot)
@@ -132,6 +134,16 @@ vec3 QE_ComputeAmbientPBR(QEPBRMaterialData mat, vec3 baseColor, float metallic,
 {
     vec3 kD = (1.0 - metallic) * baseColor;
     return kD * mat.Ambient.rgb * ao;
+}
+
+float QE_GetClearcoat(QEPBRMaterialData mat, vec2 uv)
+{
+    return QE_Saturate(mat.Clearcoat);
+}
+
+float QE_GetClearcoatRoughness(QEPBRMaterialData mat, vec2 uv)
+{
+    return clamp(mat.ClearcoatRoughness, 0.03, 1.0);
 }
 
 #endif // QE_PBR_MATERIAL_GLSL

@@ -432,7 +432,7 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, QEMeshDat
     if (material == nullptr)
         return;
 
-    aiReturn ret;//Code which says whether loading something has been successful of not
+    aiReturn ret;
 
     aiString rawName;
     ret = material->Get(AI_MATKEY_NAME, rawName);//Get the material name (pass by reference)
@@ -467,7 +467,7 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, QEMeshDat
 
             matDto.UpdateTexturePaths(matpath);
 
-            mat_ptr = std::make_shared<QEMaterial>(QEMaterial(shader, matDto));
+            mat_ptr = std::make_shared<QEMaterial>(shader, matDto);
             materialManager->AddMaterial(mat_ptr);
         }
     }
@@ -484,16 +484,16 @@ std::string MeshImporter::GetTextureTypeName(aiTextureType type)
 {
     switch (type) {
     case aiTextureType_DIFFUSE:
-    case aiTextureType_BASE_COLOR:     return "Diffuse"; // Unifica BASE_COLOR con Diffuse
+    case aiTextureType_BASE_COLOR:     return "Diffuse";
     case aiTextureType_SPECULAR:       return "Specular";
     case aiTextureType_AMBIENT:        return "Ambient";
     case aiTextureType_EMISSIVE:
-    case aiTextureType_EMISSION_COLOR: return "Emissive"; // Unifica EMISSION_COLOR con Emissive
+    case aiTextureType_EMISSION_COLOR: return "Emissive";
     case aiTextureType_HEIGHT:         return "Height";
     case aiTextureType_NORMALS:
-    case aiTextureType_NORMAL_CAMERA:  return "Normals"; // Unifica NORMAL_CAMERA con Normals
+    case aiTextureType_NORMAL_CAMERA:  return "Normals";
     case aiTextureType_SHININESS:
-    case aiTextureType_DIFFUSE_ROUGHNESS: return "Roughness"; // Unifica Roughness y Shininess
+    case aiTextureType_DIFFUSE_ROUGHNESS: return "Roughness";
     case aiTextureType_OPACITY:        return "Opacity";
     case aiTextureType_DISPLACEMENT:   return "Displacement";
     case aiTextureType_LIGHTMAP:       return "Lightmap";
@@ -544,39 +544,60 @@ void MeshImporter::ExtractAndUpdateTextures(
     const std::string& modelDirectory)
 {
     std::vector<aiTextureType> textureTypes = {
-        aiTextureType_DIFFUSE,
-        aiTextureType_BASE_COLOR,
-        aiTextureType_SPECULAR,
-        aiTextureType_NORMALS,
-        aiTextureType_NORMAL_CAMERA,
-        aiTextureType_EMISSIVE,
-        aiTextureType_EMISSION_COLOR,
-        aiTextureType_HEIGHT,
-        aiTextureType_DISPLACEMENT,
-        aiTextureType_AMBIENT,
-        aiTextureType_LIGHTMAP,
-        aiTextureType_AMBIENT_OCCLUSION,
-        aiTextureType_METALNESS,
-        aiTextureType_DIFFUSE_ROUGHNESS,
-        aiTextureType_SHININESS,
-
-        // CLAVE:
-        aiTextureType_GLTF_METALLIC_ROUGHNESS
+        aiTextureType_DIFFUSE, aiTextureType_SPECULAR, aiTextureType_NORMALS,
+        aiTextureType_EMISSIVE, aiTextureType_HEIGHT, aiTextureType_AMBIENT,
+        aiTextureType_SHININESS, aiTextureType_OPACITY, aiTextureType_DISPLACEMENT,
+        aiTextureType_LIGHTMAP, aiTextureType_REFLECTION, aiTextureType_BASE_COLOR,
+        aiTextureType_METALNESS, aiTextureType_DIFFUSE_ROUGHNESS, aiTextureType_AMBIENT_OCCLUSION, aiTextureType_GLTF_METALLIC_ROUGHNESS
     };
 
-    const std::string parentFolder =
-        std::filesystem::path(outputTextureFolder).filename().string();
+    const std::string parentFolder = filesystem::path(outputTextureFolder).filename().string();
+    std::unordered_map<int, std::string> embeddedIndexToFinalPath;
+    std::unordered_map<std::string, std::string> externalAbsToFinalPath;
 
-    auto MakeFinalRelPath = [&](const std::string& fileName) -> std::string
+    auto isAbsolutePath = [](const std::string& p) -> bool
         {
-            // "../Textures/<file>"
-            return std::string("../") + parentFolder + "/" + fileName;
+            if (p.size() > 2 && std::isalpha((unsigned char)p[0]) && p[1] == ':' && (p[2] == '\\' || p[2] == '/'))
+                return true; // "C:\..."
+            if (!p.empty() && (p[0] == '/' || p[0] == '\\'))
+                return true; // "/..." o "\..."
+            return false;
+        };
+
+    auto normalizePath = [](const filesystem::path& p) -> std::string
+        {
+            try
+            {
+                return filesystem::weakly_canonical(p).generic_string();
+            }
+            catch (...)
+            {
+                return filesystem::absolute(p).lexically_normal().generic_string();
+            }
+        };
+
+    auto pickExtensionForEmbedded = [&](const aiTexture* tex) -> std::string
+        {
+            if (tex->mHeight == 0)
+            {
+                std::string hint = tex->achFormatHint;
+                for (auto& ch : hint) ch = (char)std::tolower((unsigned char)ch);
+
+                if (hint.find("png") != std::string::npos) return ".png";
+                if (hint.find("jpg") != std::string::npos || hint.find("jpeg") != std::string::npos) return ".jpg";
+                if (hint.find("dds") != std::string::npos) return ".dds";
+                if (hint.find("ktx") != std::string::npos) return ".ktx";
+                if (hint.find("tga") != std::string::npos) return ".tga";
+                if (hint.find("bmp") != std::string::npos) return ".bmp";
+                return ".bin";
+            }
+
+            return ".raw";
         };
 
     for (unsigned int i = 0; i < scene->mNumMaterials; i++)
     {
         aiMaterial* material = scene->mMaterials[i];
-        if (!material) continue;
 
         for (aiTextureType type : textureTypes)
         {
@@ -584,73 +605,104 @@ void MeshImporter::ExtractAndUpdateTextures(
             if (texCount == 0) continue;
 
             std::vector<aiString> newPaths;
-            newPaths.resize(texCount);
+            newPaths.reserve(texCount);
 
             for (unsigned int j = 0; j < texCount; ++j)
             {
                 aiString texturePath;
                 if (material->GetTexture(type, j, &texturePath) != AI_SUCCESS)
+                {
+                    newPaths.emplace_back(aiString(""));
                     continue;
+                }
 
                 std::string original = texturePath.C_Str();
                 if (original.empty())
+                {
+                    newPaths.emplace_back(aiString(""));
                     continue;
-
-                std::string outputFileName;
-                std::string outputFullPath;
+                }
 
                 // -----------------------------
                 // EMBEDDED: "*N"
                 // -----------------------------
                 if (original[0] == '*')
                 {
-                    int textureIndex = std::stoi(original.substr(1));
-                    if (textureIndex < 0 || (unsigned)textureIndex >= scene->mNumTextures)
+                    int textureIndex = -1;
+                    try { textureIndex = std::stoi(original.substr(1)); }
+                    catch (...) { textureIndex = -1; }
+
+                    if (textureIndex < 0 || textureIndex >= (int)scene->mNumTextures)
+                    {
+                        newPaths.emplace_back(aiString(""));
                         continue;
+                    }
+
+                    auto itSaved = embeddedIndexToFinalPath.find(textureIndex);
+                    if (itSaved != embeddedIndexToFinalPath.end())
+                    {
+                        newPaths.emplace_back(aiString(itSaved->second));
+                        continue;
+                    }
 
                     aiTexture* embeddedTexture = scene->mTextures[textureIndex];
-                    if (!embeddedTexture)
-                        continue;
 
-                    // Decide extensión: si mHeight==0 -> compressed (jpg/png/etc). No lo sabes.
-                    // Por simplicidad mantén tu heurística; mejor que dejar "*1".
-                    std::string extension = (embeddedTexture->mHeight == 0) ? ".jpg" : ".png";
+                    std::string filename = embeddedTexture->mFilename.C_Str();
+                    if (filename.empty())
+                    {
+                        std::string ext = pickExtensionForEmbedded(embeddedTexture);
+                        filename = "Embedded_" + std::to_string(textureIndex) + ext;
+                    }
+                    else
+                    {
+                        filesystem::path fp(filename);
+                        if (!fp.has_extension())
+                        {
+                            filename += pickExtensionForEmbedded(embeddedTexture);
+                        }
+                        filename = filesystem::path(filename).filename().string();
+                    }
 
-                    // Nombre determinista (NO uses "*1" como nombre).
-                    std::string typeName = GetTextureTypeName(type);
-                    outputFileName = "Texture_" + typeName + "_" + std::to_string(i) + "_" + std::to_string(j) + extension;
+                    std::string diskPath = (filesystem::path(outputTextureFolder) / filename).string();
+                    SaveTextureToFile(embeddedTexture, diskPath);
 
-                    outputFullPath = outputTextureFolder + "/" + outputFileName;
+                    std::string finalPath = "../" + parentFolder + "/" + filesystem::path(diskPath).filename().string();
+                    embeddedIndexToFinalPath[textureIndex] = finalPath;
 
-                    SaveTextureToFile(embeddedTexture, outputFullPath);
+                    newPaths.emplace_back(aiString(finalPath));
+                    continue;
                 }
+
                 // -----------------------------
-                // EXTERNAL
+                // EXTERNAL FILE
                 // -----------------------------
+                filesystem::path srcPath;
+                if (isAbsolutePath(original))
+                    srcPath = filesystem::path(original);
                 else
+                    srcPath = filesystem::path(modelDirectory) / original;
+
+                std::string srcAbsNorm = normalizePath(srcPath);
+
+                auto itExt = externalAbsToFinalPath.find(srcAbsNorm);
+                if (itExt != externalAbsToFinalPath.end())
                 {
-                    std::filesystem::path p(original);
-
-                    // Si original es absoluto, úsalo tal cual; si no, resuélvelo con modelDirectory.
-                    std::filesystem::path sourcePath = p.is_absolute()
-                        ? p
-                        : (std::filesystem::path(modelDirectory) / p);
-
-                    outputFileName = p.filename().string();
-                    if (outputFileName.empty())
-                        continue;
-
-                    outputFullPath = outputTextureFolder + "/" + outputFileName;
-
-                    CopyTextureFile(sourcePath.string(), outputFullPath);
+                    newPaths.emplace_back(aiString(itExt->second));
+                    continue;
                 }
 
-                // Guardar ruta relativa final en el material
-                std::string finalRel = MakeFinalRelPath(std::filesystem::path(outputFullPath).filename().string());
-                newPaths[j] = aiString(finalRel);
+                std::string dstFile = srcPath.filename().string();
+                std::string dstDiskPath = (filesystem::path(outputTextureFolder) / dstFile).string();
+
+                CopyTextureFile(srcAbsNorm, dstDiskPath);
+
+                std::string finalPath = "../" + parentFolder + "/" + filesystem::path(dstDiskPath).filename().string();
+                externalAbsToFinalPath[srcAbsNorm] = finalPath;
+
+                newPaths.emplace_back(aiString(finalPath));
             }
 
-            // Aplicar cambios
+            // Update material properties
             for (unsigned int j = 0; j < texCount; ++j)
             {
                 if (newPaths[j].length == 0) continue;
@@ -659,7 +711,6 @@ void MeshImporter::ExtractAndUpdateTextures(
         }
     }
 }
-
 
 void MeshImporter::ExtractAndUpdateMaterials(
     aiScene* scene,
@@ -821,6 +872,8 @@ void MeshImporter::ExtractAndUpdateMaterials(
         file.write(reinterpret_cast<const char*>(&matData.Metallic), sizeof(float));
         file.write(reinterpret_cast<const char*>(&matData.Roughness), sizeof(float));
         file.write(reinterpret_cast<const char*>(&matData.AO), sizeof(float));
+        file.write(reinterpret_cast<const char*>(&matData.Clearcoat), sizeof(float));
+        file.write(reinterpret_cast<const char*>(&matData.ClearcoatRoughness), sizeof(float));
 
         // Colors (6 vec4)
         file.write(reinterpret_cast<const char*>(&matData.Diffuse), sizeof(glm::vec4));

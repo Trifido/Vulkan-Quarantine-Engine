@@ -107,7 +107,12 @@ void main()
     float viewDepth = -fs_in.ViewPos.z;
     float shininess = uboMaterial.Shininess;
 
-    vec3 normal = QE_GetNormal(uboMaterial, texSampler, fs_in.TexCoords, fs_in.Normal, fs_in.TBN);
+    vec3 N_coat = normalize(fs_in.Normal);
+    vec3 N_base = QE_GetNormal(uboMaterial, texSampler, fs_in.TexCoords, fs_in.Normal, fs_in.TBN);
+
+    float clearcoat = saturate(uboMaterial.Clearcoat);
+    float coatRough = clamp(uboMaterial.ClearcoatRoughness, 0.03, 1.0);
+
     vec3 albedoColor = QE_GetBaseColor(uboMaterial, texSampler, fs_in.TexCoords);
     vec3 emissiveColor = QE_GetEmissiveColor(uboMaterial, texSampler, fs_in.TexCoords);
 
@@ -134,8 +139,9 @@ void main()
                 if (lights[gli].lightType == POINT_LIGHT)
                 {
                     resultPoint += ComputePointLightPBR(
-                        lights[gli], fragPos, normal, V,
+                        lights[gli], fragPos, N_base, N_coat, V,
                         albedoColor, metallic, roughness,
+                        clearcoat, coatRough,
                         QE_PointShadowCubemaps[nonuniformEXT(lights[gli].idxShadowMap)]
                     );
                 }
@@ -158,8 +164,9 @@ void main()
                     mat4 vp1 = QE_CascadeViewProj[vp1i];
 
                     resultDir += ComputeDirectionalLightPBR(
-                        lights[gli], fragPos, normal, V,
+                        lights[gli], fragPos, N_base, N_coat, V,
                         albedoColor, metallic, roughness,
+                        clearcoat, coatRough,
                         QE_DirectionalShadowmaps[nonuniformEXT(si)],
                         splits, viewDepth,
                         vp0, vp1, c0, c1
@@ -168,8 +175,9 @@ void main()
                 else
                 {
                     resultSpot += ComputeSpotLightPBR(
-                        lights[gli], fragPos, normal, V,
-                        albedoColor, metallic, roughness
+                        lights[gli], fragPos, N_base, N_coat, V,
+                        albedoColor, metallic, roughness,
+                        clearcoat, coatRough
                     );
                 }
             }

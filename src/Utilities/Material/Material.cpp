@@ -16,7 +16,7 @@ QEMaterial::QEMaterial(std::string name, std::string filepath)
         this->materialFilePath = filepath;
     }
 
-    this->materialData = {};
+    //this->materialData = {};
     this->layer = (unsigned int) RenderLayer::SOLID;
     this->lightManager = LightManager::getInstance();
 }
@@ -45,6 +45,8 @@ QEMaterial::QEMaterial(std::shared_ptr<ShaderModule> shader_ptr, const MaterialD
     this->materialData.Metallic = materialDto.Metallic;
     this->materialData.Roughness = materialDto.Roughness;
     this->materialData.AO = materialDto.AO;
+    this->materialData.Clearcoat = materialDto.Clearcoat;
+    this->materialData.ClearcoatRoughness = materialDto.ClearcoatRoughness;
 
     this->materialData.Diffuse = materialDto.Diffuse;
     this->materialData.Ambient = materialDto.Ambient;
@@ -67,18 +69,10 @@ QEMaterial::QEMaterial(std::shared_ptr<ShaderModule> shader_ptr, const MaterialD
 
     for (const auto& tp : texturePaths)
     {
-        const std::string& path = tp.first;
-        TEXTURE_TYPE type = tp.second;
-
-        if (!path.empty() && path != "NULL_TEXTURE")
-        {
-            this->materialData.AddTexture(path, std::make_shared<CustomTexture>(path, type));
-        }
-        else
-        {
-            this->materialData.AddTexture("NULL_TEXTURE", std::make_shared<CustomTexture>("", TEXTURE_TYPE::NULL_TYPE));
-        }
+        this->materialData.AddTexture(tp.second, tp.first);
     }
+
+    this->materialData.ApplyDtoPacking(materialDto);
 }
 
 std::shared_ptr<QEMaterial> QEMaterial::CreateMaterialInstance()
@@ -198,71 +192,71 @@ void QEMaterial::RenameMaterial(std::string newName)
 std::string QEMaterial::SaveMaterialFile()
 {
     std::ofstream file(materialFilePath, std::ios::binary);
-    if (!file)
+    if (!file.is_open())
     {
         std::cerr << "Error al abrir " << materialFilePath << " para escritura.\n";
         return "";
     }
 
-    if (file.is_open())
-    {
-        // Name
-        int materialNameLength = static_cast<int>(Name.length());
-        file.write(reinterpret_cast<const char*>(&materialNameLength), sizeof(int));
-        file.write(reinterpret_cast<const char*>(Name.c_str()), materialNameLength);
-
-        // Material file path
-        int materialPathLength = static_cast<int>(materialFilePath.length());
-        file.write(reinterpret_cast<const char*>(&materialPathLength), sizeof(int));
-        file.write(reinterpret_cast<const char*>(materialFilePath.c_str()), materialPathLength);
-
-        // Shader
-        std::string shaderName = shader->shaderNameID;
-        int shaderNameLength = static_cast<int>(shaderName.length());
-        file.write(reinterpret_cast<const char*>(&shaderNameLength), sizeof(int));
-        file.write(reinterpret_cast<const char*>(shaderName.c_str()), shaderNameLength);
-
-        // Render layer
-        int renderLayer = 1;
-        file.write(reinterpret_cast<const char*>(&renderLayer), sizeof(int));
-
-        // Material data
-        file.write(reinterpret_cast<const char*>(&materialData.Opacity), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&materialData.BumpScaling), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&materialData.Shininess), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&materialData.Reflectivity), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&materialData.Shininess_Strength), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&materialData.Refractivity), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&materialData.Metallic), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&materialData.Roughness), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&materialData.AO), sizeof(float));
-
-        file.write(reinterpret_cast<const char*>(&materialData.Diffuse), sizeof(glm::vec4));
-        file.write(reinterpret_cast<const char*>(&materialData.Ambient), sizeof(glm::vec4));
-        file.write(reinterpret_cast<const char*>(&materialData.Specular), sizeof(glm::vec4));
-        file.write(reinterpret_cast<const char*>(&materialData.Emissive), sizeof(glm::vec4));
-        file.write(reinterpret_cast<const char*>(&materialData.Transparent), sizeof(glm::vec4));
-        file.write(reinterpret_cast<const char*>(&materialData.Reflective), sizeof(glm::vec4));
-
-        // Texture paths
-        int zeroLength = 0;
-
-        const int slotCount = (int)materialData.texture_vector->size();
-        for (int slot = 0; slot < slotCount; ++slot)
+    auto writeString = [&](const std::string& s)
         {
-            auto& texture = materialData.texture_vector->at((size_t)slot);
+            int len = (int)s.size();
+            file.write(reinterpret_cast<const char*>(&len), sizeof(int));
+            if (len > 0)
+                file.write(s.data(), len);
+        };
 
-            if (texture != nullptr && texture->type != TEXTURE_TYPE::NULL_TYPE)
-            {
-                texture->SaveTexturePath(file);
-            }
-            else
-            {
-                file.write(reinterpret_cast<const char*>(&zeroLength), sizeof(int));
-            }
-        }
+    // 1) Header
+    writeString(Name);
+    writeString(materialFilePath);
 
-        file.close();
-    }
-    return this->materialFilePath;
+    std::string shaderName = (shader ? shader->shaderNameID : "default");
+    writeString(shaderName);
+
+    // 2) Layer
+    int renderLayer = (int)layer;
+    file.write(reinterpret_cast<const char*>(&renderLayer), sizeof(int));
+
+    // 3) Scalars legacy + PBR + Clearcoat (MISMO ORDEN que el reader)
+    file.write(reinterpret_cast<const char*>(&materialData.Opacity), sizeof(float));
+    file.write(reinterpret_cast<const char*>(&materialData.BumpScaling), sizeof(float));
+    file.write(reinterpret_cast<const char*>(&materialData.Shininess), sizeof(float));
+    file.write(reinterpret_cast<const char*>(&materialData.Reflectivity), sizeof(float));
+    file.write(reinterpret_cast<const char*>(&materialData.Shininess_Strength), sizeof(float));
+    file.write(reinterpret_cast<const char*>(&materialData.Refractivity), sizeof(float));
+
+    file.write(reinterpret_cast<const char*>(&materialData.Metallic), sizeof(float));
+    file.write(reinterpret_cast<const char*>(&materialData.Roughness), sizeof(float));
+    file.write(reinterpret_cast<const char*>(&materialData.AO), sizeof(float));
+
+    // NUEVO: clearcoat
+    file.write(reinterpret_cast<const char*>(&materialData.Clearcoat), sizeof(float));
+    file.write(reinterpret_cast<const char*>(&materialData.ClearcoatRoughness), sizeof(float));
+
+    // 4) Colors
+    file.write(reinterpret_cast<const char*>(&materialData.Diffuse), sizeof(glm::vec4));
+    file.write(reinterpret_cast<const char*>(&materialData.Ambient), sizeof(glm::vec4));
+    file.write(reinterpret_cast<const char*>(&materialData.Specular), sizeof(glm::vec4));
+    file.write(reinterpret_cast<const char*>(&materialData.Emissive), sizeof(glm::vec4));
+    file.write(reinterpret_cast<const char*>(&materialData.Transparent), sizeof(glm::vec4));
+    file.write(reinterpret_cast<const char*>(&materialData.Reflective), sizeof(glm::vec4));
+
+    // 5) Mask + channels (si los guardas en MaterialData)
+    file.write(reinterpret_cast<const char*>(&materialData.TexMask), sizeof(uint32_t));
+    file.write(reinterpret_cast<const char*>(&materialData.MetallicChan), sizeof(uint32_t));
+    file.write(reinterpret_cast<const char*>(&materialData.RoughnessChan), sizeof(uint32_t));
+    file.write(reinterpret_cast<const char*>(&materialData.AOChan), sizeof(uint32_t));
+
+    writeString(materialData.diffuseTexturePath);
+    writeString(materialData.normalTexturePath);
+    writeString(materialData.metallicTexturePath);
+    writeString(materialData.roughnessTexturePath);
+    writeString(materialData.aoTexturePath);
+    writeString(materialData.emissiveTexturePath);
+    writeString(materialData.heightTexturePath);
+    writeString(materialData.specularTexturePath);
+
+    file.close();
+    return materialFilePath;
 }
+

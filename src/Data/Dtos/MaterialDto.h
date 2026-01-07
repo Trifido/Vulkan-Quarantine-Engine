@@ -42,6 +42,8 @@ struct MaterialDto
     float Metallic = 0.0f;
     float Roughness = 1.0f;
     float AO = 1.0f;
+    float Clearcoat = 0.0f;
+    float ClearcoatRoughness = 0.1f;
 
     glm::vec4 Diffuse = glm::vec4(1.0f);
     glm::vec4 Ambient = glm::vec4(0.1f);

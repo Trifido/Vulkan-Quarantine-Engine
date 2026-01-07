@@ -16,6 +16,35 @@ static uint32_t SlotBitFromType(TEXTURE_TYPE t)
     }
 }
 
+static inline QEColorSpace ColorSpaceFromSemantic(TEXTURE_TYPE t)
+{
+    switch (t)
+    {
+    case TEXTURE_TYPE::DIFFUSE_TYPE:
+    case TEXTURE_TYPE::EMISSIVE_TYPE:
+        return QEColorSpace::SRGB;
+
+    default:
+        return QEColorSpace::Linear; // normal, metal, rough, ao, height, spec...
+    }
+}
+
+static std::string& PathRefForSemantic(MaterialData& md, TEXTURE_TYPE s)
+{
+    switch (s)
+    {
+    case TEXTURE_TYPE::DIFFUSE_TYPE:   return md.diffuseTexturePath;
+    case TEXTURE_TYPE::NORMAL_TYPE:    return md.normalTexturePath;
+    case TEXTURE_TYPE::METALNESS_TYPE: return md.metallicTexturePath;
+    case TEXTURE_TYPE::ROUGHNESS_TYPE: return md.roughnessTexturePath;
+    case TEXTURE_TYPE::AO_TYPE:        return md.aoTexturePath;
+    case TEXTURE_TYPE::EMISSIVE_TYPE:  return md.emissiveTexturePath;
+    case TEXTURE_TYPE::HEIGHT_TYPE:    return md.heightTexturePath;
+    case TEXTURE_TYPE::SPECULAR_TYPE:  return md.specularTexturePath;
+    default: return md.diffuseTexturePath; // no debería usarse
+    }
+}
+
 std::string MaterialData::NormalizeMaterialMemberName(std::string name)
 {
     auto pos = name.rfind('.');
@@ -47,15 +76,15 @@ std::unordered_map<std::string, WriteFn> MaterialData::BuildMaterialWriters()
     writeValue("Transparent", [this] { return Transparent; });
     writeValue("Reflective", [this] { return Reflective; });
 
-    // ints
-    writeValue("idxDiffuse", [this] { return IDTextures[TEXTURE_TYPE::DIFFUSE_TYPE]; });
-    writeValue("idxNormal", [this] { return IDTextures[TEXTURE_TYPE::NORMAL_TYPE]; });
-    writeValue("idxSpecular", [this] { return IDTextures[TEXTURE_TYPE::SPECULAR_TYPE]; });
-    writeValue("idxEmissive", [this] { return IDTextures[TEXTURE_TYPE::EMISSIVE_TYPE]; });
-    writeValue("idxHeight", [this] { return IDTextures[TEXTURE_TYPE::HEIGHT_TYPE]; });
-    writeValue("idxMetallic", [this] { return IDTextures[TEXTURE_TYPE::METALNESS_TYPE]; });
-    writeValue("idxRoughness", [this] { return IDTextures[TEXTURE_TYPE::ROUGHNESS_TYPE]; });
-    writeValue("idxAO", [this] { return IDTextures[TEXTURE_TYPE::AO_TYPE]; });
+    // ints (UBO indices reales)
+    writeValue("idxDiffuse", [this] { return idxDiffuse; });
+    writeValue("idxNormal", [this] { return idxNormal; });
+    writeValue("idxSpecular", [this] { return idxSpecular; });
+    writeValue("idxEmissive", [this] { return idxEmissive; });
+    writeValue("idxHeight", [this] { return idxHeight; });
+    writeValue("idxMetallic", [this] { return idxMetallic; });
+    writeValue("idxRoughness", [this] { return idxRoughness; });
+    writeValue("idxAO", [this] { return idxAO; });
 
     //uints
     writeValue("texMask", [this] { return TexMask; });
@@ -73,6 +102,8 @@ std::unordered_map<std::string, WriteFn> MaterialData::BuildMaterialWriters()
     writeValue("Metallic", [this] { return Metallic; });
     writeValue("Roughness", [this] { return Roughness; });
     writeValue("AO", [this] { return AO; });
+    writeValue("Clearcoat", [this] { return Clearcoat; });
+    writeValue("ClearcoatRoughness", [this] { return ClearcoatRoughness; });
 
     return w;
 }
@@ -117,7 +148,10 @@ void MaterialData::ImportAssimpMaterial(aiMaterial* material)
 {
     if (!material) return;
 
-    // Scalars
+    if (Clearcoat < 0.0f) Clearcoat = 0.0f;
+    if (ClearcoatRoughness <= 0.0f) ClearcoatRoughness = 0.1f;
+
+    // --- Scalars (legacy / Phong) ---
     material->Get(AI_MATKEY_OPACITY, Opacity);
     material->Get(AI_MATKEY_BUMPSCALING, BumpScaling);
 
@@ -130,98 +164,33 @@ void MaterialData::ImportAssimpMaterial(aiMaterial* material)
     material->Get(AI_MATKEY_SHININESS_STRENGTH, Shininess_Strength);
     material->Get(AI_MATKEY_REFRACTI, Refractivity);
 
-    // Colors: Assimp -> aiColor4D -> glm::vec4
-    aiColor4D c;
+    // --- PBR: Clearcoat (KHR_materials_clearcoat, etc.) ---
+    {
+        float cc = Clearcoat;
+        if (material->Get(AI_MATKEY_CLEARCOAT_FACTOR, cc) == AI_SUCCESS)
+        {
+            if (cc < 0.0f) cc = 0.0f;
+            if (cc > 1.0f) cc = 1.0f;
+            Clearcoat = cc;
+        }
 
+        float ccr = ClearcoatRoughness;
+        if (material->Get(AI_MATKEY_CLEARCOAT_ROUGHNESS_FACTOR, ccr) == AI_SUCCESS)
+        {
+            if (ccr < 0.03f) ccr = 0.03f;
+            if (ccr > 1.0f)  ccr = 1.0f;
+            ClearcoatRoughness = ccr;
+        }
+    }
+
+    // --- Colors: Assimp -> aiColor4D -> glm::vec4 ---
+    aiColor4D c;
     if (material->Get(AI_MATKEY_COLOR_DIFFUSE, c) == AI_SUCCESS)     Diffuse = ToVec4(c);
     if (material->Get(AI_MATKEY_COLOR_AMBIENT, c) == AI_SUCCESS)     Ambient = ToVec4(c);
     if (material->Get(AI_MATKEY_COLOR_SPECULAR, c) == AI_SUCCESS)    Specular = ToVec4(c);
     if (material->Get(AI_MATKEY_COLOR_EMISSIVE, c) == AI_SUCCESS)    Emissive = ToVec4(c);
     if (material->Get(AI_MATKEY_COLOR_TRANSPARENT, c) == AI_SUCCESS) Transparent = ToVec4(c);
     if (material->Get(AI_MATKEY_COLOR_REFLECTIVE, c) == AI_SUCCESS)  Reflective = ToVec4(c);
-}
-
-void MaterialData::ImportAssimpTexture(const aiScene* scene, aiMaterial* material,
-    std::string fileExtension_, std::string texturePath_)
-{
-    if (!scene || !material) return;
-
-    texturePath = std::move(texturePath_);
-    fileExtension = std::move(fileExtension_);
-
-    // --- BaseColor ---
-    {
-        std::string tex = GetTexture(scene, material, aiTextureType_BASE_COLOR, TEXTURE_TYPE::DIFFUSE_TYPE);
-        if (tex.empty())
-            tex = GetTexture(scene, material, aiTextureType_DIFFUSE, TEXTURE_TYPE::DIFFUSE_TYPE);
-
-        if (!tex.empty())
-            AddTexture(tex, textureManager->GetTexture(tex));
-    }
-
-    // --- Normal ---
-    {
-        std::string tex = GetTexture(scene, material, aiTextureType_NORMAL_CAMERA, TEXTURE_TYPE::NORMAL_TYPE);
-        if (tex.empty())
-            tex = GetTexture(scene, material, aiTextureType_NORMALS, TEXTURE_TYPE::NORMAL_TYPE);
-
-        if (!tex.empty())
-            AddTexture(tex, textureManager->GetTexture(tex));
-    }
-
-    // --- Emissive ---
-    {
-        std::string tex = GetTexture(scene, material, aiTextureType_EMISSION_COLOR, TEXTURE_TYPE::EMISSIVE_TYPE);
-        if (tex.empty())
-            tex = GetTexture(scene, material, aiTextureType_EMISSIVE, TEXTURE_TYPE::EMISSIVE_TYPE);
-
-        if (!tex.empty())
-            AddTexture(tex, textureManager->GetTexture(tex));
-    }
-
-    // --- AO (glTF occlusionTexture) ---
-    {
-        std::string tex = GetTexture(scene, material, aiTextureType_AMBIENT_OCCLUSION, TEXTURE_TYPE::AO_TYPE);
-        if (!tex.empty())
-        {
-            AOChan = 0; // glTF occlusion usa canal R
-            UpdateMaterialDataRaw("aoChan", &AOChan, sizeof(AOChan));
-
-            AddTexture(tex, textureManager->GetTexture(tex));
-        }
-    }
-
-    // --- Metallic-Roughness packed (glTF) ---
-    {
-        std::string tex = GetTexture(scene, material, aiTextureType_GLTF_METALLIC_ROUGHNESS, TEXTURE_TYPE::METALNESS_TYPE);
-
-        if (!tex.empty())
-        {
-            auto shared = textureManager->GetTexture(tex);
-
-            // 1) METALNESS
-            AddTexture(tex, shared);
-
-            // 2) ROUGHNESS
-            int slotR = IDTextures[TEXTURE_TYPE::ROUGHNESS_TYPE];
-            texture_vector->at((size_t)slotR) = shared;
-            TexMask |= (1u << 3);
-            UpdateMaterialDataRaw("texMask", &TexMask, sizeof(TexMask));
-
-            // Canales glTF:
-            MetallicChan = 2; // B
-            RoughnessChan = 1; // G
-            UpdateMaterialDataRaw("metallicChan", &MetallicChan, sizeof(MetallicChan));
-            UpdateMaterialDataRaw("roughnessChan", &RoughnessChan, sizeof(RoughnessChan));
-        }
-    }
-
-    // Height
-    {
-        std::string tex = GetTexture(scene, material, aiTextureType_HEIGHT, TEXTURE_TYPE::HEIGHT_TYPE);
-        if (!tex.empty())
-            AddTexture(tex, textureManager->GetTexture(tex));
-    }
 }
 
 std::string MaterialData::GetTexture(const aiScene* scene, aiMaterial* mat, aiTextureType type, TEXTURE_TYPE textureType)
@@ -238,7 +207,6 @@ std::string MaterialData::GetTexture(const aiScene* scene, aiMaterial* mat, aiTe
 
     if (fileExtension == "fbx")
     {
-        // FBX suele venir con backslashes
         std::size_t pos = filePath.find_last_of("\\/");
         finalName = (pos != std::string::npos) ? filePath.substr(pos + 1) : filePath;
     }
@@ -280,37 +248,66 @@ void MaterialData::fillEmptyTextures()
     }
 }
 
-void MaterialData::AddTexture(const std::string& textureName, const std::shared_ptr<CustomTexture>& texture)
+void MaterialData::AddTexture(TEXTURE_TYPE semantic, const std::string& texturePath)
 {
-    if (!texture) return;
+    PathRefForSemantic(*this, semantic) =
+        (texturePath.empty() ? "NULL_TEXTURE" : texturePath);
 
-    if (texture->type == TEXTURE_TYPE::NULL_TYPE)
+    auto it = IDTextures.find(semantic);
+    if (it == IDTextures.end()) return;
+
+    int slot = it->second;
+    if (slot < 0 || slot >= TOTAL_NUM_TEXTURES) return;
+
+    std::shared_ptr<CustomTexture> tex;
+
+    if (texturePath.empty() || texturePath == "NULL_TEXTURE" || (!texturePath.empty() && texturePath[0] == '*'))
     {
-        textureManager->AddTexture(textureName, texture);
-        return;
+        tex = textureManager->GetTexture("NULL_TEXTURE");
     }
     else
     {
-        uint32_t bit = SlotBitFromType(texture->type);
-        if (bit != 0)
+        QEColorSpace cs = ColorSpaceFromSemantic(semantic);
+        tex = textureManager->GetOrLoadTextureByPath(texturePath, cs);
+    }
+
+    if (!tex) return;
+
+    texture_vector->at((size_t)slot) = tex;
+    Textures[semantic] = tex;
+
+    bool isReal = !texturePath.empty() && texturePath != "NULL_TEXTURE" && texturePath[0] != '*';
+    if (isReal)
+    {
+        uint32_t bit = SlotBitFromType(semantic);
+        if (bit)
         {
             TexMask |= bit;
             UpdateMaterialDataRaw("texMask", &TexMask, sizeof(TexMask));
         }
     }
 
-    auto it = IDTextures.find(texture->type);
-    if (it == IDTextures.end())
-        return;
+    auto m = findTextureByType(TEXTURE_TYPE::METALNESS_TYPE);
+    auto r = findTextureByType(TEXTURE_TYPE::ROUGHNESS_TYPE);
 
-    int slot = it->second;
-    if (slot < 0 || slot >= TOTAL_NUM_TEXTURES)
-        return;
+    if (m && r && m == r && m != emptyTexture)
+    {
+        idxMetallic = (int)MAT_TEX_SLOT::Metallic;
+        idxRoughness = idxMetallic;
 
-    texture_vector->at(static_cast<size_t>(slot)) = texture;
+        MetallicChan = 2;
+        RoughnessChan = 1;
 
-    Textures[texture->type] = texture;
-    textureManager->AddTexture(textureName, texture);
+        UpdateMaterialDataRaw("idxMetallic", &idxMetallic, sizeof(idxMetallic));
+        UpdateMaterialDataRaw("idxRoughness", &idxRoughness, sizeof(idxRoughness));
+        UpdateMaterialDataRaw("metallicChan", &MetallicChan, sizeof(MetallicChan));
+        UpdateMaterialDataRaw("roughnessChan", &RoughnessChan, sizeof(RoughnessChan));
+
+        TexMask |= (1u << (uint32_t)MAT_TEX_SLOT::Metallic);
+        TexMask |= (1u << (uint32_t)MAT_TEX_SLOT::Roughness);
+        UpdateMaterialDataRaw("texMask", &TexMask, sizeof(TexMask));
+    }
+
 }
 
 void MaterialData::CleanLastResources()
@@ -429,6 +426,8 @@ void MaterialData::SetMaterialField(const std::string& nameField_, float value)
     if (nameField == "Metallic") { Metallic = value;  UpdateMaterialDataRaw("Metallic", &Metallic, sizeof(Metallic)); return; }
     if (nameField == "Roughness") { Roughness = value; UpdateMaterialDataRaw("Roughness", &Roughness, sizeof(Roughness)); return; }
     if (nameField == "AO") { AO = value;        UpdateMaterialDataRaw("AO", &AO, sizeof(AO)); return; }
+    if (nameField == "Clearcoat") { Clearcoat = value;        UpdateMaterialDataRaw("Clearcoat", &Clearcoat, sizeof(Clearcoat)); return; }
+    if (nameField == "ClearcoatRoughness") { ClearcoatRoughness = value;        UpdateMaterialDataRaw("ClearcoatRoughness", &ClearcoatRoughness, sizeof(ClearcoatRoughness)); return; }
 }
 
 void MaterialData::SetMaterialField(const std::string& nameField_, glm::vec3 value)
@@ -448,14 +447,14 @@ void MaterialData::SetMaterialField(const std::string& nameField_, int value)
 {
     const std::string nameField = NormalizeMaterialMemberName(nameField_);
 
-    if (nameField == "idxDiffuse") { IDTextures[TEXTURE_TYPE::DIFFUSE_TYPE] = value; UpdateMaterialDataRaw("idxDiffuse", &value, sizeof(value)); return; }
-    if (nameField == "idxNormal") { IDTextures[TEXTURE_TYPE::NORMAL_TYPE] = value; UpdateMaterialDataRaw("idxNormal", &value, sizeof(value)); return; }
-    if (nameField == "idxSpecular") { IDTextures[TEXTURE_TYPE::SPECULAR_TYPE] = value; UpdateMaterialDataRaw("idxSpecular", &value, sizeof(value)); return; }
-    if (nameField == "idxEmissive") { IDTextures[TEXTURE_TYPE::EMISSIVE_TYPE] = value; UpdateMaterialDataRaw("idxEmissive", &value, sizeof(value)); return; }
-    if (nameField == "idxHeight") { IDTextures[TEXTURE_TYPE::HEIGHT_TYPE] = value; UpdateMaterialDataRaw("idxHeight", &value, sizeof(value)); return; }
-    if (nameField == "idxMetallic") { IDTextures[TEXTURE_TYPE::METALNESS_TYPE] = value; UpdateMaterialDataRaw("idxMetallic", &value, sizeof(value)); return; }
-    if (nameField == "idxRoughness") { IDTextures[TEXTURE_TYPE::ROUGHNESS_TYPE] = value; UpdateMaterialDataRaw("idxRoughness", &value, sizeof(value)); return; }
-    if (nameField == "idxAO") { IDTextures[TEXTURE_TYPE::AO_TYPE] = value;        UpdateMaterialDataRaw("idxAO", &value, sizeof(value)); return; }
+    if (nameField == "idxDiffuse") { idxDiffuse = value;   UpdateMaterialDataRaw("idxDiffuse", &idxDiffuse, sizeof(idxDiffuse)); return; }
+    if (nameField == "idxNormal") { idxNormal = value;    UpdateMaterialDataRaw("idxNormal", &idxNormal, sizeof(idxNormal)); return; }
+    if (nameField == "idxSpecular") { idxSpecular = value;  UpdateMaterialDataRaw("idxSpecular", &idxSpecular, sizeof(idxSpecular)); return; }
+    if (nameField == "idxEmissive") { idxEmissive = value;  UpdateMaterialDataRaw("idxEmissive", &idxEmissive, sizeof(idxEmissive)); return; }
+    if (nameField == "idxHeight") { idxHeight = value;    UpdateMaterialDataRaw("idxHeight", &idxHeight, sizeof(idxHeight)); return; }
+    if (nameField == "idxMetallic") { idxMetallic = value;  UpdateMaterialDataRaw("idxMetallic", &idxMetallic, sizeof(idxMetallic)); return; }
+    if (nameField == "idxRoughness") { idxRoughness = value; UpdateMaterialDataRaw("idxRoughness", &idxRoughness, sizeof(idxRoughness)); return; }
+    if (nameField == "idxAO") { idxAO = value;        UpdateMaterialDataRaw("idxAO", &idxAO, sizeof(idxAO)); return; }
 }
 
 void MaterialData::SetTextureSlot(uint32_t slot, const std::shared_ptr<CustomTexture>& tex, bool isReal)
@@ -464,6 +463,42 @@ void MaterialData::SetTextureSlot(uint32_t slot, const std::shared_ptr<CustomTex
     if (isReal)
     {
         TexMask |= (1u << slot);
+        UpdateMaterialDataRaw("texMask", &TexMask, sizeof(TexMask));
+    }
+}
+
+void MaterialData::ApplyDtoPacking(const MaterialDto& dto)
+{
+    MetallicChan = dto.metallicChan;
+    RoughnessChan = dto.roughnessChan;
+    AOChan = dto.aoChan;
+
+    UpdateMaterialDataRaw("metallicChan", &MetallicChan, sizeof(MetallicChan));
+    UpdateMaterialDataRaw("roughnessChan", &RoughnessChan, sizeof(RoughnessChan));
+    UpdateMaterialDataRaw("aoChan", &AOChan, sizeof(AOChan));
+
+    TexMask = dto.texMask;
+    UpdateMaterialDataRaw("texMask", &TexMask, sizeof(TexMask));
+
+    if (dto.metallicTexturePath != "NULL_TEXTURE" &&
+        dto.roughnessTexturePath != "NULL_TEXTURE" &&
+        !dto.metallicTexturePath.empty() &&
+        dto.metallicTexturePath == dto.roughnessTexturePath)
+    {
+        idxMetallic = (int)MAT_TEX_SLOT::Metallic;
+        idxRoughness = idxMetallic;
+
+        // glTF default
+        MetallicChan = (dto.metallicChan != 0u) ? dto.metallicChan : 2u;
+        RoughnessChan = (dto.roughnessChan != 0u) ? dto.roughnessChan : 1u;
+
+        UpdateMaterialDataRaw("idxMetallic", &idxMetallic, sizeof(idxMetallic));
+        UpdateMaterialDataRaw("idxRoughness", &idxRoughness, sizeof(idxRoughness));
+        UpdateMaterialDataRaw("metallicChan", &MetallicChan, sizeof(MetallicChan));
+        UpdateMaterialDataRaw("roughnessChan", &RoughnessChan, sizeof(RoughnessChan));
+
+        TexMask |= (1u << (uint32_t)MAT_TEX_SLOT::Metallic);
+        TexMask |= (1u << (uint32_t)MAT_TEX_SLOT::Roughness);
         UpdateMaterialDataRaw("texMask", &TexMask, sizeof(TexMask));
     }
 }

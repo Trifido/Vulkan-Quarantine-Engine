@@ -71,4 +71,39 @@ vec3 BRDF_CookTorrance(
     return (diffuse + specular) * NdotL;
 }
 
+vec3 BRDF_Clearcoat(
+    vec3 N_coat, vec3 V, vec3 L,
+    float clearcoat, float clearcoatRoughness
+){
+    clearcoat = saturate(clearcoat);
+
+    // Si no hay coat, sal rápido
+    if (clearcoat <= 1e-5)
+        return vec3(0.0);
+
+    vec3 H = normalize(V + L);
+
+    float NdotL = saturate(dot(N_coat, L));
+    float NdotV = saturate(dot(N_coat, V));
+    float NdotH = saturate(dot(N_coat, H));
+    float VdotH = saturate(dot(V, H));
+
+    // Coat suele ser liso. Clamp más agresivo que el base.
+    clearcoatRoughness = clamp(clearcoatRoughness, 0.03, 1.0);
+
+    // F0 fijo (IOR~1.5 => ~0.04). Algunas implementaciones usan 0.04–0.08.
+    vec3 F0 = vec3(0.04);
+
+    vec3  F = F_Schlick(F0, VdotH);
+    float D = D_GGX(NdotH, clearcoatRoughness);
+    float G = G_Smith(NdotV, NdotL, clearcoatRoughness);
+
+    vec3 numerator = D * G * F;
+    float denom    = max(4.0 * NdotV * NdotL, 1e-6);
+    vec3 specular  = numerator / denom;
+
+    // Sin difuso; sólo especular
+    return (specular * clearcoat) * NdotL;
+}
+
 #endif // QE_PBR_GLSL

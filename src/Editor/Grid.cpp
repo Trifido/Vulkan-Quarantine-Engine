@@ -19,7 +19,7 @@ Grid::Grid()
     std::string nameGrid = "editorGrid";
     if (!matManager->Exists(nameGrid))
     {
-        this->material_grid_ptr = std::make_shared<QEMaterial>(QEMaterial(nameGrid, this->shader_grid_ptr));
+        this->material_grid_ptr = std::make_shared<QEMaterial>(nameGrid, this->shader_grid_ptr);
         this->material_grid_ptr->layer = (unsigned int)RenderLayer::EDITOR;
         this->material_grid_ptr->InitializeMaterialData();
         matManager->AddMaterial(this->material_grid_ptr);

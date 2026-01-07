@@ -8,60 +8,57 @@ Materials:
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorDebugAABB.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\defaultParticlesMat.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorDebugCollider.qemat
-  - ../../QEProjects\QEExample\QEAssets\QEMaterials\QEMatInst_defaultPrimitiveMat.qemat
   - ../../QEProjects\QEExample\QEAssets\QEModels\Character\Materials\Alpha_Joints_MAT.qemat
-  - ../../QEProjects\QEExample\QEAssets\QEMaterials\QEMatInst_defaultPrimitiveMat_1.qemat
-  - ../../QEProjects\QEExample\QEAssets\QEMaterials\QEMatInst_defaultPrimitiveMat_2.qemat
-  - ../../QEProjects\QEExample\QEAssets\QEModels\Character\Materials\Alpha_Body_MAT.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorGrid.qemat
+  - ../../QEProjects\QEExample\QEAssets\QEModels\Character\Materials\Alpha_Body_MAT.qemat
 GameObjects:
-  - id: YT3CEW8K69rk
+  - id: X3g5Ayy61leD
     name: QECameraEditor
     components:
       - type: QETransform
-        id: lPGtfUR2IZ2m
-        localPosition: [0.71473587, 4.085518, 7.84917]
-        localRotation: [-0.1993677, 0.0017102809, 0.00034796065, 0.9799232]
+        id: YT3CEW8K69rk
+        localPosition: [0.25863385, 3.5232644, 6.951864]
+        localRotation: [-0.17190783, 0.015472673, 0.0027004124, 0.9849879]
         localScale: [1, 1, 1]
         parentId: ""
       - type: QECamera
-        id: frAQBc8Wsa1x
+        id: lPGtfUR2IZ2m
         _near: 0.1
         _far: 500
         _fov: 45
         Width: 1280
         Height: 720
       - type: QECameraController
-        id: B1S7NLt2nQfj
+        id: 3SL3XByImciQ
         Speed: 10
         MouseSensitivity: 0.1
         EditorControls: true
-  - id: UTjlTOSj3iH7
-    name: floor
+  - id: Ir9oDUTOX7NY
+    name: character
     components:
       - type: QETransform
-        id: JTRsbYH133Ty
-        localPosition: [0, -0.01, 0]
+        id: EkZgzUny1swO
+        localPosition: [0, 0, 0]
         localRotation: [0, 0, 0, 1]
-        localScale: [10, 1, 10]
+        localScale: [1, 1, 1]
         parentId: ""
       - type: QEGeometryComponent
-        id: WLIB4G3sV0yk
-        _name: FloorPrimitive
-        _filepath: QECore
+        id: bdYSEvWRBLzZ
+        _name: Character
+        _filepath: C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Character.gltf
       - type: QEMeshRenderer
-        id: Pds7HX27KbNC
+        id: 02h67YrlvBnd
         IsMeshShaderPipeline: false
-      - type: PlaneCollider
-        id: CytJR8Cu6XFp
-        CollisionMargin: 0.04
-        Size: 0.01
-        Orientation: [0, 1, 0]
-      - type: PhysicsBody
-        id: tEIP68v8ZdV6
-        Type: 0
-        Mass: 0
-        Inertia: [0, 0, 0]
-        CollisionGroup: 4
+      - type: QEAnimationComponent
+        id: JTRsbYH133Ty
+        currentState:
+          Id: ""
+          Loop: true
+          AnimationClip: ""
+        States:
+          []
+        Transitions:
+          []
     materials:
-      - QEMatInst_defaultPrimitiveMat
+      - Alpha_Joints_MAT
+      - Alpha_Body_MAT

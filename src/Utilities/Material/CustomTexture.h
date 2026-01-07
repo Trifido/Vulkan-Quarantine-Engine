@@ -13,6 +13,12 @@
 
 using namespace std;
 
+enum class QEColorSpace : uint8_t
+{
+    Linear = 0, // UNORM
+    SRGB = 1
+};
+
 class CustomTexture : public TextureManagerModule
 {
 private:
@@ -36,7 +42,10 @@ public:
     CustomTexture(vector<string> path);
     CustomTexture(aiTexel* data, unsigned int width, unsigned int height, TEXTURE_TYPE type);
     CustomTexture(unsigned int width, unsigned int height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, TEXTURE_TYPE type);
+    CustomTexture(std::string path, TEXTURE_TYPE type, QEColorSpace cs);
+
     void createTextureImage(string path = NULL);
+    void createTextureImage(string path, QEColorSpace cs);
     void createCubemapTextureImage(string path = NULL);
     void createCubemapTextureImage(vector<string> paths);
     void createTextureRawImage(aiTexel* rawData, unsigned int width, unsigned int height);

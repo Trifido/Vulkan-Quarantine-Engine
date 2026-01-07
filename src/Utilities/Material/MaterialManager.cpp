@@ -129,7 +129,8 @@ void MaterialManager::InitializeMaterialManager()
     {
         if (this->default_particles_shader != nullptr)
         {
-            this->AddMaterial(std::make_shared<QEMaterial>(QEMaterial("defaultParticlesMat", this->default_particles_shader)));
+            auto mat = std::make_shared<QEMaterial>("defaultParticlesMat", this->default_particles_shader);
+            this->AddMaterial(mat);
             this->_materials["defaultParticlesMat"]->layer = (int)RenderLayer::PARTICLES;
         }
     }
@@ -169,7 +170,8 @@ void MaterialManager::CreateDefaultPrimitiveMaterial()
     {
         if (this->default_primitive_shader != nullptr)
         {
-            this->AddMaterial(std::make_shared<QEMaterial>(QEMaterial("defaultPrimitiveMat", this->default_primitive_shader)));
+            auto mat = std::make_shared<QEMaterial>("defaultPrimitiveMat", this->default_primitive_shader);
+            this->AddMaterial(mat);
         }
     }
 
@@ -177,8 +179,9 @@ void MaterialManager::CreateDefaultPrimitiveMaterial()
     {
         if (this->mesh_shader_test != nullptr)
         {
-            this->AddMaterial(std::make_shared<QEMaterial>(QEMaterial("defaultMeshPrimitiveMat", this->mesh_shader_test)));
-            _materials["defaultMeshPrimitiveMat"]->SetMeshShaderPipeline(true);
+            auto mat = std::make_shared<QEMaterial>("defaultMeshPrimitiveMat", this->mesh_shader_test);
+            this->AddMaterial(mat);
+            this->_materials["defaultMeshPrimitiveMat"]->SetMeshShaderPipeline(true);
         }
     }
 }
@@ -186,13 +189,13 @@ void MaterialManager::CreateDefaultPrimitiveMaterial()
 void MaterialManager::CreateMaterial(std::string& nameMaterial)
 {
     nameMaterial = CheckName(nameMaterial);
-    this->AddMaterial(std::make_shared<QEMaterial>(QEMaterial(nameMaterial, this->default_shader)));
+    this->AddMaterial(std::make_shared<QEMaterial>(nameMaterial, this->default_shader));
 }
 
 void MaterialManager::CreateMeshShaderMaterial(std::string& nameMaterial)
 {
     nameMaterial = CheckName(nameMaterial);
-    this->AddMaterial(std::make_shared<QEMaterial>(QEMaterial(nameMaterial, this->mesh_shader_test)));
+    this->AddMaterial(std::make_shared<QEMaterial>(nameMaterial, this->mesh_shader_test));
     //_materials[nameMaterial]->SetMeshShaderPipeline(true);
 }
 
@@ -331,6 +334,8 @@ MaterialDto MaterialManager::ReadQEMaterial(std::ifstream& matfile)
     matfile.read(reinterpret_cast<char*>(&materialDto.Metallic), sizeof(float));
     matfile.read(reinterpret_cast<char*>(&materialDto.Roughness), sizeof(float));
     matfile.read(reinterpret_cast<char*>(&materialDto.AO), sizeof(float));
+    matfile.read(reinterpret_cast<char*>(&materialDto.Clearcoat), sizeof(float));
+    matfile.read(reinterpret_cast<char*>(&materialDto.ClearcoatRoughness), sizeof(float));
 
     // Colors
     matfile.read(reinterpret_cast<char*>(&materialDto.Diffuse), sizeof(glm::vec4));
@@ -358,7 +363,6 @@ MaterialDto MaterialManager::ReadQEMaterial(std::ifstream& matfile)
 
     return materialDto;
 }
-
 
 void MaterialManager::LoadMaterialDtos(std::vector<MaterialDto>& materialDtos)
 {

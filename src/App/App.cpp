@@ -180,7 +180,7 @@ void App::initVulkan()
     this->debugSystem->InitializeDebugGraphicResources();
 
     // Import meshes
-    //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Street/street_asset_pack.glb");
+    //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Character.glb");
 
     // Import animations
     //QEProjectManager::ImportAnimationFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Walking.glb",
@@ -190,6 +190,16 @@ void App::initVulkan()
     //auto streetPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/FuturisticRoom/Meshes/sci-fi_lab.gltf").generic_string();
     // Load Scene
     this->loadScene(this->scene);
+
+    //auto materialBalPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/MaterialBall2/Meshes/3d_material_ball.gltf").generic_string();
+    //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Character.gltf").generic_string();
+
+    //std::shared_ptr<QEGameObject> visualCharacter = std::make_shared<QEGameObject>("character");
+    //visualCharacter->AddComponent(std::make_shared<QEGeometryComponent>(std::make_unique<MeshGenerator>(characterPath)));
+    //visualCharacter->AddComponent(std::make_shared<QEMeshRenderer>());
+    ////materialBall->AddComponent(std::make_shared<QEAnimationComponent>());
+
+    //this->gameObjectManager->AddGameObject(visualCharacter);
 
     this->physicsModule->SetGravity(-20.0f);
     this->lightManager->InitializeShadowMaps();

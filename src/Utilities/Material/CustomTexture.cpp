@@ -332,7 +332,23 @@ CustomTexture::CustomTexture(unsigned int width, unsigned int height, VkFormat f
     this->createTextureSampler();
 }
 
-void CustomTexture::createTextureImage(std::string path)
+CustomTexture::CustomTexture(std::string path, TEXTURE_TYPE type, QEColorSpace cs)
+{
+    this->type = type;
+    this->texturePaths.push_back(path);
+
+    if (type == TEXTURE_TYPE::CUBEMAP_TYPE)
+        this->createCubemapTextureImage(path); // (si quieres SRGB/Linear en cubemap también, lo extendemos luego)
+    else
+        this->createTextureImage(path, cs);
+}
+
+void CustomTexture::createTextureImage(string path)
+{
+    createTextureImage(path, QEColorSpace::SRGB);
+}
+
+void CustomTexture::createTextureImage(std::string path, QEColorSpace cs)
 {
     bool allocated = false;
 
@@ -354,36 +370,35 @@ void CustomTexture::createTextureImage(std::string path)
     }
 
     mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
+    VkDeviceSize imageSize = (VkDeviceSize)texWidth * (VkDeviceSize)texHeight * 4;
 
-    VkDeviceSize imageSize = texWidth * texHeight * 4;
     VkFormat imageFormat;
-
     if (path.empty())
         imageFormat = VK_FORMAT_R8G8B8A8_UNORM;
     else
-        imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
+        imageFormat = (cs == QEColorSpace::SRGB) ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
 
-    if (!pixels) {
-        throw std::runtime_error("failed to load texture image!");
-    }
+    if (!pixels) throw std::runtime_error("failed to load texture image!");
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
-
-    BufferManageModule::createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory, *deviceModule);
+    BufferManageModule::createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        stagingBuffer, stagingBufferMemory, *deviceModule);
 
     void* data;
     vkMapMemory(deviceModule->device, stagingBufferMemory, 0, imageSize, 0, &data);
-    memcpy(data, pixels, static_cast<size_t>(imageSize));
+    memcpy(data, pixels, (size_t)imageSize);
     vkUnmapMemory(deviceModule->device, stagingBufferMemory);
 
     if (allocated) delete[] pixels;
     else stbi_image_free(pixels);
 
-    createImage(texWidth, texHeight, imageFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+    createImage(texWidth, texHeight, imageFormat, VK_IMAGE_TILING_OPTIMAL,
+        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mipLevels, 1, VK_SAMPLE_COUNT_1_BIT);
 
-    copyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), mipLevels);
+    copyBufferToImage(stagingBuffer, image, (uint32_t)texWidth, (uint32_t)texHeight, mipLevels);
 
     vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
     vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
@@ -393,6 +408,7 @@ void CustomTexture::createTextureImage(std::string path)
     this->createTextureImageView(imageFormat);
     this->createTextureSampler();
 }
+
 
 void CustomTexture::createCubemapTextureImage(std::string path)
 {
