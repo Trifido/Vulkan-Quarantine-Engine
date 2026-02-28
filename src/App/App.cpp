@@ -201,6 +201,24 @@ void App::initVulkan()
 
     //this->gameObjectManager->AddGameObject(visualCharacter);
 
+    //auto floor = std::make_shared<QEGameObject>("floor");
+    //floor->AddComponent(std::make_shared<QEGeometryComponent>(std::make_unique<FloorGenerator>()));
+    //floor->AddComponent(std::make_shared<QEMeshRenderer>());
+    //auto matFloor = materialManager->GetMaterial("defaultPrimitiveMat");
+    //floor->AddComponent(matFloor);
+    //auto transform = floor->GetComponent<QETransform>();
+    //transform->SetLocalScale(glm::vec3(10.0f, 1.0f, 10.0f));
+    //this->gameObjectManager->AddGameObject(floor);
+
+    //auto floor = gameObjectManager->GetGameObject("Obstacle02");
+    //auto collider = std::make_shared<PlaneCollider>();
+    //collider->SetPlane(10.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+    //auto staticBody = std::make_shared<PhysicsBody>();
+    //staticBody->CollisionGroup = CollisionFlag::COL_SCENE;
+    //staticBody->Type = PhysicBodyType::STATIC_BODY;
+    //floor->AddComponent(collider);
+    //floor->AddComponent(staticBody);
+
     this->physicsModule->SetGravity(-20.0f);
     this->lightManager->InitializeShadowMaps();
     this->atmosphereSystem->InitializeAtmosphereResources();
@@ -218,7 +236,7 @@ void App::loadScene(QEScene scene)
 
     //Editor resources initialization
     this->sessionManager->SetEditorMode(this->isRunEditor);
-    this->sessionManager->SetDebugMode(false);
+    this->sessionManager->SetDebugMode(true);
     this->sessionManager->SetupEditor();
 
     // Initialize active camera resources
