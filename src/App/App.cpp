@@ -10,7 +10,6 @@
 #include <QEProjectManager.h>
 #include <QEMeshRenderer.h>
 #include <QESpringArmComponent.h>
-#include <DebugController.h>
 #include <PlaneCollider.h>
 #include <BoxCollider.h>
 #include "PhysicsBody.h"
@@ -210,14 +209,13 @@ void App::initVulkan()
     //transform->SetLocalScale(glm::vec3(10.0f, 1.0f, 10.0f));
     //this->gameObjectManager->AddGameObject(floor);
 
-    //auto floor = gameObjectManager->GetGameObject("Obstacle02");
-    //auto collider = std::make_shared<PlaneCollider>();
-    //collider->SetPlane(10.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-    //auto staticBody = std::make_shared<PhysicsBody>();
-    //staticBody->CollisionGroup = CollisionFlag::COL_SCENE;
-    //staticBody->Type = PhysicBodyType::STATIC_BODY;
-    //floor->AddComponent(collider);
-    //floor->AddComponent(staticBody);
+    auto obstacle = gameObjectManager->GetGameObject("Obstacle02");
+    auto collider = std::make_shared<BoxCollider>();
+    auto staticBody = std::make_shared<PhysicsBody>();
+    staticBody->CollisionGroup = CollisionFlag::COL_SCENE;
+    staticBody->Type = PhysicBodyType::STATIC_BODY;
+    obstacle->AddComponent(collider);
+    obstacle->AddComponent(staticBody);
 
     this->physicsModule->SetGravity(-20.0f);
     this->lightManager->InitializeShadowMaps();
@@ -490,7 +488,7 @@ void App::drawFrame()
     //this->lightManager->UpdateUBOLight();
     this->materialManager->UpdateUniforms();
 
-    vkDeviceWaitIdle(deviceModule->device);
+    //vkDeviceWaitIdle(deviceModule->device);
 
     commandPoolModule->Render(&framebufferModule);
 

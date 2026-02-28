@@ -52,6 +52,7 @@ public:
     PhysicsModule();
 
     void UpdateDebugPhysicsDrawer();
+    size_t GetTrackedBodyCount() const { return m_bodies.size(); }
 
     const JPH::BroadPhaseLayerInterface& GetBPLayerInterface()   const { return *m_broadphaseLayers; }
     const JPH::ObjectVsBroadPhaseLayerFilter& GetObjectVsBPLFilter()  const { return *m_objectVsBPLFilter; }
