@@ -63,7 +63,7 @@ AtmosphereDto AtmosphereSystem::CreateAtmosphereDto()
     return {
            this->IsInitialized,
            static_cast<int>(this->atmosphereType),
-           QEHelper::DirectionToEulerDegrees(this->sunLight->uniformData.Direction),
+           this->sunLight->GetSunEulerDegrees(),
            this->sunLight->baseIntensity
     };
 }

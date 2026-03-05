@@ -28,6 +28,7 @@ void QESunLight::UpdateSun()
 
 void QESunLight::SetSunEulerDegrees(const glm::vec3& eulerDeg)
 {
+    this->SunEulerDegrees = eulerDeg;
     this->transform->SetLocalEulerDegrees(eulerDeg);
 
     glm::vec3 directionToSun = this->transform->Forward();

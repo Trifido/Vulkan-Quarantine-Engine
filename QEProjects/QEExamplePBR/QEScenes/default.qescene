@@ -1,0 +1,33 @@
+AtmosphereDto:
+  hasAtmosphere: true
+  environmentType: 2
+  sunEulerDegrees: [-45.000004, 45.000004, 0]
+  sunBaseIntensity: 100
+Materials:
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEMaterials\defaultPrimitiveMat.qemat
+  - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorDebugAABB.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEMaterials\defaultParticlesMat.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEMaterials\editorDebugCollider.qemat
+  - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorGrid.qemat
+GameObjects:
+  - id: X3g5Ayy61leD
+    name: QECameraEditor
+    components:
+      - type: QETransform
+        id: YT3CEW8K69rk
+        localPosition: [19.775976, 13.354305, -20.063713]
+        localRotation: [-0.002443943, 0.9877023, 0.15555492, 0.015517916]
+        localScale: [1, 1, 1]
+        parentId: ""
+      - type: QECamera
+        id: lPGtfUR2IZ2m
+        _near: 0.1
+        _far: 500
+        _fov: 45
+        Width: 1280
+        Height: 720
+      - type: QECameraController
+        id: 3SL3XByImciQ
+        Speed: 10
+        MouseSensitivity: 0.1
+        EditorControls: true
