@@ -7,6 +7,7 @@
 #include <QEScene.h>
 
 const static std::string PROJECTS_FOLDER_PATH = "../../QEProjects";
+const static std::string SCENE_TEMPLATE = "../../src/Data/SceneTemplates/QETemplate.qescene";
 const static std::string SCENE_FOLDER = "QEScenes";
 const static std::string ASSETS_FOLDER = "QEAssets";
 const static std::string MODELS_FOLDER = "QEModels";
@@ -25,7 +26,6 @@ private:
 public:
     static bool CreateQEProject(const std::string& projectName);
     static bool CreateFolder(const fs::path& projectPath, const std::string& folderName);
-    static bool CreateScene(const std::string& sceneName = "DefaultScene");
     static bool CreateYamlScene(const std::string& sceneName = "DefaultScene");
     static bool ImportMeshFile(const fs::path& inputFile);
     static bool ImportAnimationFile(const fs::path& inputFile, const fs::path& folderPath);

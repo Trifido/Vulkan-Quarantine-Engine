@@ -53,72 +53,28 @@ bool QEProjectManager::CreateFolder(const fs::path& projectPath, const std::stri
     return false;
 }
 
-bool QEProjectManager::CreateScene(const std::string& sceneName)
-{
-    fs::path scenePath = CURRENT_PROJECT_PATH / SCENE_FOLDER;
-
-    if (fs::exists(scenePath))
-    {
-        std::string filename = sceneName + ".qescene";
-        CURRENT_DEFAULT_SCENE_PATH = scenePath / filename;
-
-        if (!fs::exists(CURRENT_DEFAULT_SCENE_PATH))
-        {
-            std::ofstream file(CURRENT_DEFAULT_SCENE_PATH, std::ios::binary);
-            if (!file)
-            {
-                std::cerr << "Error al abrir el archivo para escritura.\n";
-                return false;
-            }
-
-            if (file.is_open())
-            {
-                size_t sceneNameLength = filename.length();
-                file.write(reinterpret_cast<const char*>(&sceneNameLength), sizeof(sceneNameLength));
-                file.write(filename.c_str(), sceneNameLength);
-
-                AtmosphereDto atmosphere;
-                file.write(reinterpret_cast<const char*>(&atmosphere.hasAtmosphere), sizeof(bool));
-                file.write(reinterpret_cast<const char*>(&atmosphere.environmentType), sizeof(int));
-                file.write(reinterpret_cast<const char*>(&atmosphere.sunEulerDegrees), sizeof(glm::vec3));
-                file.write(reinterpret_cast<const char*>(&atmosphere.sunBaseIntensity), sizeof(float));
-
-                int numMaterials = 0;
-                file.write(reinterpret_cast<const char*>(&numMaterials), sizeof(int));
-
-                int numGameObjects = 0;
-                file.write(reinterpret_cast<const char*>(&numGameObjects), sizeof(int));
-
-                int numLights = 0;
-                file.write(reinterpret_cast<const char*>(&numLights), sizeof(int));
-
-                file.close();
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
 bool QEProjectManager::CreateYamlScene(const std::string& sceneName)
 {
-    fs::path scenePath = CURRENT_PROJECT_PATH / SCENE_FOLDER;
+    const fs::path sceneDir = CURRENT_PROJECT_PATH / SCENE_FOLDER;
 
-    if (fs::exists(scenePath))
-    {
-        std::string filename = sceneName + ".qescene";
-        CURRENT_DEFAULT_SCENE_PATH = scenePath / filename;
+    std::error_code ec;
+    fs::create_directories(sceneDir, ec);
+    if (ec) return false;
 
-        if (!fs::exists(CURRENT_DEFAULT_SCENE_PATH))
-        {
-            std::ofstream file(CURRENT_DEFAULT_SCENE_PATH, std::ios::binary | std::ios::trunc);
-            file.close();
-            return true;
-        }
-    }
+    const fs::path dst = sceneDir / (sceneName + ".qescene");
+    CURRENT_DEFAULT_SCENE_PATH = dst;
 
-    return false;
+    if (fs::exists(dst))
+        return false;
+
+    if (!fs::exists(SCENE_TEMPLATE))
+        return false;
+
+    ec.clear();
+    fs::copy_file(SCENE_TEMPLATE, dst, fs::copy_options::none, ec);
+    if (ec) return false;
+
+    return true;
 }
 
 bool QEProjectManager::ImportMeshFile(const fs::path& inputFile)
