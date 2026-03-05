@@ -191,31 +191,10 @@ void App::initVulkan()
     this->loadScene(this->scene);
 
     //auto materialBalPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/MaterialBall2/Meshes/3d_material_ball.gltf").generic_string();
-    //auto characterPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Character.gltf").generic_string();
-
-    //std::shared_ptr<QEGameObject> visualCharacter = std::make_shared<QEGameObject>("character");
-    //visualCharacter->AddComponent(std::make_shared<QEGeometryComponent>(std::make_unique<MeshGenerator>(characterPath)));
-    //visualCharacter->AddComponent(std::make_shared<QEMeshRenderer>());
-    ////materialBall->AddComponent(std::make_shared<QEAnimationComponent>());
-
-    //this->gameObjectManager->AddGameObject(visualCharacter);
-
-    //auto floor = std::make_shared<QEGameObject>("floor");
-    //floor->AddComponent(std::make_shared<QEGeometryComponent>(std::make_unique<FloorGenerator>()));
-    //floor->AddComponent(std::make_shared<QEMeshRenderer>());
-    //auto matFloor = materialManager->GetMaterial("defaultPrimitiveMat");
-    //floor->AddComponent(matFloor);
-    //auto transform = floor->GetComponent<QETransform>();
-    //transform->SetLocalScale(glm::vec3(10.0f, 1.0f, 10.0f));
-    //this->gameObjectManager->AddGameObject(floor);
-
-    auto obstacle = gameObjectManager->GetGameObject("Obstacle02");
-    auto collider = std::make_shared<BoxCollider>();
-    auto staticBody = std::make_shared<PhysicsBody>();
-    staticBody->CollisionGroup = CollisionFlag::COL_SCENE;
-    staticBody->Type = PhysicBodyType::STATIC_BODY;
-    obstacle->AddComponent(collider);
-    obstacle->AddComponent(staticBody);
+    //std::shared_ptr<QEGameObject> ball = std::make_shared<QEGameObject>("ball");
+    //ball->AddComponent(std::make_shared<QEGeometryComponent>(std::make_unique<MeshGenerator>(materialBalPath)));
+    //ball->AddComponent(std::make_shared<QEMeshRenderer>());
+    //this->gameObjectManager->AddGameObject(ball);
 
     this->physicsModule->SetGravity(-20.0f);
     this->lightManager->InitializeShadowMaps();

@@ -6,23 +6,45 @@ QEDebugSystem::QEDebugSystem()
     deviceModule_ptr = DeviceModule::getInstance();
 }
 
-void QEDebugSystem::createVertexBuffer()
+void QEDebugSystem::createVertexBuffer(VkDeviceSize requiredBytes)
 {
-    if (lineVertices.empty())
+    if (requiredBytes == 0)
         return;
 
-    VkDeviceSize bufferSize = sizeof(DebugVertex) * lineVertices.size();
-    BufferManageModule::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, lineVertexBuffer, lineVertexMemory, *deviceModule_ptr);
+    // Si ya existe, destruir primero (ojo sincronización si está en uso)
+    if (lineVertexMemory != VK_NULL_HANDLE)
+    {
+        vkDeviceWaitIdle(deviceModule_ptr->device);
+        vkDestroyBuffer(deviceModule_ptr->device, lineVertexBuffer, nullptr);
+        vkFreeMemory(deviceModule_ptr->device, lineVertexMemory, nullptr);
+        lineVertexBuffer = VK_NULL_HANDLE;
+        lineVertexMemory = VK_NULL_HANDLE;
+        lineVertexCapacity = 0;
+    }
 
-    this->updateVertexBuffer();
+    // (Opcional) crecer con margen para evitar recrear cada frame
+    VkDeviceSize newCap = requiredBytes;
+    const VkDeviceSize gran = 4096;
+    newCap = (newCap + (gran - 1)) & ~(gran - 1);
+
+    BufferManageModule::createBuffer(
+        newCap,
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        lineVertexBuffer,
+        lineVertexMemory,
+        *deviceModule_ptr
+    );
+
+    lineVertexCapacity = newCap;
 }
 
 void QEDebugSystem::updateVertexBuffer()
 {
-    if (lineVertices.empty())
-        return;
+    if (lineVertices.empty()) return;
 
     VkDeviceSize bufferSize = sizeof(DebugVertex) * lineVertices.size();
+    assert(bufferSize <= lineVertexCapacity);
 
     // 1. Crear staging buffer (host visible + coherent)
     VkBuffer stagingBuffer;
@@ -77,7 +99,7 @@ void QEDebugSystem::InitializeDebugGraphicResources()
         this->material_debug_ptr->InitializeMaterialData();
     }
 
-    this->createVertexBuffer();
+    this->createVertexBuffer(lineVertexCapacity);
 }
 
 void QEDebugSystem::AddLine(glm::vec3 orig, glm::vec3 end, glm::vec4 color)
@@ -142,14 +164,14 @@ void QEDebugSystem::UpdateGraphicBuffers()
     if (lineVertices.empty())
         return;
 
-    if (lineVertexMemory != VK_NULL_HANDLE)
+    VkDeviceSize requiredBytes = sizeof(DebugVertex) * lineVertices.size();
+
+    if (lineVertexMemory == VK_NULL_HANDLE || requiredBytes > lineVertexCapacity)
     {
-        this->updateVertexBuffer();
+        createVertexBuffer(requiredBytes);
     }
-    else
-    {
-        this->createVertexBuffer();
-    }
+
+    updateVertexBuffer();
 }
 
 void QEDebugSystem::ClearLines()
