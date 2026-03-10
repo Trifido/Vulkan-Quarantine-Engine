@@ -86,6 +86,10 @@ layout (set = 2, binding = 2) readonly buffer cascadeViewProjs
 
 void main()
 {
+    vec4 base = QE_GetBaseColorAlpha(uboMaterial, texSampler, fs_in.TexCoords);
+    //if (uboMaterial.AlphaMode == 1u && base.a < uboMaterial.AlphaCutoff)
+    //    discard;
+        
     vec4 pos_camera_space = cameraData.view * vec4(fs_in.FragPos, 1.0);
     float z_far = FAR_PLANE;
     float z_near = 0.1;
@@ -113,7 +117,9 @@ void main()
     float clearcoat = saturate(uboMaterial.Clearcoat);
     float coatRough = clamp(uboMaterial.ClearcoatRoughness, 0.03, 1.0);
 
-    vec3 albedoColor = QE_GetBaseColor(uboMaterial, texSampler, fs_in.TexCoords);
+    vec3 albedoColor = base.rgb;
+    float alpha = base.a * uboMaterial.Opacity;
+
     vec3 emissiveColor = QE_GetEmissiveColor(uboMaterial, texSampler, fs_in.TexCoords);
 
     float roughness = QE_GetRoughness(uboMaterial, texSampler, fs_in.TexCoords);
@@ -185,5 +191,6 @@ void main()
     }
 
     result += resultPoint + resultDir + resultSpot;
-    outColor = vec4(result, uboMaterial.Opacity);
+    result += emissiveColor;
+    outColor = vec4(result, alpha);
 }

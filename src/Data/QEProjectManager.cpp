@@ -136,10 +136,14 @@ fs::path QEProjectManager::GetMaterialFolderPath()
 
 bool QEProjectManager::InitializeDefaultQEScene(QEScene& scene)
 {
-    if (fs::exists(CURRENT_DEFAULT_SCENE_PATH))
-    {
-        return scene.InitScene(CURRENT_DEFAULT_SCENE_PATH);
-    }
+    return InitializeQEScene(scene, CURRENT_DEFAULT_SCENE_PATH);
+}
 
+bool QEProjectManager::InitializeQEScene(QEScene& scene, const fs::path& scenePath)
+{
+    if (fs::exists(scenePath))
+    {
+        return scene.InitScene(scenePath);
+    }
     return false;
 }

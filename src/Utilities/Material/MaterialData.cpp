@@ -91,6 +91,7 @@ std::unordered_map<std::string, WriteFn> MaterialData::BuildMaterialWriters()
     writeValue("metallicChan", [this] { return MetallicChan; });
     writeValue("roughnessChan", [this] { return RoughnessChan; });
     writeValue("aoChan", [this] { return AOChan; });
+    writeValue("AlphaMode", [this] { return AlphaMode; });
 
     // floats
     writeValue("Opacity", [this] { return Opacity; });
@@ -104,6 +105,7 @@ std::unordered_map<std::string, WriteFn> MaterialData::BuildMaterialWriters()
     writeValue("AO", [this] { return AO; });
     writeValue("Clearcoat", [this] { return Clearcoat; });
     writeValue("ClearcoatRoughness", [this] { return ClearcoatRoughness; });
+    writeValue("AlphaCutoff", [this] { return AlphaCutoff; });
 
     return w;
 }
@@ -122,6 +124,7 @@ MaterialData::MaterialData()
     MetallicChan = 0;
     RoughnessChan = 0;
     AOChan = 0;
+    AlphaMode = 0;
 
     // Índices (slots)
     IDTextures[TEXTURE_TYPE::DIFFUSE_TYPE] = (int)MAT_TEX_SLOT::BaseColor;
@@ -428,6 +431,7 @@ void MaterialData::SetMaterialField(const std::string& nameField_, float value)
     if (nameField == "AO") { AO = value;        UpdateMaterialDataRaw("AO", &AO, sizeof(AO)); return; }
     if (nameField == "Clearcoat") { Clearcoat = value;        UpdateMaterialDataRaw("Clearcoat", &Clearcoat, sizeof(Clearcoat)); return; }
     if (nameField == "ClearcoatRoughness") { ClearcoatRoughness = value;        UpdateMaterialDataRaw("ClearcoatRoughness", &ClearcoatRoughness, sizeof(ClearcoatRoughness)); return; }
+    if (nameField == "AlphaCutoff") { AlphaCutoff = value; UpdateMaterialDataRaw("AlphaCutoff", &AlphaCutoff, sizeof(AlphaCutoff)); return; }
 }
 
 void MaterialData::SetMaterialField(const std::string& nameField_, glm::vec3 value)
@@ -472,10 +476,12 @@ void MaterialData::ApplyDtoPacking(const MaterialDto& dto)
     MetallicChan = dto.metallicChan;
     RoughnessChan = dto.roughnessChan;
     AOChan = dto.aoChan;
+    AlphaMode = dto.AlphaMode;
 
     UpdateMaterialDataRaw("metallicChan", &MetallicChan, sizeof(MetallicChan));
     UpdateMaterialDataRaw("roughnessChan", &RoughnessChan, sizeof(RoughnessChan));
     UpdateMaterialDataRaw("aoChan", &AOChan, sizeof(AOChan));
+    UpdateMaterialDataRaw("AlphaMode", &AlphaMode, sizeof(AlphaMode));
 
     TexMask = dto.texMask;
     UpdateMaterialDataRaw("texMask", &TexMask, sizeof(TexMask));

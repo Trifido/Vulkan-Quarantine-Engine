@@ -20,10 +20,11 @@ void QESessionManager::SetEditorMode(bool value)
     this->_isEditor = value;
 
     auto gameObjectManager = GameObjectManager::getInstance();
-    std::shared_ptr<QEGameObject> cameraObject = gameObjectManager->GetGameObject(NameCameraEditor);
 
-    if (_isEditor || _gameCamera == nullptr)
+    if (_editorCamera == nullptr)
     {
+        std::shared_ptr<QEGameObject> cameraObject = gameObjectManager->GetGameObject(NameCameraEditor);
+
         if (cameraObject == nullptr)
         {
             cameraObject = std::make_shared<QEGameObject>(NameCameraEditor);
@@ -36,10 +37,11 @@ void QESessionManager::SetEditorMode(bool value)
 
             gameObjectManager->AddGameObject(cameraObject);
         }
-    }
-    _editorCamera = cameraObject->GetComponentInChildren<QECamera>();
 
-    this->_activeCamera = (_isEditor || _gameCamera == nullptr) ? _editorCamera : _gameCamera;
+        _editorCamera = cameraObject->GetComponentInChildren<QECamera>();
+    }
+
+    _activeCamera = (_isEditor || !_gameCamera) ? _editorCamera : _gameCamera;
 }
 
 void QESessionManager::SetDebugMode(bool value)
@@ -100,6 +102,9 @@ void QESessionManager::UpdateActiveCameraGPUData()
 
 void QESessionManager::UpdateViewportSize()
 {
+    if (this->_activeCamera == nullptr)
+        return;
+
     auto swapchainModule = SwapChainModule::getInstance();
     this->_activeCamera->UpdateViewportSize(swapchainModule->swapChainExtent);
     this->_activeCamera->UpdateCamera();

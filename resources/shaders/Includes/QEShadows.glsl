@@ -1,7 +1,7 @@
 #ifndef QE_SHADOWS_GLSL
 #define QE_SHADOWS_GLSL
 
-#define SHADOW_OPACITY 0.5
+#define SHADOW_OPACITY 0.1
 #define CSM_COUNT 4
 
 vec3 sampleOffsetDirections[20] = vec3[]

@@ -67,6 +67,7 @@ public:
     float AO = 1.0f;
     float Clearcoat = 0.0f;
     float ClearcoatRoughness = 0.1f;
+    float AlphaCutoff = 0.5f;
 
     // Presence mask: bit por slot (0..7)
     uint32_t TexMask = 0;
@@ -74,6 +75,7 @@ public:
     uint32_t MetallicChan = 0;
     uint32_t RoughnessChan = 0;
     uint32_t AOChan = 0;
+    uint32_t AlphaMode = 0;
 
     // Colors
     glm::vec4 Diffuse = glm::vec4(1.0f);

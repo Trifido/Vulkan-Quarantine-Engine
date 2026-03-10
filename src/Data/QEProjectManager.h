@@ -32,6 +32,7 @@ public:
     static fs::path GetMaterialFolderPath();
 
     static bool InitializeDefaultQEScene(QEScene& scene);
+    static bool InitializeQEScene(QEScene& scene, const fs::path& sceneName);
 };
 
 #endif // !QE_PROJECT_MANAGER

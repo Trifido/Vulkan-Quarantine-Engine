@@ -33,6 +33,7 @@ struct QEPBRMaterialData
     uint metallicChan;
     uint roughnessChan;
     uint aoChan;
+    uint AlphaMode;     // 0=Opaque, 1=Mask, 2=Blend
 
     float Opacity;
     float BumpScaling;
@@ -45,6 +46,8 @@ struct QEPBRMaterialData
     float AO;
     float Clearcoat;
     float ClearcoatRoughness;
+
+    float AlphaCutoff;  // típico 0.5
 };
 
 bool QE_HasTex(uint mask, uint slot)
@@ -67,6 +70,16 @@ vec3 QE_GetBaseColor(QEPBRMaterialData mat, sampler2D texSampler[QE_NUM_TEX], ve
     vec3 c = mat.Diffuse.rgb;
     if (QE_HasTex(mat.texMask, QE_SLOT_BASECOLOR))
         c = texture(texSampler[nonuniformEXT(mat.idxDiffuse)], uv).rgb;
+
+    return c;
+}
+
+vec4 QE_GetBaseColorAlpha(QEPBRMaterialData mat, sampler2D texSampler[QE_NUM_TEX], vec2 uv)
+{
+    vec4 c = mat.Diffuse;
+
+    if (QE_HasTex(mat.texMask, QE_SLOT_BASECOLOR))
+        c = texture(texSampler[nonuniformEXT(mat.idxDiffuse)], uv);
 
     return c;
 }

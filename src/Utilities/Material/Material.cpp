@@ -47,6 +47,7 @@ QEMaterial::QEMaterial(std::shared_ptr<ShaderModule> shader_ptr, const MaterialD
     this->materialData.AO = materialDto.AO;
     this->materialData.Clearcoat = materialDto.Clearcoat;
     this->materialData.ClearcoatRoughness = materialDto.ClearcoatRoughness;
+    this->materialData.AlphaCutoff = materialDto.AlphaCutoff;
 
     this->materialData.Diffuse = materialDto.Diffuse;
     this->materialData.Ambient = materialDto.Ambient;

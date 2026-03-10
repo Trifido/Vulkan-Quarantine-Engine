@@ -44,6 +44,7 @@ struct MaterialDto
     float AO = 1.0f;
     float Clearcoat = 0.0f;
     float ClearcoatRoughness = 0.1f;
+    float AlphaCutoff = 0.5f;
 
     glm::vec4 Diffuse = glm::vec4(1.0f);
     glm::vec4 Ambient = glm::vec4(0.1f);
@@ -65,6 +66,7 @@ struct MaterialDto
     uint32_t metallicChan = 0;
     uint32_t roughnessChan = 0;
     uint32_t aoChan = 0;
+    uint32_t AlphaMode = 0;
 
     MaterialDto() = default;
 

@@ -1,22 +1,47 @@
 AtmosphereDto:
   hasAtmosphere: true
   environmentType: 2
-  sunEulerDegrees: [-45.000004, 45.000004, 0]
+  sunEulerDegrees: [-80, 45, 0]
   sunBaseIntensity: 100
 Materials:
   - ../../QEProjects\QEExamplePBR\QEAssets\QEMaterials\defaultPrimitiveMat.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_11.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_20.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_0.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorDebugAABB.qemat
   - ../../QEProjects\QEExamplePBR\QEAssets\QEMaterials\defaultParticlesMat.qemat
   - ../../QEProjects\QEExamplePBR\QEAssets\QEMaterials\editorDebugCollider.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorGrid.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_1.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_21.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_2.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_22.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_3.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_23.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_4.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_24.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_5.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_6.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_7.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_8.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_9.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_10.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_12.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_13.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_14.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_15.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_16.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_17.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_18.qemat
+  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_19.qemat
 GameObjects:
   - id: X3g5Ayy61leD
     name: QECameraEditor
     components:
       - type: QETransform
         id: YT3CEW8K69rk
-        localPosition: [19.775976, 13.354305, -20.063713]
-        localRotation: [-0.002443943, 0.9877023, 0.15555492, 0.015517916]
+        localPosition: [8.034485, 2.0401726, -0.38818246]
+        localRotation: [0.0006064837, 0.71812415, -0.0006258392, 0.6959145]
         localScale: [1, 1, 1]
         parentId: ""
       - type: QECamera
@@ -31,3 +56,45 @@ GameObjects:
         Speed: 10
         MouseSensitivity: 0.1
         EditorControls: true
+  - id: Ir9oDUTOX7NY
+    name: sponza
+    components:
+      - type: QETransform
+        id: EkZgzUny1swO
+        localPosition: [0, 0, 0]
+        localRotation: [0, 0, 0, 1]
+        localScale: [1, 1, 1]
+        parentId: ""
+      - type: QEGeometryComponent
+        id: bdYSEvWRBLzZ
+        _name: scene
+        _filepath: C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExamplePBR/QEAssets/QEModels/source/Meshes/scene.gltf
+      - type: QEMeshRenderer
+        id: 02h67YrlvBnd
+        IsMeshShaderPipeline: false
+    materials:
+      - Material_0
+      - Material_1
+      - Material_2
+      - Material_3
+      - Material_4
+      - Material_5
+      - Material_6
+      - Material_7
+      - Material_8
+      - Material_9
+      - Material_10
+      - Material_11
+      - Material_12
+      - Material_13
+      - Material_14
+      - Material_15
+      - Material_16
+      - Material_17
+      - Material_18
+      - Material_19
+      - Material_20
+      - Material_21
+      - Material_22
+      - Material_23
+      - Material_24

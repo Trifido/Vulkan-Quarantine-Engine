@@ -767,10 +767,19 @@ void MeshImporter::ExtractAndUpdateMaterials(
         if (!material) continue;
 
         aiString rawName;
-        if (material->Get(AI_MATKEY_NAME, rawName) != AI_SUCCESS)
-            continue;
+        std::string materialName;
 
-        std::string materialName = matManager->CheckName(rawName.C_Str());
+        if (material->Get(AI_MATKEY_NAME, rawName) != AI_SUCCESS || rawName.length == 0)
+        {
+            std::cout << "[MeshImporter] Material sin nombre en índice " << i << ", usando fallback.\n";
+        }
+
+        if (material->Get(AI_MATKEY_NAME, rawName) == AI_SUCCESS && rawName.length > 0)
+            materialName = matManager->CheckName(rawName.C_Str());
+
+        if (materialName.empty())
+            materialName = "Material_" + std::to_string(i);
+
         aiString newName(materialName);
         material->AddProperty(&newName, AI_MATKEY_NAME);
 
@@ -868,12 +877,13 @@ void MeshImporter::ExtractAndUpdateMaterials(
         file.write(reinterpret_cast<const char*>(&matData.Shininess_Strength), sizeof(float));
         file.write(reinterpret_cast<const char*>(&matData.Refractivity), sizeof(float));
 
-        // PBR factors (3)  <--- OJO: en tu ReadQEMaterial van aquí
+        // PBR factors (6)  <--- OJO: en tu ReadQEMaterial van aquí
         file.write(reinterpret_cast<const char*>(&matData.Metallic), sizeof(float));
         file.write(reinterpret_cast<const char*>(&matData.Roughness), sizeof(float));
         file.write(reinterpret_cast<const char*>(&matData.AO), sizeof(float));
         file.write(reinterpret_cast<const char*>(&matData.Clearcoat), sizeof(float));
         file.write(reinterpret_cast<const char*>(&matData.ClearcoatRoughness), sizeof(float));
+        file.write(reinterpret_cast<const char*>(&matData.AlphaCutoff), sizeof(float));
 
         // Colors (6 vec4)
         file.write(reinterpret_cast<const char*>(&matData.Diffuse), sizeof(glm::vec4));
@@ -888,6 +898,7 @@ void MeshImporter::ExtractAndUpdateMaterials(
         file.write(reinterpret_cast<const char*>(&metallicChan), sizeof(uint32_t));
         file.write(reinterpret_cast<const char*>(&roughnessChan), sizeof(uint32_t));
         file.write(reinterpret_cast<const char*>(&aoChan), sizeof(uint32_t));
+        file.write(reinterpret_cast<const char*>(&matData.AlphaMode), sizeof(uint32_t));
 
         // 8 texture slots
         // slot0 diffuse/basecolor, slot1 normal, slot2 metallic, slot3 roughness,
