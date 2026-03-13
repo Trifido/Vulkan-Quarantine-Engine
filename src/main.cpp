@@ -75,7 +75,7 @@ int main(int, char**)
         << exePath.wstring() << L"\n\n";
 #endif
 
-    QEProjectManager::CreateQEProject("QEExample");
+    QEProjectManager::CreateQEProject("QEExamplePBR");
     QEScene scene{};
     QEProjectManager::InitializeDefaultQEScene(scene);
     App app;
