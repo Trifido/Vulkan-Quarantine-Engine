@@ -9,7 +9,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <vulkan/vulkan.hpp>
 
-#include "App.h"
+#include "QEEditorApp.h"
 #include <QEProjectManager.h>
 #include <stdio.h>
 #define FULL_SCREEN false
@@ -78,8 +78,8 @@ int main(int, char**)
     QEProjectManager::CreateQEProject("QEExamplePBR");
     QEScene scene{};
     QEProjectManager::InitializeDefaultQEScene(scene);
-    App app;
-    app.run(scene, true);
-
+    QEEditorApp app;
+    app.Run(scene);
+    //system("pause");
     return 0;
 }

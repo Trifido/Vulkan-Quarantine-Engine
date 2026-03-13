@@ -53,52 +53,35 @@
 #include <QEScene.h>
 #include <QESessionManager.h>
 
-using namespace std;
-
-const string MODEL_PATH = "../../resources/models/head/head.obj";
-const string TEXTURE_WALL_NORMAL_PATH = "../../resources/textures/wall/brickwall_normal.jpg";
-const string MODEL_HOUSE_PATH = "../../resources/models/vikingRoom/viking_room.obj";
-const string MODEL_WHEEL_PATH = "../../resources/models/scifiWheel/source/wheel.glb";
-const string MODEL_KNIGHT_PATH = "../../resources/models/Bulky Knight/source/Big Night For Sketchfab.fbx";
-const string MODEL_GUN_PATH = "../../resources/models/Modified Colt/source/Gun Low Poly.fbx";
-const string MODEL_ATLAS_PATH = "../../resources/models/Atlas/Atlas.obj";
-const string MODEL_ARTORIAS_PATH = "../../resources/models/Artorias/source/Artorias.fbx";
-const string MODEL_ZELDA_PATH = "../../resources/models/Zelda/pose.obj";
-const string MODEL_SURVIVAL_PATH = "../../resources/models/survival/backpack.obj";
-const string MODEL_CRYSIS_PATH = "../../../resources/models/crysis/nanosuit.obj";
-const string MODEL_PUMPKIN_PATH = "../../resources/models/pumpkin/pumpkin.obj";
-
-const string TEXTURE_PATH = "../../resources/models/head/lambertian.jpg";
-const string TEXTURE_BUMP_PATH = "../../resources/models/head/bump.png";
-const string TEXTURE_WALL_PATH = "../../resources/textures/wall/brickwall.jpg";
-const string TEXTURE_TEST_PATH = "../../resources/textures/test.png";
-const string TEXTURE_HOUSE_PATH = "../../resources/textures/viking_room.png";
-const string TEXTURE_SKYBOX_PATH = "skybox/HDRIHaven.jpg";
-const vector<string> TEXTURE_SKYBOX_PATH_FACES = { "skybox/right.jpg", "skybox/left.jpg", "skybox/top.jpg", "skybox/bottom.jpg", "skybox/front.jpg", "skybox/back.jpg" };
-const string TEXTURE_SPHERICAL_MAP_PATH = "skybox/klippad_dawn_1_4k.hdr";
-
-const string TEXTURE_CONTAINER_PATH = "../../resources/textures/container2.png";
-const string TEXTURE_CONTAINERSPEC_PATH = "../../resources/textures/container2_specular.png";
-
 enum class ERROR_RESIZE
 {
     SWAPCHAIN_ERROR = 0,
     IMAGE_ERROR = 1
 };
 
-class App
+class QEBaseApp
 {
 public:
-    App();
-    ~App();
-    void run(QEScene scene, bool isEditorMode);
+    QEBaseApp();
+    virtual ~QEBaseApp() = default;
 
-    void initWindow();
-    void init_imgui();
+    void Run(QEScene scene);
+
+    void InitWindow();
+
+protected:
+    virtual void OnInitialize() {}
+    virtual void OnShutdown() {}
+    virtual void OnBeginFrame() {}
+    virtual void OnEndFrame() {}
+    virtual bool IsEditorMode() const { return false; }
+    virtual void OnPostInitVulkan() {}
+    virtual void OnPreCleanup() {}
+    virtual void OnSwapchainRecreated() {}
+
 private:
     void initVulkan();
     void loadScene(QEScene scene);
-    void saveScene();
     void mainLoop();
     void computeFrame();
     void drawFrame();  
@@ -107,13 +90,12 @@ private:
     void cleanManagers();
     void resizeSwapchain(VkResult result, ERROR_RESIZE errorResize);
     void recreateSwapchain();
-    //bool createFontsTexture(VkCommandBuffer& commandBuffer);
-    //void setupImguiUploadFonts();
-public:
+protected:
     GUIWindow*              mainWindow;
+public:
     bool                    framebufferResized = false;
 
-private:
+protected:
     VulkanInstance          vulkanInstance {};
     VulkanLayerAndExtension layerExtensionModule {};
     DeviceModule*           deviceModule {};
@@ -123,7 +105,6 @@ private:
     FramebufferModule       framebufferModule;
     CommandPoolModule*      commandPoolModule {};
     SynchronizationModule   synchronizationModule;
-    VkDescriptorPool        imguiPool {};
 
     PhysicsModule*          physicsModule;
 
@@ -135,8 +116,6 @@ private:
     bool show_demo_window = true;
     bool show_another_window = true;
     bool isRender = false;
-    bool isRunEditor = true;
-    //FontResourcesModule     fontModule;
 
     //RayTracingModule        raytracingModule;
 

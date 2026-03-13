@@ -1,12 +1,9 @@
-#include "App.h"
+#include "QEBaseApp.h"
 
 #include "SyncTool.h"
 
-#include <backends/imgui_impl_glfw.h>
-#include <backends/imgui_impl_vulkan.h>
 #include <BufferManageModule.h>
 #include <filesystem>
-#include "../Editor/Grid.h"
 #include <QEProjectManager.h>
 #include <QEMeshRenderer.h>
 #include <QESpringArmComponent.h>
@@ -14,7 +11,7 @@
 #include <BoxCollider.h>
 #include "PhysicsBody.h"
 
-App::App()
+QEBaseApp::QEBaseApp()
 {
     this->keyboard_ptr = KeyboardController::getInstance();
     this->queueModule = QueueModule::getInstance();
@@ -28,87 +25,28 @@ App::App()
     this->computePipelineManager = ComputePipelineManager::getInstance();
 }
 
-App::~App()
-{
-
-}
-
-void App::run(QEScene scene, bool isEditorMode)
+void QEBaseApp::Run(QEScene scene)
 {
     this->scene = scene;
-    this->isRunEditor = isEditorMode;
 
-    initWindow();
+    InitWindow();
     initVulkan();
+
+    OnInitialize();
+
     mainLoop();
+
+    OnShutdown();
     cleanUp();
 }
 
-void App::initWindow()
+void QEBaseApp::InitWindow()
 {
     this->mainWindow = GUIWindow::getInstance();
     this->mainWindow->init();
 }
 
-void App::init_imgui()
-{
-    //1: create descriptor pool for IMGUI
-    // the size of the pool is very oversize, but it's copied from imgui demo itself.
-    VkDescriptorPoolSize pool_sizes[] =
-    {
-        { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-        { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
-    };
-
-    VkDescriptorPoolCreateInfo pool_info = {};
-    pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-    pool_info.maxSets = 1000;
-    pool_info.poolSizeCount = (uint32_t)std::size(pool_sizes);
-    pool_info.pPoolSizes = pool_sizes;
-
-    vkCreateDescriptorPool(deviceModule->device, &pool_info, nullptr, &imguiPool);
-
-
-    // 2: initialize imgui library
-
-    //this initializes the core structures of imgui
-    ImGui::CreateContext();
-
-    //this initializes imgui for GLFW
-    ImGui_ImplGlfw_InitForVulkan(mainWindow->window, true);
-
-    //this initializes imgui for Vulkan
-    ImGui_ImplVulkan_InitInfo init_info = {};
-    init_info.Instance = vulkanInstance.getInstance();
-    init_info.PhysicalDevice = deviceModule->physicalDevice;
-    init_info.Device = deviceModule->device;
-    init_info.Queue = queueModule->graphicsQueue;
-    init_info.DescriptorPool = imguiPool;
-    init_info.Subpass = 0;                      // normalmente el primero
-    init_info.RenderPass = *this->renderPassModule->ImGuiRenderPass;
-    init_info.MinImageCount = 3;
-    init_info.ImageCount = 3;
-    init_info.MSAASamples = *deviceModule->getMsaaSamples();//VK_SAMPLE_COUNT_1_BIT;
-
-    ImGui_ImplVulkan_Init(&init_info);
-
-    //execute a gpu command to upload imgui font textures
-    VkCommandBuffer commandBuffer = beginSingleTimeCommands(deviceModule->device, commandPoolModule->getCommandPool());
-    ImGui_ImplVulkan_CreateFontsTexture();
-    endSingleTimeCommands(deviceModule->device, queueModule->graphicsQueue, commandPoolModule->getCommandPool(), commandBuffer);
-}
-
-void App::initVulkan()
+void QEBaseApp::initVulkan()
 {
     vulkanInstance.debug_level = DEBUG_LEVEL::ONLY_ERROR;
     vulkanInstance.createInstance();
@@ -140,7 +78,6 @@ void App::initVulkan()
 
     //Creamos el Render Pass
     renderPassModule = RenderPassModule::getInstance();
-    renderPassModule->CreateImGuiRenderPass(swapchainModule->swapChainImageFormat, *antialiasingModule->msaaSamples);
     renderPassModule->CreateRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
     renderPassModule->CreateDirShadowRenderPass(VK_FORMAT_D32_SFLOAT);
     renderPassModule->CreateOmniShadowRenderPass(VK_FORMAT_R32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT);
@@ -201,40 +138,34 @@ void App::initVulkan()
     this->atmosphereSystem->InitializeAtmosphereResources();
     this->synchronizationModule.createSyncObjects();
 
-    init_imgui();
+    OnPostInitVulkan();
 }
 
-void App::loadScene(QEScene scene)
+void QEBaseApp::loadScene(QEScene scene)
 {
     scene.DeserializeScene();
 
     this->gameObjectManager->StartQEGameObjects();
     this->sessionManager->RegisterActiveSceneCamera();
 
-    //Editor resources initialization
-    this->sessionManager->SetEditorMode(this->isRunEditor);
+    this->sessionManager->SetEditorMode(IsEditorMode());
     this->sessionManager->SetDebugMode(false);
-    this->sessionManager->SetupEditor();
 
-    // Initialize active camera resources
+    if (IsEditorMode())
+    {
+        this->sessionManager->SetupEditor();
+    }
+
     this->sessionManager->ActiveCamera()->QEStart();
-    // Initialize the light manager & the lights
+
     this->lightManager->AddDirShadowMapShader(materialManager->csm_shader);
     this->lightManager->AddOmniShadowMapShader(materialManager->omni_shadow_mapping_shader);
 
-    // Initialize the atmophere system
     this->atmosphereSystem = AtmosphereSystem::getInstance();
     this->atmosphereSystem->LoadAtmosphereDto(scene.atmosphereDto);
 }
 
-void App::saveScene()
-{
-    this->scene.cameraEditor = this->sessionManager->EditorCamera();
-    this->scene.atmosphereDto = this->atmosphereSystem->CreateAtmosphereDto();
-    this->scene.SerializeScene();
-}
-
-void App::mainLoop()
+void QEBaseApp::mainLoop()
 {
     while (!glfwWindowShouldClose(mainWindow->getWindow()))
     {
@@ -271,35 +202,20 @@ void App::mainLoop()
         // UPDATE DEBUG BUFFERS
         this->debugSystem->UpdateGraphicBuffers();
 
-        ImGuiIO& io = ImGui::GetIO();
-        if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false) && sessionManager->IsEditor())
-        {
-            saveScene();
-        }
-
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-        ImGui::Render();
-
-        if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-        {
-            ImGui::UpdatePlatformWindows();
-            ImGui::RenderPlatformWindowsDefault();
-        }
+        OnBeginFrame();
 
         this->computeFrame();
         this->drawFrame();
+
+        OnEndFrame();
     }
     vkDeviceWaitIdle(deviceModule->device);
-
-    ImGui_ImplVulkan_Shutdown();
-    vkDestroyDescriptorPool(deviceModule->device, imguiPool, nullptr);
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
 }
 
-void App::cleanUp()
+void QEBaseApp::cleanUp()
 {
+    OnPreCleanup();
+
     this->shaderManager->Clean();
 
     //this->OmniShadowResources->cleanup();
@@ -316,7 +232,6 @@ void App::cleanUp()
     this->atmosphereSystem->Cleanup();
     this->gameObjectManager->ReleaseAllGameObjects();
     this->particleSystemManager->Cleanup();
-    this->sessionManager->CleanEditorResources();
     this->sessionManager->CleanCullingResources();
     this->debugSystem->Cleanup();
 
@@ -344,7 +259,7 @@ void App::cleanUp()
     this->cleanManagers();
 }
 
-void App::cleanUpSwapchain()
+void QEBaseApp::cleanUpSwapchain()
 {
     antialiasingModule->cleanup();
     depthBufferModule->cleanup();
@@ -361,7 +276,7 @@ void App::cleanUpSwapchain()
     swapchainModule->cleanup();
 }
 
-void App::cleanManagers()
+void QEBaseApp::cleanManagers()
 {
     //delete this->renderPassModule;
     this->renderPassModule = nullptr;
@@ -441,7 +356,7 @@ void App::cleanManagers()
     this->deviceModule = nullptr;
 }
 
-void App::computeFrame()
+void QEBaseApp::computeFrame()
 {
     if (this->isRender)
     {
@@ -456,7 +371,7 @@ void App::computeFrame()
     }
 }
 
-void App::drawFrame()
+void QEBaseApp::drawFrame()
 {
     synchronizationModule.synchronizeWaitFences();
 
@@ -478,7 +393,7 @@ void App::drawFrame()
     this->isRender = true;
 }
 
-void App::resizeSwapchain(VkResult result, ERROR_RESIZE errorResize)
+void QEBaseApp::resizeSwapchain(VkResult result, ERROR_RESIZE errorResize)
 {
     if (errorResize == ERROR_RESIZE::SWAPCHAIN_ERROR)
     {
@@ -506,7 +421,7 @@ void App::resizeSwapchain(VkResult result, ERROR_RESIZE errorResize)
     }
 }
 
-void App::recreateSwapchain()
+void QEBaseApp::recreateSwapchain()
 {
     mainWindow->checkMinimize();
 
@@ -528,7 +443,6 @@ void App::recreateSwapchain()
     depthBufferModule->createDepthResources(swapchainModule->swapChainExtent, commandPoolModule->getCommandPool());
 
     //Recreamos el render pass
-    renderPassModule->CreateImGuiRenderPass(swapchainModule->swapChainImageFormat, *antialiasingModule->msaaSamples);
     renderPassModule->CreateRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
     renderPassModule->CreateDirShadowRenderPass(VK_FORMAT_D32_SFLOAT);
     renderPassModule->CreateOmniShadowRenderPass(VK_FORMAT_R32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT);
@@ -544,4 +458,6 @@ void App::recreateSwapchain()
 
     commandPoolModule->recreateCommandBuffers();
     commandPoolModule->Render(&framebufferModule);
+
+    OnSwapchainRecreated();
 }
