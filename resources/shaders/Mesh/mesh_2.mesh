@@ -4,6 +4,8 @@
 #extension GL_EXT_shader_16bit_storage: require
 #extension GL_EXT_shader_8bit_storage: require
 
+#include "../Includes/QECommon.glsl"
+
 layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 layout(triangles, max_vertices = 96, max_primitives = 32) out;
 
@@ -32,14 +34,10 @@ struct PBRVertex
     float boneWeights[4];
 };
 
-layout(set = 0, binding = 0) uniform CameraUniform
+layout(set = 0, binding = 0, std140) uniform UniformCamera
 {
-	mat4 view;
-	mat4 proj;
-	mat4 viewproj;
-    vec4 position;
-    vec4 frustumPlanes[6];
-} cameraData;
+    QECameraData cameraData;
+};
 
 layout(set = 0, binding = 1) readonly buffer Meshlets
 {

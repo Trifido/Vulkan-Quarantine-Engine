@@ -10,7 +10,6 @@
 #include <QEProjectManager.h>
 #include <QEMeshRenderer.h>
 #include <QESpringArmComponent.h>
-#include <DebugController.h>
 #include <PlaneCollider.h>
 #include <BoxCollider.h>
 #include "PhysicsBody.h"
@@ -180,7 +179,7 @@ void App::initVulkan()
     this->debugSystem->InitializeDebugGraphicResources();
 
     // Import meshes
-    //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Street/street_asset_pack.glb");
+    //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Character.glb");
 
     // Import animations
     //QEProjectManager::ImportAnimationFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Walking.glb",
@@ -190,6 +189,12 @@ void App::initVulkan()
     //auto streetPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/FuturisticRoom/Meshes/sci-fi_lab.gltf").generic_string();
     // Load Scene
     this->loadScene(this->scene);
+
+    //auto materialBalPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/MaterialBall2/Meshes/3d_material_ball.gltf").generic_string();
+    //std::shared_ptr<QEGameObject> ball = std::make_shared<QEGameObject>("ball");
+    //ball->AddComponent(std::make_shared<QEGeometryComponent>(std::make_unique<MeshGenerator>(materialBalPath)));
+    //ball->AddComponent(std::make_shared<QEMeshRenderer>());
+    //this->gameObjectManager->AddGameObject(ball);
 
     this->physicsModule->SetGravity(-20.0f);
     this->lightManager->InitializeShadowMaps();
@@ -462,7 +467,7 @@ void App::drawFrame()
     //this->lightManager->UpdateUBOLight();
     this->materialManager->UpdateUniforms();
 
-    vkDeviceWaitIdle(deviceModule->device);
+    //vkDeviceWaitIdle(deviceModule->device);
 
     commandPoolModule->Render(&framebufferModule);
 

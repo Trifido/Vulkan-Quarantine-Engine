@@ -9,7 +9,7 @@ PlaneCollider::PlaneCollider()
 
 PlaneCollider::PlaneCollider(const float& newSize, const glm::vec3& newOrientation)
 {
-    this->SetPlane(this->Size, this->Orientation);
+    this->SetPlane(newSize, newOrientation);
 }
 
 void PlaneCollider::QEStart()

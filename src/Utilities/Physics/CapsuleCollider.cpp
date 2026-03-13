@@ -13,9 +13,6 @@ void CapsuleCollider::QEStart()
 
 bool CapsuleCollider::TryAutoFit()
 {
-    auto tr = Owner->GetComponent<QETransform>();
-    std::cout << "Children transforms: " << (tr ? tr->GetChildren().size() : 0) << "\n";
-
     auto boundingBox = Owner->GetComponentInChildren<AABBObject>(true);
     if (!boundingBox) return false;
 

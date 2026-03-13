@@ -425,6 +425,15 @@ void QEAnimationComponent::QEInit()
             this->animator->PlayAnimation(entryAnimation->second, entryState->second.Loop);
         }
     }
+    else
+    {
+        auto anim = _animations.begin();
+
+        if (anim != _animations.end())
+        {
+            this->animator->PlayAnimation(anim->second, true);
+        }
+    }
 
     QEGameComponent::QEInit();
 }

@@ -84,7 +84,17 @@ JPH::ObjectLayer PhysicsBody::ResolveObjectLayer(const PhysicBodyType type, cons
 
 void PhysicsBody::Initialize()
 {
-    if (!collider || !collider->colShape || !transform) return;
+    if (_QEInitialized || !collider || !collider->colShape || !transform) return;
+
+    if (!body.IsInvalid())
+    {
+        return;
+    }
+    else
+    {
+        PhysicsModule::getInstance()->RemoveRigidBody(body);
+        body = JPH::BodyID();
+    }
 
     RebuildScaledShapeFromCollider();
 
@@ -131,6 +141,8 @@ void PhysicsBody::Initialize()
     currPos = pos; currRot = rot;
     prevPos = pos; prevRot = rot;
     hasCurr = true;
+
+    _QEInitialized = true;
 }
 
 void PhysicsBody::copyTransformtoGLM()

@@ -129,7 +129,8 @@ void MaterialManager::InitializeMaterialManager()
     {
         if (this->default_particles_shader != nullptr)
         {
-            this->AddMaterial(std::make_shared<QEMaterial>(QEMaterial("defaultParticlesMat", this->default_particles_shader)));
+            auto mat = std::make_shared<QEMaterial>("defaultParticlesMat", this->default_particles_shader);
+            this->AddMaterial(mat);
             this->_materials["defaultParticlesMat"]->layer = (int)RenderLayer::PARTICLES;
         }
     }
@@ -169,7 +170,8 @@ void MaterialManager::CreateDefaultPrimitiveMaterial()
     {
         if (this->default_primitive_shader != nullptr)
         {
-            this->AddMaterial(std::make_shared<QEMaterial>(QEMaterial("defaultPrimitiveMat", this->default_primitive_shader)));
+            auto mat = std::make_shared<QEMaterial>("defaultPrimitiveMat", this->default_primitive_shader);
+            this->AddMaterial(mat);
         }
     }
 
@@ -177,8 +179,9 @@ void MaterialManager::CreateDefaultPrimitiveMaterial()
     {
         if (this->mesh_shader_test != nullptr)
         {
-            this->AddMaterial(std::make_shared<QEMaterial>(QEMaterial("defaultMeshPrimitiveMat", this->mesh_shader_test)));
-            _materials["defaultMeshPrimitiveMat"]->SetMeshShaderPipeline(true);
+            auto mat = std::make_shared<QEMaterial>("defaultMeshPrimitiveMat", this->mesh_shader_test);
+            this->AddMaterial(mat);
+            this->_materials["defaultMeshPrimitiveMat"]->SetMeshShaderPipeline(true);
         }
     }
 }
@@ -186,13 +189,13 @@ void MaterialManager::CreateDefaultPrimitiveMaterial()
 void MaterialManager::CreateMaterial(std::string& nameMaterial)
 {
     nameMaterial = CheckName(nameMaterial);
-    this->AddMaterial(std::make_shared<QEMaterial>(QEMaterial(nameMaterial, this->default_shader)));
+    this->AddMaterial(std::make_shared<QEMaterial>(nameMaterial, this->default_shader));
 }
 
 void MaterialManager::CreateMeshShaderMaterial(std::string& nameMaterial)
 {
     nameMaterial = CheckName(nameMaterial);
-    this->AddMaterial(std::make_shared<QEMaterial>(QEMaterial(nameMaterial, this->mesh_shader_test)));
+    this->AddMaterial(std::make_shared<QEMaterial>(nameMaterial, this->mesh_shader_test));
     //_materials[nameMaterial]->SetMeshShaderPipeline(true);
 }
 
@@ -294,31 +297,32 @@ std::vector<MaterialDto> MaterialManager::GetMaterialDtos(std::ifstream& file)
 
 MaterialDto MaterialManager::ReadQEMaterial(std::ifstream& matfile)
 {
-    int materialPathLength;
-    int shaderPathLength;
-    int nameLength;
-    int diffuseLength;
-    int normalLength;
-    int specularLength;
-    int emissiveLength;
-    int heightLength;
+    MaterialDto materialDto{};
 
-    MaterialDto materialDto {};
+    auto readString = [&](std::string& out)
+        {
+            int len = 0;
+            matfile.read(reinterpret_cast<char*>(&len), sizeof(int));
+            if (len > 0)
+            {
+                out.resize(len);
+                matfile.read(out.data(), len);
+            }
+            else
+            {
+                out.clear();
+            }
+        };
 
-    matfile.read(reinterpret_cast<char*>(&nameLength), sizeof(nameLength));
-    materialDto.Name.resize(nameLength);
-    matfile.read(&materialDto.Name[0], nameLength);
+    // Header strings
+    readString(materialDto.Name);
+    readString(materialDto.FilePath);
+    readString(materialDto.ShaderPath);
 
-    matfile.read(reinterpret_cast<char*>(&materialPathLength), sizeof(materialPathLength));
-    materialDto.FilePath.resize(materialPathLength);
-    matfile.read(&materialDto.FilePath[0], materialPathLength);
-
-    matfile.read(reinterpret_cast<char*>(&shaderPathLength), sizeof(shaderPathLength));
-    materialDto.ShaderPath.resize(shaderPathLength);
-    matfile.read(&materialDto.ShaderPath[0], shaderPathLength);
-
+    // Layer
     matfile.read(reinterpret_cast<char*>(&materialDto.layer), sizeof(int));
 
+    // Scalars legacy
     matfile.read(reinterpret_cast<char*>(&materialDto.Opacity), sizeof(float));
     matfile.read(reinterpret_cast<char*>(&materialDto.BumpScaling), sizeof(float));
     matfile.read(reinterpret_cast<char*>(&materialDto.Shininess), sizeof(float));
@@ -326,47 +330,36 @@ MaterialDto MaterialManager::ReadQEMaterial(std::ifstream& matfile)
     matfile.read(reinterpret_cast<char*>(&materialDto.Shininess_Strength), sizeof(float));
     matfile.read(reinterpret_cast<char*>(&materialDto.Refractivity), sizeof(float));
 
-    matfile.read(reinterpret_cast<char*>(&materialDto.Diffuse[0]), sizeof(glm::vec4));
+    // PBR factors
+    matfile.read(reinterpret_cast<char*>(&materialDto.Metallic), sizeof(float));
+    matfile.read(reinterpret_cast<char*>(&materialDto.Roughness), sizeof(float));
+    matfile.read(reinterpret_cast<char*>(&materialDto.AO), sizeof(float));
+    matfile.read(reinterpret_cast<char*>(&materialDto.Clearcoat), sizeof(float));
+    matfile.read(reinterpret_cast<char*>(&materialDto.ClearcoatRoughness), sizeof(float));
+
+    // Colors
+    matfile.read(reinterpret_cast<char*>(&materialDto.Diffuse), sizeof(glm::vec4));
     matfile.read(reinterpret_cast<char*>(&materialDto.Ambient), sizeof(glm::vec4));
     matfile.read(reinterpret_cast<char*>(&materialDto.Specular), sizeof(glm::vec4));
     matfile.read(reinterpret_cast<char*>(&materialDto.Emissive), sizeof(glm::vec4));
     matfile.read(reinterpret_cast<char*>(&materialDto.Transparent), sizeof(glm::vec4));
     matfile.read(reinterpret_cast<char*>(&materialDto.Reflective), sizeof(glm::vec4));
 
-    matfile.read(reinterpret_cast<char*>(&diffuseLength), sizeof(diffuseLength));
-    if (diffuseLength > 0)
-    {
-        materialDto.diffuseTexturePath.resize(diffuseLength);
-        matfile.read(&materialDto.diffuseTexturePath[0], diffuseLength);
-    }
+    // Mask + channels (NEW)
+    matfile.read(reinterpret_cast<char*>(&materialDto.texMask), sizeof(uint32_t));
+    matfile.read(reinterpret_cast<char*>(&materialDto.metallicChan), sizeof(uint32_t));
+    matfile.read(reinterpret_cast<char*>(&materialDto.roughnessChan), sizeof(uint32_t));
+    matfile.read(reinterpret_cast<char*>(&materialDto.aoChan), sizeof(uint32_t));
 
-    matfile.read(reinterpret_cast<char*>(&normalLength), sizeof(normalLength));
-    if (normalLength > 0)
-    {
-        materialDto.normalTexturePath.resize(normalLength);
-        matfile.read(&materialDto.normalTexturePath[0], normalLength);
-    }
-
-    matfile.read(reinterpret_cast<char*>(&specularLength), sizeof(specularLength));
-    if (specularLength > 0)
-    {
-        materialDto.specularTexturePath.resize(specularLength);
-        matfile.read(&materialDto.specularTexturePath[0], specularLength);
-    }
-
-    matfile.read(reinterpret_cast<char*>(&emissiveLength), sizeof(emissiveLength));
-    if (emissiveLength > 0)
-    {
-        materialDto.emissiveTexturePath.resize(emissiveLength);
-        matfile.read(&materialDto.emissiveTexturePath[0], emissiveLength);
-    }
-
-    matfile.read(reinterpret_cast<char*>(&heightLength), sizeof(heightLength));
-    if (heightLength > 0)
-    {
-        materialDto.heightTexturePath.resize(heightLength);
-        matfile.read(&materialDto.heightTexturePath[0], heightLength);
-    }
+    // 8 texture slots
+    readString(materialDto.diffuseTexturePath);    // slot 0
+    readString(materialDto.normalTexturePath);     // slot 1
+    readString(materialDto.metallicTexturePath);   // slot 2
+    readString(materialDto.roughnessTexturePath);  // slot 3
+    readString(materialDto.aoTexturePath);         // slot 4
+    readString(materialDto.emissiveTexturePath);   // slot 5
+    readString(materialDto.heightTexturePath);     // slot 6
+    readString(materialDto.specularTexturePath);   // slot 7
 
     return materialDto;
 }

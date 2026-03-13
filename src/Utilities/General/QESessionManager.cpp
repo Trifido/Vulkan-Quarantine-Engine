@@ -12,7 +12,7 @@ QESessionManager::QESessionManager()
 {
     auto deviceModule = DeviceModule::getInstance();
     this->cameraUBO = std::make_shared<UniformBufferObject>();
-    this->cameraUBO->CreateUniformBuffer(sizeof(CameraUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->cameraUBO->CreateUniformBuffer(sizeof(UniformCamera), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 }
 
 void QESessionManager::SetEditorMode(bool value)
@@ -20,10 +20,11 @@ void QESessionManager::SetEditorMode(bool value)
     this->_isEditor = value;
 
     auto gameObjectManager = GameObjectManager::getInstance();
-    std::shared_ptr<QEGameObject> cameraObject = gameObjectManager->GetGameObject(NameCameraEditor);
 
-    if (_isEditor || _gameCamera == nullptr)
+    if (_editorCamera == nullptr)
     {
+        std::shared_ptr<QEGameObject> cameraObject = gameObjectManager->GetGameObject(NameCameraEditor);
+
         if (cameraObject == nullptr)
         {
             cameraObject = std::make_shared<QEGameObject>(NameCameraEditor);
@@ -36,10 +37,11 @@ void QESessionManager::SetEditorMode(bool value)
 
             gameObjectManager->AddGameObject(cameraObject);
         }
-    }
-    _editorCamera = cameraObject->GetComponentInChildren<QECamera>();
 
-    this->_activeCamera = (_isEditor || _gameCamera == nullptr) ? _editorCamera : _gameCamera;
+        _editorCamera = cameraObject->GetComponentInChildren<QECamera>();
+    }
+
+    _activeCamera = (_isEditor || !_gameCamera) ? _editorCamera : _gameCamera;
 }
 
 void QESessionManager::SetDebugMode(bool value)
@@ -91,8 +93,8 @@ void QESessionManager::UpdateActiveCameraGPUData()
         for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
         {
             void* data;
-            vkMapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame], 0, sizeof(CameraUniform), 0, &data);
-            memcpy(data, static_cast<const void*>(this->_activeCamera->CameraData.get()), sizeof(CameraUniform));
+            vkMapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame], 0, sizeof(UniformCamera), 0, &data);
+            memcpy(data, static_cast<const void*>(this->_activeCamera->CameraData.get()), sizeof(UniformCamera));
             vkUnmapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame]);
         }
     }
@@ -100,6 +102,9 @@ void QESessionManager::UpdateActiveCameraGPUData()
 
 void QESessionManager::UpdateViewportSize()
 {
+    if (this->_activeCamera == nullptr)
+        return;
+
     auto swapchainModule = SwapChainModule::getInstance();
     this->_activeCamera->UpdateViewportSize(swapchainModule->swapChainExtent);
     this->_activeCamera->UpdateCamera();

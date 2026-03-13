@@ -11,7 +11,7 @@
 
 struct DescriptorBindingReflect
 {
-    VkShaderStageFlagBits stage;
+    VkShaderStageFlags stage = 0;
     uint32_t set;
     uint32_t binding;
     VkDescriptorType type;
@@ -26,10 +26,10 @@ struct DescriptorBindingReflect
 
 struct DescriptorSetReflect
 {
-    VkShaderStageFlagBits stage;
+    VkShaderStageFlags stage = 0;
     uint32_t set;
     uint32_t bindingCount;
-    DescriptorBindingReflect* bindings;
+    std::vector<DescriptorBindingReflect> bindings;
 
     bool Exist(const DescriptorBindingReflect& d)
     {
@@ -63,6 +63,13 @@ struct InputVars
     }
 };
 
+struct ReflectedMember
+{
+    std::string name;
+    uint32_t offset = 0;
+    uint32_t size = 0;
+};
+
 bool compareByLocation(const InputVars& a, const InputVars& b);
 
 class ReflectShader
@@ -71,7 +78,7 @@ private:
     std::vector<std::string> nativesVariables;
 public:
     std::vector<InputVars> inputVariables;
-    std::unordered_map<int, std::unordered_map<std::string, DescriptorBindingReflect>> bindings;
+    std::unordered_map<uint32_t, std::unordered_map<uint32_t, DescriptorBindingReflect>> bindings;
     std::vector<DescriptorSetReflect> descriptorSetReflect;
     bool isAnimationShader = false;
     bool isUBOMaterial = false;
@@ -79,7 +86,7 @@ public:
     bool isShaderReflected = false;
     bool HasPointShadows = false;
     bool HasDirectionalShadows = false;
-    std::vector<std::string> materialUBOComponents;
+    std::vector<ReflectedMember> materialUBOMembers;
     std::vector<std::string> animationUBOComponents;
     VkDeviceSize materialBufferSize = 0;
     VkDeviceSize animationBufferSize = 0;

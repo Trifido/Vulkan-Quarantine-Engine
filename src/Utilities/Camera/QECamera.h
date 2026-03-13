@@ -33,7 +33,7 @@ protected:
 
 public:
     std::shared_ptr<FrustumComponent> _frustumComponent;
-    std::shared_ptr<CameraUniform> CameraData;
+    std::shared_ptr<UniformCamera> CameraData;
 
     REFLECT_PROPERTY(float, Width)
     REFLECT_PROPERTY(float, Height)

@@ -104,5 +104,5 @@ void AABBObject::QEDestroy()
         return;
     }
 
-    QEGameComponent::QEDestroy();
+    QEGeometryComponent::QEDestroy();
 }

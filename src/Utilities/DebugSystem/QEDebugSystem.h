@@ -16,6 +16,7 @@ private:
     VkBuffer lineVertexBuffer = VK_NULL_HANDLE;
     VkDeviceMemory lineVertexMemory = VK_NULL_HANDLE;
     std::vector<DebugVertex> lineVertices;
+    VkDeviceSize lineVertexCapacity = 0;
 
     glm::vec4 debugColor = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
 
@@ -25,7 +26,7 @@ private:
     bool enabled = false;
 
 private:
-    void createVertexBuffer();
+    void createVertexBuffer(VkDeviceSize requiredBytes);
     void updateVertexBuffer();
 
 public:

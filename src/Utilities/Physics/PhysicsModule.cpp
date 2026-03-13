@@ -135,8 +135,12 @@ PhysicsModule::PhysicsModule()
 
 PhysicsModule::~PhysicsModule()
 {
-    delete Factory::sInstance;
-    Factory::sInstance = nullptr;
+    delete DebugDrawer;
+    DebugDrawer = nullptr;
+
+    JPH::UnregisterTypes();
+    delete JPH::Factory::sInstance;
+    JPH::Factory::sInstance = nullptr;
 }
 
 JPH::BodyID PhysicsModule::AddRigidBody(const BodyCreationSettings& settings, EActivation act)
@@ -200,4 +204,6 @@ void PhysicsModule::UpdateDebugPhysicsDrawer()
             cc->DebugDraw(*DebugDrawer);
         }
     }
+
+    DebugDrawer->NextFrame();
 }

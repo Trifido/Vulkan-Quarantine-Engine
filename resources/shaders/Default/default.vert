@@ -1,6 +1,8 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
+#include "../Includes/QECommon.glsl"
+
 layout(location = 0) in vec4 inPosition;
 layout(location = 1) in vec4 inNormal;
 layout(location = 2) in vec2 inTexCoord;
@@ -14,14 +16,10 @@ layout(location = 0) out VS_OUT {
     vec2 TexCoords;
 } vs_out;
 
-layout(set = 0, binding = 0) uniform CameraUniform
+layout(set = 0, binding = 0, std140) uniform UniformCamera
 {
-	mat4 view;
-	mat4 proj;
-	mat4 viewproj;
-    vec4 position;
-    vec4 frustumPlanes[6];
-} cameraData;
+    QECameraData cameraData;
+};
 
 layout(std430, push_constant) uniform PushConstants
 {

@@ -28,13 +28,13 @@ struct LightManagerUniform
     uint32_t numLights;
 };
 
-struct CameraUniform
+struct alignas(16) UniformCamera
 {
     glm::mat4 View;
     glm::mat4 Projection;
     glm::mat4 Viewproj;
     glm::vec4 WPosition;
-    alignas(16) glm::vec4 FrustumPlanes[6];
+    glm::vec4 FrustumPlanes[6];
 };
 
 struct ScreenResolutionUniform
@@ -56,6 +56,9 @@ struct MaterialUniform
     int idxSpecular;
     int idxEmissive;
     int idxHeight;
+    int idxMetallic;
+    int idxRoughness;
+    int idxAO;
 
     float Opacity;
     float BumpScaling;
@@ -63,6 +66,9 @@ struct MaterialUniform
     float Refractivity;
     float Shininess;
     float Shininess_Strength;
+    float Metallic;
+    float Roughness;
+    float AO;
 };
 
 struct ParticleSystemUniform

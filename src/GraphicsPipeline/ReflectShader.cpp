@@ -21,6 +21,31 @@ static VkDescriptorType ToVkDescriptorType(SpvReflectDescriptorType t) {
     }
 }
 
+static void FlattenBlockVariable(
+    const SpvReflectBlockVariable& var,
+    const std::string& prefix,
+    std::vector<ReflectedMember>& out)
+{
+    const char* rawName = var.name ? var.name : "";
+    std::string fullName = prefix.empty() ? std::string(rawName)
+        : (prefix + "." + rawName);
+
+    if (var.member_count == 0)
+    {
+        ReflectedMember m{};
+        m.name = fullName;
+        m.offset = var.offset;
+        m.size = var.size;
+        out.push_back(m);
+        return;
+    }
+
+    for (uint32_t i = 0; i < var.member_count; ++i)
+    {
+        FlattenBlockVariable(var.members[i], fullName, out);
+    }
+}
+
 bool compareByLocation(const InputVars& a, const InputVars& b)
 {
     return a.location < b.location;
@@ -657,79 +682,88 @@ void ReflectShader::CheckStage(DescriptorSetReflect& descripReflect, const SpvRe
 {
     switch (obj.shader_stage) {
     default:
-        break;
+        descripReflect.stage = 0; break;
     case SPV_REFLECT_SHADER_STAGE_VERTEX_BIT:
-        descripReflect.stage = VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT;
+        descripReflect.stage = VK_SHADER_STAGE_VERTEX_BIT;
         break;
     case SPV_REFLECT_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
-        descripReflect.stage = VkShaderStageFlagBits::VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+        descripReflect.stage = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
         break;
     case SPV_REFLECT_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
-        descripReflect.stage = VkShaderStageFlagBits::VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+        descripReflect.stage = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
         break;
     case SPV_REFLECT_SHADER_STAGE_GEOMETRY_BIT:
-        descripReflect.stage = VkShaderStageFlagBits::VK_SHADER_STAGE_GEOMETRY_BIT;
+        descripReflect.stage = VK_SHADER_STAGE_GEOMETRY_BIT;
         break;
     case SPV_REFLECT_SHADER_STAGE_FRAGMENT_BIT:
-        descripReflect.stage = VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT;
+        descripReflect.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
         break;
     case SPV_REFLECT_SHADER_STAGE_COMPUTE_BIT:
-        descripReflect.stage = VkShaderStageFlagBits::VK_SHADER_STAGE_COMPUTE_BIT;
+        descripReflect.stage = VK_SHADER_STAGE_COMPUTE_BIT;
         break;
     case SPV_REFLECT_SHADER_STAGE_TASK_BIT_EXT:
-        descripReflect.stage = VkShaderStageFlagBits::VK_SHADER_STAGE_TASK_BIT_EXT;
+        descripReflect.stage = VK_SHADER_STAGE_TASK_BIT_EXT;
         break;
     case SPV_REFLECT_SHADER_STAGE_MESH_BIT_EXT:
-        descripReflect.stage = VkShaderStageFlagBits::VK_SHADER_STAGE_MESH_BIT_EXT;
+        descripReflect.stage = VK_SHADER_STAGE_MESH_BIT_EXT;
         break;
     }
 }
 
 void ReflectShader::CheckDescriptorSet(DescriptorSetReflect& descripReflect, const SpvReflectDescriptorSet& obj, const char* indent)
 {
-    std::string tt = std::string(indent) + "  ";
-    std::string ttttt = std::string(indent) + "    ";
-
     descripReflect.set = obj.set;
-    descripReflect.bindingCount = obj.binding_count;
-    descripReflect.bindings = new DescriptorBindingReflect[obj.binding_count];
+    descripReflect.bindings.clear();
+    descripReflect.bindings.reserve(obj.binding_count);
 
-    for (uint32_t i = 0; i < obj.binding_count; ++i) {
-        const SpvReflectDescriptorBinding& binding = *obj.bindings[i];
-        descripReflect.bindings[i] = GetDescriptorBinding(binding, false);
-        descripReflect.bindings[i].set = obj.set;
-        descripReflect.bindings[i].stage = descripReflect.stage;
+    for (uint32_t i = 0; i < obj.binding_count; ++i)
+    {
+        const SpvReflectDescriptorBinding& b = *obj.bindings[i];
 
-        auto bindingIdx = this->bindings[obj.set].find(descripReflect.bindings[i].name);
+        DescriptorBindingReflect br = GetDescriptorBinding(b, false);
+        br.set = obj.set;
+        br.stage = descripReflect.stage;
 
-        if (bindingIdx == this->bindings[obj.set].end())
+        descripReflect.bindings.push_back(br);
+
+        auto& setMap = this->bindings[obj.set];
+        auto it = setMap.find(br.binding);
+
+        if (it == setMap.end())
         {
-            this->bindings[obj.set][descripReflect.bindings[i].name] = descripReflect.bindings[i];
+            setMap.emplace(br.binding, br);
         }
         else
         {
-            this->bindings[obj.set][descripReflect.bindings[i].name].stage = (VkShaderStageFlagBits)(descripReflect.bindings[i].stage | this->bindings[obj.set][descripReflect.bindings[i].name].stage);
+            it->second.stage |= br.stage;
         }
     }
 }
 
 void ReflectShader::CheckUBOMaterial(SpvReflectDescriptorSet* set)
 {
-    if (!this->isUBOMaterial)
+    if (this->isUBOMaterial) return;
+
+    for (uint32_t b = 0; b < set->binding_count && !this->isUBOMaterial; b++)
     {
-        for (uint32_t b = 0; b < set->binding_count && !this->isUBOMaterial; b++)
+        const SpvReflectDescriptorBinding* binding = set->bindings[b];
+        if (!binding) continue;
+
+        if (binding->block.name == nullptr) continue;
+
+        if (binding->descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER &&
+            set->set == 0 && binding->binding == 1)
         {
-            if (set->bindings[b]->block.name != NULL)
+            this->isUBOMaterial = true;
+            this->materialBufferSize = binding->block.size;
+
+            materialUBOMembers.clear();
+            materialUBOMembers.reserve(binding->block.member_count * 8);
+
+            for (uint32_t m = 0; m < binding->block.member_count; m++)
             {
-                if (strcmp(set->bindings[b]->block.name, "uboMaterial") == 0)
-                {
-                    this->isUBOMaterial = true;
-                    this->materialBufferSize = set->bindings[b]->block.size;
-                    for (uint32_t m = 0; m < set->bindings[b]->block.member_count; m++)
-                    {
-                        materialUBOComponents.push_back(set->bindings[b]->block.members[m].name);
-                    }
-                }
+                const SpvReflectBlockVariable& mem = binding->block.members[m];
+                FlattenBlockVariable(mem, "", materialUBOMembers);
             }
         }
     }
@@ -777,22 +811,21 @@ void ReflectShader::CheckShadowMaps(SpvReflectDescriptorSet* set)
 
 DescriptorBindingReflect ReflectShader::GetDescriptorBinding(const SpvReflectDescriptorBinding& obj, bool write_set)
 {
-    DescriptorBindingReflect descriptor = DescriptorBindingReflect();
+    DescriptorBindingReflect descriptor{};
 
     descriptor.binding = obj.binding;
     descriptor.type = ToVkDescriptorType(obj.descriptor_type);
 
-    if(obj.array.dims_count > 0)
+    descriptor.arraySize = 1;
+    if (obj.array.dims_count > 0)
         descriptor.arraySize = obj.array.dims[0];
 
-    if (obj.type_description->type_name != NULL)
+    descriptor.name = (obj.name ? obj.name : "");
+    if (obj.type_description && obj.type_description->type_name && strlen(obj.type_description->type_name) > 0)
         descriptor.name = obj.type_description->type_name;
-    else if (strcmp(obj.name, "texSampler") == 0)
-    {
+
+    if (obj.name && strcmp(obj.name, "texSampler") == 0)
         descriptor.name = "Texture2DArray";
-    }
-    else
-        descriptor.name = obj.name;
 
     return descriptor;
 }

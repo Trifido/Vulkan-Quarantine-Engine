@@ -1,38 +1,92 @@
 AtmosphereDto:
   hasAtmosphere: true
   environmentType: 2
-  sunEulerDegrees: [-45.000004, 45.000004, 0]
+  sunEulerDegrees: [-45.000004, -45.000004, 0]
   sunBaseIntensity: 100
 Materials:
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\defaultPrimitiveMat.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorDebugAABB.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\defaultParticlesMat.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorDebugCollider.qemat
-  - ../../QEProjects\QEExample\QEAssets\QEMaterials\QEMatInst_defaultPrimitiveMat.qemat
-  - ../../QEProjects\QEExample\QEAssets\QEModels\Character\Materials\Alpha_Joints_MAT.qemat
-  - ../../QEProjects\QEExample\QEAssets\QEMaterials\QEMatInst_defaultPrimitiveMat_1.qemat
-  - ../../QEProjects\QEExample\QEAssets\QEMaterials\QEMatInst_defaultPrimitiveMat_2.qemat
-  - ../../QEProjects\QEExample\QEAssets\QEModels\Character\Materials\Alpha_Body_MAT.qemat
   - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorGrid.qemat
+  - ../../QEProjects\QEExample\QEAssets\QEModels\Character\Materials\Alpha_Joints_MAT.qemat
+  - ../../QEProjects\QEExample\QEAssets\QEModels\Character\Materials\Alpha_Body_MAT.qemat
 GameObjects:
-  - id: YT3CEW8K69rk
+  - id: VJKo22zHcL8A
+    name: Obstacle03
+    components:
+      - type: QETransform
+        id: II08n8YXDzJF
+        localPosition: [-6, 1.5, -6]
+        localRotation: [0, 0, 0, 1]
+        localScale: [2, 3, 2]
+        parentId: ""
+      - type: QEGeometryComponent
+        id: nlNLYG35SqTG
+        _name: CubePrimitive
+        _filepath: QECore
+      - type: QEMeshRenderer
+        id: tifPRHmoGrgK
+        IsMeshShaderPipeline: false
+      - type: BoxCollider
+        id: IkbSUz2k4XdH
+        CollisionMargin: 0.04
+        Size: [0.5, 0.5, 0.5]
+      - type: PhysicsBody
+        id: 9VxSffSaITvg
+        Type: 0
+        Mass: 0
+        Inertia: [0, 0, 0]
+        CollisionGroup: 4
+    materials:
+      - defaultPrimitiveMat
+  - id: CH9WpIYaPHWf
+    name: Floor
+    components:
+      - type: QETransform
+        id: UTjlTOSj3iH7
+        localPosition: [0, 0, 0]
+        localRotation: [0, 0, 0, 1]
+        localScale: [10, 1, 10]
+        parentId: ""
+      - type: QEGeometryComponent
+        id: JTRsbYH133Ty
+        _name: FloorPrimitive
+        _filepath: QECore
+      - type: QEMeshRenderer
+        id: WLIB4G3sV0yk
+        IsMeshShaderPipeline: false
+      - type: PlaneCollider
+        id: akyvPmMoLBCR
+        CollisionMargin: 0.04
+        Size: 0.01
+        Orientation: [0, 1, 0]
+      - type: PhysicsBody
+        id: yp0qZbXHjtan
+        Type: 0
+        Mass: 0
+        Inertia: [0, 0, 0]
+        CollisionGroup: 4
+    materials:
+      - defaultPrimitiveMat
+  - id: X3g5Ayy61leD
     name: QECameraEditor
     components:
       - type: QETransform
-        id: lPGtfUR2IZ2m
-        localPosition: [0.71473587, 4.085518, 7.84917]
-        localRotation: [-0.1993677, 0.0017102809, 0.00034796065, 0.9799232]
+        id: YT3CEW8K69rk
+        localPosition: [2.8406937, 6.3629417, 12.383524]
+        localRotation: [-0.23627369, 0.10574602, 0.025875947, 0.9655688]
         localScale: [1, 1, 1]
         parentId: ""
       - type: QECamera
-        id: frAQBc8Wsa1x
+        id: lPGtfUR2IZ2m
         _near: 0.1
         _far: 500
         _fov: 45
         Width: 1280
         Height: 720
       - type: QECameraController
-        id: B1S7NLt2nQfj
+        id: 3SL3XByImciQ
         Speed: 10
         MouseSensitivity: 0.1
         EditorControls: true
@@ -71,8 +125,8 @@ GameObjects:
             parentId: ""
           - type: QEGeometryComponent
             id: I89qTPFtysL1
-            _name: Idle_Character
-            _filepath: C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Idle_Character.gltf
+            _name: Character
+            _filepath: C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/Character/Meshes/Character.gltf
           - type: QEMeshRenderer
             id: Q4GTOPwD7kkq
             IsMeshShaderPipeline: false
@@ -331,100 +385,283 @@ GameObjects:
                 _fov: 45
                 Width: 1410
                 Height: 775
-  - id: UTjlTOSj3iH7
-    name: floor
+  - id: uihnKJGjkvaP
+    name: Obstacle02
     components:
       - type: QETransform
-        id: JTRsbYH133Ty
-        localPosition: [0, -0.01, 0]
+        id: WolzchUSmJqh
+        localPosition: [-6, 1, 4]
         localRotation: [0, 0, 0, 1]
-        localScale: [10, 1, 10]
+        localScale: [2, 2, 2]
         parentId: ""
       - type: QEGeometryComponent
-        id: WLIB4G3sV0yk
-        _name: FloorPrimitive
+        id: TmfAUKYckdKB
+        _name: SpherePrimitive
         _filepath: QECore
       - type: QEMeshRenderer
-        id: Pds7HX27KbNC
-        IsMeshShaderPipeline: false
-      - type: PlaneCollider
-        id: CytJR8Cu6XFp
-        CollisionMargin: 0.04
-        Size: 0.01
-        Orientation: [0, 1, 0]
-      - type: PhysicsBody
-        id: tEIP68v8ZdV6
-        Type: 0
-        Mass: 0
-        Inertia: [0, 0, 0]
-        CollisionGroup: 4
-      - type: QEGeometryComponent
-        id: 9Mk6pyZdABIG
-        _name: EmptyMesh
-        _filepath: QECore
-    materials:
-      - QEMatInst_defaultPrimitiveMat
-  - id: gqVNBeg10gAI
-    name: wall
-    components:
-      - type: QETransform
-        id: 4OMrxF2ltRPW
-        localPosition: [3, 0.1, 0]
-        localRotation: [0, 0, 0, 1]
-        localScale: [4, 0.5, 4]
-        parentId: ""
-      - type: QEGeometryComponent
-        id: acKwhzQyw8by
-        _name: CubePrimitive
-        _filepath: QECore
-      - type: QEMeshRenderer
-        id: xIFwOQfxFYy0
+        id: 9Ppfr6SkbeR8
         IsMeshShaderPipeline: false
       - type: BoxCollider
-        id: quubpCzI71MR
+        id: ETvOmdRXXNsy
         CollisionMargin: 0.04
         Size: [0.5, 0.5, 0.5]
       - type: PhysicsBody
-        id: VOgDko8fnPYl
+        id: E4NHRkTZCBld
         Type: 0
         Mass: 0
         Inertia: [0, 0, 0]
         CollisionGroup: 4
+    materials:
+      - defaultPrimitiveMat
+  - id: tEIP68v8ZdV6
+    name: Wall01
+    components:
+      - type: QETransform
+        id: 0GXAPZHAD2vQ
+        localPosition: [0, 1.25, -9.75]
+        localRotation: [0, 0, 0, 1]
+        localScale: [20, 2.5, 0.5]
+        parentId: ""
+      - type: QEGeometryComponent
+        id: kWrpqiwdo3Hr
+        _name: CubePrimitive
+        _filepath: QECore
+      - type: QEMeshRenderer
+        id: dt6z3lSTpgTp
+        IsMeshShaderPipeline: false
+      - type: BoxCollider
+        id: flAQsoC7WO95
+        CollisionMargin: 0.04
+        Size: [0.5, 0.5, 0.5]
+      - type: PhysicsBody
+        id: efK2h3B98kTD
+        Type: 0
+        Mass: 0
+        Inertia: [0, 0, 0]
+        CollisionGroup: 4
+    materials:
+      - defaultPrimitiveMat
+  - id: jHkpC99IR3Ws
+    name: Obstacle01
+    components:
+      - type: QETransform
+        id: IMd3jKuWwPsw
+        localPosition: [6, 0.25, 4]
+        localRotation: [0, 0, 0, 1]
+        localScale: [2, 0.5, 2]
+        parentId: ""
       - type: QEGeometryComponent
         id: ERoC0nE0pAli
-        _name: EmptyMesh
-        _filepath: QECore
-    materials:
-      - QEMatInst_defaultPrimitiveMat_2
-  - id: kWrpqiwdo3Hr
-    name: ramp
-    components:
-      - type: QETransform
-        id: dt6z3lSTpgTp
-        localPosition: [0, -0.5, -10]
-        localRotation: [0.57357645, 0, 0, 0.81915206]
-        localScale: [3, 10, 3]
-        parentId: ""
-      - type: QEGeometryComponent
-        id: RpRVcwo6HM8u
         _name: CubePrimitive
         _filepath: QECore
       - type: QEMeshRenderer
-        id: A8D9eE4ZADtm
+        id: 9Mk6pyZdABIG
         IsMeshShaderPipeline: false
+      - type: BoxCollider
+        id: 9CaGJhxWkhVY
+        CollisionMargin: 0.04
+        Size: [0.5, 0.5, 0.5]
       - type: PhysicsBody
-        id: vWvN20LBHSkD
+        id: O3dJfBuCov1e
         Type: 0
         Mass: 0
         Inertia: [0, 0, 0]
         CollisionGroup: 4
-      - type: BoxCollider
+    materials:
+      - defaultPrimitiveMat
+  - id: vWvN20LBHSkD
+    name: Wall02
+    components:
+      - type: QETransform
         id: 6qr7J1hAkTkU
+        localPosition: [0, 1.25, 9.75]
+        localRotation: [0, 0, 0, 1]
+        localScale: [20, 2.5, 0.5]
+        parentId: ""
+      - type: QEGeometryComponent
+        id: FvMA0OSa91e9
+        _name: CubePrimitive
+        _filepath: QECore
+      - type: QEMeshRenderer
+        id: gqVNBeg10gAI
+        IsMeshShaderPipeline: false
+      - type: BoxCollider
+        id: HqyzKXoJMFch
         CollisionMargin: 0.04
         Size: [0.5, 0.5, 0.5]
-      - type: QEGeometryComponent
-        id: pASsMZ6uUeHJ
-        _name: EmptyMesh
-        _filepath: QECore
+      - type: PhysicsBody
+        id: jR1wTYI67ekr
+        Type: 0
+        Mass: 0
+        Inertia: [0, 0, 0]
+        CollisionGroup: 4
     materials:
-      - QEMatInst_defaultPrimitiveMat_1
+      - defaultPrimitiveMat
+  - id: xIFwOQfxFYy0
+    name: Wall03
+    components:
+      - type: QETransform
+        id: quubpCzI71MR
+        localPosition: [9.75, 1.25, 0]
+        localRotation: [0, 0, 0, 1]
+        localScale: [0.5, 2.5, 19]
+        parentId: ""
+      - type: QEGeometryComponent
+        id: VOgDko8fnPYl
+        _name: CubePrimitive
+        _filepath: QECore
+      - type: QEMeshRenderer
+        id: apdvxlUsBH29
+        IsMeshShaderPipeline: false
+      - type: BoxCollider
+        id: UydLRJBUDZXX
+        CollisionMargin: 0.04
+        Size: [0.5, 0.5, 0.5]
+      - type: PhysicsBody
+        id: FyxfRWIz9RwJ
+        Type: 0
+        Mass: 0
+        Inertia: [0, 0, 0]
+        CollisionGroup: 4
+    materials:
+      - defaultPrimitiveMat
+  - id: IOwWR2uaAtZV
+    name: Wall04
+    components:
+      - type: QETransform
+        id: B5yi9ijSAjBQ
+        localPosition: [-9.75, 1.25, 0]
+        localRotation: [0, 0, 0, 1]
+        localScale: [0.5, 2.5, 19]
+        parentId: ""
+      - type: QEGeometryComponent
+        id: jgnZSCe8nPQH
+        _name: CubePrimitive
+        _filepath: QECore
+      - type: QEMeshRenderer
+        id: nppZqt456uNh
+        IsMeshShaderPipeline: false
+      - type: BoxCollider
+        id: akyvPmMoLBCR
+        CollisionMargin: 0.04
+        Size: [0.5, 0.5, 0.5]
+      - type: PhysicsBody
+        id: yp0qZbXHjtan
+        Type: 0
+        Mass: 0
+        Inertia: [0, 0, 0]
+        CollisionGroup: 4
+    materials:
+      - defaultPrimitiveMat
+  - id: g1vriJN04X29
+    name: Obstacle07
+    components:
+      - type: QETransform
+        id: XdBh8j0SCA0z
+        localPosition: [-6, 1.267, -1.95]
+        localRotation: [0.22069743, 0, 0, 0.97534233]
+        localScale: [2, 0.5, 7]
+        parentId: ""
+      - type: QEGeometryComponent
+        id: KFZdSKQc5eTR
+        _name: CubePrimitive
+        _filepath: QECore
+      - type: QEMeshRenderer
+        id: uvykKPltKud5
+        IsMeshShaderPipeline: false
+      - type: BoxCollider
+        id: 8OLKdtm9WgMa
+        CollisionMargin: 0.04
+        Size: [0.5, 0.5, 0.5]
+      - type: PhysicsBody
+        id: F0mJKATWd43O
+        Type: 0
+        Mass: 0
+        Inertia: [0, 0, 0]
+        CollisionGroup: 4
+    materials:
+      - defaultPrimitiveMat
+  - id: 4EbA1KG3aMSF
+    name: Obstacle04
+    components:
+      - type: QETransform
+        id: gDmnfMwafStM
+        localPosition: [6, 1.5, -6]
+        localRotation: [0, 0, 0, 1]
+        localScale: [2, 3, 2]
+        parentId: ""
+      - type: QEGeometryComponent
+        id: icLMPCqabztw
+        _name: CubePrimitive
+        _filepath: QECore
+      - type: QEMeshRenderer
+        id: 5K1eD28Kin4m
+        IsMeshShaderPipeline: false
+      - type: BoxCollider
+        id: EsjieOpxcfBn
+        CollisionMargin: 0.04
+        Size: [0.5, 0.5, 0.5]
+      - type: PhysicsBody
+        id: 4tzYABythRDU
+        Type: 0
+        Mass: 0
+        Inertia: [0, 0, 0]
+        CollisionGroup: 4
+    materials:
+      - defaultPrimitiveMat
+  - id: MtivVlvkI3S1
+    name: Obstacle05
+    components:
+      - type: QETransform
+        id: WSxzzthFYqGE
+        localPosition: [0, 2.75, -6]
+        localRotation: [0, 0, 0, 1]
+        localScale: [10, 0.5, 2]
+        parentId: ""
+      - type: QEGeometryComponent
+        id: dkVpeKgHaJ5P
+        _name: CubePrimitive
+        _filepath: QECore
+      - type: QEMeshRenderer
+        id: 1fJXE0YMq1we
+        IsMeshShaderPipeline: false
+      - type: BoxCollider
+        id: SLUcbCkFeXVw
+        CollisionMargin: 0.04
+        Size: [0.5, 0.5, 0.5]
+      - type: PhysicsBody
+        id: VQZaOA2jb1ND
+        Type: 0
+        Mass: 0
+        Inertia: [0, 0, 0]
+        CollisionGroup: 4
+    materials:
+      - defaultPrimitiveMat
+  - id: NKb4LTfLMMLq
+    name: Obstacle06
+    components:
+      - type: QETransform
+        id: 080gXW8zW5v6
+        localPosition: [6, 1.267, -1.95]
+        localRotation: [0.22069743, 0, 0, 0.97534233]
+        localScale: [2, 0.5, 7]
+        parentId: ""
+      - type: QEGeometryComponent
+        id: qCQNwWaErAnG
+        _name: CubePrimitive
+        _filepath: QECore
+      - type: QEMeshRenderer
+        id: ePtx5v3gYKbB
+        IsMeshShaderPipeline: false
+      - type: BoxCollider
+        id: CX3vP20n39X6
+        CollisionMargin: 0.04
+        Size: [0.5, 0.5, 0.5]
+      - type: PhysicsBody
+        id: hhgnz4Mf1it1
+        Type: 0
+        Mass: 0
+        Inertia: [0, 0, 0]
+        CollisionGroup: 4
+    materials:
+      - defaultPrimitiveMat
