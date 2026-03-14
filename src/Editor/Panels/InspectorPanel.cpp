@@ -4,7 +4,7 @@
 #include <GameObjectManager.h>
 #include <QEGameObject.h>
 #include <QETransform.h>
-#include "EditorContext.h"
+#include "Editor/Core/EditorContext.h"
 
 InspectorPanel::InspectorPanel(GameObjectManager* gameObjectManager, EditorContext* editorContext)
     : gameObjectManager(gameObjectManager), editorContext(editorContext)

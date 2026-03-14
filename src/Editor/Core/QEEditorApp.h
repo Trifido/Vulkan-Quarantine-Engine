@@ -1,19 +1,26 @@
 #pragma once
+
 #include "QEBaseApp.h"
+#include <memory>
+#include <vector>
+#include <EditorContext.h>
+#include <Editor/Panels/IEditorPanel.h>
 
 class QEEditorApp : public QEBaseApp
 {
 public:
-    ~QEEditorApp() override = default;
+    ~QEEditorApp() override;
 
 protected:
     void OnInitialize() override;
     void OnShutdown() override;
     void OnBeginFrame() override;
     void OnEndFrame() override;
+
     void OnPostInitVulkan() override;
     void OnPreCleanup() override;
     void OnSwapchainRecreated() override;
+
     bool IsEditorMode() const override { return true; }
 
 private:
@@ -30,5 +37,6 @@ private:
 
 private:
     VkDescriptorPool imguiPool{};
+    std::unique_ptr<EditorContext> editorContext;
+    std::vector<std::unique_ptr<IEditorPanel>> panels;
 };
-

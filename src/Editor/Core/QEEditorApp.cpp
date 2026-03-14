@@ -15,6 +15,7 @@ QEEditorApp::~QEEditorApp() = default;
 void QEEditorApp::OnInitialize()
 {
     editorContext = std::make_unique<EditorContext>();
+    editorContext->ShowDemoWindow = true;
     CreatePanels();
 }
 
@@ -35,7 +36,6 @@ void QEEditorApp::OnEndFrame()
 
 void QEEditorApp::OnPostInitVulkan()
 {
-    renderPassModule->CreateImGuiRenderPass(swapchainModule->swapChainImageFormat, *antialiasingModule->msaaSamples);
     InitializeImGui();
 }
 
@@ -47,10 +47,6 @@ void QEEditorApp::OnPreCleanup()
 
 void QEEditorApp::OnSwapchainRecreated()
 {
-    renderPassModule->CreateImGuiRenderPass(
-        swapchainModule->swapChainImageFormat,
-        *antialiasingModule->msaaSamples);
-
     // aquí seguramente luego necesitarás revalidar o recrear
     // cosas del backend/editor si tu integración lo exige
 }
@@ -66,6 +62,10 @@ void QEEditorApp::DrawEditorUI()
 {
     HandleShortcuts();
     DrawDockspace();
+
+    //ImGui::Begin("Test Window");
+    //ImGui::Text("QEEditorApp UI is running");
+    //ImGui::End();
 
     for (auto& panel : panels)
     {
@@ -123,6 +123,10 @@ void QEEditorApp::InitializeImGui()
     //this initializes the core structures of imgui
     ImGui::CreateContext();
 
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+
     //this initializes imgui for GLFW
     ImGui_ImplGlfw_InitForVulkan(mainWindow->window, true);
 
@@ -134,7 +138,7 @@ void QEEditorApp::InitializeImGui()
     init_info.Queue = queueModule->graphicsQueue;
     init_info.DescriptorPool = imguiPool;
     init_info.Subpass = 0;
-    init_info.RenderPass = *this->renderPassModule->ImGuiRenderPass;
+    init_info.RenderPass = *this->renderPassModule->DefaultRenderPass;
     init_info.MinImageCount = 3;
     init_info.ImageCount = 3;
     init_info.MSAASamples = *deviceModule->getMsaaSamples();//VK_SAMPLE_COUNT_1_BIT;
@@ -159,8 +163,8 @@ void QEEditorApp::CreatePanels()
 {
     panels.clear();
 
-    panels.emplace_back(std::make_unique<SceneHierarchyPanel>(gameObjectManager, editorContext->get()));
-    panels.emplace_back(std::make_unique<InspectorPanel>(gameObjectManager, editorContext->get()));
+    panels.emplace_back(std::make_unique<SceneHierarchyPanel>(gameObjectManager, editorContext.get()));
+    panels.emplace_back(std::make_unique<InspectorPanel>(gameObjectManager, editorContext.get()));
 }
 
 void QEEditorApp::DrawDockspace()
@@ -228,22 +232,22 @@ void QEEditorApp::HandleShortcuts()
 
     if (ImGui::IsKeyPressed(ImGuiKey_Q, false))
     {
-        editorContext->CurrentGizmoOperation = GizmoOperation::None;
+        editorContext->CurrentGizmoOperation = QEGizmoOperation::None;
     }
 
     if (ImGui::IsKeyPressed(ImGuiKey_W, false))
     {
-        editorContext->CurrentGizmoOperation = GizmoOperation::Translate;
+        editorContext->CurrentGizmoOperation = QEGizmoOperation::Translate;
     }
 
     if (ImGui::IsKeyPressed(ImGuiKey_E, false))
     {
-        editorContext->CurrentGizmoOperation = GizmoOperation::Rotate;
+        editorContext->CurrentGizmoOperation = QEGizmoOperation::Rotate;
     }
 
     if (ImGui::IsKeyPressed(ImGuiKey_R, false))
     {
-        editorContext->CurrentGizmoOperation = GizmoOperation::Scale;
+        editorContext->CurrentGizmoOperation = QEGizmoOperation::Scale;
     }
 }
 

@@ -80,6 +80,6 @@ int main(int, char**)
     QEProjectManager::InitializeDefaultQEScene(scene);
     QEEditorApp app;
     app.Run(scene);
-    //system("pause");
+    system("pause");
     return 0;
 }

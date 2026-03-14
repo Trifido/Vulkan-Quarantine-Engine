@@ -203,11 +203,10 @@ void QEBaseApp::mainLoop()
         this->debugSystem->UpdateGraphicBuffers();
 
         OnBeginFrame();
+        OnEndFrame();
 
         this->computeFrame();
         this->drawFrame();
-
-        OnEndFrame();
     }
     vkDeviceWaitIdle(deviceModule->device);
 }

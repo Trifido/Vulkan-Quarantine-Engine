@@ -3,8 +3,8 @@
 #include "QEBaseApp.h"
 #include <memory>
 #include <vector>
-#include <EditorContext.h>
-#include <IEditorPanel.h>
+#include <Editor/Core/EditorContext.h>
+#include <Editor/Panels/IEditorPanel.h>
 
 class QEEditorApp : public QEBaseApp
 {

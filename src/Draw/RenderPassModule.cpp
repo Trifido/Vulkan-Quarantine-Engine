@@ -5,7 +5,6 @@ RenderPassModule::RenderPassModule()
 {
     device_ptr = DeviceModule::getInstance();
 
-    this->ImGuiRenderPass = std::make_shared<VkRenderPass>();
     this->DefaultRenderPass = std::make_shared<VkRenderPass>();
     this->DirShadowMappingRenderPass = std::make_shared<VkRenderPass>();
     this->OmniShadowMappingRenderPass = std::make_shared<VkRenderPass>();
@@ -18,7 +17,6 @@ RenderPassModule::~RenderPassModule()
 
 void RenderPassModule::cleanup()
 {
-    vkDestroyRenderPass(device_ptr->device, *ImGuiRenderPass, nullptr);
     vkDestroyRenderPass(device_ptr->device, *DefaultRenderPass, nullptr);
     vkDestroyRenderPass(device_ptr->device, *DirShadowMappingRenderPass, nullptr);
     vkDestroyRenderPass(device_ptr->device, *OmniShadowMappingRenderPass, nullptr);
@@ -199,41 +197,5 @@ void RenderPassModule::CreateOmniShadowRenderPass(VkFormat shadowFormat, VkForma
     if (vkCreateRenderPass(device_ptr->device, &renderPassInfo, nullptr, OmniShadowMappingRenderPass.get()) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create omni shadow render pass!");
-    }
-}
-
-void RenderPassModule::CreateImGuiRenderPass(VkFormat swapchainFormat, VkSampleCountFlagBits msaaSamples)
-{
-    VkAttachmentDescription color_attach = {};
-    color_attach.format = swapchainFormat;
-    color_attach.samples = msaaSamples;
-    color_attach.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD; // o CLEAR si lo prefieres
-    color_attach.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    color_attach.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    color_attach.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    color_attach.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    color_attach.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    VkAttachmentReference color_ref = {};
-    color_ref.attachment = 0;
-    color_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkSubpassDescription subpass = {};
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &color_ref;
-
-    // (Opcionalmente depth/MSAA attachments aquí)
-
-    VkRenderPassCreateInfo rp_info = {};
-    rp_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    rp_info.attachmentCount = 1;
-    rp_info.pAttachments = &color_attach;
-    rp_info.subpassCount = 1;
-    rp_info.pSubpasses = &subpass;
-
-    if (vkCreateRenderPass(device_ptr->device, &rp_info, nullptr, ImGuiRenderPass.get()) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create imgui render pass!");
     }
 }
