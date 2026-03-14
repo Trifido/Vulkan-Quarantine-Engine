@@ -14,8 +14,8 @@ private:
 public:
     RenderLayerModule();
     void AddLayer(RenderLayer newLayer);
-    unsigned int GetLayer(unsigned int idx);
-    unsigned int GetCount();
+    unsigned int GetLayer(unsigned int idx) const;
+    unsigned int GetCount() const;
 };
 
 #endif // !RENDER_LAYER_MODULE

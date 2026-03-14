@@ -9,6 +9,7 @@
 #include "RenderLayerModule.h"
 #include "QESingleton.h"
 #include <fstream>
+#include <vector>
 
 class GameObjectManager : public QESingleton<GameObjectManager>
 {
@@ -25,7 +26,7 @@ private:
 public:
     GameObjectManager() = default;
     void AddGameObject(std::shared_ptr<QEGameObject> object_ptr);
-    std::shared_ptr<QEGameObject> GetGameObject(std::string name);
+    std::shared_ptr<QEGameObject> GetGameObject(const std::string& name);
     void DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
     void CSMCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex);
     void OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, glm::mat4 viewParameter, glm::vec3 lightPosition);
@@ -38,7 +39,9 @@ public:
     void UpdateQEGameObjects();
     void DestroyQEGameObjects();
 
-    std::shared_ptr<QEGameComponent> FindGameComponentInScene(std::string id);
+    std::shared_ptr<QEGameComponent> FindGameComponentInScene(const std::string& id);
+    std::vector<std::shared_ptr<QEGameObject>> GetRootGameObjects() const;
+    std::shared_ptr<QEGameObject> GetGameObjectById(const std::string& id) const;
 };
 
 #endif

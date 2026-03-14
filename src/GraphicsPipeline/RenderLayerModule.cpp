@@ -8,7 +8,7 @@ void RenderLayerModule::AddLayer(RenderLayer newLayer)
     std::sort(enabledLayers.begin(), enabledLayers.end());
 }
 
-unsigned int RenderLayerModule::GetLayer(unsigned int idx)
+unsigned int RenderLayerModule::GetLayer(unsigned int idx) const
 {
     if (idx < enabledLayers.size())
     {
@@ -19,7 +19,7 @@ unsigned int RenderLayerModule::GetLayer(unsigned int idx)
     return 0;
 }
 
-unsigned int RenderLayerModule::GetCount()
+unsigned int RenderLayerModule::GetCount() const
 {
     return static_cast<unsigned int>(enabledLayers.size());
 }

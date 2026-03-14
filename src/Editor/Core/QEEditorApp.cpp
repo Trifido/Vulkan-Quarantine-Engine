@@ -1,11 +1,21 @@
-#include "QEEditorApp.h"
+
+#include <QEEditorApp.h>
+
+#include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 #include <SyncTool.h>
-#include "../Editor/Grid.h"
+
+#include "Panels/IEditorPanel.h"
+#include "Panels/SceneHierarchyPanel.h"
+#include "Panels/InspectorPanel.h"
+
+QEEditorApp::~QEEditorApp() = default;
 
 void QEEditorApp::OnInitialize()
 {
+    editorContext = std::make_unique<EditorContext>();
+    CreatePanels();
 }
 
 void QEEditorApp::OnShutdown()
@@ -54,18 +64,18 @@ void QEEditorApp::BeginImGuiFrame()
 
 void QEEditorApp::DrawEditorUI()
 {
-    ImGuiIO& io = ImGui::GetIO();
-    if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false))
+    HandleShortcuts();
+    DrawDockspace();
+
+    for (auto& panel : panels)
     {
-        SaveScene();
+        panel->Draw();
     }
 
-    // Aquí luego:
-    // DrawDockspace();
-    // DrawHierarchyPanel();
-    // DrawInspectorPanel();
-
-    ImGui::ShowDemoWindow();
+    if (editorContext && editorContext->ShowDemoWindow)
+    {
+        ImGui::ShowDemoWindow(&editorContext->ShowDemoWindow);
+    }
 }
 
 void QEEditorApp::EndImGuiFrame()
@@ -123,7 +133,7 @@ void QEEditorApp::InitializeImGui()
     init_info.Device = deviceModule->device;
     init_info.Queue = queueModule->graphicsQueue;
     init_info.DescriptorPool = imguiPool;
-    init_info.Subpass = 0;                      // normalmente el primero
+    init_info.Subpass = 0;
     init_info.RenderPass = *this->renderPassModule->ImGuiRenderPass;
     init_info.MinImageCount = 3;
     init_info.ImageCount = 3;
@@ -143,6 +153,98 @@ void QEEditorApp::ShutdownImGui()
     vkDestroyDescriptorPool(deviceModule->device, imguiPool, nullptr);
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+}
+
+void QEEditorApp::CreatePanels()
+{
+    panels.clear();
+
+    panels.emplace_back(std::make_unique<SceneHierarchyPanel>(gameObjectManager, editorContext->get()));
+    panels.emplace_back(std::make_unique<InspectorPanel>(gameObjectManager, editorContext->get()));
+}
+
+void QEEditorApp::DrawDockspace()
+{
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+
+    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(viewport->WorkSize);
+    ImGui::SetNextWindowViewport(viewport->ID);
+
+    window_flags |= ImGuiWindowFlags_NoTitleBar;
+    window_flags |= ImGuiWindowFlags_NoCollapse;
+    window_flags |= ImGuiWindowFlags_NoResize;
+    window_flags |= ImGuiWindowFlags_NoMove;
+    window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
+    window_flags |= ImGuiWindowFlags_NoNavFocus;
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+
+    ImGui::Begin("MainDockspace", nullptr, window_flags);
+
+    ImGui::PopStyleVar(2);
+
+    ImGuiID dockspace_id = ImGui::GetID("QE_MainDockspace");
+    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
+
+    if (ImGui::BeginMenuBar())
+    {
+        if (ImGui::BeginMenu("File"))
+        {
+            if (ImGui::MenuItem("Save", "Ctrl+S"))
+            {
+                SaveScene();
+            }
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Window"))
+        {
+            ImGui::MenuItem("Hierarchy", nullptr, &editorContext->ShowHierarchy);
+            ImGui::MenuItem("Inspector", nullptr, &editorContext->ShowInspector);
+            ImGui::MenuItem("Viewport", nullptr, &editorContext->ShowViewport);
+            ImGui::MenuItem("Console", nullptr, &editorContext->ShowConsole);
+            ImGui::MenuItem("Content Browser", nullptr, &editorContext->ShowContentBrowser);
+            ImGui::MenuItem("ImGui Demo", nullptr, &editorContext->ShowDemoWindow);
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMenuBar();
+    }
+
+    ImGui::End();
+}
+
+void QEEditorApp::HandleShortcuts()
+{
+    ImGuiIO& io = ImGui::GetIO();
+
+    if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false))
+    {
+        SaveScene();
+    }
+
+    if (ImGui::IsKeyPressed(ImGuiKey_Q, false))
+    {
+        editorContext->CurrentGizmoOperation = GizmoOperation::None;
+    }
+
+    if (ImGui::IsKeyPressed(ImGuiKey_W, false))
+    {
+        editorContext->CurrentGizmoOperation = GizmoOperation::Translate;
+    }
+
+    if (ImGui::IsKeyPressed(ImGuiKey_E, false))
+    {
+        editorContext->CurrentGizmoOperation = GizmoOperation::Rotate;
+    }
+
+    if (ImGui::IsKeyPressed(ImGuiKey_R, false))
+    {
+        editorContext->CurrentGizmoOperation = GizmoOperation::Scale;
+    }
 }
 
 void QEEditorApp::SaveScene()

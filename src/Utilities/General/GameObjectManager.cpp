@@ -2,6 +2,7 @@
 #include <iostream>
 #include <GameObjectDto.h>
 #include <QEMeshRenderer.h>
+#include <unordered_set>
 
 std::string GameObjectManager::CheckName(std::string nameGameObject)
 {
@@ -134,7 +135,7 @@ void GameObjectManager::CleanLastResources()
     this->_objects.clear();
 }
 
-std::shared_ptr<QEGameObject> GameObjectManager::GetGameObject(std::string name)
+std::shared_ptr<QEGameObject> GameObjectManager::GetGameObject(const std::string& name)
 {
     for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
     {
@@ -225,7 +226,7 @@ void GameObjectManager::DestroyQEGameObjects()
     }
 }
 
-std::shared_ptr<QEGameComponent> GameObjectManager::FindGameComponentInScene(std::string id)
+std::shared_ptr<QEGameComponent> GameObjectManager::FindGameComponentInScene(const std::string& id)
 {
     for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
     {
@@ -236,6 +237,60 @@ std::shared_ptr<QEGameComponent> GameObjectManager::FindGameComponentInScene(std
                 if (component->id == id)
                     return component;
             }
+        }
+    }
+
+    return nullptr;
+}
+
+std::vector<std::shared_ptr<QEGameObject>> GameObjectManager::GetRootGameObjects() const
+{
+    std::vector<std::shared_ptr<QEGameObject>> roots;
+    std::unordered_set<std::string> emittedRoots;
+
+    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); ++idl)
+    {
+        const unsigned int layerId = this->renderLayers.GetLayer(idl);
+        auto layerIt = this->_objects.find(layerId);
+        if (layerIt == this->_objects.end())
+            continue;
+
+        for (const auto& kv : layerIt->second)
+        {
+            const auto& go = kv.second;
+            if (!go)
+                continue;
+
+            if (go->parent != nullptr)
+                continue;
+
+            if (!emittedRoots.insert(go->ID()).second)
+                continue;
+
+            roots.push_back(go);
+        }
+    }
+
+    return roots;
+}
+
+std::shared_ptr<QEGameObject> GameObjectManager::GetGameObjectById(const std::string& id) const
+{
+    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); ++idl)
+    {
+        const unsigned int layerId = this->renderLayers.GetLayer(idl);
+        auto layerIt = this->_objects.find(layerId);
+        if (layerIt == this->_objects.end())
+            continue;
+
+        for (const auto& kv : layerIt->second)
+        {
+            const auto& go = kv.second;
+            if (!go)
+                continue;
+
+            if (go->ID() == id)
+                return go;
         }
     }
 
