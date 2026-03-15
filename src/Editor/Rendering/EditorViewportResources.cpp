@@ -6,6 +6,8 @@
 #include <DeviceModule.h>
 #include <RenderPassModule.h>
 #include <TextureManagerModule.h>
+#include <SyncTool.h>
+#include <CommandPoolModule.h>
 
 EditorViewportResources::EditorViewportResources()
 {
@@ -15,10 +17,16 @@ EditorViewportResources::~EditorViewportResources()
 {
 }
 
-void EditorViewportResources::Initialize(DeviceModule* deviceModule, RenderPassModule* renderPassModule)
+void EditorViewportResources::Initialize(
+    DeviceModule* deviceModule,
+    RenderPassModule* renderPassModule,
+    CommandPoolModule* commandPoolModule,
+    QueueModule* queueModule)
 {
     this->deviceModule = deviceModule;
     this->renderPassModule = renderPassModule;
+    this->commandPoolModule = commandPoolModule;
+    this->queueModule = queueModule;
 }
 
 void EditorViewportResources::Cleanup()
@@ -29,6 +37,8 @@ void EditorViewportResources::Cleanup()
     renderTarget = {};
     deviceModule = nullptr;
     renderPassModule = nullptr;
+    commandPoolModule = nullptr;
+    queueModule = nullptr;
 }
 
 bool EditorViewportResources::IsValid() const
@@ -222,8 +232,7 @@ void EditorViewportResources::CreateImages()
     }
 
     // Transiciones iniciales mínimas
-    TextureManagerModule transitionHelper;
-    transitionHelper.transitionImageLayout(
+    TransitionImageLayout(
         depthImage,
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
@@ -272,4 +281,69 @@ void EditorViewportResources::UnregisterImGuiTexture()
         ImGui_ImplVulkan_RemoveTexture(imguiDescriptorSet);
         imguiDescriptorSet = VK_NULL_HANDLE;
     }
+}
+
+void EditorViewportResources::TransitionImageLayout(
+    VkImage image,
+    VkImageLayout oldLayout,
+    VkImageLayout newLayout,
+    VkImageSubresourceRange range)
+{
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands(
+        deviceModule->device,
+        commandPoolModule->getCommandPool());
+
+    VkImageMemoryBarrier barrier{};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.oldLayout = oldLayout;
+    barrier.newLayout = newLayout;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image = image;
+    barrier.subresourceRange = range;
+    barrier.srcAccessMask = 0;
+    barrier.dstAccessMask = 0;
+
+    VkPipelineStageFlags sourceStage;
+    VkPipelineStageFlags destinationStage;
+
+    if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
+        newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+    {
+        barrier.srcAccessMask = 0;
+        barrier.dstAccessMask =
+            VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+            VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+        sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    }
+    else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
+        newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+    {
+        barrier.srcAccessMask = 0;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+        sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    }
+    else
+    {
+        throw std::runtime_error("unsupported viewport image layout transition!");
+    }
+
+    vkCmdPipelineBarrier(
+        commandBuffer,
+        sourceStage,
+        destinationStage,
+        0,
+        0, nullptr,
+        0, nullptr,
+        1, &barrier);
+
+    endSingleTimeCommands(
+        deviceModule->device,
+        queueModule->graphicsQueue,
+        commandPoolModule->getCommandPool(),
+        commandBuffer);
 }

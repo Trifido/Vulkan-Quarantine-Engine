@@ -19,7 +19,7 @@ void QEEditorApp::OnInitialize()
     editorContext = std::make_unique<EditorContext>();
 
     viewportResources = std::make_unique<EditorViewportResources>();
-    viewportResources->Initialize(this->deviceModule, this->renderPassModule);
+    viewportResources->Initialize(deviceModule, renderPassModule, commandPoolModule, queueModule);
     viewportResources->Resize(1280, 720);
 
     CreatePanels();

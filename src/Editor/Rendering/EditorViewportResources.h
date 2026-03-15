@@ -6,6 +6,8 @@
 
 class DeviceModule;
 class RenderPassModule;
+class CommandPoolModule;
+class QueueModule;
 
 class EditorViewportResources
 {
@@ -13,7 +15,11 @@ public:
     EditorViewportResources();
     ~EditorViewportResources();
 
-    void Initialize(DeviceModule* deviceModule, RenderPassModule* renderPassModule);
+    void Initialize(
+        DeviceModule* deviceModule,
+        RenderPassModule* renderPassModule,
+        CommandPoolModule* commandPoolModule,
+        QueueModule* queueModule);
     void Cleanup();
 
     void Resize(uint32_t width, uint32_t height);
@@ -30,10 +36,17 @@ private:
     void CreateFramebuffer();
     void RegisterImGuiTexture();
     void UnregisterImGuiTexture();
+    void TransitionImageLayout(
+        VkImage image,
+        VkImageLayout oldLayout,
+        VkImageLayout newLayout,
+        VkImageSubresourceRange range);
 
 private:
     DeviceModule* deviceModule = nullptr;
     RenderPassModule* renderPassModule = nullptr;
+    CommandPoolModule* commandPoolModule = nullptr;
+    QueueModule* queueModule = nullptr;
 
     QERenderTarget renderTarget{};
 
