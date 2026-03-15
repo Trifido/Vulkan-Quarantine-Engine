@@ -319,6 +319,58 @@ void CommandPoolModule::Render(FramebufferModule* framebufferModule)
     }
 }
 
+void CommandPoolModule::RenderSceneToTarget(const QERenderTarget& renderTarget, uint32_t iCBuffer)
+{
+    if (!renderTarget.Valid())
+    {
+        return;
+    }
+
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = static_cast<float>(renderTarget.Extent.width);
+    viewport.height = static_cast<float>(renderTarget.Extent.height);
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent = renderTarget.Extent;
+
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = renderTarget.RenderPass;
+    renderPassInfo.framebuffer = renderTarget.Framebuffer;
+    renderPassInfo.renderArea.offset = { 0, 0 };
+    renderPassInfo.renderArea.extent = renderTarget.Extent;
+
+    std::array<VkClearValue, 2> clearValues{};
+    clearValues[0].color = { this->ClearColor.x, this->ClearColor.y, this->ClearColor.z, 1.0f };
+    clearValues[1].depthStencil = { 1.0f, 0 };
+
+    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+    renderPassInfo.pClearValues = clearValues.data();
+
+    vkCmdBeginRenderPass(commandBuffers[iCBuffer], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    vkCmdSetViewport(commandBuffers[iCBuffer], 0, 1, &viewport);
+    vkCmdSetScissor(commandBuffers[iCBuffer], 0, 1, &scissor);
+
+    this->atmosphereSystem->DrawCommand(commandBuffers[iCBuffer], iCBuffer);
+    this->gameObjectManager->DrawCommand(commandBuffers[iCBuffer], iCBuffer);
+    this->editorManager->DrawCommnad(commandBuffers[iCBuffer], iCBuffer);
+    this->cullingSceneManager->DrawDebug(commandBuffers[iCBuffer], iCBuffer);
+    this->debugSystem->DrawDebugLines(commandBuffers[iCBuffer], iCBuffer);
+
+    vkCmdEndRenderPass(commandBuffers[iCBuffer]);
+}
+
+void CommandPoolModule::RenderEditorViewport(const QERenderTarget& renderTarget, uint32_t iCBuffer)
+{
+    RenderSceneToTarget(renderTarget, iCBuffer);
+}
+
 void CommandPoolModule::recordComputeCommandBuffer(VkCommandBuffer commandBuffer)
 {
     auto currentFrame = SynchronizationModule::GetCurrentFrame();

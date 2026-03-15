@@ -3,8 +3,10 @@
 #include "QEBaseApp.h"
 #include <memory>
 #include <vector>
-#include <EditorContext.h>
+#include <Editor/Core/EditorContext.h>
 #include <Editor/Panels/IEditorPanel.h>
+#include <QERenderTarget.h>
+#include <Editor/Rendering/EditorViewportResources.h>
 
 class QEEditorApp : public QEBaseApp
 {
@@ -22,6 +24,7 @@ protected:
     void OnSwapchainRecreated() override;
 
     bool IsEditorMode() const override { return true; }
+    const QERenderTarget* GetAdditionalSceneRenderTarget() const override;
 
 private:
     void InitializeImGui();
@@ -38,5 +41,6 @@ private:
 private:
     VkDescriptorPool imguiPool{};
     std::unique_ptr<EditorContext> editorContext;
+    std::unique_ptr<EditorViewportResources> viewportResources;
     std::vector<std::unique_ptr<IEditorPanel>> panels;
 };

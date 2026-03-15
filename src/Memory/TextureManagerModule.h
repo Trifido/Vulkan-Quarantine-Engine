@@ -16,9 +16,9 @@ public:
     VkImageView     imageView = { VK_NULL_HANDLE };
     VkImage         image = { VK_NULL_HANDLE };
     VkImageLayout   currentLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    VkDeviceMemory  deviceMemory = { VK_NULL_HANDLE };
     static QueueModule* queueModule;
 protected:
-    VkDeviceMemory  deviceMemory = { VK_NULL_HANDLE };
     VkCommandPool*  ptrCommandPool = { VK_NULL_HANDLE };
     SwapChainModule* swapchainModule = nullptr;
 

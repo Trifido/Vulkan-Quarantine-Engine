@@ -3,7 +3,7 @@
 #include <imgui.h>
 #include <GameObjectManager.h>
 #include <QEGameObject.h>
-#include "EditorContext.h"
+#include <Editor/Core/EditorContext.h>
 
 SceneHierarchyPanel::SceneHierarchyPanel(GameObjectManager* gameObjectManager, EditorContext* editorContext)
     : gameObjectManager(gameObjectManager), editorContext(editorContext)

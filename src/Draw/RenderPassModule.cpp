@@ -199,3 +199,7 @@ void RenderPassModule::CreateOmniShadowRenderPass(VkFormat shadowFormat, VkForma
         throw std::runtime_error("failed to create omni shadow render pass!");
     }
 }
+
+void RenderPassModule::CreateViewportRenderPass(VkFormat colorFormat, VkFormat depthFormat, VkSampleCountFlagBits samples)
+{
+}

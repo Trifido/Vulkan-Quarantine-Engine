@@ -59,6 +59,8 @@ enum class ERROR_RESIZE
     IMAGE_ERROR = 1
 };
 
+class QERenderTarget;
+
 class QEBaseApp
 {
 public:
@@ -78,6 +80,7 @@ protected:
     virtual void OnPostInitVulkan() {}
     virtual void OnPreCleanup() {}
     virtual void OnSwapchainRecreated() {}
+    virtual const QERenderTarget* GetAdditionalSceneRenderTarget() const { return nullptr; }
 
 private:
     void initVulkan();

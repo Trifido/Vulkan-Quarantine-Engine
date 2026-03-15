@@ -25,4 +25,9 @@ struct EditorContext
     bool ShowDemoWindow = false;
 
     QEGizmoOperation CurrentGizmoOperation = QEGizmoOperation::Translate;
+
+    uint32_t ViewportWidth = 1;
+    uint32_t ViewportHeight = 1;
+    bool ViewportFocused = false;
+    bool ViewportHovered = false;
 };

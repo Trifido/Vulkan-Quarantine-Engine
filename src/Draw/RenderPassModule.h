@@ -9,12 +9,13 @@
 class RenderPassModule : public QESingleton<RenderPassModule>
 {
 private:
-    friend class QESingleton<RenderPassModule>; // Permitir acceso al constructor
+    friend class QESingleton<RenderPassModule>;
     DeviceModule* device_ptr;
 public:
     std::shared_ptr<VkRenderPass>   DefaultRenderPass;
     std::shared_ptr<VkRenderPass>   DirShadowMappingRenderPass;
     std::shared_ptr<VkRenderPass>   OmniShadowMappingRenderPass;
+    std::shared_ptr<VkRenderPass>   ViewportRenderPass;
 
 public:
     RenderPassModule();
@@ -24,6 +25,7 @@ public:
     void CreateRenderPass(VkFormat swapchainFormat, VkFormat depthFormat, VkSampleCountFlagBits msaaSamples);
     void CreateDirShadowRenderPass(VkFormat shadowFormat);
     void CreateOmniShadowRenderPass(VkFormat shadowFormat, VkFormat shadowDepthFormat);
+    void CreateViewportRenderPass(VkFormat colorFormat, VkFormat depthFormat, VkSampleCountFlagBits samples);
 };
 
 #endif

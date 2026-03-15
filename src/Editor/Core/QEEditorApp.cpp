@@ -9,18 +9,29 @@
 #include "Panels/IEditorPanel.h"
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/InspectorPanel.h"
+#include "Panels/ViewportPanel.h"
+#include "Rendering/EditorViewportResources.h"
 
 QEEditorApp::~QEEditorApp() = default;
 
 void QEEditorApp::OnInitialize()
 {
     editorContext = std::make_unique<EditorContext>();
-    editorContext->ShowDemoWindow = true;
+
+    viewportResources = std::make_unique<EditorViewportResources>();
+    viewportResources->Initialize(deviceModule, renderPassModule);
+    viewportResources->Resize(1280, 720);
+
     CreatePanels();
 }
 
 void QEEditorApp::OnShutdown()
 {
+    if (viewportResources)
+    {
+        viewportResources->Cleanup();
+        viewportResources.reset();
+    }
 }
 
 void QEEditorApp::OnBeginFrame()
@@ -87,6 +98,16 @@ void QEEditorApp::EndImGuiFrame()
         ImGui::UpdatePlatformWindows();
         ImGui::RenderPlatformWindowsDefault();
     }
+}
+
+const QERenderTarget* QEEditorApp::GetAdditionalSceneRenderTarget() const
+{
+    if (!viewportResources || !viewportResources->IsValid())
+    {
+        return nullptr;
+    }
+
+    return &viewportResources->GetRenderTarget();
 }
 
 void QEEditorApp::InitializeImGui()
@@ -165,6 +186,7 @@ void QEEditorApp::CreatePanels()
 
     panels.emplace_back(std::make_unique<SceneHierarchyPanel>(gameObjectManager, editorContext.get()));
     panels.emplace_back(std::make_unique<InspectorPanel>(gameObjectManager, editorContext.get()));
+    panels.emplace_back(std::make_unique<ViewportPanel>(editorContext.get(), viewportResources.get()));
 }
 
 void QEEditorApp::DrawDockspace()

@@ -15,6 +15,7 @@
 #include <CullingSceneManager.h>
 #include <DebugSystem/QEDebugSystem.h>
 #include <QESingleton.h>
+#include <QERenderTarget.h>
 
 class CommandPoolModule : public QESingleton<CommandPoolModule>
 {
@@ -59,6 +60,8 @@ public:
     void createCommandBuffers();
     void recreateCommandBuffers();
     void Render(FramebufferModule* framebufferModule);
+    void RenderSceneToTarget(const QERenderTarget& renderTarget, uint32_t iCBuffer);
+    void RenderEditorViewport(const QERenderTarget& renderTarget, uint32_t iCBuffer);
     void recordComputeCommandBuffer(VkCommandBuffer commandBuffer);
     void cleanup();
     void CleanLastResources();

@@ -383,6 +383,12 @@ void QEBaseApp::drawFrame()
 
     //vkDeviceWaitIdle(deviceModule->device);
 
+    const QERenderTarget* extraRenderTarget = GetAdditionalSceneRenderTarget();
+    if (extraRenderTarget != nullptr && extraRenderTarget->Valid())
+    {
+        commandPoolModule->RenderEditorViewport(*extraRenderTarget, (uint32_t)synchronizationModule.GetCurrentFrame());
+    }
+
     commandPoolModule->Render(&framebufferModule);
 
     synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer((uint32_t)synchronizationModule.GetCurrentFrame()), this->isRender);
