@@ -1,5 +1,5 @@
 
-#include <QEEditorApp.h>
+#include "QEEditorApp.h"
 
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -19,7 +19,7 @@ void QEEditorApp::OnInitialize()
     editorContext = std::make_unique<EditorContext>();
 
     viewportResources = std::make_unique<EditorViewportResources>();
-    viewportResources->Initialize(deviceModule, renderPassModule);
+    viewportResources->Initialize(this->deviceModule, this->renderPassModule);
     viewportResources->Resize(1280, 720);
 
     CreatePanels();
