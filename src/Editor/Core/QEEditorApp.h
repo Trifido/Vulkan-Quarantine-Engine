@@ -42,5 +42,5 @@ private:
     VkDescriptorPool imguiPool{};
     std::unique_ptr<EditorContext> editorContext;
     std::unique_ptr<EditorViewportResources> viewportResources;
-    std::vector<std::unique_ptr<IEditorPanel>> panels;
+    std::unique_ptr < std::vector<std::unique_ptr<IEditorPanel>>> panels;
 };

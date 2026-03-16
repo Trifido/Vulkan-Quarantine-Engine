@@ -17,6 +17,7 @@ QEEditorApp::~QEEditorApp() = default;
 void QEEditorApp::OnInitialize()
 {
     editorContext = std::make_unique<EditorContext>();
+    panels = std::make_unique<std::vector<std::unique_ptr<IEditorPanel>>>();
 
     viewportResources = std::make_unique<EditorViewportResources>();
     viewportResources->Initialize(deviceModule, renderPassModule, commandPoolModule, queueModule);
@@ -78,7 +79,7 @@ void QEEditorApp::DrawEditorUI()
     //ImGui::Text("QEEditorApp UI is running");
     //ImGui::End();
 
-    for (auto& panel : panels)
+    for (auto& panel : *panels)
     {
         panel->Draw();
     }
@@ -182,11 +183,11 @@ void QEEditorApp::ShutdownImGui()
 
 void QEEditorApp::CreatePanels()
 {
-    panels.clear();
+    panels->clear();
 
-    panels.emplace_back(std::make_unique<SceneHierarchyPanel>(gameObjectManager, editorContext.get()));
-    panels.emplace_back(std::make_unique<InspectorPanel>(gameObjectManager, editorContext.get()));
-    panels.emplace_back(std::make_unique<ViewportPanel>(editorContext.get(), viewportResources.get()));
+    panels->emplace_back(std::make_unique<SceneHierarchyPanel>(gameObjectManager, editorContext.get()));
+    panels->emplace_back(std::make_unique<InspectorPanel>(gameObjectManager, editorContext.get()));
+    panels->emplace_back(std::make_unique<ViewportPanel>(editorContext.get(), viewportResources.get()));
 }
 
 void QEEditorApp::DrawDockspace()
