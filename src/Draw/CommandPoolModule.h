@@ -59,7 +59,7 @@ public:
     void createCommandPool(VkSurfaceKHR& surface);
     void createCommandBuffers();
     void recreateCommandBuffers();
-    void Render(FramebufferModule* framebufferModule);
+    void Render(FramebufferModule* framebufferModule, const QERenderTarget* extraRenderTarget);
     void RenderSceneToTarget(const QERenderTarget& renderTarget, uint32_t iCBuffer);
     void RenderEditorViewport(const QERenderTarget& renderTarget, uint32_t iCBuffer);
     void recordComputeCommandBuffer(VkCommandBuffer commandBuffer);

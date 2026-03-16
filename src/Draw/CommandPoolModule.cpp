@@ -107,9 +107,10 @@ void CommandPoolModule::setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t
     renderPassInfo.renderArea.offset = { 0, 0 };
     renderPassInfo.renderArea.extent = swapchainModule->swapChainExtent;
 
-    std::array<VkClearValue, 2> clearValues{};
+    std::array<VkClearValue, 3> clearValues{};
     clearValues[0].color = { this->ClearColor.x, this->ClearColor.y, this->ClearColor.z, 1.0f };
     clearValues[1].depthStencil = { 1.0f, 0 };
+    clearValues[2].color = { 0.0f, 0.0f, 0.0f, 1.0f };
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
     renderPassInfo.pClearValues = clearValues.data();
 
@@ -281,41 +282,43 @@ void CommandPoolModule::updateCubeMapFace(uint32_t faceIdx, std::shared_ptr<VkRe
     vkCmdEndRenderPass(commandBuffer);
 }
 
-void CommandPoolModule::Render(FramebufferModule* framebufferModule)
+void CommandPoolModule::Render(FramebufferModule* framebufferModule, const QERenderTarget* extraRenderTarget)
 {
-    for (uint32_t i = 0; i < commandBuffers.size(); i++) {
-        VkCommandBufferBeginInfo beginInfo{};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        beginInfo.flags = 0; // Optional
-        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-        beginInfo.pInheritanceInfo = nullptr; // Optional
+    uint32_t currentFrame = (uint32_t)SynchronizationModule::GetCurrentFrame();
+    VkCommandBuffer cmd = commandBuffers[currentFrame];
 
-        if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS) {
-            throw std::runtime_error("failed to begin recording command buffer!");
-        }
+    vkResetCommandBuffer(cmd, 0);
 
-        for (uint32_t idDirLight = 0; idDirLight < this->lightManager->DirLights.size(); idDirLight++)
-        {
-            this->setDirectionalShadowRenderPass(this->renderPassModule->DirShadowMappingRenderPass, idDirLight, i);
-        }
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    beginInfo.pInheritanceInfo = nullptr;
 
-        //auto itSpotlight = this->lightManager->SpotLights.begin();
-        //while (itSpotlight != this->lightManager->SpotLights.end())
-        //{
-        //    this->setDirectionalShadowRenderPass(this->renderPassModule->dirShadowMappingRenderPass, *itSpotlight, i);
-        //    itSpotlight++;
-        //}
+    if (vkBeginCommandBuffer(cmd, &beginInfo) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to begin recording command buffer!");
+    }
 
-        for(uint32_t idPointLight = 0; idPointLight < this->lightManager->PointLights.size(); idPointLight++)
-        {
-            this->setOmniShadowRenderPass(this->renderPassModule->OmniShadowMappingRenderPass, idPointLight, i);
-        }
+    for (uint32_t idDirLight = 0; idDirLight < this->lightManager->DirLights.size(); idDirLight++)
+    {
+        this->setDirectionalShadowRenderPass(this->renderPassModule->DirShadowMappingRenderPass, idDirLight, currentFrame);
+    }
 
-        this->setCustomRenderPass(framebufferModule->swapChainFramebuffers[swapchainModule->currentImage], i);
+    for (uint32_t idPointLight = 0; idPointLight < this->lightManager->PointLights.size(); idPointLight++)
+    {
+        this->setOmniShadowRenderPass(this->renderPassModule->OmniShadowMappingRenderPass, idPointLight, currentFrame);
+    }
 
-        if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
-            throw std::runtime_error("failed to record command buffer!");
-        }
+    if (extraRenderTarget != nullptr && extraRenderTarget->Valid())
+    {
+        this->RenderSceneToTarget(*extraRenderTarget, currentFrame);
+    }
+
+    this->setCustomRenderPass(framebufferModule->swapChainFramebuffers[swapchainModule->currentImage], currentFrame);
+
+    if (vkEndCommandBuffer(cmd) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to record command buffer!");
     }
 }
 
@@ -345,9 +348,10 @@ void CommandPoolModule::RenderSceneToTarget(const QERenderTarget& renderTarget, 
     renderPassInfo.renderArea.offset = { 0, 0 };
     renderPassInfo.renderArea.extent = renderTarget.Extent;
 
-    std::array<VkClearValue, 2> clearValues{};
+    std::array<VkClearValue, 3> clearValues{};
     clearValues[0].color = { this->ClearColor.x, this->ClearColor.y, this->ClearColor.z, 1.0f };
     clearValues[1].depthStencil = { 1.0f, 0 };
+    clearValues[2].color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
     renderPassInfo.pClearValues = clearValues.data();

@@ -25,7 +25,7 @@ public:
     void CreateRenderPass(VkFormat swapchainFormat, VkFormat depthFormat, VkSampleCountFlagBits msaaSamples);
     void CreateDirShadowRenderPass(VkFormat shadowFormat);
     void CreateOmniShadowRenderPass(VkFormat shadowFormat, VkFormat shadowDepthFormat);
-    void CreateViewportRenderPass(VkFormat colorFormat, VkFormat depthFormat, VkSampleCountFlagBits samples);
+    void CreateViewportRenderPass(VkFormat colorFormat, VkFormat depthFormat, VkSampleCountFlagBits msaaSamples);
 };
 
 #endif

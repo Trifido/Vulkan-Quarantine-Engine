@@ -50,10 +50,14 @@ private:
 
     QERenderTarget renderTarget{};
 
-    VkImage colorImage = VK_NULL_HANDLE;
-    VkDeviceMemory colorMemory = VK_NULL_HANDLE;
-    VkImageView colorImageView = VK_NULL_HANDLE;
-    VkSampler colorSampler = VK_NULL_HANDLE;
+    VkImage msaaColorImage = VK_NULL_HANDLE;
+    VkDeviceMemory msaaColorMemory = VK_NULL_HANDLE;
+    VkImageView msaaColorImageView = VK_NULL_HANDLE;
+
+    VkImage resolveImage = VK_NULL_HANDLE;
+    VkDeviceMemory resolveMemory = VK_NULL_HANDLE;
+    VkImageView resolveImageView = VK_NULL_HANDLE;
+    VkSampler resolveSampler = VK_NULL_HANDLE;
 
     VkImage depthImage = VK_NULL_HANDLE;
     VkDeviceMemory depthMemory = VK_NULL_HANDLE;

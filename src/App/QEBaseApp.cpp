@@ -82,6 +82,11 @@ void QEBaseApp::initVulkan()
     renderPassModule->CreateDirShadowRenderPass(VK_FORMAT_D32_SFLOAT);
     renderPassModule->CreateOmniShadowRenderPass(VK_FORMAT_R32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT);
 
+    renderPassModule->CreateViewportRenderPass(
+        swapchainModule->swapChainImageFormat,
+        depthBufferModule->findDepthFormat(),
+        *antialiasingModule->msaaSamples);
+
     //Registramos el default render pass
     this->graphicsPipelineManager->RegisterDefaultRenderPass(renderPassModule->DefaultRenderPass);
 
@@ -384,12 +389,7 @@ void QEBaseApp::drawFrame()
     //vkDeviceWaitIdle(deviceModule->device);
 
     const QERenderTarget* extraRenderTarget = GetAdditionalSceneRenderTarget();
-    if (extraRenderTarget != nullptr && extraRenderTarget->Valid())
-    {
-        commandPoolModule->RenderEditorViewport(*extraRenderTarget, (uint32_t)synchronizationModule.GetCurrentFrame());
-    }
-
-    commandPoolModule->Render(&framebufferModule);
+    commandPoolModule->Render(&framebufferModule, extraRenderTarget);
 
     synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer((uint32_t)synchronizationModule.GetCurrentFrame()), this->isRender);
 
@@ -452,6 +452,11 @@ void QEBaseApp::recreateSwapchain()
     renderPassModule->CreateDirShadowRenderPass(VK_FORMAT_D32_SFLOAT);
     renderPassModule->CreateOmniShadowRenderPass(VK_FORMAT_R32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT);
 
+    renderPassModule->CreateViewportRenderPass(
+        swapchainModule->swapChainImageFormat,
+        depthBufferModule->findDepthFormat(),
+        *antialiasingModule->msaaSamples);
+
     //Recreamos los graphics pipeline de los materiales
     graphicsPipelineManager->RegisterDefaultRenderPass(renderPassModule->DefaultRenderPass);
 
@@ -462,7 +467,8 @@ void QEBaseApp::recreateSwapchain()
     framebufferModule.createFramebuffer(renderPassModule->DefaultRenderPass);
 
     commandPoolModule->recreateCommandBuffers();
-    commandPoolModule->Render(&framebufferModule);
+    const QERenderTarget* extraRenderTarget = GetAdditionalSceneRenderTarget();
+    commandPoolModule->Render(&framebufferModule, extraRenderTarget);
 
     OnSwapchainRecreated();
 }

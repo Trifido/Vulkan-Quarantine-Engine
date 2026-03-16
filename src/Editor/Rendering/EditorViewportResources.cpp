@@ -8,6 +8,8 @@
 #include <TextureManagerModule.h>
 #include <SyncTool.h>
 #include <CommandPoolModule.h>
+#include <SwapChainModule.h>
+#include <DepthBufferModule.h>
 
 EditorViewportResources::EditorViewportResources()
 {
@@ -44,7 +46,9 @@ void EditorViewportResources::Cleanup()
 bool EditorViewportResources::IsValid() const
 {
     return renderTarget.Valid() &&
-        colorImageView != VK_NULL_HANDLE &&
+        msaaColorImageView != VK_NULL_HANDLE &&
+        resolveImageView != VK_NULL_HANDLE &&
+        depthImageView != VK_NULL_HANDLE &&
         imguiDescriptorSet != VK_NULL_HANDLE;
 }
 
@@ -88,28 +92,46 @@ void EditorViewportResources::CleanupImages()
         renderTarget.Framebuffer = VK_NULL_HANDLE;
     }
 
-    if (colorSampler != VK_NULL_HANDLE)
+    if (resolveSampler != VK_NULL_HANDLE)
     {
-        vkDestroySampler(deviceModule->device, colorSampler, nullptr);
-        colorSampler = VK_NULL_HANDLE;
+        vkDestroySampler(deviceModule->device, resolveSampler, nullptr);
+        resolveSampler = VK_NULL_HANDLE;
     }
 
-    if (colorImageView != VK_NULL_HANDLE)
+    if (resolveImageView != VK_NULL_HANDLE)
     {
-        vkDestroyImageView(deviceModule->device, colorImageView, nullptr);
-        colorImageView = VK_NULL_HANDLE;
+        vkDestroyImageView(deviceModule->device, resolveImageView, nullptr);
+        resolveImageView = VK_NULL_HANDLE;
     }
 
-    if (colorImage != VK_NULL_HANDLE)
+    if (resolveImage != VK_NULL_HANDLE)
     {
-        vkDestroyImage(deviceModule->device, colorImage, nullptr);
-        colorImage = VK_NULL_HANDLE;
+        vkDestroyImage(deviceModule->device, resolveImage, nullptr);
+        resolveImage = VK_NULL_HANDLE;
     }
 
-    if (colorMemory != VK_NULL_HANDLE)
+    if (resolveMemory != VK_NULL_HANDLE)
     {
-        vkFreeMemory(deviceModule->device, colorMemory, nullptr);
-        colorMemory = VK_NULL_HANDLE;
+        vkFreeMemory(deviceModule->device, resolveMemory, nullptr);
+        resolveMemory = VK_NULL_HANDLE;
+    }
+
+    if (msaaColorImageView != VK_NULL_HANDLE)
+    {
+        vkDestroyImageView(deviceModule->device, msaaColorImageView, nullptr);
+        msaaColorImageView = VK_NULL_HANDLE;
+    }
+
+    if (msaaColorImage != VK_NULL_HANDLE)
+    {
+        vkDestroyImage(deviceModule->device, msaaColorImage, nullptr);
+        msaaColorImage = VK_NULL_HANDLE;
+    }
+
+    if (msaaColorMemory != VK_NULL_HANDLE)
+    {
+        vkFreeMemory(deviceModule->device, msaaColorMemory, nullptr);
+        msaaColorMemory = VK_NULL_HANDLE;
     }
 
     if (depthImageView != VK_NULL_HANDLE)
@@ -133,128 +155,160 @@ void EditorViewportResources::CleanupImages()
 
 void EditorViewportResources::CreateImages()
 {
-    renderTarget.RenderPass = *renderPassModule->DefaultRenderPass;
+    renderTarget.RenderPass = *renderPassModule->ViewportRenderPass;
 
     const uint32_t width = renderTarget.Extent.width;
     const uint32_t height = renderTarget.Extent.height;
 
-    // COLOR
-    TextureManagerModule colorTexture;
-    colorTexture.createImage(
-        width,
-        height,
-        VK_FORMAT_R8G8B8A8_UNORM,
-        VK_IMAGE_TILING_OPTIMAL,
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        1,
-        1,
-        VK_SAMPLE_COUNT_1_BIT);
+    const VkFormat colorFormat = SwapChainModule::getInstance()->swapChainImageFormat;
+    const VkFormat depthFormat = DepthBufferModule::getInstance()->findDepthFormat();
+    const VkSampleCountFlagBits msaaSamples = *DeviceModule::getInstance()->getMsaaSamples();
 
-    colorImage = colorTexture.image;
-    colorMemory = colorTexture.deviceMemory;
-    colorTexture.image = VK_NULL_HANDLE;
-    colorTexture.deviceMemory = VK_NULL_HANDLE;
-
-    VkImageViewCreateInfo colorViewInfo{};
-    colorViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    colorViewInfo.image = colorImage;
-    colorViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    colorViewInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
-    colorViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    colorViewInfo.subresourceRange.baseMipLevel = 0;
-    colorViewInfo.subresourceRange.levelCount = 1;
-    colorViewInfo.subresourceRange.baseArrayLayer = 0;
-    colorViewInfo.subresourceRange.layerCount = 1;
-
-    if (vkCreateImageView(deviceModule->device, &colorViewInfo, nullptr, &colorImageView) != VK_SUCCESS)
+    // 1) COLOR MSAA
     {
-        throw std::runtime_error("failed to create editor viewport color image view!");
+        TextureManagerModule colorTexture;
+        colorTexture.createImage(
+            width,
+            height,
+            colorFormat,
+            VK_IMAGE_TILING_OPTIMAL,
+            VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            1,
+            1,
+            msaaSamples);
+
+        msaaColorImage = colorTexture.image;
+        msaaColorMemory = colorTexture.deviceMemory;
+        colorTexture.image = VK_NULL_HANDLE;
+        colorTexture.deviceMemory = VK_NULL_HANDLE;
+
+        VkImageViewCreateInfo viewInfo{};
+        viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        viewInfo.image = msaaColorImage;
+        viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        viewInfo.format = colorFormat;
+        viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        viewInfo.subresourceRange.baseMipLevel = 0;
+        viewInfo.subresourceRange.levelCount = 1;
+        viewInfo.subresourceRange.baseArrayLayer = 0;
+        viewInfo.subresourceRange.layerCount = 1;
+
+        if (vkCreateImageView(deviceModule->device, &viewInfo, nullptr, &msaaColorImageView) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to create editor viewport MSAA color image view!");
+        }
     }
 
-    VkSamplerCreateInfo samplerInfo{};
-    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    samplerInfo.magFilter = VK_FILTER_LINEAR;
-    samplerInfo.minFilter = VK_FILTER_LINEAR;
-    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    samplerInfo.anisotropyEnable = VK_FALSE;
-    samplerInfo.maxAnisotropy = 1.0f;
-    samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-    samplerInfo.unnormalizedCoordinates = VK_FALSE;
-    samplerInfo.compareEnable = VK_FALSE;
-    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    samplerInfo.minLod = 0.0f;
-    samplerInfo.maxLod = 0.0f;
-    samplerInfo.mipLodBias = 0.0f;
-
-    if (vkCreateSampler(deviceModule->device, &samplerInfo, nullptr, &colorSampler) != VK_SUCCESS)
+    // 2) DEPTH MSAA
     {
-        throw std::runtime_error("failed to create editor viewport sampler!");
+        TextureManagerModule depthTexture;
+        depthTexture.createImage(
+            width,
+            height,
+            depthFormat,
+            VK_IMAGE_TILING_OPTIMAL,
+            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            1,
+            1,
+            msaaSamples);
+
+        depthImage = depthTexture.image;
+        depthMemory = depthTexture.deviceMemory;
+        depthTexture.image = VK_NULL_HANDLE;
+        depthTexture.deviceMemory = VK_NULL_HANDLE;
+
+        VkImageViewCreateInfo depthViewInfo{};
+        depthViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        depthViewInfo.image = depthImage;
+        depthViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        depthViewInfo.format = depthFormat;
+        depthViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+        depthViewInfo.subresourceRange.baseMipLevel = 0;
+        depthViewInfo.subresourceRange.levelCount = 1;
+        depthViewInfo.subresourceRange.baseArrayLayer = 0;
+        depthViewInfo.subresourceRange.layerCount = 1;
+
+        if (vkCreateImageView(deviceModule->device, &depthViewInfo, nullptr, &depthImageView) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to create editor viewport depth image view!");
+        }
     }
 
-    // DEPTH
-    VkFormat depthFormat = VK_FORMAT_D32_SFLOAT;
-
-    TextureManagerModule depthTexture;
-    depthTexture.createImage(
-        width,
-        height,
-        depthFormat,
-        VK_IMAGE_TILING_OPTIMAL,
-        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        1,
-        1,
-        VK_SAMPLE_COUNT_1_BIT);
-
-    depthImage = depthTexture.image;
-    depthMemory = depthTexture.deviceMemory;
-    depthTexture.image = VK_NULL_HANDLE;
-    depthTexture.deviceMemory = VK_NULL_HANDLE;
-
-    VkImageViewCreateInfo depthViewInfo{};
-    depthViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    depthViewInfo.image = depthImage;
-    depthViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    depthViewInfo.format = depthFormat;
-    depthViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-    depthViewInfo.subresourceRange.baseMipLevel = 0;
-    depthViewInfo.subresourceRange.levelCount = 1;
-    depthViewInfo.subresourceRange.baseArrayLayer = 0;
-    depthViewInfo.subresourceRange.layerCount = 1;
-
-    if (vkCreateImageView(deviceModule->device, &depthViewInfo, nullptr, &depthImageView) != VK_SUCCESS)
+    // 3) RESOLVE FINAL
     {
-        throw std::runtime_error("failed to create editor viewport depth image view!");
+        TextureManagerModule resolveTexture;
+        resolveTexture.createImage(
+            width,
+            height,
+            colorFormat,
+            VK_IMAGE_TILING_OPTIMAL,
+            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            1,
+            1,
+            VK_SAMPLE_COUNT_1_BIT);
+
+        resolveImage = resolveTexture.image;
+        resolveMemory = resolveTexture.deviceMemory;
+        resolveTexture.image = VK_NULL_HANDLE;
+        resolveTexture.deviceMemory = VK_NULL_HANDLE;
+
+        VkImageViewCreateInfo resolveViewInfo{};
+        resolveViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        resolveViewInfo.image = resolveImage;
+        resolveViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        resolveViewInfo.format = colorFormat;
+        resolveViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        resolveViewInfo.subresourceRange.baseMipLevel = 0;
+        resolveViewInfo.subresourceRange.levelCount = 1;
+        resolveViewInfo.subresourceRange.baseArrayLayer = 0;
+        resolveViewInfo.subresourceRange.layerCount = 1;
+
+        if (vkCreateImageView(deviceModule->device, &resolveViewInfo, nullptr, &resolveImageView) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to create editor viewport resolve image view!");
+        }
+
+        VkSamplerCreateInfo samplerInfo{};
+        samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+        samplerInfo.magFilter = VK_FILTER_LINEAR;
+        samplerInfo.minFilter = VK_FILTER_LINEAR;
+        samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        samplerInfo.anisotropyEnable = VK_FALSE;
+        samplerInfo.maxAnisotropy = 1.0f;
+        samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+        samplerInfo.unnormalizedCoordinates = VK_FALSE;
+        samplerInfo.compareEnable = VK_FALSE;
+        samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+        samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+        samplerInfo.minLod = 0.0f;
+        samplerInfo.maxLod = 0.0f;
+        samplerInfo.mipLodBias = 0.0f;
+
+        if (vkCreateSampler(deviceModule->device, &samplerInfo, nullptr, &resolveSampler) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to create editor viewport resolve sampler!");
+        }
     }
-
-    // Transiciones iniciales mínimas
-    TransitionImageLayout(
-        depthImage,
-        VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-        { VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1 });
-
-    // OJO:
-    // la color image para offscreen idealmente debería terminar en
-    // VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL al acabar el render pass.
-    // De momento no la transicionamos aquí porque dependerá del render pass.
 }
+
 void EditorViewportResources::CreateFramebuffer()
 {
     VkImageView attachments[] =
     {
-        colorImageView,
-        depthImageView
+        msaaColorImageView,
+        depthImageView,
+        resolveImageView
     };
 
     VkFramebufferCreateInfo framebufferInfo{};
     framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     framebufferInfo.renderPass = renderTarget.RenderPass;
-    framebufferInfo.attachmentCount = 2;
+    framebufferInfo.attachmentCount = 3;
     framebufferInfo.pAttachments = attachments;
     framebufferInfo.width = renderTarget.Extent.width;
     framebufferInfo.height = renderTarget.Extent.height;
@@ -269,8 +323,8 @@ void EditorViewportResources::CreateFramebuffer()
 void EditorViewportResources::RegisterImGuiTexture()
 {
     imguiDescriptorSet = ImGui_ImplVulkan_AddTexture(
-        colorSampler,
-        colorImageView,
+        resolveSampler,
+        resolveImageView,
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
