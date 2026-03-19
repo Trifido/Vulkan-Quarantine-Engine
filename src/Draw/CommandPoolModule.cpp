@@ -131,6 +131,48 @@ void CommandPoolModule::setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t
     vkCmdEndRenderPass(commandBuffers[iCBuffer]);
 }
 
+void CommandPoolModule::setSwapchainImGuiRenderPass(VkFramebuffer& framebuffer, uint32_t iCBuffer)
+{
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = (float)swapchainModule->swapChainExtent.width;
+    viewport.height = (float)swapchainModule->swapChainExtent.height;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent = swapchainModule->swapChainExtent;
+
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = *(this->renderPassModule->DefaultRenderPass);
+    renderPassInfo.framebuffer = framebuffer;
+    renderPassInfo.renderArea.offset = { 0, 0 };
+    renderPassInfo.renderArea.extent = swapchainModule->swapChainExtent;
+
+    std::array<VkClearValue, 3> clearValues{};
+    clearValues[0].color = { 0.08f, 0.08f, 0.08f, 1.0f };
+    clearValues[1].depthStencil = { 1.0f, 0 };
+    clearValues[2].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+    renderPassInfo.pClearValues = clearValues.data();
+
+    vkCmdBeginRenderPass(commandBuffers[iCBuffer], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    vkCmdSetViewport(commandBuffers[iCBuffer], 0, 1, &viewport);
+    vkCmdSetScissor(commandBuffers[iCBuffer], 0, 1, &scissor);
+
+    if (ImGui::GetDrawData() != nullptr)
+    {
+        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[iCBuffer]);
+    }
+
+    vkCmdEndRenderPass(commandBuffers[iCBuffer]);
+}
+
 void CommandPoolModule::setDirectionalShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, uint32_t idDirlight, uint32_t iCBuffer)
 {
     auto dirLight = this->lightManager->DirLights.at(idDirlight);
@@ -309,12 +351,17 @@ void CommandPoolModule::Render(FramebufferModule* framebufferModule, const QERen
         this->setOmniShadowRenderPass(this->renderPassModule->OmniShadowMappingRenderPass, idPointLight, currentFrame);
     }
 
-    if (extraRenderTarget != nullptr && extraRenderTarget->Valid())
+    const bool hasEditorViewport = (extraRenderTarget != nullptr && extraRenderTarget->Valid());
+
+    if (hasEditorViewport)
     {
         this->RenderSceneToTarget(*extraRenderTarget, currentFrame);
+        this->setSwapchainImGuiRenderPass(framebufferModule->swapChainFramebuffers[swapchainModule->currentImage], currentFrame);
     }
-
-    this->setCustomRenderPass(framebufferModule->swapChainFramebuffers[swapchainModule->currentImage], currentFrame);
+    else
+    {
+        this->setCustomRenderPass(framebufferModule->swapChainFramebuffers[swapchainModule->currentImage], currentFrame);
+    }
 
     if (vkEndCommandBuffer(cmd) != VK_SUCCESS)
     {
