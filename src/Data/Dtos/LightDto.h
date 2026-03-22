@@ -6,7 +6,7 @@
 #include <LightType.h>
 #include <string>
 
-#pragma pack(1)
+#pragma pack(push, 1)
 struct LightDto
 {
     std::string name;
@@ -43,5 +43,5 @@ struct LightDto
     }
 };
 
-#pragma pack()
+#pragma pack(pop)
 #endif

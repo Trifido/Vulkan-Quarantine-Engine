@@ -6,20 +6,27 @@
 #include <ImGuizmo.h>
 #include <SyncTool.h>
 
-#include "Core/EditorSelectionManager.h"
-#include "Core/QEGizmoController.h"
+#include <Editor/Core/EditorContext.h>
+#include <Editor/Core/EditorSelectionManager.h>
+#include <Editor/Core/QEGizmoController.h>
+#include <Editor/Core/EditorPickingSystem.h>
+#include <QERenderTarget.h>
+
 #include "Panels/IEditorPanel.h"
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/InspectorPanel.h"
 #include "Panels/ViewportPanel.h"
 #include "Rendering/EditorViewportResources.h"
 
+QEEditorApp::QEEditorApp()
+{
+}
+
 QEEditorApp::~QEEditorApp() = default;
 
 void QEEditorApp::OnInitialize()
 {
     editorContext = std::make_unique<EditorContext>();
-    panels = std::make_unique<std::vector<std::unique_ptr<IEditorPanel>>>();
 
     viewportResources = std::make_unique<EditorViewportResources>();
     viewportResources->Initialize(deviceModule, renderPassModule, commandPoolModule, queueModule);
@@ -84,7 +91,7 @@ void QEEditorApp::DrawEditorUI()
     HandleShortcuts();
     DrawDockspace();
 
-    for (auto& panel : *panels)
+    for (auto& panel : panels)
     {
         panel->Draw();
     }
@@ -187,23 +194,24 @@ void QEEditorApp::ShutdownImGui()
 
 void QEEditorApp::CreatePanels()
 {
-    panels->clear();
+    panels.clear();
 
-    panels->emplace_back(std::make_unique<SceneHierarchyPanel>(
+    panels.emplace_back(std::make_unique<SceneHierarchyPanel>(
         gameObjectManager,
         editorContext.get(),
         selectionManager.get()));
 
-    panels->emplace_back(std::make_unique<InspectorPanel>(
+    panels.emplace_back(std::make_unique<InspectorPanel>(
         gameObjectManager,
         editorContext.get(),
         selectionManager.get()));
 
-    panels->emplace_back(std::make_unique<ViewportPanel>(
+    panels.emplace_back(std::make_unique<ViewportPanel>(
         editorContext.get(),
         viewportResources.get(),
         selectionManager.get(),
-        gizmoController.get()));
+        gizmoController.get(),
+        pickingSystem.get()));
 }
 
 void QEEditorApp::DrawDockspace()

@@ -5,7 +5,7 @@
 
 #include <glm/glm.hpp>
 
-#pragma pack(1)
+#pragma pack(push, 1)
 struct CameraDto
 {
     glm::vec3 position;
@@ -41,6 +41,6 @@ struct CameraDto
         this->yawSaved = yaw;
     }
 };
-#pragma pack()
+#pragma pack(pop)
 
 #endif // !CAMERA_DTO_H

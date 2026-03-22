@@ -3,17 +3,25 @@
 #include "QEBaseApp.h"
 #include <memory>
 #include <vector>
-#include <Editor/Core/EditorContext.h>
-#include <Editor/Core/EditorSelectionManager.h>
-#include <Editor/Core/QEGizmoController.h>
-#include <Editor/Panels/IEditorPanel.h>
-#include <QERenderTarget.h>
-#include <Editor/Rendering/EditorViewportResources.h>
+
+class IEditorPanel;
+class EditorContext;
+class EditorSelectionManager;
+class QEGizmoController;
+class EditorPickingSystem;
+class EditorViewportResources;
+class QERenderTarget;
 
 class QEEditorApp : public QEBaseApp
 {
 public:
+    QEEditorApp();
     ~QEEditorApp() override;
+
+    QEEditorApp(const QEEditorApp&) = delete;
+    QEEditorApp& operator=(const QEEditorApp&) = delete;
+    QEEditorApp(QEEditorApp&&) = delete;
+    QEEditorApp& operator=(QEEditorApp&&) = delete;
 
 protected:
     void OnInitialize() override;
@@ -46,5 +54,6 @@ private:
     std::unique_ptr<EditorViewportResources> viewportResources;
     std::unique_ptr<EditorSelectionManager> selectionManager;
     std::unique_ptr<QEGizmoController> gizmoController;
-    std::unique_ptr < std::vector<std::unique_ptr<IEditorPanel>>> panels;
+    std::unique_ptr<EditorPickingSystem> pickingSystem;
+    std::vector<std::unique_ptr<IEditorPanel>> panels;
 };

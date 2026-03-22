@@ -6,7 +6,7 @@
 #include <glm/glm.hpp>
 #include <glm_yaml_conversions.h>
 
-#pragma pack(1)
+#pragma pack(push, 1)
 struct AtmosphereDto
 {
     bool hasAtmosphere;
@@ -30,7 +30,7 @@ struct AtmosphereDto
     {
     }
 };
-#pragma pack()
+#pragma pack(pop)
 
 
 namespace YAML {

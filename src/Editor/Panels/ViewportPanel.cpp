@@ -6,16 +6,19 @@
 #include <Editor/Core/EditorSelectionManager.h>
 #include <Editor/Core/QEGizmoController.h>
 #include <Editor/Rendering/EditorViewportResources.h>
+#include <QECamera.h>
 
 ViewportPanel::ViewportPanel(
     EditorContext* editorContext,
     EditorViewportResources* viewportResources,
     EditorSelectionManager* selectionManager,
-    QEGizmoController* gizmoController)
+    QEGizmoController* gizmoController,
+    EditorPickingSystem* pickingSystem)
     : editorContext(editorContext)
     , viewportResources(viewportResources)
     , selectionManager(selectionManager)
     , gizmoController(gizmoController)
+    , pickingSystem(pickingSystem)
 {
 }
 
@@ -69,6 +72,7 @@ void ViewportPanel::Draw()
         editorContext->ViewportImageHovered = insideX && insideY;
 
         HandleViewportShortcuts();
+        HandlePicking();
 
         auto sessionManager = QESessionManager::getInstance();
         auto editorCamera = sessionManager->EditorCamera();
@@ -127,5 +131,44 @@ void ViewportPanel::HandleViewportShortcuts()
     if (ImGui::IsKeyPressed(ImGuiKey_E, false))
     {
         gizmoController->SetOperation(QEGizmoController::Operation::Scale);
+    }
+}
+
+void ViewportPanel::HandlePicking()
+{
+    if (!editorContext || !selectionManager || !pickingSystem || !gizmoController)
+        return;
+
+    if (!editorContext->ViewportImageHovered)
+        return;
+
+    if (!ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        return;
+
+    if (gizmoController->IsOver() || gizmoController->IsUsing())
+        return;
+
+    auto editorCamera = QESessionManager::getInstance()->EditorCamera();
+    if (!editorCamera || !editorCamera->CameraData)
+        return;
+
+    ImVec2 mousePos = ImGui::GetMousePos();
+
+    auto pickedObject = pickingSystem->PickGameObject(
+        editorCamera,
+        mousePos.x,
+        mousePos.y,
+        editorContext->ViewportScreenX,
+        editorContext->ViewportScreenY,
+        editorContext->ViewportScreenWidth,
+        editorContext->ViewportScreenHeight);
+
+    if (pickedObject)
+    {
+        selectionManager->SelectGameObject(pickedObject);
+    }
+    else
+    {
+        selectionManager->ClearSelection();
     }
 }

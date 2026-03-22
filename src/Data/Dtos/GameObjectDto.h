@@ -6,7 +6,7 @@
 #include <string>
 #include <glm/glm.hpp>
 
-#pragma pack(1)
+#pragma pack(push, 1)
 struct GameObjectDto
 {
     std::string Id;
@@ -33,6 +33,6 @@ struct GameObjectDto
         this->BindMaterialName = materialName;
     }
 };
-#pragma pack()
+#pragma pack(pop)
 
 #endif

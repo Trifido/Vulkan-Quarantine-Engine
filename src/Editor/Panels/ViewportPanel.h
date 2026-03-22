@@ -4,6 +4,7 @@
 #include <Editor/Core/EditorContext.h>
 #include <Editor/Core/QEGizmoController.h>
 #include <Editor/Core/EditorSelectionManager.h>
+#include <Editor/Core/EditorPickingSystem.h>
 #include <Editor/Rendering/EditorViewportResources.h>
 
 class ViewportPanel : public IEditorPanel
@@ -13,7 +14,8 @@ public:
         EditorContext* editorContext,
         EditorViewportResources* viewportResources,
         EditorSelectionManager* selectionManager,
-        QEGizmoController* gizmoController);
+        QEGizmoController* gizmoController,
+        EditorPickingSystem* pickingSystem);
 
     const char* GetName() const override { return "Viewport"; }
     void Draw() override;
@@ -25,4 +27,7 @@ private:
     EditorViewportResources* viewportResources = nullptr;
     EditorSelectionManager* selectionManager = nullptr;
     QEGizmoController* gizmoController = nullptr;
+    EditorPickingSystem* pickingSystem = nullptr;
+
+    void HandlePicking();
 };
