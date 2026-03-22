@@ -113,8 +113,6 @@ bool QEGizmoController::Draw(
     if (viewportSize.x <= 0.0f || viewportSize.y <= 0.0f)
         return false;
 
-    camera->UpdateCamera();
-
     return ManipulateTransform(
         selectedObject,
         transform,
@@ -192,9 +190,12 @@ bool QEGizmoController::ManipulateTransform(
         }
     }
 
+    glm::mat4 gizmoProjection = camera->CameraData->Projection;
+    gizmoProjection[1][1] *= -1.0f;
+
     bool changed = ImGuizmo::Manipulate(
         glm::value_ptr(camera->CameraData->View),
-        glm::value_ptr(camera->CameraData->Projection),
+        glm::value_ptr(gizmoProjection),
         gizmoOperation,
         gizmoMode,
         glm::value_ptr(worldMatrix),

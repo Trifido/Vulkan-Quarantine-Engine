@@ -68,9 +68,24 @@ void InspectorPanel::Draw()
 
         ImGui::TextUnformatted("Transform");
 
-        ImGui::InputFloat3("Position", &position.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
-        ImGui::InputFloat3("Rotation", &rotation.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
-        ImGui::InputFloat3("Scale", &scale.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
+        if (ImGui::DragFloat3("Position", &position.x, 0.1f))
+        {
+            transform->SetLocalPosition(position);
+        }
+
+        if (ImGui::DragFloat3("Rotation", &rotation.x, 0.5f))
+        {
+            transform->SetLocalEulerDegrees(rotation);
+        }
+
+        if (ImGui::DragFloat3("Scale", &scale.x, 0.05f))
+        {
+            scale.x = (scale.x == 0.0f) ? 0.0001f : scale.x;
+            scale.y = (scale.y == 0.0f) ? 0.0001f : scale.y;
+            scale.z = (scale.z == 0.0f) ? 0.0001f : scale.z;
+
+            transform->SetLocalScale(scale);
+        }
     }
     else
     {

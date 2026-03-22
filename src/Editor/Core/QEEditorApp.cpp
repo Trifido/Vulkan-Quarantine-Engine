@@ -3,6 +3,7 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
+#include <ImGuizmo.h>
 #include <SyncTool.h>
 
 #include "Core/EditorSelectionManager.h"
@@ -75,6 +76,7 @@ void QEEditorApp::BeginImGuiFrame()
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+    ImGuizmo::BeginFrame();
 }
 
 void QEEditorApp::DrawEditorUI()
