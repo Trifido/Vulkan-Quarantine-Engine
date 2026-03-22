@@ -124,6 +124,24 @@ target_include_directories(imgui PUBLIC
 )
 
 # ------------------------------
+# ImGuizmo
+# ------------------------------
+
+set(IMGUIZMO_DIR ${CMAKE_SOURCE_DIR}/extern/ImGuizmo)
+
+add_library(imguizmo STATIC
+  ${IMGUIZMO_DIR}/ImGuizmo.cpp
+  ${IMGUIZMO_DIR}/ImGuizmo.h
+)
+
+target_include_directories(imguizmo PUBLIC
+  ${IMGUIZMO_DIR}
+  ${IMGUI_DIR}
+)
+
+target_link_libraries(imguizmo PUBLIC imgui)
+
+# ------------------------------
 # Source Files
 # ------------------------------
 
@@ -220,6 +238,7 @@ target_link_libraries(QuarantineEngine
   Jolt
   SPIRV-Reflect
   meshoptimizer
+  imguizmo
   yaml-cpp  
 )
 
@@ -240,7 +259,7 @@ function(hide_from_vs TARGET_NAME)
 endfunction()
 
 foreach(TARGET_NAME
-  glfw imgui assimp
+  glfw imgui imguizmo assimp
   SPIRV-Reflect meshoptimizer glm zlibstatic yaml-cpp
 )
   hide_from_vs(${TARGET_NAME})
@@ -282,6 +301,7 @@ if (MSVC)
     SPIRV-Reflect
     meshoptimizer
     imgui
+    imguizmo
     zlibstatic
   )
     exclude_from_vs_build(${dep})
