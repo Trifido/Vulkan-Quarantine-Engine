@@ -129,10 +129,11 @@ void QEBaseApp::initVulkan()
 
     //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/FuturisticRoom/sci-fi_lab.glb");
     //auto streetPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/FuturisticRoom/Meshes/sci-fi_lab.gltf").generic_string();
+    
     // Load Scene
     this->loadScene(this->scene);
 
-    //auto materialBalPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/MaterialBall2/Meshes/3d_material_ball.gltf").generic_string();
+    //auto materialBalPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/MaterialBall/Meshes/material_ball.gltf").generic_string();
     //std::shared_ptr<QEGameObject> ball = std::make_shared<QEGameObject>("ball");
     //ball->AddComponent(std::make_shared<QEGeometryComponent>(std::make_unique<MeshGenerator>(materialBalPath)));
     //ball->AddComponent(std::make_shared<QEMeshRenderer>());
