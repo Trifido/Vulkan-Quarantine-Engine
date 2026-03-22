@@ -39,7 +39,7 @@ void Grid::Draw(VkCommandBuffer& commandBuffer, uint32_t idx)
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
     vkCmdSetDepthTestEnable(commandBuffer, true);
-    vkCmdSetDepthWriteEnable(commandBuffer, true);
+    vkCmdSetDepthWriteEnable(commandBuffer, false);
     vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
     vkCmdSetCullMode(commandBuffer, false);
 
