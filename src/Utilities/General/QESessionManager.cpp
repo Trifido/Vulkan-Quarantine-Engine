@@ -100,14 +100,30 @@ void QESessionManager::UpdateActiveCameraGPUData()
     }
 }
 
-void QESessionManager::UpdateViewportSize()
+void QESessionManager::UpdateEditorCameraViewportSize(uint32_t width, uint32_t height)
 {
-    if (this->_activeCamera == nullptr)
+    if (this->_editorCamera == nullptr)
         return;
 
-    auto swapchainModule = SwapChainModule::getInstance();
-    this->_activeCamera->UpdateViewportSize(swapchainModule->swapChainExtent);
-    this->_activeCamera->UpdateCamera();
+    VkExtent2D extent{};
+    extent.width = std::max(1u, width);
+    extent.height = std::max(1u, height);
+
+    this->_editorCamera->UpdateViewportSize(extent);
+    this->_editorCamera->UpdateCamera();
+}
+
+void QESessionManager::UpdateGameCameraViewportSize(uint32_t width, uint32_t height)
+{
+    if (this->_gameCamera == nullptr)
+        return;
+
+    VkExtent2D extent{};
+    extent.width = std::max(1u, width);
+    extent.height = std::max(1u, height);
+
+    this->_gameCamera->UpdateViewportSize(extent);
+    this->_gameCamera->UpdateCamera();
 }
 
 void QESessionManager::SetupEditor()

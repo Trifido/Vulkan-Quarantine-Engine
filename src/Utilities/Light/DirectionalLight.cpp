@@ -1,6 +1,7 @@
 ﻿#include "DirectionalLight.h"
 #include <SynchronizationModule.h>
 #include <QESessionManager.h>
+#include "QECamera.h"
 
 QEDirectionalLight::QEDirectionalLight() : QELight()
 {

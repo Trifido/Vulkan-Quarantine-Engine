@@ -7,6 +7,7 @@
 #include <SunLight.h>
 #include <QESessionManager.h>
 #include <QEGameObject.h>
+#include "QECamera.h"
 
 bool compareDistance(const LightMap& a, const LightMap& b)
 {

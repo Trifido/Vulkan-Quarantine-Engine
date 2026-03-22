@@ -2,6 +2,7 @@
 #include <MaterialManager.h>
 #include <filesystem>
 #include <QESessionManager.h>
+#include "QECamera.h"
 
 void CullingSceneManager::InitializeCullingSceneResources()
 {

@@ -1,57 +1,59 @@
 #pragma once
 
-#ifndef QE_SESSION_MANAGER
-#define QE_SESSION_MANAGER
+#include <memory>
+#include <string>
+#include <vulkan/vulkan.h>
+#include <QESingleton.h>
 
-#include "QESingleton.h"
-#include <QECamera.h>
+class QECamera;
+class UniformBufferObject;
 
 class QESessionManager : public QESingleton<QESessionManager>
 {
 private:
-    friend class QESingleton<QESessionManager>;
+    friend class QESingleton<QESessionManager>; // Permitir acceso al constructor
+public:
+    QESessionManager();
+
+    void SetEditorMode(bool value);
+    void SetDebugMode(bool value);
+    void RegisterActiveSceneCamera();
+    void SetFindNewSceneCamera(std::string cameraID);
+    void FreeCameraResources();
+
+    void UpdateActiveCameraGPUData();
+
+    void UpdateEditorCameraViewportSize(uint32_t width, uint32_t height);
+    void UpdateGameCameraViewportSize(uint32_t width, uint32_t height);
+
+    void SetupEditor();
+    void CleanEditorResources();
+    void CleanCameras();
+    void UpdateCullingScene();
+    void CleanCullingResources();
+    void FindNewSceneCamera();
+    std::shared_ptr<UniformBufferObject> GetCameraUBO() { return this->cameraUBO; }
+
+    std::shared_ptr<QECamera> ActiveCamera() const { return _activeCamera; }
+    std::shared_ptr<QECamera> EditorCamera() const { return _editorCamera; }
+    std::shared_ptr<QECamera> GameCamera() const { return _gameCamera; }
+
+    bool IsEditor() const { return _isEditor; }
+
+public:
+    std::string NameCameraEditor = "QECameraEditor";
+
+private:
     bool _isEditor = false;
     bool _isDebugMode = false;
+    bool _newSceneCamera = false;
+
+    std::string newCameraID;
+
     std::shared_ptr<QECamera> _activeCamera = nullptr;
     std::shared_ptr<QECamera> _editorCamera = nullptr;
     std::shared_ptr<QECamera> _gameCamera = nullptr;
 
-    std::shared_ptr<UniformBufferObject> cameraUBO;
-
-private:
-    bool _newSceneCamera = false;
-    std::string newCameraID = "";
-
 public:
-    const std::string NameCameraEditor = "QECameraEditor";
-
-public:
-    QESessionManager();
-
-    const bool IsEditor() { return _isEditor; }
-    const bool IsDebugMode() { return _isDebugMode; }
-    void SetEditorMode(bool value);
-    void SetDebugMode(bool value);
-    void RegisterActiveSceneCamera();
-    std::shared_ptr<QECamera> ActiveCamera() { return _activeCamera; }
-    std::shared_ptr<QECamera> EditorCamera() { return _editorCamera; }
-    std::shared_ptr<UniformBufferObject> GetCameraUBO() { return this->cameraUBO; }
-    void SetFindNewSceneCamera(std::string cameraID);
-
-    void CleanCameras();
-    void FreeCameraResources();
-    void UpdateActiveCameraGPUData();
-    void UpdateViewportSize();
-
-    void SetupEditor();
-    void CleanEditorResources();
-
-    void UpdateCullingScene();
-    void CleanCullingResources();
-
-    void FindNewSceneCamera();
+    std::shared_ptr<UniformBufferObject> cameraUBO = nullptr;
 };
-
-#endif // !QE_SESSION_MANAGER
-
-

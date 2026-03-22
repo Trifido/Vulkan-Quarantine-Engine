@@ -50,9 +50,6 @@ void QECameraController::EditorCameraController(float dt)
     if (!this->EditorControls)
         return;
 
-    EditorScroll(dt);
-    EditorRotate(dt);
-
     glm::vec3 dir(0.0f);
     glm::vec3 fwd = _OwnerTransform->Forward();
     glm::vec3 right = _OwnerTransform->Right();

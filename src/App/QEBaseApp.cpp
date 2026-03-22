@@ -153,6 +153,14 @@ void QEBaseApp::loadScene(QEScene scene)
     this->gameObjectManager->StartQEGameObjects();
     this->sessionManager->RegisterActiveSceneCamera();
 
+    if (!IsEditorMode())
+    {
+        auto swapchainModule = SwapChainModule::getInstance();
+        this->sessionManager->UpdateGameCameraViewportSize(
+            swapchainModule->swapChainExtent.width,
+            swapchainModule->swapChainExtent.height);
+    }
+
     this->sessionManager->SetEditorMode(IsEditorMode());
     this->sessionManager->SetDebugMode(false);
 
@@ -435,7 +443,13 @@ void QEBaseApp::recreateSwapchain()
     cleanUpSwapchain();
     swapchainModule->createSwapChain(windowSurface.getSurface(), mainWindow->getWindow());
 
-    this->sessionManager->UpdateViewportSize();
+    if (!IsEditorMode())
+    {
+        this->sessionManager->UpdateGameCameraViewportSize(
+            swapchainModule->swapChainExtent.width,
+            swapchainModule->swapChainExtent.height);
+    }
+
     this->atmosphereSystem->UpdateAtmopshereResolution();
 
     antialiasingModule->createColorResources();

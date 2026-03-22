@@ -23,14 +23,14 @@ void GraphicsPipelineModule::CompileGraphicsPipeline(std::vector<VkPipelineShade
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = (float)swapChainModule->swapChainExtent.width;
-    viewport.height = (float)swapChainModule->swapChainExtent.height;
+    viewport.width = 1.0f;
+    viewport.height = 1.0f;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
     VkRect2D scissor{};
     scissor.offset = { 0, 0 };
-    scissor.extent = swapChainModule->swapChainExtent;
+    scissor.extent = { 1, 1 };
 
     VkPipelineViewportStateCreateInfo viewportState{};
     viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -86,8 +86,8 @@ void GraphicsPipelineModule::CompileGraphicsPipeline(std::vector<VkPipelineShade
     colorBlending.blendConstants[3] = 0.0f; // Optional
 
     std::vector<VkDynamicState> dynamicStates = {
-        //VK_DYNAMIC_STATE_VIEWPORT,
-        //VK_DYNAMIC_STATE_SCISSOR,
+        VK_DYNAMIC_STATE_VIEWPORT,
+        VK_DYNAMIC_STATE_SCISSOR,
         VK_DYNAMIC_STATE_DEPTH_TEST_ENABLE,
         VK_DYNAMIC_STATE_CULL_MODE,
         VK_DYNAMIC_STATE_FRONT_FACE,
