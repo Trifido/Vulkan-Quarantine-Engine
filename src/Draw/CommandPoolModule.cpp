@@ -125,9 +125,6 @@ void CommandPoolModule::setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t
     this->cullingSceneManager->DrawDebug(commandBuffers[iCBuffer], iCBuffer);
     this->debugSystem->DrawDebugLines(commandBuffers[iCBuffer], iCBuffer);
 
-    if (ImGui::GetDrawData() != nullptr)
-        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[iCBuffer]);
-
     vkCmdEndRenderPass(commandBuffers[iCBuffer]);
 }
 

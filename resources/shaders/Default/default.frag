@@ -17,6 +17,7 @@
 #define MAX_NUM_LIGHTS 64
 #define NUM_WORDS ( ( MAX_NUM_LIGHTS + 31 ) / 32 )
 #define FAR_PLANE 500.0
+#define NEAR_PLANE 0.1
 
 layout(location = 0) in VS_OUT {
     vec3 FragPos;
@@ -92,7 +93,7 @@ void main()
         
     vec4 pos_camera_space = cameraData.view * vec4(fs_in.FragPos, 1.0);
     float z_far = FAR_PLANE;
-    float z_near = 0.1;
+    float z_near = NEAR_PLANE;
     float linear_d = (-pos_camera_space.z - z_near) / (z_far - z_near);
     linear_d = clamp(linear_d, 0.0, 0.999999);
     int bin_index = int( linear_d / BIN_WIDTH );

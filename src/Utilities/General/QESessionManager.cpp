@@ -85,19 +85,28 @@ void QESessionManager::FreeCameraResources()
     this->_editorCamera.reset();
 }
 
-void QESessionManager::UpdateActiveCameraGPUData()
+void QESessionManager::UpdateActiveCameraGPUData(uint32_t currentFrame)
 {
-    if (_activeCamera != nullptr)
-    {
-        auto deviceModule = DeviceModule::getInstance();
-        for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
-        {
-            void* data;
-            vkMapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame], 0, sizeof(UniformCamera), 0, &data);
-            memcpy(data, static_cast<const void*>(this->_activeCamera->CameraData.get()), sizeof(UniformCamera));
-            vkUnmapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame]);
-        }
-    }
+    if (_activeCamera == nullptr)
+        return;
+
+    auto deviceModule = DeviceModule::getInstance();
+
+    void* data = nullptr;
+    vkMapMemory(
+        deviceModule->device,
+        this->cameraUBO->uniformBuffersMemory[currentFrame],
+        0,
+        sizeof(UniformCamera),
+        0,
+        &data);
+
+    memcpy(
+        data,
+        static_cast<const void*>(this->_activeCamera->CameraData.get()),
+        sizeof(UniformCamera));
+
+    vkUnmapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame]);
 }
 
 void QESessionManager::UpdateEditorCameraViewportSize(uint32_t width, uint32_t height)

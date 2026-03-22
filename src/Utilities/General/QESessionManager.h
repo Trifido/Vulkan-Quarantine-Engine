@@ -21,7 +21,7 @@ public:
     void SetFindNewSceneCamera(std::string cameraID);
     void FreeCameraResources();
 
-    void UpdateActiveCameraGPUData();
+    void UpdateActiveCameraGPUData(uint32_t currentFrame);
 
     void UpdateEditorCameraViewportSize(uint32_t width, uint32_t height);
     void UpdateGameCameraViewportSize(uint32_t width, uint32_t height);

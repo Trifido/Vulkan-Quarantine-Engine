@@ -209,9 +209,6 @@ void QEBaseApp::mainLoop()
         // UPDATE ATMOSPHERE
         this->atmosphereSystem->UpdateSun();
 
-        // UPDATE CAMERA DATA
-        this->sessionManager->UpdateActiveCameraGPUData();
-
         // UPDATE DEBUG BUFFERS
         this->debugSystem->UpdateGraphicBuffers();
 
@@ -373,13 +370,18 @@ void QEBaseApp::computeFrame()
     if (this->isRender)
     {
         synchronizationModule.synchronizeWaitComputeFences();
-        //Update uniformBuffer here -----> <-----
 
-        // Update particles system
+        uint32_t currentFrame = (uint32_t)synchronizationModule.GetCurrentFrame();
+
+        this->sessionManager->UpdateActiveCameraGPUData(currentFrame);
+
         this->particleSystemManager->UpdateParticleSystems();
 
-        commandPoolModule->recordComputeCommandBuffer(commandPoolModule->getComputeCommandBuffer((uint32_t)synchronizationModule.GetCurrentFrame()));
-        synchronizationModule.submitComputeCommandBuffer(commandPoolModule->getComputeCommandBuffer((uint32_t)synchronizationModule.GetCurrentFrame()));
+        commandPoolModule->recordComputeCommandBuffer(
+            commandPoolModule->getComputeCommandBuffer(currentFrame));
+
+        synchronizationModule.submitComputeCommandBuffer(
+            commandPoolModule->getComputeCommandBuffer(currentFrame));
     }
 }
 
@@ -387,21 +389,32 @@ void QEBaseApp::drawFrame()
 {
     synchronizationModule.synchronizeWaitFences();
 
-    VkResult result = vkAcquireNextImageKHR(deviceModule->device, swapchainModule->getSwapchain(), UINT64_MAX, synchronizationModule.getImageAvailableSemaphore(), VK_NULL_HANDLE, &swapchainModule->currentImage);
+    uint32_t currentFrame = (uint32_t)synchronizationModule.GetCurrentFrame();
+
+    VkResult result = vkAcquireNextImageKHR(
+        deviceModule->device,
+        swapchainModule->getSwapchain(),
+        UINT64_MAX,
+        synchronizationModule.getImageAvailableSemaphore(),
+        VK_NULL_HANDLE,
+        &swapchainModule->currentImage);
+
     resizeSwapchain(result, ERROR_RESIZE::SWAPCHAIN_ERROR);
 
-    //this->cameraEditor->UpdateUBOCamera();
-    //this->lightManager->UpdateUBOLight();
+    this->sessionManager->UpdateActiveCameraGPUData(currentFrame);
     this->materialManager->UpdateUniforms();
-
-    //vkDeviceWaitIdle(deviceModule->device);
 
     const QERenderTarget* extraRenderTarget = GetAdditionalSceneRenderTarget();
     commandPoolModule->Render(&framebufferModule, extraRenderTarget);
 
-    synchronizationModule.submitCommandBuffer(commandPoolModule->getCommandBuffer((uint32_t)synchronizationModule.GetCurrentFrame()), this->isRender);
+    synchronizationModule.submitCommandBuffer(
+        commandPoolModule->getCommandBuffer(currentFrame),
+        this->isRender);
 
-    result = synchronizationModule.presentSwapchain(swapchainModule->getSwapchain(), swapchainModule->currentImage);
+    result = synchronizationModule.presentSwapchain(
+        swapchainModule->getSwapchain(),
+        swapchainModule->currentImage);
+
     resizeSwapchain(result, ERROR_RESIZE::IMAGE_ERROR);
     this->isRender = true;
 }
