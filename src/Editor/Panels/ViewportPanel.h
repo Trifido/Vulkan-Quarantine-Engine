@@ -1,22 +1,28 @@
 #pragma once
 
 #include "IEditorPanel.h"
-
-class EditorViewportResources;
-struct EditorContext;
+#include <Editor/Core/EditorContext.h>
+#include <Editor/Core/QEGizmoController.h>
+#include <Editor/Core/EditorSelectionManager.h>
+#include <Editor/Rendering/EditorViewportResources.h>
 
 class ViewportPanel : public IEditorPanel
 {
 public:
-    ViewportPanel(EditorContext* editorContext, EditorViewportResources* viewportResources);
+    ViewportPanel(
+        EditorContext* editorContext,
+        EditorViewportResources* viewportResources,
+        EditorSelectionManager* selectionManager,
+        QEGizmoController* gizmoController);
 
     const char* GetName() const override { return "Viewport"; }
     void Draw() override;
 
-private:
-    const uint32_t renderWidth = 1280;
-    const uint32_t renderHeight = 720;
+    void HandleViewportShortcuts();
 
+private:
     EditorContext* editorContext = nullptr;
     EditorViewportResources* viewportResources = nullptr;
+    EditorSelectionManager* selectionManager = nullptr;
+    QEGizmoController* gizmoController = nullptr;
 };

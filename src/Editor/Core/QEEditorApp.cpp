@@ -1,4 +1,3 @@
-
 #include "QEEditorApp.h"
 
 #include <imgui.h>
@@ -6,6 +5,8 @@
 #include <imgui_impl_vulkan.h>
 #include <SyncTool.h>
 
+#include "Core/EditorSelectionManager.h"
+#include "Core/QEGizmoController.h"
 #include "Panels/IEditorPanel.h"
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/InspectorPanel.h"
@@ -22,6 +23,10 @@ void QEEditorApp::OnInitialize()
     viewportResources = std::make_unique<EditorViewportResources>();
     viewportResources->Initialize(deviceModule, renderPassModule, commandPoolModule, queueModule);
     viewportResources->Resize(1280, 720);
+
+    selectionManager = std::make_unique<EditorSelectionManager>();
+    gizmoController = std::make_unique<QEGizmoController>();
+    gizmoController->SetOperation(QEGizmoController::Operation::Translate);
 
     CreatePanels();
 }
@@ -77,10 +82,6 @@ void QEEditorApp::DrawEditorUI()
     HandleShortcuts();
     DrawDockspace();
 
-    //ImGui::Begin("Test Window");
-    //ImGui::Text("QEEditorApp UI is running");
-    //ImGui::End();
-
     for (auto& panel : *panels)
     {
         panel->Draw();
@@ -115,8 +116,6 @@ const QERenderTarget* QEEditorApp::GetAdditionalSceneRenderTarget() const
 
 void QEEditorApp::InitializeImGui()
 {
-    //1: create descriptor pool for IMGUI
-    // the size of the pool is very oversize, but it's copied from imgui demo itself.
     VkDescriptorPoolSize pool_sizes[] =
     {
         { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
@@ -141,20 +140,14 @@ void QEEditorApp::InitializeImGui()
 
     vkCreateDescriptorPool(deviceModule->device, &pool_info, nullptr, &imguiPool);
 
-
-    // 2: initialize imgui library
-
-    //this initializes the core structures of imgui
     ImGui::CreateContext();
 
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-    //this initializes imgui for GLFW
     ImGui_ImplGlfw_InitForVulkan(mainWindow->window, true);
 
-    //this initializes imgui for Vulkan
     ImGui_ImplVulkan_InitInfo init_info = {};
     init_info.Instance = vulkanInstance.getInstance();
     init_info.PhysicalDevice = deviceModule->physicalDevice;
@@ -162,17 +155,24 @@ void QEEditorApp::InitializeImGui()
     init_info.Queue = queueModule->graphicsQueue;
     init_info.DescriptorPool = imguiPool;
     init_info.Subpass = 0;
-    init_info.RenderPass = *this->renderPassModule->DefaultRenderPass;
+    init_info.RenderPass = *renderPassModule->DefaultRenderPass;
     init_info.MinImageCount = 3;
     init_info.ImageCount = 3;
-    init_info.MSAASamples = *deviceModule->getMsaaSamples();//VK_SAMPLE_COUNT_1_BIT;
+    init_info.MSAASamples = *deviceModule->getMsaaSamples();
 
     ImGui_ImplVulkan_Init(&init_info);
 
-    //execute a gpu command to upload imgui font textures
-    VkCommandBuffer commandBuffer = beginSingleTimeCommands(deviceModule->device, commandPoolModule->getCommandPool());
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands(
+        deviceModule->device,
+        commandPoolModule->getCommandPool());
+
     ImGui_ImplVulkan_CreateFontsTexture();
-    endSingleTimeCommands(deviceModule->device, queueModule->graphicsQueue, commandPoolModule->getCommandPool(), commandBuffer);
+
+    endSingleTimeCommands(
+        deviceModule->device,
+        queueModule->graphicsQueue,
+        commandPoolModule->getCommandPool(),
+        commandBuffer);
 }
 
 void QEEditorApp::ShutdownImGui()
@@ -187,9 +187,21 @@ void QEEditorApp::CreatePanels()
 {
     panels->clear();
 
-    panels->emplace_back(std::make_unique<SceneHierarchyPanel>(gameObjectManager, editorContext.get()));
-    panels->emplace_back(std::make_unique<InspectorPanel>(gameObjectManager, editorContext.get()));
-    panels->emplace_back(std::make_unique<ViewportPanel>(editorContext.get(), viewportResources.get()));
+    panels->emplace_back(std::make_unique<SceneHierarchyPanel>(
+        gameObjectManager,
+        editorContext.get(),
+        selectionManager.get()));
+
+    panels->emplace_back(std::make_unique<InspectorPanel>(
+        gameObjectManager,
+        editorContext.get(),
+        selectionManager.get()));
+
+    panels->emplace_back(std::make_unique<ViewportPanel>(
+        editorContext.get(),
+        viewportResources.get(),
+        selectionManager.get(),
+        gizmoController.get()));
 }
 
 void QEEditorApp::DrawDockspace()
@@ -254,31 +266,11 @@ void QEEditorApp::HandleShortcuts()
     {
         SaveScene();
     }
-
-    if (ImGui::IsKeyPressed(ImGuiKey_Q, false))
-    {
-        editorContext->CurrentGizmoOperation = QEGizmoOperation::None;
-    }
-
-    if (ImGui::IsKeyPressed(ImGuiKey_W, false))
-    {
-        editorContext->CurrentGizmoOperation = QEGizmoOperation::Translate;
-    }
-
-    if (ImGui::IsKeyPressed(ImGuiKey_E, false))
-    {
-        editorContext->CurrentGizmoOperation = QEGizmoOperation::Rotate;
-    }
-
-    if (ImGui::IsKeyPressed(ImGuiKey_R, false))
-    {
-        editorContext->CurrentGizmoOperation = QEGizmoOperation::Scale;
-    }
 }
 
 void QEEditorApp::SaveScene()
 {
-    this->scene.cameraEditor = this->sessionManager->EditorCamera();
-    this->scene.atmosphereDto = this->atmosphereSystem->CreateAtmosphereDto();
-    this->scene.SerializeScene();
+    scene.cameraEditor = sessionManager->EditorCamera();
+    scene.atmosphereDto = atmosphereSystem->CreateAtmosphereDto();
+    scene.SerializeScene();
 }

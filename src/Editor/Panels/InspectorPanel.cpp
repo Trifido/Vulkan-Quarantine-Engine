@@ -1,13 +1,22 @@
 #include "InspectorPanel.h"
 
 #include <imgui.h>
+#include <glm/gtx/euler_angles.hpp>
+#include <glm/gtx/quaternion.hpp>
+
 #include <GameObjectManager.h>
 #include <QEGameObject.h>
 #include <QETransform.h>
-#include "Editor/Core/EditorContext.h"
+#include <Editor/Core/EditorContext.h>
+#include <Editor/Core/EditorSelectionManager.h>
 
-InspectorPanel::InspectorPanel(GameObjectManager* gameObjectManager, EditorContext* editorContext)
-    : gameObjectManager(gameObjectManager), editorContext(editorContext)
+InspectorPanel::InspectorPanel(
+    GameObjectManager* gameObjectManager,
+    EditorContext* editorContext,
+    EditorSelectionManager* selectionManager)
+    : gameObjectManager(gameObjectManager)
+    , editorContext(editorContext)
+    , selectionManager(selectionManager)
 {
 }
 
@@ -27,19 +36,19 @@ void InspectorPanel::Draw()
         return;
     }
 
-    if (editorContext->SelectedGameObjectId.empty())
+    if (!selectionManager || !selectionManager->HasSelection())
     {
         ImGui::TextUnformatted("No GameObject selected.");
         ImGui::End();
         return;
     }
 
-    auto gameObject = gameObjectManager->GetGameObjectById(editorContext->SelectedGameObjectId);
+    auto gameObject = selectionManager->GetSelectedGameObject();
 
     if (!gameObject)
     {
         ImGui::TextUnformatted("Selected GameObject no longer exists.");
-        editorContext->SelectedGameObjectId.clear();
+        selectionManager->ClearSelection();
         ImGui::End();
         return;
     }

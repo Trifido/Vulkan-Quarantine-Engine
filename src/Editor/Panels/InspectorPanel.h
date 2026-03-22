@@ -4,11 +4,15 @@
 
 class GameObjectManager;
 struct EditorContext;
+class EditorSelectionManager;
 
 class InspectorPanel : public IEditorPanel
 {
 public:
-    InspectorPanel(GameObjectManager* gameObjectManager, EditorContext* editorContext);
+    InspectorPanel(
+        GameObjectManager* gameObjectManager,
+        EditorContext* editorContext,
+        EditorSelectionManager* selectionManager);
 
     const char* GetName() const override { return "Inspector"; }
     void Draw() override;
@@ -16,4 +20,5 @@ public:
 private:
     GameObjectManager* gameObjectManager = nullptr;
     EditorContext* editorContext = nullptr;
+    EditorSelectionManager* selectionManager = nullptr;
 };

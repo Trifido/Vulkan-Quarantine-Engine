@@ -4,9 +4,15 @@
 #include <GameObjectManager.h>
 #include <QEGameObject.h>
 #include <Editor/Core/EditorContext.h>
+#include <Editor/Core/EditorSelectionManager.h>
 
-SceneHierarchyPanel::SceneHierarchyPanel(GameObjectManager* gameObjectManager, EditorContext* editorContext)
-    : gameObjectManager(gameObjectManager), editorContext(editorContext)
+SceneHierarchyPanel::SceneHierarchyPanel(
+    GameObjectManager* gameObjectManager,
+    EditorContext* editorContext,
+    EditorSelectionManager* selectionManager)
+    : gameObjectManager(gameObjectManager)
+    , editorContext(editorContext)
+    , selectionManager(selectionManager)
 {
 }
 
@@ -43,7 +49,7 @@ void SceneHierarchyPanel::DrawGameObjectNode(const std::shared_ptr<QEGameObject>
         return;
     }
 
-    const bool isSelected = (editorContext->SelectedGameObjectId == gameObject->ID());
+    const bool isSelected = selectionManager && selectionManager->IsSelected(gameObject);
 
     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
 
@@ -65,7 +71,8 @@ void SceneHierarchyPanel::DrawGameObjectNode(const std::shared_ptr<QEGameObject>
 
     if (ImGui::IsItemClicked())
     {
-        editorContext->SelectedGameObjectId = gameObject->ID();
+        if (selectionManager)
+            selectionManager->SelectGameObject(gameObject);
     }
 
     if (isOpen)
