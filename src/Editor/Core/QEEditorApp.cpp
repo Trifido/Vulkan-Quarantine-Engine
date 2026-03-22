@@ -35,6 +35,7 @@ void QEEditorApp::OnInitialize()
     selectionManager = std::make_unique<EditorSelectionManager>();
     gizmoController = std::make_unique<QEGizmoController>();
     gizmoController->SetOperation(QEGizmoController::Operation::Translate);
+    pickingSystem = std::make_unique<EditorPickingSystem>();
 
     CreatePanels();
 }
