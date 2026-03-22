@@ -432,43 +432,33 @@ void QEBaseApp::recreateSwapchain()
 
     vkDeviceWaitIdle(deviceModule->device);
 
-    //Recreamos el swapchain
     cleanUpSwapchain();
     swapchainModule->createSwapChain(windowSurface.getSurface(), mainWindow->getWindow());
 
-    //Actualizamos el formato de la c�mara
     this->sessionManager->UpdateViewportSize();
-
-    //Actualizamos la resoluci�n de la atmosfera
     this->atmosphereSystem->UpdateAtmopshereResolution();
 
-    //Recreamos el antialiasing module
     antialiasingModule->createColorResources();
-    //Recreamos el depth buffer module
     depthBufferModule->createDepthResources(swapchainModule->swapChainExtent, commandPoolModule->getCommandPool());
 
-    //Recreamos el render pass
-    renderPassModule->CreateRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
+    renderPassModule->CreateRenderPass(
+        swapchainModule->swapChainImageFormat,
+        depthBufferModule->findDepthFormat(),
+        *antialiasingModule->msaaSamples);
+
     renderPassModule->CreateDirShadowRenderPass(VK_FORMAT_D32_SFLOAT);
     renderPassModule->CreateOmniShadowRenderPass(VK_FORMAT_R32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT);
-
     renderPassModule->CreateViewportRenderPass(
         swapchainModule->swapChainImageFormat,
         depthBufferModule->findDepthFormat(),
         *antialiasingModule->msaaSamples);
 
-    //Recreamos los graphics pipeline de los materiales
     graphicsPipelineManager->RegisterDefaultRenderPass(renderPassModule->DefaultRenderPass);
-
     shaderManager->RecreateShaderGraphicsPipelines();
-    //materialManager->RecreateMaterials(renderPassModule);
 
-    //Recreamos el frame buffer
     framebufferModule.createFramebuffer(renderPassModule->DefaultRenderPass);
 
     commandPoolModule->recreateCommandBuffers();
-    const QERenderTarget* extraRenderTarget = GetAdditionalSceneRenderTarget();
-    commandPoolModule->Render(&framebufferModule, extraRenderTarget);
 
     OnSwapchainRecreated();
 }

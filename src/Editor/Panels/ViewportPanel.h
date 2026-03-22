@@ -14,6 +14,9 @@ public:
     void Draw() override;
 
 private:
+    const uint32_t renderWidth = 1280;
+    const uint32_t renderHeight = 720;
+
     EditorContext* editorContext = nullptr;
     EditorViewportResources* viewportResources = nullptr;
 };

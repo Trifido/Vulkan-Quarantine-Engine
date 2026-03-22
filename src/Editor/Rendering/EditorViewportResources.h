@@ -30,6 +30,8 @@ public:
     const QERenderTarget& GetRenderTarget() const { return renderTarget; }
     ImTextureID GetImGuiTexture() const { return (ImTextureID)imguiDescriptorSet; }
 
+    void Rebuild();
+
 private:
     void CleanupImages();
     void CreateImages();

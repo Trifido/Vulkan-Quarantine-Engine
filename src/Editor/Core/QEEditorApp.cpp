@@ -59,8 +59,10 @@ void QEEditorApp::OnPreCleanup()
 
 void QEEditorApp::OnSwapchainRecreated()
 {
-    // aquí seguramente luego necesitarás revalidar o recrear
-    // cosas del backend/editor si tu integración lo exige
+    if (viewportResources)
+    {
+        viewportResources->Rebuild();
+    }
 }
 
 void QEEditorApp::BeginImGuiFrame()

@@ -53,6 +53,7 @@ void QECamera::UpdateViewportSize(VkExtent2D size)
 {
     this->Width = (float)size.width;
     this->Height = (float)size.height;
+
     _dirtyData = true;
 }
 

@@ -401,3 +401,25 @@ void EditorViewportResources::TransitionImageLayout(
         commandPoolModule->getCommandPool(),
         commandBuffer);
 }
+
+void EditorViewportResources::Rebuild()
+{
+    if (!deviceModule)
+    {
+        return;
+    }
+
+    if (renderTarget.Extent.width == 0 || renderTarget.Extent.height == 0)
+    {
+        return;
+    }
+
+    vkDeviceWaitIdle(deviceModule->device);
+
+    UnregisterImGuiTexture();
+    CleanupImages();
+
+    CreateImages();
+    CreateFramebuffer();
+    RegisterImGuiTexture();
+}
