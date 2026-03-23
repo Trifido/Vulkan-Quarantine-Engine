@@ -17,7 +17,7 @@ EditorPickingSystem::EditorPickingSystem()
 }
 
 std::shared_ptr<QEGameObject> EditorPickingSystem::PickGameObject(
-    std::shared_ptr<QECamera> camera,
+    const std::shared_ptr<QECamera>& camera,
     float mouseScreenX,
     float mouseScreenY,
     float viewportScreenX,
@@ -25,13 +25,13 @@ std::shared_ptr<QEGameObject> EditorPickingSystem::PickGameObject(
     float viewportWidth,
     float viewportHeight) const
 {
-    if (!gameObjectManager || !camera)
+    if (!gameObjectManager || !camera || !camera->CameraData)
         return nullptr;
 
     if (viewportWidth <= 0.0f || viewportHeight <= 0.0f)
         return nullptr;
 
-    Ray ray = BuildRayFromScreenPoint(
+    const QERay worldRay = BuildRayFromScreenPoint(
         camera,
         mouseScreenX,
         mouseScreenY,
@@ -49,40 +49,19 @@ std::shared_ptr<QEGameObject> EditorPickingSystem::PickGameObject(
     }
 
     std::shared_ptr<QEGameObject> closestObject = nullptr;
-    float closestDistance = std::numeric_limits<float>::max();
+    float closestWorldDistance = std::numeric_limits<float>::max();
 
     for (const auto& gameObject : candidates)
     {
         if (!gameObject)
             continue;
 
-        auto transform = gameObject->GetComponent<QETransform>();
-        auto aabbObject = gameObject->GetComponent<AABBObject>();
-
-        if (!transform || !aabbObject)
-            continue;
-
-        // Aproximación inicial:
-        // centro = world position
-        // radio = half diagonal del bounding box local escalado aprox
-        const glm::vec3 localMin = aabbObject->min;
-        const glm::vec3 localMax = aabbObject->max;
-        const glm::vec3 localCenter = aabbObject->Center;
-        const glm::vec3 localExtent = aabbObject->Size * 0.5f;
-
-        glm::vec4 worldCenter4 = transform->GetWorldMatrix() * glm::vec4(localCenter, 1.0f);
-        glm::vec3 worldCenter(worldCenter4);
-
-        glm::vec3 worldScale = transform->GetWorldScale();
-        float maxScale = glm::max(worldScale.x, glm::max(worldScale.y, worldScale.z));
-        float radius = glm::length(localExtent) * maxScale;
-
-        float distance = 0.0f;
-        if (IntersectRaySphere(ray, worldCenter, radius, distance))
+        float hitWorldDistance = 0.0f;
+        if (PickMeshTriangles(gameObject, worldRay, hitWorldDistance))
         {
-            if (distance < closestDistance)
+            if (hitWorldDistance < closestWorldDistance)
             {
-                closestDistance = distance;
+                closestWorldDistance = hitWorldDistance;
                 closestObject = gameObject;
             }
         }
@@ -91,8 +70,8 @@ std::shared_ptr<QEGameObject> EditorPickingSystem::PickGameObject(
     return closestObject;
 }
 
-Ray EditorPickingSystem::BuildRayFromScreenPoint(
-    std::shared_ptr<QECamera> camera,
+QERay EditorPickingSystem::BuildRayFromScreenPoint(
+    const std::shared_ptr<QECamera>& camera,
     float mouseScreenX,
     float mouseScreenY,
     float viewportScreenX,
@@ -100,7 +79,7 @@ Ray EditorPickingSystem::BuildRayFromScreenPoint(
     float viewportWidth,
     float viewportHeight) const
 {
-    Ray ray{};
+    QERay ray{};
 
     const float localX = mouseScreenX - viewportScreenX;
     const float localY = mouseScreenY - viewportScreenY;
@@ -140,33 +119,233 @@ void EditorPickingSystem::CollectCandidates(
     }
 }
 
-bool EditorPickingSystem::IntersectRaySphere(
-    const Ray& ray,
-    const glm::vec3& center,
-    float radius,
-    float& outDistance) const
+bool EditorPickingSystem::IntersectRayAABB(
+    const QERay& ray,
+    const glm::vec3& aabbMin,
+    const glm::vec3& aabbMax,
+    float& outTMin,
+    float& outTMax) const
 {
-    const glm::vec3 oc = ray.Origin - center;
+    const float epsilon = 1e-8f;
 
-    const float a = glm::dot(ray.Direction, ray.Direction);
-    const float b = 2.0f * glm::dot(oc, ray.Direction);
-    const float c = glm::dot(oc, oc) - radius * radius;
+    float tMin = 0.0f;
+    float tMax = std::numeric_limits<float>::max();
 
-    const float discriminant = b * b - 4.0f * a * c;
-    if (discriminant < 0.0f)
+    for (int axis = 0; axis < 3; ++axis)
+    {
+        const float origin = ray.Origin[axis];
+        const float direction = ray.Direction[axis];
+        const float minVal = aabbMin[axis];
+        const float maxVal = aabbMax[axis];
+
+        if (fabs(direction) < epsilon)
+        {
+            if (origin < minVal || origin > maxVal)
+                return false;
+        }
+        else
+        {
+            float invD = 1.0f / direction;
+            float t0 = (minVal - origin) * invD;
+            float t1 = (maxVal - origin) * invD;
+
+            if (t0 > t1)
+                std::swap(t0, t1);
+
+            tMin = std::max(tMin, t0);
+            tMax = std::min(tMax, t1);
+
+            if (tMax < tMin)
+                return false;
+        }
+    }
+
+    outTMin = tMin;
+    outTMax = tMax;
+    return true;
+}
+
+bool EditorPickingSystem::IntersectRayTriangle(
+    const QERay& ray,
+    const glm::vec3& v0,
+    const glm::vec3& v1,
+    const glm::vec3& v2,
+    float& outT) const
+{
+    const float epsilon = 1e-7f;
+
+    const glm::vec3 edge1 = v1 - v0;
+    const glm::vec3 edge2 = v2 - v0;
+
+    const glm::vec3 pvec = glm::cross(ray.Direction, edge2);
+    const float det = glm::dot(edge1, pvec);
+
+    if (fabs(det) < epsilon)
         return false;
 
-    const float sqrtD = sqrtf(discriminant);
-    const float t0 = (-b - sqrtD) / (2.0f * a);
-    const float t1 = (-b + sqrtD) / (2.0f * a);
+    const float invDet = 1.0f / det;
+    const glm::vec3 tvec = ray.Origin - v0;
 
-    float t = t0;
-    if (t < 0.0f)
-        t = t1;
+    const float u = glm::dot(tvec, pvec) * invDet;
+    if (u < 0.0f || u > 1.0f)
+        return false;
 
+    const glm::vec3 qvec = glm::cross(tvec, edge1);
+    const float v = glm::dot(ray.Direction, qvec) * invDet;
+    if (v < 0.0f || (u + v) > 1.0f)
+        return false;
+
+    const float t = glm::dot(edge2, qvec) * invDet;
     if (t < 0.0f)
         return false;
 
-    outDistance = t;
+    outT = t;
+    return true;
+}
+
+QERay EditorPickingSystem::TransformRay(
+    const QERay& ray,
+    const glm::mat4& matrix) const
+{
+    QERay transformed{};
+
+    const glm::vec4 origin4 = matrix * glm::vec4(ray.Origin, 1.0f);
+    const glm::vec4 direction4 = matrix * glm::vec4(ray.Direction, 0.0f);
+
+    transformed.Origin = glm::vec3(origin4);
+    transformed.Direction = glm::normalize(glm::vec3(direction4));
+
+    return transformed;
+}
+
+bool EditorPickingSystem::PickMeshTriangles(
+    const std::shared_ptr<QEGameObject>& gameObject,
+    const QERay& worldRay,
+    float& outWorldDistance) const
+{
+    auto transform = gameObject->GetComponent<QETransform>();
+    auto geometry = gameObject->GetComponent<QEGeometryComponent>();
+
+    if (!transform || !geometry)
+        return false;
+
+    auto mesh = geometry->GetMesh();
+    if (!mesh)
+        return false;
+
+    const glm::mat4& objectWorldMatrix = transform->GetWorldMatrix();
+    const glm::mat4 invObjectWorld = glm::inverse(objectWorldMatrix);
+    const QERay objectLocalRay = TransformRay(worldRay, invObjectWorld);
+
+    float closestWorldDistance = std::numeric_limits<float>::max();
+    bool hit = false;
+
+    for (const auto& submesh : mesh->MeshData)
+    {
+        if (submesh.Vertices.empty())
+            continue;
+
+        const glm::mat4& submeshModel = submesh.ModelTransform;
+        const glm::mat4 invSubmeshModel = glm::inverse(submeshModel);
+
+        const QERay submeshLocalRay = TransformRay(objectLocalRay, invSubmeshModel);
+
+        float aabbTMin = 0.0f;
+        float aabbTMax = 0.0f;
+
+        if (!IntersectRayAABB(
+            submeshLocalRay,
+            submesh.BoundingBox.first,
+            submesh.BoundingBox.second,
+            aabbTMin,
+            aabbTMax))
+        {
+            continue;
+        }
+
+        float closestSubmeshLocalT = std::numeric_limits<float>::max();
+        bool submeshHit = false;
+
+        const bool indexed = !submesh.Indices.empty();
+
+        if (indexed)
+        {
+            const size_t triangleCount = submesh.Indices.size() / 3;
+
+            for (size_t i = 0; i < triangleCount; ++i)
+            {
+                const uint32_t i0 = submesh.Indices[i * 3 + 0];
+                const uint32_t i1 = submesh.Indices[i * 3 + 1];
+                const uint32_t i2 = submesh.Indices[i * 3 + 2];
+
+                if (i0 >= submesh.Vertices.size() ||
+                    i1 >= submesh.Vertices.size() ||
+                    i2 >= submesh.Vertices.size())
+                {
+                    continue;
+                }
+
+                const glm::vec3 v0 = submesh.Vertices[i0].Position;
+                const glm::vec3 v1 = submesh.Vertices[i1].Position;
+                const glm::vec3 v2 = submesh.Vertices[i2].Position;
+
+                float t = 0.0f;
+                if (IntersectRayTriangle(submeshLocalRay, v0, v1, v2, t))
+                {
+                    if (t < closestSubmeshLocalT)
+                    {
+                        closestSubmeshLocalT = t;
+                        submeshHit = true;
+                    }
+                }
+            }
+        }
+        else
+        {
+            const size_t triangleCount = submesh.Vertices.size() / 3;
+
+            for (size_t i = 0; i < triangleCount; ++i)
+            {
+                const glm::vec3 v0 = submesh.Vertices[i * 3 + 0].Position;
+                const glm::vec3 v1 = submesh.Vertices[i * 3 + 1].Position;
+                const glm::vec3 v2 = submesh.Vertices[i * 3 + 2].Position;
+
+                float t = 0.0f;
+                if (IntersectRayTriangle(submeshLocalRay, v0, v1, v2, t))
+                {
+                    if (t < closestSubmeshLocalT)
+                    {
+                        closestSubmeshLocalT = t;
+                        submeshHit = true;
+                    }
+                }
+            }
+        }
+
+        if (!submeshHit)
+            continue;
+
+        const glm::vec3 hitPointSubmeshLocal =
+            submeshLocalRay.Origin + submeshLocalRay.Direction * closestSubmeshLocalT;
+
+        const glm::vec3 hitPointObjectLocal =
+            glm::vec3(submeshModel * glm::vec4(hitPointSubmeshLocal, 1.0f));
+
+        const glm::vec3 hitPointWorld =
+            glm::vec3(objectWorldMatrix * glm::vec4(hitPointObjectLocal, 1.0f));
+
+        const float worldDistance = glm::length(hitPointWorld - worldRay.Origin);
+
+        if (worldDistance < closestWorldDistance)
+        {
+            closestWorldDistance = worldDistance;
+            hit = true;
+        }
+    }
+
+    if (!hit)
+        return false;
+
+    outWorldDistance = closestWorldDistance;
     return true;
 }
