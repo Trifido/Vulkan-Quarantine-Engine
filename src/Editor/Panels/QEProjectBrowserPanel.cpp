@@ -1,7 +1,6 @@
 #include "QEProjectBrowserPanel.h"
 
 #include <algorithm>
-#include <imgui.h>
 
 void QEProjectBrowserPanel::SetProjectRootPath(const std::filesystem::path& projectRootPath)
 {
@@ -35,6 +34,25 @@ QEAssetType QEProjectBrowserPanel::GetAssetTypeFromPath(const std::filesystem::p
     return QEAssetType::Unknown;
 }
 
+std::string QEProjectBrowserPanel::GetDisplayNameFitted(const std::string& name, float maxWidth) const
+{
+    if (ImGui::CalcTextSize(name.c_str()).x <= maxWidth)
+        return name;
+
+    std::string result = name;
+    const std::string ellipsis = "...";
+
+    while (!result.empty())
+    {
+        result.pop_back();
+        std::string candidate = result + ellipsis;
+        if (ImGui::CalcTextSize(candidate.c_str()).x <= maxWidth)
+            return candidate;
+    }
+
+    return ellipsis;
+}
+
 const char* QEProjectBrowserPanel::GetAssetTypeLabel(QEAssetType type) const
 {
     switch (type)
@@ -53,13 +71,27 @@ const char* QEProjectBrowserPanel::GetAssetIcon(QEAssetType type) const
 {
     switch (type)
     {
-        case QEAssetType::Folder:    return "[DIR]";
-        case QEAssetType::Scene:     return "[SCN]";
-        case QEAssetType::Material:  return "[MAT]";
-        case QEAssetType::Texture:   return "[TEX]";
-        case QEAssetType::Mesh:      return "[MSH]";
-        case QEAssetType::Animation: return "[ANM]";
-        default:                     return "[UNK]";
+        case QEAssetType::Folder:    return "DIR";
+        case QEAssetType::Scene:     return "SCN";
+        case QEAssetType::Material:  return "MAT";
+        case QEAssetType::Texture:   return "TEX";
+        case QEAssetType::Mesh:      return "MSH";
+        case QEAssetType::Animation: return "ANM";
+        default:                     return "UNK";
+    }
+}
+
+ImVec4 QEProjectBrowserPanel::GetAssetColor(QEAssetType type) const
+{
+    switch (type)
+    {
+        case QEAssetType::Folder:    return ImVec4(0.90f, 0.75f, 0.20f, 1.0f);
+        case QEAssetType::Scene:     return ImVec4(0.40f, 0.80f, 1.00f, 1.0f);
+        case QEAssetType::Material:  return ImVec4(0.80f, 0.40f, 1.00f, 1.0f);
+        case QEAssetType::Texture:   return ImVec4(0.30f, 0.90f, 0.30f, 1.0f);
+        case QEAssetType::Mesh:      return ImVec4(1.00f, 0.55f, 0.25f, 1.0f);
+        case QEAssetType::Animation: return ImVec4(1.00f, 0.35f, 0.35f, 1.0f);
+        default:                     return ImVec4(0.70f, 0.70f, 0.70f, 1.0f);
     }
 }
 
@@ -191,51 +223,106 @@ void QEProjectBrowserPanel::DrawFolderContents(QEProjectAssetItem* folder)
     if (folder == nullptr || !folder->IsDirectory)
         return;
 
-    ImGui::Text("Path: %s", folder->RelativePath.c_str());
+    ImGui::Text("Folder: %s", folder->Name.c_str());
     ImGui::Separator();
 
-    if (ImGui::BeginTable("ProjectBrowserContents", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_Resizable))
+    float availableWidth = ImGui::GetContentRegionAvail().x;
+    int columnCount = static_cast<int>(availableWidth / (tileSize + cellPadding));
+
+    if (columnCount < 1)
+        columnCount = 1;
+
+    if (ImGui::BeginTable("ProjectBrowserGrid", columnCount, ImGuiTableFlags_SizingFixedFit))
     {
-        ImGui::TableSetupColumn("Icon", ImGuiTableColumnFlags_WidthFixed, 60.0f);
-        ImGui::TableSetupColumn("Name");
-        ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed, 100.0f);
-        ImGui::TableSetupColumn("Relative Path");
-        ImGui::TableHeadersRow();
+        int index = 0;
 
         for (const auto& child : folder->Children)
         {
-            QEProjectAssetItem* childPtr = child.get();
-
-            ImGui::TableNextRow();
-
-            ImGui::TableSetColumnIndex(0);
-            ImGui::TextUnformatted(GetAssetIcon(childPtr->Type));
-
-            ImGui::TableSetColumnIndex(1);
-            const bool isSelected = (_selectedItem == childPtr);
-            if (ImGui::Selectable(childPtr->Name.c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns))
-            {
-                _selectedItem = childPtr;
-            }
-
-            if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
-            {
-                if (childPtr->IsDirectory)
-                {
-                    _selectedFolder = childPtr;
-                    _selectedItem = childPtr;
-                }
-            }
-
-            ImGui::TableSetColumnIndex(2);
-            ImGui::TextUnformatted(GetAssetTypeLabel(childPtr->Type));
-
-            ImGui::TableSetColumnIndex(3);
-            ImGui::TextUnformatted(childPtr->RelativePath.c_str());
+            ImGui::TableNextColumn();
+            DrawAssetTile(child.get(), tileSize);
+            ++index;
         }
 
         ImGui::EndTable();
     }
+}
+
+void QEProjectBrowserPanel::DrawAssetTile(QEProjectAssetItem* item, float tileSize)
+{
+    if (item == nullptr)
+        return;
+
+    ImGui::PushID(item->AbsolutePath.c_str());
+
+    const bool isSelected = (_selectedItem == item);
+
+    ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+    ImVec2 tileMin = cursorPos;
+    ImVec2 iconAreaMax = ImVec2(cursorPos.x + iconAreaSize, cursorPos.y + iconAreaSize);
+    ImVec2 tileMax = ImVec2(cursorPos.x + iconAreaSize, cursorPos.y + totalHeight);
+
+    ImGui::InvisibleButton("##tile", ImVec2(iconAreaSize, totalHeight));
+
+    const bool hovered = ImGui::IsItemHovered();
+    const bool clicked = ImGui::IsItemClicked();
+
+    if (clicked)
+    {
+        _selectedItem = item;
+    }
+
+    if (hovered && ImGui::IsMouseDoubleClicked(0))
+    {
+        if (item->IsDirectory)
+        {
+            _selectedFolder = item;
+            _selectedItem = item;
+        }
+    }
+
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
+
+    ImU32 bgColor = IM_COL32(0, 0, 0, 0);
+
+    if (isSelected)
+        bgColor = IM_COL32(70, 110, 170, 160);
+    else if (hovered)
+        bgColor = IM_COL32(90, 90, 90, 90);
+
+    ImU32 borderColor = hovered || isSelected
+        ? IM_COL32(120, 170, 255, 220)
+        : IM_COL32(100, 100, 100, 120);
+
+    drawList->AddRectFilled(tileMin, iconAreaMax, bgColor, 6.0f);
+    drawList->AddRect(tileMin, iconAreaMax, borderColor, 6.0f);
+
+    // Icono centrado
+    const char* icon = GetAssetIcon(item->Type);
+    ImVec4 iconColor = GetAssetColor(item->Type);
+
+    ImVec2 iconTextSize = ImGui::CalcTextSize(icon);
+    float iconX = tileMin.x + (iconAreaSize - iconTextSize.x) * 0.5f;
+    float iconY = tileMin.y + (iconAreaSize - iconTextSize.y) * 0.5f;
+
+    drawList->AddText(
+        ImVec2(iconX, iconY),
+        ImGui::ColorConvertFloat4ToU32(iconColor),
+        icon);
+
+    // Nombre debajo
+    const float textPadding = 8.0f;
+    std::string label = GetDisplayNameFitted(item->Name, iconAreaSize - textPadding * 2.0f);
+
+    ImVec2 textSize = ImGui::CalcTextSize(label.c_str());
+    float textX = tileMin.x + (iconAreaSize - textSize.x) * 0.5f;
+    float textY = iconAreaMax.y + 8.0f;
+
+    drawList->AddText(
+        ImVec2(textX, textY),
+        IM_COL32(230, 230, 230, 255),
+        label.c_str());
+
+    ImGui::PopID();
 }
 
 void QEProjectBrowserPanel::Draw()
