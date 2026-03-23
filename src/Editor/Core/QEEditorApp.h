@@ -12,6 +12,7 @@ class EditorPickingSystem;
 class EditorViewportResources;
 class EditorCommandManager;
 class QERenderTarget;
+class QEProjectBrowserPanel;
 
 class QEEditorApp : public QEBaseApp
 {
@@ -57,5 +58,6 @@ private:
     std::unique_ptr<QEGizmoController> gizmoController;
     std::unique_ptr<EditorPickingSystem> pickingSystem;
     std::unique_ptr<EditorCommandManager> commandManager;
+    std::unique_ptr<QEProjectBrowserPanel> projectBrowserPanel;
     std::vector<std::unique_ptr<IEditorPanel>> panels;
 };

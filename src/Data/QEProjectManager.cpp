@@ -10,47 +10,77 @@
 fs::path QEProjectManager::CURRENT_PROJECT_PATH;
 fs::path QEProjectManager::CURRENT_DEFAULT_SCENE_PATH;
 
+fs::path QEProjectManager::GetCurrentProjectPath()
+{
+    return CURRENT_PROJECT_PATH;
+}
+
+fs::path QEProjectManager::GetCurrentDefaultScenePath()
+{
+    return CURRENT_DEFAULT_SCENE_PATH;
+}
+
+fs::path QEProjectManager::GetScenesFolderPath()
+{
+    return CURRENT_PROJECT_PATH / SCENE_FOLDER;
+}
+
+fs::path QEProjectManager::GetAssetsFolderPath()
+{
+    return CURRENT_PROJECT_PATH / ASSETS_FOLDER;
+}
+
+fs::path QEProjectManager::GetModelsFolderPath()
+{
+    return CURRENT_PROJECT_PATH / ASSETS_FOLDER / MODELS_FOLDER;
+}
+
+bool QEProjectManager::HasCurrentProject()
+{
+    return !CURRENT_PROJECT_PATH.empty() && fs::exists(CURRENT_PROJECT_PATH);
+}
+
 bool QEProjectManager::CreateQEProject(const std::string& projectName)
 {
     fs::path folderName = projectName;
     fs::path projectPath = PROJECTS_FOLDER_PATH / folderName;
 
-    CURRENT_PROJECT_PATH = projectPath;
-
     std::vector<bool> results =
     {
-        // Create main folder
         CreateFolder(PROJECTS_FOLDER_PATH, projectName),
-        // Create scene folder
         CreateFolder(projectPath, SCENE_FOLDER),
-        // Create assets folder
         CreateFolder(projectPath, ASSETS_FOLDER),
-        // Create mesh folder
         CreateFolder(projectPath, ASSETS_FOLDER + "/" + MODELS_FOLDER),
-        // Create materials folder
-        CreateFolder(projectPath, ASSETS_FOLDER + "/" + MATERIALS_FOLDER),
-        // Create scene
-        CreateYamlScene("default")
+        CreateFolder(projectPath, ASSETS_FOLDER + "/" + MATERIALS_FOLDER)
     };
 
-    return std::all_of(results.begin(), results.end(), [](bool r) { return r; });
+    const bool foldersOk = std::all_of(results.begin(), results.end(), [](bool r) { return r; });
+
+    if (!foldersOk)
+        return false;
+
+    CURRENT_PROJECT_PATH = projectPath;
+
+    if (!CreateYamlScene("default"))
+        return false;
+
+    return true;
 }
 
 bool QEProjectManager::CreateFolder(const fs::path& projectPath, const std::string& folderName)
 {
     fs::path folderPath = projectPath / folderName;
 
-    if (fs::exists(projectPath) && !fs::exists(folderPath))
+    std::error_code ec;
+    fs::create_directories(folderPath, ec);
+
+    if (ec)
     {
-        if (fs::create_directories(folderPath))
-        {
-            return true;
-        }
+        std::cerr << "Error creating folder: " << folderPath << " -> " << ec.message() << std::endl;
+        return false;
     }
 
-    printf("Folder: %s already exists\n", folderName.c_str());
-
-    return false;
+    return fs::exists(folderPath);
 }
 
 bool QEProjectManager::CreateYamlScene(const std::string& sceneName)

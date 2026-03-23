@@ -33,7 +33,10 @@ int main(int, char**)
     std::wcout << L"Working Directory fijado a: " << exePath.wstring() << L"\n\n";
 #endif
 
-    QEProjectManager::CreateQEProject("QEExamplePBR");
+    if (!QEProjectManager::CreateQEProject("QEExamplePBR"))
+    {
+        std::cout << "Project already exists or could not be created.\n";
+    }
 
     QEScene scene{};
     QEProjectManager::InitializeDefaultQEScene(scene);

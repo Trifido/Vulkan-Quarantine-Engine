@@ -18,7 +18,9 @@
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/InspectorPanel.h"
 #include "Panels/ViewportPanel.h"
+#include "Panels/QEProjectBrowserPanel.h"
 #include "Rendering/EditorViewportResources.h"
+#include <QEProjectManager.h>
 
 QEEditorApp::QEEditorApp()
 {
@@ -39,6 +41,13 @@ void QEEditorApp::OnInitialize()
     gizmoController->SetOperation(QEGizmoController::Operation::Translate);
     pickingSystem = std::make_unique<EditorPickingSystem>();
     commandManager = std::make_unique<EditorCommandManager>();
+
+    projectBrowserPanel = std::make_unique<QEProjectBrowserPanel>();
+
+    if (QEProjectManager::HasCurrentProject())
+    {
+        projectBrowserPanel->SetProjectRootPath(QEProjectManager::GetCurrentProjectPath());
+    }
 
     CreatePanels();
 }
@@ -218,6 +227,8 @@ void QEEditorApp::CreatePanels()
         gizmoController.get(),
         pickingSystem.get(),
         commandManager.get()));
+
+    panels.emplace_back(std::move(projectBrowserPanel));
 }
 
 void QEEditorApp::DrawDockspace()

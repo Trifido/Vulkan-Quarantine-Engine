@@ -24,12 +24,19 @@ private:
     static fs::path CURRENT_PROJECT_PATH;
     static fs::path CURRENT_DEFAULT_SCENE_PATH;
 public:
+    static bool HasCurrentProject();
     static bool CreateQEProject(const std::string& projectName);
     static bool CreateFolder(const fs::path& projectPath, const std::string& folderName);
     static bool CreateYamlScene(const std::string& sceneName = "DefaultScene");
     static bool ImportMeshFile(const fs::path& inputFile);
     static bool ImportAnimationFile(const fs::path& inputFile, const fs::path& folderPath);
     static fs::path GetMaterialFolderPath();
+
+    static fs::path GetCurrentProjectPath();
+    static fs::path GetCurrentDefaultScenePath();
+    static fs::path GetScenesFolderPath();
+    static fs::path GetAssetsFolderPath();
+    static fs::path GetModelsFolderPath();
 
     static bool InitializeDefaultQEScene(QEScene& scene);
     static bool InitializeQEScene(QEScene& scene, const fs::path& sceneName);
