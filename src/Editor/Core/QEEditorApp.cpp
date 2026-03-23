@@ -12,6 +12,8 @@
 #include <Editor/Core/EditorPickingSystem.h>
 #include <QERenderTarget.h>
 
+#include <Editor/Commands/EditorCommandManager.h>
+
 #include "Panels/IEditorPanel.h"
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/InspectorPanel.h"
@@ -36,6 +38,7 @@ void QEEditorApp::OnInitialize()
     gizmoController = std::make_unique<QEGizmoController>();
     gizmoController->SetOperation(QEGizmoController::Operation::Translate);
     pickingSystem = std::make_unique<EditorPickingSystem>();
+    commandManager = std::make_unique<EditorCommandManager>();
 
     CreatePanels();
 }
@@ -205,14 +208,16 @@ void QEEditorApp::CreatePanels()
     panels.emplace_back(std::make_unique<InspectorPanel>(
         gameObjectManager,
         editorContext.get(),
-        selectionManager.get()));
+        selectionManager.get(),
+        commandManager.get()));
 
     panels.emplace_back(std::make_unique<ViewportPanel>(
         editorContext.get(),
         viewportResources.get(),
         selectionManager.get(),
         gizmoController.get(),
-        pickingSystem.get()));
+        pickingSystem.get(),
+        commandManager.get()));
 }
 
 void QEEditorApp::DrawDockspace()
@@ -276,6 +281,18 @@ void QEEditorApp::HandleShortcuts()
     if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false))
     {
         SaveScene();
+    }
+
+    if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_Z, false))
+    {
+        if (commandManager)
+            commandManager->Undo();
+    }
+
+    if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_Y, false))
+    {
+        if (commandManager)
+            commandManager->Redo();
     }
 }
 

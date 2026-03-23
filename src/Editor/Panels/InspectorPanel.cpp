@@ -10,13 +10,19 @@
 #include <Editor/Core/EditorContext.h>
 #include <Editor/Core/EditorSelectionManager.h>
 
+#include <Editor/Commands/EditorCommandManager.h>
+#include <Editor/Commands/TransformCommand.h>
+#include <Editor/Commands/EditorTransformUtils.h>
+
 InspectorPanel::InspectorPanel(
     GameObjectManager* gameObjectManager,
     EditorContext* editorContext,
-    EditorSelectionManager* selectionManager)
+    EditorSelectionManager* selectionManager,
+    EditorCommandManager* commandManager)
     : gameObjectManager(gameObjectManager)
     , editorContext(editorContext)
     , selectionManager(selectionManager)
+    , commandManager(commandManager)
 {
 }
 
@@ -60,36 +66,80 @@ void InspectorPanel::Draw()
 
     ImGui::Separator();
 
-    if (auto transform = gameObject->GetComponent<QETransform>())
+    auto transform = gameObject->GetComponent<QETransform>();
+    if (!transform)
     {
-        glm::vec3 position = transform->localPosition;
-        glm::vec3 rotation = glm::degrees(glm::eulerAngles(transform->localRotation));
-        glm::vec3 scale = transform->localScale;
+        ImGui::TextUnformatted("No Transform component.");
+        ImGui::End();
+        return;
+    }
 
-        ImGui::TextUnformatted("Transform");
+    glm::vec3 position = transform->localPosition;
+    glm::vec3 rotation = glm::degrees(glm::eulerAngles(transform->localRotation));
+    glm::vec3 scale = transform->localScale;
 
-        if (ImGui::DragFloat3("Position", &position.x, 0.1f))
+    ImGui::TextUnformatted("Transform");
+
+    if (ImGui::DragFloat3("Position", &position.x, 0.1f))
+    {
+        if (commandManager)
+        {
+            TransformState before = EditorTransformUtils::CaptureState(transform);
+            TransformState after = before;
+            after.Position = position;
+
+            commandManager->ExecuteCommand(
+                std::make_unique<TransformCommand>(
+                    gameObject->ID(),
+                    before,
+                    after));
+        }
+        else
         {
             transform->SetLocalPosition(position);
         }
+    }
 
-        if (ImGui::DragFloat3("Rotation", &rotation.x, 0.5f))
+    if (ImGui::DragFloat3("Rotation", &rotation.x, 0.5f))
+    {
+        if (commandManager)
+        {
+            TransformState before = EditorTransformUtils::CaptureState(transform);
+            TransformState after = before;
+            after.Rotation = glm::quat(glm::radians(rotation));
+
+            commandManager->ExecuteCommand(
+                std::make_unique<TransformCommand>(
+                    gameObject->ID(),
+                    before,
+                    after));
+        }
+        else
         {
             transform->SetLocalEulerDegrees(rotation);
         }
+    }
 
-        if (ImGui::DragFloat3("Scale", &scale.x, 0.05f))
+    if (ImGui::DragFloat3("Scale", &scale.x, 0.05f))
+    {
+        scale = glm::max(scale, glm::vec3(0.0001f));
+
+        if (commandManager)
         {
-            scale.x = (scale.x == 0.0f) ? 0.0001f : scale.x;
-            scale.y = (scale.y == 0.0f) ? 0.0001f : scale.y;
-            scale.z = (scale.z == 0.0f) ? 0.0001f : scale.z;
+            TransformState before = EditorTransformUtils::CaptureState(transform);
+            TransformState after = before;
+            after.Scale = scale;
 
+            commandManager->ExecuteCommand(
+                std::make_unique<TransformCommand>(
+                    gameObject->ID(),
+                    before,
+                    after));
+        }
+        else
+        {
             transform->SetLocalScale(scale);
         }
-    }
-    else
-    {
-        ImGui::TextUnformatted("No Transform component.");
     }
 
     ImGui::End();

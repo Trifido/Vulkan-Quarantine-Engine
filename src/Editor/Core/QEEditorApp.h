@@ -10,6 +10,7 @@ class EditorSelectionManager;
 class QEGizmoController;
 class EditorPickingSystem;
 class EditorViewportResources;
+class EditorCommandManager;
 class QERenderTarget;
 
 class QEEditorApp : public QEBaseApp
@@ -55,5 +56,6 @@ private:
     std::unique_ptr<EditorSelectionManager> selectionManager;
     std::unique_ptr<QEGizmoController> gizmoController;
     std::unique_ptr<EditorPickingSystem> pickingSystem;
+    std::unique_ptr<EditorCommandManager> commandManager;
     std::vector<std::unique_ptr<IEditorPanel>> panels;
 };

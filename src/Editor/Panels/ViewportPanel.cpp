@@ -5,20 +5,24 @@
 #include <Editor/Core/EditorContext.h>
 #include <Editor/Core/EditorSelectionManager.h>
 #include <Editor/Core/QEGizmoController.h>
+#include <Editor/Commands/EditorTransformUtils.h>
 #include <Editor/Rendering/EditorViewportResources.h>
 #include <QECamera.h>
+#include <GameObjectManager.h>
 
 ViewportPanel::ViewportPanel(
     EditorContext* editorContext,
     EditorViewportResources* viewportResources,
     EditorSelectionManager* selectionManager,
     QEGizmoController* gizmoController,
-    EditorPickingSystem* pickingSystem)
+    EditorPickingSystem* pickingSystem,
+    EditorCommandManager* commandManager)
     : editorContext(editorContext)
     , viewportResources(viewportResources)
     , selectionManager(selectionManager)
     , gizmoController(gizmoController)
     , pickingSystem(pickingSystem)
+    , commandManager(commandManager)
 {
 }
 
@@ -89,6 +93,8 @@ void ViewportPanel::Draw()
                     glm::vec2(editorContext->ViewportScreenWidth, editorContext->ViewportScreenHeight));
             }
         }
+
+        HandleGizmoCommandTracking();
     }
     else
     {
@@ -97,6 +103,8 @@ void ViewportPanel::Draw()
         editorContext->ViewportScreenWidth = 0.0f;
         editorContext->ViewportScreenHeight = 0.0f;
         editorContext->ViewportImageHovered = false;
+        wasUsingGizmoLastFrame = false;
+        gizmoTrackedObjectId.clear();
 
         ImGui::TextUnformatted("Viewport not initialized.");
     }
@@ -171,4 +179,79 @@ void ViewportPanel::HandlePicking()
     {
         selectionManager->ClearSelection();
     }
+}
+
+void ViewportPanel::HandleGizmoCommandTracking()
+{
+    if (!selectionManager || !gizmoController || !commandManager)
+        return;
+
+    auto selectedObject = selectionManager->GetSelectedGameObject();
+    if (!selectedObject)
+    {
+        wasUsingGizmoLastFrame = false;
+        gizmoTrackedObjectId.clear();
+        return;
+    }
+
+    auto transform = selectedObject->GetComponent<QETransform>();
+    if (!transform)
+    {
+        wasUsingGizmoLastFrame = false;
+        gizmoTrackedObjectId.clear();
+        return;
+    }
+
+    const bool isUsingNow = gizmoController->IsUsing();
+    const std::string currentObjectId = selectedObject->ID();
+
+    // Inicio del drag del gizmo
+    if (!wasUsingGizmoLastFrame && isUsingNow)
+    {
+        gizmoTrackedObjectId = currentObjectId;
+        gizmoBeginState = EditorTransformUtils::CaptureState(transform);
+    }
+
+    // Fin del drag del gizmo
+    if (wasUsingGizmoLastFrame && !isUsingNow)
+    {
+        // Por seguridad, resolvemos de nuevo el objeto por ID
+        if (!gizmoTrackedObjectId.empty())
+        {
+            auto trackedObject = selectionManager->GetSelectedGameObject();
+
+            // Si cambió la selección mientras usabas el gizmo, mejor resolver por ID
+            if (!trackedObject || trackedObject->ID() != gizmoTrackedObjectId)
+            {
+                trackedObject = GameObjectManager::getInstance()->GetGameObjectById(gizmoTrackedObjectId);
+            }
+
+            if (trackedObject)
+            {
+                auto trackedTransform = trackedObject->GetComponent<QETransform>();
+                if (trackedTransform)
+                {
+                    TransformState endState = EditorTransformUtils::CaptureState(trackedTransform);
+
+                    const bool changed =
+                        gizmoBeginState.Position != endState.Position ||
+                        gizmoBeginState.Rotation != endState.Rotation ||
+                        gizmoBeginState.Scale != endState.Scale;
+
+                    if (changed)
+                    {
+                        commandManager->PushExecutedCommand(
+                            std::make_unique<TransformCommand>(
+                                gizmoTrackedObjectId,
+                                gizmoBeginState,
+                                endState));
+                    }
+                }
+            }
+        }
+
+        gizmoTrackedObjectId.clear();
+    }
+
+    wasUsingGizmoLastFrame = isUsingNow;
 }
