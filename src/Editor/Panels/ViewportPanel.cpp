@@ -215,12 +215,10 @@ void ViewportPanel::HandleGizmoCommandTracking()
     // Fin del drag del gizmo
     if (wasUsingGizmoLastFrame && !isUsingNow)
     {
-        // Por seguridad, resolvemos de nuevo el objeto por ID
         if (!gizmoTrackedObjectId.empty())
         {
             auto trackedObject = selectionManager->GetSelectedGameObject();
 
-            // Si cambió la selección mientras usabas el gizmo, mejor resolver por ID
             if (!trackedObject || trackedObject->ID() != gizmoTrackedObjectId)
             {
                 trackedObject = GameObjectManager::getInstance()->GetGameObjectById(gizmoTrackedObjectId);
