@@ -368,6 +368,8 @@ QEProjects/
 *.bin
 *.jpeg
 
+!external/ImGuizmo/
+!external/ImGuizmo/**
 # --- Allow tracking shader files under resources/shaders ---
 # Unignore shaders directory and everything inside
 !resources/shaders/
