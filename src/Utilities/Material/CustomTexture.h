@@ -2,7 +2,6 @@
 
 #ifndef CUSTOM_TEXTURE_H
 #define CUSTOM_TEXTURE_H
-#define STB_IMAGE_IMPLEMENTATION
 
 #include <vulkan/vulkan.hpp>
 #include "TextureManagerModule.h"

@@ -6,9 +6,26 @@
 #include <memory>
 #include <filesystem>
 #include <imgui.h>
+#include <vulkan/vulkan.h>
+#include <unordered_map>
 
 constexpr float tileSize = 80.0f;
 constexpr float cellPadding = 12.0f;
+
+struct QEIconTexture
+{
+    VkImage Image = VK_NULL_HANDLE;
+    VkDeviceMemory Memory = VK_NULL_HANDLE;
+    VkImageView ImageView = VK_NULL_HANDLE;
+    VkSampler Sampler = VK_NULL_HANDLE;
+
+    VkDescriptorSet DescriptorSet = VK_NULL_HANDLE;
+    ImTextureID ImGuiTexture = 0;
+
+    uint32_t Width = 0;
+    uint32_t Height = 0;
+    bool IsValid = false;
+};
 
 class QEProjectBrowserPanel : public IEditorPanel
 {
@@ -16,16 +33,21 @@ public:
     QEProjectBrowserPanel() = default;
     ~QEProjectBrowserPanel() override = default;
 
+    bool InitializeIcons();
     void SetProjectRootPath(const std::filesystem::path& projectRootPath);
     const std::filesystem::path& GetProjectRootPath() const { return _projectRootPath; }
     void Refresh();
     void Draw() override;
+
+    void CleanupIcons();
 
     const char* GetName() const override { return "Asset Browser"; }
 
 private:
     std::filesystem::path _projectRootPath;
     std::shared_ptr<QEProjectAssetItem> _rootItem = nullptr;
+
+    std::unordered_map<QEAssetType, QEIconTexture> _iconTextures;
 
     QEProjectAssetItem* _selectedFolder = nullptr;
     QEProjectAssetItem* _selectedItem = nullptr;
@@ -49,4 +71,44 @@ private:
     const char* GetAssetTypeLabel(QEAssetType type) const;
     const char* GetAssetIcon(QEAssetType type) const;
     ImVec4 GetAssetColor(QEAssetType type) const;
+
+    const QEIconTexture* GetAssetIconTexture(QEAssetType type) const;
+    bool LoadIconTexture(QEAssetType type, const std::filesystem::path& filePath);
+
+private:
+    bool CreateBuffer(
+        VkDeviceSize size,
+        VkBufferUsageFlags usage,
+        VkMemoryPropertyFlags properties,
+        VkBuffer& buffer,
+        VkDeviceMemory& bufferMemory);
+
+    bool CreateImage(
+        uint32_t width,
+        uint32_t height,
+        VkFormat format,
+        VkImageTiling tiling,
+        VkImageUsageFlags usage,
+        VkMemoryPropertyFlags properties,
+        VkImage& image,
+        VkDeviceMemory& imageMemory);
+
+    void TransitionImageLayout(
+        VkImage image,
+        VkImageLayout oldLayout,
+        VkImageLayout newLayout);
+
+    void CopyBufferToImage(
+        VkBuffer buffer,
+        VkImage image,
+        uint32_t width,
+        uint32_t height);
+
+    VkImageView CreateImageView(
+        VkImage image,
+        VkFormat format,
+        VkImageAspectFlags aspectFlags);
+
+    VkSampler CreateSampler();
+    uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 };

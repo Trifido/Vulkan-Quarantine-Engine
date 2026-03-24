@@ -49,6 +49,11 @@ void QEEditorApp::OnInitialize()
         projectBrowserPanel->SetProjectRootPath(QEProjectManager::GetCurrentProjectPath());
     }
 
+    if (projectBrowserPanel)
+    {
+        projectBrowserPanel->InitializeIcons();
+    }
+
     CreatePanels();
 }
 
@@ -79,6 +84,11 @@ void QEEditorApp::OnPostInitVulkan()
 
 void QEEditorApp::OnPreCleanup()
 {
+    if (projectBrowserPanel)
+    {
+        projectBrowserPanel->CleanupIcons();
+    }
+
     sessionManager->CleanEditorResources();
     ShutdownImGui();
 }
