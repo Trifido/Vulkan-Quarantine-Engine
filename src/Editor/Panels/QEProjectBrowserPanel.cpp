@@ -30,8 +30,9 @@ QEAssetType QEProjectBrowserPanel::GetAssetTypeFromPath(const std::filesystem::p
     if (ext == ".qescene") return QEAssetType::Scene;
     if (ext == ".qemat")   return QEAssetType::Material;
     if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".ktx2") return QEAssetType::Texture;
-    if (ext == ".gltf" || ext == ".bin") return QEAssetType::Mesh;
+    if (ext == ".gltf") return QEAssetType::Mesh;
     if (ext == ".glb") return QEAssetType::Animation;
+    if (ext == ".bin") return QEAssetType::Unknown;
 
     return QEAssetType::Unknown;
 }
@@ -515,7 +516,12 @@ std::shared_ptr<QEProjectAssetItem> QEProjectBrowserPanel::BuildDirectoryRecursi
         std::vector<std::filesystem::directory_entry> entries;
 
         for (const auto& entry : std::filesystem::directory_iterator(path))
+        {
+            if (!ShouldDisplayPath(entry.path()))
+                continue;
+
             entries.push_back(entry);
+        }
 
         std::sort(entries.begin(), entries.end(),
             [](const auto& a, const auto& b)
@@ -670,6 +676,25 @@ void QEProjectBrowserPanel::DrawAssetTile(QEProjectAssetItem* item, float tileSi
         _selectedItem = nullptr;
     }
 
+    if (IsItemDraggable(item))
+    {
+        if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+        {
+            const std::string fullPath = item->AbsolutePath;
+
+            ImGui::SetDragDropPayload(
+                "QE_PROJECT_ASSET_PATH",
+                fullPath.c_str(),
+                (fullPath.size() + 1) * sizeof(char));
+
+            ImGui::TextUnformatted("Mesh");
+            ImGui::Separator();
+            ImGui::TextUnformatted(item->Name.c_str());
+
+            ImGui::EndDragDropSource();
+        }
+    }
+
     ImDrawList* drawList = ImGui::GetWindowDrawList();
 
     ImU32 bgColor = IM_COL32(0, 0, 0, 0);
@@ -726,6 +751,32 @@ void QEProjectBrowserPanel::DrawAssetTile(QEProjectAssetItem* item, float tileSi
         label.c_str());
 
     ImGui::PopID();
+}
+
+bool QEProjectBrowserPanel::ShouldDisplayPath(const std::filesystem::path& path) const
+{
+    if (std::filesystem::is_directory(path))
+        return true;
+
+    std::string ext = path.extension().string();
+    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+
+    if (ext == ".bin")
+        return false;
+
+    return true;
+}
+
+bool QEProjectBrowserPanel::IsItemDraggable(const QEProjectAssetItem* item) const
+{
+    if (item == nullptr || item->IsDirectory)
+        return false;
+
+    std::filesystem::path p(item->AbsolutePath);
+    std::string ext = p.extension().string();
+    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+
+    return ext == ".gltf";
 }
 
 std::string QEProjectBrowserPanel::GetDisplayAssetName(const QEProjectAssetItem* item) const

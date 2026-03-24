@@ -68,6 +68,8 @@ private:
     void DrawFolderTree(QEProjectAssetItem* item);
     void DrawFolderContents(QEProjectAssetItem* folder);
     void DrawAssetTile(QEProjectAssetItem* item, float tileSize);
+    bool ShouldDisplayPath(const std::filesystem::path& path) const;
+    bool IsItemDraggable(const QEProjectAssetItem* item) const;
 
     std::string GetDisplayAssetName(const QEProjectAssetItem* item) const;
     const char* GetAssetIcon(QEAssetType type) const;
