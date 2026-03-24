@@ -13,6 +13,7 @@ class EditorViewportResources;
 class EditorCommandManager;
 class QERenderTarget;
 class QEProjectBrowserPanel;
+class ViewportPanel;
 
 class QEEditorApp : public QEBaseApp
 {
@@ -50,6 +51,8 @@ private:
     void HandleShortcuts();
     void SaveScene();
 
+    void SpawnDroppedMesh(const std::string& assetPath);
+
 private:
     VkDescriptorPool imguiPool{};
     std::unique_ptr<EditorContext> editorContext;
@@ -59,5 +62,6 @@ private:
     std::unique_ptr<EditorPickingSystem> pickingSystem;
     std::unique_ptr<EditorCommandManager> commandManager;
     std::unique_ptr<QEProjectBrowserPanel> projectBrowserPanel;
+    std::unique_ptr <ViewportPanel> viewportPanel = nullptr;
     std::vector<std::unique_ptr<IEditorPanel>> panels;
 };

@@ -21,6 +21,8 @@
 #include "Panels/QEProjectBrowserPanel.h"
 #include "Rendering/EditorViewportResources.h"
 #include <QEProjectManager.h>
+#include <QEMeshRenderer.h>
+#include <algorithm>
 
 QEEditorApp::QEEditorApp()
 {
@@ -228,13 +230,20 @@ void QEEditorApp::CreatePanels()
         selectionManager.get(),
         commandManager.get()));
 
-    panels.emplace_back(std::make_unique<ViewportPanel>(
+    viewportPanel = std::make_unique<ViewportPanel>(
         editorContext.get(),
         viewportResources.get(),
         selectionManager.get(),
         gizmoController.get(),
         pickingSystem.get(),
-        commandManager.get()));
+        commandManager.get());
+
+    viewportPanel->OnAssetDroppedInViewport = [this](const std::string& assetPath)
+        {
+            SpawnDroppedMesh(assetPath);
+        };
+
+    panels.emplace_back(std::move(viewportPanel));
 
     panels.emplace_back(std::move(projectBrowserPanel));
 }
@@ -320,4 +329,40 @@ void QEEditorApp::SaveScene()
     scene.cameraEditor = sessionManager->EditorCamera();
     scene.atmosphereDto = atmosphereSystem->CreateAtmosphereDto();
     scene.SerializeScene();
+}
+
+void QEEditorApp::SpawnDroppedMesh(const std::string& assetPath)
+{
+    if (assetPath.empty())
+        return;
+
+    std::filesystem::path path(assetPath);
+
+    if (!std::filesystem::exists(path))
+        return;
+
+    std::string ext = path.extension().string();
+    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+
+    if (ext != ".gltf")
+        return;
+
+    const std::string objectName = path.stem().string();
+
+    std::shared_ptr<QEGameObject> newObject = std::make_shared<QEGameObject>(objectName);
+    newObject->AddComponent(std::make_shared<QEGeometryComponent>(std::make_unique<MeshGenerator>(path.generic_string())));
+    newObject->AddComponent(std::make_shared<QEMeshRenderer>());
+
+    if (auto transform = newObject->GetComponent<QETransform>())
+    {
+        transform->SetLocalPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+        transform->SetLocalScale(glm::vec3(1.0f, 1.0f, 1.0f));
+    }
+
+    gameObjectManager->AddGameObject(newObject);
+
+    if (selectionManager)
+    {
+        selectionManager->SelectGameObject(newObject);
+    }
 }

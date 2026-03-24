@@ -69,6 +69,7 @@ void ViewportPanel::Draw()
         editorContext->ViewportScreenHeight = imageSize.y;
 
         ImGui::Image(viewportResources->GetImGuiTexture(), imageSize);
+        HandleAssetDropTarget();
 
         ImVec2 mousePos = ImGui::GetMousePos();
         const bool insideX = mousePos.x >= imagePos.x && mousePos.x <= (imagePos.x + imageSize.x);
@@ -252,4 +253,45 @@ void ViewportPanel::HandleGizmoCommandTracking()
     }
 
     wasUsingGizmoLastFrame = isUsingNow;
+}
+
+void ViewportPanel::HandleAssetDropTarget()
+{
+    if (!editorContext)
+        return;
+
+    if (ImGui::BeginDragDropTarget())
+    {
+        if (const ImGuiPayload* peekPayload =
+            ImGui::AcceptDragDropPayload("QE_PROJECT_ASSET_PATH", ImGuiDragDropFlags_AcceptPeekOnly))
+        {
+            ImDrawList* drawList = ImGui::GetWindowDrawList();
+            ImVec2 min = ImGui::GetItemRectMin();
+            ImVec2 max = ImGui::GetItemRectMax();
+
+            drawList->AddRect(min, max, IM_COL32(120, 180, 255, 255), 0.0f, 0, 2.0f);
+        }
+
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("QE_PROJECT_ASSET_PATH"))
+        {
+            if (payload->Data && payload->DataSize > 0)
+            {
+                const char* droppedPath = static_cast<const char*>(payload->Data);
+                HandleDroppedAssetPath(std::string(droppedPath));
+            }
+        }
+
+        ImGui::EndDragDropTarget();
+    }
+}
+
+void ViewportPanel::HandleDroppedAssetPath(const std::string& assetPath)
+{
+    if (assetPath.empty())
+        return;
+
+    if (OnAssetDroppedInViewport)
+    {
+        OnAssetDroppedInViewport(assetPath);
+    }
 }
