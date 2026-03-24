@@ -9,8 +9,9 @@
 #include <vulkan/vulkan.h>
 #include <unordered_map>
 
-constexpr float tileSize = 80.0f;
+constexpr float tileSize = 92.0f;
 constexpr float cellPadding = 12.0f;
+constexpr float textPadding = 2.0f;
 
 struct QEIconTexture
 {
@@ -31,7 +32,7 @@ class QEProjectBrowserPanel : public IEditorPanel
 {
 public:
     QEProjectBrowserPanel() = default;
-    ~QEProjectBrowserPanel() override = default;
+    ~QEProjectBrowserPanel() override;
 
     bool InitializeIcons();
     void SetProjectRootPath(const std::filesystem::path& projectRootPath);
@@ -68,7 +69,7 @@ private:
     void DrawFolderContents(QEProjectAssetItem* folder);
     void DrawAssetTile(QEProjectAssetItem* item, float tileSize);
 
-    const char* GetAssetTypeLabel(QEAssetType type) const;
+    std::string GetDisplayAssetName(const QEProjectAssetItem* item) const;
     const char* GetAssetIcon(QEAssetType type) const;
     ImVec4 GetAssetColor(QEAssetType type) const;
 

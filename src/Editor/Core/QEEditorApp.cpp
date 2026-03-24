@@ -84,10 +84,8 @@ void QEEditorApp::OnPostInitVulkan()
 
 void QEEditorApp::OnPreCleanup()
 {
-    if (projectBrowserPanel)
-    {
-        projectBrowserPanel->CleanupIcons();
-    }
+    vkDeviceWaitIdle(deviceModule->device);
+    panels.clear();
 
     sessionManager->CleanEditorResources();
     ShutdownImGui();

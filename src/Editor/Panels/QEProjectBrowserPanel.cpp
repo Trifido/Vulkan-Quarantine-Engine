@@ -83,6 +83,11 @@ ImVec4 QEProjectBrowserPanel::GetAssetColor(QEAssetType type) const
     }
 }
 
+QEProjectBrowserPanel::~QEProjectBrowserPanel()
+{
+    CleanupIcons();
+}
+
 bool QEProjectBrowserPanel::InitializeIcons()
 {
     CleanupIcons();
@@ -577,8 +582,7 @@ void QEProjectBrowserPanel::DrawFolderTree(QEProjectAssetItem* item)
     const bool isOpen = ImGui::TreeNodeEx(
         item->AbsolutePath.c_str(),
         flags,
-        "%s %s",
-        GetAssetIcon(item->Type),
+        "%s",
         item->Name.c_str());
 
     if (ImGui::IsItemClicked())
@@ -604,8 +608,19 @@ void QEProjectBrowserPanel::DrawFolderContents(QEProjectAssetItem* folder)
     if (folder == nullptr || !folder->IsDirectory)
         return;
 
-    ImGui::Text("Folder: %s", folder->Name.c_str());
-    ImGui::Separator();
+    std::string headerLabel = "Contents";
+
+    if (_selectedItem != nullptr)
+    {
+        headerLabel = _selectedItem->Name;
+    }
+    else if (folder != nullptr)
+    {
+        headerLabel = folder->Name;
+    }
+
+    ImGui::TextUnformatted(headerLabel.c_str());
+    ImGui::Spacing();
 
     const float availableWidth = ImGui::GetContentRegionAvail().x;
     int columnCount = static_cast<int>(availableWidth / (tileSize + cellPadding));
@@ -698,8 +713,8 @@ void QEProjectBrowserPanel::DrawAssetTile(QEProjectAssetItem* item, float tileSi
             icon);
     }
 
-    const float textPadding = 8.0f;
-    std::string label = GetDisplayNameFitted(item->Name, iconAreaSize - textPadding * 2.0f);
+    std::string baseName = GetDisplayAssetName(item);
+    std::string label = GetDisplayNameFitted(baseName, iconAreaSize - textPadding * 2.0f);
 
     ImVec2 textSize = ImGui::CalcTextSize(label.c_str());
     float textX = tileMin.x + (iconAreaSize - textSize.x) * 0.5f;
@@ -707,10 +722,22 @@ void QEProjectBrowserPanel::DrawAssetTile(QEProjectAssetItem* item, float tileSi
 
     drawList->AddText(
         ImVec2(textX, textY),
-        IM_COL32(230, 230, 230, 255),
+        IM_COL32(210, 210, 210, 255),
         label.c_str());
 
     ImGui::PopID();
+}
+
+std::string QEProjectBrowserPanel::GetDisplayAssetName(const QEProjectAssetItem* item) const
+{
+    if (item == nullptr)
+        return "";
+
+    if (item->IsDirectory)
+        return item->Name;
+
+    std::filesystem::path p(item->Name);
+    return p.stem().string();
 }
 
 void QEProjectBrowserPanel::Draw()
@@ -724,7 +751,7 @@ void QEProjectBrowserPanel::Draw()
     if (ImGui::Button("Refresh"))
         Refresh();
 
-    ImGui::Separator();
+    ImGui::Spacing();
 
     if (_rootItem == nullptr)
     {
@@ -733,19 +760,40 @@ void QEProjectBrowserPanel::Draw()
         return;
     }
 
-    ImGui::Columns(2, "ProjectBrowserColumns", true);
+    ImGuiTableFlags tableFlags =
+        ImGuiTableFlags_Resizable |
+        ImGuiTableFlags_SizingStretchProp |
+        ImGuiTableFlags_BordersInnerV;
 
-    ImGui::TextUnformatted("Folders");
-    ImGui::Separator();
-    DrawFolderTree(_rootItem.get());
+    if (ImGui::BeginTable("ProjectBrowserLayout", 2, tableFlags))
+    {
+        ImGui::TableSetupColumn("Folders", ImGuiTableColumnFlags_WidthStretch, 0.32f);
+        ImGui::TableSetupColumn("Contents", ImGuiTableColumnFlags_WidthStretch, 0.68f);
 
-    ImGui::NextColumn();
+        ImGui::TableNextColumn();
 
-    ImGui::TextUnformatted("Contents");
-    ImGui::Separator();
-    DrawFolderContents(_selectedFolder);
+        ImGui::TextUnformatted("Folders");
+        ImGui::Spacing();
 
-    ImGui::Columns(1);
+        if (ImGui::BeginChild("FoldersPanel", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar))
+        {
+            DrawFolderTree(_rootItem.get());
+        }
+        ImGui::EndChild();
+
+        ImGui::TableNextColumn();
+
+        ImGui::TextUnformatted("Contents");
+        ImGui::Spacing();
+
+        if (ImGui::BeginChild("ContentsPanel", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar))
+        {
+            DrawFolderContents(_selectedFolder);
+        }
+        ImGui::EndChild();
+
+        ImGui::EndTable();
+    }
 
     ImGui::End();
 }
