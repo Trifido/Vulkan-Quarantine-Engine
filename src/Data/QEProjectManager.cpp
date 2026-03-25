@@ -7,6 +7,7 @@
 #include <AtmosphereDto.h>
 #include <MeshImporter.h>
 #include "QEMaterialFileHelper.h"
+#include "QEMaterialYamlHelper.h"
 
 fs::path QEProjectManager::CURRENT_PROJECT_PATH;
 fs::path QEProjectManager::CURRENT_DEFAULT_SCENE_PATH;
@@ -205,24 +206,16 @@ bool QEProjectManager::CreateDefaultProjectMaterials()
 {
     const fs::path materialFolder = GetMaterialFolderPath();
 
-    const fs::path primitivePath = materialFolder / "defaultPrimitiveMat.qemat";
-    const fs::path particlesPath = materialFolder / "defaultParticlesMat.qemat";
-    const fs::path debugAABBPath = materialFolder / "editorDebugAABB.qemat";
-    const fs::path debugColliderPath = materialFolder / "editorDebugCollider.qemat";
-    const fs::path gridPath = materialFolder / "editorGrid.qemat";
+    MaterialDto primitiveDto = QEMaterialFileHelper::BuildDefaultPrimitiveMaterialDto(CURRENT_PROJECT_PATH);
+    MaterialDto particlesDto = QEMaterialFileHelper::BuildDefaultParticlesMaterialDto(CURRENT_PROJECT_PATH);
+    MaterialDto debugAABBDto = QEMaterialFileHelper::BuildEditorDebugAABBMaterialDto(CURRENT_PROJECT_PATH);
+    MaterialDto debugColliderDto = QEMaterialFileHelper::BuildEditorDebugColliderMaterialDto(CURRENT_PROJECT_PATH);
+    MaterialDto gridDto = QEMaterialFileHelper::BuildEditorGridMaterialDto(CURRENT_PROJECT_PATH);
 
-    const MaterialDto primitiveDto = QEMaterialFileHelper::BuildDefaultPrimitiveMaterialDto(CURRENT_PROJECT_PATH);
-    const MaterialDto particlesDto = QEMaterialFileHelper::BuildDefaultParticlesMaterialDto(CURRENT_PROJECT_PATH);
-    const MaterialDto debugAABBDto = QEMaterialFileHelper::BuildEditorDebugAABBMaterialDto(CURRENT_PROJECT_PATH);
-    const MaterialDto debugColliderDto = QEMaterialFileHelper::BuildEditorDebugColliderMaterialDto(CURRENT_PROJECT_PATH);
-    const MaterialDto gridDto = QEMaterialFileHelper::BuildEditorGridMaterialDto(CURRENT_PROJECT_PATH);
-
-    const bool ok =
-        QEMaterialFileHelper::WriteMaterialFile(primitivePath, primitiveDto) &&
-        QEMaterialFileHelper::WriteMaterialFile(particlesPath, particlesDto) &&
-        QEMaterialFileHelper::WriteMaterialFile(debugAABBPath, debugAABBDto) &&
-        QEMaterialFileHelper::WriteMaterialFile(debugColliderPath, debugColliderDto) &&
-        QEMaterialFileHelper::WriteMaterialFile(gridPath, gridDto);
-
-    return ok;
+    return
+        QEMaterialYamlHelper::WriteMaterialFile(materialFolder / "defaultPrimitiveMat.qemat", primitiveDto) &&
+        QEMaterialYamlHelper::WriteMaterialFile(materialFolder / "defaultParticlesMat.qemat", particlesDto) &&
+        QEMaterialYamlHelper::WriteMaterialFile(materialFolder / "editorDebugAABB.qemat", debugAABBDto) &&
+        QEMaterialYamlHelper::WriteMaterialFile(materialFolder / "editorDebugCollider.qemat", debugColliderDto) &&
+        QEMaterialYamlHelper::WriteMaterialFile(materialFolder / "editorGrid.qemat", gridDto);
 }

@@ -10,8 +10,6 @@
 class QEMaterialFileHelper
 {
 public:
-    static bool WriteMaterialFile(const std::filesystem::path& filePath, const MaterialDto& dto);
-
     static MaterialDto BuildDefaultPrimitiveMaterialDto(const std::filesystem::path& projectRoot);
     static MaterialDto BuildDefaultParticlesMaterialDto(const std::filesystem::path& projectRoot);
     static MaterialDto BuildEditorDebugAABBMaterialDto(const std::filesystem::path& projectRoot);

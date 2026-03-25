@@ -43,6 +43,7 @@ public:
     void BindDescriptors(VkCommandBuffer& commandBuffer, uint32_t idx);
     void RenameMaterial(std::string newName);
     std::string SaveMaterialFile();
+    MaterialDto ToDto() const;
 };
 
 #endif // !MATERIAL_H

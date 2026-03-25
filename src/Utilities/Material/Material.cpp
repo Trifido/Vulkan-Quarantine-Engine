@@ -1,5 +1,6 @@
 #include "Material.h"
 #include <QEProjectManager.h>
+#include <QEMaterialYamlHelper.h>
 
 QEMaterial::QEMaterial(std::string name, std::string filepath)
 {
@@ -52,6 +53,7 @@ QEMaterial::QEMaterial(std::shared_ptr<ShaderModule> shader_ptr, const MaterialD
     this->materialData.Clearcoat = materialDto.Clearcoat;
     this->materialData.ClearcoatRoughness = materialDto.ClearcoatRoughness;
     this->materialData.AlphaCutoff = materialDto.AlphaCutoff;
+    this->materialData.AlphaMode = materialDto.AlphaMode;
 
     this->materialData.Diffuse = materialDto.Diffuse;
     this->materialData.Ambient = materialDto.Ambient;
@@ -197,69 +199,63 @@ void QEMaterial::RenameMaterial(std::string newName)
 std::string QEMaterial::SaveMaterialFile()
 {
     fs::path absMaterialPath = QEProjectManager::ResolveProjectPath(materialFilePath);
+    this->materialFilePath = absMaterialPath.lexically_normal().string();
 
-    std::ofstream file(absMaterialPath, std::ios::binary);
-    if (!file.is_open())
+    MaterialDto dto = this->ToDto();
+    dto.FilePath = QEProjectManager::ToProjectRelativePath(absMaterialPath);
+
+    if (!QEMaterialYamlHelper::WriteMaterialFile(absMaterialPath, dto))
     {
-        std::cerr << "Error al abrir " << absMaterialPath << " para escritura.\n";
+        std::cerr << "Error al guardar material YAML en " << absMaterialPath << std::endl;
         return "";
     }
 
-    auto writeString = [&](const std::string& s)
-        {
-            int len = (int)s.size();
-            file.write(reinterpret_cast<const char*>(&len), sizeof(int));
-            if (len > 0)
-                file.write(s.data(), len);
-        };
-
-    this->materialFilePath = absMaterialPath.lexically_normal().string();
-
-    // Header
-    writeString(Name);
-    writeString(QEProjectManager::ToProjectRelativePath(this->materialFilePath));
-
-    std::string shaderName = (shader ? shader->shaderNameID : "default");
-    writeString(shaderName);
-
-    int renderLayer = (int)layer;
-    file.write(reinterpret_cast<const char*>(&renderLayer), sizeof(int));
-
-    file.write(reinterpret_cast<const char*>(&materialData.Opacity), sizeof(float));
-    file.write(reinterpret_cast<const char*>(&materialData.BumpScaling), sizeof(float));
-    file.write(reinterpret_cast<const char*>(&materialData.Shininess), sizeof(float));
-    file.write(reinterpret_cast<const char*>(&materialData.Reflectivity), sizeof(float));
-    file.write(reinterpret_cast<const char*>(&materialData.Shininess_Strength), sizeof(float));
-    file.write(reinterpret_cast<const char*>(&materialData.Refractivity), sizeof(float));
-
-    file.write(reinterpret_cast<const char*>(&materialData.Metallic), sizeof(float));
-    file.write(reinterpret_cast<const char*>(&materialData.Roughness), sizeof(float));
-    file.write(reinterpret_cast<const char*>(&materialData.AO), sizeof(float));
-    file.write(reinterpret_cast<const char*>(&materialData.Clearcoat), sizeof(float));
-    file.write(reinterpret_cast<const char*>(&materialData.ClearcoatRoughness), sizeof(float));
-
-    file.write(reinterpret_cast<const char*>(&materialData.Diffuse), sizeof(glm::vec4));
-    file.write(reinterpret_cast<const char*>(&materialData.Ambient), sizeof(glm::vec4));
-    file.write(reinterpret_cast<const char*>(&materialData.Specular), sizeof(glm::vec4));
-    file.write(reinterpret_cast<const char*>(&materialData.Emissive), sizeof(glm::vec4));
-    file.write(reinterpret_cast<const char*>(&materialData.Transparent), sizeof(glm::vec4));
-    file.write(reinterpret_cast<const char*>(&materialData.Reflective), sizeof(glm::vec4));
-
-    file.write(reinterpret_cast<const char*>(&materialData.TexMask), sizeof(uint32_t));
-    file.write(reinterpret_cast<const char*>(&materialData.MetallicChan), sizeof(uint32_t));
-    file.write(reinterpret_cast<const char*>(&materialData.RoughnessChan), sizeof(uint32_t));
-    file.write(reinterpret_cast<const char*>(&materialData.AOChan), sizeof(uint32_t));
-
-    writeString(materialData.diffuseTexturePath);
-    writeString(materialData.normalTexturePath);
-    writeString(materialData.metallicTexturePath);
-    writeString(materialData.roughnessTexturePath);
-    writeString(materialData.aoTexturePath);
-    writeString(materialData.emissiveTexturePath);
-    writeString(materialData.heightTexturePath);
-    writeString(materialData.specularTexturePath);
-
-    file.close();
-
     return this->materialFilePath;
+}
+
+MaterialDto QEMaterial::ToDto() const
+{
+    MaterialDto dto{};
+
+    dto.Name = this->Name;
+    dto.FilePath = QEProjectManager::ToProjectRelativePath(this->materialFilePath);
+    dto.ShaderPath = (this->shader ? this->shader->shaderNameID : "default");
+    dto.layer = static_cast<int>(this->layer);
+
+    dto.Opacity = this->materialData.Opacity;
+    dto.BumpScaling = this->materialData.BumpScaling;
+    dto.Shininess = this->materialData.Shininess;
+    dto.Reflectivity = this->materialData.Reflectivity;
+    dto.Shininess_Strength = this->materialData.Shininess_Strength;
+    dto.Refractivity = this->materialData.Refractivity;
+    dto.Metallic = this->materialData.Metallic;
+    dto.Roughness = this->materialData.Roughness;
+    dto.AO = this->materialData.AO;
+    dto.Clearcoat = this->materialData.Clearcoat;
+    dto.ClearcoatRoughness = this->materialData.ClearcoatRoughness;
+    dto.AlphaCutoff = this->materialData.AlphaCutoff;
+
+    dto.Diffuse = this->materialData.Diffuse;
+    dto.Ambient = this->materialData.Ambient;
+    dto.Specular = this->materialData.Specular;
+    dto.Emissive = this->materialData.Emissive;
+    dto.Transparent = this->materialData.Transparent;
+    dto.Reflective = this->materialData.Reflective;
+
+    dto.texMask = this->materialData.TexMask;
+    dto.metallicChan = this->materialData.MetallicChan;
+    dto.roughnessChan = this->materialData.RoughnessChan;
+    dto.aoChan = this->materialData.AOChan;
+    dto.AlphaMode = this->materialData.AlphaMode;
+
+    dto.diffuseTexturePath = this->materialData.diffuseTexturePath;
+    dto.normalTexturePath = this->materialData.normalTexturePath;
+    dto.specularTexturePath = this->materialData.specularTexturePath;
+    dto.emissiveTexturePath = this->materialData.emissiveTexturePath;
+    dto.heightTexturePath = this->materialData.heightTexturePath;
+    dto.metallicTexturePath = this->materialData.metallicTexturePath;
+    dto.roughnessTexturePath = this->materialData.roughnessTexturePath;
+    dto.aoTexturePath = this->materialData.aoTexturePath;
+
+    return dto;
 }

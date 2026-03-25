@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <Vertex.h>
 #include <QEProjectManager.h>
+#include <QEMaterialYamlHelper.h>
 
 std::string MaterialManager::CheckName(std::string nameMaterial)
 {
@@ -422,21 +423,19 @@ void MaterialManager::DeserializeMaterials(YAML::Node materials)
                 std::string matPath = materialPath.as<std::string>();
                 fs::path resolvedPath = QEProjectManager::ResolveProjectPath(matPath);
 
-                std::ifstream matfile(resolvedPath, std::ios::binary);
-                if (!matfile.is_open())
+                MaterialDto materialDto;
+                if (!QEMaterialYamlHelper::ReadMaterialFile(resolvedPath, materialDto))
                 {
-                    std::cerr << "Error al abrir el material " << resolvedPath << std::endl;
+                    std::cerr << "Error al leer el material " << resolvedPath << std::endl;
                     continue;
                 }
 
-                MaterialDto materialDto = ReadQEMaterial(matfile);
-                matfile.close();
-
-                // Muy importante: dejar el DTO resuelto en memoria
                 if (materialDto.FilePath.empty())
-                    materialDto.FilePath = resolvedPath.string();
+                    materialDto.FilePath = NormalizeSlashes(resolvedPath.string());
                 else
-                    materialDto.FilePath = QEProjectManager::ResolveProjectPath(materialDto.FilePath).string();
+                    materialDto.FilePath = NormalizeSlashes(QEProjectManager::ResolveProjectPath(materialDto.FilePath).string());
+
+                materialDto.UpdateTexturePaths(resolvedPath.parent_path());
 
                 materialDtos.push_back(materialDto);
             }
