@@ -43,6 +43,7 @@ public:
     void CleanupIcons();
 
     const char* GetName() const override { return "Asset Browser"; }
+    void SetPendingExternalDrops(const std::vector<std::filesystem::path>& paths);
 
 private:
     std::filesystem::path _projectRootPath;
@@ -56,6 +57,10 @@ private:
     const float iconAreaSize = tileSize;
     const float labelHeight = 32.0f;
     const float totalHeight = iconAreaSize + labelHeight;
+
+    std::vector<std::filesystem::path> _pendingExternalDrops;
+    bool _isWindowHovered = false;
+    bool _isContentsPanelHovered = false;
 
 private:
     std::shared_ptr<QEProjectAssetItem> BuildDirectoryRecursive(
@@ -77,6 +82,9 @@ private:
 
     const QEIconTexture* GetAssetIconTexture(QEAssetType type) const;
     bool LoadIconTexture(QEAssetType type, const std::filesystem::path& filePath);
+
+    void HandleExternalFileDrops();
+    bool IsImportableExternalFile(const std::filesystem::path& path) const;
 
 private:
     bool CreateBuffer(

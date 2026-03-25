@@ -26,6 +26,10 @@
 #include "DeviceModule.h"
 #include "QueueModule.h"
 
+#include <functional>
+#include <filesystem>
+#include <vector>
+
 class GUIWindow : public QESingleton<GUIWindow>
 {
 private:
@@ -38,6 +42,7 @@ private:
 public:
     GLFWwindow* window;
     int width, height;
+    std::function<void(const std::vector<std::filesystem::path>&)> OnExternalFilesDropped;
 
 public:
     GUIWindow();
@@ -50,5 +55,6 @@ public:
 private:
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
     void setupImgui();
+    static void dropCallback(GLFWwindow* window, int count, const char** paths);
 };
 

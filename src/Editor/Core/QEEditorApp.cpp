@@ -32,6 +32,14 @@ QEEditorApp::~QEEditorApp() = default;
 
 void QEEditorApp::OnInitialize()
 {
+    mainWindow->OnExternalFilesDropped = [this](const std::vector<std::filesystem::path>& paths)
+        {
+            for (const auto& path : paths)
+            {
+                QueueExternalDroppedFile(path);
+            }
+        };
+
     editorContext = std::make_unique<EditorContext>();
 
     viewportResources = std::make_unique<EditorViewportResources>();
@@ -43,18 +51,6 @@ void QEEditorApp::OnInitialize()
     gizmoController->SetOperation(QEGizmoController::Operation::Translate);
     pickingSystem = std::make_unique<EditorPickingSystem>();
     commandManager = std::make_unique<EditorCommandManager>();
-
-    projectBrowserPanel = std::make_unique<QEProjectBrowserPanel>();
-
-    if (QEProjectManager::HasCurrentProject())
-    {
-        projectBrowserPanel->SetProjectRootPath(QEProjectManager::GetCurrentProjectPath());
-    }
-
-    if (projectBrowserPanel)
-    {
-        projectBrowserPanel->InitializeIcons();
-    }
 
     CreatePanels();
 }
@@ -114,10 +110,17 @@ void QEEditorApp::DrawEditorUI()
     HandleShortcuts();
     DrawDockspace();
 
+    if (projectBrowserPanelPtr != nullptr)
+    {
+        projectBrowserPanelPtr->SetPendingExternalDrops(GetExternalDroppedFiles());
+    }
+
     for (auto& panel : panels)
     {
         panel->Draw();
     }
+
+    ClearExternalDroppedFiles();
 
     if (editorContext && editorContext->ShowDemoWindow)
     {
@@ -230,7 +233,7 @@ void QEEditorApp::CreatePanels()
         selectionManager.get(),
         commandManager.get()));
 
-    viewportPanel = std::make_unique<ViewportPanel>(
+    auto viewportPanelLocal = std::make_unique<ViewportPanel>(
         editorContext.get(),
         viewportResources.get(),
         selectionManager.get(),
@@ -238,14 +241,24 @@ void QEEditorApp::CreatePanels()
         pickingSystem.get(),
         commandManager.get());
 
-    viewportPanel->OnAssetDroppedInViewport = [this](const std::string& assetPath)
+    viewportPanelLocal->OnAssetDroppedInViewport = [this](const std::string& assetPath)
         {
             SpawnDroppedMesh(assetPath);
         };
 
-    panels.emplace_back(std::move(viewportPanel));
+    panels.emplace_back(std::move(viewportPanelLocal));
 
-    panels.emplace_back(std::move(projectBrowserPanel));
+    auto projectBrowserPanelLocal = std::make_unique<QEProjectBrowserPanel>();
+
+    if (QEProjectManager::HasCurrentProject())
+    {
+        projectBrowserPanelLocal->SetProjectRootPath(QEProjectManager::GetCurrentProjectPath());
+    }
+
+    projectBrowserPanelLocal->InitializeIcons();
+
+    projectBrowserPanelPtr = projectBrowserPanelLocal.get();
+    panels.emplace_back(std::move(projectBrowserPanelLocal));
 }
 
 void QEEditorApp::DrawDockspace()
@@ -365,4 +378,19 @@ void QEEditorApp::SpawnDroppedMesh(const std::string& assetPath)
     {
         selectionManager->SelectGameObject(newObject);
     }
+}
+
+void QEEditorApp::QueueExternalDroppedFile(const std::filesystem::path& path)
+{
+    _externalDroppedFiles.push_back(path);
+}
+
+const std::vector<std::filesystem::path>& QEEditorApp::GetExternalDroppedFiles() const
+{
+    return _externalDroppedFiles;
+}
+
+void QEEditorApp::ClearExternalDroppedFiles()
+{
+    _externalDroppedFiles.clear();
 }

@@ -77,6 +77,7 @@ bool GUIWindow::init(bool fullScreen)
     // 6) Callbacks
     glfwSetWindowUserPointer(window, this);
     glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+    glfwSetDropCallback(window, dropCallback);
 
     // 7) Comprobar Vulkan
     if (!glfwVulkanSupported())
@@ -222,4 +223,27 @@ void GUIWindow::setupImgui()
 void GUIWindow::setupNewFrame()
 {
     ImGui_ImplGlfw_NewFrame();
+}
+
+void GUIWindow::dropCallback(GLFWwindow* window, int count, const char** paths)
+{
+    GUIWindow* guiWindow = reinterpret_cast<GUIWindow*>(glfwGetWindowUserPointer(window));
+    if (guiWindow == nullptr)
+        return;
+
+    if (!guiWindow->OnExternalFilesDropped)
+        return;
+
+    std::vector<std::filesystem::path> droppedPaths;
+    droppedPaths.reserve(static_cast<size_t>(count));
+
+    for (int i = 0; i < count; ++i)
+    {
+        if (paths[i] == nullptr)
+            continue;
+
+        droppedPaths.emplace_back(paths[i]);
+    }
+
+    guiWindow->OnExternalFilesDropped(droppedPaths);
 }

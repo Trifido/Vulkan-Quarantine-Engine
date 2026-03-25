@@ -12,6 +12,7 @@
 #include <SyncTool.h>
 
 #include <stb_image.h>
+#include <QEProjectManager.h>
 
 void QEProjectBrowserPanel::SetProjectRootPath(const std::filesystem::path& projectRootPath)
 {
@@ -793,11 +794,16 @@ std::string QEProjectBrowserPanel::GetDisplayAssetName(const QEProjectAssetItem*
 
 void QEProjectBrowserPanel::Draw()
 {
+    _isWindowHovered = false;
+    _isContentsPanelHovered = false;
+
     if (!ImGui::Begin("Project Browser"))
     {
         ImGui::End();
         return;
     }
+
+    _isWindowHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows);
 
     if (ImGui::Button("Refresh"))
         Refresh();
@@ -807,6 +813,7 @@ void QEProjectBrowserPanel::Draw()
     if (_rootItem == nullptr)
     {
         ImGui::TextUnformatted("No project loaded.");
+        HandleExternalFileDrops();
         ImGui::End();
         return;
     }
@@ -839,12 +846,15 @@ void QEProjectBrowserPanel::Draw()
 
         if (ImGui::BeginChild("ContentsPanel", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar))
         {
+            _isContentsPanelHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows);
             DrawFolderContents(_selectedFolder);
         }
         ImGui::EndChild();
 
         ImGui::EndTable();
     }
+
+    HandleExternalFileDrops();
 
     ImGui::End();
 }
@@ -888,4 +898,58 @@ void QEProjectBrowserPanel::CleanupIcons()
     }
 
     _iconTextures.clear();
+}
+
+void QEProjectBrowserPanel::SetPendingExternalDrops(const std::vector<std::filesystem::path>& paths)
+{
+    _pendingExternalDrops = paths;
+}
+
+bool QEProjectBrowserPanel::IsImportableExternalFile(const std::filesystem::path& path) const
+{
+    if (!std::filesystem::exists(path))
+        return false;
+
+    if (std::filesystem::is_directory(path))
+        return false;
+
+    std::string ext = path.extension().string();
+    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+
+    return ext == ".gltf" || ext == ".glb" || ext == ".fbx" || ext == ".obj";
+}
+
+void QEProjectBrowserPanel::HandleExternalFileDrops()
+{
+    if (_pendingExternalDrops.empty())
+        return;
+
+    // Sólo importamos si el usuario ha soltado encima del Project Browser.
+    if (!_isWindowHovered && !_isContentsPanelHovered)
+        return;
+
+    bool importedAny = false;
+
+    for (const auto& droppedPath : _pendingExternalDrops)
+    {
+        if (!IsImportableExternalFile(droppedPath))
+            continue;
+
+        try
+        {
+            QEProjectManager::ImportMeshFile(droppedPath.string());
+            importedAny = true;
+        }
+        catch (const std::exception& e)
+        {
+            // Aquí puedes loguearlo si tienes consola o logger.
+            // Ejemplo:
+            // std::cerr << "Import failed: " << e.what() << std::endl;
+        }
+    }
+
+    _pendingExternalDrops.clear();
+
+    if (importedAny)
+        Refresh();
 }

@@ -26,6 +26,10 @@ public:
     QEEditorApp(QEEditorApp&&) = delete;
     QEEditorApp& operator=(QEEditorApp&&) = delete;
 
+    void QueueExternalDroppedFile(const std::filesystem::path& path);
+    const std::vector<std::filesystem::path>& GetExternalDroppedFiles() const;
+    void ClearExternalDroppedFiles();
+
 protected:
     void OnInitialize() override;
     void OnShutdown() override;
@@ -62,6 +66,8 @@ private:
     std::unique_ptr<EditorPickingSystem> pickingSystem;
     std::unique_ptr<EditorCommandManager> commandManager;
     std::unique_ptr<QEProjectBrowserPanel> projectBrowserPanel;
+    QEProjectBrowserPanel* projectBrowserPanelPtr = nullptr;
     std::unique_ptr <ViewportPanel> viewportPanel = nullptr;
     std::vector<std::unique_ptr<IEditorPanel>> panels;
+    std::vector<std::filesystem::path> _externalDroppedFiles;
 };
