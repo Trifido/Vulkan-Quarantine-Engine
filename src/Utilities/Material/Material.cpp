@@ -217,8 +217,10 @@ MaterialDto QEMaterial::ToDto() const
 {
     MaterialDto dto{};
 
+    fs::path absMaterialPath = QEProjectManager::ResolveProjectPath(this->materialFilePath);
+
     dto.Name = this->Name;
-    dto.FilePath = QEProjectManager::ToProjectRelativePath(this->materialFilePath);
+    dto.FilePath = QEProjectManager::ToProjectRelativePath(absMaterialPath);
     dto.ShaderPath = (this->shader ? this->shader->shaderNameID : "default");
     dto.layer = static_cast<int>(this->layer);
 
@@ -248,14 +250,34 @@ MaterialDto QEMaterial::ToDto() const
     dto.aoChan = this->materialData.AOChan;
     dto.AlphaMode = this->materialData.AlphaMode;
 
-    dto.diffuseTexturePath = this->materialData.diffuseTexturePath;
-    dto.normalTexturePath = this->materialData.normalTexturePath;
-    dto.specularTexturePath = this->materialData.specularTexturePath;
-    dto.emissiveTexturePath = this->materialData.emissiveTexturePath;
-    dto.heightTexturePath = this->materialData.heightTexturePath;
-    dto.metallicTexturePath = this->materialData.metallicTexturePath;
-    dto.roughnessTexturePath = this->materialData.roughnessTexturePath;
-    dto.aoTexturePath = this->materialData.aoTexturePath;
+    dto.diffuseTexturePath = ToMaterialRelativeTexturePath(this->materialData.diffuseTexturePath, absMaterialPath);
+    dto.normalTexturePath = ToMaterialRelativeTexturePath(this->materialData.normalTexturePath, absMaterialPath);
+    dto.specularTexturePath = ToMaterialRelativeTexturePath(this->materialData.specularTexturePath, absMaterialPath);
+    dto.emissiveTexturePath = ToMaterialRelativeTexturePath(this->materialData.emissiveTexturePath, absMaterialPath);
+    dto.heightTexturePath = ToMaterialRelativeTexturePath(this->materialData.heightTexturePath, absMaterialPath);
+    dto.metallicTexturePath = ToMaterialRelativeTexturePath(this->materialData.metallicTexturePath, absMaterialPath);
+    dto.roughnessTexturePath = ToMaterialRelativeTexturePath(this->materialData.roughnessTexturePath, absMaterialPath);
+    dto.aoTexturePath = ToMaterialRelativeTexturePath(this->materialData.aoTexturePath, absMaterialPath);
 
     return dto;
+}
+
+
+std::string QEMaterial::ToMaterialRelativeTexturePath(const std::string& texturePath, const std::filesystem::path& materialFilePath)
+{
+    if (IsNullTex(texturePath))
+        return "NULL_TEXTURE";
+
+    namespace fs = std::filesystem;
+
+    fs::path texPath(texturePath);
+    fs::path materialDir = materialFilePath.parent_path();
+
+    std::error_code ec;
+    fs::path rel = fs::relative(texPath, materialDir, ec);
+
+    if (ec)
+        return NormalizeSlashes(texPath.lexically_normal().string());
+
+    return NormalizeSlashes(rel.lexically_normal().string());
 }

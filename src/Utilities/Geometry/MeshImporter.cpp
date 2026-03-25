@@ -8,6 +8,8 @@
 #include "MaterialData.h"
 #include "Material.h"
 #include <SanitizerHelper.h>
+#include <QEMaterialYamlHelper.h>
+#include <QEProjectManager.h>
 
 void MeshImporter::RecreateNormals(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices)
 {
@@ -428,15 +430,14 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, QEMeshDat
         return;
 
     aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-
     if (material == nullptr)
         return;
 
     aiReturn ret;
-
     aiString rawName;
-    ret = material->Get(AI_MATKEY_NAME, rawName);//Get the material name (pass by reference)
-    if (ret != AI_SUCCESS) rawName = "";//Failed to find material name so makes var empty
+    ret = material->Get(AI_MATKEY_NAME, rawName);
+    if (ret != AI_SUCCESS)
+        rawName = "";
 
     std::string materialName = rawName.C_Str();
     std::shared_ptr<QEMaterial> mat_ptr;
@@ -447,16 +448,13 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, QEMeshDat
     {
         fs::path materialPath = matpath / (materialName + ".qemat");
 
-        std::ifstream matfile(materialPath, std::ios::binary);
-        if (!matfile.is_open())
+        MaterialDto matDto;
+        if (!QEMaterialYamlHelper::ReadMaterialFile(materialPath, matDto))
         {
             std::cerr << "Error al abrir el material " << materialPath << std::endl;
         }
         else
         {
-            MaterialDto matDto = MaterialManager::ReadQEMaterial(matfile);
-            matfile.close();
-
             auto shaderManager = ShaderManager::getInstance();
             auto shader = shaderManager->GetShader(matDto.ShaderPath);
             if (shader == nullptr)
@@ -479,7 +477,6 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, QEMeshDat
     meshData.MaterialID = materialName;
     material = nullptr;
 }
-
 std::string MeshImporter::GetTextureTypeName(aiTextureType type)
 {
     switch (type) {
@@ -720,13 +717,11 @@ void MeshImporter::ExtractAndUpdateMaterials(
 {
     auto matManager = MaterialManager::getInstance();
 
-    // Importante: GLTF_METALLIC_ROUGHNESS NO va en fallbacks normales.
-    // Lo tratamos como caso especial para slot2/slot3.
     std::vector<std::vector<aiTextureType>> textureSlots = {
         { aiTextureType_BASE_COLOR, aiTextureType_DIFFUSE }, // 0 BaseColor
         { aiTextureType_NORMAL_CAMERA, aiTextureType_NORMALS, aiTextureType_HEIGHT }, // 1 Normal
-        { aiTextureType_METALNESS }, // 2 Metallic (separada)
-        { aiTextureType_DIFFUSE_ROUGHNESS, aiTextureType_SHININESS, aiTextureType_MAYA_SPECULAR_ROUGHNESS }, // 3 Roughness (separada)
+        { aiTextureType_METALNESS }, // 2 Metallic
+        { aiTextureType_DIFFUSE_ROUGHNESS, aiTextureType_SHININESS, aiTextureType_MAYA_SPECULAR_ROUGHNESS }, // 3 Roughness
         { aiTextureType_AMBIENT_OCCLUSION, aiTextureType_LIGHTMAP }, // 4 AO
         { aiTextureType_EMISSION_COLOR, aiTextureType_EMISSIVE }, // 5 Emissive
         { aiTextureType_DISPLACEMENT, aiTextureType_HEIGHT }, // 6 Height
@@ -737,16 +732,14 @@ void MeshImporter::ExtractAndUpdateMaterials(
 
     auto NormalizeTexPath = [&](const std::string& p) -> std::string
         {
-            if (p.empty()) return "";
+            if (p.empty())
+                return "NULL_TEXTURE";
 
             std::filesystem::path fp(p);
-
-            // Queremos siempre un archivo, no un directorio.
             std::string fn = fp.filename().string();
-            if (fn.empty()) return "";
+            if (fn.empty())
+                return "NULL_TEXTURE";
 
-            // Misma convención que en ExtractAndUpdateTextures:
-            // "../<TexturesFolder>/<file>"
             return std::string("../") + parentFolder + "/" + fn;
         };
 
@@ -764,7 +757,8 @@ void MeshImporter::ExtractAndUpdateMaterials(
     for (unsigned int i = 0; i < scene->mNumMaterials; i++)
     {
         aiMaterial* material = scene->mMaterials[i];
-        if (!material) continue;
+        if (!material)
+            continue;
 
         aiString rawName;
         std::string materialName;
@@ -787,129 +781,96 @@ void MeshImporter::ExtractAndUpdateMaterials(
         if (fs::exists(materialPath))
             continue;
 
-        // ------------------------------------------------------------
         // 1) Resolver paths por slot
-        // ------------------------------------------------------------
         std::vector<std::string> finalPaths(textureSlots.size(), "");
-
         for (size_t slot = 0; slot < textureSlots.size(); ++slot)
             finalPaths[slot] = ResolveFirstTexture(material, textureSlots[slot]);
 
-        // ------------------------------------------------------------
         // 2) Caso especial glTF packed MetallicRoughness
-        // ------------------------------------------------------------
-        uint32_t metallicChan = 0; // default R
-        uint32_t roughnessChan = 0; // default R
-        uint32_t aoChan = 0; // default R
+        uint32_t metallicChan = 0;
+        uint32_t roughnessChan = 0;
+        uint32_t aoChan = 0;
 
         aiString mrPath;
         const bool hasMR = (material->GetTexture(aiTextureType_GLTF_METALLIC_ROUGHNESS, 0, &mrPath) == AI_SUCCESS);
 
         if (hasMR)
         {
-            // MISMO fichero para slot2/slot3
             finalPaths[2] = std::string(mrPath.C_Str());
             finalPaths[3] = std::string(mrPath.C_Str());
 
-            // glTF: Roughness en G, Metallic en B
-            roughnessChan = 1;
-            metallicChan = 2;
+            roughnessChan = 1; // G
+            metallicChan = 2; // B
         }
 
-        // glTF AO normalmente en R
         if (!finalPaths[4].empty())
-            aoChan = 0;
+            aoChan = 0; // R
 
-        // ------------------------------------------------------------
-        // 3) Normalizar paths a "../TexturesFolder/filename"
-        // ------------------------------------------------------------
+        // 3) Normalizar paths
         for (auto& p : finalPaths)
             p = NormalizeTexPath(p);
 
-        // ------------------------------------------------------------
         // 4) Calcular mask
-        // ------------------------------------------------------------
         uint32_t texMask = 0;
         for (size_t slot = 0; slot < finalPaths.size(); ++slot)
         {
-            if (!finalPaths[slot].empty())
-                texMask |= (1u << (uint32_t)slot);
+            if (!IsNullTex(finalPaths[slot]))
+                texMask |= (1u << static_cast<uint32_t>(slot));
         }
 
-        // ------------------------------------------------------------
-        // 5) Importar material params y escribir el .qemat
-        // Layout: debe coincidir con tu ReadQEMaterial actual.
-        // ------------------------------------------------------------
+        // 5) Importar parámetros de material desde Assimp
         MaterialData matData;
         matData.ImportAssimpMaterial(material);
 
-        std::ofstream file(materialPath, std::ios::binary);
-        if (!file.is_open())
+        // 6) Construir DTO
+        MaterialDto dto;
+        dto.Name = materialName;
+        dto.FilePath = QEProjectManager::ToProjectRelativePath(materialPath);
+        dto.ShaderPath = "default";
+        dto.layer = 1;
+
+        dto.Opacity = matData.Opacity;
+        dto.BumpScaling = matData.BumpScaling;
+        dto.Shininess = matData.Shininess;
+        dto.Reflectivity = matData.Reflectivity;
+        dto.Shininess_Strength = matData.Shininess_Strength;
+        dto.Refractivity = matData.Refractivity;
+        dto.Metallic = matData.Metallic;
+        dto.Roughness = matData.Roughness;
+        dto.AO = matData.AO;
+        dto.Clearcoat = matData.Clearcoat;
+        dto.ClearcoatRoughness = matData.ClearcoatRoughness;
+        dto.AlphaCutoff = matData.AlphaCutoff;
+
+        dto.Diffuse = matData.Diffuse;
+        dto.Ambient = matData.Ambient;
+        dto.Specular = matData.Specular;
+        dto.Emissive = matData.Emissive;
+        dto.Transparent = matData.Transparent;
+        dto.Reflective = matData.Reflective;
+
+        dto.texMask = texMask;
+        dto.metallicChan = metallicChan;
+        dto.roughnessChan = roughnessChan;
+        dto.aoChan = aoChan;
+        dto.AlphaMode = matData.AlphaMode;
+
+        dto.diffuseTexturePath = finalPaths[0];
+        dto.normalTexturePath = finalPaths[1];
+        dto.metallicTexturePath = finalPaths[2];
+        dto.roughnessTexturePath = finalPaths[3];
+        dto.aoTexturePath = finalPaths[4];
+        dto.emissiveTexturePath = finalPaths[5];
+        dto.heightTexturePath = finalPaths[6];
+        dto.specularTexturePath = finalPaths[7];
+
+        if (!QEMaterialYamlHelper::WriteMaterialFile(materialPath, dto))
         {
-            std::cerr << "Error al abrir " << materialPath << " para escritura.\n";
+            std::cerr << "Error al escribir material YAML: " << materialPath << std::endl;
             continue;
         }
-
-        auto writeString = [&](const std::string& s)
-            {
-                int len = (int)s.size();
-                file.write(reinterpret_cast<const char*>(&len), sizeof(int));
-                if (len > 0)
-                    file.write(s.data(), len);
-            };
-
-        // Header strings
-        writeString(materialName);
-        writeString(materialPath.string());
-
-        std::string shaderPath = "default";
-        writeString(shaderPath);
-
-        // Layer
-        int renderLayer = 1;
-        file.write(reinterpret_cast<const char*>(&renderLayer), sizeof(int));
-
-        // Scalars legacy (6)
-        file.write(reinterpret_cast<const char*>(&matData.Opacity), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&matData.BumpScaling), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&matData.Shininess), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&matData.Reflectivity), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&matData.Shininess_Strength), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&matData.Refractivity), sizeof(float));
-
-        // PBR factors (6)  <--- OJO: en tu ReadQEMaterial van aquí
-        file.write(reinterpret_cast<const char*>(&matData.Metallic), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&matData.Roughness), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&matData.AO), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&matData.Clearcoat), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&matData.ClearcoatRoughness), sizeof(float));
-        file.write(reinterpret_cast<const char*>(&matData.AlphaCutoff), sizeof(float));
-
-        // Colors (6 vec4)
-        file.write(reinterpret_cast<const char*>(&matData.Diffuse), sizeof(glm::vec4));
-        file.write(reinterpret_cast<const char*>(&matData.Ambient), sizeof(glm::vec4));
-        file.write(reinterpret_cast<const char*>(&matData.Specular), sizeof(glm::vec4));
-        file.write(reinterpret_cast<const char*>(&matData.Emissive), sizeof(glm::vec4));
-        file.write(reinterpret_cast<const char*>(&matData.Transparent), sizeof(glm::vec4));
-        file.write(reinterpret_cast<const char*>(&matData.Reflective), sizeof(glm::vec4));
-
-        // Mask + channels
-        file.write(reinterpret_cast<const char*>(&texMask), sizeof(uint32_t));
-        file.write(reinterpret_cast<const char*>(&metallicChan), sizeof(uint32_t));
-        file.write(reinterpret_cast<const char*>(&roughnessChan), sizeof(uint32_t));
-        file.write(reinterpret_cast<const char*>(&aoChan), sizeof(uint32_t));
-        file.write(reinterpret_cast<const char*>(&matData.AlphaMode), sizeof(uint32_t));
-
-        // 8 texture slots
-        // slot0 diffuse/basecolor, slot1 normal, slot2 metallic, slot3 roughness,
-        // slot4 AO, slot5 emissive, slot6 height, slot7 specular
-        for (const std::string& p : finalPaths)
-            writeString(p);
-
-        file.close();
     }
 }
-
 
 void MeshImporter::RemoveOnlyEmbeddedTextures(aiScene* scene)
 {
