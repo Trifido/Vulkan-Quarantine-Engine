@@ -10,7 +10,6 @@
 
 class QEMaterial;
 class QECamera;
-class LightManager;
 class RenderPassModule;
 class ShaderModule;
 
@@ -20,7 +19,6 @@ private:
     friend class QESingleton<MaterialManager>; // Permitir acceso al constructor
     std::unordered_map<std::string, std::shared_ptr<QEMaterial>> _materials;
 
-    LightManager*       lightManager;
     RenderPassModule*   renderPassModule;
 
     std::shared_ptr<ShaderModule> default_shader;

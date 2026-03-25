@@ -4,11 +4,11 @@ AtmosphereDto:
   sunEulerDegrees: [-45.000004, -45.000004, 0]
   sunBaseIntensity: 100
 Materials:
-  - ../../QEProjects\QEExample\QEAssets\QEMaterials\defaultPrimitiveMat.qemat
-  - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorDebugAABB.qemat
-  - ../../QEProjects\QEExample\QEAssets\QEMaterials\defaultParticlesMat.qemat
-  - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorDebugCollider.qemat
-  - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorGrid.qemat
+  - .\QEAssets\QEMaterials\defaultPrimitiveMat.qemat
+  - .\QEAssets\QEMaterials\editorDebugAABB.qemat
+  - .\QEAssets\QEMaterials\defaultParticlesMat.qemat
+  - .\QEAssets\QEMaterials\editorDebugCollider.qemat
+  - .\QEAssets\QEMaterials\editorGrid.qemat
 GameObjects:
   - id: X3g5Ayy61leD
     name: QECameraEditor

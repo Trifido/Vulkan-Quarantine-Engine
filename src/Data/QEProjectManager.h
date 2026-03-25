@@ -38,8 +38,14 @@ public:
     static fs::path GetAssetsFolderPath();
     static fs::path GetModelsFolderPath();
 
+    static fs::path ResolveProjectPath(const fs::path& path);
+    static std::string ToProjectRelativePath(const fs::path& path);
+
     static bool InitializeDefaultQEScene(QEScene& scene);
     static bool InitializeQEScene(QEScene& scene, const fs::path& sceneName);
+
+private:
+    static bool CreateDefaultProjectMaterials();
 };
 
 #endif // !QE_PROJECT_MANAGER

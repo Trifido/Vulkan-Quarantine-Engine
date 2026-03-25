@@ -7,6 +7,7 @@
 #include <GraphicsPipelineModule.h>
 #include <filesystem>
 #include <Vertex.h>
+#include <QEProjectManager.h>
 
 std::string MaterialManager::CheckName(std::string nameMaterial)
 {
@@ -52,8 +53,6 @@ MaterialManager::MaterialManager()
     const std::string absolute_debug_frag_shader_path = absPath + "/Debug/debug_frag.spv";
     const std::string absolute_grid_vertex_shader_path = absPath + "/Grid/grid_vert.spv";
     const std::string absolute_grid_frag_shader_path = absPath + "/Grid/grid_frag.spv";
-
-    this->lightManager = LightManager::getInstance();
 
     auto shaderManager = ShaderManager::getInstance();
     this->default_shader = std::make_shared<ShaderModule>(
@@ -217,7 +216,7 @@ void MaterialManager::CleanPipelines()
         it.second->cleanup();
     }
     // Clean Camera & Lights UBO's
-    this->lightManager->CleanLightUBO();
+    LightManager::getInstance()->CleanLightUBO();
 }
 
 void MaterialManager::CleanLastResources()
@@ -230,7 +229,6 @@ void MaterialManager::CleanLastResources()
     }
 
     this->_materials.clear();
-    this->lightManager = nullptr;
     this->default_shader.reset();
     this->default_primitive_shader.reset();
     this->default_shader = nullptr;
@@ -403,8 +401,9 @@ YAML::Node MaterialManager::SerializeMaterials()
 
     for (auto& it : _materials)
     {
-        std::string materialPath = it.second->SaveMaterialFile();
-        materialsNode.push_back(materialPath);
+        std::string savedPath = it.second->SaveMaterialFile();
+        std::string relativePath = QEProjectManager::ToProjectRelativePath(savedPath);
+        materialsNode.push_back(relativePath);
     }
 
     return materialsNode;
@@ -421,17 +420,23 @@ void MaterialManager::DeserializeMaterials(YAML::Node materials)
             for (const auto& materialPath : materials)
             {
                 std::string matPath = materialPath.as<std::string>();
+                fs::path resolvedPath = QEProjectManager::ResolveProjectPath(matPath);
 
-                std::ifstream matfile(matPath, std::ios::binary);
+                std::ifstream matfile(resolvedPath, std::ios::binary);
                 if (!matfile.is_open())
                 {
-                    std::cerr << "Error al abrir el material " << matPath << std::endl;
+                    std::cerr << "Error al abrir el material " << resolvedPath << std::endl;
                     continue;
                 }
 
                 MaterialDto materialDto = ReadQEMaterial(matfile);
-
                 matfile.close();
+
+                // Muy importante: dejar el DTO resuelto en memoria
+                if (materialDto.FilePath.empty())
+                    materialDto.FilePath = resolvedPath.string();
+                else
+                    materialDto.FilePath = QEProjectManager::ResolveProjectPath(materialDto.FilePath).string();
 
                 materialDtos.push_back(materialDto);
             }

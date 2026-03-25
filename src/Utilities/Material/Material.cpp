@@ -5,19 +5,23 @@ QEMaterial::QEMaterial(std::string name, std::string filepath)
 {
     this->Name = name;
 
-    if (filepath == "")
+    if (filepath.empty())
     {
         fs::path filenamePath = QEProjectManager::GetMaterialFolderPath();
         filenamePath /= name + ".qemat";
-        this->materialFilePath = filenamePath.string();
+        this->materialFilePath = filenamePath.lexically_normal().string();
     }
     else
     {
-        this->materialFilePath = filepath;
+        fs::path p(filepath);
+
+        if (p.is_relative())
+            p = QEProjectManager::ResolveProjectPath(p);
+
+        this->materialFilePath = p.lexically_normal().string();
     }
 
-    //this->materialData = {};
-    this->layer = (unsigned int) RenderLayer::SOLID;
+    this->layer = (unsigned int)RenderLayer::SOLID;
     this->lightManager = LightManager::getInstance();
 }
 
@@ -192,10 +196,12 @@ void QEMaterial::RenameMaterial(std::string newName)
 
 std::string QEMaterial::SaveMaterialFile()
 {
-    std::ofstream file(materialFilePath, std::ios::binary);
+    fs::path absMaterialPath = QEProjectManager::ResolveProjectPath(materialFilePath);
+
+    std::ofstream file(absMaterialPath, std::ios::binary);
     if (!file.is_open())
     {
-        std::cerr << "Error al abrir " << materialFilePath << " para escritura.\n";
+        std::cerr << "Error al abrir " << absMaterialPath << " para escritura.\n";
         return "";
     }
 
@@ -207,18 +213,18 @@ std::string QEMaterial::SaveMaterialFile()
                 file.write(s.data(), len);
         };
 
-    // 1) Header
+    this->materialFilePath = absMaterialPath.lexically_normal().string();
+
+    // Header
     writeString(Name);
-    writeString(materialFilePath);
+    writeString(QEProjectManager::ToProjectRelativePath(this->materialFilePath));
 
     std::string shaderName = (shader ? shader->shaderNameID : "default");
     writeString(shaderName);
 
-    // 2) Layer
     int renderLayer = (int)layer;
     file.write(reinterpret_cast<const char*>(&renderLayer), sizeof(int));
 
-    // 3) Scalars legacy + PBR + Clearcoat (MISMO ORDEN que el reader)
     file.write(reinterpret_cast<const char*>(&materialData.Opacity), sizeof(float));
     file.write(reinterpret_cast<const char*>(&materialData.BumpScaling), sizeof(float));
     file.write(reinterpret_cast<const char*>(&materialData.Shininess), sizeof(float));
@@ -229,12 +235,9 @@ std::string QEMaterial::SaveMaterialFile()
     file.write(reinterpret_cast<const char*>(&materialData.Metallic), sizeof(float));
     file.write(reinterpret_cast<const char*>(&materialData.Roughness), sizeof(float));
     file.write(reinterpret_cast<const char*>(&materialData.AO), sizeof(float));
-
-    // NUEVO: clearcoat
     file.write(reinterpret_cast<const char*>(&materialData.Clearcoat), sizeof(float));
     file.write(reinterpret_cast<const char*>(&materialData.ClearcoatRoughness), sizeof(float));
 
-    // 4) Colors
     file.write(reinterpret_cast<const char*>(&materialData.Diffuse), sizeof(glm::vec4));
     file.write(reinterpret_cast<const char*>(&materialData.Ambient), sizeof(glm::vec4));
     file.write(reinterpret_cast<const char*>(&materialData.Specular), sizeof(glm::vec4));
@@ -242,7 +245,6 @@ std::string QEMaterial::SaveMaterialFile()
     file.write(reinterpret_cast<const char*>(&materialData.Transparent), sizeof(glm::vec4));
     file.write(reinterpret_cast<const char*>(&materialData.Reflective), sizeof(glm::vec4));
 
-    // 5) Mask + channels (si los guardas en MaterialData)
     file.write(reinterpret_cast<const char*>(&materialData.TexMask), sizeof(uint32_t));
     file.write(reinterpret_cast<const char*>(&materialData.MetallicChan), sizeof(uint32_t));
     file.write(reinterpret_cast<const char*>(&materialData.RoughnessChan), sizeof(uint32_t));
@@ -258,6 +260,6 @@ std::string QEMaterial::SaveMaterialFile()
     writeString(materialData.specularTexturePath);
 
     file.close();
-    return materialFilePath;
-}
 
+    return this->materialFilePath;
+}
