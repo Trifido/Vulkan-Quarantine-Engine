@@ -368,7 +368,7 @@ void QEEditorApp::SpawnDroppedMesh(const std::string& assetPath)
 
     if (auto transform = newObject->GetComponent<QETransform>())
     {
-        transform->SetLocalPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+        transform->SetLocalPosition(GetSpawnPositionInFrontOfEditorCamera(5.0f));
         transform->SetLocalScale(glm::vec3(1.0f, 1.0f, 1.0f));
     }
 
@@ -378,6 +378,26 @@ void QEEditorApp::SpawnDroppedMesh(const std::string& assetPath)
     {
         selectionManager->SelectGameObject(newObject);
     }
+}
+
+glm::vec3 QEEditorApp::GetSpawnPositionInFrontOfEditorCamera(float distance) const
+{
+    auto editorCamera = sessionManager->EditorCamera();
+    if (!editorCamera)
+        return glm::vec3(0.0f);
+
+    auto cameraOwner = editorCamera->Owner;
+    if (!cameraOwner)
+        return glm::vec3(0.0f);
+
+    auto cameraTransform = cameraOwner->GetComponent<QETransform>();
+    if (!cameraTransform)
+        return glm::vec3(0.0f);
+
+    const glm::vec3 cameraPos = cameraTransform->GetWorldPosition();
+    const glm::vec3 forward = glm::normalize(cameraTransform->Forward());
+
+    return cameraPos + forward * distance;
 }
 
 void QEEditorApp::QueueExternalDroppedFile(const std::filesystem::path& path)

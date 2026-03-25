@@ -924,7 +924,6 @@ void QEProjectBrowserPanel::HandleExternalFileDrops()
     if (_pendingExternalDrops.empty())
         return;
 
-    // Sólo importamos si el usuario ha soltado encima del Project Browser.
     if (!_isWindowHovered && !_isContentsPanelHovered)
         return;
 
@@ -942,9 +941,7 @@ void QEProjectBrowserPanel::HandleExternalFileDrops()
         }
         catch (const std::exception& e)
         {
-            // Aquí puedes loguearlo si tienes consola o logger.
-            // Ejemplo:
-            // std::cerr << "Import failed: " << e.what() << std::endl;
+            std::cerr << "Import failed: " << e.what() << std::endl;
         }
     }
 
