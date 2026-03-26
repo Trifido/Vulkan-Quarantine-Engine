@@ -9,6 +9,7 @@
 #include <Vertex.h>
 #include <QEProjectManager.h>
 #include <QEMaterialYamlHelper.h>
+#include <Helpers/ScopedTimer.h>
 
 std::string MaterialManager::CheckName(std::string nameMaterial)
 {
@@ -365,9 +366,13 @@ MaterialDto MaterialManager::ReadQEMaterial(std::ifstream& matfile)
 
 void MaterialManager::LoadMaterialDtos(std::vector<MaterialDto>& materialDtos)
 {
+    PROFILE_SCOPE("LoadMaterialDtos");
+
     auto shaderManager = ShaderManager::getInstance();
     for (auto& it : materialDtos)
     {
+        PROFILE_SCOPE("Create runtime material");
+
         auto shader = shaderManager->GetShader(it.ShaderPath);
 
         if (!this->Exists(it.Name))
@@ -412,6 +417,8 @@ YAML::Node MaterialManager::SerializeMaterials()
 
 void MaterialManager::DeserializeMaterials(YAML::Node materials)
 {
+    PROFILE_SCOPE("DeserializeMaterials");
+
     std::vector<MaterialDto> materialDtos;
 
     try
@@ -420,22 +427,26 @@ void MaterialManager::DeserializeMaterials(YAML::Node materials)
         {
             for (const auto& materialPath : materials)
             {
+                PROFILE_SCOPE("Deserialize single material");
+
                 std::string matPath = materialPath.as<std::string>();
                 fs::path resolvedPath = QEProjectManager::ResolveProjectPath(matPath);
 
                 MaterialDto materialDto;
-                if (!QEMaterialYamlHelper::ReadMaterialFile(resolvedPath, materialDto))
                 {
-                    std::cerr << "Error al leer el material " << resolvedPath << std::endl;
-                    continue;
+                    PROFILE_SCOPE("Read material yaml");
+
+                    if (!QEMaterialYamlHelper::ReadMaterialFile(resolvedPath, materialDto))
+                    {
+                        std::cerr << "Error al leer el material " << resolvedPath << std::endl;
+                        continue;
+                    }
                 }
 
-                if (materialDto.FilePath.empty())
-                    materialDto.FilePath = NormalizeSlashes(resolvedPath.string());
-                else
-                    materialDto.FilePath = NormalizeSlashes(QEProjectManager::ResolveProjectPath(materialDto.FilePath).string());
-
-                materialDto.UpdateTexturePaths(resolvedPath.parent_path());
+                {
+                    PROFILE_SCOPE("Update texture paths");
+                    materialDto.UpdateTexturePaths(resolvedPath.parent_path());
+                }
 
                 materialDtos.push_back(materialDto);
             }
