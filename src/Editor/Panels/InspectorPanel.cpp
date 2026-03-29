@@ -8,6 +8,10 @@
 #include <string>
 #include <typeindex>
 
+#include <algorithm>
+#include <cctype>
+#include <unordered_map>
+
 #include <GameObjectManager.h>
 #include <QEGameObject.h>
 #include <QETransform.h>
@@ -288,6 +292,153 @@ namespace
 
         ImGui::Separator();
     }
+
+    std::string ToLowerCopy(const std::string& text)
+    {
+        std::string result = text;
+        std::transform(result.begin(), result.end(), result.begin(),
+            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        return result;
+    }
+
+    bool ContainsCaseInsensitive(const std::string& text, const std::string& filter)
+    {
+        if (filter.empty())
+            return true;
+
+        return ToLowerCopy(text).find(ToLowerCopy(filter)) != std::string::npos;
+    }
+
+    bool IsComponentAddableToGameObject(
+        const std::shared_ptr<QEGameObject>& gameObject,
+        const std::string& componentTypeName)
+    {
+        if (!gameObject)
+            return false;
+
+        if (componentTypeName.empty())
+            return false;
+
+        // Evitar añadir la clase base
+        if (componentTypeName == "QEGameComponent")
+            return false;
+
+        // Si ya existe un componente del mismo tipo exacto, no lo ofrecemos
+        for (const auto& component : gameObject->components)
+        {
+            if (!component)
+                continue;
+
+            if (component->getTypeName() == componentTypeName)
+                return false;
+        }
+
+        return true;
+    }
+
+    void DrawAddComponentPopup(const std::shared_ptr<QEGameObject>& gameObject)
+    {
+        if (!gameObject)
+            return;
+
+        if (ImGui::Button("Add Component"))
+        {
+            ImGui::OpenPopup("AddComponentPopup");
+        }
+
+        ImGuiViewport* viewport = ImGui::GetMainViewport();
+        const ImVec2 center = viewport->GetCenter();
+
+        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+        ImGui::SetNextWindowSize(ImVec2(420.0f, 360.0f), ImGuiCond_Appearing);
+
+        if (ImGui::BeginPopupModal("AddComponentPopup", nullptr, ImGuiWindowFlags_NoResize))
+        {
+            static char filterBuffer[128] = "";
+            static bool setFocusToSearch = true;
+
+            ImGui::TextUnformatted("Add Component");
+            ImGui::Separator();
+
+            if (setFocusToSearch)
+            {
+                ImGui::SetKeyboardFocusHere();
+                setFocusToSearch = false;
+            }
+
+            ImGui::InputTextWithHint(
+                "##ComponentSearch",
+                "Search component...",
+                filterBuffer,
+                sizeof(filterBuffer));
+
+            ImGui::Separator();
+
+            const std::string filterText = filterBuffer;
+            auto& factoryRegistry = getFactoryRegistry();
+
+            std::vector<std::string> componentNames;
+            componentNames.reserve(factoryRegistry.size());
+
+            for (const auto& [typeName, factory] : factoryRegistry)
+            {
+                if (!factory)
+                    continue;
+
+                if (!IsComponentAddableToGameObject(gameObject, typeName))
+                    continue;
+
+                if (!ContainsCaseInsensitive(typeName, filterText))
+                    continue;
+
+                componentNames.push_back(typeName);
+            }
+
+            std::sort(componentNames.begin(), componentNames.end());
+
+            ImGui::BeginChild("ComponentList", ImVec2(0.0f, -40.0f), true);
+
+            if (componentNames.empty())
+            {
+                ImGui::TextUnformatted("No components found.");
+            }
+            else
+            {
+                for (const auto& componentName : componentNames)
+                {
+                    if (ImGui::Selectable(componentName.c_str()))
+                    {
+                        auto it = factoryRegistry.find(componentName);
+                        if (it != factoryRegistry.end() && it->second)
+                        {
+                            std::unique_ptr<QEGameComponent> uniqueComponent = it->second();
+                            if (uniqueComponent)
+                            {
+                                std::shared_ptr<QEGameComponent> sharedComponent(std::move(uniqueComponent));
+                                gameObject->AddComponent(sharedComponent);
+                            }
+                        }
+
+                        filterBuffer[0] = '\0';
+                        setFocusToSearch = true;
+                        ImGui::CloseCurrentPopup();
+                        break;
+                    }
+                }
+            }
+
+            ImGui::EndChild();
+
+            if (ImGui::Button("Close"))
+            {
+                filterBuffer[0] = '\0';
+                setFocusToSearch = true;
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::EndPopup();
+        }
+    }
 }
 
 InspectorPanel::InspectorPanel(
@@ -339,6 +490,8 @@ void InspectorPanel::Draw()
     ImGui::Text("ID: %s", gameObject->ID().c_str());
     ImGui::Text("Children: %d", static_cast<int>(gameObject->childs.size()));
     ImGui::Text("Components: %d", static_cast<int>(gameObject->components.size()));
+
+    DrawAddComponentPopup(gameObject);
 
     ImGui::Separator();
 

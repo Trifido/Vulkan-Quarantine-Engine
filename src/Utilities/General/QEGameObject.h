@@ -64,10 +64,9 @@ public:
                     return m->id == newID;
                 }
             );
-            if (it != materials.end()) {
-                // Ya hay un QEMaterial con ese ID: no lo añadimos
+
+            if (it != materials.end())
                 return false;
-            }
 
             materials.push_back(component_ptr);
             bindedMaterials.push_back(component_ptr->Name);
@@ -75,25 +74,7 @@ public:
         }
         else
         {
-            auto it = std::find_if(
-                components.begin(), components.end(),
-                [&](const std::shared_ptr<QEGameComponent>& comp)
-                {
-                    return dynamic_cast<T*>(comp.get()) != nullptr;
-                }
-            );
-            if (it != components.end())
-                return false;
-
-            components.push_back(component_ptr);
-            component_ptr->BindGameObject(this);
-
-            if constexpr (std::is_same_v<T, QETransform>)
-            {
-                component_ptr->SetSelf(component_ptr);
-            }
-
-            return true;
+            return AddComponent(std::static_pointer_cast<QEGameComponent>(component_ptr));
         }
     }
 
@@ -166,6 +147,36 @@ public:
     const std::vector<std::shared_ptr<QEMaterial>>& GetMaterials() const
     {
         return materials;
+    }
+
+    bool AddComponent(const std::shared_ptr<QEGameComponent>& component_ptr)
+    {
+        if (!component_ptr)
+            return false;
+
+        const std::string newTypeName = component_ptr->getTypeName();
+
+        auto it = std::find_if(
+            components.begin(),
+            components.end(),
+            [&](const std::shared_ptr<QEGameComponent>& comp)
+            {
+                return comp && comp->getTypeName() == newTypeName;
+            }
+        );
+
+        if (it != components.end())
+            return false;
+
+        components.push_back(component_ptr);
+        component_ptr->BindGameObject(this);
+
+        if (auto transform = std::dynamic_pointer_cast<QETransform>(component_ptr))
+        {
+            transform->SetSelf(transform);
+        }
+
+        return true;
     }
 };
 
