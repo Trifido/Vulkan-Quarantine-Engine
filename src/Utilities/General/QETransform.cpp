@@ -1,6 +1,62 @@
 #include "QETransform.h"
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
+#include <cmath>
+#include <limits>
+
+namespace
+{
+    constexpr float QE_TRANSFORM_MIN_SCALE = 0.001f;
+    constexpr float QE_TRANSFORM_MAX_SCALE = 100000.0f;
+
+    bool IsFiniteVec3(const glm::vec3& v)
+    {
+        return std::isfinite(v.x) && std::isfinite(v.y) && std::isfinite(v.z);
+    }
+
+    bool IsFiniteQuat(const glm::quat& q)
+    {
+        return std::isfinite(q.x) && std::isfinite(q.y) &&
+            std::isfinite(q.z) && std::isfinite(q.w);
+    }
+
+    float SanitizeScaleComponent(float v, float fallback)
+    {
+        if (!std::isfinite(v))
+            return fallback;
+
+        // Si no quieres permitir escalado negativo en el engine:
+        v = std::abs(v);
+
+        if (v < QE_TRANSFORM_MIN_SCALE)
+            v = QE_TRANSFORM_MIN_SCALE;
+
+        if (v > QE_TRANSFORM_MAX_SCALE)
+            v = QE_TRANSFORM_MAX_SCALE;
+
+        return v;
+    }
+
+    glm::vec3 SanitizeScale(const glm::vec3& s, const glm::vec3& fallback)
+    {
+        return glm::vec3(
+            SanitizeScaleComponent(s.x, fallback.x),
+            SanitizeScaleComponent(s.y, fallback.y),
+            SanitizeScaleComponent(s.z, fallback.z));
+    }
+
+    glm::quat SafeNormalizeQuat(const glm::quat& q, const glm::quat& fallback)
+    {
+        if (!IsFiniteQuat(q))
+            return fallback;
+
+        float len = glm::length(q);
+        if (!std::isfinite(len) || len < 1e-8f)
+            return fallback;
+
+        return glm::normalize(q);
+    }
+}
 
 QETransform::QETransform()
 {
@@ -123,10 +179,22 @@ void QETransform::SetFromMatrix(const glm::mat4& m)
     glm::vec3 translation, scale;
     glm::quat rotation;
 
-    glm::decompose(m, scale, rotation, translation, skew, perspective);
+    const glm::vec3 oldPosition = localPosition;
+    const glm::quat oldRotation = localRotation;
+    const glm::vec3 oldScale = localScale;
+
+    bool ok = glm::decompose(m, scale, rotation, translation, skew, perspective);
+    if (!ok)
+        return;
+
+    if (!IsFiniteVec3(translation))
+        translation = oldPosition;
+
+    rotation = SafeNormalizeQuat(rotation, oldRotation);
+    scale = SanitizeScale(scale, oldScale);
 
     localPosition = translation;
-    localRotation = glm::normalize(rotation);
+    localRotation = rotation;
     localScale = scale;
 
     localDirty = true;
@@ -169,14 +237,25 @@ void QETransform::SetParent(std::shared_ptr<QETransform> newParent, bool keepWor
         glm::mat4 parentWorld = newParent ? newParent->GetWorldMatrix() : glm::mat4(1.0f);
         glm::mat4 newLocal = glm::inverse(parentWorld) * currentWorld;
 
-        glm::vec3 skew; glm::vec4 persp;
+        glm::vec3 skew;
+        glm::vec4 persp;
         glm::vec3 t, s;
         glm::quat r;
-        glm::decompose(newLocal, s, r, t, skew, persp);
-        localPosition = t;
-        localRotation = glm::normalize(r);
-        localScale = s;
-        localDirty = true;
+
+        bool ok = glm::decompose(newLocal, s, r, t, skew, persp);
+        if (ok)
+        {
+            if (!IsFiniteVec3(t))
+                t = localPosition;
+
+            r = SafeNormalizeQuat(r, localRotation);
+            s = SanitizeScale(s, localScale);
+
+            localPosition = t;
+            localRotation = r;
+            localScale = s;
+            localDirty = true;
+        }
     }
 
     MarkWorldDirty();
