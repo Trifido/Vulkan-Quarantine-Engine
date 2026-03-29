@@ -9,8 +9,8 @@
 
 class QETransform : public QEGameComponent
 {
-    REFLECTABLE_COMPONENT(QETransform)
 public:
+    REFLECTABLE_COMPONENT(QETransform)
     REFLECT_PROPERTY(glm::vec3, localPosition)
     REFLECT_PROPERTY(glm::quat, localRotation)
     REFLECT_PROPERTY(glm::vec3, localScale)

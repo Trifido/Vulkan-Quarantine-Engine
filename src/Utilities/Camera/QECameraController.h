@@ -6,6 +6,7 @@
 
 class QECameraController : public QEGameComponent
 {
+public:
     REFLECTABLE_COMPONENT(QECameraController)
 private:
     bool firstMouse = true;

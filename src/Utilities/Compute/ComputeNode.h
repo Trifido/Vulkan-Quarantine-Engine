@@ -13,6 +13,7 @@
 
 class ComputeNode : public QEGameComponent
 {
+public:
     REFLECTABLE_COMPONENT(ComputeNode)
 private:
     DeviceModule*                               deviceModule = nullptr;

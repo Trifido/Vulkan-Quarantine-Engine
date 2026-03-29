@@ -9,8 +9,8 @@
 
 class QEAnimationComponent : public QEGameComponent
 {
-    REFLECTABLE_COMPONENT(QEAnimationComponent)
 public:
+    REFLECTABLE_COMPONENT(QEAnimationComponent)
     std::shared_ptr<Animator> animator;
 
 private:

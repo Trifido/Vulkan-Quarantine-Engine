@@ -16,6 +16,7 @@ class FrustumComponent;
 
 class QECamera : public QEGameComponent
 {
+public:
     REFLECTABLE_COMPONENT(QECamera)
 private:
     struct { float fov, n, f, w, h; } _projCache{ -1,-1,-1,-1,-1 };
