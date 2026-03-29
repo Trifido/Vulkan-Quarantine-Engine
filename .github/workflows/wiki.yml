@@ -1,0 +1,51 @@
+name: Publish Wiki
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/wiki/**'
+  workflow_dispatch:
+
+jobs:
+  publish-wiki:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      # 1) Checkout the main repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2) Clone the GitHub Wiki repository
+      - name: Clone wiki repository
+        run: |
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git /tmp/wiki
+
+      # 3) Sync docs/wiki content into the wiki repository
+      - name: Sync wiki content
+        run: |
+          # Remove existing content (keep .git)
+          find /tmp/wiki -mindepth 1 -not -path '/tmp/wiki/.git*' -delete
+
+          # Copy the language subdirectories (en/ and es/)
+          cp -r docs/wiki/en /tmp/wiki/en
+          cp -r docs/wiki/es /tmp/wiki/es
+
+          # Promote README.md to Home.md (GitHub Wiki landing page)
+          cp docs/wiki/README.md /tmp/wiki/Home.md
+
+      # 4) Commit and push changes to the wiki
+      - name: Commit and push wiki changes
+        run: |
+          cd /tmp/wiki
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          if git diff --staged --quiet; then
+            echo "No changes to publish."
+          else
+            git commit -m "docs: sync wiki from docs/wiki @ ${{ github.sha }}"
+            git push
+          fi
