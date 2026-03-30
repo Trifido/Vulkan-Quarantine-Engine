@@ -12,6 +12,8 @@ private:
     bool firstMouse = true;
     float lastX = 0.0f;
     float lastY = 0.0f;
+    double lastMouseX = 0.0;
+    double lastMouseY = 0.0;
     float yawDeg = 0.0f;
     float pitchDeg = 0.0f;
 
@@ -21,13 +23,15 @@ private:
 public:
     REFLECT_PROPERTY(float, Speed)
     REFLECT_PROPERTY(float, MouseSensitivity)
-    REFLECT_PROPERTY(bool, EditorControls)
 
 private:
     void GetYawPitchFromForward(const glm::vec3& fwd, float& yawDeg, float& pitchDeg);
     void EditorCameraController(float dt);
     void EditorScroll(float dt);
     void EditorRotate(float dt);
+
+    void RuntimeCameraController(float dt);
+    void RuntimeRotate(float dt);
 
 public:
     void QEStart() override;
