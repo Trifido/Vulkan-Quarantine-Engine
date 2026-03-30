@@ -4,45 +4,45 @@ AtmosphereDto:
   sunEulerDegrees: [-80, 45, 0]
   sunBaseIntensity: 100
 Materials:
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_20.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_0.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEMaterials\defaultPrimitiveMat.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_11.qemat
-  - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorDebugAABB.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEMaterials\defaultParticlesMat.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEMaterials\editorDebugCollider.qemat
-  - ../../QEProjects\QEExample\QEAssets\QEMaterials\editorGrid.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_21.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_1.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_22.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_2.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_23.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_3.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_24.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_4.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_5.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_6.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_7.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_8.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_9.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_10.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_12.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_13.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_14.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_15.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_16.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_17.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_18.qemat
-  - ../../QEProjects\QEExamplePBR\QEAssets\QEModels\source\Materials\Material_19.qemat
-  - ../../QEProjects\QEExample\QEAssets\QEModels\MaterialBall\Materials\lambert3SG.qemat
+  - QEAssets/QEModels/source/Materials/Material_20.qemat
+  - QEAssets/QEModels/source/Materials/Material_0.qemat
+  - QEAssets/QEModels/source/Materials/Material_11.qemat
+  - QEAssets/QEMaterials/defaultPrimitiveMat.qemat
+  - QEAssets/QEMaterials/editorDebugAABB.qemat
+  - QEAssets/QEMaterials/defaultParticlesMat.qemat
+  - QEAssets/QEMaterials/editorDebugCollider.qemat
+  - QEAssets/QEMaterials/editorGrid.qemat
+  - QEAssets/QEModels/source/Materials/Material_21.qemat
+  - QEAssets/QEModels/source/Materials/Material_1.qemat
+  - QEAssets/QEModels/source/Materials/Material_22.qemat
+  - QEAssets/QEModels/source/Materials/Material_2.qemat
+  - QEAssets/QEModels/source/Materials/Material_23.qemat
+  - QEAssets/QEModels/source/Materials/Material_3.qemat
+  - QEAssets/QEModels/source/Materials/Material_24.qemat
+  - QEAssets/QEModels/source/Materials/Material_4.qemat
+  - QEAssets/QEModels/source/Materials/Material_5.qemat
+  - QEAssets/QEModels/source/Materials/Material_6.qemat
+  - QEAssets/QEModels/source/Materials/Material_7.qemat
+  - QEAssets/QEModels/source/Materials/Material_8.qemat
+  - QEAssets/QEModels/source/Materials/Material_9.qemat
+  - QEAssets/QEModels/source/Materials/Material_10.qemat
+  - QEAssets/QEModels/source/Materials/Material_12.qemat
+  - QEAssets/QEModels/source/Materials/Material_13.qemat
+  - QEAssets/QEModels/source/Materials/Material_14.qemat
+  - QEAssets/QEModels/source/Materials/Material_15.qemat
+  - QEAssets/QEModels/source/Materials/Material_16.qemat
+  - QEAssets/QEModels/source/Materials/Material_17.qemat
+  - QEAssets/QEModels/source/Materials/Material_18.qemat
+  - QEAssets/QEModels/source/Materials/Material_19.qemat
+  - QEAssets/QEModels/MaterialBall/Materials/lambert3SG.qemat
 GameObjects:
   - id: X3g5Ayy61leD
     name: QECameraEditor
     components:
       - type: QETransform
         id: YT3CEW8K69rk
-        localPosition: [3.8862884, 2.1718748, -0.2626291]
-        localRotation: [-0.1106773, 0.6942156, 0.10933274, 0.70275295]
+        localPosition: [4.1047783, 2.4456527, -0.34550753]
+        localRotation: [-0.13878702, 0.69797605, 0.14073753, 0.68830264]
         localScale: [1, 1, 1]
         parentId: ""
       - type: QECamera
@@ -50,28 +50,28 @@ GameObjects:
         _near: 0.1
         _far: 500
         _fov: 45
-        Width: 1035
-        Height: 721
+        Width: 855
+        Height: 446
       - type: QECameraController
         id: 3SL3XByImciQ
         Speed: 10
         MouseSensitivity: 0.1
         EditorControls: true
-  - id: Ir9oDUTOX7NY
-    name: sponza
+  - id: 81nP7VxEE4Fd
+    name: scene
     components:
       - type: QETransform
-        id: EkZgzUny1swO
+        id: gcL9fOPyc98b
         localPosition: [0, 0, 0]
         localRotation: [0, 0, 0, 1]
         localScale: [1, 1, 1]
         parentId: ""
       - type: QEGeometryComponent
-        id: bdYSEvWRBLzZ
+        id: I89qTPFtysL1
         _name: scene
-        _filepath: C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExamplePBR/QEAssets/QEModels/source/Meshes/scene.gltf
+        _filepath: ../../QEProjects/QEExamplePBR/QEAssets/QEModels/source/Meshes/scene.gltf
       - type: QEMeshRenderer
-        id: 02h67YrlvBnd
+        id: Q4GTOPwD7kkq
         IsMeshShaderPipeline: false
     materials:
       - Material_0
@@ -99,22 +99,21 @@ GameObjects:
       - Material_22
       - Material_23
       - Material_24
-    children:
-      - id: VOgDko8fnPYl
-        name: ball
-        components:
-          - type: QETransform
-            id: apdvxlUsBH29
-            localPosition: [0, 0.8855249, 0]
-            localRotation: [0, 0.7071068, 0, 0.7071068]
-            localScale: [0.11999886, 0.120000005, 0.11999886]
-            parentId: ""
-          - type: QEGeometryComponent
-            id: Cm3ORYkfrjRZ
-            _name: material_ball
-            _filepath: C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/QEProjects/QEExample/QEAssets/QEModels/MaterialBall/Meshes/material_ball.gltf
-          - type: QEMeshRenderer
-            id: Ddw6LcpX33e1
-            IsMeshShaderPipeline: false
-        materials:
-          - lambert3SG
+  - id: B5yi9ijSAjBQ
+    name: material_ball
+    components:
+      - type: QETransform
+        id: jgnZSCe8nPQH
+        localPosition: [0.48219576, 0.88872415, -0.01701226]
+        localRotation: [0, 0.7136066, 0, 0.7005467]
+        localScale: [0.12000012, 0.12000002, 0.12000012]
+        parentId: ""
+      - type: QEGeometryComponent
+        id: nppZqt456uNh
+        _name: material_ball
+        _filepath: ../../QEProjects/QEExamplePBR/QEAssets/QEModels/MaterialBall/Meshes/material_ball.gltf
+      - type: QEMeshRenderer
+        id: aAAZ7eJqXZMw
+        IsMeshShaderPipeline: false
+    materials:
+      - lambert3SG
