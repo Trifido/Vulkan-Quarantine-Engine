@@ -43,5 +43,5 @@ void main() {
     vs_out.TBN = mat3(T, B, N);
     vs_out.Normal = N;
 
-    gl_Position = cameraData.viewproj * vec4(vs_out.FragPos, 1.0);
+    gl_Position = cameraData.viewProjection * vec4(vs_out.FragPos, 1.0);
 }

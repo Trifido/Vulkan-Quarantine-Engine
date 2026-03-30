@@ -17,5 +17,5 @@ layout(location = 0) in vec4 inPosition;
 
 void main() 
 {
-    gl_Position = cameraData.viewproj * constants.model * inPosition;
+    gl_Position = cameraData.viewProjection * constants.model * inPosition;
 }

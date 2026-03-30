@@ -26,7 +26,7 @@ float gridSize = 100.0;
 
 void main()
 {
-    mat4 MVP = cameraData.viewproj;
+    mat4 MVP = cameraData.viewProjection;
 	int idx = indices[gl_VertexIndex];
 	vec3 position = pos[idx] * gridSize;
 	

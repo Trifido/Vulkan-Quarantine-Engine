@@ -70,7 +70,7 @@ bool coneCull(vec3 center, float radius, vec3 cone_axis, float cone_cutoff)
 
 bool isSphereOutsideFrustum(vec4 sphere_center, float sphere_radius)
 {
-    mat4 invVP = inverse(cameraData.proj);
+    mat4 invVP = inverse(cameraData.projection);
     vec4 sphere_view_center = invVP * sphere_center;
     sphere_view_center /= sphere_view_center.w;
 

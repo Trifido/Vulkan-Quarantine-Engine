@@ -19,10 +19,14 @@ struct QELightData
 
 struct QECameraData
 {
-	mat4 view;
-	mat4 proj;
-	mat4 viewproj;
-    vec4 position;
+    mat4 view;
+    mat4 projection;
+    mat4 viewProjection;
+    mat4 invView;
+    mat4 invProj;
+    mat4 invViewProj;
+    vec4 position;      // xyz = world pos
+    vec4 cameraParams;  // x = near, y = far, z = fovY, w = aspect
     vec4 frustumPlanes[6];
 };
 
