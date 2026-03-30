@@ -59,18 +59,18 @@ void QECamera::UpdateViewportSize(VkExtent2D size)
 
 void QECamera::UpdateCamera()
 {
+    if (!CameraData)
+        return;
+
     glm::vec3 pos = _OwnerTransform ? _OwnerTransform->GetWorldPosition() : glm::vec3(0.0f);
     glm::quat rot = _OwnerTransform ? _OwnerTransform->GetWorldRotation() : glm::quat(1, 0, 0, 0);
 
-    // 2) View = R^T * T^-1   (conjugado del quat = R^T)
     glm::mat4 Rinv = glm::toMat4(glm::conjugate(rot));
     glm::mat4 Tinv = glm::translate(glm::mat4(1.0f), -pos);
     CameraData->View = Rinv * Tinv;
 
-    // 3) Proyección (Vulkan: flip Y)
     UpdateProjectionIfNeeded();
 
-    // 4) Derivados
     CameraData->WPosition = glm::vec4(pos, 1.0f);
     CameraData->Viewproj = CameraData->Projection * CameraData->View;
 
@@ -99,6 +99,9 @@ void QECamera::UpdateProjectionIfNeeded()
 
 void QECamera::UpdateFrustumPlanes()
 {
+    if (!CameraData || !_frustumComponent)
+        return;
+
     glm::mat4 viewprojectionTranspose = glm::transpose(this->CameraData->Viewproj);
     this->CameraData->FrustumPlanes[0] = normalize_plane(viewprojectionTranspose[3] + viewprojectionTranspose[0]);
     this->CameraData->FrustumPlanes[1] = normalize_plane(viewprojectionTranspose[3] - viewprojectionTranspose[0]);
@@ -132,11 +135,9 @@ void QECamera::QEStart()
 {
     if (_QEStarted) return;
 
-    auto sessionManager = QESessionManager::getInstance();
-    if (!sessionManager->IsEditor() && this->Owner->Name == sessionManager->NameCameraEditor) return;
-
     QEGameComponent::QEStart();
 
+    auto sessionManager = QESessionManager::getInstance();
     sessionManager->SetFindNewSceneCamera(this->id);
 
     this->deviceModule = DeviceModule::getInstance();

@@ -18,6 +18,7 @@ public:
     void SetEditorMode(bool value);
     void SetDebugMode(bool value);
     void RegisterActiveSceneCamera();
+    void RegisterSceneCameras();
     void SetFindNewSceneCamera(std::string cameraID);
     void FreeCameraResources();
 
@@ -25,6 +26,7 @@ public:
 
     void UpdateEditorCameraViewportSize(uint32_t width, uint32_t height);
     void UpdateGameCameraViewportSize(uint32_t width, uint32_t height);
+    void UpdateActiveCameraViewportSize(uint32_t width, uint32_t height);
 
     void SetupEditor();
     void CleanEditorResources();
@@ -32,6 +34,7 @@ public:
     void UpdateCullingScene();
     void CleanCullingResources();
     void FindNewSceneCamera();
+    void ResolveActiveCamera();
     std::shared_ptr<UniformBufferObject> GetCameraUBO() { return this->cameraUBO; }
 
     std::shared_ptr<QECamera> ActiveCamera() const { return _activeCamera; }

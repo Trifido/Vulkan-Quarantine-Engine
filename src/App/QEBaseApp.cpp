@@ -119,25 +119,9 @@ void QEBaseApp::initVulkan()
     this->particleSystemManager = ParticleSystemManager::getInstance();
     this->debugSystem = QEDebugSystem::getInstance();
     this->debugSystem->InitializeDebugGraphicResources();
-
-    // Import meshes
-    //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Character.glb");
-
-    // Import animations
-    //QEProjectManager::ImportAnimationFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/Character/Walking.glb",
-    //    std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/Character/Animations"));
-
-    //QEProjectManager::ImportMeshFile("C:/Users/Usuario/Documents/GitHub/Vulkan-Quarantine-Engine/resources/models/FuturisticRoom/sci-fi_lab.glb");
-    //auto streetPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/FuturisticRoom/Meshes/sci-fi_lab.gltf").generic_string();
-    
+        
     // Load Scene
     this->loadScene(this->scene);
-
-    //auto materialBalPath = std::filesystem::absolute("../../QEProjects/QEExample/QEAssets/QEModels/MaterialBall/Meshes/material_ball.gltf").generic_string();
-    //std::shared_ptr<QEGameObject> ball = std::make_shared<QEGameObject>("ball");
-    //ball->AddComponent(std::make_shared<QEGeometryComponent>(std::make_unique<MeshGenerator>(materialBalPath)));
-    //ball->AddComponent(std::make_shared<QEMeshRenderer>());
-    //this->gameObjectManager->AddGameObject(ball);
 
     this->physicsModule->SetGravity(-20.0f);
     this->lightManager->InitializeShadowMaps();
@@ -151,32 +135,31 @@ void QEBaseApp::loadScene(QEScene scene)
 {
     scene.DeserializeScene();
 
-    this->gameObjectManager->StartQEGameObjects();
-    this->sessionManager->RegisterActiveSceneCamera();
+    gameObjectManager->StartQEGameObjects();
 
-    if (!IsEditorMode())
-    {
-        auto swapchainModule = SwapChainModule::getInstance();
-        this->sessionManager->UpdateGameCameraViewportSize(
-            swapchainModule->swapChainExtent.width,
-            swapchainModule->swapChainExtent.height);
-    }
-
-    this->sessionManager->SetEditorMode(IsEditorMode());
-    this->sessionManager->SetDebugMode(false);
+    sessionManager->SetEditorMode(IsEditorMode());
+    sessionManager->RegisterSceneCameras();
+    sessionManager->ResolveActiveCamera();
+    sessionManager->SetDebugMode(false);
 
     if (IsEditorMode())
     {
-        this->sessionManager->SetupEditor();
+        sessionManager->SetupEditor();
     }
 
-    this->sessionManager->ActiveCamera()->QEStart();
+    auto activeCamera = sessionManager->ActiveCamera();
+    if (!activeCamera)
+        throw std::runtime_error("No active camera resolved.");
 
-    this->lightManager->AddDirShadowMapShader(materialManager->csm_shader);
-    this->lightManager->AddOmniShadowMapShader(materialManager->omni_shadow_mapping_shader);
+    auto swapchainModule = SwapChainModule::getInstance();
+    activeCamera->UpdateViewportSize(swapchainModule->swapChainExtent);
+    activeCamera->UpdateCamera();
 
-    this->atmosphereSystem = AtmosphereSystem::getInstance();
-    this->atmosphereSystem->LoadAtmosphereDto(scene.atmosphereDto);
+    lightManager->AddDirShadowMapShader(materialManager->csm_shader);
+    lightManager->AddOmniShadowMapShader(materialManager->omni_shadow_mapping_shader);
+
+    atmosphereSystem = AtmosphereSystem::getInstance();
+    atmosphereSystem->LoadAtmosphereDto(scene.atmosphereDto);
 }
 
 void QEBaseApp::mainLoop()

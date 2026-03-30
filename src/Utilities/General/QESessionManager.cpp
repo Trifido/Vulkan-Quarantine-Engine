@@ -36,12 +36,13 @@ void QESessionManager::SetEditorMode(bool value)
             cameraTransform->SetLocalPosition(glm::vec3(0.0f, 10.0f, 10.0f));
 
             gameObjectManager->AddGameObject(cameraObject);
-        }
 
-        _editorCamera = cameraObject->GetComponentInChildren<QECamera>();
+            _editorCamera = cameraObject->GetComponent<QECamera>();
+        }
     }
 
-    _activeCamera = (_isEditor || !_gameCamera) ? _editorCamera : _gameCamera;
+    RegisterSceneCameras();
+    ResolveActiveCamera();
 }
 
 void QESessionManager::SetDebugMode(bool value)
@@ -57,18 +58,33 @@ void QESessionManager::SetDebugMode(bool value)
 
 void QESessionManager::RegisterActiveSceneCamera()
 {
-    this->FindNewSceneCamera();
+    auto gameObjectManager = GameObjectManager::getInstance();
 
-    if (this->_gameCamera != NULL)
+    _gameCamera = nullptr;
+
+    auto foundCamera = gameObjectManager->FindFirstComponentInScene<QECamera>(NameCameraEditor);
+    if (foundCamera)
     {
-        if (!_isEditor)
-        {
-            _activeCamera = _gameCamera;
-            _activeCamera->QEStart();
-        }
-
-        this->_newSceneCamera = false;
+        _gameCamera = foundCamera;
     }
+
+    _activeCamera = (_gameCamera != nullptr) ? _gameCamera : _editorCamera;
+}
+
+void QESessionManager::RegisterSceneCameras()
+{
+    auto gameObjectManager = GameObjectManager::getInstance();
+
+    _editorCamera = nullptr;
+    _gameCamera = nullptr;
+
+    auto editorCameraObject = gameObjectManager->GetGameObject(NameCameraEditor);
+    if (editorCameraObject)
+    {
+        _editorCamera = editorCameraObject->GetComponent<QECamera>();
+    }
+
+    _gameCamera = gameObjectManager->FindFirstComponentInScene<QECamera>(NameCameraEditor);
 }
 
 void QESessionManager::SetFindNewSceneCamera(std::string cameraID)
@@ -135,6 +151,19 @@ void QESessionManager::UpdateGameCameraViewportSize(uint32_t width, uint32_t hei
     this->_gameCamera->UpdateCamera();
 }
 
+void QESessionManager::UpdateActiveCameraViewportSize(uint32_t width, uint32_t height)
+{
+    if (!_activeCamera)
+        return;
+
+    VkExtent2D extent{};
+    extent.width = std::max(1u, width);
+    extent.height = std::max(1u, height);
+
+    _activeCamera->UpdateViewportSize(extent);
+    _activeCamera->UpdateCamera();
+}
+
 void QESessionManager::SetupEditor()
 {
     auto cullingSceneManager = CullingSceneManager::getInstance();
@@ -194,4 +223,16 @@ void QESessionManager::FindNewSceneCamera()
     // Ensure the returned object is of the correct type before assignment
     auto foundCamera = gameObjectManager->FindGameComponentInScene(this->newCameraID);
     this->_gameCamera = std::dynamic_pointer_cast<QECamera>(foundCamera);
+}
+
+void QESessionManager::ResolveActiveCamera()
+{
+    if (_isEditor)
+    {
+        _activeCamera = _editorCamera ? _editorCamera : _gameCamera;
+    }
+    else
+    {
+        _activeCamera = _gameCamera ? _gameCamera : _editorCamera;
+    }
 }

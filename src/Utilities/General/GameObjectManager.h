@@ -39,9 +39,40 @@ public:
     void UpdateQEGameObjects();
     void DestroyQEGameObjects();
 
+    template<typename T>
+    std::shared_ptr<T> FindFirstComponentInScene(const std::string& excludedGameObjectName = "") const;
     std::shared_ptr<QEGameComponent> FindGameComponentInScene(const std::string& id);
     std::vector<std::shared_ptr<QEGameObject>> GetRootGameObjects() const;
     std::shared_ptr<QEGameObject> GetGameObjectById(const std::string& id) const;
 };
+
+
+template<typename T>
+std::shared_ptr<T> GameObjectManager::FindFirstComponentInScene(const std::string& excludedGameObjectName) const
+{
+    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); ++idl)
+    {
+        const unsigned int layerId = this->renderLayers.GetLayer(idl);
+        auto layerIt = this->_objects.find(layerId);
+        if (layerIt == this->_objects.end())
+            continue;
+
+        for (const auto& kv : layerIt->second)
+        {
+            const auto& go = kv.second;
+            if (!go)
+                continue;
+
+            if (!excludedGameObjectName.empty() && go->Name == excludedGameObjectName)
+                continue;
+
+            auto component = go->GetComponent<T>();
+            if (component)
+                return component;
+        }
+    }
+
+    return nullptr;
+}
 
 #endif

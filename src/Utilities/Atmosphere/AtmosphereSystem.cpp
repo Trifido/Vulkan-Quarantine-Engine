@@ -422,6 +422,12 @@ void AtmosphereSystem::CleanLastResources()
 
 void AtmosphereSystem::UpdateSun()
 {
+    auto activeCamera = QESessionManager::getInstance()->ActiveCamera();
+    if (!activeCamera)
+    {
+        throw std::runtime_error("AtmosphereSystem requires an active camera before InitializeAtmosphere.");
+    }
+
     if (this->atmosphereType == AtmosphereType::PHYSICALLY_BASED_SKY)
     {
         this->sunLight->UpdateSun();
