@@ -32,8 +32,12 @@ struct alignas(16) UniformCamera
 {
     glm::mat4 View;
     glm::mat4 Projection;
-    glm::mat4 Viewproj;
-    glm::vec4 WPosition;
+    glm::mat4 ViewProjection;
+    glm::mat4 InvView;
+    glm::mat4 InvProjection;
+    glm::mat4 InvViewProjection;
+    glm::vec4 Position;
+    glm::vec4 Params; // x=near, y=far, z=fovY, w=aspect
     glm::vec4 FrustumPlanes[6];
 };
 

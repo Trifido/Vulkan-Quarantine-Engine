@@ -61,7 +61,7 @@ void QEDirectionalLight::UpdateCascades()
     float lastSplitDist = 0.0f;
 
     // Matriz inversa de cámara (NDC->World)
-    glm::mat4 invCam = glm::inverse(activeCamera->CameraData->Viewproj);
+    glm::mat4 invCam = glm::inverse(activeCamera->CameraData->ViewProjection);
 
     // Resolución (si la tienes por cascada, usa la de i)
     const float shadowMapRes = 2048.f;

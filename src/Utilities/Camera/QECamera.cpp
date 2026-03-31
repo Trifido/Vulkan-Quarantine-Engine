@@ -71,8 +71,12 @@ void QECamera::UpdateCamera()
 
     UpdateProjectionIfNeeded();
 
-    CameraData->WPosition = glm::vec4(pos, 1.0f);
-    CameraData->Viewproj = CameraData->Projection * CameraData->View;
+    CameraData->Position = glm::vec4(pos, 1.0f);
+    CameraData->ViewProjection = CameraData->Projection * CameraData->View;
+    CameraData->InvView = glm::inverse(CameraData->View);
+    CameraData->InvProjection = glm::inverse(CameraData->Projection);
+    CameraData->InvViewProjection = glm::inverse(CameraData->ViewProjection);
+    CameraData->Params = glm::vec4(_near, _far, _fov, _aspect);
 
     UpdateFrustumPlanes();
     if (_frustumComponent) _frustumComponent->ActivateComputeCulling(true);
@@ -91,8 +95,8 @@ void QECamera::UpdateProjectionIfNeeded()
     if (_projCache.fov == _fov && _projCache.n == _near && _projCache.f == _far &&
         _projCache.w == Width && _projCache.h == Height) return;
 
-    const float aspect = glm::max(0.0001f, Width / glm::max(Height, 0.0001f));
-    CameraData->Projection = glm::perspective(glm::radians(_fov), aspect, _near, _far);
+    _aspect = glm::max(0.0001f, Width / glm::max(Height, 0.0001f));
+    CameraData->Projection = glm::perspective(glm::radians(_fov), _aspect, _near, _far);
     CameraData->Projection[1][1] *= -1.0f;
     _projCache = { _fov, _near, _far, Width, Height };
 }
@@ -102,7 +106,7 @@ void QECamera::UpdateFrustumPlanes()
     if (!CameraData || !_frustumComponent)
         return;
 
-    glm::mat4 viewprojectionTranspose = glm::transpose(this->CameraData->Viewproj);
+    glm::mat4 viewprojectionTranspose = glm::transpose(this->CameraData->ViewProjection);
     this->CameraData->FrustumPlanes[0] = normalize_plane(viewprojectionTranspose[3] + viewprojectionTranspose[0]);
     this->CameraData->FrustumPlanes[1] = normalize_plane(viewprojectionTranspose[3] - viewprojectionTranspose[0]);
     this->CameraData->FrustumPlanes[2] = normalize_plane(viewprojectionTranspose[3] + viewprojectionTranspose[1]);
@@ -110,7 +114,7 @@ void QECamera::UpdateFrustumPlanes()
     this->CameraData->FrustumPlanes[4] = normalize_plane(viewprojectionTranspose[3] + viewprojectionTranspose[2]);
     this->CameraData->FrustumPlanes[5] = normalize_plane(viewprojectionTranspose[3] - viewprojectionTranspose[2]);
 
-    this->_frustumComponent->RecreateFrustum(this->CameraData->Viewproj);
+    this->_frustumComponent->RecreateFrustum(this->CameraData->ViewProjection);
 }
 
 void QECamera::SetNear(float newValue)

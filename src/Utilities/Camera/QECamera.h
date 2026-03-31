@@ -26,6 +26,7 @@ private:
     glm::vec4 normalize_plane(glm::vec4 plane);
     bool _dirtyData = true;
     uint32_t _lastTransformVersion = 0;
+    float _aspect;
 
 protected:
     REFLECT_PROPERTY(float, _near)

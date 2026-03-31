@@ -57,12 +57,12 @@ vec3 getValFromTLUT(vec3 viewPos, vec3 sunDir)
     float height = length(viewPos);
     vec3 up = viewPos / height;
     float sunCosZenithAngle = dot(sunDir, up);
-    
+
     vec2 uv = vec2(
-        tLUTRes.x * clamp((height - PlanetRadius)/(AtmosphereRadius - PlanetRadius),0.0,1.0),
-        tLUTRes.y * clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0)
-    ) / tLUTRes;
-    
+        clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0),
+        clamp((height - PlanetRadius) / (AtmosphereRadius - PlanetRadius), 0.0, 1.0)
+    );
+
     return texture(InputImage, uv).rgb;
 }
 
@@ -121,42 +121,34 @@ void main()
 {
     vec3 sunDir = normalize(sunData.direction);
     vec2 iResolution = screenResolution.data;
-    vec3 viewPos = cameraData.position.xyz * 1e-6; 
+
+    vec3 viewPos = cameraData.position.xyz * 1e-6;
     viewPos.y += PlanetRadius;
-    viewPos.y = max(PlanetRadius, viewPos.y);
+    viewPos.y = max(PlanetRadius + 1e-6, viewPos.y);
 
-    vec3 camDir = normalize(cameraData.view[2].xyz);
-    float camFOVWidth = 0.785398;
-    float camWidthScale = 2.0 * tan(camFOVWidth / 2.0);
-    float camHeightScale = camWidthScale * iResolution.y / iResolution.x;
+    vec2 ndc = (gl_FragCoord.xy / iResolution) * 2.0 - 1.0;
 
-    vec3 upVector = vec3(0.0, 1.0, 0.0);
-    vec3 camRight = normalize(cross(camDir, upVector));
-    vec3 camUp = cross(camRight, camDir);
-
-    vec2 xy = (gl_FragCoord.xy / iResolution.xy) * 2.0 - 1.0;
-    xy.x= -xy.x;
+    vec4 clip = vec4(ndc, 1.0, 1.0);
+    vec4 viewPosFar = cameraData.invProj * clip;
+    viewPosFar /= viewPosFar.w;
     
-    vec3 rayDirView = normalize(vec3(xy.x * camWidthScale, xy.y * camHeightScale, 1.0));
-    mat4 viewToWorld = inverse(cameraData.view);
-    // Convertir la dirección del rayo a espacio mundial
-    vec3 rayDir = normalize((viewToWorld * vec4(rayDirView, 0.0)).xyz);
-    
+    // In this engine's view-space convention, forward is -Z.
+    vec3 rayDirView = normalize(-viewPosFar.xyz);
+    vec3 rayDir = normalize((cameraData.invView * vec4(rayDirView, 0.0)).xyz);
+
     vec3 lum = getValFromSkyLUT(viewPos, rayDir, sunDir);
-
-    // Bloom should be added at the end, but this is subtle and works well.
 
     vec3 sunLum = sunWithBloom(rayDir, sunDir);
     sunLum = smoothstep(0.002, 1.0, sunLum);
+
     if (length(sunLum) > 0.0)
     {
-        if (rayIntersectSphere(viewPos, rayDir, PlanetRadius) < 0.0)
+        if (rayIntersectSphere(viewPos, rayDir, PlanetRadius) > 0.0)
         {
-            sunLum *= 0.0;
-        } 
-        else 
+            sunLum = vec3(0.0);
+        }
+        else
         {
-            // If the sun value is applied to this pixel, we need to calculate the transmittance to obscure it.
             sunLum *= getValFromTLUT(viewPos, sunDir);
         }
     }
@@ -164,5 +156,6 @@ void main()
     lum += sunLum;
     lum *= sunData.intensity;
     lum = jodieReinhardTonemap(lum);
+
     outColor = vec4(lum, 1.0);
 }
