@@ -31,10 +31,10 @@ void QESunLight::SetSunEulerDegrees(const glm::vec3& eulerDeg)
     this->SunEulerDegrees = eulerDeg;
     this->transform->SetLocalEulerDegrees(eulerDeg);
 
-    glm::vec3 directionToSun = this->transform->Forward();
-    this->uniformData.Direction = directionToSun;
+    glm::vec3 lightDirection = this->transform->Forward();
+    this->uniformData.Direction = lightDirection;
 
-    float elevation = glm::clamp(-directionToSun.y, -1.0f, 1.0f);
+    float elevation = glm::clamp(-lightDirection.y, -1.0f, 1.0f);
     float colorIntensity = glm::clamp(elevation, 0.0f, 1.0f);
     this->uniformData.Intensity = this->baseIntensity * colorIntensity;
 

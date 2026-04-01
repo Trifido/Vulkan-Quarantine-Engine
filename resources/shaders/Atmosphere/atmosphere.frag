@@ -29,6 +29,7 @@ const float PI = 3.14159265358;
 // Unidades en Megametros (MM)
 const float PlanetRadius = 6.360;
 const float AtmosphereRadius = 6.460;
+const float AtmosphereExposure = 12.0;
 
 float safeAcos(float x) 
 {
@@ -103,18 +104,23 @@ vec3 jodieReinhardTonemap(vec3 c)
     return mix(c / (l + 1.0), tc, tc);
 }
 
-vec3 sunWithBloom(vec3 rayDir, vec3 sunDir)
+vec3 sunDisk(vec3 rayDir, vec3 sunDir)
 {
-    const float sunSolidAngle = 0.53*PI/180.0;
-    const float minSunCosTheta = cos(sunSolidAngle);
-
+    const float sunAngularRadius = 0.53 * 0.5 * PI / 180.0;
     float cosTheta = dot(rayDir, sunDir);
-    if (cosTheta >= minSunCosTheta) return vec3(1.0);
+    float minSunCosTheta = cos(sunAngularRadius);
 
-    float offset = minSunCosTheta - cosTheta;
-    float gaussianBloom = exp(-offset*50000.0)*0.5;
-    float invBloom = 1.0/(0.02 + offset*300.0)*0.01;
-    return vec3(gaussianBloom+invBloom);
+    return (cosTheta >= minSunCosTheta) ? vec3(1.0) : vec3(0.0);
+}
+
+vec3 sunBloom(vec3 rayDir, vec3 sunDir)
+{
+    float cosTheta = dot(rayDir, sunDir);
+    float offset = 1.0 - cosTheta;
+
+    float gaussianBloom = exp(-offset * 8000.0) * 0.35;
+    float invBloom = 1.0 / (0.02 + offset * 200.0) * 0.003;
+    return vec3(gaussianBloom + invBloom);
 }
 
 void main()
@@ -131,31 +137,31 @@ void main()
     vec4 clip = vec4(ndc, 1.0, 1.0);
     vec4 viewPosFar = cameraData.invProj * clip;
     viewPosFar /= viewPosFar.w;
-    
-    // In this engine's view-space convention, forward is -Z.
+
     vec3 rayDirView = normalize(-viewPosFar.xyz);
     vec3 rayDir = normalize((cameraData.invView * vec4(rayDirView, 0.0)).xyz);
 
-    vec3 lum = getValFromSkyLUT(viewPos, rayDir, sunDir);
+    vec3 skyLum = getValFromSkyLUT(viewPos, rayDir, sunDir);
+    skyLum *= 1.25;
 
-    vec3 sunLum = sunWithBloom(rayDir, sunDir);
+    vec3 sunLum = sunDisk(rayDir, sunDir) + sunBloom(rayDir, sunDir);
     sunLum = smoothstep(0.002, 1.0, sunLum);
 
-    if (length(sunLum) > 0.0)
+    if (rayIntersectSphere(viewPos, rayDir, PlanetRadius) < 0.0)
     {
-        if (rayIntersectSphere(viewPos, rayDir, PlanetRadius) > 0.0)
-        {
-            sunLum = vec3(0.0);
-        }
-        else
-        {
-            sunLum *= getValFromTLUT(viewPos, sunDir);
-        }
+        sunLum = vec3(0.0);
+    }
+    else
+    {
+        vec3 sunTransmittance = getValFromTLUT(viewPos, sunDir);
+        sunTransmittance = mix(vec3(1.0), sunTransmittance, 0.35);
+        sunTransmittance = max(sunTransmittance, vec3(0.15));
+        sunLum *= sunTransmittance;
     }
 
-    lum += sunLum;
-    lum *= sunData.intensity;
-    lum = jodieReinhardTonemap(lum);
+    vec3 lum = skyLum + sunLum * sunData.intensity;
+    lum *= AtmosphereExposure;
+    lum = jodieReinhardTonemap(lum);    
 
     outColor = vec4(lum, 1.0);
 }
