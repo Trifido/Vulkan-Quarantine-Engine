@@ -106,21 +106,29 @@ vec3 jodieReinhardTonemap(vec3 c)
 
 vec3 sunDisk(vec3 rayDir, vec3 sunDir)
 {
-    const float sunAngularRadius = 0.53 * 0.5 * PI / 180.0;
+    const float sunAngularRadius = 0.73 * PI / 180.0;
     float cosTheta = dot(rayDir, sunDir);
     float minSunCosTheta = cos(sunAngularRadius);
 
-    return (cosTheta >= minSunCosTheta) ? vec3(1.0) : vec3(0.0);
+    // borde algo suave, pero definido
+    float eps = 0.000015;
+    return vec3(smoothstep(minSunCosTheta - eps, minSunCosTheta + eps, cosTheta));
 }
 
 vec3 sunBloom(vec3 rayDir, vec3 sunDir)
 {
     float cosTheta = dot(rayDir, sunDir);
-    float offset = 1.0 - cosTheta;
+    float offset = max(0.0, 1.0 - cosTheta);
 
-    float gaussianBloom = exp(-offset * 8000.0) * 0.35;
-    float invBloom = 1.0 / (0.02 + offset * 200.0) * 0.003;
+    float gaussianBloom = exp(-offset * 14000.0) * 0.2;
+    float invBloom = 1.0 / (0.02 + offset * 350.0) * 0.0008;
     return vec3(gaussianBloom + invBloom);
+}
+
+vec3 safeNormalizeColor(vec3 c)
+{
+    float m = max(c.r, max(c.g, c.b));
+    return (m > 1e-5) ? (c / m) : vec3(1.0);
 }
 
 void main()
@@ -144,24 +152,51 @@ void main()
     vec3 skyLum = getValFromSkyLUT(viewPos, rayDir, sunDir);
     skyLum *= 1.25;
 
-    vec3 sunLum = sunDisk(rayDir, sunDir) + sunBloom(rayDir, sunDir);
-    sunLum = smoothstep(0.002, 1.0, sunLum);
+    vec3 disk = sunDisk(rayDir, sunDir);
+    vec3 bloom = sunBloom(rayDir, sunDir);
 
     if (rayIntersectSphere(viewPos, rayDir, PlanetRadius) < 0.0)
     {
-        sunLum = vec3(0.0);
+        disk = vec3(0.0);
+        bloom = vec3(0.0);
     }
     else
     {
         vec3 sunTransmittance = getValFromTLUT(viewPos, sunDir);
-        sunTransmittance = mix(vec3(1.0), sunTransmittance, 0.35);
-        sunTransmittance = max(sunTransmittance, vec3(0.15));
-        sunLum *= sunTransmittance;
+
+        vec3 diskColor = safeNormalizeColor(sunTransmittance);
+        float diskStrength = max(sunTransmittance.r, max(sunTransmittance.g, sunTransmittance.b));
+        diskStrength = max(diskStrength, 0.25);
+
+        // altura solar para transición visual
+        float sunHeight = clamp(abs(sunDir.y), 0.0, 1.0);
+
+        // 0 = horizonte, 1 = alto
+        float dayAmount = smoothstep(0.02, 0.35, sunHeight);
+
+        vec3 sunsetTint = vec3(1.0, 0.22, 0.04);
+        vec3 dayTint    = vec3(1.0, 0.97, 0.92);
+
+        // color final del disco: mezcla entre color físico y look artístico
+        vec3 sunDiskTint = mix(sunsetTint, dayTint, dayAmount);
+        sunDiskTint *= mix(diskColor, vec3(1.0), dayAmount * 0.65);
+
+        // bloom más suave y algo más neutro cuando el sol está alto
+        vec3 sunBloomTint = mix(vec3(1.0, 0.35, 0.08), vec3(1.0, 0.95, 0.9), dayAmount);
+
+        disk *= sunDiskTint;
+        disk *= mix(0.35, 1.0, diskStrength);
+
+        vec3 bloomTransmittance = mix(vec3(1.0), sunTransmittance, 0.2);
+        bloomTransmittance = max(bloomTransmittance, vec3(0.02));
+        bloom *= bloomTransmittance * sunBloomTint;
     }
 
-    vec3 lum = skyLum + sunLum * sunData.intensity;
-    lum *= AtmosphereExposure;
-    lum = jodieReinhardTonemap(lum);    
+    vec3 sky = jodieReinhardTonemap(skyLum * AtmosphereExposure);
 
-    outColor = vec4(lum, 1.0);
+    vec3 sun = disk * 8.0 + bloom * 1.0;
+
+    vec3 finalColor = sky + sun;
+
+    outColor = vec4(finalColor, 1.0);
 }
