@@ -100,6 +100,7 @@ public:
     void CleanLastResources();
     void UpdateSun();
     void UpdateAtmopshereResolution();
+    void UpdatePerFrame(uint32_t frame);
 };
 
 #endif // !ATMOSPHERE_SYSTEM_H

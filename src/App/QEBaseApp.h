@@ -80,14 +80,13 @@ protected:
     virtual void OnPostInitVulkan() {}
     virtual void OnPreCleanup() {}
     virtual void OnSwapchainRecreated() {}
-    virtual const QERenderTarget* GetAdditionalSceneRenderTarget() const { return nullptr; }
 
 private:
     void initVulkan();
     void loadScene(QEScene scene);
     void mainLoop();
-    void computeFrame();
-    void drawFrame();  
+    void computeFrame(uint32_t currentFrame);
+    void drawFrame(uint32_t currentFrame);
     void cleanUp();
     void cleanUpSwapchain();
     void cleanManagers();

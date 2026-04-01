@@ -46,6 +46,9 @@ void QEEditorApp::OnInitialize()
     viewportResources->Initialize(deviceModule, renderPassModule, commandPoolModule, queueModule);
     viewportResources->Resize(1280, 720);
 
+    SetAdditionalSceneRenderTarget();
+    atmosphereSystem->UpdateAtmopshereResolution();
+
     selectionManager = std::make_unique<EditorSelectionManager>();
     gizmoController = std::make_unique<QEGizmoController>();
     gizmoController->SetOperation(QEGizmoController::Operation::Translate);
@@ -94,6 +97,8 @@ void QEEditorApp::OnSwapchainRecreated()
     if (viewportResources)
     {
         viewportResources->Rebuild();
+        SetAdditionalSceneRenderTarget();
+        atmosphereSystem->UpdateAtmopshereResolution();
     }
 }
 
@@ -139,14 +144,15 @@ void QEEditorApp::EndImGuiFrame()
     }
 }
 
-const QERenderTarget* QEEditorApp::GetAdditionalSceneRenderTarget() const
+void QEEditorApp::SetAdditionalSceneRenderTarget()
 {
     if (!viewportResources || !viewportResources->IsValid())
     {
-        return nullptr;
+        return;
     }
 
-    return &viewportResources->GetRenderTarget();
+    auto sessionManager = QESessionManager::getInstance();
+    sessionManager->ExtraRenderTarget = &viewportResources->GetRenderTarget();
 }
 
 void QEEditorApp::InitializeImGui()

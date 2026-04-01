@@ -41,13 +41,13 @@ protected:
     void OnSwapchainRecreated() override;
 
     bool IsEditorMode() const override { return true; }
-    const QERenderTarget* GetAdditionalSceneRenderTarget() const override;
 
 private:
     void InitializeImGui();
     void BeginImGuiFrame();
     void DrawEditorUI();
     void EndImGuiFrame();
+    void SetAdditionalSceneRenderTarget();
     void ShutdownImGui();
 
     void CreatePanels();

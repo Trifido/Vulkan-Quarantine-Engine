@@ -8,6 +8,7 @@
 #include "glm_yaml_conversions.h"
 #include <QESessionManager.h>
 #include <Helpers/MathHelpers.h>
+#include <QERenderTarget.h>
 
 AtmosphereSystem::AtmosphereSystem()
 {
@@ -440,8 +441,17 @@ void AtmosphereSystem::UpdateAtmopshereResolution()
 {
     if (this->atmosphereType == AtmosphereType::PHYSICALLY_BASED_SKY)
     {
+        auto extraRenderTarget = QESessionManager::getInstance()->ExtraRenderTarget;
         ScreenResolutionUniform resolution = {};
-        resolution.resolution = glm::vec2(this->swapChainModule->swapChainExtent.width, this->swapChainModule->swapChainExtent.height);
+
+        if (extraRenderTarget != nullptr)
+        {
+            resolution.resolution = glm::vec2(extraRenderTarget->Extent.width, extraRenderTarget->Extent.height);
+        }
+        else
+        {
+            resolution.resolution = glm::vec2(this->swapChainModule->swapChainExtent.width, this->swapChainModule->swapChainExtent.height);
+        }
 
         for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
         {
@@ -451,4 +461,10 @@ void AtmosphereSystem::UpdateAtmopshereResolution()
             vkUnmapMemory(deviceModule->device, this->resolutionUBO->uniformBuffersMemory[currentFrame]);
         }
     }
+}
+
+void AtmosphereSystem::UpdatePerFrame(uint32_t frame)
+{
+    UpdateSun();
+    UpdateAtmopshereResolution();
 }

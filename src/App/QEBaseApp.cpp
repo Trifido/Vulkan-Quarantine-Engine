@@ -169,6 +169,7 @@ void QEBaseApp::mainLoop()
         glfwPollEvents();
 
         Timer::getInstance()->UpdateDeltaTime();
+        uint32_t currentFrame = (uint32_t)synchronizationModule.GetCurrentFrame();
 
         this->debugSystem->ClearLines();
 
@@ -191,7 +192,7 @@ void QEBaseApp::mainLoop()
         this->lightManager->Update();
 
         // UPDATE ATMOSPHERE
-        this->atmosphereSystem->UpdateSun();
+        this->atmosphereSystem->UpdatePerFrame(currentFrame);
 
         // UPDATE DEBUG BUFFERS
         this->debugSystem->UpdateGraphicBuffers();
@@ -199,8 +200,8 @@ void QEBaseApp::mainLoop()
         OnBeginFrame();
         OnEndFrame();
 
-        this->computeFrame();
-        this->drawFrame();
+        this->computeFrame(currentFrame);
+        this->drawFrame(currentFrame);
     }
     vkDeviceWaitIdle(deviceModule->device);
 }
@@ -349,13 +350,11 @@ void QEBaseApp::cleanManagers()
     this->deviceModule = nullptr;
 }
 
-void QEBaseApp::computeFrame()
+void QEBaseApp::computeFrame(uint32_t currentFrame)
 {
     if (this->isRender)
     {
         synchronizationModule.synchronizeWaitComputeFences();
-
-        uint32_t currentFrame = (uint32_t)synchronizationModule.GetCurrentFrame();
 
         this->sessionManager->UpdateActiveCameraGPUData(currentFrame);
 
@@ -369,11 +368,9 @@ void QEBaseApp::computeFrame()
     }
 }
 
-void QEBaseApp::drawFrame()
+void QEBaseApp::drawFrame(uint32_t currentFrame)
 {
     synchronizationModule.synchronizeWaitFences();
-
-    uint32_t currentFrame = (uint32_t)synchronizationModule.GetCurrentFrame();
 
     VkResult result = vkAcquireNextImageKHR(
         deviceModule->device,
@@ -388,8 +385,7 @@ void QEBaseApp::drawFrame()
     this->sessionManager->UpdateActiveCameraGPUData(currentFrame);
     this->materialManager->UpdateUniforms();
 
-    const QERenderTarget* extraRenderTarget = GetAdditionalSceneRenderTarget();
-    commandPoolModule->Render(&framebufferModule, extraRenderTarget);
+    commandPoolModule->Render(&framebufferModule, this->sessionManager->ExtraRenderTarget);
 
     synchronizationModule.submitCommandBuffer(
         commandPoolModule->getCommandBuffer(currentFrame),

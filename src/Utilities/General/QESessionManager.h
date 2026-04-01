@@ -4,6 +4,7 @@
 #include <string>
 #include <vulkan/vulkan.h>
 #include <QESingleton.h>
+#include <QERenderTarget.h>
 
 class QECamera;
 class UniformBufferObject;
@@ -45,6 +46,7 @@ public:
 
 public:
     std::string NameCameraEditor = "QECameraEditor";
+    const QERenderTarget* ExtraRenderTarget = nullptr;
 
 private:
     bool _isEditor = false;
