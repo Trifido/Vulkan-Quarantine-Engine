@@ -30,10 +30,44 @@ public:
     TEXTURE_TYPE        type;
 
 private:
-    void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t mipLevels);
-    void copyBufferToCubemapImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t mipLevels);
-    void copyBufferImagesToCubemapImage(VkBuffer buffer, VkImage image, uint32_t textureWidth, VkDeviceSize faceTextureSize, uint32_t mipLevels);
-    void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
+    void RecordTransitionImageLayout(
+        VkCommandBuffer cmd,
+        VkImage image,
+        VkImageLayout oldLayout,
+        VkImageLayout newLayout,
+        VkImageSubresourceRange range);
+
+    void RecordCopyBufferToImage(
+        VkCommandBuffer cmd,
+        VkBuffer buffer,
+        VkImage image,
+        uint32_t width,
+        uint32_t height);
+
+    void RecordCopyBufferToCubemapImage(
+        VkCommandBuffer cmd,
+        VkBuffer buffer,
+        VkImage image,
+        uint32_t width,
+        uint32_t height,
+        uint32_t mipLevels);
+
+    void RecordCopyBufferImagesToCubemapImage(
+        VkCommandBuffer cmd,
+        VkBuffer buffer,
+        VkImage image,
+        uint32_t textureWidth,
+        VkDeviceSize faceTextureSize,
+        uint32_t mipLevels);
+
+    void RecordGenerateMipmaps(
+        VkCommandBuffer cmd,
+        VkImage image,
+        VkFormat imageFormat,
+        int32_t texWidth,
+        int32_t texHeight,
+        uint32_t mipLevels);
+
     int GetChannelCount(VkFormat format);
 public:
     CustomTexture();
