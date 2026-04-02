@@ -119,7 +119,7 @@ void QEBaseApp::initVulkan()
     this->particleSystemManager = ParticleSystemManager::getInstance();
     this->debugSystem = QEDebugSystem::getInstance();
     this->debugSystem->InitializeDebugGraphicResources();
-        
+
     // Load Scene
     this->loadScene(this->scene);
 

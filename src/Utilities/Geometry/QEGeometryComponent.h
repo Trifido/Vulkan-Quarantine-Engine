@@ -16,8 +16,8 @@ public:
     REFLECTABLE_DERIVED_COMPONENT(QEGeometryComponent, QEGameComponent)
 
 protected:
-    REFLECT_PROPERTY(string, _name)
-    REFLECT_PROPERTY(string, _filepath)
+    REFLECT_PROPERTY(std::string, _name)
+    REFLECT_PROPERTY(std::string, _filepath)
     std::vector<VkDeviceMemory> vertexBufferMemory = { VK_NULL_HANDLE };
     std::vector<VkDeviceMemory> indexBufferMemory = { VK_NULL_HANDLE };
     std::vector<VkDeviceMemory> animationBufferMemory = { VK_NULL_HANDLE };
@@ -59,7 +59,7 @@ public:
 
     size_t GetIndicesCount(uint32_t meshIndex) const;
 
-    static std::unique_ptr<IQEMeshGenerator> GetGenerator(string name, string filepath);
+    static std::unique_ptr<IQEMeshGenerator> GetGenerator(std::string name, std::string filepath);
 
 private:
     void CreateMeshlets();

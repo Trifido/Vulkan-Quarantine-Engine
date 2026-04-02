@@ -1,3 +1,12 @@
+ImportedTextures:
+  Diffuse: ""
+  Normal: ""
+  Metallic: ""
+  Roughness: ""
+  AO: ""
+  Emissive: ""
+  Height: ""
+  Specular: ""
 Material:
   Name: defaultPrimitiveMat
   FilePath: QEAssets/QEMaterials/defaultPrimitiveMat.qemat

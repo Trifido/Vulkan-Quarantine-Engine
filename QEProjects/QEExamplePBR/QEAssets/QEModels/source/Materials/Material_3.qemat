@@ -1,3 +1,12 @@
+ImportedTextures:
+  Diffuse: ""
+  Normal: ""
+  Metallic: ""
+  Roughness: ""
+  AO: ""
+  Emissive: ""
+  Height: ""
+  Specular: ""
 Material:
   Name: Material_3
   FilePath: QEAssets/QEModels/source/Materials/Material_3.qemat

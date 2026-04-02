@@ -21,8 +21,8 @@ private:
     LightManager* lightManager;
     std::string materialFilePath;
 
-    static std::string ToMaterialRelativeTexturePath(
-        const std::string& texturePath,
+    static std::string ToMaterialRelativePath(
+        const std::string& assetPath,
         const std::filesystem::path& materialFilePath);
 
 public:

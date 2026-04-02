@@ -6,6 +6,7 @@
 #include "BufferManageModule.h"
 #include "SyncTool.h"
 #include <unordered_map>
+#include <Helpers/ScopedTimer.h>
 
 
 VkCommandPool CustomTexture::commandPool;
@@ -31,7 +32,7 @@ CustomTexture::CustomTexture(std::string path, TEXTURE_TYPE type)
     }
 }
 
-CustomTexture::CustomTexture(vector<string> path)
+CustomTexture::CustomTexture(std::vector<std::string> path)
 {
     this->texturePaths = path;
     this->type = TEXTURE_TYPE::CUBEMAP_TYPE;
@@ -105,13 +106,14 @@ CustomTexture::CustomTexture(std::string path, TEXTURE_TYPE type, QEColorSpace c
         this->createTextureImage(path, cs);
 }
 
-void CustomTexture::createTextureImage(string path)
+void CustomTexture::createTextureImage(std::string path)
 {
     createTextureImage(path, QEColorSpace::SRGB);
 }
 
 void CustomTexture::createTextureImage(std::string path, QEColorSpace cs)
 {
+    PROFILE_SCOPE("CustomTexture::createTextureImage");
     bool allocated = false;
 
     ptrCommandPool = &commandPool;
@@ -126,6 +128,7 @@ void CustomTexture::createTextureImage(std::string path, QEColorSpace cs)
     }
     else
     {
+        PROFILE_SCOPE("stbi_load");
         pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     }
 
@@ -144,83 +147,102 @@ void CustomTexture::createTextureImage(std::string path, QEColorSpace cs)
     VkBuffer stagingBuffer = VK_NULL_HANDLE;
     VkDeviceMemory stagingBufferMemory = VK_NULL_HANDLE;
 
-    BufferManageModule::createBuffer(
-        imageSize,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        stagingBuffer,
-        stagingBufferMemory,
-        *deviceModule
-    );
+    {
+        PROFILE_SCOPE("create staging buffer");
+        BufferManageModule::createBuffer(
+            imageSize,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            stagingBuffer,
+            stagingBufferMemory,
+            *deviceModule
+        );
+    }
 
-    void* data = nullptr;
-    vkMapMemory(deviceModule->device, stagingBufferMemory, 0, imageSize, 0, &data);
-    memcpy(data, pixels, static_cast<size_t>(imageSize));
-    vkUnmapMemory(deviceModule->device, stagingBufferMemory);
+    {
+        PROFILE_SCOPE("map + memcpy");
+        void* data = nullptr;
+        vkMapMemory(deviceModule->device, stagingBufferMemory, 0, imageSize, 0, &data);
+        memcpy(data, pixels, static_cast<size_t>(imageSize));
+        vkUnmapMemory(deviceModule->device, stagingBufferMemory);
+    }
 
     if (allocated) delete[] pixels;
     else stbi_image_free(pixels);
 
-    createImage(
-        texWidth,
-        texHeight,
-        imageFormat,
-        VK_IMAGE_TILING_OPTIMAL,
-        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        mipLevels,
-        1,
-        VK_SAMPLE_COUNT_1_BIT
-    );
+    {
+        PROFILE_SCOPE("createImage");
+        createImage(
+            texWidth,
+            texHeight,
+            imageFormat,
+            VK_IMAGE_TILING_OPTIMAL,
+            VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            mipLevels,
+            1,
+            VK_SAMPLE_COUNT_1_BIT
+        );
+    }
 
-    VkCommandBuffer cmd = beginSingleTimeCommands(deviceModule->device, *ptrCommandPool);
+    {
+        PROFILE_SCOPE("record+submit upload");
+        VkCommandBuffer cmd = beginSingleTimeCommands(deviceModule->device, *ptrCommandPool);
 
-    VkImageSubresourceRange range{};
-    range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    range.baseMipLevel = 0;
-    range.levelCount = mipLevels;
-    range.baseArrayLayer = 0;
-    range.layerCount = 1;
+        VkImageSubresourceRange range{};
+        range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        range.baseMipLevel = 0;
+        range.levelCount = mipLevels;
+        range.baseArrayLayer = 0;
+        range.layerCount = 1;
 
-    RecordTransitionImageLayout(
-        cmd,
-        image,
-        VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        range
-    );
+        RecordTransitionImageLayout(
+            cmd,
+            image,
+            VK_IMAGE_LAYOUT_UNDEFINED,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            range
+        );
 
-    RecordCopyBufferToImage(
-        cmd,
-        stagingBuffer,
-        image,
-        static_cast<uint32_t>(texWidth),
-        static_cast<uint32_t>(texHeight)
-    );
+        RecordCopyBufferToImage(
+            cmd,
+            stagingBuffer,
+            image,
+            static_cast<uint32_t>(texWidth),
+            static_cast<uint32_t>(texHeight)
+        );
 
-    RecordGenerateMipmaps(
-        cmd,
-        image,
-        imageFormat,
-        texWidth,
-        texHeight,
-        mipLevels
-    );
+        RecordGenerateMipmaps(
+            cmd,
+            image,
+            imageFormat,
+            texWidth,
+            texHeight,
+            mipLevels
+        );
 
-    endSingleTimeCommands(deviceModule->device, queueModule->graphicsQueue, *ptrCommandPool, cmd);
+        endSingleTimeCommands(deviceModule->device, queueModule->graphicsQueue, *ptrCommandPool, cmd);
 
-    vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
-    vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
+        vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
+        vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
+    }
 
-    this->createTextureImageView(imageFormat);
-    this->createTextureSampler();
+    {
+        PROFILE_SCOPE("createTextureImageView");
+        this->createTextureImageView(imageFormat);
+    }
+
+    {
+        PROFILE_SCOPE("createTextureSampler");
+        this->createTextureSampler();
+    }
 }
 
-void CustomTexture::createCubemapTextureImage(vector<string> paths)
+void CustomTexture::createCubemapTextureImage(std::vector<std::string> paths)
 {
     ptrCommandPool = &commandPool;
 
-    vector<stbi_uc*> pixels;
+    std::vector<stbi_uc*> pixels;
 
     for (int i = 0; i < 6; ++i)
     {

@@ -4,22 +4,22 @@ AtmosphereDto:
   sunEulerDegrees: [-80, 45, 0]
   sunBaseIntensity: 100
 Materials:
-  - QEAssets/QEMaterials/defaultPrimitiveMat.qemat
-  - QEAssets/QEModels/source/Materials/Material_11.qemat
   - QEAssets/QEModels/source/Materials/Material_20.qemat
   - QEAssets/QEModels/source/Materials/Material_0.qemat
+  - QEAssets/QEMaterials/defaultPrimitiveMat.qemat
+  - QEAssets/QEModels/source/Materials/Material_11.qemat
   - QEAssets/QEMaterials/editorDebugAABB.qemat
   - QEAssets/QEMaterials/defaultParticlesMat.qemat
   - QEAssets/QEMaterials/editorDebugCollider.qemat
   - QEAssets/QEMaterials/editorGrid.qemat
-  - QEAssets/QEModels/source/Materials/Material_1.qemat
   - QEAssets/QEModels/source/Materials/Material_21.qemat
-  - QEAssets/QEModels/source/Materials/Material_2.qemat
+  - QEAssets/QEModels/source/Materials/Material_1.qemat
   - QEAssets/QEModels/source/Materials/Material_22.qemat
-  - QEAssets/QEModels/source/Materials/Material_3.qemat
+  - QEAssets/QEModels/source/Materials/Material_2.qemat
   - QEAssets/QEModels/source/Materials/Material_23.qemat
-  - QEAssets/QEModels/source/Materials/Material_4.qemat
+  - QEAssets/QEModels/source/Materials/Material_3.qemat
   - QEAssets/QEModels/source/Materials/Material_24.qemat
+  - QEAssets/QEModels/source/Materials/Material_4.qemat
   - QEAssets/QEModels/source/Materials/Material_5.qemat
   - QEAssets/QEModels/source/Materials/Material_6.qemat
   - QEAssets/QEModels/source/Materials/Material_7.qemat
@@ -41,8 +41,8 @@ GameObjects:
     components:
       - type: QETransform
         id: YT3CEW8K69rk
-        localPosition: [3.0946321, 3.3070722, -0.19677018]
-        localRotation: [-0.11651354, 0.71203214, 0.12171, 0.68163157]
+        localPosition: [3.6084158, 2.7442317, 0.09991197]
+        localRotation: [-0.16987112, 0.68863827, 0.17105883, 0.6838568]
         localScale: [1, 1, 1]
         parentId: ""
       - type: QECamera
@@ -50,8 +50,8 @@ GameObjects:
         _near: 0.1
         _far: 500
         _fov: 45
-        Width: 2954
-        Height: 1071
+        Width: 924
+        Height: 477
       - type: QECameraController
         id: 3SL3XByImciQ
         Speed: 10

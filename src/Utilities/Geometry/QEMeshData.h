@@ -35,7 +35,7 @@ struct QEMesh
     std::string Name = "";  
     std::string FilePath = "";  
     std::vector<QEMeshData> MeshData;
-    std::vector<string> MaterialRel;
+    std::vector<std::string> MaterialRel;
     std::pair<glm::vec3, glm::vec3> BoundingBox;
     std::unordered_map<std::string, BoneInfo> BonesInfoMap;
     std::vector<AnimationData> AnimationData;

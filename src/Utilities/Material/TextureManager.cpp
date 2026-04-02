@@ -104,7 +104,7 @@ std::shared_ptr<CustomTexture> TextureManager::GetOrLoadTextureByPath(const std:
 
     const std::string normalizedPath = NormalizeTextureKey(rawPath);
     const std::string key = MakeKey(normalizedPath, cs);
-
+    std::cout << "Loading texture: " << normalizedPath << std::endl;
     auto it = _pathCache.find(key);
     if (it != _pathCache.end() && it->second)
         return it->second;

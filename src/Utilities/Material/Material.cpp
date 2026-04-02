@@ -252,34 +252,47 @@ MaterialDto QEMaterial::ToDto() const
     dto.aoChan = this->materialData.AOChan;
     dto.AlphaMode = this->materialData.AlphaMode;
 
-    dto.diffuseTexturePath = ToMaterialRelativeTexturePath(this->materialData.diffuseTexturePath, absMaterialPath);
-    dto.normalTexturePath = ToMaterialRelativeTexturePath(this->materialData.normalTexturePath, absMaterialPath);
-    dto.specularTexturePath = ToMaterialRelativeTexturePath(this->materialData.specularTexturePath, absMaterialPath);
-    dto.emissiveTexturePath = ToMaterialRelativeTexturePath(this->materialData.emissiveTexturePath, absMaterialPath);
-    dto.heightTexturePath = ToMaterialRelativeTexturePath(this->materialData.heightTexturePath, absMaterialPath);
-    dto.metallicTexturePath = ToMaterialRelativeTexturePath(this->materialData.metallicTexturePath, absMaterialPath);
-    dto.roughnessTexturePath = ToMaterialRelativeTexturePath(this->materialData.roughnessTexturePath, absMaterialPath);
-    dto.aoTexturePath = ToMaterialRelativeTexturePath(this->materialData.aoTexturePath, absMaterialPath);
+    dto.diffuseTexturePath = ToMaterialRelativePath(this->materialData.diffuseTexturePath, absMaterialPath);
+    dto.normalTexturePath = ToMaterialRelativePath(this->materialData.normalTexturePath, absMaterialPath);
+    dto.specularTexturePath = ToMaterialRelativePath(this->materialData.specularTexturePath, absMaterialPath);
+    dto.emissiveTexturePath = ToMaterialRelativePath(this->materialData.emissiveTexturePath, absMaterialPath);
+    dto.heightTexturePath = ToMaterialRelativePath(this->materialData.heightTexturePath, absMaterialPath);
+    dto.metallicTexturePath = ToMaterialRelativePath(this->materialData.metallicTexturePath, absMaterialPath);
+    dto.roughnessTexturePath = ToMaterialRelativePath(this->materialData.roughnessTexturePath, absMaterialPath);
+    dto.aoTexturePath = ToMaterialRelativePath(this->materialData.aoTexturePath, absMaterialPath);
+
+    dto.diffuseTextureImportedPath = ToMaterialRelativePath(this->materialData.diffuseTextureImportedPath, absMaterialPath);
+    dto.normalTextureImportedPath = ToMaterialRelativePath(this->materialData.normalTextureImportedPath, absMaterialPath);
+    dto.metallicTextureImportedPath = ToMaterialRelativePath(this->materialData.metallicTextureImportedPath, absMaterialPath);
+    dto.roughnessTextureImportedPath = ToMaterialRelativePath(this->materialData.roughnessTextureImportedPath, absMaterialPath);
+    dto.aoTextureImportedPath = ToMaterialRelativePath(this->materialData.aoTextureImportedPath, absMaterialPath);
+    dto.emissiveTextureImportedPath = ToMaterialRelativePath(this->materialData.emissiveTextureImportedPath, absMaterialPath);
+    dto.heightTextureImportedPath = ToMaterialRelativePath(this->materialData.heightTextureImportedPath, absMaterialPath);
+    dto.specularTextureImportedPath = ToMaterialRelativePath(this->materialData.specularTextureImportedPath, absMaterialPath);
 
     return dto;
 }
 
-
-std::string QEMaterial::ToMaterialRelativeTexturePath(const std::string& texturePath, const std::filesystem::path& materialFilePath)
+std::string QEMaterial::ToMaterialRelativePath(
+    const std::string& assetPath,
+    const std::filesystem::path& materialFilePath)
 {
-    if (IsNullTex(texturePath))
+    if (assetPath.empty())
+        return "";
+
+    if (assetPath == "NULL_TEXTURE")
         return "NULL_TEXTURE";
 
     namespace fs = std::filesystem;
 
-    fs::path texPath(texturePath);
+    fs::path p(assetPath);
     fs::path materialDir = materialFilePath.parent_path();
 
     std::error_code ec;
-    fs::path rel = fs::relative(texPath, materialDir, ec);
+    fs::path rel = fs::relative(p, materialDir, ec);
 
     if (ec)
-        return NormalizeSlashes(texPath.lexically_normal().string());
+        return p.lexically_normal().string();
 
-    return NormalizeSlashes(rel.lexically_normal().string());
+    return rel.lexically_normal().string();
 }

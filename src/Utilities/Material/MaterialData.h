@@ -104,6 +104,15 @@ public:
     std::string heightTexturePath = "NULL_TEXTURE";
     std::string specularTexturePath = "NULL_TEXTURE";
 
+    std::string diffuseTextureImportedPath = "NULL_TEXTURE";
+    std::string normalTextureImportedPath = "NULL_TEXTURE";
+    std::string metallicTextureImportedPath = "NULL_TEXTURE";
+    std::string roughnessTextureImportedPath = "NULL_TEXTURE";
+    std::string aoTextureImportedPath = "NULL_TEXTURE";
+    std::string emissiveTextureImportedPath = "NULL_TEXTURE";
+    std::string heightTextureImportedPath = "NULL_TEXTURE";
+    std::string specularTextureImportedPath = "NULL_TEXTURE";
+
     static const int TOTAL_NUM_TEXTURES = (int)MAT_TEX_SLOT::Count;
 
     std::unordered_map<TEXTURE_TYPE, std::shared_ptr<CustomTexture>> Textures;

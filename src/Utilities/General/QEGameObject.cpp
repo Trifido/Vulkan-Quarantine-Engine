@@ -2,7 +2,7 @@
 #include <QEAnimationComponent.h>
 #include <CullingSceneManager.h>
 
-QEGameObject::QEGameObject(string name)
+QEGameObject::QEGameObject(std::string name)
 {
     this->Name = (name.empty()) ? ID() : name;
     this->childs.resize(0);

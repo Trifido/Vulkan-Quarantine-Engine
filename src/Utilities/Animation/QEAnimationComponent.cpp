@@ -417,7 +417,7 @@ void QEAnimationComponent::QEInit()
     auto entryState = this->_states.find(this->currentState.Id);
     if (entryState != this->_states.end())
     {
-        string animationClip = entryState->second.AnimationClip;
+        std::string animationClip = entryState->second.AnimationClip;
         auto entryAnimation  = this->_animations.find(animationClip);
 
         if (entryAnimation != this->_animations.end())

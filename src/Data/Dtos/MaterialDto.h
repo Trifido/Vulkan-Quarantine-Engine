@@ -62,6 +62,15 @@ struct MaterialDto
     std::string roughnessTexturePath = "NULL_TEXTURE";
     std::string aoTexturePath = "NULL_TEXTURE";
 
+    std::string diffuseTextureImportedPath = "";
+    std::string normalTextureImportedPath = "";
+    std::string metallicTextureImportedPath = "";
+    std::string roughnessTextureImportedPath = "";
+    std::string aoTextureImportedPath = "";
+    std::string emissiveTextureImportedPath = "";
+    std::string heightTextureImportedPath = "";
+    std::string specularTextureImportedPath = "";
+
     uint32_t texMask = 0;
     uint32_t metallicChan = 0;
     uint32_t roughnessChan = 0;
@@ -113,6 +122,30 @@ struct MaterialDto
         fixOne(emissiveTexturePath);
         fixOne(heightTexturePath);
         fixOne(specularTexturePath);
+    }
+
+    void UpdateImportedTexturePaths(const std::filesystem::path& materialDir)
+    {
+        auto fix = [&](std::string& p)
+            {
+                if (p.empty() || p == "NULL_TEXTURE")
+                    return;
+
+                std::filesystem::path path(p);
+                if (path.is_relative())
+                    path = materialDir / path;
+
+                p = path.lexically_normal().string();
+            };
+
+        fix(diffuseTextureImportedPath);
+        fix(normalTextureImportedPath);
+        fix(metallicTextureImportedPath);
+        fix(roughnessTextureImportedPath);
+        fix(aoTextureImportedPath);
+        fix(emissiveTextureImportedPath);
+        fix(heightTextureImportedPath);
+        fix(specularTextureImportedPath);
     }
 };
 

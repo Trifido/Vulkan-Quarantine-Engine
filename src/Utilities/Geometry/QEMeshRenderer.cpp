@@ -75,7 +75,7 @@ void QEMeshRenderer::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx
             vkCmdBindIndexBuffer(commandBuffer, this->geometryComponent->indexBuffer[i], 0, VK_INDEX_TYPE_UINT32);
         }
 
-        string materialID = qeMesh->MaterialRel[i];
+        std::string materialID = qeMesh->MaterialRel[i];
         auto material = this->Owner->GetMaterial(materialID);
         material->BindDescriptors(commandBuffer, idx);
 

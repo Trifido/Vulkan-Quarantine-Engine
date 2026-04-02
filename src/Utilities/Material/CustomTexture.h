@@ -8,9 +8,8 @@
 #include "TextureTypes.h"
 #include "assimp/texture.h"
 #include <vector>
+#include <string>
 #include <fstream>
-
-using namespace std;
 
 enum class QEColorSpace : uint8_t
 {
@@ -24,10 +23,10 @@ private:
     int                 texWidth, texHeight, texChannels;
 
 public:
-    vector<string>      texturePaths;
-    VkSampler           textureSampler;
-    static VkCommandPool commandPool;
-    TEXTURE_TYPE        type;
+    std::vector<std::string>    texturePaths;
+    VkSampler                   textureSampler;
+    static VkCommandPool        commandPool;
+    TEXTURE_TYPE                type;
 
 private:
     void RecordTransitionImageLayout(
@@ -71,16 +70,16 @@ private:
     int GetChannelCount(VkFormat format);
 public:
     CustomTexture();
-    CustomTexture(string path, TEXTURE_TYPE type);
-    CustomTexture(vector<string> path);
+    CustomTexture(std::string path, TEXTURE_TYPE type);
+    CustomTexture(std::vector<std::string> path);
     CustomTexture(aiTexel* data, unsigned int width, unsigned int height, TEXTURE_TYPE type);
     CustomTexture(unsigned int width, unsigned int height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, TEXTURE_TYPE type);
     CustomTexture(std::string path, TEXTURE_TYPE type, QEColorSpace cs);
 
-    void createTextureImage(string path = NULL);
-    void createTextureImage(string path, QEColorSpace cs);
-    void createCubemapTextureImage(string path = NULL);
-    void createCubemapTextureImage(vector<string> paths);
+    void createTextureImage(std::string path = NULL);
+    void createTextureImage(std::string path, QEColorSpace cs);
+    void createCubemapTextureImage(std::string path = NULL);
+    void createCubemapTextureImage(std::vector<std::string> paths);
     void createTextureRawImage(aiTexel* rawData, unsigned int width, unsigned int height);
     void createTextureImageView(VkFormat imageFormat);
     void createTextureSampler();

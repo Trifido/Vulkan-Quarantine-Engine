@@ -23,7 +23,7 @@ size_t QEGeometryComponent::GetIndicesCount(uint32_t meshIndex) const
     return mesh.MeshData[meshIndex].Indices.size();
 }
 
-std::unique_ptr<IQEMeshGenerator> QEGeometryComponent::GetGenerator(string name, string filepath)
+std::unique_ptr<IQEMeshGenerator> QEGeometryComponent::GetGenerator(std::string name, std::string filepath)
 {
     if (filepath != "QECore")
     {

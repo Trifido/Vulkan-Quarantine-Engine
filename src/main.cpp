@@ -44,6 +44,5 @@ int main(int, char**)
     QEEditorApp app;
     app.Run(scene);
 
-    system("pause");
     return 0;
 }

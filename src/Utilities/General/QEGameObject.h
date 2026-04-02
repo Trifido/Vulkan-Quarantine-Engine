@@ -7,6 +7,7 @@
 #include <QECharacterController.h>
 #include <Material.h>
 #include <yaml-cpp/yaml.h>
+#include <string>
 
 typedef class QEGameObject QEGameObject;
 
@@ -35,7 +36,7 @@ private:
     void InitializeResources();
 
 public:
-    QEGameObject(string name = "");
+    QEGameObject(std::string name = "");
     //QEGameObject(const GameObjectDto& gameObjectDto);
     inline std::string ID() const { return id; }
 
