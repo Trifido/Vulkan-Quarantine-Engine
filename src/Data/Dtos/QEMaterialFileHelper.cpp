@@ -82,6 +82,15 @@ MaterialDto QEMaterialFileHelper::BuildBaseMaterialDto(
     dto.heightTexturePath.clear();
     dto.specularTexturePath.clear();
 
+    dto.diffuseTextureImportedPath.clear();
+    dto.normalTextureImportedPath.clear();
+    dto.metallicTextureImportedPath.clear();
+    dto.roughnessTextureImportedPath.clear();
+    dto.aoTextureImportedPath.clear();
+    dto.emissiveTextureImportedPath.clear();
+    dto.heightTextureImportedPath.clear();
+    dto.specularTextureImportedPath.clear();
+
     return dto;
 }
 

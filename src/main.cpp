@@ -33,7 +33,7 @@ int main(int, char**)
     std::wcout << L"Working Directory fijado a: " << exePath.wstring() << L"\n\n";
 #endif
 
-    if (!QEProjectManager::CreateQEProject("QEExamplePBR"))
+    if (!QEProjectManager::CreateQEProject("QETest"))
     {
         std::cout << "Project already exists or could not be created.\n";
     }

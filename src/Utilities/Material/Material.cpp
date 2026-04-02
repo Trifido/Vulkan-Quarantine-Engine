@@ -40,6 +40,14 @@ QEMaterial::QEMaterial(std::string name, std::shared_ptr<ShaderModule> shader_pt
 
 QEMaterial::QEMaterial(std::shared_ptr<ShaderModule> shader_ptr, const MaterialDto& materialDto) : QEMaterial(materialDto.Name, shader_ptr, materialDto.FilePath)
 {
+    auto PickTexturePath = [](const std::string& importedPath, const std::string& sourcePath) -> std::string
+        {
+            if (!importedPath.empty() && importedPath != "NULL_TEXTURE")
+                return importedPath;
+
+            return sourcePath;
+        };
+
     this->layer = materialDto.layer;
 
     this->materialData.Opacity = materialDto.Opacity;
@@ -65,14 +73,14 @@ QEMaterial::QEMaterial(std::shared_ptr<ShaderModule> shader_ptr, const MaterialD
 
     std::vector<std::pair<std::string, TEXTURE_TYPE>> texturePaths =
     {
-        { materialDto.diffuseTexturePath,   TEXTURE_TYPE::DIFFUSE_TYPE },
-        { materialDto.normalTexturePath,    TEXTURE_TYPE::NORMAL_TYPE },
-        { materialDto.metallicTexturePath,  TEXTURE_TYPE::METALNESS_TYPE },
-        { materialDto.roughnessTexturePath, TEXTURE_TYPE::ROUGHNESS_TYPE },
-        { materialDto.aoTexturePath,        TEXTURE_TYPE::AO_TYPE },
-        { materialDto.emissiveTexturePath,  TEXTURE_TYPE::EMISSIVE_TYPE },
-        { materialDto.heightTexturePath,    TEXTURE_TYPE::HEIGHT_TYPE },
-        { materialDto.specularTexturePath,  TEXTURE_TYPE::SPECULAR_TYPE }
+        { PickTexturePath(materialDto.diffuseTextureImportedPath,   materialDto.diffuseTexturePath),   TEXTURE_TYPE::DIFFUSE_TYPE },
+        { PickTexturePath(materialDto.normalTextureImportedPath,    materialDto.normalTexturePath),    TEXTURE_TYPE::NORMAL_TYPE },
+        { PickTexturePath(materialDto.metallicTextureImportedPath,  materialDto.metallicTexturePath),  TEXTURE_TYPE::METALNESS_TYPE },
+        { PickTexturePath(materialDto.roughnessTextureImportedPath, materialDto.roughnessTexturePath), TEXTURE_TYPE::ROUGHNESS_TYPE },
+        { PickTexturePath(materialDto.aoTextureImportedPath,        materialDto.aoTexturePath),        TEXTURE_TYPE::AO_TYPE },
+        { PickTexturePath(materialDto.emissiveTextureImportedPath,  materialDto.emissiveTexturePath),  TEXTURE_TYPE::EMISSIVE_TYPE },
+        { PickTexturePath(materialDto.heightTextureImportedPath,    materialDto.heightTexturePath),    TEXTURE_TYPE::HEIGHT_TYPE },
+        { PickTexturePath(materialDto.specularTextureImportedPath,  materialDto.specularTexturePath),  TEXTURE_TYPE::SPECULAR_TYPE }
     };
 
     PROFILE_SCOPE("QEMaterial from DTO");

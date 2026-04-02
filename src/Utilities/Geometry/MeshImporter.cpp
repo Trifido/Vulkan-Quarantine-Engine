@@ -11,6 +11,39 @@
 #include <QEMaterialYamlHelper.h>
 #include <QEProjectManager.h>
 #include <Helpers/ScopedTimer.h>
+#include <QETextureImporter.h>
+
+static void ImportMaterialTextureIfNeeded(
+    std::string& sourcePath,
+    std::string& importedPath,
+    TEXTURE_TYPE semantic,
+    QEColorSpace colorSpace)
+{
+    if (sourcePath.empty() || sourcePath == "NULL_TEXTURE")
+        return;
+
+    if (!importedPath.empty() && std::filesystem::exists(importedPath))
+        return;
+
+    QETextureImportSettings settings{};
+    settings.semantic = semantic;
+    settings.colorSpace = colorSpace;
+    settings.generateMipmaps = true;
+    settings.overwrite = false;
+
+    std::string outPath = QETextureImporter::BuildImportedPath(sourcePath);
+    QETextureImportResult result = QETextureImporter::ImportToKtx2(sourcePath, outPath, settings);
+
+    if (result.success)
+    {
+        importedPath = result.importedPath;
+    }
+    else
+    {
+        std::cerr << "[TextureImporter] ERROR: " << result.error << std::endl;
+        importedPath.clear();
+    }
+}
 
 void MeshImporter::RecreateNormals(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices)
 {
@@ -736,6 +769,8 @@ void MeshImporter::ExtractAndUpdateMaterials(
     };
 
     const std::string parentFolder = std::filesystem::path(outputTextureFolder).filename().string();
+    const fs::path materialDir = fs::path(outputMaterialPath);
+    const fs::path textureDir = fs::path(outputTextureFolder);
 
     auto NormalizeTexPath = [&](const std::string& p) -> std::string
         {
@@ -761,6 +796,46 @@ void MeshImporter::ExtractAndUpdateMaterials(
             return "";
         };
 
+    auto ResolveTextureToDiskPath = [&](const std::string& texRef) -> std::string
+        {
+            if (texRef.empty())
+                return "";
+
+            fs::path p(texRef);
+
+            // Si ya viene absoluta, úsala tal cual
+            if (p.is_absolute())
+                return p.lexically_normal().string();
+
+            // Durante la importación, las texturas ya se han copiado/extraído a outputTextureFolder.
+            // Nos interesa el archivo físico real dentro de esa carpeta.
+            std::string filename = p.filename().string();
+            if (filename.empty())
+                return "";
+
+            return (textureDir / filename).lexically_normal().string();
+        };
+
+    auto ToMaterialRelativePath = [&](const std::string& assetPath, const fs::path& materialFilePath) -> std::string
+        {
+            if (assetPath.empty())
+                return "NULL_TEXTURE";
+
+            if (assetPath == "NULL_TEXTURE")
+                return "NULL_TEXTURE";
+
+            fs::path p(assetPath);
+            fs::path materialDir = materialFilePath.parent_path();
+
+            std::error_code ec;
+            fs::path rel = fs::relative(p, materialDir, ec);
+
+            if (ec)
+                return p.lexically_normal().generic_string();
+
+            return rel.lexically_normal().generic_string();
+        };
+
     for (unsigned int i = 0; i < scene->mNumMaterials; i++)
     {
         aiMaterial* material = scene->mMaterials[i];
@@ -784,14 +859,14 @@ void MeshImporter::ExtractAndUpdateMaterials(
         aiString newName(materialName);
         material->AddProperty(&newName, AI_MATKEY_NAME);
 
-        fs::path materialPath = fs::path(outputMaterialPath) / (materialName + ".qemat");
+        fs::path materialPath = materialDir / (materialName + ".qemat");
         if (fs::exists(materialPath))
             continue;
 
-        // 1) Resolver paths por slot
-        std::vector<std::string> finalPaths(textureSlots.size(), "");
+        // 1) Resolver referencias de textura por slot tal como vienen del material
+        std::vector<std::string> rawPaths(textureSlots.size(), "");
         for (size_t slot = 0; slot < textureSlots.size(); ++slot)
-            finalPaths[slot] = ResolveFirstTexture(material, textureSlots[slot]);
+            rawPaths[slot] = ResolveFirstTexture(material, textureSlots[slot]);
 
         // 2) Caso especial glTF packed MetallicRoughness
         uint32_t metallicChan = 0;
@@ -803,21 +878,27 @@ void MeshImporter::ExtractAndUpdateMaterials(
 
         if (hasMR)
         {
-            finalPaths[2] = std::string(mrPath.C_Str());
-            finalPaths[3] = std::string(mrPath.C_Str());
+            rawPaths[2] = std::string(mrPath.C_Str());
+            rawPaths[3] = std::string(mrPath.C_Str());
 
             roughnessChan = 1; // G
             metallicChan = 2; // B
         }
 
-        if (!finalPaths[4].empty())
+        if (!rawPaths[4].empty())
             aoChan = 0; // R
 
-        // 3) Normalizar paths
+        // 3) Construir rutas físicas reales para el importer (.png/.jpg en disco)
+        std::vector<std::string> sourceDiskPaths(rawPaths.size(), "");
+        for (size_t slot = 0; slot < rawPaths.size(); ++slot)
+            sourceDiskPaths[slot] = ResolveTextureToDiskPath(rawPaths[slot]);
+
+        // 4) Construir rutas relativas para serializar en el material
+        std::vector<std::string> finalPaths = rawPaths;
         for (auto& p : finalPaths)
             p = NormalizeTexPath(p);
 
-        // 4) Calcular mask
+        // 5) Calcular mask
         uint32_t texMask = 0;
         for (size_t slot = 0; slot < finalPaths.size(); ++slot)
         {
@@ -825,11 +906,11 @@ void MeshImporter::ExtractAndUpdateMaterials(
                 texMask |= (1u << static_cast<uint32_t>(slot));
         }
 
-        // 5) Importar parámetros de material desde Assimp
+        // 6) Importar parámetros del material desde Assimp
         MaterialData matData;
         matData.ImportAssimpMaterial(material);
 
-        // 6) Construir DTO
+        // 7) Construir DTO
         MaterialDto dto;
         dto.Name = materialName;
         dto.FilePath = QEProjectManager::ToProjectRelativePath(materialPath);
@@ -870,6 +951,25 @@ void MeshImporter::ExtractAndUpdateMaterials(
         dto.emissiveTexturePath = finalPaths[5];
         dto.heightTexturePath = finalPaths[6];
         dto.specularTexturePath = finalPaths[7];
+
+        // 8) Generar KTX2 durante la importación del asset, usando rutas físicas reales
+        ImportMaterialTextureIfNeeded(sourceDiskPaths[0], dto.diffuseTextureImportedPath, TEXTURE_TYPE::DIFFUSE_TYPE, QEColorSpace::SRGB);
+        ImportMaterialTextureIfNeeded(sourceDiskPaths[1], dto.normalTextureImportedPath, TEXTURE_TYPE::NORMAL_TYPE, QEColorSpace::Linear);
+        ImportMaterialTextureIfNeeded(sourceDiskPaths[2], dto.metallicTextureImportedPath, TEXTURE_TYPE::METALNESS_TYPE, QEColorSpace::Linear);
+        ImportMaterialTextureIfNeeded(sourceDiskPaths[3], dto.roughnessTextureImportedPath, TEXTURE_TYPE::ROUGHNESS_TYPE, QEColorSpace::Linear);
+        ImportMaterialTextureIfNeeded(sourceDiskPaths[4], dto.aoTextureImportedPath, TEXTURE_TYPE::AO_TYPE, QEColorSpace::Linear);
+        ImportMaterialTextureIfNeeded(sourceDiskPaths[5], dto.emissiveTextureImportedPath, TEXTURE_TYPE::EMISSIVE_TYPE, QEColorSpace::SRGB);
+        ImportMaterialTextureIfNeeded(sourceDiskPaths[6], dto.heightTextureImportedPath, TEXTURE_TYPE::HEIGHT_TYPE, QEColorSpace::Linear);
+        ImportMaterialTextureIfNeeded(sourceDiskPaths[7], dto.specularTextureImportedPath, TEXTURE_TYPE::SPECULAR_TYPE, QEColorSpace::Linear);
+
+        dto.diffuseTextureImportedPath = ToMaterialRelativePath(dto.diffuseTextureImportedPath, materialPath);
+        dto.normalTextureImportedPath = ToMaterialRelativePath(dto.normalTextureImportedPath, materialPath);
+        dto.metallicTextureImportedPath = ToMaterialRelativePath(dto.metallicTextureImportedPath, materialPath);
+        dto.roughnessTextureImportedPath = ToMaterialRelativePath(dto.roughnessTextureImportedPath, materialPath);
+        dto.aoTextureImportedPath = ToMaterialRelativePath(dto.aoTextureImportedPath, materialPath);
+        dto.emissiveTextureImportedPath = ToMaterialRelativePath(dto.emissiveTextureImportedPath, materialPath);
+        dto.heightTextureImportedPath = ToMaterialRelativePath(dto.heightTextureImportedPath, materialPath);
+        dto.specularTextureImportedPath = ToMaterialRelativePath(dto.specularTextureImportedPath, materialPath);
 
         if (!QEMaterialYamlHelper::WriteMaterialFile(materialPath, dto))
         {

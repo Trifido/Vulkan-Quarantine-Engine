@@ -100,7 +100,7 @@ YAML::Node QEMaterialYamlHelper::SerializeMaterialDto(const MaterialDto& dto)
     importedTexturesNode["Emissive"] = dto.emissiveTextureImportedPath;
     importedTexturesNode["Height"] = dto.heightTextureImportedPath;
     importedTexturesNode["Specular"] = dto.specularTextureImportedPath;
-    root["ImportedTextures"] = importedTexturesNode;
+    material["ImportedTextures"] = importedTexturesNode;
 
     root["Material"] = material;
     return root;

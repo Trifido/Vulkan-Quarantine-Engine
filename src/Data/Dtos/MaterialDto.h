@@ -62,14 +62,14 @@ struct MaterialDto
     std::string roughnessTexturePath = "NULL_TEXTURE";
     std::string aoTexturePath = "NULL_TEXTURE";
 
-    std::string diffuseTextureImportedPath = "";
-    std::string normalTextureImportedPath = "";
-    std::string metallicTextureImportedPath = "";
-    std::string roughnessTextureImportedPath = "";
-    std::string aoTextureImportedPath = "";
-    std::string emissiveTextureImportedPath = "";
-    std::string heightTextureImportedPath = "";
-    std::string specularTextureImportedPath = "";
+    std::string diffuseTextureImportedPath = "NULL_TEXTURE";
+    std::string normalTextureImportedPath = "NULL_TEXTURE";
+    std::string metallicTextureImportedPath = "NULL_TEXTURE";
+    std::string roughnessTextureImportedPath = "NULL_TEXTURE";
+    std::string aoTextureImportedPath = "NULL_TEXTURE";
+    std::string emissiveTextureImportedPath = "NULL_TEXTURE";
+    std::string heightTextureImportedPath = "NULL_TEXTURE";
+    std::string specularTextureImportedPath = "NULL_TEXTURE";
 
     uint32_t texMask = 0;
     uint32_t metallicChan = 0;

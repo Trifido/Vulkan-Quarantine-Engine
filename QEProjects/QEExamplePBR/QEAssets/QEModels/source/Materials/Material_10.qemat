@@ -1,12 +1,3 @@
-ImportedTextures:
-  Diffuse: ""
-  Normal: ""
-  Metallic: ""
-  Roughness: ""
-  AO: ""
-  Emissive: ""
-  Height: ""
-  Specular: ""
 Material:
   Name: Material_10
   FilePath: QEAssets/QEModels/source/Materials/Material_10.qemat
@@ -71,3 +62,12 @@ Material:
     Metallic: ../Textures/Embedded_31.png
     Roughness: ../Textures/Embedded_31.png
     AO: NULL_TEXTURE
+  ImportedTextures:
+    Diffuse: NULL_TEXTURE
+    Normal: NULL_TEXTURE
+    Metallic: NULL_TEXTURE
+    Roughness: NULL_TEXTURE
+    AO: NULL_TEXTURE
+    Emissive: NULL_TEXTURE
+    Height: NULL_TEXTURE
+    Specular: NULL_TEXTURE

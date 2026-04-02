@@ -41,8 +41,8 @@ GameObjects:
     components:
       - type: QETransform
         id: YT3CEW8K69rk
-        localPosition: [3.6084158, 2.7442317, 0.09991197]
-        localRotation: [-0.16987112, 0.68863827, 0.17105883, 0.6838568]
+        localPosition: [3.2153265, 2.9675176, -1.1330656]
+        localRotation: [-0.13149534, 0.7270146, 0.14527206, 0.65806895]
         localScale: [1, 1, 1]
         parentId: ""
       - type: QECamera
@@ -50,8 +50,8 @@ GameObjects:
         _near: 0.1
         _far: 500
         _fov: 45
-        Width: 924
-        Height: 477
+        Width: 1257
+        Height: 450
       - type: QECameraController
         id: 3SL3XByImciQ
         Speed: 10
@@ -98,21 +98,21 @@ GameObjects:
       - Material_22
       - Material_23
       - Material_24
-  - id: B5yi9ijSAjBQ
+  - id: jgnZSCe8nPQH
     name: material_ball
     components:
       - type: QETransform
-        id: jgnZSCe8nPQH
-        localPosition: [-2.6141, 0.88872415, -0.22609445]
-        localRotation: [0, 0.7136066, 0, 0.7005467]
-        localScale: [0.12000012, 0.12000002, 0.12000012]
+        id: nppZqt456uNh
+        localPosition: [-0.19888757, 0.83698624, -0.07726453]
+        localRotation: [0, 0.7336951, 0, 0.6794789]
+        localScale: [0.110000126, 0.110000014, 0.110000126]
         parentId: ""
       - type: QEGeometryComponent
-        id: nppZqt456uNh
+        id: aAAZ7eJqXZMw
         _name: material_ball
         _filepath: ../../QEProjects/QEExamplePBR/QEAssets/QEModels/MaterialBall/Meshes/material_ball.gltf
       - type: QEMeshRenderer
-        id: aAAZ7eJqXZMw
+        id: ECM9T0ci76Ro
         IsMeshShaderPipeline: false
     materials:
       - lambert3SG

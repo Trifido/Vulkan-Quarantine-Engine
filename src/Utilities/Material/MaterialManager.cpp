@@ -10,39 +10,6 @@
 #include <QEProjectManager.h>
 #include <QEMaterialYamlHelper.h>
 #include <Helpers/ScopedTimer.h>
-#include <QETextureImporter.h>
-
-static void ImportMaterialTextureIfNeeded(
-    std::string& sourcePath,
-    std::string& importedPath,
-    TEXTURE_TYPE semantic,
-    QEColorSpace colorSpace)
-{
-    if (sourcePath.empty() || sourcePath == "NULL_TEXTURE")
-        return;
-
-    if (!importedPath.empty() && std::filesystem::exists(importedPath))
-        return;
-
-    QETextureImportSettings settings{};
-    settings.semantic = semantic;
-    settings.colorSpace = colorSpace;
-    settings.generateMipmaps = true;
-    settings.overwrite = false;
-
-    std::string outPath = QETextureImporter::BuildImportedPath(sourcePath);
-    QETextureImportResult result = QETextureImporter::ImportToKtx2(sourcePath, outPath, settings);
-
-    if (result.success)
-    {
-        importedPath = result.importedPath;
-    }
-    else
-    {
-        std::cerr << "[TextureImporter] ERROR: " << result.error << std::endl;
-        importedPath.clear();
-    }
-}
 
 std::string MaterialManager::CheckName(std::string nameMaterial)
 {
@@ -480,54 +447,6 @@ void MaterialManager::DeserializeMaterials(YAML::Node materials)
                     PROFILE_SCOPE("Update texture paths");
                     materialDto.UpdateTexturePaths(resolvedPath.parent_path());
                     materialDto.UpdateImportedTexturePaths(resolvedPath.parent_path());
-
-                    ImportMaterialTextureIfNeeded(
-                        materialDto.diffuseTexturePath,
-                        materialDto.diffuseTextureImportedPath,
-                        TEXTURE_TYPE::DIFFUSE_TYPE,
-                        QEColorSpace::SRGB);
-
-                    ImportMaterialTextureIfNeeded(
-                        materialDto.normalTexturePath,
-                        materialDto.normalTextureImportedPath,
-                        TEXTURE_TYPE::NORMAL_TYPE,
-                        QEColorSpace::Linear);
-
-                    ImportMaterialTextureIfNeeded(
-                        materialDto.metallicTexturePath,
-                        materialDto.metallicTextureImportedPath,
-                        TEXTURE_TYPE::METALNESS_TYPE,
-                        QEColorSpace::Linear);
-
-                    ImportMaterialTextureIfNeeded(
-                        materialDto.roughnessTexturePath,
-                        materialDto.roughnessTextureImportedPath,
-                        TEXTURE_TYPE::ROUGHNESS_TYPE,
-                        QEColorSpace::Linear);
-
-                    ImportMaterialTextureIfNeeded(
-                        materialDto.aoTexturePath,
-                        materialDto.aoTextureImportedPath,
-                        TEXTURE_TYPE::AO_TYPE,
-                        QEColorSpace::Linear);
-
-                    ImportMaterialTextureIfNeeded(
-                        materialDto.emissiveTexturePath,
-                        materialDto.emissiveTextureImportedPath,
-                        TEXTURE_TYPE::EMISSIVE_TYPE,
-                        QEColorSpace::SRGB);
-
-                    ImportMaterialTextureIfNeeded(
-                        materialDto.heightTexturePath,
-                        materialDto.heightTextureImportedPath,
-                        TEXTURE_TYPE::HEIGHT_TYPE,
-                        QEColorSpace::Linear);
-
-                    ImportMaterialTextureIfNeeded(
-                        materialDto.specularTexturePath,
-                        materialDto.specularTextureImportedPath,
-                        TEXTURE_TYPE::SPECULAR_TYPE,
-                        QEColorSpace::Linear);
                 }
 
                 materialDtos.push_back(materialDto);
