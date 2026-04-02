@@ -36,16 +36,26 @@ void Grid::Draw(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
     auto mat = this->gridMesh->GetMaterial();
     auto pipelineModule = mat->shader->PipelineModule;
+
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
-    vkCmdSetDepthTestEnable(commandBuffer, true);
-    vkCmdSetDepthWriteEnable(commandBuffer, false);
+    vkCmdSetDepthTestEnable(commandBuffer, VK_TRUE);
+    vkCmdSetDepthWriteEnable(commandBuffer, VK_FALSE);
     vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
-    vkCmdSetCullMode(commandBuffer, false);
+    vkCmdSetCullMode(commandBuffer, VK_CULL_MODE_NONE);
 
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, mat->descriptor->getDescriptorSet(idx), 0, nullptr);
+    vkCmdBindDescriptorSets(
+        commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        pipelineModule->pipelineLayout,
+        0,
+        1,
+        mat->descriptor->getDescriptorSet(idx),
+        0,
+        nullptr
+    );
 
-    vkCmdDraw(commandBuffer, 6, 1, 0, 0);
+    vkCmdDraw(commandBuffer, 3, 1, 0, 0);
 }
 
 void Grid::Clean()
