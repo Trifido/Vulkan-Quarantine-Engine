@@ -12,6 +12,7 @@ enum class QEAssetType
     Texture,
     Mesh,
     Animation,
+    NavigateUp,
     Unknown
 };
 

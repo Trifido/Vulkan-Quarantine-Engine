@@ -1,4 +1,4 @@
-#include "QEProjectBrowserPanel.h"
+﻿#include "QEProjectBrowserPanel.h"
 
 #include <algorithm>
 #include <imgui.h>
@@ -109,13 +109,45 @@ void QEProjectBrowserPanel::DrawFolderContents(QEProjectAssetItem* folder)
     if (folder == nullptr || !folder->IsDirectory)
         return;
 
-    if (ImGui::Button("^"))
+    const QEIconTexture* upIcon = _iconCache.GetIcon(QEAssetType::NavigateUp);
+
+    const float iconSize = ImGui::GetTextLineHeight();
+
+    if (upIcon && upIcon->ImGuiTexture != 0)
     {
-        if (folder->Parent != nullptr)
-            _navigation.NavigateToFolder(folder->Parent, true);
+        ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(0, 0, 0, 0));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(255, 255, 255, 25));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(255, 255, 255, 40));
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+
+        // 🔑 alineación vertical correcta
+        ImGui::AlignTextToFramePadding();
+
+        if (ImGui::ImageButton(
+            "##NavigateUp",
+            upIcon->ImGuiTexture,
+            ImVec2(30, 30)))
+        {
+            if (folder->Parent != nullptr)
+                _navigation.NavigateToFolder(folder->Parent, true);
+        }
+
+        ImGui::PopStyleVar();
+        ImGui::PopStyleColor(3);
+    }
+    else
+    {
+        ImGui::AlignTextToFramePadding();
+
+        if (ImGui::Button("^"))
+        {
+            if (folder->Parent != nullptr)
+                _navigation.NavigateToFolder(folder->Parent, true);
+        }
     }
 
-    ImGui::SameLine();
+    // 🔑 importante también aquí
+    ImGui::AlignTextToFramePadding();
 
     std::string headerLabel = "Contents";
 

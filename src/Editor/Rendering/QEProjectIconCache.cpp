@@ -28,6 +28,8 @@ bool QEProjectIconCache::Initialize()
     ok &= LoadIconTexture(QEAssetType::Texture, "../../src/Editor/Icons/texture.png");
     ok &= LoadIconTexture(QEAssetType::Mesh, "../../src/Editor/Icons/mesh.png");
     ok &= LoadIconTexture(QEAssetType::Animation, "../../src/Editor/Icons/animation.png");
+    ok &= LoadIconTexture(QEAssetType::Animation, "../../src/Editor/Icons/animation.png");
+    ok &= LoadIconTexture(QEAssetType::NavigateUp, "../../src/Editor/Icons/up.png");
     return ok;
 }
 
