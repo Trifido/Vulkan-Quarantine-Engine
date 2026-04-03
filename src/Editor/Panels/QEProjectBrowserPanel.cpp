@@ -796,6 +796,11 @@ std::string QEProjectBrowserPanel::GetDisplayAssetName(const QEProjectAssetItem*
 void QEProjectBrowserPanel::Draw()
 {
     QEAssetImportManager::Get().UpdateMainThread();
+    if (QEAssetImportManager::Get().ConsumeFinishedSuccessfulImports() > 0)
+    {
+        Refresh();
+    }
+
     _isWindowHovered = false;
     _isContentsPanelHovered = false;
 
@@ -816,47 +821,55 @@ void QEProjectBrowserPanel::Draw()
     {
         ImGui::TextUnformatted("No project loaded.");
         HandleExternalFileDrops();
+        DrawImportFooter();
         ImGui::End();
         return;
     }
+
+    const float footerHeight = HasVisibleImportFooter() ? 120.0f : 0.0f;
 
     ImGuiTableFlags tableFlags =
         ImGuiTableFlags_Resizable |
         ImGuiTableFlags_SizingStretchProp |
         ImGuiTableFlags_BordersInnerV;
 
-    if (ImGui::BeginTable("ProjectBrowserLayout", 2, tableFlags))
+    if (ImGui::BeginChild("ProjectBrowserMainArea", ImVec2(0, -footerHeight), false))
     {
-        ImGui::TableSetupColumn("Folders", ImGuiTableColumnFlags_WidthStretch, 0.32f);
-        ImGui::TableSetupColumn("Contents", ImGuiTableColumnFlags_WidthStretch, 0.68f);
-
-        ImGui::TableNextColumn();
-
-        ImGui::TextUnformatted("Folders");
-        ImGui::Spacing();
-
-        if (ImGui::BeginChild("FoldersPanel", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar))
+        if (ImGui::BeginTable("ProjectBrowserLayout", 2, tableFlags))
         {
-            DrawFolderTree(_rootItem.get());
+            ImGui::TableSetupColumn("Folders", ImGuiTableColumnFlags_WidthStretch, 0.32f);
+            ImGui::TableSetupColumn("Contents", ImGuiTableColumnFlags_WidthStretch, 0.68f);
+
+            ImGui::TableNextColumn();
+
+            ImGui::TextUnformatted("Folders");
+            ImGui::Spacing();
+
+            if (ImGui::BeginChild("FoldersPanel", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar))
+            {
+                DrawFolderTree(_rootItem.get());
+            }
+            ImGui::EndChild();
+
+            ImGui::TableNextColumn();
+
+            ImGui::TextUnformatted("Contents");
+            ImGui::Spacing();
+
+            if (ImGui::BeginChild("ContentsPanel", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar))
+            {
+                _isContentsPanelHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows);
+                DrawFolderContents(_selectedFolder);
+            }
+            ImGui::EndChild();
+
+            ImGui::EndTable();
         }
-        ImGui::EndChild();
-
-        ImGui::TableNextColumn();
-
-        ImGui::TextUnformatted("Contents");
-        ImGui::Spacing();
-
-        if (ImGui::BeginChild("ContentsPanel", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar))
-        {
-            _isContentsPanelHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows);
-            DrawFolderContents(_selectedFolder);
-        }
-        ImGui::EndChild();
-
-        ImGui::EndTable();
     }
+    ImGui::EndChild();
 
     HandleExternalFileDrops();
+    DrawImportFooter();
 
     ImGui::End();
 }
@@ -921,6 +934,96 @@ bool QEProjectBrowserPanel::IsImportableExternalFile(const std::filesystem::path
     return ext == ".gltf" || ext == ".glb" || ext == ".fbx" || ext == ".obj";
 }
 
+void QEProjectBrowserPanel::DrawImportFooter()
+{
+    auto jobs = QEAssetImportManager::Get().GetJobsSnapshot();
+    if (jobs.empty())
+        return;
+
+    bool hasVisibleJobs = false;
+    for (const auto& job : jobs)
+    {
+        if (!job)
+            continue;
+
+        QEImportJobState state = job->State.load(std::memory_order_relaxed);
+        if (state == QEImportJobState::Queued ||
+            state == QEImportJobState::Running ||
+            state == QEImportJobState::Failed)
+        {
+            hasVisibleJobs = true;
+            break;
+        }
+    }
+
+    if (!hasVisibleJobs)
+        return;
+
+    ImGui::Separator();
+    ImGui::TextUnformatted("Imports");
+
+    for (const auto& job : jobs)
+    {
+        if (!job)
+            continue;
+
+        QEImportJobState state = job->State.load(std::memory_order_relaxed);
+        if (state == QEImportJobState::Succeeded)
+            continue;
+
+        float progress = job->Progress.Value.load(std::memory_order_relaxed);
+        std::string stage = job->Progress.Stage;
+        std::string message = job->Progress.Message;
+
+        std::string title = job->DisplayName;
+        if (!stage.empty())
+            title += " - " + stage;
+
+        ImGui::TextUnformatted(title.c_str());
+
+        std::string overlay;
+        switch (state)
+        {
+        case QEImportJobState::Queued:    overlay = "Queued"; break;
+        case QEImportJobState::Running:   overlay = message.empty() ? "Importing..." : message; break;
+        case QEImportJobState::Failed:    overlay = "Failed"; break;
+        default:                          overlay = ""; break;
+        }
+
+        ImGui::ProgressBar(progress, ImVec2(-1.0f, 0.0f), overlay.c_str());
+
+        if (state == QEImportJobState::Failed && !job->Error.empty())
+        {
+            ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 120, 120, 255));
+            ImGui::TextWrapped("%s", job->Error.c_str());
+            ImGui::PopStyleColor();
+        }
+
+        ImGui::Spacing();
+    }
+}
+
+bool QEProjectBrowserPanel::HasVisibleImportFooter() const
+{
+    auto jobs = QEAssetImportManager::Get().GetJobsSnapshot();
+
+    for (const auto& job : jobs)
+    {
+        if (!job)
+            continue;
+
+        QEImportJobState state = job->State.load(std::memory_order_relaxed);
+        if (state == QEImportJobState::Queued ||
+            state == QEImportJobState::Running ||
+            state == QEImportJobState::Failed)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void QEProjectBrowserPanel::HandleExternalFileDrops()
 {
     if (_pendingExternalDrops.empty())
@@ -928,8 +1031,6 @@ void QEProjectBrowserPanel::HandleExternalFileDrops()
 
     if (!_isWindowHovered && !_isContentsPanelHovered)
         return;
-
-    bool importedAny = false;
 
     for (const auto& droppedPath : _pendingExternalDrops)
     {
@@ -939,7 +1040,6 @@ void QEProjectBrowserPanel::HandleExternalFileDrops()
         try
         {
             QEAssetImportManager::Get().EnqueueMeshImport(droppedPath.string());
-            importedAny = true;
         }
         catch (const std::exception& e)
         {
@@ -948,7 +1048,4 @@ void QEProjectBrowserPanel::HandleExternalFileDrops()
     }
 
     _pendingExternalDrops.clear();
-
-    if (importedAny)
-        Refresh();
 }

@@ -85,6 +85,8 @@ private:
 
     void HandleExternalFileDrops();
     bool IsImportableExternalFile(const std::filesystem::path& path) const;
+    void DrawImportFooter();
+    bool HasVisibleImportFooter() const;
 
 private:
     bool CreateBuffer(

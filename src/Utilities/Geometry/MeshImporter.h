@@ -14,6 +14,9 @@
 #include <TextureManager.h>
 #include <QEAnimationResources.h>
 #include <QEMeshData.h>
+#include <functional>
+
+using QEImportProgressCallback = std::function<void(float, const std::string&, const std::string&)>;
 
 namespace fs = std::filesystem;
 
@@ -40,8 +43,19 @@ private:
     static std::string GetTextureTypeName(aiTextureType type);
     static void SaveTextureToFile(const aiTexture* texture, const std::string& outputPath);
     static void CopyTextureFile(const std::string& sourcePath, const std::string& destPath);
-    static void ExtractAndUpdateTextures(aiScene* scene, const std::string& outputTextureFolder, const std::string& modelDirectory);
-    static void ExtractAndUpdateMaterials(aiScene* scene, const std::string& outputTextureFolder, const std::string& outputMaterialPath, const std::string& modelDirectory);
+
+    static void ExtractAndUpdateTextures(
+        aiScene* scene,
+        const std::string& outputTextureFolder,
+        const std::string& modelDirectory,
+        const QEImportProgressCallback& onProgress = nullptr);
+
+    static void ExtractAndUpdateMaterials(aiScene* scene,
+        const std::string& outputTextureFolder,
+        const std::string& outputMaterialPath,
+        const std::string& modelDirectory,
+        const QEImportProgressCallback& onProgress = nullptr);
+
     static void RemoveOnlyEmbeddedTextures(aiScene* scene);
 public:
     static bool LoadAndExportModel(
@@ -49,7 +63,8 @@ public:
         const std::string& outputMeshPath,
         const std::string& outputMaterialPath,
         const std::string& outputTexturePath,
-        const std::string& outputAnimationPath);
+        const std::string& outputAnimationPath,
+        const QEImportProgressCallback& onProgress = nullptr);
 };
 
 #endif // !MESH_H

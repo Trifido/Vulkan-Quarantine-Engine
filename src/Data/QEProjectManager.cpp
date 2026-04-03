@@ -112,7 +112,7 @@ bool QEProjectManager::CreateYamlScene(const std::string& sceneName)
     return true;
 }
 
-bool QEProjectManager::ImportMeshFile(const fs::path& inputFile)
+bool QEProjectManager::ImportMeshFile(const fs::path& inputFile, const QEImportProgressCallback& onProgress)
 {
     if (!fs::exists(inputFile))
     {
@@ -143,7 +143,8 @@ bool QEProjectManager::ImportMeshFile(const fs::path& inputFile)
         outputMeshPath.string(),
         outputMaterialFolderPath.string(),
         outputTextureFolderPath.string(),
-        outputAnimationFolderPath.string()
+        outputAnimationFolderPath.string(),
+        onProgress
     );
 }
 

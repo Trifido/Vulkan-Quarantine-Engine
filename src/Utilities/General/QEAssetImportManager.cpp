@@ -56,6 +56,8 @@ void QEAssetImportManager::UpdateMainThread()
         std::swap(finishedLocal, _finished);
     }
 
+    int successCount = 0;
+
     while (!finishedLocal.empty())
     {
         const auto& job = finishedLocal.front();
@@ -67,14 +69,23 @@ void QEAssetImportManager::UpdateMainThread()
             if (state == QEImportJobState::Succeeded)
             {
                 job->SetProgress(1.0f, "Completed", "Import finished");
+                ++successCount;
             }
             else if (state == QEImportJobState::Failed)
             {
-                job->SetProgress(job->Progress.Value.load(std::memory_order_relaxed), "Failed", "Import failed");
+                job->SetProgress(
+                    job->Progress.Value.load(std::memory_order_relaxed),
+                    "Failed",
+                    "Import failed");
             }
         }
 
         finishedLocal.pop();
+    }
+
+    if (successCount > 0)
+    {
+        _pendingSuccessfulRefreshes.fetch_add(successCount, std::memory_order_relaxed);
     }
 }
 
@@ -102,6 +113,11 @@ bool QEAssetImportManager::HasActiveJobs() const
     }
 
     return false;
+}
+
+int QEAssetImportManager::ConsumeFinishedSuccessfulImports()
+{
+    return _pendingSuccessfulRefreshes.exchange(0, std::memory_order_relaxed);
 }
 
 void QEAssetImportManager::WorkerLoop()
@@ -133,7 +149,12 @@ void QEAssetImportManager::WorkerLoop()
             job->State.store(QEImportJobState::Running, std::memory_order_relaxed);
             job->SetProgress(0.05f, "Starting", "Preparing import");
 
-            QEProjectManager::ImportMeshFile(job->SourcePath);
+            auto progressCb = [job](float value, const std::string& stage, const std::string& message)
+                {
+                    job->SetProgress(value, stage, message);
+                };
+
+            QEProjectManager::ImportMeshFile(job->SourcePath, progressCb);
 
             job->SetResultPath(job->SourcePath);
             job->State.store(QEImportJobState::Succeeded, std::memory_order_relaxed);

@@ -4,7 +4,10 @@
 
 #include <filesystem>
 #include <string>
+#include <functional>
 #include <QEScene.h>
+
+using QEImportProgressCallback = std::function<void(float, const std::string&, const std::string&)>;
 
 const static std::string PROJECTS_FOLDER_PATH = "../../QEProjects";
 const static std::string SCENE_TEMPLATE = "../../src/Data/SceneTemplates/QETemplate.qescene";
@@ -28,7 +31,9 @@ public:
     static bool CreateQEProject(const std::string& projectName);
     static bool CreateFolder(const fs::path& projectPath, const std::string& folderName);
     static bool CreateYamlScene(const std::string& sceneName = "DefaultScene");
-    static bool ImportMeshFile(const fs::path& inputFile);
+    static bool ImportMeshFile(
+        const fs::path& inputFile,
+        const QEImportProgressCallback& onProgress = nullptr);
     static bool ImportAnimationFile(const fs::path& inputFile, const fs::path& folderPath);
     static fs::path GetMaterialFolderPath();
 

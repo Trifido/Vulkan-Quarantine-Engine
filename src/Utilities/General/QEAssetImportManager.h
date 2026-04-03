@@ -75,6 +75,7 @@ public:
     void UpdateMainThread();
     std::vector<std::shared_ptr<QEImportJob>> GetJobsSnapshot() const;
     bool HasActiveJobs() const;
+    int ConsumeFinishedSuccessfulImports();
 
 private:
     void WorkerLoop();
@@ -85,6 +86,7 @@ private:
 private:
     std::thread _worker;
     std::atomic<bool> _running{ true };
+    std::atomic<int> _pendingSuccessfulRefreshes{ 0 };
 
     mutable std::mutex _mutex;
     std::condition_variable _cv;

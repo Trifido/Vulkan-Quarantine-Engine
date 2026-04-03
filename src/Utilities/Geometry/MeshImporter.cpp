@@ -13,17 +13,17 @@
 #include <Helpers/ScopedTimer.h>
 #include <QETextureImporter.h>
 
-static void ImportMaterialTextureIfNeeded(
+static bool ImportMaterialTextureIfNeeded(
     std::string& sourcePath,
     std::string& importedPath,
     TEXTURE_TYPE semantic,
     QEColorSpace colorSpace)
 {
     if (sourcePath.empty() || sourcePath == "NULL_TEXTURE")
-        return;
+        return false;
 
     if (!importedPath.empty() && std::filesystem::exists(importedPath))
-        return;
+        return false;
 
     QETextureImportSettings settings{};
     settings.semantic = semantic;
@@ -37,11 +37,13 @@ static void ImportMaterialTextureIfNeeded(
     if (result.success)
     {
         importedPath = result.importedPath;
+        return true;
     }
     else
     {
         std::cerr << "[TextureImporter] ERROR: " << result.error << std::endl;
         importedPath.clear();
+        return false;
     }
 }
 
@@ -578,7 +580,8 @@ void MeshImporter::CopyTextureFile(const std::string& sourcePath, const std::str
 void MeshImporter::ExtractAndUpdateTextures(
     aiScene* scene,
     const std::string& outputTextureFolder,
-    const std::string& modelDirectory)
+    const std::string& modelDirectory,
+    const QEImportProgressCallback& onProgress)
 {
     std::vector<aiTextureType> textureTypes = {
         aiTextureType_DIFFUSE, aiTextureType_SPECULAR, aiTextureType_NORMALS,
@@ -753,8 +756,15 @@ void MeshImporter::ExtractAndUpdateMaterials(
     aiScene* scene,
     const std::string& outputTextureFolder,
     const std::string& outputMaterialPath,
-    const std::string& modelDirectory)
+    const std::string& modelDirectory,
+    const QEImportProgressCallback& onProgress)
 {
+    auto report = [&](float value, const std::string& stage, const std::string& msg)
+        {
+            if (onProgress)
+                onProgress(value, stage, msg);
+        };
+
     auto matManager = MaterialManager::getInstance();
 
     std::vector<std::vector<aiTextureType>> textureSlots = {
@@ -818,6 +828,81 @@ void MeshImporter::ExtractAndUpdateMaterials(
 
             return rel.lexically_normal().generic_string();
         };
+
+    auto WouldRequireImport = [&](const std::string& sourcePath) -> bool
+        {
+            if (sourcePath.empty() || sourcePath == "NULL_TEXTURE")
+                return false;
+
+            std::string outPath = QETextureImporter::BuildImportedPath(sourcePath);
+            return !fs::exists(outPath);
+        };
+
+    int totalKtxTasks = 0;
+
+    // Primera pasada: contar conversiones KTX2 reales
+    for (unsigned int i = 0; i < scene->mNumMaterials; i++)
+    {
+        aiMaterial* material = scene->mMaterials[i];
+        if (!material)
+            continue;
+
+        aiString rawName;
+        std::string materialName;
+
+        if (material->Get(AI_MATKEY_NAME, rawName) == AI_SUCCESS && rawName.length > 0)
+            materialName = matManager->CheckName(rawName.C_Str());
+
+        if (materialName.empty())
+            materialName = "Material_" + std::to_string(i);
+
+        fs::path materialPath = materialDir / (materialName + ".qemat");
+        if (fs::exists(materialPath))
+            continue;
+
+        std::vector<std::string> rawPaths(textureSlots.size(), "");
+        for (size_t slot = 0; slot < textureSlots.size(); ++slot)
+            rawPaths[slot] = ResolveFirstTexture(material, textureSlots[slot]);
+
+        aiString mrPath;
+        const bool hasMR = (material->GetTexture(aiTextureType_GLTF_METALLIC_ROUGHNESS, 0, &mrPath) == AI_SUCCESS);
+        if (hasMR)
+        {
+            rawPaths[2] = std::string(mrPath.C_Str());
+            rawPaths[3] = std::string(mrPath.C_Str());
+        }
+
+        std::vector<std::string> sourceDiskPaths(rawPaths.size(), "");
+        for (size_t slot = 0; slot < rawPaths.size(); ++slot)
+            sourceDiskPaths[slot] = ResolveTextureToDiskPath(rawPaths[slot]);
+
+        for (const auto& src : sourceDiskPaths)
+        {
+            if (WouldRequireImport(src))
+                ++totalKtxTasks;
+        }
+    }
+
+    int completedKtxTasks = 0;
+
+    auto reportKtxProgress = [&]()
+        {
+            if (totalKtxTasks <= 0)
+            {
+                report(0.85f, "Textures", "No KTX2 conversions needed");
+                return;
+            }
+
+            float local = static_cast<float>(completedKtxTasks) / static_cast<float>(totalKtxTasks);
+            float global = 0.35f + local * 0.50f;
+
+            report(
+                global,
+                "Textures",
+                "Compressing KTX2 " + std::to_string(completedKtxTasks) + "/" + std::to_string(totalKtxTasks));
+        };
+
+    reportKtxProgress();
 
     for (unsigned int i = 0; i < scene->mNumMaterials; i++)
     {
@@ -907,17 +992,28 @@ void MeshImporter::ExtractAndUpdateMaterials(
         dto.aoChan = aoChan;
         dto.AlphaMode = matData.AlphaMode;
 
-        // Generar KTX2 finales en ../Textures
-        ImportMaterialTextureIfNeeded(sourceDiskPaths[0], dto.diffuseTexturePath, TEXTURE_TYPE::DIFFUSE_TYPE, QEColorSpace::SRGB);
-        ImportMaterialTextureIfNeeded(sourceDiskPaths[1], dto.normalTexturePath, TEXTURE_TYPE::NORMAL_TYPE, QEColorSpace::Linear);
-        ImportMaterialTextureIfNeeded(sourceDiskPaths[2], dto.metallicTexturePath, TEXTURE_TYPE::METALNESS_TYPE, QEColorSpace::Linear);
-        ImportMaterialTextureIfNeeded(sourceDiskPaths[3], dto.roughnessTexturePath, TEXTURE_TYPE::ROUGHNESS_TYPE, QEColorSpace::Linear);
-        ImportMaterialTextureIfNeeded(sourceDiskPaths[4], dto.aoTexturePath, TEXTURE_TYPE::AO_TYPE, QEColorSpace::Linear);
-        ImportMaterialTextureIfNeeded(sourceDiskPaths[5], dto.emissiveTexturePath, TEXTURE_TYPE::EMISSIVE_TYPE, QEColorSpace::SRGB);
-        ImportMaterialTextureIfNeeded(sourceDiskPaths[6], dto.heightTexturePath, TEXTURE_TYPE::HEIGHT_TYPE, QEColorSpace::Linear);
-        ImportMaterialTextureIfNeeded(sourceDiskPaths[7], dto.specularTexturePath, TEXTURE_TYPE::SPECULAR_TYPE, QEColorSpace::Linear);
+        auto importSlot = [&](std::string& src, std::string& dst, TEXTURE_TYPE semantic, QEColorSpace colorSpace)
+            {
+                const bool shouldImport = WouldRequireImport(src);
 
-        // A partir de aquí, Textures apunta al asset runtime final (.ktx2)
+                ImportMaterialTextureIfNeeded(src, dst, semantic, colorSpace);
+
+                if (shouldImport)
+                {
+                    ++completedKtxTasks;
+                    reportKtxProgress();
+                }
+            };
+
+        importSlot(sourceDiskPaths[0], dto.diffuseTexturePath, TEXTURE_TYPE::DIFFUSE_TYPE, QEColorSpace::SRGB);
+        importSlot(sourceDiskPaths[1], dto.normalTexturePath, TEXTURE_TYPE::NORMAL_TYPE, QEColorSpace::Linear);
+        importSlot(sourceDiskPaths[2], dto.metallicTexturePath, TEXTURE_TYPE::METALNESS_TYPE, QEColorSpace::Linear);
+        importSlot(sourceDiskPaths[3], dto.roughnessTexturePath, TEXTURE_TYPE::ROUGHNESS_TYPE, QEColorSpace::Linear);
+        importSlot(sourceDiskPaths[4], dto.aoTexturePath, TEXTURE_TYPE::AO_TYPE, QEColorSpace::Linear);
+        importSlot(sourceDiskPaths[5], dto.emissiveTexturePath, TEXTURE_TYPE::EMISSIVE_TYPE, QEColorSpace::SRGB);
+        importSlot(sourceDiskPaths[6], dto.heightTexturePath, TEXTURE_TYPE::HEIGHT_TYPE, QEColorSpace::Linear);
+        importSlot(sourceDiskPaths[7], dto.specularTexturePath, TEXTURE_TYPE::SPECULAR_TYPE, QEColorSpace::Linear);
+
         dto.diffuseTexturePath = ToMaterialRelativePath(dto.diffuseTexturePath, materialPath);
         dto.normalTexturePath = ToMaterialRelativePath(dto.normalTexturePath, materialPath);
         dto.metallicTexturePath = ToMaterialRelativePath(dto.metallicTexturePath, materialPath);
@@ -944,6 +1040,8 @@ void MeshImporter::ExtractAndUpdateMaterials(
             continue;
         }
     }
+
+    report(0.85f, "Materials", "Material generation finished");
 }
 
 void MeshImporter::RemoveOnlyEmbeddedTextures(aiScene* scene)
@@ -985,21 +1083,30 @@ bool MeshImporter::LoadAndExportModel(
     const std::string& outputMeshPath,
     const std::string& outputMaterialPath,
     const std::string& outputTexturePath,
-    const std::string& outputAnimationPath)
+    const std::string& outputAnimationPath,
+    const QEImportProgressCallback& onProgress)
 {
+    auto report = [&](float value, const std::string& stage, const std::string& msg)
+        {
+            if (onProgress)
+                onProgress(value, stage, msg);
+        };
+
+    report(0.02f, "Loading", "Reading source model");
+
     unsigned int flags = aiProcess_EmbedTextures | aiProcess_Triangulate | aiProcess_GenNormals;
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(inputPath, flags);
 
     if (!scene) {
         std::cerr << "Error al cargar el modelo: " << importer.GetErrorString() << std::endl;
+        report(0.0f, "Failed", "Could not read source model");
         return false;
     }
 
-    // Exportar animaciones, si tiene...
+    report(0.12f, "Animation", "Importing animations");
     AnimationImporter::ImportAnimation(scene, outputAnimationPath);
 
-    // Comprobar si tiene materiales y texturas
     if (scene->HasMaterials())
     {
         std::string modelDirectory = filesystem::path(inputPath).parent_path().string();
@@ -1010,11 +1117,24 @@ bool MeshImporter::LoadAndExportModel(
 
         fs::create_directories(tempTextureFolder);
 
-        ExtractAndUpdateTextures(const_cast<aiScene*>(scene), tempTextureFolder.string(), modelDirectory);
-        ExtractAndUpdateMaterials(const_cast<aiScene*>(scene), tempTextureFolder.string(), outputMaterialPath, modelDirectory);
+        report(0.22f, "Textures", "Extracting source textures");
+        ExtractAndUpdateTextures(
+            const_cast<aiScene*>(scene),
+            tempTextureFolder.string(),
+            modelDirectory,
+            onProgress);
+
+        report(0.35f, "Materials", "Generating materials and KTX2");
+        ExtractAndUpdateMaterials(
+            const_cast<aiScene*>(scene),
+            tempTextureFolder.string(),
+            outputMaterialPath,
+            modelDirectory,
+            onProgress);
 
         std::error_code ec;
 
+        report(0.90f, "Cleanup", "Cleaning temporary files");
         fs::remove_all(tempTextureFolder, ec);
         if (ec)
             std::cerr << "Warning: could not remove temp texture folder: " << tempTextureFolder << std::endl;
@@ -1028,7 +1148,8 @@ bool MeshImporter::LoadAndExportModel(
         }
     }
 
-    // Exportar a glTF 2.0
+    report(0.95f, "Mesh", "Exporting glTF");
+
     Assimp::Exporter exporter;
 
     aiScene* editableScene = new aiScene();
@@ -1041,10 +1162,13 @@ bool MeshImporter::LoadAndExportModel(
     {
         std::cerr << "Error al exportar a glTF: " << exporter.GetErrorString() << std::endl;
         AnimationImporter::DestroyScene(editableScene);
+        report(0.95f, "Failed", "glTF export failed");
         return false;
     }
 
     AnimationImporter::DestroyScene(editableScene);
+
+    report(1.0f, "Completed", "Import finished");
     std::cout << "Exportación exitosa: " << outputMeshPath << std::endl;
     return true;
 }
