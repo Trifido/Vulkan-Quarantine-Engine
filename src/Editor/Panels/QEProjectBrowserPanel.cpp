@@ -13,6 +13,7 @@
 
 #include <stb_image.h>
 #include <QEProjectManager.h>
+#include <QEAssetImportManager.h>
 
 void QEProjectBrowserPanel::SetProjectRootPath(const std::filesystem::path& projectRootPath)
 {
@@ -794,6 +795,7 @@ std::string QEProjectBrowserPanel::GetDisplayAssetName(const QEProjectAssetItem*
 
 void QEProjectBrowserPanel::Draw()
 {
+    QEAssetImportManager::Get().UpdateMainThread();
     _isWindowHovered = false;
     _isContentsPanelHovered = false;
 
@@ -936,7 +938,7 @@ void QEProjectBrowserPanel::HandleExternalFileDrops()
 
         try
         {
-            QEProjectManager::ImportMeshFile(droppedPath.string());
+            QEAssetImportManager::Get().EnqueueMeshImport(droppedPath.string());
             importedAny = true;
         }
         catch (const std::exception& e)
