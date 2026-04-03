@@ -32,6 +32,6 @@ RenderLayerModule::RenderLayerModule()
     enabledLayers[2] = RenderLayer::TRANSPARENT_LAYER;
     enabledLayers[3] = RenderLayer::PARTICLES;
     enabledLayers[4] = RenderLayer::UI;
-    enabledLayers[5] = RenderLayer::DEBUG;
+    enabledLayers[5] = RenderLayer::DEBUG_LAYER;
     enabledLayers[6] = RenderLayer::EDITOR;
 }

@@ -72,6 +72,22 @@ set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(yaml-cpp)
 
+# KTX / libktx
+FetchContent_Declare(
+  ktx
+  GIT_REPOSITORY https://github.com/KhronosGroup/KTX-Software.git
+  GIT_TAG v4.4.2
+  GIT_SHALLOW TRUE
+)
+
+set(KTX_FEATURE_TESTS OFF CACHE BOOL "" FORCE)
+set(KTX_FEATURE_TOOLS OFF CACHE BOOL "" FORCE)
+set(KTX_FEATURE_GL_UPLOAD OFF CACHE BOOL "" FORCE)
+set(KTX_FEATURE_VK_UPLOAD ON CACHE BOOL "" FORCE)
+set(KTX_FEATURE_LOADTEST_APPS OFF CACHE BOOL "" FORCE)
+
+FetchContent_MakeAvailable(ktx)
+
 # ------------------------------
 # Submodules as libraries
 # ------------------------------
@@ -207,6 +223,7 @@ target_include_directories(QuarantineEngine PRIVATE
   ${CMAKE_SOURCE_DIR}/src/Utilities/Material
   ${CMAKE_SOURCE_DIR}/src/Utilities/Particles
   ${CMAKE_SOURCE_DIR}/src/Utilities/Physics
+  
 
   ${glfw_SOURCE_DIR}/include
   ${glm_SOURCE_DIR}
@@ -239,7 +256,8 @@ target_link_libraries(QuarantineEngine
   SPIRV-Reflect
   meshoptimizer
   imguizmo
-  yaml-cpp  
+  yaml-cpp
+  ktx
 )
 
 # ------------------------------

@@ -91,17 +91,6 @@ YAML::Node QEMaterialYamlHelper::SerializeMaterialDto(const MaterialDto& dto)
     textures["AO"] = NormalizeYamlTexturePath(dto.aoTexturePath);
     material["Textures"] = textures;
 
-    YAML::Node importedTexturesNode;
-    importedTexturesNode["Diffuse"] = dto.diffuseTextureImportedPath;
-    importedTexturesNode["Normal"] = dto.normalTextureImportedPath;
-    importedTexturesNode["Metallic"] = dto.metallicTextureImportedPath;
-    importedTexturesNode["Roughness"] = dto.roughnessTextureImportedPath;
-    importedTexturesNode["AO"] = dto.aoTextureImportedPath;
-    importedTexturesNode["Emissive"] = dto.emissiveTextureImportedPath;
-    importedTexturesNode["Height"] = dto.heightTextureImportedPath;
-    importedTexturesNode["Specular"] = dto.specularTextureImportedPath;
-    material["ImportedTextures"] = importedTexturesNode;
-
     root["Material"] = material;
     return root;
 }
@@ -164,18 +153,6 @@ bool QEMaterialYamlHelper::DeserializeMaterialDto(const YAML::Node& root, Materi
         dto.metallicTexturePath = textures["Metallic"] ? NormalizeYamlTexturePath(textures["Metallic"].as<std::string>()) : "NULL_TEXTURE";
         dto.roughnessTexturePath = textures["Roughness"] ? NormalizeYamlTexturePath(textures["Roughness"].as<std::string>()) : "NULL_TEXTURE";
         dto.aoTexturePath = textures["AO"] ? NormalizeYamlTexturePath(textures["AO"].as<std::string>()) : "NULL_TEXTURE";
-    }
-
-    if (auto importedTexturesNode = root["ImportedTextures"])
-    {
-        if (importedTexturesNode["Diffuse"])   dto.diffuseTextureImportedPath = importedTexturesNode["Diffuse"].as<std::string>();
-        if (importedTexturesNode["Normal"])    dto.normalTextureImportedPath = importedTexturesNode["Normal"].as<std::string>();
-        if (importedTexturesNode["Metallic"])  dto.metallicTextureImportedPath = importedTexturesNode["Metallic"].as<std::string>();
-        if (importedTexturesNode["Roughness"]) dto.roughnessTextureImportedPath = importedTexturesNode["Roughness"].as<std::string>();
-        if (importedTexturesNode["AO"])        dto.aoTextureImportedPath = importedTexturesNode["AO"].as<std::string>();
-        if (importedTexturesNode["Emissive"])  dto.emissiveTextureImportedPath = importedTexturesNode["Emissive"].as<std::string>();
-        if (importedTexturesNode["Height"])    dto.heightTextureImportedPath = importedTexturesNode["Height"].as<std::string>();
-        if (importedTexturesNode["Specular"])  dto.specularTextureImportedPath = importedTexturesNode["Specular"].as<std::string>();
     }
 
     return true;

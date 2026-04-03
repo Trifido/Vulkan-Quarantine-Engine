@@ -10,7 +10,7 @@ enum class RenderLayer
     TRANSPARENT_LAYER = 2,
     PARTICLES = 2,
     UI = 3,
-    DEBUG = 98,
+    DEBUG_LAYER = 98,
     EDITOR = 99
 };
 

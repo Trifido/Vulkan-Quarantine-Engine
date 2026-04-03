@@ -78,6 +78,7 @@ public:
 
     void createTextureImage(std::string path = NULL);
     void createTextureImage(std::string path, QEColorSpace cs);
+    void createTextureFromKtx2(const std::string& path, QEColorSpace cs);
     void createCubemapTextureImage(std::string path = NULL);
     void createCubemapTextureImage(std::vector<std::string> paths);
     void createTextureRawImage(aiTexel* rawData, unsigned int width, unsigned int height);

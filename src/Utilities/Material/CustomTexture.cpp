@@ -7,6 +7,9 @@
 #include "SyncTool.h"
 #include <unordered_map>
 #include <Helpers/ScopedTimer.h>
+#include <ktx.h>
+#include <ktxvulkan.h>
+#include <filesystem>
 
 
 VkCommandPool CustomTexture::commandPool;
@@ -101,9 +104,20 @@ CustomTexture::CustomTexture(std::string path, TEXTURE_TYPE type, QEColorSpace c
     this->texturePaths.push_back(path);
 
     if (type == TEXTURE_TYPE::CUBEMAP_TYPE)
-        this->createCubemapTextureImage(path); // (si quieres SRGB/Linear en cubemap también, lo extendemos luego)
+    {
+        this->createCubemapTextureImage(path);
+    }
     else
-        this->createTextureImage(path, cs);
+    {
+        std::filesystem::path p(path);
+        std::string ext = p.extension().string();
+        std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+
+        if (ext == ".ktx2")
+            this->createTextureFromKtx2(path, cs);
+        else
+            this->createTextureImage(path, cs);
+    }
 }
 
 void CustomTexture::createTextureImage(std::string path)
@@ -236,6 +250,149 @@ void CustomTexture::createTextureImage(std::string path, QEColorSpace cs)
         PROFILE_SCOPE("createTextureSampler");
         this->createTextureSampler();
     }
+}
+
+void CustomTexture::createTextureFromKtx2(const std::string& path, QEColorSpace cs)
+{
+    ptrCommandPool = &commandPool;
+
+    ktxTexture2* kTexture = nullptr;
+    KTX_error_code ktxResult = ktxTexture2_CreateFromNamedFile(
+        path.c_str(),
+        KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT,
+        &kTexture
+    );
+
+    if (ktxResult != KTX_SUCCESS || !kTexture)
+        throw std::runtime_error("Failed to load KTX2 texture: " + path);
+
+    texWidth = static_cast<int>(kTexture->baseWidth);
+    texHeight = static_cast<int>(kTexture->baseHeight);
+    mipLevels = kTexture->numLevels;
+    texChannels = 4; // de momento, valor conservador
+
+    VkFormat imageFormat = static_cast<VkFormat>(kTexture->vkFormat);
+    if (imageFormat == VK_FORMAT_UNDEFINED)
+    {
+        ktxTexture_Destroy(ktxTexture(kTexture));
+        throw std::runtime_error("KTX2 texture has undefined vkFormat: " + path);
+    }
+
+    ktx_size_t dataSize = ktxTexture_GetDataSize(ktxTexture(kTexture));
+    ktx_uint8_t* imageData = ktxTexture_GetData(ktxTexture(kTexture));
+
+    if (!imageData || dataSize == 0)
+    {
+        ktxTexture_Destroy(ktxTexture(kTexture));
+        throw std::runtime_error("KTX2 texture contains no image data: " + path);
+    }
+
+    VkBuffer stagingBuffer = VK_NULL_HANDLE;
+    VkDeviceMemory stagingBufferMemory = VK_NULL_HANDLE;
+
+    BufferManageModule::createBuffer(
+        static_cast<VkDeviceSize>(dataSize),
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        stagingBuffer,
+        stagingBufferMemory,
+        *deviceModule
+    );
+
+    void* mapped = nullptr;
+    vkMapMemory(deviceModule->device, stagingBufferMemory, 0, static_cast<VkDeviceSize>(dataSize), 0, &mapped);
+    memcpy(mapped, imageData, static_cast<size_t>(dataSize));
+    vkUnmapMemory(deviceModule->device, stagingBufferMemory);
+
+    createImage(
+        texWidth,
+        texHeight,
+        imageFormat,
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        mipLevels,
+        1,
+        VK_SAMPLE_COUNT_1_BIT
+    );
+
+    VkCommandBuffer cmd = beginSingleTimeCommands(deviceModule->device, *ptrCommandPool);
+
+    VkImageSubresourceRange range{};
+    range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    range.baseMipLevel = 0;
+    range.levelCount = mipLevels;
+    range.baseArrayLayer = 0;
+    range.layerCount = 1;
+
+    RecordTransitionImageLayout(
+        cmd,
+        image,
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        range
+    );
+
+    std::vector<VkBufferImageCopy> regions;
+    regions.reserve(mipLevels);
+
+    for (uint32_t level = 0; level < mipLevels; ++level)
+    {
+        ktx_size_t offset = 0;
+        KTX_error_code offRes = ktxTexture_GetImageOffset(ktxTexture(kTexture), level, 0, 0, &offset);
+        if (offRes != KTX_SUCCESS)
+        {
+            endSingleTimeCommands(deviceModule->device, queueModule->graphicsQueue, *ptrCommandPool, cmd);
+            vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
+            vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
+            ktxTexture_Destroy(ktxTexture(kTexture));
+            throw std::runtime_error("Failed to get KTX2 mip offset: " + path);
+        }
+
+        VkBufferImageCopy region{};
+        region.bufferOffset = static_cast<VkDeviceSize>(offset);
+        region.bufferRowLength = 0;
+        region.bufferImageHeight = 0;
+        region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        region.imageSubresource.mipLevel = level;
+        region.imageSubresource.baseArrayLayer = 0;
+        region.imageSubresource.layerCount = 1;
+        region.imageOffset = { 0, 0, 0 };
+        region.imageExtent = {
+            std::max(1u, kTexture->baseWidth >> level),
+            std::max(1u, kTexture->baseHeight >> level),
+            1
+        };
+
+        regions.push_back(region);
+    }
+
+    vkCmdCopyBufferToImage(
+        cmd,
+        stagingBuffer,
+        image,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        static_cast<uint32_t>(regions.size()),
+        regions.data()
+    );
+
+    RecordTransitionImageLayout(
+        cmd,
+        image,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        range
+    );
+
+    endSingleTimeCommands(deviceModule->device, queueModule->graphicsQueue, *ptrCommandPool, cmd);
+
+    vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
+    vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
+
+    ktxTexture_Destroy(ktxTexture(kTexture));
+
+    createTextureImageView(imageFormat);
+    createTextureSampler();
 }
 
 void CustomTexture::createCubemapTextureImage(std::vector<std::string> paths)

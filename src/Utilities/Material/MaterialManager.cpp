@@ -446,7 +446,6 @@ void MaterialManager::DeserializeMaterials(YAML::Node materials)
                 {
                     PROFILE_SCOPE("Update texture paths");
                     materialDto.UpdateTexturePaths(resolvedPath.parent_path());
-                    materialDto.UpdateImportedTexturePaths(resolvedPath.parent_path());
                 }
 
                 materialDtos.push_back(materialDto);

@@ -71,18 +71,27 @@ std::string QETextureImporter::BuildImportedPath(const std::string& sourcePath)
     fs::path src = fs::absolute(sourcePath).lexically_normal();
     fs::path srcParent = src.parent_path();
 
-    fs::path importedDir;
-    if (srcParent.filename() == "Textures")
-        importedDir = srcParent.parent_path() / "ImportedTextures";
+    fs::path outputDir;
+
+    if (srcParent.filename() == "__TempTextures")
+    {
+        outputDir = srcParent.parent_path() / "Textures";
+    }
+    else if (srcParent.filename() == "Textures")
+    {
+        outputDir = srcParent;
+    }
     else
-        importedDir = srcParent / "ImportedTextures";
+    {
+        outputDir = srcParent / "Textures";
+    }
 
-    fs::create_directories(importedDir);
+    fs::create_directories(outputDir);
 
-    fs::path outFile = importedDir / src.stem();
+    fs::path outFile = outputDir / src.stem();
     outFile += ".ktx2";
 
-    return fs::absolute(outFile).lexically_normal().string();
+    return outFile.lexically_normal().string();
 }
 
 QETextureImportResult QETextureImporter::ImportToKtx2(
@@ -134,6 +143,8 @@ QETextureImportResult QETextureImporter::ImportToKtx2(
         args << "--assign_oetf srgb ";
     else
         args << "--assign_oetf linear ";
+
+    args << "--target_type RGBA ";
 
     args << Quote(result.importedPath) << " ";
     args << Quote(result.sourcePath);

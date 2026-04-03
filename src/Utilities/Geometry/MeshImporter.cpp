@@ -768,22 +768,11 @@ void MeshImporter::ExtractAndUpdateMaterials(
         { aiTextureType_SPECULAR, aiTextureType_REFLECTION, aiTextureType_MAYA_SPECULAR_COLOR } // 7 Specular
     };
 
-    const std::string parentFolder = std::filesystem::path(outputTextureFolder).filename().string();
     const fs::path materialDir = fs::path(outputMaterialPath);
-    const fs::path textureDir = fs::path(outputTextureFolder);
+    const fs::path tempTextureDir = fs::path(outputTextureFolder);
+    const fs::path finalTextureDir = tempTextureDir.parent_path() / "Textures";
 
-    auto NormalizeTexPath = [&](const std::string& p) -> std::string
-        {
-            if (p.empty())
-                return "NULL_TEXTURE";
-
-            std::filesystem::path fp(p);
-            std::string fn = fp.filename().string();
-            if (fn.empty())
-                return "NULL_TEXTURE";
-
-            return std::string("../") + parentFolder + "/" + fn;
-        };
+    fs::create_directories(finalTextureDir);
 
     auto ResolveFirstTexture = [&](aiMaterial* material, const std::vector<aiTextureType>& fallbacks) -> std::string
         {
@@ -803,32 +792,26 @@ void MeshImporter::ExtractAndUpdateMaterials(
 
             fs::path p(texRef);
 
-            // Si ya viene absoluta, úsala tal cual
             if (p.is_absolute())
                 return p.lexically_normal().string();
 
-            // Durante la importación, las texturas ya se han copiado/extraído a outputTextureFolder.
-            // Nos interesa el archivo físico real dentro de esa carpeta.
             std::string filename = p.filename().string();
             if (filename.empty())
                 return "";
 
-            return (textureDir / filename).lexically_normal().string();
+            return (tempTextureDir / filename).lexically_normal().string();
         };
 
     auto ToMaterialRelativePath = [&](const std::string& assetPath, const fs::path& materialFilePath) -> std::string
         {
-            if (assetPath.empty())
-                return "NULL_TEXTURE";
-
-            if (assetPath == "NULL_TEXTURE")
+            if (assetPath.empty() || assetPath == "NULL_TEXTURE")
                 return "NULL_TEXTURE";
 
             fs::path p(assetPath);
-            fs::path materialDir = materialFilePath.parent_path();
+            fs::path materialFolder = materialFilePath.parent_path();
 
             std::error_code ec;
-            fs::path rel = fs::relative(p, materialDir, ec);
+            fs::path rel = fs::relative(p, materialFolder, ec);
 
             if (ec)
                 return p.lexically_normal().generic_string();
@@ -863,12 +846,10 @@ void MeshImporter::ExtractAndUpdateMaterials(
         if (fs::exists(materialPath))
             continue;
 
-        // 1) Resolver referencias de textura por slot tal como vienen del material
         std::vector<std::string> rawPaths(textureSlots.size(), "");
         for (size_t slot = 0; slot < textureSlots.size(); ++slot)
             rawPaths[slot] = ResolveFirstTexture(material, textureSlots[slot]);
 
-        // 2) Caso especial glTF packed MetallicRoughness
         uint32_t metallicChan = 0;
         uint32_t roughnessChan = 0;
         uint32_t aoChan = 0;
@@ -882,35 +863,19 @@ void MeshImporter::ExtractAndUpdateMaterials(
             rawPaths[3] = std::string(mrPath.C_Str());
 
             roughnessChan = 1; // G
-            metallicChan = 2; // B
+            metallicChan = 2;  // B
         }
 
         if (!rawPaths[4].empty())
             aoChan = 0; // R
 
-        // 3) Construir rutas físicas reales para el importer (.png/.jpg en disco)
         std::vector<std::string> sourceDiskPaths(rawPaths.size(), "");
         for (size_t slot = 0; slot < rawPaths.size(); ++slot)
             sourceDiskPaths[slot] = ResolveTextureToDiskPath(rawPaths[slot]);
 
-        // 4) Construir rutas relativas para serializar en el material
-        std::vector<std::string> finalPaths = rawPaths;
-        for (auto& p : finalPaths)
-            p = NormalizeTexPath(p);
-
-        // 5) Calcular mask
-        uint32_t texMask = 0;
-        for (size_t slot = 0; slot < finalPaths.size(); ++slot)
-        {
-            if (!IsNullTex(finalPaths[slot]))
-                texMask |= (1u << static_cast<uint32_t>(slot));
-        }
-
-        // 6) Importar parámetros del material desde Assimp
         MaterialData matData;
         matData.ImportAssimpMaterial(material);
 
-        // 7) Construir DTO
         MaterialDto dto;
         dto.Name = materialName;
         dto.FilePath = QEProjectManager::ToProjectRelativePath(materialPath);
@@ -937,39 +902,41 @@ void MeshImporter::ExtractAndUpdateMaterials(
         dto.Transparent = matData.Transparent;
         dto.Reflective = matData.Reflective;
 
-        dto.texMask = texMask;
         dto.metallicChan = metallicChan;
         dto.roughnessChan = roughnessChan;
         dto.aoChan = aoChan;
         dto.AlphaMode = matData.AlphaMode;
 
-        dto.diffuseTexturePath = finalPaths[0];
-        dto.normalTexturePath = finalPaths[1];
-        dto.metallicTexturePath = finalPaths[2];
-        dto.roughnessTexturePath = finalPaths[3];
-        dto.aoTexturePath = finalPaths[4];
-        dto.emissiveTexturePath = finalPaths[5];
-        dto.heightTexturePath = finalPaths[6];
-        dto.specularTexturePath = finalPaths[7];
+        // Generar KTX2 finales en ../Textures
+        ImportMaterialTextureIfNeeded(sourceDiskPaths[0], dto.diffuseTexturePath, TEXTURE_TYPE::DIFFUSE_TYPE, QEColorSpace::SRGB);
+        ImportMaterialTextureIfNeeded(sourceDiskPaths[1], dto.normalTexturePath, TEXTURE_TYPE::NORMAL_TYPE, QEColorSpace::Linear);
+        ImportMaterialTextureIfNeeded(sourceDiskPaths[2], dto.metallicTexturePath, TEXTURE_TYPE::METALNESS_TYPE, QEColorSpace::Linear);
+        ImportMaterialTextureIfNeeded(sourceDiskPaths[3], dto.roughnessTexturePath, TEXTURE_TYPE::ROUGHNESS_TYPE, QEColorSpace::Linear);
+        ImportMaterialTextureIfNeeded(sourceDiskPaths[4], dto.aoTexturePath, TEXTURE_TYPE::AO_TYPE, QEColorSpace::Linear);
+        ImportMaterialTextureIfNeeded(sourceDiskPaths[5], dto.emissiveTexturePath, TEXTURE_TYPE::EMISSIVE_TYPE, QEColorSpace::SRGB);
+        ImportMaterialTextureIfNeeded(sourceDiskPaths[6], dto.heightTexturePath, TEXTURE_TYPE::HEIGHT_TYPE, QEColorSpace::Linear);
+        ImportMaterialTextureIfNeeded(sourceDiskPaths[7], dto.specularTexturePath, TEXTURE_TYPE::SPECULAR_TYPE, QEColorSpace::Linear);
 
-        // 8) Generar KTX2 durante la importación del asset, usando rutas físicas reales
-        ImportMaterialTextureIfNeeded(sourceDiskPaths[0], dto.diffuseTextureImportedPath, TEXTURE_TYPE::DIFFUSE_TYPE, QEColorSpace::SRGB);
-        ImportMaterialTextureIfNeeded(sourceDiskPaths[1], dto.normalTextureImportedPath, TEXTURE_TYPE::NORMAL_TYPE, QEColorSpace::Linear);
-        ImportMaterialTextureIfNeeded(sourceDiskPaths[2], dto.metallicTextureImportedPath, TEXTURE_TYPE::METALNESS_TYPE, QEColorSpace::Linear);
-        ImportMaterialTextureIfNeeded(sourceDiskPaths[3], dto.roughnessTextureImportedPath, TEXTURE_TYPE::ROUGHNESS_TYPE, QEColorSpace::Linear);
-        ImportMaterialTextureIfNeeded(sourceDiskPaths[4], dto.aoTextureImportedPath, TEXTURE_TYPE::AO_TYPE, QEColorSpace::Linear);
-        ImportMaterialTextureIfNeeded(sourceDiskPaths[5], dto.emissiveTextureImportedPath, TEXTURE_TYPE::EMISSIVE_TYPE, QEColorSpace::SRGB);
-        ImportMaterialTextureIfNeeded(sourceDiskPaths[6], dto.heightTextureImportedPath, TEXTURE_TYPE::HEIGHT_TYPE, QEColorSpace::Linear);
-        ImportMaterialTextureIfNeeded(sourceDiskPaths[7], dto.specularTextureImportedPath, TEXTURE_TYPE::SPECULAR_TYPE, QEColorSpace::Linear);
+        // A partir de aquí, Textures apunta al asset runtime final (.ktx2)
+        dto.diffuseTexturePath = ToMaterialRelativePath(dto.diffuseTexturePath, materialPath);
+        dto.normalTexturePath = ToMaterialRelativePath(dto.normalTexturePath, materialPath);
+        dto.metallicTexturePath = ToMaterialRelativePath(dto.metallicTexturePath, materialPath);
+        dto.roughnessTexturePath = ToMaterialRelativePath(dto.roughnessTexturePath, materialPath);
+        dto.aoTexturePath = ToMaterialRelativePath(dto.aoTexturePath, materialPath);
+        dto.emissiveTexturePath = ToMaterialRelativePath(dto.emissiveTexturePath, materialPath);
+        dto.heightTexturePath = ToMaterialRelativePath(dto.heightTexturePath, materialPath);
+        dto.specularTexturePath = ToMaterialRelativePath(dto.specularTexturePath, materialPath);
 
-        dto.diffuseTextureImportedPath = ToMaterialRelativePath(dto.diffuseTextureImportedPath, materialPath);
-        dto.normalTextureImportedPath = ToMaterialRelativePath(dto.normalTextureImportedPath, materialPath);
-        dto.metallicTextureImportedPath = ToMaterialRelativePath(dto.metallicTextureImportedPath, materialPath);
-        dto.roughnessTextureImportedPath = ToMaterialRelativePath(dto.roughnessTextureImportedPath, materialPath);
-        dto.aoTextureImportedPath = ToMaterialRelativePath(dto.aoTextureImportedPath, materialPath);
-        dto.emissiveTextureImportedPath = ToMaterialRelativePath(dto.emissiveTextureImportedPath, materialPath);
-        dto.heightTextureImportedPath = ToMaterialRelativePath(dto.heightTextureImportedPath, materialPath);
-        dto.specularTextureImportedPath = ToMaterialRelativePath(dto.specularTextureImportedPath, materialPath);
+        uint32_t texMask = 0;
+        if (!IsNullTex(dto.diffuseTexturePath))   texMask |= (1u << 0);
+        if (!IsNullTex(dto.normalTexturePath))    texMask |= (1u << 1);
+        if (!IsNullTex(dto.metallicTexturePath))  texMask |= (1u << 2);
+        if (!IsNullTex(dto.roughnessTexturePath)) texMask |= (1u << 3);
+        if (!IsNullTex(dto.aoTexturePath))        texMask |= (1u << 4);
+        if (!IsNullTex(dto.emissiveTexturePath))  texMask |= (1u << 5);
+        if (!IsNullTex(dto.heightTexturePath))    texMask |= (1u << 6);
+        if (!IsNullTex(dto.specularTexturePath))  texMask |= (1u << 7);
+        dto.texMask = texMask;
 
         if (!QEMaterialYamlHelper::WriteMaterialFile(materialPath, dto))
         {
@@ -1037,9 +1004,28 @@ bool MeshImporter::LoadAndExportModel(
     {
         std::string modelDirectory = filesystem::path(inputPath).parent_path().string();
 
-        ExtractAndUpdateTextures(const_cast<aiScene*>(scene), outputTexturePath, modelDirectory);
+        fs::path modelRoot = fs::path(outputTexturePath).parent_path();
+        fs::path tempTextureFolder = modelRoot / "__TempTextures";
+        fs::path legacyImportedFolder = modelRoot / "ImportedTextures";
 
-        ExtractAndUpdateMaterials(const_cast<aiScene*>(scene), outputTexturePath, outputMaterialPath, modelDirectory);
+        fs::create_directories(tempTextureFolder);
+
+        ExtractAndUpdateTextures(const_cast<aiScene*>(scene), tempTextureFolder.string(), modelDirectory);
+        ExtractAndUpdateMaterials(const_cast<aiScene*>(scene), tempTextureFolder.string(), outputMaterialPath, modelDirectory);
+
+        std::error_code ec;
+
+        fs::remove_all(tempTextureFolder, ec);
+        if (ec)
+            std::cerr << "Warning: could not remove temp texture folder: " << tempTextureFolder << std::endl;
+
+        ec.clear();
+        if (fs::exists(legacyImportedFolder))
+        {
+            fs::remove_all(legacyImportedFolder, ec);
+            if (ec)
+                std::cerr << "Warning: could not remove legacy ImportedTextures folder: " << legacyImportedFolder << std::endl;
+        }
     }
 
     // Exportar a glTF 2.0
