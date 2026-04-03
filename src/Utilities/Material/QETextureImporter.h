@@ -8,10 +8,17 @@
 #include <TextureTypes.h>
 #include <CustomTexture.h>
 
+enum class QETextureCompressionPreset
+{
+    UASTC,
+    ETC1S
+};
+
 struct QETextureImportSettings
 {
     TEXTURE_TYPE semantic = TEXTURE_TYPE::NULL_TYPE;
     QEColorSpace colorSpace = QEColorSpace::SRGB;
+    QETextureCompressionPreset compressionPreset = QETextureCompressionPreset::UASTC;
     bool generateMipmaps = true;
     bool overwrite = false;
 };

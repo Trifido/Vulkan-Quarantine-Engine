@@ -7,7 +7,6 @@
 #include "SyncTool.h"
 #include <unordered_map>
 #include <Helpers/ScopedTimer.h>
-#include <ktx.h>
 #include <ktxvulkan.h>
 #include <filesystem>
 
@@ -252,6 +251,25 @@ void CustomTexture::createTextureImage(std::string path, QEColorSpace cs)
     }
 }
 
+KtxTranscodeSelection CustomTexture::ChooseKtxTranscodeFormat(QEColorSpace cs)
+{
+    VkPhysicalDeviceFeatures features{};
+    vkGetPhysicalDeviceFeatures(deviceModule->physicalDevice, &features);
+
+    if (features.textureCompressionBC)
+    {
+        if (cs == QEColorSpace::SRGB)
+            return { KTX_TTF_BC7_RGBA, VK_FORMAT_BC7_SRGB_BLOCK };
+        else
+            return { KTX_TTF_BC7_RGBA, VK_FORMAT_BC7_UNORM_BLOCK };
+    }
+
+    if (cs == QEColorSpace::SRGB)
+        return { KTX_TTF_RGBA32, VK_FORMAT_R8G8B8A8_SRGB };
+    else
+        return { KTX_TTF_RGBA32, VK_FORMAT_R8G8B8A8_UNORM };
+}
+
 void CustomTexture::createTextureFromKtx2(const std::string& path, QEColorSpace cs)
 {
     ptrCommandPool = &commandPool;
@@ -266,17 +284,41 @@ void CustomTexture::createTextureFromKtx2(const std::string& path, QEColorSpace 
     if (ktxResult != KTX_SUCCESS || !kTexture)
         throw std::runtime_error("Failed to load KTX2 texture: " + path);
 
-    texWidth = static_cast<int>(kTexture->baseWidth);
-    texHeight = static_cast<int>(kTexture->baseHeight);
-    mipLevels = kTexture->numLevels;
-    texChannels = 4; // de momento, valor conservador
+    VkFormat imageFormat = VK_FORMAT_UNDEFINED;
 
-    VkFormat imageFormat = static_cast<VkFormat>(kTexture->vkFormat);
+    if (ktxTexture2_NeedsTranscoding(kTexture))
+    {
+        KtxTranscodeSelection selection = ChooseKtxTranscodeFormat(cs);
+
+        KTX_error_code transcodeResult = ktxTexture2_TranscodeBasis(
+            kTexture,
+            selection.ktxFormat,
+            0
+        );
+
+        if (transcodeResult != KTX_SUCCESS)
+        {
+            ktxTexture_Destroy(ktxTexture(kTexture));
+            throw std::runtime_error("Failed to transcode KTX2 texture: " + path);
+        }
+
+        imageFormat = selection.vkFormat;
+    }
+    else
+    {
+        imageFormat = static_cast<VkFormat>(kTexture->vkFormat);
+    }
+
     if (imageFormat == VK_FORMAT_UNDEFINED)
     {
         ktxTexture_Destroy(ktxTexture(kTexture));
-        throw std::runtime_error("KTX2 texture has undefined vkFormat: " + path);
+        throw std::runtime_error("KTX2 texture has undefined VkFormat: " + path);
     }
+
+    texWidth = static_cast<int>(kTexture->baseWidth);
+    texHeight = static_cast<int>(kTexture->baseHeight);
+    mipLevels = kTexture->numLevels;
+    texChannels = 4;
 
     ktx_size_t dataSize = ktxTexture_GetDataSize(ktxTexture(kTexture));
     ktx_uint8_t* imageData = ktxTexture_GetData(ktxTexture(kTexture));

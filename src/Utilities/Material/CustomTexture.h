@@ -10,11 +10,18 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <ktx.h>
 
 enum class QEColorSpace : uint8_t
 {
     Linear = 0, // UNORM
     SRGB = 1
+};
+
+struct KtxTranscodeSelection
+{
+    ktx_transcode_fmt_e ktxFormat;
+    VkFormat vkFormat;
 };
 
 class CustomTexture : public TextureManagerModule
@@ -68,6 +75,10 @@ private:
         uint32_t mipLevels);
 
     int GetChannelCount(VkFormat format);
+
+    KtxTranscodeSelection ChooseKtxTranscodeFormat(QEColorSpace cs);
+    void createTextureFromKtx2(const std::string& path, QEColorSpace cs);
+
 public:
     CustomTexture();
     CustomTexture(std::string path, TEXTURE_TYPE type);
@@ -75,10 +86,8 @@ public:
     CustomTexture(aiTexel* data, unsigned int width, unsigned int height, TEXTURE_TYPE type);
     CustomTexture(unsigned int width, unsigned int height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, TEXTURE_TYPE type);
     CustomTexture(std::string path, TEXTURE_TYPE type, QEColorSpace cs);
-
     void createTextureImage(std::string path = NULL);
     void createTextureImage(std::string path, QEColorSpace cs);
-    void createTextureFromKtx2(const std::string& path, QEColorSpace cs);
     void createCubemapTextureImage(std::string path = NULL);
     void createCubemapTextureImage(std::vector<std::string> paths);
     void createTextureRawImage(aiTexel* rawData, unsigned int width, unsigned int height);

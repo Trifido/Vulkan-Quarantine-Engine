@@ -139,6 +139,9 @@ QETextureImportResult QETextureImporter::ImportToKtx2(
     if (settings.generateMipmaps)
         args << "--genmipmap ";
 
+    args << "--bcmp ";
+
+    // Color space
     if (settings.colorSpace == QEColorSpace::SRGB)
         args << "--assign_oetf srgb ";
     else
@@ -146,6 +149,7 @@ QETextureImportResult QETextureImporter::ImportToKtx2(
 
     args << "--target_type RGBA ";
 
+    // Input / output
     args << Quote(result.importedPath) << " ";
     args << Quote(result.sourcePath);
 
