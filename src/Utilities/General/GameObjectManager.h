@@ -23,9 +23,17 @@ private:
     unsigned int DecideRenderLayer(std::shared_ptr<QEGameObject> go, unsigned int defaultLayer);
     void RegisterSingle(std::shared_ptr<QEGameObject> go, std::string name);
 
+    void UnregisterSingle(const std::shared_ptr<QEGameObject>& go);
+    void UnregisterHierarchy(const std::shared_ptr<QEGameObject>& go);
+    void DestroyHierarchy(const std::shared_ptr<QEGameObject>& go);
+
 public:
     GameObjectManager() = default;
+
     void AddGameObject(std::shared_ptr<QEGameObject> object_ptr);
+    bool RemoveGameObject(const std::shared_ptr<QEGameObject>& object_ptr);
+    std::shared_ptr<QEGameObject> CreateEmptyGameObject(const std::string& baseName = "Empty GameObject");
+
     std::shared_ptr<QEGameObject> GetGameObject(const std::string& name);
     void DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
     void CSMCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex);
@@ -45,7 +53,6 @@ public:
     std::vector<std::shared_ptr<QEGameObject>> GetRootGameObjects() const;
     std::shared_ptr<QEGameObject> GetGameObjectById(const std::string& id) const;
 };
-
 
 template<typename T>
 std::shared_ptr<T> GameObjectManager::FindFirstComponentInScene(const std::string& excludedGameObjectName) const

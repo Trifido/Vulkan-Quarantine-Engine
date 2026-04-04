@@ -21,9 +21,20 @@ public:
 
 private:
     void DrawGameObjectNode(const std::shared_ptr<QEGameObject>& gameObject);
+    void DrawWindowContextMenu();
+    void HandleDeleteShortcut();
 
 private:
     GameObjectManager* gameObjectManager = nullptr;
     EditorContext* editorContext = nullptr;
     EditorSelectionManager* selectionManager = nullptr;
+
+    std::shared_ptr<QEGameObject> pendingDeleteGameObject = nullptr;
+    bool pendingCreateEmptyGameObject = false;
+
+//DRAG & DROP
+private:
+    bool IsDescendantOf(const std::shared_ptr<QEGameObject>& node, const std::shared_ptr<QEGameObject>& potentialAncestor) const;
+    bool ReparentGameObject(const std::shared_ptr<QEGameObject>& child, const std::shared_ptr<QEGameObject>& newParent);
+    void DrawRootDropTarget();
 };

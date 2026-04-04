@@ -42,10 +42,62 @@ unsigned int GameObjectManager::DecideRenderLayer(std::shared_ptr<QEGameObject> 
 
 void GameObjectManager::RegisterSingle(std::shared_ptr<QEGameObject> go, std::string name)
 {
+    if (!go)
+        return;
+
     name = CheckName(name);
+    go->Name = name;
 
     const unsigned int layer = DecideRenderLayer(go, (unsigned int)RenderLayer::SOLID);
     this->_objects[layer][name] = go;
+}
+
+void GameObjectManager::UnregisterSingle(const std::shared_ptr<QEGameObject>& go)
+{
+    if (!go)
+        return;
+
+    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); ++idl)
+    {
+        const unsigned int layerId = this->renderLayers.GetLayer(idl);
+        auto layerIt = this->_objects.find(layerId);
+        if (layerIt == this->_objects.end())
+            continue;
+
+        for (auto it = layerIt->second.begin(); it != layerIt->second.end();)
+        {
+            if (it->second == go)
+                it = layerIt->second.erase(it);
+            else
+                ++it;
+        }
+    }
+}
+
+void GameObjectManager::UnregisterHierarchy(const std::shared_ptr<QEGameObject>& go)
+{
+    if (!go)
+        return;
+
+    for (auto& child : go->childs)
+    {
+        UnregisterHierarchy(child);
+    }
+
+    UnregisterSingle(go);
+}
+
+void GameObjectManager::DestroyHierarchy(const std::shared_ptr<QEGameObject>& go)
+{
+    if (!go)
+        return;
+
+    for (auto& child : go->childs)
+    {
+        DestroyHierarchy(child);
+    }
+
+    go->QEDestroy();
 }
 
 void GameObjectManager::AddGameObject(std::shared_ptr<QEGameObject> object_ptr)
@@ -65,6 +117,33 @@ void GameObjectManager::AddGameObject(std::shared_ptr<QEGameObject> object_ptr)
         };
 
     dfs(object_ptr);
+}
+
+std::shared_ptr<QEGameObject> GameObjectManager::CreateEmptyGameObject(const std::string& baseName)
+{
+    const std::string finalName = CheckName(baseName.empty() ? "Empty GameObject" : baseName);
+    auto gameObject = std::make_shared<QEGameObject>(finalName);
+    AddGameObject(gameObject);
+    return gameObject;
+}
+
+bool GameObjectManager::RemoveGameObject(const std::shared_ptr<QEGameObject>& object_ptr)
+{
+    if (!object_ptr)
+        return false;
+
+    if (object_ptr->Name == "QECameraEditor")
+        return false;
+
+    if (object_ptr->parent != nullptr)
+    {
+        object_ptr->parent->RemoveChild(object_ptr);
+    }
+
+    DestroyHierarchy(object_ptr);
+    UnregisterHierarchy(object_ptr);
+
+    return true;
 }
 
 void GameObjectManager::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
