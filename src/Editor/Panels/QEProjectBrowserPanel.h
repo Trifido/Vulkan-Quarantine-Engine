@@ -31,6 +31,8 @@ public:
 
 private:
     void DrawFolderTree(QEProjectAssetItem* item);
+    void DrawBreadcrumbAligned(QEProjectAssetItem* folder, float lineHeight);
+    void DrawNavigationBar(QEProjectAssetItem* folder);
     void DrawFolderContents(QEProjectAssetItem* folder);
     void DrawAssetTile(QEProjectAssetItem* item, float tileSize);
 

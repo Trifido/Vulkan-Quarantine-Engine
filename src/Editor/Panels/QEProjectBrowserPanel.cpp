@@ -104,60 +104,99 @@ void QEProjectBrowserPanel::DrawFolderTree(QEProjectAssetItem* item)
     }
 }
 
-void QEProjectBrowserPanel::DrawFolderContents(QEProjectAssetItem* folder)
+void QEProjectBrowserPanel::DrawBreadcrumbAligned(QEProjectAssetItem* folder, float lineHeight)
 {
-    if (folder == nullptr || !folder->IsDirectory)
-        return;
+    std::vector<QEProjectAssetItem*> path;
 
+    QEProjectAssetItem* current = folder;
+    while (current)
+    {
+        path.push_back(current);
+        current = current->Parent;
+    }
+
+    std::reverse(path.begin(), path.end());
+
+    for (size_t i = 0; i < path.size(); ++i)
+    {
+        QEProjectAssetItem* node = path[i];
+
+        // 🔑 mismo baseline SIEMPRE
+        ImGui::AlignTextToFramePadding();
+
+        // 🔑 usar Button en vez de SmallButton (más consistente)
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(6, 2));
+
+        if (ImGui::Button(node->Name.c_str()))
+        {
+            _navigation.NavigateToFolder(node, true);
+        }
+
+        ImGui::PopStyleVar();
+
+        if (i < path.size() - 1)
+        {
+            ImGui::SameLine(0, 4.0f);
+
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted(">");
+
+            ImGui::SameLine(0, 4.0f);
+        }
+    }
+}
+
+void QEProjectBrowserPanel::DrawNavigationBar(QEProjectAssetItem* folder)
+{
+    const float lineHeight = ImGui::GetTextLineHeight();
+    const float iconSize = 17.f;
+
+    // 🔑 Esto fuerza baseline común para TODO
+    ImGui::AlignTextToFramePadding();
+
+    // =========================
+    // ⬆ BOTÓN UP
+    // =========================
     const QEIconTexture* upIcon = _iconCache.GetIcon(QEAssetType::NavigateUp);
-
-    const float iconSize = ImGui::GetTextLineHeight();
 
     if (upIcon && upIcon->ImGuiTexture != 0)
     {
         ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(0, 0, 0, 0));
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(255, 255, 255, 25));
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(255, 255, 255, 40));
+
+        // 🔑 IMPORTANTE: padding 0
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
 
-        // 🔑 alineación vertical correcta
-        ImGui::AlignTextToFramePadding();
-
-        if (ImGui::ImageButton(
-            "##NavigateUp",
-            upIcon->ImGuiTexture,
-            ImVec2(30, 30)))
+        if (ImGui::ImageButton("##Up", upIcon->ImGuiTexture, ImVec2(iconSize, iconSize)))
         {
-            if (folder->Parent != nullptr)
+            if (folder->Parent)
                 _navigation.NavigateToFolder(folder->Parent, true);
         }
 
         ImGui::PopStyleVar();
         ImGui::PopStyleColor(3);
     }
-    else
-    {
-        ImGui::AlignTextToFramePadding();
 
-        if (ImGui::Button("^"))
-        {
-            if (folder->Parent != nullptr)
-                _navigation.NavigateToFolder(folder->Parent, true);
-        }
-    }
+    ImGui::SameLine(0, 6.0f);
 
-    // 🔑 importante también aquí
-    ImGui::AlignTextToFramePadding();
+    // =========================
+    // 🧭 BREADCRUMB
+    // =========================
+    DrawBreadcrumbAligned(folder, lineHeight);
+}
 
-    std::string headerLabel = "Contents";
+void QEProjectBrowserPanel::DrawFolderContents(QEProjectAssetItem* folder)
+{
+    if (folder == nullptr || !folder->IsDirectory)
+        return;
 
-    if (_navigation.GetSelectedItem() != nullptr)
-        headerLabel = _navigation.GetSelectedItem()->Name;
-    else
-        headerLabel = folder->Name;
+    DrawNavigationBar(folder); // 👈 nuevo
 
-    ImGui::TextUnformatted(headerLabel.c_str());
+    ImGui::Separator();
     ImGui::Spacing();
+
+    // ---- GRID ----
 
     const float availableWidth = ImGui::GetContentRegionAvail().x;
     int columnCount = static_cast<int>(availableWidth / (tileSize + cellPadding));
@@ -168,8 +207,7 @@ void QEProjectBrowserPanel::DrawFolderContents(QEProjectAssetItem* folder)
     {
         for (const auto& child : folder->Children)
         {
-            if (!child)
-                continue;
+            if (!child) continue;
 
             ImGui::TableNextColumn();
             DrawAssetTile(child.get(), tileSize);
