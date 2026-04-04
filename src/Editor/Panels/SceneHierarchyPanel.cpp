@@ -32,15 +32,26 @@ void SceneHierarchyPanel::Draw()
         return;
     }
 
+    dragDropHandledThisFrame = false;
+
     HandleDeleteShortcut();
     DrawWindowContextMenu();
-    DrawRootDropTarget();
 
     const auto rootObjects = gameObjectManager->GetRootGameObjects();
 
     for (const auto& root : rootObjects)
     {
         DrawGameObjectNode(root);
+    }
+
+    if (draggingGameObject && ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+    {
+        if (!dragDropHandledThisFrame && ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows))
+        {
+            ReparentGameObject(draggingGameObject, nullptr);
+        }
+
+        draggingGameObject.reset();
     }
 
     if (pendingCreateEmptyGameObject)
@@ -168,6 +179,8 @@ void SceneHierarchyPanel::DrawGameObjectNode(const std::shared_ptr<QEGameObject>
 
     if (ImGui::BeginDragDropSource())
     {
+        draggingGameObject = gameObject;
+
         QEGameObject* rawPtr = gameObject.get();
         ImGui::SetDragDropPayload("HIERARCHY_GAMEOBJECT", &rawPtr, sizeof(QEGameObject*));
         ImGui::Text("Move: %s", gameObject->Name.c_str());
@@ -186,7 +199,10 @@ void SceneHierarchyPanel::DrawGameObjectNode(const std::shared_ptr<QEGameObject>
                     auto dragged = gameObjectManager->GetGameObjectById(draggedRaw->ID());
                     if (dragged)
                     {
-                        ReparentGameObject(dragged, gameObject);
+                        if (ReparentGameObject(dragged, gameObject))
+                        {
+                            dragDropHandledThisFrame = true;
+                        }
                     }
                 }
             }
@@ -265,41 +281,3 @@ bool SceneHierarchyPanel::ReparentGameObject(const std::shared_ptr<QEGameObject>
     return true;
 }
 
-void SceneHierarchyPanel::DrawRootDropTarget()
-{
-    ImGui::Separator();
-    ImGui::TextUnformatted("Drop here to unparent");
-
-    ImVec2 avail = ImGui::GetContentRegionAvail();
-    const float width = (avail.x > 1.0f) ? avail.x : 1.0f;
-    const float height = 32.0f;
-
-    ImVec2 cursor = ImGui::GetCursorScreenPos();
-    ImGui::InvisibleButton("##HierarchyRootDropTarget", ImVec2(width, height));
-
-    ImDrawList* drawList = ImGui::GetWindowDrawList();
-    ImU32 color = IM_COL32(90, 90, 90, 120);
-    drawList->AddRect(cursor, ImVec2(cursor.x + width, cursor.y + height), color);
-    drawList->AddText(ImVec2(cursor.x + 8.0f, cursor.y + 8.0f), IM_COL32(220, 220, 220, 255), "Root");
-
-    if (ImGui::BeginDragDropTarget())
-    {
-        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_GAMEOBJECT"))
-        {
-            if (payload->DataSize == sizeof(QEGameObject*))
-            {
-                QEGameObject* draggedRaw = *static_cast<QEGameObject* const*>(payload->Data);
-                if (draggedRaw)
-                {
-                    auto dragged = gameObjectManager->GetGameObjectById(draggedRaw->ID());
-                    if (dragged)
-                    {
-                        ReparentGameObject(dragged, nullptr);
-                    }
-                }
-            }
-        }
-
-        ImGui::EndDragDropTarget();
-    }
-}
