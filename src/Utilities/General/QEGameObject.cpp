@@ -285,3 +285,55 @@ void QEGameObject::InitializeResources()
 
     AddComponent<QETransform>(std::make_shared<QETransform>());
 }
+
+bool QEGameObject::RemoveComponent(const std::shared_ptr<QEGameComponent>& component_ptr)
+{
+    if (!component_ptr)
+        return false;
+
+    if (std::dynamic_pointer_cast<QETransform>(component_ptr))
+        return false;
+
+    auto it = std::find_if(
+        components.begin(),
+        components.end(),
+        [&](const std::shared_ptr<QEGameComponent>& comp)
+        {
+            return comp == component_ptr;
+        }
+    );
+
+    if (it == components.end())
+        return false;
+
+    (*it)->QEDestroy();
+    (*it)->Owner = nullptr;
+    components.erase(it);
+    return true;
+}
+
+bool QEGameObject::RemoveComponentByType(const std::string& typeName)
+{
+    if (typeName.empty())
+        return false;
+
+    if (typeName == "QETransform")
+        return false;
+
+    auto it = std::find_if(
+        components.begin(),
+        components.end(),
+        [&](const std::shared_ptr<QEGameComponent>& comp)
+        {
+            return comp && comp->getTypeName() == typeName;
+        }
+    );
+
+    if (it == components.end())
+        return false;
+
+    (*it)->QEDestroy();
+    (*it)->Owner = nullptr;
+    components.erase(it);
+    return true;
+}

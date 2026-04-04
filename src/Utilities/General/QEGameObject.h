@@ -179,6 +179,26 @@ public:
 
         return true;
     }
+
+    bool RemoveComponent(const std::shared_ptr<QEGameComponent>& component_ptr);
+    bool RemoveComponentByType(const std::string& typeName);
+
+    template<typename T>
+    bool RemoveComponent()
+    {
+        for (auto it = components.begin(); it != components.end(); ++it)
+        {
+            if (std::dynamic_pointer_cast<T>(*it))
+            {
+                (*it)->QEDestroy();
+                (*it)->Owner = nullptr;
+                components.erase(it);
+                return true;
+            }
+        }
+
+        return false;
+    }
 };
 
 #endif

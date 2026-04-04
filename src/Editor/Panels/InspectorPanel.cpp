@@ -162,16 +162,24 @@ namespace
         return false;
     }
 
-    void DrawTransformInspector(
+    bool DrawTransformInspector(
         const std::shared_ptr<QEGameObject>& gameObject,
         const std::shared_ptr<QETransform>& transform,
         EditorCommandManager* commandManager)
     {
         if (!gameObject || !transform)
-            return;
+            return false;
+
+        bool requestRemove = false;
 
         if (ImGui::CollapsingHeader("QETransform", ImGuiTreeNodeFlags_DefaultOpen))
         {
+            if (ImGui::BeginPopupContextItem("QETransformContext"))
+            {
+                ImGui::TextUnformatted("QETransform cannot be removed.");
+                ImGui::EndPopup();
+            }
+
             glm::vec3 position = transform->localPosition;
             glm::vec3 rotation = glm::degrees(glm::eulerAngles(transform->localRotation));
             glm::vec3 scale = transform->localScale;
@@ -240,26 +248,38 @@ namespace
         }
 
         ImGui::Separator();
+        return requestRemove;
     }
 
-    void DrawGenericComponentInspector(
+    bool DrawGenericComponentInspector(
         QEGameComponent* component,
         const std::string& uniquePrefix)
     {
         if (!component)
-            return;
+            return false;
 
         if (!component->IsSerializable())
-            return;
+            return false;
 
         QEMetaType* meta = component->meta();
         if (!meta)
-            return;
+            return false;
 
+        bool requestRemove = false;
         const std::string headerLabel = component->getTypeName();
 
         if (ImGui::CollapsingHeader(headerLabel.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
         {
+            if (ImGui::BeginPopupContextItem((uniquePrefix + "_context").c_str()))
+            {
+                if (ImGui::MenuItem("Remove Component"))
+                {
+                    requestRemove = true;
+                }
+
+                ImGui::EndPopup();
+            }
+
             const auto fields = meta->allFields();
 
             int drawnFields = 0;
@@ -298,6 +318,7 @@ namespace
         }
 
         ImGui::Separator();
+        return requestRemove;
     }
 
     std::string ToLowerCopy(const std::string& text)
@@ -500,6 +521,7 @@ void InspectorPanel::Draw()
 
     ImGui::Separator();
 
+    std::shared_ptr<QEGameComponent> componentToRemove = nullptr;
     int componentIndex = 0;
     for (auto& component : gameObject->components)
     {
@@ -509,19 +531,32 @@ void InspectorPanel::Draw()
         if (!component->IsSerializable())
             continue;
 
+        bool requestRemove = false;
+
         if (auto transform = std::dynamic_pointer_cast<QETransform>(component))
         {
-            DrawTransformInspector(gameObject, transform, commandManager);
+            requestRemove = DrawTransformInspector(gameObject, transform, commandManager);
         }
         else
         {
             const std::string uniquePrefix =
                 "comp_" + gameObject->ID() + "_" + std::to_string(componentIndex);
 
-            DrawGenericComponentInspector(component.get(), uniquePrefix);
+            requestRemove = DrawGenericComponentInspector(component.get(), uniquePrefix);
+        }
+
+        if (requestRemove)
+        {
+            componentToRemove = component;
+            break;
         }
 
         ++componentIndex;
+    }
+
+    if (componentToRemove)
+    {
+        gameObject->RemoveComponent(componentToRemove);
     }
 
     ImGui::End();
