@@ -33,11 +33,19 @@ private:
     void RuntimeCameraController(float dt);
     void RuntimeRotate(float dt);
 
+
 public:
     void QEStart() override;
     void QEInit() override;
     void QEUpdate() override;
     void QEDestroy() override;
+
+public:
+    void SetInputEnabled(bool enabled) { _inputEnabled = enabled; }
+    bool IsInputEnabled() const { return _inputEnabled; }
+
+private:
+    bool _inputEnabled = true;
 };
 
 #endif // !QE_CAMERA_CONTROLLER_H

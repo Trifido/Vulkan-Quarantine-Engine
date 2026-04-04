@@ -24,6 +24,11 @@ void QECameraController::QEInit()
 void QECameraController::QEUpdate()
 {
     if (!_OwnerTransform) return;
+    if (!_inputEnabled)
+    {
+        firstMouse = true;
+        return;
+    }
 
     float dt = Timer::DeltaTime;
     if (dt <= 0.0f) return;

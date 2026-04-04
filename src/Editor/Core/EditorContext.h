@@ -21,6 +21,9 @@ struct EditorContext
     bool ViewportHovered = false;
     bool ViewportImageHovered = false;
 
+    bool BlockViewportInput = false;
+    bool EditorCameraInputEnabled = false;
+
     float ViewportScreenX = 0.0f;
     float ViewportScreenY = 0.0f;
     float ViewportScreenWidth = 0.0f;

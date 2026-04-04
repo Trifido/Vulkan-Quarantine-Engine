@@ -32,6 +32,7 @@ public:
 
     void AddGameObject(std::shared_ptr<QEGameObject> object_ptr);
     bool RemoveGameObject(const std::shared_ptr<QEGameObject>& object_ptr);
+    bool RenameGameObject(const std::shared_ptr<QEGameObject>& objectPtr, const std::string& newName);
     std::shared_ptr<QEGameObject> CreateEmptyGameObject(const std::string& baseName = "Empty GameObject");
 
     std::shared_ptr<QEGameObject> GetGameObject(const std::string& name);

@@ -12,9 +12,11 @@
 
 namespace
 {
-    bool IsEditorModalOpen()
+    bool IsEditorInputBlocked()
     {
-        return ImGui::IsPopupOpen("AddComponentPopup", ImGuiPopupFlags_AnyPopupId);
+        return
+            ImGui::IsPopupOpen("AddComponentPopup", ImGuiPopupFlags_AnyPopupId) ||
+            ImGui::IsPopupOpen("Rename GameObject", ImGuiPopupFlags_AnyPopupId);
     }
 }
 
@@ -44,10 +46,13 @@ void ViewportPanel::Draw()
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::Begin("Viewport", &editorContext->ShowViewport);
 
-    const bool modalOpen = IsEditorModalOpen();
-    editorContext->ViewportFocused = !modalOpen && ImGui::IsWindowFocused();
-    editorContext->ViewportHovered = !modalOpen && ImGui::IsWindowHovered();
+    const bool inputBlocked = IsEditorInputBlocked();
+
+    editorContext->BlockViewportInput = inputBlocked;
+    editorContext->ViewportFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+    editorContext->ViewportHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows);
     editorContext->ViewportImageHovered = false;
+    editorContext->EditorCameraInputEnabled = false;
 
     ImVec2 avail = ImGui::GetContentRegionAvail();
     avail.x = (avail.x > 1.0f) ? avail.x : 1.0f;
@@ -79,7 +84,7 @@ void ViewportPanel::Draw()
 
         ImGui::Image(viewportResources->GetImGuiTexture(), imageSize);
 
-        if (!modalOpen)
+        if (!inputBlocked)
         {
             HandleAssetDropTarget();
 
@@ -88,18 +93,22 @@ void ViewportPanel::Draw()
             const bool insideY = mousePos.y >= imagePos.y && mousePos.y <= (imagePos.y + imageSize.y);
             editorContext->ViewportImageHovered = insideX && insideY;
 
+            editorContext->EditorCameraInputEnabled =
+                editorContext->ViewportImageHovered || editorContext->ViewportFocused;
+
             HandleViewportShortcuts();
             HandlePicking();
         }
         else
         {
             editorContext->ViewportImageHovered = false;
+            editorContext->EditorCameraInputEnabled = false;
         }
 
         auto sessionManager = QESessionManager::getInstance();
         auto editorCamera = sessionManager->EditorCamera();
 
-        if (!modalOpen && selectionManager && gizmoController && editorCamera)
+        if (!inputBlocked && selectionManager && gizmoController && editorCamera)
         {
             auto selectedObject = selectionManager->GetSelectedGameObject();
             if (selectedObject)
@@ -112,7 +121,7 @@ void ViewportPanel::Draw()
             }
         }
 
-        if (!modalOpen)
+        if (!inputBlocked)
         {
             HandleGizmoCommandTracking();
         }

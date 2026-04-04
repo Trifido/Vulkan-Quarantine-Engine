@@ -144,6 +144,8 @@ void QEEditorApp::DrawEditorUI()
         panel->Draw();
     }
 
+    UpdateEditorCameraInputState();
+
     ClearExternalDroppedFiles();
 
     if (editorContext && editorContext->ShowDemoWindow)
@@ -403,6 +405,29 @@ glm::vec3 QEEditorApp::GetSpawnPositionInFrontOfEditorCamera(float distance) con
     const glm::vec3 forward = glm::normalize(cameraTransform->Forward());
 
     return cameraPos + forward * distance;
+}
+
+void QEEditorApp::UpdateEditorCameraInputState()
+{
+    auto editorCamera = sessionManager->EditorCamera();
+    if (!editorCamera || !editorCamera->Owner)
+        return;
+
+    auto controller = editorCamera->Owner->GetComponent<QECameraController>();
+    if (!controller)
+        return;
+
+    const bool popupOpen =
+        ImGui::IsPopupOpen("AddComponentPopup", ImGuiPopupFlags_AnyPopupId) ||
+        ImGui::IsPopupOpen("Rename GameObject", ImGuiPopupFlags_AnyPopupId);
+
+    const bool allowInput =
+        editorContext &&
+        !popupOpen &&
+        !editorContext->BlockViewportInput &&
+        (editorContext->ViewportFocused || editorContext->ViewportImageHovered);
+
+    controller->SetInputEnabled(allowInput);
 }
 
 void QEEditorApp::QueueExternalDroppedFile(const std::filesystem::path& path)

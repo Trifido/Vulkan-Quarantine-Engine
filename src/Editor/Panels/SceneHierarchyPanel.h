@@ -4,6 +4,7 @@
 
 #include <Editor/Core/EditorSelectionManager.h>
 #include <memory>
+#include <string>
 
 class GameObjectManager;
 class QEGameObject;
@@ -39,4 +40,13 @@ private:
 
     std::shared_ptr<QEGameObject> draggingGameObject = nullptr;
     bool dragDropHandledThisFrame = false;
+
+//RENAME QEGAMEOBJECTS
+private:
+    void StartRename(const std::shared_ptr<QEGameObject>& gameObject);
+    void DrawRenamePopup();
+
+    std::shared_ptr<QEGameObject> renamingGameObject = nullptr;
+    std::string renameBuffer;
+    bool openRenamePopup = false;
 };

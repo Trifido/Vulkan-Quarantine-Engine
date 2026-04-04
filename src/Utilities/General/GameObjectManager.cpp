@@ -375,3 +375,44 @@ std::shared_ptr<QEGameObject> GameObjectManager::GetGameObjectById(const std::st
 
     return nullptr;
 }
+
+bool GameObjectManager::RenameGameObject(const std::shared_ptr<QEGameObject>& objectPtr, const std::string& newName)
+{
+    if (!objectPtr)
+        return false;
+
+    if (newName.empty())
+        return false;
+
+    const std::string trimmedName = newName;
+    if (trimmedName.empty())
+        return false;
+
+    if (objectPtr->Name == trimmedName)
+        return false;
+
+    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); ++idl)
+    {
+        const unsigned int layerId = this->renderLayers.GetLayer(idl);
+        auto layerIt = this->_objects.find(layerId);
+        if (layerIt == this->_objects.end())
+            continue;
+
+        for (auto it = layerIt->second.begin(); it != layerIt->second.end(); ++it)
+        {
+            if (it->second == objectPtr)
+            {
+                layerIt->second.erase(it);
+                break;
+            }
+        }
+    }
+
+    const std::string uniqueName = CheckName(trimmedName);
+    objectPtr->Name = uniqueName;
+
+    const unsigned int layer = DecideRenderLayer(objectPtr, (unsigned int)RenderLayer::SOLID);
+    this->_objects[layer][objectPtr->Name] = objectPtr;
+
+    return true;
+}

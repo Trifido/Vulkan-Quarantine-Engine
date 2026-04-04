@@ -58,6 +58,7 @@ private:
 
     void SpawnDroppedMesh(const std::string& assetPath);
     glm::vec3 GetSpawnPositionInFrontOfEditorCamera(float distance) const;
+    void UpdateEditorCameraInputState();
 
 private:
     VkDescriptorPool imguiPool{};

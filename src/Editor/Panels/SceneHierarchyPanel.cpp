@@ -36,6 +36,7 @@ void SceneHierarchyPanel::Draw()
 
     HandleDeleteShortcut();
     DrawWindowContextMenu();
+    DrawRenamePopup();
 
     const auto rootObjects = gameObjectManager->GetRootGameObjects();
 
@@ -102,7 +103,6 @@ void SceneHierarchyPanel::HandleDeleteShortcut()
     if (!ImGui::IsKeyPressed(ImGuiKey_Delete, false))
         return;
 
-    // Esto asume que tu EditorSelectionManager expone un getter del seleccionado actual.
     auto selected = selectionManager->GetSelectedGameObject();
     if (!selected)
         return;
@@ -148,30 +148,38 @@ void SceneHierarchyPanel::DrawGameObjectNode(const std::shared_ptr<QEGameObject>
     if (ImGui::IsItemClicked())
     {
         if (selectionManager)
+        {
             selectionManager->SelectGameObject(gameObject);
+        }
+    }
+
+    if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+    {
+        StartRename(gameObject);
+    }
+
+    if (isSelected &&
+        ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) &&
+        ImGui::IsKeyPressed(ImGuiKey_F2))
+    {
+        StartRename(gameObject);
     }
 
     if (ImGui::BeginPopupContextItem())
     {
         if (selectionManager)
+        {
             selectionManager->SelectGameObject(gameObject);
+        }
+
+        if (ImGui::MenuItem("Rename"))
+        {
+            StartRename(gameObject);
+        }
 
         if (ImGui::MenuItem("Delete"))
         {
             pendingDeleteGameObject = gameObject;
-        }
-
-        if (ImGui::MenuItem("Unparent"))
-        {
-            ReparentGameObject(gameObject, nullptr);
-        }
-
-        if (ImGui::MenuItem("Create Empty Child"))
-        {
-            auto child = gameObjectManager->CreateEmptyGameObject("Empty GameObject");
-            ReparentGameObject(child, gameObject);
-            if (selectionManager)
-                selectionManager->SelectGameObject(child);
         }
 
         ImGui::EndPopup();
@@ -281,3 +289,103 @@ bool SceneHierarchyPanel::ReparentGameObject(const std::shared_ptr<QEGameObject>
     return true;
 }
 
+void SceneHierarchyPanel::StartRename(const std::shared_ptr<QEGameObject>& gameObject)
+{
+    if (!gameObject)
+        return;
+
+    if (gameObject->Name == "QECameraEditor")
+        return;
+
+    renamingGameObject = gameObject;
+    renameBuffer = gameObject->Name;
+    openRenamePopup = true;
+}
+
+void SceneHierarchyPanel::DrawRenamePopup()
+{
+    if (openRenamePopup)
+    {
+        ImGui::OpenPopup("Rename GameObject");
+        openRenamePopup = false;
+    }
+
+    if (!renamingGameObject)
+        return;
+
+    ImGuiViewport* viewport = ImGui::GetMainViewport();
+    const ImVec2 center = viewport->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(360.0f, 0.0f), ImGuiCond_Appearing);
+
+    if (ImGui::BeginPopupModal("Rename GameObject", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        static bool focusRenameField = true;
+
+        char buffer[256];
+        memset(buffer, 0, sizeof(buffer));
+        strncpy_s(buffer, sizeof(buffer), renameBuffer.c_str(), _TRUNCATE);
+
+        ImGui::TextUnformatted("New name");
+
+        if (focusRenameField)
+        {
+            ImGui::SetKeyboardFocusHere();
+            focusRenameField = false;
+        }
+
+        const bool enterPressed = ImGui::InputText(
+            "##RenameGameObject",
+            buffer,
+            sizeof(buffer),
+            ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll);
+
+        renameBuffer = buffer;
+
+        if (ImGui::IsKeyPressed(ImGuiKey_Escape))
+        {
+            renamingGameObject.reset();
+            renameBuffer.clear();
+            focusRenameField = true;
+            ImGui::CloseCurrentPopup();
+        }
+
+        if (enterPressed)
+        {
+            if (!renameBuffer.empty())
+            {
+                gameObjectManager->RenameGameObject(renamingGameObject, renameBuffer);
+            }
+
+            renamingGameObject.reset();
+            renameBuffer.clear();
+            focusRenameField = true;
+            ImGui::CloseCurrentPopup();
+        }
+
+        if (ImGui::Button("OK", ImVec2(120.0f, 0.0f)))
+        {
+            if (!renameBuffer.empty())
+            {
+                gameObjectManager->RenameGameObject(renamingGameObject, renameBuffer);
+            }
+
+            renamingGameObject.reset();
+            renameBuffer.clear();
+            focusRenameField = true;
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Cancel", ImVec2(120.0f, 0.0f)))
+        {
+            renamingGameObject.reset();
+            renameBuffer.clear();
+            focusRenameField = true;
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
+}
