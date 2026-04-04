@@ -326,11 +326,9 @@ namespace
         if (componentTypeName.empty())
             return false;
 
-        // Evitar añadir la clase base
         if (componentTypeName == "QEGameComponent")
             return false;
 
-        // Si ya existe un componente del mismo tipo exacto, no lo ofrecemos
         for (const auto& component : gameObject->components)
         {
             if (!component)
