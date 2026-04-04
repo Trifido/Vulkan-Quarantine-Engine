@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cctype>
 #include <unordered_map>
+#include <unordered_set>
 
 #include <GameObjectManager.h>
 #include <QEGameObject.h>
@@ -262,6 +263,7 @@ namespace
             const auto fields = meta->allFields();
 
             int drawnFields = 0;
+            std::unordered_set<std::string> drawnFieldKeys;
 
             for (size_t i = 0; i < fields.size(); ++i)
             {
@@ -273,13 +275,18 @@ namespace
                 if (!IsSupportedFieldType(field.type))
                     continue;
 
+                const std::string fieldKey =
+                    field.name + "|" +
+                    std::to_string(field.offset) + "|" +
+                    field.type.name();
+
+                if (!drawnFieldKeys.insert(fieldKey).second)
+                    continue;
+
                 const std::string widgetId =
                     uniquePrefix + "_" + component->getTypeName() + "_" + field.name + "_" + std::to_string(i);
 
-                if (DrawReflectedField(component, field, widgetId))
-                {
-                    // De momento edición directa, sin command system genérico
-                }
+                DrawReflectedField(component, field, widgetId);
 
                 ++drawnFields;
             }
