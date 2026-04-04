@@ -49,6 +49,11 @@ void SceneHierarchyPanel::DrawGameObjectNode(const std::shared_ptr<QEGameObject>
         return;
     }
 
+    if (gameObject->Name == "QECameraEditor")
+    {
+        return;
+    }
+
     const bool isSelected = selectionManager && selectionManager->IsSelected(gameObject);
 
     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;

@@ -18,11 +18,20 @@
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/InspectorPanel.h"
 #include "Panels/ViewportPanel.h"
+#include "Panels/EditorHeaderBar.h"
 #include "Panels/QEProjectBrowserPanel.h"
 #include "Rendering/EditorViewportResources.h"
 #include <QEProjectManager.h>
 #include <QEMeshRenderer.h>
 #include <algorithm>
+
+#include <QECamera.h>
+#include <QECameraController.h>
+
+namespace
+{
+    static constexpr const char* kEditorCameraPopupId = "EditorCameraSettingsPopup";
+}
 
 QEEditorApp::QEEditorApp()
 {
@@ -54,6 +63,16 @@ void QEEditorApp::OnInitialize()
     gizmoController->SetOperation(QEGizmoController::Operation::Translate);
     pickingSystem = std::make_unique<EditorPickingSystem>();
     commandManager = std::make_unique<EditorCommandManager>();
+
+    headerBar = std::make_unique<EditorHeaderBar>(
+        editorContext.get(),
+        commandManager.get(),
+        sessionManager);
+
+    headerBar->SetOnSaveRequested([this]()
+        {
+            SaveScene();
+        });
 
     CreatePanels();
 }
@@ -293,29 +312,9 @@ void QEEditorApp::DrawDockspace()
     ImGuiID dockspace_id = ImGui::GetID("QE_MainDockspace");
     ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
 
-    if (ImGui::BeginMenuBar())
+    if (headerBar)
     {
-        if (ImGui::BeginMenu("File"))
-        {
-            if (ImGui::MenuItem("Save", "Ctrl+S"))
-            {
-                SaveScene();
-            }
-            ImGui::EndMenu();
-        }
-
-        if (ImGui::BeginMenu("Window"))
-        {
-            ImGui::MenuItem("Hierarchy", nullptr, &editorContext->ShowHierarchy);
-            ImGui::MenuItem("Inspector", nullptr, &editorContext->ShowInspector);
-            ImGui::MenuItem("Viewport", nullptr, &editorContext->ShowViewport);
-            ImGui::MenuItem("Console", nullptr, &editorContext->ShowConsole);
-            ImGui::MenuItem("Content Browser", nullptr, &editorContext->ShowContentBrowser);
-            ImGui::MenuItem("ImGui Demo", nullptr, &editorContext->ShowDemoWindow);
-            ImGui::EndMenu();
-        }
-
-        ImGui::EndMenuBar();
+        headerBar->Draw();
     }
 
     ImGui::End();

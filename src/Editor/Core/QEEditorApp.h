@@ -14,6 +14,7 @@ class EditorCommandManager;
 class QERenderTarget;
 class QEProjectBrowserPanel;
 class ViewportPanel;
+class EditorHeaderBar;
 
 class QEEditorApp : public QEBaseApp
 {
@@ -68,7 +69,8 @@ private:
     std::unique_ptr<EditorCommandManager> commandManager;
     std::unique_ptr<QEProjectBrowserPanel> projectBrowserPanel;
     QEProjectBrowserPanel* projectBrowserPanelPtr = nullptr;
-    std::unique_ptr <ViewportPanel> viewportPanel = nullptr;
+    std::unique_ptr<ViewportPanel> viewportPanel = nullptr;
+    std::unique_ptr<EditorHeaderBar> headerBar;
     std::vector<std::unique_ptr<IEditorPanel>> panels;
     std::vector<std::filesystem::path> _externalDroppedFiles;
 };
