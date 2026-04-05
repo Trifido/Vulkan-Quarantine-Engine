@@ -103,10 +103,13 @@ void main()
     ));
 
     vec3 skyLum = getValFromSkyLUT(viewPos, localRayDir);
-    vec3 disk = sunDisk(rayDir, sunDirWorld);
-    vec3 bloom = sunBloom(rayDir, sunDirWorld);
-    vec3 sunTransmittance = getValFromTLUT(viewPos, sunDirWorld);
-    float sunHeight = clamp(sunDirWorld.y, 0.0, 1.0);
+
+    vec3 sunDirForDisk = normalize(sunData.direction);
+    vec3 sunDirForTlut = normalize(-sunData.direction);
+
+    vec3 disk = sunDisk(rayDir, sunDirForDisk);
+    vec3 bloom = sunBloom(rayDir, sunDirForDisk);
+    vec3 sunTransmittance = getValFromTLUT(viewPos, sunDirForTlut);
 
     float horizonAngle = safeAcos(sqrt(height * height - PlanetRadius * PlanetRadius) / height) + HorizonBias;
     float viewZenithAngle = acos(clamp(dot(rayDir, up), -1.0, 1.0));
@@ -118,29 +121,34 @@ void main()
     disk *= diskVisible;
     bloom *= bloomVisible;
 
-    vec3 diskColor = safeNormalizeColor(sunTransmittance);
-    float diskStrength = max(sunTransmittance.r, max(sunTransmittance.g, sunTransmittance.b));
-    diskStrength = max(diskStrength, 0.25);
+    float sunHeight = clamp(dot(sunDirWorld, -up), 0.0, 1.0);
 
-    float dayAmount = smoothstep(0.02, 0.35, sunHeight);
+float diskDayAmount  = smoothstep(0.02, 0.30, sunHeight);
+float bloomDayAmount = smoothstep(-0.05, 0.18, sunHeight);
 
-    vec3 sunsetTint = vec3(1.0, 0.22, 0.04);
-    vec3 dayTint = vec3(1.0, 0.97, 0.92);
+float sunsetFactor = 1.0 - smoothstep(0.0, 0.12, sunHeight);
+sunsetFactor = pow(sunsetFactor, 2.0);
 
-    vec3 sunDiskTint = mix(sunsetTint, dayTint, dayAmount);
-    sunDiskTint *= mix(diskColor, vec3(1.0), dayAmount * 0.65);
+vec3 sunsetDiskTint  = vec3(1.0, 0.55, 0.28);
+vec3 dayDiskTint     = vec3(1.0, 0.99, 0.97);
 
-    vec3 sunBloomTint = mix(vec3(1.0, 0.35, 0.08), vec3(1.0, 0.95, 0.9), dayAmount);
+vec3 sunsetBloomTint = vec3(1.0, 0.65, 0.35);
+vec3 dayBloomTint    = vec3(1.0, 0.98, 0.95);
+
+vec3 sunDiskTint  = mix(sunsetDiskTint,  dayDiskTint,  diskDayAmount);
+vec3 sunBloomTint = mix(sunsetBloomTint, dayBloomTint, bloomDayAmount);
+
+// boost solo muy cerca del horizonte
+sunDiskTint  = mix(sunDiskTint,  vec3(1.0, 0.35, 0.08), sunsetFactor);
+sunBloomTint = mix(sunBloomTint, vec3(1.0, 0.45, 0.12), sunsetFactor);
 
     disk *= sunDiskTint;
-    disk *= mix(0.35, 1.0, diskStrength);
-
-    vec3 bloomTransmittance = mix(vec3(1.0), sunTransmittance, 0.2);
-    bloomTransmittance = max(bloomTransmittance, vec3(0.02));
-    bloom *= bloomTransmittance * sunBloomTint;
+    bloom *= sunBloomTint;
 
     vec3 sky = jodieReinhardTonemap(skyLum * AtmosphereExposure);
-    vec3 sun = disk * 3.5 + bloom * 5.0;
+
+    vec3 sunRaw = disk * 4.0 + bloom * 6.0;
+    vec3 sun = sunRaw / (1.0 + sunRaw * 0.30);
 
     vec3 finalColor = sky + sun;
     outColor = vec4(finalColor, 1.0);
