@@ -44,7 +44,8 @@ public:
     void DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t currentFrame);
 
 private:
-    void UpdateOutputTextureState();
+    void TransitionInputTexturesToReadable(VkCommandBuffer commandBuffer);
+    void UpdateOutputTextureState(VkCommandBuffer commandBuffer);
 
     void QEStart() override;
     void QEInit() override;

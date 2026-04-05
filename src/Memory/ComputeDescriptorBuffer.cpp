@@ -189,14 +189,14 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
             writes.push_back(w);
         };
 
-    auto pushImageWrite = [&](uint32_t dstBinding, VkDescriptorImageInfo* ii)
+    auto pushImageWrite = [&](VkDescriptorType type, uint32_t dstBinding, VkDescriptorImageInfo* ii)
         {
             VkWriteDescriptorSet w{};
             w.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             w.dstSet = descriptorSets[frameIdx];
             w.dstBinding = dstBinding;
             w.dstArrayElement = 0;
-            w.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+            w.descriptorType = type;
             w.descriptorCount = 1;
             w.pBufferInfo = nullptr;
             w.pImageInfo = ii;
@@ -301,26 +301,26 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
             continue;
         }
 
-        // Storage Images
+        // Images
         if (br.name == "InputImage")
         {
             this->inputImageInfo = {};
-            this->inputImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+            this->inputImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             this->inputImageInfo.imageView = inputTextures.at(0)->imageView;
             this->inputImageInfo.sampler = inputTextures.at(0)->textureSampler;
 
-            pushImageWrite(b, &this->inputImageInfo);
+            pushImageWrite(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, b, &this->inputImageInfo);
             continue;
         }
 
         if (br.name == "InputImage_2")
         {
             this->inputImageInfo_2 = {};
-            this->inputImageInfo_2.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+            this->inputImageInfo_2.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             this->inputImageInfo_2.imageView = inputTextures.at(1)->imageView;
             this->inputImageInfo_2.sampler = inputTextures.at(1)->textureSampler;
 
-            pushImageWrite(b, &this->inputImageInfo_2);
+            pushImageWrite(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, b, &this->inputImageInfo_2);
             continue;
         }
 
@@ -329,9 +329,9 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
             this->outputImageInfo = {};
             this->outputImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
             this->outputImageInfo.imageView = outputTexture->imageView;
-            this->outputImageInfo.sampler = outputTexture->textureSampler;
+            this->outputImageInfo.sampler = VK_NULL_HANDLE;
 
-            pushImageWrite(b, &this->outputImageInfo);
+            pushImageWrite(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, b, &this->outputImageInfo);
             continue;
         }
     }

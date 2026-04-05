@@ -107,7 +107,7 @@ void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
 {
     if (this->OnDemandCompute && !this->Compute)
     {
-        this->UpdateOutputTextureState();
+        this->UpdateOutputTextureState(commandBuffer);
         return;
     }
 
@@ -123,9 +123,19 @@ void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
         bufferBarrier.size = VK_WHOLE_SIZE;
         bufferBarrier.pNext = NULL;
 
-        vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0,
-            0, nullptr, 1, &bufferBarrier, 0, nullptr);
+        vkCmdPipelineBarrier(
+            commandBuffer,
+            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            0,
+            0, nullptr,
+            1, &bufferBarrier,
+            0, nullptr
+        );
     }
+
+    this->TransitionInputTexturesToReadable(commandBuffer);
+    this->UpdateOutputTextureState(commandBuffer);
 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, this->computeShader->ComputePipelineModule->pipeline);
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, this->computeShader->ComputePipelineModule->pipelineLayout, 0, 1, &computeDescriptor->descriptorSets[currentFrame], 0, 0);
@@ -137,31 +147,7 @@ void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
     }
     else
     {
-        this->UpdateOutputTextureState();
-
         vkCmdDispatch(commandBuffer, CEIL_DIV(this->widthImage, NElements), CEIL_DIV(this->heightImage, NElements), 1);
-    }
-}
-
-void ComputeNode::UpdateOutputTextureState()
-{
-    auto outputTexture = this->computeDescriptor->outputTexture;
-
-    if (outputTexture == nullptr)
-        return;
-
-    VkImageSubresourceRange subresourceRange = {};
-    subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    subresourceRange.baseMipLevel = 0;
-    subresourceRange.levelCount = 1;
-    subresourceRange.layerCount = 1;
-
-    if (outputTexture->currentLayout != VK_IMAGE_LAYOUT_GENERAL)
-    {
-        if (outputTexture->currentLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-            outputTexture->transitionImageLayout(outputTexture->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, subresourceRange);
-        else
-            outputTexture->transitionImageLayout(outputTexture->image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, subresourceRange);
     }
 }
 
@@ -184,4 +170,70 @@ void ComputeNode::QEDestroy()
 void ComputeNode::QEInit()
 {
     QEGameComponent::QEInit();
+}
+
+void ComputeNode::TransitionInputTexturesToReadable(VkCommandBuffer commandBuffer)
+{
+    if (!this->computeDescriptor || this->computeDescriptor->inputTextures.empty())
+        return;
+
+    VkImageSubresourceRange subresourceRange{};
+    subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    subresourceRange.baseMipLevel = 0;
+    subresourceRange.levelCount = 1;
+    subresourceRange.layerCount = 1;
+
+    for (auto& tex : this->computeDescriptor->inputTextures)
+    {
+        if (!tex) continue;
+
+        if (tex->currentLayout == VK_IMAGE_LAYOUT_GENERAL)
+        {
+            tex->transitionImageLayoutCmd(
+                commandBuffer,
+                tex->image,
+                VK_IMAGE_LAYOUT_GENERAL,
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                subresourceRange
+            );
+        }
+    }
+}
+
+void ComputeNode::UpdateOutputTextureState(VkCommandBuffer commandBuffer)
+{
+    auto outputTexture = this->computeDescriptor->outputTexture;
+
+    if (outputTexture == nullptr)
+        return;
+
+    VkImageSubresourceRange subresourceRange{};
+    subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    subresourceRange.baseMipLevel = 0;
+    subresourceRange.levelCount = 1;
+    subresourceRange.layerCount = 1;
+
+    if (outputTexture->currentLayout != VK_IMAGE_LAYOUT_GENERAL)
+    {
+        if (outputTexture->currentLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+        {
+            outputTexture->transitionImageLayoutCmd(
+                commandBuffer,
+                outputTexture->image,
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                VK_IMAGE_LAYOUT_GENERAL,
+                subresourceRange
+            );
+        }
+        else
+        {
+            outputTexture->transitionImageLayoutCmd(
+                commandBuffer,
+                outputTexture->image,
+                VK_IMAGE_LAYOUT_UNDEFINED,
+                VK_IMAGE_LAYOUT_GENERAL,
+                subresourceRange
+            );
+        }
+    }
 }

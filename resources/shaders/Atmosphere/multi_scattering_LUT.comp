@@ -2,7 +2,7 @@
 
 layout(local_size_x = 16, local_size_y = 16) in;
 
-layout(binding = 0, rgba32f) uniform image2D InputImage;
+layout(binding = 0) uniform sampler2D InputImage;
 layout(binding = 1, rgba32f) uniform image2D OutputImage;
 
 #include "../Includes/Atmosphere/QEAtmosphereCommon.glsl"
@@ -25,15 +25,14 @@ vec3 getValFromTLUT(vec3 pos, vec3 sunDir)
 {
     float height = length(pos);
     vec3 up = pos / height;
-    float sunCosZenithAngle = dot(sunDir, -up);
+    float sunCosZenithAngle = dot(sunDir, up);
 
-    vec2 tLUTRes = vec2(imageSize(InputImage));
     vec2 uv = vec2(
-        tLUTRes.x * clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0),
-        tLUTRes.y * max(0.0, min(1.0, (height - PlanetRadius) / (AtmosphereRadius - PlanetRadius)))
+        clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0),
+        clamp((height - PlanetRadius) / (AtmosphereRadius - PlanetRadius), 0.0, 1.0)
     );
 
-    return imageLoad(InputImage, ivec2(uv)).rgb;
+    return texture(InputImage, uv).rgb;
 }
 
 void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 lumTotal, out vec3 fms)
