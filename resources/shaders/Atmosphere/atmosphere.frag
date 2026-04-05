@@ -123,24 +123,24 @@ void main()
 
     float sunHeight = clamp(dot(sunDirWorld, -up), 0.0, 1.0);
 
-float diskDayAmount  = smoothstep(0.02, 0.30, sunHeight);
-float bloomDayAmount = smoothstep(-0.05, 0.18, sunHeight);
+    float diskDayAmount  = smoothstep(0.02, 0.30, sunHeight);
+    float bloomDayAmount = smoothstep(-0.05, 0.18, sunHeight);
 
-float sunsetFactor = 1.0 - smoothstep(0.0, 0.12, sunHeight);
-sunsetFactor = pow(sunsetFactor, 2.0);
+    float sunsetFactor = 1.0 - smoothstep(0.0, 0.12, sunHeight);
+    sunsetFactor = pow(sunsetFactor, 2.0);
 
-vec3 sunsetDiskTint  = vec3(1.0, 0.55, 0.28);
-vec3 dayDiskTint     = vec3(1.0, 0.99, 0.97);
+    vec3 sunsetDiskTint  = vec3(1.0, 0.55, 0.28);
+    vec3 dayDiskTint     = vec3(1.0, 0.99, 0.97);
 
-vec3 sunsetBloomTint = vec3(1.0, 0.65, 0.35);
-vec3 dayBloomTint    = vec3(1.0, 0.98, 0.95);
+    vec3 sunsetBloomTint = vec3(1.0, 0.65, 0.35);
+    vec3 dayBloomTint    = vec3(1.0, 0.98, 0.95);
 
-vec3 sunDiskTint  = mix(sunsetDiskTint,  dayDiskTint,  diskDayAmount);
-vec3 sunBloomTint = mix(sunsetBloomTint, dayBloomTint, bloomDayAmount);
+    vec3 sunDiskTint  = mix(sunsetDiskTint,  dayDiskTint,  diskDayAmount);
+    vec3 sunBloomTint = mix(sunsetBloomTint, dayBloomTint, bloomDayAmount);
 
-// boost solo muy cerca del horizonte
-sunDiskTint  = mix(sunDiskTint,  vec3(1.0, 0.35, 0.08), sunsetFactor);
-sunBloomTint = mix(sunBloomTint, vec3(1.0, 0.45, 0.12), sunsetFactor);
+    // boost solo muy cerca del horizonte
+    sunDiskTint  = mix(sunDiskTint,  vec3(1.0, 0.35, 0.08), sunsetFactor);
+    sunBloomTint = mix(sunBloomTint, vec3(1.0, 0.45, 0.12), sunsetFactor);
 
     disk *= sunDiskTint;
     bloom *= sunBloomTint;
