@@ -101,6 +101,14 @@ public:
     void UpdateSun();
     void UpdateAtmopshereResolution();
     void UpdatePerFrame(uint32_t frame);
+
+    glm::vec3 GetSunEulerDegrees() const;
+    void SetSunEulerDegrees(const glm::vec3& eulerDeg);
+
+    float GetSunBaseIntensity() const;
+    void SetSunBaseIntensity(float intensity);
+
+    std::shared_ptr<QESunLight> GetSunLight() const { return this->sunLight; }
 };
 
 #endif // !ATMOSPHERE_SYSTEM_H

@@ -3,6 +3,7 @@
 #include <imgui.h>
 #include <GameObjectManager.h>
 #include <QEGameObject.h>
+#include <AtmosphereSystem.h>
 #include <Editor/Core/EditorContext.h>
 #include <Editor/Core/EditorSelectionManager.h>
 
@@ -44,6 +45,8 @@ void SceneHierarchyPanel::Draw()
     {
         DrawGameObjectNode(root);
     }
+
+    DrawAtmosphereNode();
 
     if (draggingGameObject && ImGui::IsMouseReleased(ImGuiMouseButton_Left))
     {
@@ -227,6 +230,32 @@ void SceneHierarchyPanel::DrawGameObjectNode(const std::shared_ptr<QEGameObject>
         }
 
         ImGui::TreePop();
+    }
+}
+
+void SceneHierarchyPanel::DrawAtmosphereNode()
+{
+    auto atmosphere = AtmosphereSystem::getInstance();
+    if (!atmosphere)
+        return;
+
+    const bool isSelected = selectionManager && selectionManager->IsAtmosphereSelected();
+
+    ImGuiTreeNodeFlags flags =
+        ImGuiTreeNodeFlags_Leaf |
+        ImGuiTreeNodeFlags_NoTreePushOnOpen |
+        ImGuiTreeNodeFlags_SpanAvailWidth;
+
+    if (isSelected)
+    {
+        flags |= ImGuiTreeNodeFlags_Selected;
+    }
+
+    ImGui::TreeNodeEx("EDITOR_ATMOSPHERE_NODE", flags, "Atmosphere");
+
+    if (ImGui::IsItemClicked() && selectionManager)
+    {
+        selectionManager->SelectAtmosphere();
     }
 }
 

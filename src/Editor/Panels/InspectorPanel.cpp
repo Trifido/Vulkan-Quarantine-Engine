@@ -17,6 +17,7 @@
 #include <QEGameObject.h>
 #include <QETransform.h>
 #include <QEGameComponent.h>
+#include <AtmosphereSystem.h>
 #include <Reflectable.h>
 
 #include <Editor/Core/EditorContext.h>
@@ -321,6 +322,40 @@ namespace
         return requestRemove;
     }
 
+    void DrawAtmosphereInspector()
+    {
+        auto atmosphere = AtmosphereSystem::getInstance();
+        if (!atmosphere)
+        {
+            ImGui::TextUnformatted("AtmosphereSystem is null.");
+            return;
+        }
+
+        ImGui::TextUnformatted("Atmosphere");
+        ImGui::Separator();
+
+        // Enable
+        bool enabled = atmosphere->IsInitialized;
+        if (ImGui::Checkbox("Enabled", &enabled))
+        {
+            atmosphere->IsInitialized = enabled;
+        }
+
+        // Sun rotation
+        glm::vec3 sunEuler = atmosphere->GetSunEulerDegrees();
+        if (ImGui::DragFloat3("Sun Rotation", &sunEuler.x, 0.5f))
+        {
+            atmosphere->SetSunEulerDegrees(sunEuler);
+        }
+
+        // Intensity
+        float intensity = atmosphere->GetSunBaseIntensity();
+        if (ImGui::DragFloat("Sun Intensity", &intensity, 1.0f, 0.0f, 100000.0f))
+        {
+            atmosphere->SetSunBaseIntensity(intensity);
+        }
+    }
+
     std::string ToLowerCopy(const std::string& text)
     {
         std::string result = text;
@@ -491,6 +526,13 @@ void InspectorPanel::Draw()
     if (!gameObjectManager)
     {
         ImGui::TextUnformatted("GameObjectManager is null.");
+        ImGui::End();
+        return;
+    }
+
+    if (selectionManager && selectionManager->IsAtmosphereSelected())
+    {
+        DrawAtmosphereInspector();
         ImGui::End();
         return;
     }

@@ -22,6 +22,7 @@ public:
 
 private:
     void DrawGameObjectNode(const std::shared_ptr<QEGameObject>& gameObject);
+    void DrawAtmosphereNode();
     void DrawWindowContextMenu();
     void HandleDeleteShortcut();
 

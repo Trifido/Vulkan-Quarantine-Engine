@@ -468,3 +468,31 @@ void AtmosphereSystem::UpdatePerFrame(uint32_t frame)
     UpdateSun();
     UpdateAtmopshereResolution();
 }
+
+glm::vec3 AtmosphereSystem::GetSunEulerDegrees() const
+{
+    return this->sunLight ? this->sunLight->GetSunEulerDegrees() : glm::vec3(0.0f);
+}
+
+void AtmosphereSystem::SetSunEulerDegrees(const glm::vec3& eulerDeg)
+{
+    if (!this->sunLight) return;
+
+    this->sunLight->SetSunEulerDegrees(eulerDeg);
+    this->UpdateSun();
+}
+
+float AtmosphereSystem::GetSunBaseIntensity() const
+{
+    return this->sunLight ? this->sunLight->baseIntensity : 0.0f;
+}
+
+void AtmosphereSystem::SetSunBaseIntensity(float intensity)
+{
+    if (!this->sunLight) return;
+
+    this->sunLight->baseIntensity = intensity;
+    this->sunLight->SetSunEulerDegrees(this->sunLight->GetSunEulerDegrees());
+
+    this->UpdateSun();
+}
