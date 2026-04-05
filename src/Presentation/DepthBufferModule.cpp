@@ -25,7 +25,7 @@ void DepthBufferModule::createDepthResources(VkExtent2D& swapChainExtent, VkComm
     range.baseArrayLayer = 0;
     range.layerCount = 1;
 
-    transitionImageLayout(image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, range);
+    TransitionImageLayoutImmediate(image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, range);
 }
 
 VkFormat DepthBufferModule::findDepthFormat()

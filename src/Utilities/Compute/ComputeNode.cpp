@@ -76,7 +76,7 @@ void ComputeNode::InitializeOutputTextureComputeNode(uint32_t width, uint32_t he
     subresourceRange.baseMipLevel = 0;
     subresourceRange.levelCount = 1;
     subresourceRange.layerCount = 1;
-    this->computeDescriptor->outputTexture->transitionImageLayout(this->computeDescriptor->outputTexture->image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, subresourceRange);
+    this->computeDescriptor->outputTexture->TransitionImageLayoutImmediate(this->computeDescriptor->outputTexture->image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, subresourceRange);
 }
 
 void ComputeNode::cleanup()
@@ -189,7 +189,7 @@ void ComputeNode::TransitionInputTexturesToReadable(VkCommandBuffer commandBuffe
 
         if (tex->currentLayout == VK_IMAGE_LAYOUT_GENERAL)
         {
-            tex->transitionImageLayoutCmd(
+            tex->TransitionImageLayoutCmd(
                 commandBuffer,
                 tex->image,
                 VK_IMAGE_LAYOUT_GENERAL,
@@ -217,7 +217,7 @@ void ComputeNode::UpdateOutputTextureState(VkCommandBuffer commandBuffer)
     {
         if (outputTexture->currentLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
         {
-            outputTexture->transitionImageLayoutCmd(
+            outputTexture->TransitionImageLayoutCmd(
                 commandBuffer,
                 outputTexture->image,
                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
@@ -227,7 +227,7 @@ void ComputeNode::UpdateOutputTextureState(VkCommandBuffer commandBuffer)
         }
         else
         {
-            outputTexture->transitionImageLayoutCmd(
+            outputTexture->TransitionImageLayoutCmd(
                 commandBuffer,
                 outputTexture->image,
                 VK_IMAGE_LAYOUT_UNDEFINED,

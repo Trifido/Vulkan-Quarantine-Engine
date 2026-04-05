@@ -24,8 +24,8 @@ protected:
 
 public:
     TextureManagerModule();
-    void transitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageSubresourceRange range);
-    void transitionImageLayoutCmd(
+    void TransitionImageLayoutImmediate(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageSubresourceRange range);
+    void TransitionImageLayoutCmd(
         VkCommandBuffer commandBuffer,
         VkImage newImage,
         VkImageLayout oldLayout,

@@ -3,7 +3,7 @@
 
 QueueModule* TextureManagerModule::queueModule;
 
-void TextureManagerModule::transitionImageLayout(VkImage newImage, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageSubresourceRange range)
+void TextureManagerModule::TransitionImageLayoutImmediate(VkImage newImage, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageSubresourceRange range)
 {
     VkCommandBuffer commandBuffer = beginSingleTimeCommands(deviceModule->device, *ptrCommandPool);
     VkImageMemoryBarrier barrier{};
@@ -79,7 +79,7 @@ void TextureManagerModule::transitionImageLayout(VkImage newImage, VkImageLayout
     endSingleTimeCommands(deviceModule->device, queueModule->graphicsQueue, *ptrCommandPool, commandBuffer);
 }
 
-void TextureManagerModule::transitionImageLayoutCmd(
+void TextureManagerModule::TransitionImageLayoutCmd(
     VkCommandBuffer commandBuffer,
     VkImage newImage,
     VkImageLayout oldLayout,
