@@ -5,6 +5,17 @@ layout(local_size_x = 16, local_size_y = 16) in;
 layout(binding = 0) uniform sampler2D InputImage;
 layout(binding = 1, rgba32f) uniform image2D OutputImage;
 
+layout(binding = 2, std140) uniform AtmosphereUniform
+{
+    vec4 RayleighScattering_Height;
+    vec4 MieScattering_Height;
+    vec4 OzoneAbsorption_Density;
+    vec4 SunColor_Intensity;
+    vec4 Planet_Atmosphere_G_Exposure;
+    vec4 Sky_Horizon_Multi_SunDisk;
+    vec4 SunDiskIntensity_Glow_Padding;
+} atmosphereData;
+
 #include "../Includes/Atmosphere/QEAtmosphereCommon.glsl"
 
 #define MULT_SCATT_STEPS 20.0
@@ -25,11 +36,15 @@ vec3 getValFromTLUT(vec3 pos, vec3 sunDir)
 {
     float height = length(pos);
     vec3 up = pos / height;
+
     float sunCosZenithAngle = dot(sunDir, up);
+
+    float planetRadius = GetPlanetRadius();
+    float atmosphereRadius = GetAtmosphereRadius();
 
     vec2 uv = vec2(
         clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0),
-        clamp((height - PlanetRadius) / (AtmosphereRadius - PlanetRadius), 0.0, 1.0)
+        clamp((height - planetRadius) / max(atmosphereRadius - planetRadius, 1e-5), 0.0, 1.0)
     );
 
     return texture(InputImage, uv).rgb;
@@ -40,7 +55,11 @@ void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 lumTotal, out vec3 fms)
     lumTotal = vec3(0.0);
     fms = vec3(0.0);
 
+    float planetRadius = GetPlanetRadius();
+    float atmosphereRadius = GetAtmosphereRadius();
+
     float invSamples = 1.0 / float(sqrtSamples * sqrtSamples);
+
     for (int i = 0; i < sqrtSamples; i++)
     {
         for (int j = 0; j < sqrtSamples; j++)
@@ -49,8 +68,9 @@ void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 lumTotal, out vec3 fms)
             float phi = safeacos(1.0 - 2.0 * (float(j) + 0.5) / float(sqrtSamples));
             vec3 rayDir = getSphericalDir(theta, phi);
 
-            float atmoDist = rayIntersectSphere(pos, rayDir, AtmosphereRadius);
-            float groundDist = rayIntersectSphere(pos, rayDir, PlanetRadius);
+            float atmoDist = rayIntersectSphere(pos, rayDir, atmosphereRadius);
+            float groundDist = rayIntersectSphere(pos, rayDir, planetRadius);
+
             float tMax = atmoDist;
             if (groundDist > 0.0)
             {
@@ -61,7 +81,10 @@ void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 lumTotal, out vec3 fms)
             float miePhaseValue = getMiePhase(cosTheta);
             float rayleighPhaseValue = getRayleighPhase(-cosTheta);
 
-            vec3 lum = vec3(0.0), lumFactor = vec3(0.0), transmittance = vec3(1.0);
+            vec3 lum = vec3(0.0);
+            vec3 lumFactor = vec3(0.0);
+            vec3 transmittance = vec3(1.0);
+
             float t = 0.0;
             for (float stepI = 0.0; stepI < MULT_SCATT_STEPS; stepI += 1.0)
             {
@@ -77,17 +100,18 @@ void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 lumTotal, out vec3 fms)
 
                 vec3 sampleTransmittance = exp(-dt * extinction);
 
-                vec3 scatteringNoPhase = rayleighScattering + mieScattering;
-                vec3 scatteringF = (scatteringNoPhase - scatteringNoPhase * sampleTransmittance) / extinction;
+                vec3 scatteringNoPhase = rayleighScattering + vec3(mieScattering);
+                vec3 safeExtinction = max(extinction, vec3(1e-5));
+                vec3 scatteringF = (scatteringNoPhase - scatteringNoPhase * sampleTransmittance) / safeExtinction;
                 lumFactor += transmittance * scatteringF;
 
-                vec3 sunTransmittance = getValFromTLUT(newPos, sunDir);
+                vec3 sunTransmittance = getValFromTLUT(newPos, sunDir) * GetSunColor() * GetSunIntensityMultiplier();
 
                 vec3 rayleighInScattering = rayleighScattering * rayleighPhaseValue;
-                float mieInScattering = mieScattering * miePhaseValue;
+                vec3 mieInScattering = vec3(mieScattering * miePhaseValue);
                 vec3 inScattering = (rayleighInScattering + mieInScattering) * sunTransmittance;
 
-                vec3 scatteringIntegral = (inScattering - inScattering * sampleTransmittance) / extinction;
+                vec3 scatteringIntegral = (inScattering - inScattering * sampleTransmittance) / safeExtinction;
 
                 lum += scatteringIntegral * transmittance;
                 transmittance *= sampleTransmittance;
@@ -98,7 +122,7 @@ void getMulScattValues(vec3 pos, vec3 sunDir, out vec3 lumTotal, out vec3 fms)
                 vec3 hitPos = pos + groundDist * rayDir;
                 if (dot(pos, sunDir) > 0.0)
                 {
-                    hitPos = normalize(hitPos) * PlanetRadius;
+                    hitPos = normalize(hitPos) * planetRadius;
                     lum += transmittance * groundAlbedo * getValFromTLUT(hitPos, sunDir);
                 }
             }
@@ -114,14 +138,17 @@ void main()
     uvec3 threadIdx = gl_GlobalInvocationID;
     vec2 dimensions = vec2(imageSize(OutputImage));
 
-    if (threadIdx.x >= (dimensions.x + 1.5) || threadIdx.y >= (dimensions.y + 1.5))
+    if (threadIdx.x >= uint(dimensions.x) || threadIdx.y >= uint(dimensions.y))
         return;
 
-    vec2 uv = (gl_GlobalInvocationID.xy + vec2(0.5)) / dimensions;
+    vec2 uv = (vec2(gl_GlobalInvocationID.xy) + vec2(0.5)) / dimensions;
 
     float sunCosTheta = 2.0 * uv.x - 1.0;
     float sunTheta = safeacos(sunCosTheta);
-    float height = mix(PlanetRadius, AtmosphereRadius, uv.y);
+
+    float planetRadius = GetPlanetRadius();
+    float atmosphereRadius = GetAtmosphereRadius();
+    float height = mix(planetRadius, atmosphereRadius, uv.y);
 
     vec3 pos = vec3(0.0, height, 0.0);
     vec3 sunDir = normalize(vec3(0.0, sunCosTheta, -sin(sunTheta)));
@@ -129,6 +156,10 @@ void main()
     vec3 lum, f_ms;
     getMulScattValues(pos, sunDir, lum, f_ms);
 
-    vec3 result = lum / (1.0 - f_ms);
-    imageStore(OutputImage, ivec2(threadIdx), vec4(result, 1.0));
+    vec3 denom = max(vec3(1.0) - f_ms, vec3(1e-5));
+    vec3 result = lum / denom;
+
+    result *= GetMultiScatteringFactor();
+
+    imageStore(OutputImage, ivec2(threadIdx.xy), vec4(result, 1.0));
 }

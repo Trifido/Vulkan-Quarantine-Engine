@@ -3,7 +3,6 @@
 layout(local_size_x = 16, local_size_y = 16) in;
 
 #include "../Includes/QECommon.glsl"
-#include "../Includes/Atmosphere/QEAtmosphereCommon.glsl"
 
 layout(binding = 0) uniform sampler2D InputImage;     // TLUT
 layout(binding = 1) uniform sampler2D InputImage_2;   // MSLUT
@@ -14,23 +13,39 @@ layout(set = 0, binding = 3, std140) uniform UniformCamera
     QECameraData cameraData;
 };
 
-layout(set = 0, binding = 4) uniform SunUniform
+layout(set = 0, binding = 4, std140) uniform SunUniform
 {
     vec3 direction;
     float intensity;
 } sunData;
+
+layout(set = 0, binding = 5, std140) uniform AtmosphereUniform
+{
+    vec4 RayleighScattering_Height;
+    vec4 MieScattering_Height;
+    vec4 OzoneAbsorption_Density;
+    vec4 SunColor_Intensity;
+    vec4 Planet_Atmosphere_G_Exposure;
+    vec4 Sky_Horizon_Multi_SunDisk;
+    vec4 SunDiskIntensity_Glow_Padding;
+} atmosphereData;
+
+#include "../Includes/Atmosphere/QEAtmosphereCommon.glsl"
 
 const float numScatteringSteps = 32.0;
 
 vec3 getValFromTLUT(vec3 pos, vec3 sunDir)
 {
     float height = length(pos);
-    vec3 up = pos / height;
+    vec3 up = pos / max(height, 1e-6);
     float sunCosZenithAngle = dot(sunDir, up);
+
+    float planetRadius = GetPlanetRadius();
+    float atmosphereRadius = GetAtmosphereRadius();
 
     vec2 uv = vec2(
         clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0),
-        clamp((height - PlanetRadius) / (AtmosphereRadius - PlanetRadius), 0.0, 1.0)
+        clamp((height - planetRadius) / max(atmosphereRadius - planetRadius, 1e-6), 0.0, 1.0)
     );
 
     return texture(InputImage, uv).rgb;
@@ -39,12 +54,15 @@ vec3 getValFromTLUT(vec3 pos, vec3 sunDir)
 vec3 getValFromMultiScattLUT(vec3 pos, vec3 sunDir)
 {
     float height = length(pos);
-    vec3 up = pos / height;
+    vec3 up = pos / max(height, 1e-6);
     float sunCosZenithAngle = dot(sunDir, up);
+
+    float planetRadius = GetPlanetRadius();
+    float atmosphereRadius = GetAtmosphereRadius();
 
     vec2 uv = vec2(
         clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0),
-        clamp((height - PlanetRadius) / (AtmosphereRadius - PlanetRadius), 0.0, 1.0)
+        clamp((height - planetRadius) / max(atmosphereRadius - planetRadius, 1e-6), 0.0, 1.0)
     );
 
     return texture(InputImage_2, uv).rgb;
@@ -52,10 +70,14 @@ vec3 getValFromMultiScattLUT(vec3 pos, vec3 sunDir)
 
 vec3 raymarchScattering(vec3 viewPos, vec3 rayDir, vec3 sunDir, float numSteps)
 {
-    vec2 atmosIntercept = rayIntersectSphere2D(viewPos, rayDir, AtmosphereRadius);
-    float groundIntercept = rayIntersectSphere(viewPos, rayDir, PlanetRadius);
+    float atmosphereRadius = GetAtmosphereRadius();
+    float planetRadius = GetPlanetRadius();
 
-    float minDist, maxDist;
+    vec2 atmosIntercept = rayIntersectSphere2D(viewPos, rayDir, atmosphereRadius);
+    float groundIntercept = rayIntersectSphere(viewPos, rayDir, planetRadius);
+
+    float minDist;
+    float maxDist;
 
     if (atmosIntercept.x < atmosIntercept.y)
     {
@@ -67,7 +89,7 @@ vec3 raymarchScattering(vec3 viewPos, vec3 rayDir, vec3 sunDir, float numSteps)
         return vec3(0.0);
     }
 
-    if (length(viewPos) < AtmosphereRadius)
+    if (length(viewPos) < atmosphereRadius)
         minDist = 0.0;
 
     if (groundIntercept > 0.0)
@@ -83,6 +105,8 @@ vec3 raymarchScattering(vec3 viewPos, vec3 rayDir, vec3 sunDir, float numSteps)
     vec3 transmittance = vec3(1.0);
     float t = 0.0;
 
+    vec3 sunRadiance = GetSunColor() * GetSunIntensityMultiplier() * sunData.intensity;
+
     for (float i = 0.0; i < numSteps; i += 1.0)
     {
         float newT = ((i + 0.3) / numSteps) * (maxDist - minDist);
@@ -91,20 +115,22 @@ vec3 raymarchScattering(vec3 viewPos, vec3 rayDir, vec3 sunDir, float numSteps)
 
         vec3 newPos = pos + t * rayDir;
 
-        vec3 rayleighScattering, extinction;
+        vec3 rayleighScattering;
+        vec3 extinction;
         float mieScattering;
         getScatteringValues(newPos, rayleighScattering, mieScattering, extinction);
 
         vec3 sampleTransmittance = exp(-dt * extinction);
 
-        vec3 sunTransmittance = getValFromTLUT(newPos, sunDir);
-        vec3 psiMS = vec3(0.0); // o getValFromMultiScattLUT(newPos, sunDir) si quieres activarlo
+        vec3 sunTransmittance = getValFromTLUT(newPos, sunDir) * sunRadiance;
+        vec3 psiMS = getValFromMultiScattLUT(newPos, sunDir) * GetMultiScatteringFactor();
 
         vec3 rayleighInScattering = rayleighScattering * (rayleighPhaseValue * sunTransmittance + psiMS);
         vec3 mieInScattering = vec3(mieScattering) * (miePhaseValue * sunTransmittance + psiMS);
         vec3 inScattering = rayleighInScattering + mieInScattering;
 
-        vec3 scatteringIntegral = (inScattering - inScattering * sampleTransmittance) / max(extinction, vec3(1e-6));
+        vec3 safeExtinction = max(extinction, vec3(1e-6));
+        vec3 scatteringIntegral = (inScattering - inScattering * sampleTransmittance) / safeExtinction;
 
         lum += scatteringIntegral * transmittance;
         transmittance *= sampleTransmittance;
@@ -139,24 +165,26 @@ void main()
         adjV = coord * coord;
     }
 
+    float planetRadius = GetPlanetRadius();
+
     vec3 viewPos = cameraData.position.xyz * 1e-6;
-    viewPos.y += PlanetRadius;
-    viewPos.y = max(PlanetRadius + 1e-6, viewPos.y);
+    viewPos.y += planetRadius;
+    viewPos.y = max(planetRadius + 1e-6, viewPos.y);
 
     float height = length(viewPos);
-    float horizonAngle = safeacos(sqrt(height * height - PlanetRadius * PlanetRadius) / height) - 0.5 * PI;
+    float horizonAngle = safeacos(sqrt(max(height * height - planetRadius * planetRadius, 0.0)) / max(height, 1e-6)) - 0.5 * PI;
     float altitudeAngle = adjV * 0.5 * PI - horizonAngle;
     float cosAltitude = cos(altitudeAngle);
 
-    vec3 rayDir = vec3(
+    vec3 rayDir = normalize(vec3(
         cosAltitude * sin(azimuthAngle),
         sin(altitudeAngle),
         -cosAltitude * cos(azimuthAngle)
-    );
+    ));
 
     vec3 sunDirWorld = normalize(sunData.direction);
 
-    vec3 up = viewPos / height;
+    vec3 up = viewPos / max(height, 1e-6);
     vec3 refAxis = (abs(up.y) < 0.999) ? vec3(0.0, 1.0, 0.0) : vec3(0.0, 0.0, 1.0);
     vec3 right = normalize(cross(up, refAxis));
     vec3 forward = normalize(cross(right, up));

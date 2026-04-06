@@ -145,6 +145,49 @@ struct SunUniform
     float Intensity;
 };
 
+struct alignas(16) AtmosphereUniform
+{
+    // xyz = scattering, w = scale height
+    glm::vec4 RayleighScattering_Height;
+
+    // xyz = scattering, w = scale height
+    glm::vec4 MieScattering_Height;
+
+    // xyz = absorption, w = density
+    glm::vec4 OzoneAbsorption_Density;
+
+    // xyz = sun color, w = sun intensity multiplier
+    glm::vec4 SunColor_Intensity;
+
+    // x = planet radius
+    // y = atmosphere radius
+    // z = mie anisotropy
+    // w = exposure
+    glm::vec4 Planet_Atmosphere_G_Exposure;
+
+    // x = sky tint
+    // y = horizon softness
+    // z = multi scattering factor
+    // w = sun disk size
+    glm::vec4 Sky_Horizon_Multi_SunDisk;
+
+    // x = sun disk intensity
+    // y = sun glow
+    // z,w = reserved
+    glm::vec4 SunDiskIntensity_Glow_Padding;
+
+    AtmosphereUniform()
+        : RayleighScattering_Height(5.802f, 13.558f, 33.100f, 8000.0f),
+        MieScattering_Height(3.996f, 3.996f, 3.996f, 1200.0f),
+        OzoneAbsorption_Density(0.650f, 1.881f, 0.085f, 1.0f),
+        SunColor_Intensity(1.0f, 0.98f, 0.92f, 1.0f),
+        Planet_Atmosphere_G_Exposure(6360000.0f, 6460000.0f, 0.8f, 10.0f),
+        Sky_Horizon_Multi_SunDisk(1.0f, 1.0f, 1.0f, 1.0f),
+        SunDiskIntensity_Glow_Padding(1.0f, 1.0f, 0.0f, 0.0f)
+    {
+    }
+};
+
 struct OmniShadowUniform
 {
     glm::mat4 projection;

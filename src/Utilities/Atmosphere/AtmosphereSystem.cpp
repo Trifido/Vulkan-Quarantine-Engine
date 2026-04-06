@@ -40,6 +40,8 @@ void AtmosphereSystem::LoadAtmosphereDto(AtmosphereDto atmosphereDto)
 
     this->atmosphereType = static_cast<AtmosphereType>(atmosphereDto.environmentType);
     this->IsInitialized = atmosphereDto.hasAtmosphere;
+
+    ApplyDtoToAtmosphereData(atmosphereDto);
 }
 
 void AtmosphereSystem::InitializeAtmosphereResources()
@@ -61,19 +63,21 @@ void AtmosphereSystem::InitializeAtmosphereResources()
 
 AtmosphereDto AtmosphereSystem::CreateAtmosphereDto()
 {
-    return {
-           this->IsInitialized,
-           static_cast<int>(this->atmosphereType),
-           this->sunLight->GetSunEulerDegrees(),
-           this->sunLight->baseIntensity
-    };
+    AtmosphereDto dto = BuildDtoFromAtmosphereData();
+
+    dto.hasAtmosphere = this->IsInitialized;
+    dto.environmentType = static_cast<int>(this->atmosphereType);
+    dto.sunEulerDegrees = this->sunLight ? this->sunLight->GetSunEulerDegrees() : glm::vec3(0.0f);
+    dto.sunBaseIntensity = this->sunLight ? this->sunLight->baseIntensity : 0.0f;
+
+    return dto;
 }
 
-void AtmosphereSystem::AddTextureResources(const string* texturePaths, uint32_t numTextures)
+void AtmosphereSystem::AddTextureResources(const std::string* texturePaths, uint32_t numTextures)
 {
     TEXTURE_TYPE textureType = (this->atmosphereType == AtmosphereType::CUBEMAP) ? TEXTURE_TYPE::CUBEMAP_TYPE : TEXTURE_TYPE::DIFFUSE_TYPE;
 
-    vector<string> resultPaths;
+    std::vector<std::string> resultPaths;
     for (size_t i = 0; i < numTextures; i++)
     {
         resultPaths.push_back(this->GetAbsolutePath("../../resources/textures", texturePaths[i]));
@@ -109,8 +113,8 @@ void AtmosphereSystem::SetUpResources()
 
     auto shaderManager = ShaderManager::getInstance();
 
-    const string absolute_sky_vert_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[this->atmosphereType]);
-    const string absolute_sky_frag_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[this->atmosphereType + (int)(shaderPaths.size() * 0.5f)]);
+    const std::string absolute_sky_vert_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[this->atmosphereType]);
+    const std::string absolute_sky_frag_shader_path = this->GetAbsolutePath("../../resources/shaders", this->shaderPaths[this->atmosphereType + (int)(shaderPaths.size() * 0.5f)]);
 
     GraphicsPipelineData pipelineData = {};
     pipelineData.HasVertexData = this->atmosphereType != AtmosphereType::PHYSICALLY_BASED_SKY;
@@ -125,6 +129,10 @@ void AtmosphereSystem::SetUpResources()
         this->resolutionUBO = std::make_shared<UniformBufferObject>();
         this->resolutionUBO->CreateUniformBuffer(sizeof(ScreenResolutionUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 
+        this->atmosphereUBO = std::make_shared<UniformBufferObject>();
+        this->atmosphereUBO->CreateUniformBuffer(sizeof(AtmosphereUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+        this->UpdateAtmosphereUBO();
+
         this->UpdateAtmopshereResolution();
         this->computeNodeManager = ComputeNodeManager::getInstance();
 
@@ -133,6 +141,7 @@ void AtmosphereSystem::SetUpResources()
         this->TLUT_ComputeNode->Compute = true;
         this->TLUT_ComputeNode->NElements = 16;
         this->TLUT_ComputeNode->InitializeOutputTextureComputeNode(256, 64, VK_FORMAT_R32G32B32A32_SFLOAT);
+        this->TLUT_ComputeNode->computeDescriptor->ubos["AtmosphereUniform"] = this->atmosphereUBO;
         this->computeNodeManager->AddComputeNode("transmittance_lut", this->TLUT_ComputeNode);
 
         this->MSLUT_ComputeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("multi_scattering_lut"));
@@ -141,6 +150,7 @@ void AtmosphereSystem::SetUpResources()
         this->MSLUT_ComputeNode->NElements = 16;
         this->MSLUT_ComputeNode->InitializeOutputTextureComputeNode(32, 32, VK_FORMAT_R32G32B32A32_SFLOAT);
         this->MSLUT_ComputeNode->computeDescriptor->inputTextures.push_back(this->TLUT_ComputeNode->computeDescriptor->outputTexture);
+        this->MSLUT_ComputeNode->computeDescriptor->ubos["AtmosphereUniform"] = this->atmosphereUBO;
         this->computeNodeManager->AddComputeNode("multi_scattering_lut", this->MSLUT_ComputeNode);
 
         this->SVLUT_ComputeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("sky_view_lut"));
@@ -151,6 +161,7 @@ void AtmosphereSystem::SetUpResources()
         this->SVLUT_ComputeNode->computeDescriptor->inputTextures.push_back(this->TLUT_ComputeNode->computeDescriptor->outputTexture);
         this->SVLUT_ComputeNode->computeDescriptor->inputTextures.push_back(this->MSLUT_ComputeNode->computeDescriptor->outputTexture);
         this->SVLUT_ComputeNode->computeDescriptor->ubos["SunUniform"] = this->sunLight->sunUBO;
+        this->SVLUT_ComputeNode->computeDescriptor->ubos["AtmosphereUniform"] = this->atmosphereUBO;
         this->computeNodeManager->AddComputeNode("sky_view_lut", this->SVLUT_ComputeNode);
 
         this->TLUT_ComputeNode->InitializeComputeNode();
@@ -176,7 +187,7 @@ void AtmosphereSystem::SetUpResources()
     this->_Mesh->QEStart();
 }
 
-void AtmosphereSystem::InitializeAtmosphere(AtmosphereType type, const string* texturePaths, uint32_t numTextures)
+void AtmosphereSystem::InitializeAtmosphere(AtmosphereType type, const std::string* texturePaths, uint32_t numTextures)
 {
     if (this->atmosphereType == type) return;
 
@@ -187,6 +198,100 @@ void AtmosphereSystem::InitializeAtmosphere(AtmosphereType type, const string* t
     this->CreateDescriptorPool();
 
     this->AddTextureResources(texturePaths, numTextures);
+}
+
+void AtmosphereSystem::ApplyDtoToAtmosphereData(const AtmosphereDto& dto)
+{
+    constexpr float kMetersToShaderUnits = 1e-6f;
+
+    this->atmosphereData.RayleighScattering_Height =
+        glm::vec4(dto.rayleighScattering, dto.rayleighScaleHeight * kMetersToShaderUnits);
+
+    this->atmosphereData.MieScattering_Height =
+        glm::vec4(dto.mieScattering, dto.mieScaleHeight * kMetersToShaderUnits);
+
+    this->atmosphereData.OzoneAbsorption_Density =
+        glm::vec4(dto.ozoneAbsorption, dto.ozoneDensity);
+
+    this->atmosphereData.SunColor_Intensity =
+        glm::vec4(dto.sunColor, dto.sunIntensityMultiplier);
+
+    this->atmosphereData.Planet_Atmosphere_G_Exposure =
+        glm::vec4(
+            dto.planetRadius * kMetersToShaderUnits,
+            dto.atmosphereRadius * kMetersToShaderUnits,
+            dto.mieAnisotropy,
+            dto.exposure
+        );
+
+    this->atmosphereData.Sky_Horizon_Multi_SunDisk =
+        glm::vec4(dto.skyTint, dto.horizonSoftness, dto.multiScatteringFactor, dto.sunDiskSize);
+
+    this->atmosphereData.SunDiskIntensity_Glow_Padding =
+        glm::vec4(dto.sunDiskIntensity, dto.sunGlow, 0.0f, 0.0f);
+}
+
+AtmosphereDto AtmosphereSystem::BuildDtoFromAtmosphereData() const
+{
+    constexpr float kShaderUnitsToMeters = 1e6f;
+
+    AtmosphereDto dto;
+
+    dto.rayleighScattering = glm::vec3(this->atmosphereData.RayleighScattering_Height);
+    dto.rayleighScaleHeight = this->atmosphereData.RayleighScattering_Height.w * kShaderUnitsToMeters;
+
+    dto.mieScattering = glm::vec3(this->atmosphereData.MieScattering_Height);
+    dto.mieScaleHeight = this->atmosphereData.MieScattering_Height.w * kShaderUnitsToMeters;
+
+    dto.ozoneAbsorption = glm::vec3(this->atmosphereData.OzoneAbsorption_Density);
+    dto.ozoneDensity = this->atmosphereData.OzoneAbsorption_Density.w;
+
+    dto.sunColor = glm::vec3(this->atmosphereData.SunColor_Intensity);
+    dto.sunIntensityMultiplier = this->atmosphereData.SunColor_Intensity.w;
+
+    dto.planetRadius = this->atmosphereData.Planet_Atmosphere_G_Exposure.x * kShaderUnitsToMeters;
+    dto.atmosphereRadius = this->atmosphereData.Planet_Atmosphere_G_Exposure.y * kShaderUnitsToMeters;
+    dto.mieAnisotropy = this->atmosphereData.Planet_Atmosphere_G_Exposure.z;
+    dto.exposure = this->atmosphereData.Planet_Atmosphere_G_Exposure.w;
+
+    dto.skyTint = this->atmosphereData.Sky_Horizon_Multi_SunDisk.x;
+    dto.horizonSoftness = this->atmosphereData.Sky_Horizon_Multi_SunDisk.y;
+    dto.multiScatteringFactor = this->atmosphereData.Sky_Horizon_Multi_SunDisk.z;
+    dto.sunDiskSize = this->atmosphereData.Sky_Horizon_Multi_SunDisk.w;
+
+    dto.sunDiskIntensity = this->atmosphereData.SunDiskIntensity_Glow_Padding.x;
+    dto.sunGlow = this->atmosphereData.SunDiskIntensity_Glow_Padding.y;
+
+    return dto;
+}
+
+void AtmosphereSystem::UpdateAtmosphereUBO()
+{
+    if (this->atmosphereType != AtmosphereType::PHYSICALLY_BASED_SKY || this->atmosphereUBO == nullptr)
+        return;
+
+    for (uint32_t currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
+    {
+        void* data = nullptr;
+        vkMapMemory(
+            deviceModule->device,
+            this->atmosphereUBO->uniformBuffersMemory[currentFrame],
+            0,
+            sizeof(AtmosphereUniform),
+            0,
+            &data
+        );
+
+        memcpy(data, &this->atmosphereData, sizeof(AtmosphereUniform));
+        vkUnmapMemory(deviceModule->device, this->atmosphereUBO->uniformBuffersMemory[currentFrame]);
+    }
+}
+
+void AtmosphereSystem::MarkAtmosphereLutsDirty()
+{
+    if (this->TLUT_ComputeNode) this->TLUT_ComputeNode->Compute = true;
+    if (this->MSLUT_ComputeNode) this->MSLUT_ComputeNode->Compute = true;
+    if (this->SVLUT_ComputeNode) this->SVLUT_ComputeNode->Compute = true;
 }
 
 void AtmosphereSystem::CreateDescriptorPool()
@@ -202,7 +307,7 @@ void AtmosphereSystem::CreateDescriptorPool()
     else
     {
         poolSizes.resize(2);
-        poolSizes[0] = { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         3u * MAX_FRAMES_IN_FLIGHT };
+        poolSizes[0] = { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         4u * MAX_FRAMES_IN_FLIGHT };
         poolSizes[1] = { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2u * MAX_FRAMES_IN_FLIGHT };
     }
 
@@ -238,11 +343,9 @@ void AtmosphereSystem::CreateDescriptorSet()
         throw std::runtime_error("failed to allocate descriptor sets!");
     }
 
-    int numWrites = (this->atmosphereType != AtmosphereType::PHYSICALLY_BASED_SKY) ? 2 : 5;
-    int numBuffers = (this->atmosphereType != AtmosphereType::PHYSICALLY_BASED_SKY) ? 1 : 3;
+    int numWrites = (this->atmosphereType != AtmosphereType::PHYSICALLY_BASED_SKY) ? 2 : 6;
+    int numBuffers = (this->atmosphereType != AtmosphereType::PHYSICALLY_BASED_SKY) ? 1 : 4;
     this->buffersInfo.resize(numBuffers);
-
-    auto activeCamera = QESessionManager::getInstance()->ActiveCamera();
 
     for (size_t frameIdx = 0; frameIdx < MAX_FRAMES_IN_FLIGHT; frameIdx++)
     {
@@ -260,9 +363,11 @@ void AtmosphereSystem::CreateDescriptorSet()
         {
             this->SetSamplerDescriptorWrite(descriptorWrites[0], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, this->TLUT_ComputeNode->computeDescriptor->outputTexture, this->imageInfo_1);
             this->SetSamplerDescriptorWrite(descriptorWrites[1], this->descriptorSets[frameIdx], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, this->SVLUT_ComputeNode->computeDescriptor->outputTexture, this->imageInfo_2);
+
             this->SetDescriptorWrite(descriptorWrites[2], this->descriptorSets[frameIdx], 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, cameraUBO->uniformBuffers[frameIdx], sizeof(UniformCamera));
             this->SetDescriptorWrite(descriptorWrites[3], this->descriptorSets[frameIdx], 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3, this->resolutionUBO->uniformBuffers[frameIdx], sizeof(ScreenResolutionUniform));
             this->SetDescriptorWrite(descriptorWrites[4], this->descriptorSets[frameIdx], 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4, this->sunLight->sunUBO->uniformBuffers[frameIdx], sizeof(SunUniform));
+            this->SetDescriptorWrite(descriptorWrites[5], this->descriptorSets[frameIdx], 3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 5, this->atmosphereUBO->uniformBuffers[frameIdx], sizeof(AtmosphereUniform));
         }
 
         vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
@@ -307,7 +412,7 @@ void AtmosphereSystem::SetSamplerDescriptorWrite(VkWriteDescriptorSet& descripto
     descriptorWrite.pImageInfo = &imageInfo;
 }
 
-string AtmosphereSystem::GetAbsolutePath(string relativePath, string filename)
+std::string AtmosphereSystem::GetAbsolutePath(std::string relativePath, std::string filename)
 {
     auto absPath = std::filesystem::absolute(relativePath) / filename;
 
@@ -386,6 +491,8 @@ void AtmosphereSystem::Cleanup()
             vkFreeMemory(deviceModule->device, this->resolutionUBO->uniformBuffersMemory[i], nullptr);
         }
     }
+
+    this->resolutionUBO = nullptr;
 
     if (!this->descriptorSets.empty())
     {
@@ -467,6 +574,7 @@ void AtmosphereSystem::UpdatePerFrame(uint32_t frame)
 {
     UpdateSun();
     UpdateAtmopshereResolution();
+    UpdateAtmosphereUBO();
 }
 
 glm::vec3 AtmosphereSystem::GetSunEulerDegrees() const
@@ -495,4 +603,34 @@ void AtmosphereSystem::SetSunBaseIntensity(float intensity)
     this->sunLight->SetSunEulerDegrees(this->sunLight->GetSunEulerDegrees());
 
     this->UpdateSun();
+}
+
+AtmosphereDto AtmosphereSystem::GetEditableAtmosphereDto()
+{
+    return CreateAtmosphereDto();
+}
+
+void AtmosphereSystem::ApplyEditableAtmosphereDto(const AtmosphereDto& dto, bool rebuildLuts)
+{
+    this->IsInitialized = dto.hasAtmosphere;
+    this->atmosphereType = static_cast<AtmosphereType>(dto.environmentType);
+
+    if (this->sunLight)
+    {
+        this->sunLight->baseIntensity = dto.sunBaseIntensity;
+        this->sunLight->SetSunEulerDegrees(dto.sunEulerDegrees);
+        this->sunLight->UpdateSun();
+    }
+
+    ApplyDtoToAtmosphereData(dto);
+    UpdateAtmosphereUBO();
+
+    if (rebuildLuts)
+    {
+        MarkAtmosphereLutsDirty();
+    }
+    else if (this->SVLUT_ComputeNode)
+    {
+        this->SVLUT_ComputeNode->Compute = true;
+    }
 }

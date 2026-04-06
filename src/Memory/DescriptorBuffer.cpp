@@ -35,7 +35,7 @@ void DescriptorBuffer::SetMeshletBuffers(std::shared_ptr<Meshlet> meshlets_ptr)
     this->ssboData["MeshletVertices"]->CreateSSBO(sizeof(Vertex) * meshlets_ptr->verticesData.size(), MAX_FRAMES_IN_FLIGHT, *deviceModule);
     this->ssboSize["MeshletVertices"] = sizeof(Vertex) * meshlets_ptr->verticesData.size();
 
-    this->ssboData["IndexBuffer"]->CreateSSBO(sizeof(uint32_t) * meshlets_ptr->indexData.size(), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->ssboData["IndexBuffer"]->CreateSSBO(sizeof(uint32_t)* meshlets_ptr->indexData.size(), MAX_FRAMES_IN_FLIGHT, *deviceModule);
     this->ssboSize["IndexBuffer"] = sizeof(uint32_t) * meshlets_ptr->indexData.size();
 
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
@@ -63,7 +63,7 @@ void DescriptorBuffer::CleanLastResources()
     this->textures = nullptr;
 
     auto it = this->ubos.begin();
-    while(it != this->ubos.end())
+    while (it != this->ubos.end())
     {
         it->second.reset();
         it->second = nullptr;
@@ -133,6 +133,14 @@ void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
 
             if (this->uboSizes.find("particleSystemUBO") == this->uboSizes.end())
                 this->uboSizes["particleSystemUBO"] = VkDeviceSize(0);
+        }
+        else if (br.name == "AtmosphereUniform")
+        {
+            if (this->ubos.find("atmosphereUBO") == this->ubos.end())
+                this->ubos["atmosphereUBO"] = std::make_shared<UniformBufferObject>();
+
+            if (this->uboSizes.find("atmosphereUBO") == this->uboSizes.end())
+                this->uboSizes["atmosphereUBO"] = VkDeviceSize(0);
         }
         else if (br.name == "ParticleSSBO")
         {
@@ -328,6 +336,11 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
         else if (br.name == "UniformAnimation")
         {
             pushUBO(dstBinding, this->ubos["animationUBO"]->uniformBuffers[frameIdx], this->uboSizes["animationUBO"]);
+        }
+        // Atmosphere UBO
+        else if (br.name == "AtmosphereUniform")
+        {
+            pushUBO(dstBinding, this->ubos["atmosphereUBO"]->uniformBuffers[frameIdx], this->uboSizes["atmosphereUBO"]);
         }
         // Partículas UBO
         else if (br.name == "UniformParticleTexture")

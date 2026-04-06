@@ -1,4 +1,4 @@
-#pragma once
+Ôªø#pragma once
 #ifndef ATMOSPHERE_SYSTEM_H
 #define ATMOSPHERE_SYSTEM_H
 
@@ -12,8 +12,6 @@
 #include <SunLight.h>
 #include <AtmosphereType.h>
 
-using namespace std;
-
 class AtmosphereSystem : public QESingleton<AtmosphereSystem>, public SerializableComponent
 {
 private:
@@ -21,6 +19,14 @@ private:
     std::shared_ptr<QESunLight> sunLight;
     glm::vec3 sunDirection;
     float sunIntensity;
+
+private:
+    AtmosphereUniform atmosphereData{};
+
+    void ApplyDtoToAtmosphereData(const AtmosphereDto& dto);
+    AtmosphereDto BuildDtoFromAtmosphereData() const;
+    void UpdateAtmosphereUBO();
+    void MarkAtmosphereLutsDirty();
 
 public:
     bool IsInitialized;
@@ -35,11 +41,12 @@ private:
 
     std::shared_ptr<CustomTexture> outputTexture;
     std::shared_ptr<UniformBufferObject> resolutionUBO = nullptr;
+    std::shared_ptr<UniformBufferObject> atmosphereUBO = nullptr;
 
     AtmosphereType atmosphereType;
 
     // Skybox shader
-    const vector<string> shaderPaths = {
+    const std::vector<std::string> shaderPaths = {
         "Atmosphere/skybox_cubemap_vert.spv",
         "Atmosphere/sky_spherical_map_vert.spv",
         "Atmosphere/atmosphere_vert.spv",
@@ -48,21 +55,21 @@ private:
         "Atmosphere/atmosphere_frag.spv",
     };
 
-    shared_ptr<ShaderModule> environment_shader;
+    std::shared_ptr<ShaderModule> environment_shader;
 
-    shared_ptr<ComputeNode> TLUT_ComputeNode;
-    shared_ptr<ComputeNode> MSLUT_ComputeNode;
-    shared_ptr<ComputeNode> SVLUT_ComputeNode;
+    std::shared_ptr<ComputeNode> TLUT_ComputeNode;
+    std::shared_ptr<ComputeNode> MSLUT_ComputeNode;
+    std::shared_ptr<ComputeNode> SVLUT_ComputeNode;
 
     // Mesh
-    shared_ptr<QEGeometryComponent> _Mesh = nullptr;
+    std::shared_ptr<QEGeometryComponent> _Mesh = nullptr;
 
     // Descriptor set
-    vector<VkDescriptorSet> descriptorSets;
+    std::vector<VkDescriptorSet> descriptorSets;
     VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
 
     // Cubemap resources
-    shared_ptr<CustomTexture> environmentTexture = nullptr;
+    std::shared_ptr<CustomTexture> environmentTexture = nullptr;
 
     std::vector<VkDescriptorBufferInfo> buffersInfo;
     VkDescriptorImageInfo imageInfo_1;
@@ -71,7 +78,7 @@ private:
 private:
     void CreateDescriptorPool();
     void CreateDescriptorSet();
-    string GetAbsolutePath(string relativePath, string filename);
+    std::string GetAbsolutePath(std::string relativePath, std::string filename);
     VkDescriptorBufferInfo GetBufferInfo(VkBuffer buffer, VkDeviceSize bufferSize);
     void SetDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, uint32_t idBuffer, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize);
     void SetSamplerDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding, std::shared_ptr<CustomTexture> texture, VkDescriptorImageInfo& imageInfo);
@@ -86,15 +93,15 @@ public:
         return name;
     }
     QEMetaType* meta() const override {
-        return nullptr; // o un meta vacÌo si no usas campos ìnormalesî
+        return nullptr; // o un meta vac√≠o si no usas campos ‚Äúnormales‚Äù
     }
 
     void LoadAtmosphereDto(AtmosphereDto atmosphereDto);
     void InitializeAtmosphereResources();
     AtmosphereDto CreateAtmosphereDto();
-    void AddTextureResources(const string* texturePaths, uint32_t numTextures);
+    void AddTextureResources(const std::string* texturePaths, uint32_t numTextures);
     void InitializeAtmosphere();
-    void InitializeAtmosphere(AtmosphereType type, const string* texturePaths, uint32_t numTextures);
+    void InitializeAtmosphere(AtmosphereType type, const std::string* texturePaths, uint32_t numTextures);
     void DrawCommand(VkCommandBuffer& commandBuffer, uint32_t frameIdx);
     void Cleanup();
     void CleanLastResources();
@@ -107,6 +114,9 @@ public:
 
     float GetSunBaseIntensity() const;
     void SetSunBaseIntensity(float intensity);
+
+    AtmosphereDto GetEditableAtmosphereDto();
+    void ApplyEditableAtmosphereDto(const AtmosphereDto& dto, bool rebuildLuts);
 
     std::shared_ptr<QESunLight> GetSunLight() const { return this->sunLight; }
 };

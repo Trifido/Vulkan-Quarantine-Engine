@@ -2,8 +2,6 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 #include "../Includes/QECommon.glsl"
-#include "../Includes/Atmosphere/QEAtmosphereCommon.glsl"
-#include "../Includes/Atmosphere/QEAtmosphereFragCommon.glsl"
 
 layout(binding = 0) uniform sampler2D InputImage;
 layout(binding = 1) uniform sampler2D InputImage_2;
@@ -24,6 +22,20 @@ layout(set = 0, binding = 4) uniform SunUniform
     float intensity;
 } sunData;
 
+layout(set = 0, binding = 5, std140) uniform AtmosphereUniform
+{
+    vec4 RayleighScattering_Height;
+    vec4 MieScattering_Height;
+    vec4 OzoneAbsorption_Density;
+    vec4 SunColor_Intensity;
+    vec4 Planet_Atmosphere_G_Exposure;
+    vec4 Sky_Horizon_Multi_SunDisk;
+    vec4 SunDiskIntensity_Glow_Padding;
+} atmosphereData;
+
+#include "../Includes/Atmosphere/QEAtmosphereCommon.glsl"
+#include "../Includes/Atmosphere/QEAtmosphereFragCommon.glsl"
+
 layout(location = 0) out vec4 outColor;
 
 const vec2 tLUTRes = vec2(256.0, 64.0);
@@ -33,11 +45,15 @@ vec3 getValFromTLUT(vec3 viewPos, vec3 sunDir)
 {
     float height = length(viewPos);
     vec3 up = viewPos / height;
+
     float sunCosZenithAngle = dot(sunDir, up);
+
+    float planetRadius = GetPlanetRadius();
+    float atmosphereRadius = GetAtmosphereRadius();
 
     vec2 uv = vec2(
         clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0),
-        clamp((height - PlanetRadius) / (AtmosphereRadius - PlanetRadius), 0.0, 1.0)
+        clamp((height - planetRadius) / (atmosphereRadius - planetRadius), 0.0, 1.0)
     );
 
     return texture(InputImage, uv).rgb;
@@ -46,8 +62,9 @@ vec3 getValFromTLUT(vec3 viewPos, vec3 sunDir)
 vec3 getValFromSkyLUT(vec3 viewPos, vec3 localRayDir)
 {
     float height = length(viewPos);
+    float planetRadius = GetPlanetRadius();
 
-    float horizonAngle = safeAcos(sqrt(height * height - PlanetRadius * PlanetRadius) / height) - 0.5 * PI;
+    float horizonAngle = safeAcos(sqrt(height * height - planetRadius * planetRadius) / height) - 0.5 * PI;
 
     float altitudeAngle = asin(clamp(localRayDir.y, -1.0, 1.0));
     float azimuthAngle = atan(localRayDir.x, -localRayDir.z);
@@ -74,9 +91,11 @@ void main()
 {
     vec2 iResolution = screenResolution.data;
 
+    float planetRadius = GetPlanetRadius();
+
     vec3 viewPos = cameraData.position.xyz * 1e-6;
-    viewPos.y += PlanetRadius;
-    viewPos.y = max(PlanetRadius + 1e-6, viewPos.y);
+    viewPos.y += planetRadius;
+    viewPos.y = max(planetRadius + 1e-6, viewPos.y);
 
     vec2 ndc = (gl_FragCoord.xy / iResolution) * 2.0 - 1.0;
 
@@ -111,7 +130,7 @@ void main()
     vec3 bloom = sunBloom(rayDir, sunDirForDisk);
     vec3 sunTransmittance = getValFromTLUT(viewPos, sunDirForTlut);
 
-    float horizonAngle = safeAcos(sqrt(height * height - PlanetRadius * PlanetRadius) / height) + HorizonBias;
+    float horizonAngle = safeAcos(sqrt(height * height - planetRadius * planetRadius) / height) + HorizonBias;
     float viewZenithAngle = acos(clamp(dot(rayDir, up), -1.0, 1.0));
     float altitudeAngle = viewZenithAngle - horizonAngle;
 
@@ -145,11 +164,10 @@ void main()
     disk *= sunDiskTint;
     bloom *= sunBloomTint;
 
-    vec3 sky = jodieReinhardTonemap(skyLum * AtmosphereExposure);
+    vec3 sky = jodieReinhardTonemap(skyLum * GetExposure());
 
-    vec3 sunRaw = disk * 4.0 + bloom * 6.0;
-    vec3 sun = sunRaw / (1.0 + sunRaw * 0.30);
-
+    vec3 sun = sunTransmittance * (disk * 4.0 + bloom * 6.0);
     vec3 finalColor = sky + sun;
+
     outColor = vec4(finalColor, 1.0);
 }

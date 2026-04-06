@@ -331,28 +331,107 @@ namespace
             return;
         }
 
+        AtmosphereDto dto = atmosphere->GetEditableAtmosphereDto();
+
+        bool changedSunOnly = false;
+        bool changedVisualOnly = false;
+        bool changedPhysical = false;
+
         ImGui::TextUnformatted("Atmosphere");
         ImGui::Separator();
 
-        // Enable
-        bool enabled = atmosphere->IsInitialized;
-        if (ImGui::Checkbox("Enabled", &enabled))
+        if (ImGui::Checkbox("Enabled", &dto.hasAtmosphere))
         {
-            atmosphere->IsInitialized = enabled;
+            changedVisualOnly = true;
         }
 
-        // Sun rotation
-        glm::vec3 sunEuler = atmosphere->GetSunEulerDegrees();
+        glm::vec3 sunEuler = dto.sunEulerDegrees;
         if (ImGui::DragFloat3("Sun Rotation", &sunEuler.x, 0.5f))
         {
-            atmosphere->SetSunEulerDegrees(sunEuler);
+            dto.sunEulerDegrees = sunEuler;
+            changedSunOnly = true;
         }
 
-        // Intensity
-        float intensity = atmosphere->GetSunBaseIntensity();
-        if (ImGui::DragFloat("Sun Intensity", &intensity, 1.0f, 0.0f, 100000.0f))
+        if (ImGui::DragFloat("Sun Intensity", &dto.sunBaseIntensity, 1.0f, 0.0f, 100000.0f))
         {
-            atmosphere->SetSunBaseIntensity(intensity);
+            changedSunOnly = true;
+        }
+
+        if (ImGui::CollapsingHeader("Scattering", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            if (ImGui::DragFloat3("Rayleigh Scattering", &dto.rayleighScattering.x, 0.01f, 0.0f, 100.0f))
+                changedPhysical = true;
+
+            if (ImGui::DragFloat("Rayleigh Scale Height", &dto.rayleighScaleHeight, 10.0f, 1.0f, 100000.0f))
+                changedPhysical = true;
+
+            if (ImGui::DragFloat3("Mie Scattering", &dto.mieScattering.x, 0.01f, 0.0f, 100.0f))
+                changedPhysical = true;
+
+            if (ImGui::DragFloat("Mie Scale Height", &dto.mieScaleHeight, 1.0f, 1.0f, 100000.0f))
+                changedPhysical = true;
+
+            if (ImGui::DragFloat("Mie Anisotropy", &dto.mieAnisotropy, 0.001f, 0.0f, 0.999f))
+                changedPhysical = true;
+        }
+
+        if (ImGui::CollapsingHeader("Absorption", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            if (ImGui::DragFloat3("Ozone Absorption", &dto.ozoneAbsorption.x, 0.01f, 0.0f, 10.0f))
+                changedPhysical = true;
+
+            if (ImGui::DragFloat("Ozone Density", &dto.ozoneDensity, 0.01f, 0.0f, 10.0f))
+                changedPhysical = true;
+        }
+
+        if (ImGui::CollapsingHeader("Planet", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            if (ImGui::DragFloat("Planet Radius", &dto.planetRadius, 1000.0f, 1.0f, 100000000.0f))
+                changedPhysical = true;
+
+            if (ImGui::DragFloat("Atmosphere Radius", &dto.atmosphereRadius, 1000.0f, 1.0f, 100000000.0f))
+                changedPhysical = true;
+        }
+
+        if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            if (ImGui::ColorEdit3("Sun Color", &dto.sunColor.x))
+                changedVisualOnly = true;
+
+            if (ImGui::DragFloat("Sun Intensity Multiplier", &dto.sunIntensityMultiplier, 0.01f, 0.0f, 100.0f))
+                changedVisualOnly = true;
+        }
+
+        if (ImGui::CollapsingHeader("Artistic", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            if (ImGui::DragFloat("Exposure", &dto.exposure, 0.05f, 0.0f, 100.0f))
+                changedVisualOnly = true;
+
+            if (ImGui::DragFloat("Sky Tint", &dto.skyTint, 0.01f, 0.0f, 10.0f))
+                changedVisualOnly = true;
+
+            if (ImGui::DragFloat("Horizon Softness", &dto.horizonSoftness, 0.01f, 0.0f, 10.0f))
+                changedVisualOnly = true;
+
+            if (ImGui::DragFloat("Multi Scattering Factor", &dto.multiScatteringFactor, 0.01f, 0.0f, 10.0f))
+                changedPhysical = true;
+        }
+
+        if (ImGui::CollapsingHeader("Sun Disc / Bloom", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            if (ImGui::DragFloat("Sun Disk Size", &dto.sunDiskSize, 0.01f, 0.0f, 20.0f))
+                changedVisualOnly = true;
+
+            if (ImGui::DragFloat("Sun Disk Intensity", &dto.sunDiskIntensity, 0.01f, 0.0f, 100.0f))
+                changedVisualOnly = true;
+
+            if (ImGui::DragFloat("Sun Glow", &dto.sunGlow, 0.01f, 0.0f, 100.0f))
+                changedVisualOnly = true;
+        }
+
+        if (changedPhysical || changedVisualOnly || changedSunOnly)
+        {
+            atmosphere->ApplyEditableAtmosphereDto(dto, changedPhysical);
         }
     }
 

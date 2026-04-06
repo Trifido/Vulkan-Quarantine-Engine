@@ -80,6 +80,20 @@ void ComputeDescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shade
             this->uboSizes["UniformNewParticles"] = sizeof(NewParticleUniform);
             this->ubos["UniformNewParticles"]->CreateUniformBuffer(this->uboSizes["UniformNewParticles"], MAX_FRAMES_IN_FLIGHT, *deviceModule);
         }
+        else if (br.name == "SunUniform")
+        {
+            if (this->ubos.find("SunUniform") == this->ubos.end())
+                this->ubos["SunUniform"] = std::make_shared<UniformBufferObject>();
+
+            this->uboSizes["SunUniform"] = sizeof(SunUniform);
+        }
+        else if (br.name == "AtmosphereUniform")
+        {
+            if (this->ubos.find("AtmosphereUniform") == this->ubos.end())
+                this->ubos["AtmosphereUniform"] = std::make_shared<UniformBufferObject>();
+
+            this->uboSizes["AtmosphereUniform"] = sizeof(AtmosphereUniform);
+        }
 
         if (br.type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)
             this->_numSSBOs++;
@@ -247,8 +261,23 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
 
         if (br.name == "SunUniform")
         {
+            auto it = this->ubos.find("SunUniform");
+            if (it == this->ubos.end() || it->second == nullptr)
+                throw std::runtime_error("ComputeDescriptorBuffer: SunUniform UBO not assigned");
+
             pushBufferWrite(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, b,
-                this->ubos["SunUniform"]->uniformBuffers[frameIdx], sizeof(SunUniform));
+                it->second->uniformBuffers[frameIdx], sizeof(SunUniform));
+            continue;
+        }
+
+        if (br.name == "AtmosphereUniform")
+        {
+            auto it = this->ubos.find("AtmosphereUniform");
+            if (it == this->ubos.end() || it->second == nullptr)
+                throw std::runtime_error("ComputeDescriptorBuffer: AtmosphereUniform UBO not assigned");
+
+            pushBufferWrite(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, b,
+                it->second->uniformBuffers[frameIdx], sizeof(AtmosphereUniform));
             continue;
         }
 

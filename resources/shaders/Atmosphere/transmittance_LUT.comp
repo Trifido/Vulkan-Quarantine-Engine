@@ -1,7 +1,19 @@
 #version 450
 
 layout(local_size_x = 16, local_size_y = 16) in;
+
 layout(binding = 0, rgba32f) uniform image2D OutputImage;
+
+layout(binding = 1, std140) uniform AtmosphereUniform
+{
+    vec4 RayleighScattering_Height;
+    vec4 MieScattering_Height;
+    vec4 OzoneAbsorption_Density;
+    vec4 SunColor_Intensity;
+    vec4 Planet_Atmosphere_G_Exposure;
+    vec4 Sky_Horizon_Multi_SunDisk;
+    vec4 SunDiskIntensity_Glow_Padding;
+} atmosphereData;
 
 #include "../Includes/Atmosphere/QEAtmosphereCommon.glsl"
 
@@ -9,12 +21,15 @@ layout(binding = 0, rgba32f) uniform image2D OutputImage;
 
 vec3 getSunTransmittance(vec3 pos, vec3 sunDir)
 {
-    if (rayIntersectSphere(pos, sunDir, PlanetRadius) > 0.0)
+    float planetRadius = GetPlanetRadius();
+    float atmosphereRadius = GetAtmosphereRadius();
+
+    if (rayIntersectSphere(pos, sunDir, planetRadius) > 0.0)
     {
         return vec3(0.0);
     }
 
-    float atmoDist = rayIntersectSphere(pos, sunDir, AtmosphereRadius);
+    float atmoDist = rayIntersectSphere(pos, sunDir, atmosphereRadius);
     float t = 0.0;
 
     vec3 transmittance = vec3(1.0);
@@ -40,18 +55,22 @@ void main()
 {
     vec2 dimensions = vec2(imageSize(OutputImage));
 
-    if (gl_GlobalInvocationID.x >= (dimensions.x + 1.5) || gl_GlobalInvocationID.y >= (dimensions.y + 1.5))
+    if (gl_GlobalInvocationID.x >= uint(dimensions.x) || gl_GlobalInvocationID.y >= uint(dimensions.y))
         return;
 
-    float u = clamp(gl_GlobalInvocationID.x, 0.0, dimensions.x - 1.0) / dimensions.x;
-    float v = clamp(gl_GlobalInvocationID.y, 0.0, dimensions.y - 1.0) / dimensions.y;
+    float u = float(gl_GlobalInvocationID.x) / dimensions.x;
+    float v = float(gl_GlobalInvocationID.y) / dimensions.y;
 
     float sunCosTheta = 2.0 * u - 1.0;
     float sunTheta = safeacos(sunCosTheta);
-    float height = mix(PlanetRadius, AtmosphereRadius, v);
+
+    float planetRadius = GetPlanetRadius();
+    float atmosphereRadius = GetAtmosphereRadius();
+    float height = mix(planetRadius, atmosphereRadius, v);
 
     vec3 pos = vec3(0.0, height, 0.0);
     vec3 sunDir = normalize(vec3(0.0, sunCosTheta, -sin(sunTheta)));
+
     vec3 result = getSunTransmittance(pos, sunDir);
 
     imageStore(OutputImage, ivec2(gl_GlobalInvocationID.xy), vec4(result, 1.0));
