@@ -275,7 +275,7 @@ std::vector<MaterialDto> MaterialManager::GetMaterialDtos(std::ifstream& file)
             std::ifstream matfile(materialPaths[i], std::ios::binary);
             if (!matfile.is_open())
             {
-                std::cerr << "Error al abrir el material " << materialPaths[i] << std::endl;
+                QE_LOG_ERROR_CAT_F("QEMaterial", "Error opening the material: {}", materialPaths[i]);
                 continue;
             }
 
@@ -290,7 +290,7 @@ std::vector<MaterialDto> MaterialManager::GetMaterialDtos(std::ifstream& file)
     }
     catch (const std::bad_alloc& e)
     {
-        std::cerr << "Error al asignar memoria para los materiales: " << e.what() << std::endl;
+        QE_LOG_ERROR_CAT_F("QEMaterial", "Error allocating memory for the materials: {}", e.what());
         return {};
     }
 }
@@ -438,7 +438,7 @@ void MaterialManager::DeserializeMaterials(YAML::Node materials)
 
                     if (!QEMaterialYamlHelper::ReadMaterialFile(resolvedPath, materialDto))
                     {
-                        std::cerr << "Error al leer el material " << resolvedPath << std::endl;
+                        QE_LOG_ERROR_CAT_F("QEMaterial", "Error reading the material: {}", resolvedPath.string());
                         continue;
                     }
                 }
@@ -454,7 +454,7 @@ void MaterialManager::DeserializeMaterials(YAML::Node materials)
     }
     catch (const std::bad_alloc& e)
     {
-        std::cerr << "Error al asignar memoria para los materiales: " << e.what() << std::endl;
+        QE_LOG_ERROR_CAT_F("QEMaterial", "Error allocating memory for the materials: {}", e.what());
         return;
     }
 

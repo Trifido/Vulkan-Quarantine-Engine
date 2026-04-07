@@ -1,6 +1,7 @@
 #include "RenderLayerModule.h"
 #include <iostream>
 #include <algorithm>
+#include <QELogMacros.h>
 
 void RenderLayerModule::AddLayer(RenderLayer newLayer)
 {
@@ -15,7 +16,7 @@ unsigned int RenderLayerModule::GetLayer(unsigned int idx) const
         return (unsigned int) this->enabledLayers.at(idx);
     }
 
-    std::cerr << "ERROR: Indice de layer no encontrada\n";
+    QE_LOG_ERROR_CAT("RenderLayerModule", "Layer index not found");
     return 0;
 }
 

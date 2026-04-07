@@ -23,7 +23,8 @@ public:
 private:
     void DrawFileMenu();
     void DrawWindowMenu();
-    void DrawRightTools();
+    void DrawDebugMenu();
+    void DrawCameraSetup();
 
     void DrawEditorCameraButton();
     void DrawEditorCameraPopup();

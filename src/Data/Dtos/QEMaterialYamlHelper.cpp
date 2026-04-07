@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <system_error>
+#include <QELogMacros.h>
 
 namespace fs = std::filesystem;
 
@@ -164,8 +165,7 @@ bool QEMaterialYamlHelper::WriteMaterialFile(const fs::path& filePath, const Mat
     fs::create_directories(filePath.parent_path(), ec);
     if (ec)
     {
-        std::cerr << "Error creando directorio para material: "
-            << filePath.parent_path() << " -> " << ec.message() << std::endl;
+        QE_LOG_ERROR_CAT_F("QEMaterialYamlHelper", "WriteMaterialFile - Error creating directory for material: {} -> {}", filePath.parent_path().string(), ec.message());
         return false;
     }
 
@@ -175,7 +175,7 @@ bool QEMaterialYamlHelper::WriteMaterialFile(const fs::path& filePath, const Mat
     std::ofstream file(filePath, std::ios::out | std::ios::trunc);
     if (!file.is_open())
     {
-        std::cerr << "Error al abrir " << filePath << " para escritura." << std::endl;
+        QE_LOG_ERROR_CAT_F("QEMaterialYamlHelper", "ImportAnimationFile - Error opening the file: {}", filePath.string());
         return false;
     }
 
@@ -193,12 +193,12 @@ bool QEMaterialYamlHelper::ReadMaterialFile(const fs::path& filePath, MaterialDt
     }
     catch (const YAML::BadFile& e)
     {
-        std::cerr << "No se pudo abrir el material: " << filePath << " (" << e.what() << ")\n";
+        QE_LOG_ERROR_CAT_F("QEMaterialYamlHelper", "The material could not be opened : {} ({})", filePath.string(), e.what());
         return false;
     }
     catch (const YAML::ParserException& e)
     {
-        std::cerr << "YAML inválido en material " << filePath << " (" << e.what() << ")\n";
+        QE_LOG_ERROR_CAT_F("QEMaterialYamlHelper", "Invalid material YAML: {} ({})", filePath.string(), e.what());
         return false;
     }
 }

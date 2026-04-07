@@ -47,13 +47,31 @@ void QESessionManager::SetEditorMode(bool value)
 
 void QESessionManager::SetDebugMode(bool value)
 {
-    this->_isDebugMode = value;
+    _isDebugMode = value;
+    SetShowColliderDebug(value);
+    SetShowCullingAABBDebug(value);
+}
 
-    auto cullingSceneManager = CullingSceneManager::getInstance();
-    cullingSceneManager->DebugMode = value;
+void QESessionManager::SetShowColliderDebug(bool value)
+{
+    _showColliderDebug = value;
 
     auto debugSystem = QEDebugSystem::getInstance();
-    debugSystem->SetEnabled(value);
+    if (debugSystem)
+    {
+        debugSystem->SetEnabled(value);
+    }
+}
+
+void QESessionManager::SetShowCullingAABBDebug(bool value)
+{
+    _showCullingAABBDebug = value;
+
+    auto cullingSceneManager = CullingSceneManager::getInstance();
+    if (cullingSceneManager)
+    {
+        cullingSceneManager->DebugMode = value;
+    }
 }
 
 void QESessionManager::RegisterActiveSceneCamera()
@@ -170,10 +188,10 @@ void QESessionManager::SetupEditor()
     auto editorManager = EditorObjectManager::getInstance();
 
     cullingSceneManager->InitializeCullingSceneResources();
-    cullingSceneManager->DebugMode = _isDebugMode;
+    cullingSceneManager->DebugMode = _showCullingAABBDebug;
 
     auto debugSystem = QEDebugSystem::getInstance();
-    debugSystem->SetEnabled(_isDebugMode);
+    debugSystem->SetEnabled(_showColliderDebug);
 
     if (_isEditor)
     {
@@ -220,7 +238,6 @@ void QESessionManager::FindNewSceneCamera()
 {
     auto gameObjectManager = GameObjectManager::getInstance();
 
-    // Ensure the returned object is of the correct type before assignment
     auto foundCamera = gameObjectManager->FindGameComponentInScene(this->newCameraID);
     this->_gameCamera = std::dynamic_pointer_cast<QECamera>(foundCamera);
 }

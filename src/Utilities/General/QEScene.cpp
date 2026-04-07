@@ -22,7 +22,7 @@ bool QEScene::InitScene(fs::path scenefile)
     std::ifstream file(scenefile, std::ios::binary);
     if (!file.is_open())
     {
-        std::cerr << "Error al abrir la escena" << scenefile << std::endl;
+        QE_LOG_ERROR_CAT_F("QEScene", "Error opening the scene {}", scenefile.string());
         return false;
     }
 
@@ -49,7 +49,7 @@ bool QEScene::SerializeScene()
 
     if (!file.is_open())
     {
-        std::cerr << "Error al guardar la escena:" << this->sceneName << std::endl;
+        QE_LOG_ERROR_CAT_F("QEScene", "Error saving the scene {}", this->sceneName);
         return false;
     }
 
@@ -74,38 +74,26 @@ bool QEScene::DeserializeScene()
     }
     catch (const YAML::BadFile& e)
     {
-        std::cerr << "No se pudo abrir la escena: " << filePath << " (" << e.what() << ")\n";
+        QE_LOG_ERROR_CAT_F("QEScene", "Error opening the scene {}", filePath.string());
         return false;
     }
     catch (const YAML::ParserException& e)
     {
-        std::cerr << "YAML inválido en " << filePath << " (" << e.what() << ")\n";
+        QE_LOG_ERROR_CAT_F("QEScene", "Invalid YAML {} ({})", filePath.string(), e.what());
         return false;
     }
-
-    // CameraEditor
-    //if (auto n = root["CameraEditor"])
-    //{
-    //    cameraEditor = QESessionManager::getInstance()->EditorCamera();
-    //    deserializeComponent(cameraEditor.get(), n);
-    //    cameraEditor->UpdateCamera();
-    //}
-    //else
-    //{
-    //    std::cerr << "Warning: nodo 'CameraEditor' no encontrado en YAML.\n";
-    //}
 
     // AtmosphereDto
     if (auto n = root["AtmosphereDto"])
     {
         if (!DeserializeAtmosphere(n, atmosphereDto))
         {
-            std::cerr << "Warning: 'AtmosphereDto' no se pudo deserializar. Usando defaults.\n";
+            QE_LOG_WARN_CAT("QEScene", "'AtmosphereDto' could not be deserialised. Using defaults.");
         }
     }
     else
     {
-        std::cerr << "Warning: nodo 'AtmosphereDto' no encontrado en YAML. Usando defaults.\n";
+        QE_LOG_WARN_CAT("QEScene", "'AtmosphereDto' node not found in YAML. Using defaults.");
     }
 
     if (auto n = root["Materials"])
@@ -114,7 +102,7 @@ bool QEScene::DeserializeScene()
     }
     else
     {
-        std::cerr << "Warning: nodo 'Materials' no encontrado en YAML.\n";
+        QE_LOG_WARN_CAT("QEScene", "'Materials' node not found in YAML.");
     }
 
     if (auto n = root["GameObjects"])
@@ -123,7 +111,7 @@ bool QEScene::DeserializeScene()
     }
     else
     {
-        std::cerr << "Warning: nodo 'GameObjects' no encontrado en YAML.\n";
+        QE_LOG_WARN_CAT("QEScene", "'GameObjects' node not found in YAML.");
     }
 
     return true;

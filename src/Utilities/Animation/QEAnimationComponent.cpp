@@ -1,6 +1,7 @@
 #include "QEAnimationComponent.h"
 #include <QEGameObject.h>
 #include <Timer.h>
+#include <QELogMacros.h>
 
 QEAnimationComponent::QEAnimationComponent()
 {
@@ -115,7 +116,11 @@ void QEAnimationComponent::ClearAllTriggers()
 void QEAnimationComponent::ChangeState(const std::string& toId)
 {
     auto it = _states.find(toId);
-    if (it == _states.end()) { std::cerr << "State not found: " << toId << "\n"; return; }
+    if (it == _states.end())
+    {
+        QE_LOG_ERROR_CAT_F("QEAnimationComponent", "State not found: {}", toId);
+        return;
+    }
 
     currentState = it->second;
 
@@ -131,13 +136,21 @@ void QEAnimationComponent::ChangeState(const std::string& toId)
 void QEAnimationComponent::ChangeState(const std::string& toId, const QETransition& tr)
 {
     auto it = _states.find(toId);
-    if (it == _states.end()) { std::cerr << "State not found: " << toId << "\n"; return; }
+    if (it == _states.end())
+    {
+        QE_LOG_ERROR_CAT_F("QEAnimationComponent", "State not found: {}", toId);
+        return;
+    }
 
     const bool prevLoop = currentState.Loop;
     AnimationState nextState = it->second;
 
     auto nextClip = GetAnimation(nextState.AnimationClip);
-    if (!nextClip) { std::cerr << "Clip not found: " << nextState.AnimationClip << "\n"; return; }
+    if (!nextClip)
+    {
+        QE_LOG_ERROR_CAT_F("QEAnimationComponent", "Clip not found: {}", nextState.AnimationClip);
+        return;
+    }
 
     currentState = nextState;
 
@@ -214,7 +227,9 @@ const QETransition* QEAnimationComponent::FindValidTransition()
     {
         if (!ExitTimeOk(t, currentState)) continue;
         if (!AreAllConditionsTrue(t)) continue;
-        std::cout << "ToState: " + t.toState << std::endl;
+
+        QE_LOG_INFO_CAT_F("QEAnimationComponent", "ToState: {}", t.toState);
+
         return &t;
     }
     return nullptr;
@@ -254,7 +269,6 @@ void QEAnimationComponent::SetTrigger(const std::string& name, bool value)
 {
     QEParam& p = ensureParam_(name, QEParamType::Trigger);
     p.trigger = value;
-    std::cout << "Set Trigger\n";
 }
 
 AnimationState QEAnimationComponent::GetCurrentState() const
@@ -268,9 +282,9 @@ bool QEAnimationComponent::GetBool(const std::string& name) const
     if (it == _params.end()) return false;
 
     const QEParam& p = it->second;
-    if (p.type != QEParamType::Bool) {
-        std::cerr << "[Animator] Warning: GetBool('" << name
-            << "') llamado sobre parámetro no-bool.\n";
+    if (p.type != QEParamType::Bool)
+    {
+        QE_LOG_WARN_CAT_F("QEAnimationComponent", "GetBool({}) llamado sobre parámetro no-bool.", name);
         return false;
     }
     return p.value.b;
@@ -282,9 +296,9 @@ int QEAnimationComponent::GetInt(const std::string& name) const
     if (it == _params.end()) return 0;
 
     const QEParam& p = it->second;
-    if (p.type != QEParamType::Int) {
-        std::cerr << "[Animator] Warning: GetInt('" << name
-            << "') llamado sobre parámetro no-int.\n";
+    if (p.type != QEParamType::Int)
+    {
+        QE_LOG_INFO_CAT_F("QEAnimationComponent", "GetInt({}) llamado sobre parámetro no-int.", name);
         return 0;
     }
     return p.value.i;
@@ -296,9 +310,9 @@ float QEAnimationComponent::GetFloat(const std::string& name) const
     if (it == _params.end()) return 0.0f;
 
     const QEParam& p = it->second;
-    if (p.type != QEParamType::Float) {
-        std::cerr << "[Animator] Warning: GetFloat('" << name
-            << "') llamado sobre parámetro no-float.\n";
+    if (p.type != QEParamType::Float)
+    {
+        QE_LOG_WARN_CAT_F("QEAnimationComponent", "GetFloat({}) llamado sobre parámetro no-float.", name);
         return 0.0f;
     }
     return p.value.f;
@@ -312,8 +326,7 @@ bool QEAnimationComponent::IsTriggerSet(const std::string& name) const
     const QEParam& p = it->second;
     if (p.type != QEParamType::Trigger)
     {
-        std::cerr << "[Animator] Warning: IsTriggerSet('" << name
-            << "') llamado sobre parámetro no-trigger.\n";
+        QE_LOG_WARN_CAT_F("QEAnimationComponent", "IsTriggerSet({}) llamado sobre parámetro no-trigger.", name);
         return false;
     }
     return p.trigger; // true si el trigger está activo

@@ -213,7 +213,7 @@ void QETransform::SetParent(std::shared_ptr<QETransform> newParent, bool keepWor
     auto self = _self.lock();
     if (!self)
     {
-        std::cerr << "[QETransform] SetParent called but self not set.\n";
+        QE_LOG_ERROR_CAT("QETransform", "SetParent called but self not set.");
         return;
     }
 

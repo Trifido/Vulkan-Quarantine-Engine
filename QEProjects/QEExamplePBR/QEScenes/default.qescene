@@ -1,25 +1,43 @@
 AtmosphereDto:
   hasAtmosphere: true
   environmentType: 2
-  sunEulerDegrees: [-80, 45, 0]
-  sunBaseIntensity: 100
+  sunEulerDegrees: [-176, 57, 0]
+  sunBaseIntensity: 31
+  rayleighScattering: [13.762, 24.928, 34.6]
+  rayleighScaleHeight: 2771
+  mieScattering: [3.996, 3.996, 3.996]
+  mieScaleHeight: 2607
+  mieAnisotropy: 0.61
+  ozoneAbsorption: [1.54, 1.881, 0.085]
+  ozoneDensity: 1
+  planetRadius: 6360000
+  atmosphereRadius: 6460000
+  sunColor: [1, 1, 0.92156863]
+  sunIntensityMultiplier: 1.12
+  exposure: 6.65
+  skyTint: 1.27
+  horizonSoftness: 1
+  multiScatteringFactor: 1
+  sunDiskSize: 0
+  sunDiskIntensity: 1
+  sunGlow: 1
 Materials:
-  - QEAssets/QEModels/source/Materials/Material_20.qemat
-  - QEAssets/QEModels/source/Materials/Material_0.qemat
   - QEAssets/QEMaterials/defaultPrimitiveMat.qemat
   - QEAssets/QEModels/source/Materials/Material_11.qemat
+  - QEAssets/QEModels/source/Materials/Material_20.qemat
+  - QEAssets/QEModels/source/Materials/Material_0.qemat
   - QEAssets/QEMaterials/editorDebugAABB.qemat
   - QEAssets/QEMaterials/defaultParticlesMat.qemat
   - QEAssets/QEMaterials/editorDebugCollider.qemat
   - QEAssets/QEMaterials/editorGrid.qemat
-  - QEAssets/QEModels/source/Materials/Material_21.qemat
   - QEAssets/QEModels/source/Materials/Material_1.qemat
-  - QEAssets/QEModels/source/Materials/Material_22.qemat
+  - QEAssets/QEModels/source/Materials/Material_21.qemat
   - QEAssets/QEModels/source/Materials/Material_2.qemat
-  - QEAssets/QEModels/source/Materials/Material_23.qemat
+  - QEAssets/QEModels/source/Materials/Material_22.qemat
   - QEAssets/QEModels/source/Materials/Material_3.qemat
-  - QEAssets/QEModels/source/Materials/Material_24.qemat
+  - QEAssets/QEModels/source/Materials/Material_23.qemat
   - QEAssets/QEModels/source/Materials/Material_4.qemat
+  - QEAssets/QEModels/source/Materials/Material_24.qemat
   - QEAssets/QEModels/source/Materials/Material_5.qemat
   - QEAssets/QEModels/source/Materials/Material_6.qemat
   - QEAssets/QEModels/source/Materials/Material_7.qemat
@@ -41,8 +59,8 @@ GameObjects:
     components:
       - type: QETransform
         id: YT3CEW8K69rk
-        localPosition: [3.2153265, 2.9675176, -1.1330656]
-        localRotation: [-0.13149534, 0.7270146, 0.14527206, 0.65806895]
+        localPosition: [7.3139424, 13.31932, -1.6271604]
+        localRotation: [-0.10668606, 0.53876865, 0.069017746, 0.8328163]
         localScale: [1, 1, 1]
         parentId: ""
       - type: QECamera
@@ -50,8 +68,8 @@ GameObjects:
         _near: 0.1
         _far: 500
         _fov: 45
-        Width: 1257
-        Height: 450
+        Width: 3023
+        Height: 951
       - type: QECameraController
         id: 3SL3XByImciQ
         Speed: 10

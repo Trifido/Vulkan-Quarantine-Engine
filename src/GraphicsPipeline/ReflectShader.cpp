@@ -1,8 +1,9 @@
 #include "ReflectShader.h"
-#include <iostream>
+#include <sstream>
 #include <cassert>
 #include <thread>
 #include <algorithm>
+#include <QELogMacros.h>
 
 static VkDescriptorType ToVkDescriptorType(SpvReflectDescriptorType t) {
     switch (t) {
@@ -850,24 +851,20 @@ void ReflectShader::Output(VkShaderModuleCreateInfo createInfo)
     const char* t = "  ";
     const char* tt = "    ";
 
-    PrintModuleInfo(std::cout, module);
-    std::cout << "\n\n";
-
-    std::cout << "Descriptor sets:"
-        << "\n";
+    std::ostringstream oss;
+    PrintModuleInfo(oss, module);
+    QE_LOG_INFO_CAT("ShaderReflection", oss.str());
+;
     for (size_t index = 0; index < sets.size(); ++index) {
         auto p_set = sets[index];
-        // descriptor sets can also be retrieved directly from the module, by set
-        // index
         auto p_set2 = spvReflectGetDescriptorSet(&module, p_set->set, &result);
         assert(result == SPV_REFLECT_RESULT_SUCCESS);
         assert(p_set == p_set2);
         (void)p_set2;
 
-        std::cout << t << index << ":"
-            << "\n";
-        PrintDescriptorSet(std::cout, *p_set, tt);
-        std::cout << "\n\n";
+        std::ostringstream osd;
+        PrintDescriptorSet(osd, *p_set, tt);
+        QE_LOG_INFO_CAT("ShaderReflection", osd.str());
     }
 
 
@@ -882,14 +879,9 @@ void ReflectShader::Output(VkShaderModuleCreateInfo createInfo)
 
     if (result == SPV_REFLECT_RESULT_SUCCESS)
     {
-        std::cout << "Input variables:"
-            << "\n";
         for (size_t index = 0; index < input_vars.size(); ++index) {
             auto p_var = input_vars[index];
 
-            // input variables can also be retrieved directly from the module, by
-            // location (unless the location is (uint32_t)-1, as is the case with
-            // built-in inputs)
             auto p_var2 =
                 spvReflectGetInputVariableByLocation(&module, p_var->location, &result);
             if (p_var->location == UINT32_MAX) {
@@ -902,8 +894,6 @@ void ReflectShader::Output(VkShaderModuleCreateInfo createInfo)
             }
             (void)p_var2;
 
-            // input variables can also be retrieved directly from the module, by
-            // semantic (if present)
             p_var2 =
                 spvReflectGetInputVariableBySemantic(&module, p_var->semantic, &result);
             if (!p_var->semantic) {
@@ -920,10 +910,10 @@ void ReflectShader::Output(VkShaderModuleCreateInfo createInfo)
             }
             (void)p_var2;
 
-            std::cout << t << index << ":"
-                << "\n";
-            PrintInterfaceVariable(std::cout, module.source_language, *p_var, tt);
-            std::cout << "\n\n";
+
+            std::ostringstream oiv;
+            PrintInterfaceVariable(oiv, module.source_language, *p_var, tt);
+            QE_LOG_INFO_CAT("ShaderReflection", oiv.str());
         }
     }
     spvReflectDestroyShaderModule(&module);

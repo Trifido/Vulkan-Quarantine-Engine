@@ -8,6 +8,7 @@
 #include <MeshImporter.h>
 #include "QEMaterialFileHelper.h"
 #include "QEMaterialYamlHelper.h"
+#include <QELogMacros.h>
 
 fs::path QEProjectManager::CURRENT_PROJECT_PATH;
 fs::path QEProjectManager::CURRENT_DEFAULT_SCENE_PATH;
@@ -81,7 +82,7 @@ bool QEProjectManager::CreateFolder(const fs::path& projectPath, const std::stri
 
     if (ec)
     {
-        std::cerr << "Error creating folder: " << folderPath << " -> " << ec.message() << std::endl;
+        QE_LOG_ERROR_CAT_F("QEProjectManager", "Error creating folder : {} -> {}", folderPath.string(), ec.message());
         return false;
     }
 
@@ -116,7 +117,7 @@ bool QEProjectManager::ImportMeshFile(const fs::path& inputFile, const QEImportP
 {
     if (!fs::exists(inputFile))
     {
-        std::cerr << "Error al abrir el archivo: " << inputFile << std::endl;
+        QE_LOG_ERROR_CAT_F("QEProjectManager", "ImportMeshFile - Error opening the file: {}", inputFile.string());
         return false;
     }
 
@@ -152,13 +153,13 @@ bool QEProjectManager::ImportAnimationFile(const fs::path& inputFile, const fs::
 {
     if (!fs::exists(inputFile))
     {
-        std::cerr << "Error al abrir el archivo: " << inputFile << std::endl;
+        QE_LOG_ERROR_CAT_F("QEProjectManager", "ImportAnimationFile - Error opening the file: {}", inputFile.string());
         return false;
     }
 
     if (!fs::exists(folderPath))
     {
-        std::cerr << "Error al abrir el archivo: " << folderPath << std::endl;
+        QE_LOG_ERROR_CAT_F("QEProjectManager", "ImportAnimationFile - Error opening the folder: {}", folderPath.string());
         return false;
     }
 

@@ -1,5 +1,6 @@
 ﻿#include "Editor/Core/QEEditorApp.h"
 #include <QEProjectManager.h>
+#include <Logging/QELogMacros.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -14,7 +15,7 @@ int main(int, char**)
     DWORD len = GetModuleFileNameW(nullptr, pathBuf, MAX_PATH);
     if (len == 0 || len == MAX_PATH)
     {
-        std::cerr << "Error al resolver la ruta del exe\n";
+        QE_LOG_ERROR_CAT("Execution", "Error resolving the path to the exe file");
         return -1;
     }
 
@@ -33,10 +34,7 @@ int main(int, char**)
     std::wcout << L"Working Directory fijado a: " << exePath.wstring() << L"\n\n";
 #endif
 
-    if (!QEProjectManager::CreateQEProject("QETest"))
-    {
-        std::cout << "Project already exists or could not be created.\n";
-    }
+    QEProjectManager::CreateQEProject("QEExample");
 
     QEScene scene{};
     QEProjectManager::InitializeDefaultQEScene(scene);

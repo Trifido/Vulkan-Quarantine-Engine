@@ -1,5 +1,6 @@
 #include "VulkanLayerAndExtension.h"
 #include <set>
+#include <QELogMacros.h>
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -9,7 +10,8 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     messageSeverity = messageSeverity;
     messageType = messageType;
     pUserData = pUserData;
-    std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+
+    QE_LOG_ERROR_CAT_F("Validation Layer", "{}", pCallbackData->pMessage);
 
     return VK_FALSE;
 }
@@ -56,7 +58,7 @@ bool checkDeviceExtensionSupport(VkPhysicalDevice device)
 
     for (auto var : requiredExtensions)
     {
-        std::cout << var.c_str() << std::endl;
+        QE_LOG_INFO_CAT_F("checkDeviceExtensionSupport", "{}", var.c_str());
     }
 
     return requiredExtensions.empty();
@@ -153,11 +155,13 @@ void VulkanLayerAndExtension::getInstanceExtensions()
 
     vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
 
-    std::cout << "available extensions:\n";
-
-    for (const auto& extension : extensions) {
-        std::cout << '\t' << extension.extensionName << '\n';
+    std::string extensionResults = "";
+    for (const auto& extension : extensions)
+    {
+        extensionResults += '\t' + extension.extensionName + '\n';
     }
+
+    QE_LOG_INFO_CAT_F("VulkanLayerAndExtension", "available extensions:\n {}", extensionResults);
 }
 
 void VulkanLayerAndExtension::setupDebugMessenger(VkInstance instance, DEBUG_LEVEL level)

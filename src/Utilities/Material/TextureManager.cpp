@@ -2,6 +2,7 @@
 #include <CustomTexture.h>
 #include <algorithm>
 #include <cctype>
+#include <QELogMacros.h>
 
 TextureManager::TextureManager()
 {
@@ -104,7 +105,9 @@ std::shared_ptr<CustomTexture> TextureManager::GetOrLoadTextureByPath(const std:
 
     const std::string normalizedPath = NormalizeTextureKey(rawPath);
     const std::string key = MakeKey(normalizedPath, cs);
-    std::cout << "Loading texture: " << normalizedPath << std::endl;
+
+    QE_LOG_INFO_CAT_F("TextureManager", "Loading texture : {}", normalizedPath);
+
     auto it = _pathCache.find(key);
     if (it != _pathCache.end() && it->second)
         return it->second;

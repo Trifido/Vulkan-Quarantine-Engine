@@ -37,10 +37,8 @@ void EditorHeaderBar::Draw()
 
     DrawFileMenu();
     DrawWindowMenu();
-
-    //ImGui::SeparatorText("");
-
-    DrawRightTools();
+    DrawDebugMenu();
+    DrawCameraSetup();
 
     ImGui::EndMenuBar();
 }
@@ -80,7 +78,36 @@ void EditorHeaderBar::DrawWindowMenu()
     }
 }
 
-void EditorHeaderBar::DrawRightTools()
+void EditorHeaderBar::DrawDebugMenu()
+{
+    if (!editorContext || !sessionManager)
+    {
+        return;
+    }
+
+    if (ImGui::BeginMenu("Debug"))
+    {
+        const bool showColliders = sessionManager->ShowColliderDebug();
+        if (ImGui::MenuItem("Colliders", nullptr, showColliders))
+        {
+            sessionManager->SetShowColliderDebug(!showColliders);
+        }
+
+        const bool showAABBs = sessionManager->ShowCullingAABBDebug();
+        if (ImGui::MenuItem("AABB Culling", nullptr, showAABBs))
+        {
+            sessionManager->SetShowCullingAABBDebug(!showAABBs);
+        }
+
+        ImGui::Separator();
+
+        ImGui::MenuItem("Console Logs", nullptr, &editorContext->ShowConsole);
+
+        ImGui::EndMenu();
+    }
+}
+
+void EditorHeaderBar::DrawCameraSetup()
 {
     DrawEditorCameraButton();
 }

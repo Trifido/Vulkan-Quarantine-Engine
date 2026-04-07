@@ -1,4 +1,5 @@
 #include "QEMeshGenerator.h"
+#include <QELogMacros.h>
 
 QEMesh CubeGenerator::GenerateQEMesh()
 {
@@ -456,7 +457,7 @@ QEMesh CapsuleGenerator::GenerateQEMesh()
     return QEMesh("CapsulePrimitive", "QECore", { meshData });
 }
 
-QEMesh MeshGenerator::GenerateQEMesh()
+QEMesh QEMeshGenerator::GenerateQEMesh()
 {
     QEMesh mesh = MeshImporter::LoadMesh(dataPath);
 
@@ -485,7 +486,7 @@ QEMesh MeshGenerator::GenerateQEMesh()
             }
             else
             {
-                std::cerr << "Fallo cargando animación: " << glb << "\n";
+                QE_LOG_ERROR_CAT_F("QEMeshGenerator", "Error loading animation: {}", glb.string());
             }
         }
     }

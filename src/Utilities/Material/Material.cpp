@@ -209,7 +209,7 @@ std::string QEMaterial::SaveMaterialFile()
 
     if (!QEMaterialYamlHelper::WriteMaterialFile(absMaterialPath, dto))
     {
-        std::cerr << "Error al guardar material YAML en " << absMaterialPath << std::endl;
+        QE_LOG_ERROR_CAT_F("QEMaterial", "Error saving YAML content to {}", absMaterialPath.string());
         return "";
     }
 

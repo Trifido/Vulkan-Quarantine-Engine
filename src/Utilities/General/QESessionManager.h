@@ -12,12 +12,20 @@ class UniformBufferObject;
 class QESessionManager : public QESingleton<QESessionManager>
 {
 private:
-    friend class QESingleton<QESessionManager>; // Permitir acceso al constructor
+    friend class QESingleton<QESessionManager>;
+
 public:
     QESessionManager();
 
     void SetEditorMode(bool value);
+
     void SetDebugMode(bool value);
+    void SetShowColliderDebug(bool value);
+    void SetShowCullingAABBDebug(bool value);
+
+    bool ShowColliderDebug() const { return _showColliderDebug; }
+    bool ShowCullingAABBDebug() const { return _showCullingAABBDebug; }
+
     void RegisterActiveSceneCamera();
     void RegisterSceneCameras();
     void SetFindNewSceneCamera(std::string cameraID);
@@ -36,6 +44,7 @@ public:
     void CleanCullingResources();
     void FindNewSceneCamera();
     void ResolveActiveCamera();
+
     std::shared_ptr<UniformBufferObject> GetCameraUBO() { return this->cameraUBO; }
 
     std::shared_ptr<QECamera> ActiveCamera() const { return _activeCamera; }
@@ -52,6 +61,9 @@ private:
     bool _isEditor = false;
     bool _isDebugMode = false;
     bool _newSceneCamera = false;
+
+    bool _showColliderDebug = false;
+    bool _showCullingAABBDebug = false;
 
     std::string newCameraID;
 

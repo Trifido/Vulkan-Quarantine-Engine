@@ -5,6 +5,7 @@
 
 #include <QEAssetImportManager.h>
 #include <iostream>
+#include <QELogMacros.h>
 
 namespace
 {
@@ -529,7 +530,7 @@ void QEProjectBrowserPanel::HandleExternalFileDrops()
         }
         catch (const std::exception& e)
         {
-            std::cerr << "Import failed: " << e.what() << std::endl;
+            QE_LOG_ERROR_CAT_F("QEProjectBrowserPanel", "Import failed: {}", e.what());
         }
     }
 

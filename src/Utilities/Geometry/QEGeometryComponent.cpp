@@ -27,7 +27,7 @@ std::unique_ptr<IQEMeshGenerator> QEGeometryComponent::GetGenerator(std::string 
 {
     if (filepath != "QECore")
     {
-        return std::make_unique<MeshGenerator>(filepath);
+        return std::make_unique<QEMeshGenerator>(filepath);
     }
     else if (name == "CubePrimitive")
     {
@@ -63,7 +63,7 @@ std::unique_ptr<IQEMeshGenerator> QEGeometryComponent::GetGenerator(std::string 
     }
     else
     {
-        return std::make_unique<MeshGenerator>();
+        return std::make_unique<QEMeshGenerator>();
     }
 }
 

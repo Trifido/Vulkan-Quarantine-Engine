@@ -57,7 +57,7 @@ void QEBaseApp::initVulkan()
 
     //Inicializamos el CommandPool Module
     commandPoolModule = CommandPoolModule::getInstance();
-    commandPoolModule->ClearColor = glm::vec3(0.1f);
+    commandPoolModule->ClearColor = glm::vec3(0.0f);
 
     //Inicializamos el Swapchain Module
     swapchainModule = SwapChainModule::getInstance();

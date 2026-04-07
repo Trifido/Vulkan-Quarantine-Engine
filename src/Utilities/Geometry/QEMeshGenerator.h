@@ -98,13 +98,13 @@ public:
 };
 
 // ConcreteStrategy Mesh
-class MeshGenerator : public IQEMeshGenerator
+class QEMeshGenerator : public IQEMeshGenerator
 {
 private:
     std::string dataPath;
 public:
-    MeshGenerator() = default;
-    MeshGenerator(std::string data)
+    QEMeshGenerator() = default;
+    QEMeshGenerator(std::string data)
         : dataPath(data) {
     }
     QEMesh GenerateQEMesh() override;

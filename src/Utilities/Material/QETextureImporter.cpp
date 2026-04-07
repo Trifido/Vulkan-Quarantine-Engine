@@ -8,6 +8,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <windows.h>
+#include <QELogMacros.h>
 
 
 
@@ -125,7 +126,7 @@ QETextureImportResult QETextureImporter::ImportToKtx2(
         .string();
 
     const int testRc = std::system((Quote(toktxExe) + " --version").c_str());
-    std::cout << "[TextureImporter] toktx test rc: " << testRc << std::endl;
+    QE_LOG_INFO_CAT_F("TextureImporter", "toktx test rc: {}", testRc);
 
     if (!fs::exists(toktxExe))
     {
@@ -153,16 +154,17 @@ QETextureImportResult QETextureImporter::ImportToKtx2(
     args << Quote(result.importedPath) << " ";
     args << Quote(result.sourcePath);
 
-    std::cout << "[TextureImporter] Toktx:  " << toktxExe << std::endl;
-    std::cout << "[TextureImporter] Source: " << result.sourcePath << std::endl;
-    std::cout << "[TextureImporter] Output: " << result.importedPath << std::endl;
-    std::cout << "[TextureImporter] Args:   " << args.str() << std::endl;
+
+    QE_LOG_INFO_CAT_F("TextureImporter", "Toktx: {}", toktxExe);
+    QE_LOG_INFO_CAT_F("TextureImporter", "Source: {}", result.sourcePath);
+    QE_LOG_INFO_CAT_F("TextureImporter", "Output: {}", result.importedPath);
+    QE_LOG_INFO_CAT_F("TextureImporter", "Args: {}", args.str());
 
     const bool sourceExists = fs::exists(result.sourcePath);
     const bool outDirExists = fs::exists(fs::path(result.importedPath).parent_path());
 
-    std::cout << "[TextureImporter] Source exists: " << sourceExists << std::endl;
-    std::cout << "[TextureImporter] Output dir exists: " << outDirExists << std::endl;
+    QE_LOG_INFO_CAT_F("TextureImporter", "Source exists: {}", sourceExists);
+    QE_LOG_INFO_CAT_F("TextureImporter", "Output dir exists: {}", outDirExists);
 
     DWORD rc = 0;
     bool launchOk = RunProcessAndWait(toktxExe, args.str(), rc);

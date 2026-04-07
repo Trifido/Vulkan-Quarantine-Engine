@@ -3,6 +3,9 @@
 #include "QEBaseApp.h"
 #include <memory>
 #include <vector>
+#include <Logs/QEEditorConsole.h>
+#include <Logs/QEEditorConsoleSink.h>
+#include <QEConsoleLogSink.h>
 
 class IEditorPanel;
 class EditorContext;
@@ -74,4 +77,7 @@ private:
     std::unique_ptr<EditorHeaderBar> headerBar;
     std::vector<std::unique_ptr<IEditorPanel>> panels;
     std::vector<std::filesystem::path> _externalDroppedFiles;
+    std::unique_ptr<QEEditorConsole> editorConsole;
+    std::unique_ptr<QEEditorConsoleSink> editorConsoleSink;
+    std::unique_ptr<QEConsoleLogSink> consoleLogSink;
 };

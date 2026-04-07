@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <QELogMacros.h>
 
 enum class QEParamType { Bool, Int, Float, Trigger };
 
@@ -46,7 +47,7 @@ struct AnimationState
 
 inline void LogTypeChange(const std::string& name, const char* fromT, const char* toT)
 {
-    std::cerr << "[Animator] Param '" << name << "' cambiado de " << fromT << " a " << toT << "\n";
+    QE_LOG_ERROR_CAT_F("AnimationState", "Param {} changed from {} to {}", name, fromT, toT);
 }
 
 #endif // !ANIMATION_STATE_DATA_H

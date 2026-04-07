@@ -3,6 +3,7 @@
 #include <map>
 #include <set>
 #include "QueueFamiliesModule.h"
+#include <Logging/QELogMacros.h>
 
 VkSampleCountFlagBits DeviceModule::getMaxUsableSampleCount()
 {
@@ -27,7 +28,7 @@ void DeviceModule::pickPhysicalDevice(const VkInstance &newInstance, VkSurfaceKH
 
     if (deviceCount == 0)
     {
-        std::cout << "failed to find GPUs with Vulkan support!\n";
+        QE_LOG_ERROR_CAT("Vulkan", "No GPUs with Vulkan support found");
         throw std::runtime_error("failed to find GPUs with Vulkan support!");
     }
 
@@ -46,7 +47,7 @@ void DeviceModule::pickPhysicalDevice(const VkInstance &newInstance, VkSurfaceKH
 
     if (physicalDevice == VK_NULL_HANDLE)
     {
-        std::cout << "failed to find a suitable GPU!\n";
+        QE_LOG_ERROR_CAT("Vulkan", "Failed to find a suitable GPU!");
         throw std::runtime_error("failed to find a suitable GPU!");
     }
 

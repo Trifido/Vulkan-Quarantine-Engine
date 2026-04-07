@@ -41,7 +41,7 @@ static bool ImportMaterialTextureIfNeeded(
     }
     else
     {
-        std::cerr << "[TextureImporter] ERROR: " << result.error << std::endl;
+        QE_LOG_ERROR_CAT_F("TextureImporter", "{}", result.error);
         importedPath.clear();
         return false;
     }
@@ -493,7 +493,7 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, QEMeshDat
         MaterialDto matDto;
         if (!QEMaterialYamlHelper::ReadMaterialFile(materialPath, matDto))
         {
-            std::cerr << "Error al abrir el material " << materialPath << std::endl;
+            QE_LOG_ERROR_CAT_F("MeshImporter", "Error opening the material {}", materialPath.string());
         }
         else
         {
@@ -501,7 +501,7 @@ void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, QEMeshDat
             auto shader = shaderManager->GetShader(matDto.ShaderPath);
             if (shader == nullptr)
             {
-                std::cerr << "Error: Shader not found for material " << materialName << std::endl;
+                QE_LOG_ERROR_CAT_F("MeshImporter", "Shader not found for material {}", materialName);
                 return;
             }
 
@@ -555,7 +555,7 @@ void MeshImporter::SaveTextureToFile(const aiTexture* texture, const std::string
     {
         outFile.write(reinterpret_cast<const char*>(texture->pcData), texture->mWidth);
         outFile.close();
-        std::cout << "Saved texture: " << outputPath << std::endl;
+        QE_LOG_INFO_CAT_F("MeshImporter", "Saved texture: {}", outputPath);
     }
 }
 
@@ -569,11 +569,11 @@ void MeshImporter::CopyTextureFile(const std::string& sourcePath, const std::str
     try
     {
         filesystem::copy(sourcePath, destPath, filesystem::copy_options::overwrite_existing);
-        std::cout << "Copied texture: " << destPath << std::endl;
+        QE_LOG_INFO_CAT_F("MeshImporter", "Copied texture: {}", destPath);
     }
     catch (std::exception& e)
     {
-        std::cerr << "Failed to copy texture: " << e.what() << std::endl;
+        QE_LOG_ERROR_CAT_F("MeshImporter", "Failed to copy texture: {}", e.what());
     }
 }
 
@@ -915,7 +915,7 @@ void MeshImporter::ExtractAndUpdateMaterials(
 
         if (material->Get(AI_MATKEY_NAME, rawName) != AI_SUCCESS || rawName.length == 0)
         {
-            std::cout << "[MeshImporter] Material sin nombre en índice " << i << ", usando fallback.\n";
+            QE_LOG_INFO_CAT_F("MeshImporter", "Material not listed in the index {}, using a fallback", i);
         }
 
         if (material->Get(AI_MATKEY_NAME, rawName) == AI_SUCCESS && rawName.length > 0)
@@ -1036,7 +1036,7 @@ void MeshImporter::ExtractAndUpdateMaterials(
 
         if (!QEMaterialYamlHelper::WriteMaterialFile(materialPath, dto))
         {
-            std::cerr << "Error al escribir material YAML: " << materialPath << std::endl;
+            QE_LOG_ERROR_CAT_F("MeshImporter", "Error writing YAML content: {}", materialPath.string());
             continue;
         }
     }
@@ -1098,8 +1098,9 @@ bool MeshImporter::LoadAndExportModel(
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(inputPath, flags);
 
-    if (!scene) {
-        std::cerr << "Error al cargar el modelo: " << importer.GetErrorString() << std::endl;
+    if (!scene)
+    {
+        QE_LOG_ERROR_CAT_F("MeshImporter", "Error loading the model: {}", importer.GetErrorString());
         report(0.0f, "Failed", "Could not read source model");
         return false;
     }
@@ -1137,14 +1138,18 @@ bool MeshImporter::LoadAndExportModel(
         report(0.90f, "Cleanup", "Cleaning temporary files");
         fs::remove_all(tempTextureFolder, ec);
         if (ec)
-            std::cerr << "Warning: could not remove temp texture folder: " << tempTextureFolder << std::endl;
+        {
+            QE_LOG_WARN_CAT_F("MeshImporter", "Could not remove temp texture folder: {}", tempTextureFolder.string());
+        }
 
         ec.clear();
         if (fs::exists(legacyImportedFolder))
         {
             fs::remove_all(legacyImportedFolder, ec);
             if (ec)
-                std::cerr << "Warning: could not remove legacy ImportedTextures folder: " << legacyImportedFolder << std::endl;
+            {
+                QE_LOG_WARN_CAT_F("MeshImporter", "Could not remove legacy ImportedTextures folder: {}", legacyImportedFolder.string());
+            }
         }
     }
 
@@ -1160,7 +1165,7 @@ bool MeshImporter::LoadAndExportModel(
 
     if (exporter.Export(editableScene, "gltf2", outputMeshPath) != AI_SUCCESS)
     {
-        std::cerr << "Error al exportar a glTF: " << exporter.GetErrorString() << std::endl;
+        QE_LOG_ERROR_CAT_F("MeshImporter", "Error exporting to glTF: {}", exporter.GetErrorString());
         AnimationImporter::DestroyScene(editableScene);
         report(0.95f, "Failed", "glTF export failed");
         return false;
@@ -1169,6 +1174,6 @@ bool MeshImporter::LoadAndExportModel(
     AnimationImporter::DestroyScene(editableScene);
 
     report(1.0f, "Completed", "Import finished");
-    std::cout << "Exportación exitosa: " << outputMeshPath << std::endl;
+    QE_LOG_INFO_CAT_F("MeshImporter", "Successful export: {}", outputMeshPath);
     return true;
 }

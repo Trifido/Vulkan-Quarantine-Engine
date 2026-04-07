@@ -28,6 +28,8 @@
 #include <QECamera.h>
 #include <QECameraController.h>
 
+#include <Logging/QELogger.h>
+
 namespace
 {
     static constexpr const char* kEditorCameraPopupId = "EditorCameraSettingsPopup";
@@ -41,6 +43,16 @@ QEEditorApp::~QEEditorApp() = default;
 
 void QEEditorApp::OnInitialize()
 {
+    // Log
+    editorConsole = std::make_unique<QEEditorConsole>();
+    editorConsoleSink = std::make_unique<QEEditorConsoleSink>(editorConsole.get());
+
+    QELogger::Get().AddSink(editorConsoleSink.get());
+
+    consoleLogSink = std::make_unique<QEConsoleLogSink>();
+    QELogger::Get().AddSink(consoleLogSink.get());
+
+    // Main window & panels
     mainWindow->OnExternalFilesDropped = [this](const std::vector<std::filesystem::path>& paths)
         {
             for (const auto& path : paths)
@@ -83,6 +95,16 @@ void QEEditorApp::OnShutdown()
     {
         viewportResources->Cleanup();
         viewportResources.reset();
+    }
+
+    if (editorConsoleSink)
+    {
+        QELogger::Get().RemoveSink(editorConsoleSink.get());
+    }
+
+    if (consoleLogSink)
+    {
+        QELogger::Get().RemoveSink(consoleLogSink.get());
     }
 }
 
@@ -370,7 +392,7 @@ void QEEditorApp::SpawnDroppedMesh(const std::string& assetPath)
     const std::string objectName = path.stem().string();
 
     std::shared_ptr<QEGameObject> newObject = std::make_shared<QEGameObject>(objectName);
-    newObject->AddComponent(std::make_shared<QEGeometryComponent>(std::make_unique<MeshGenerator>(path.generic_string())));
+    newObject->AddComponent(std::make_shared<QEGeometryComponent>(std::make_unique<QEMeshGenerator>(path.generic_string())));
     newObject->AddComponent(std::make_shared<QEMeshRenderer>());
 
     if (auto transform = newObject->GetComponent<QETransform>())

@@ -4,6 +4,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/Exporter.hpp>
 #include <SanitizerHelper.h>
+#include <QELogMacros.h>
 
 std::vector<AnimationData> AnimationImporter::LoadAnimation(std::string animationFilepath, std::unordered_map<std::string, BoneInfo> m_BoneInfoMap)
 {
@@ -305,8 +306,9 @@ std::vector<fs::path> AnimationImporter::ListGlbInDir(const fs::path& dir)
     std::vector<fs::path> out;
     std::error_code ec;
 
-    if (!fs::exists(dir, ec) || !fs::is_directory(dir, ec)) {
-        std::cerr << "[ListGlbInDir] No existe o no es directorio: " << dir << "\n";
+    if (!fs::exists(dir, ec) || !fs::is_directory(dir, ec))
+    {
+        QE_LOG_ERROR_CAT_F("AnimationImporter", "[ListGlbInDir] No existe o no es directorio: {}", dir.string());
         return out;
     }
 
