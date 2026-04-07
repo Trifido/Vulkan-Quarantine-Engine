@@ -186,8 +186,6 @@ void QEGeometryComponent::CreateIndexBuffers()
 
 void QEGeometryComponent::CreateVertexBuffers()
 {
-    PROFILE_SCOPE("CreateVertexBuffers");
-
     vertexBuffer.resize(mesh.MeshData.size());
     vertexBufferMemory.resize(mesh.MeshData.size());
     for (int i = 0; i < mesh.MeshData.size(); i++)

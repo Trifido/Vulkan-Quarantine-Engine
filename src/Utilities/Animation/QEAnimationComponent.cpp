@@ -1,7 +1,7 @@
 #include "QEAnimationComponent.h"
 #include <QEGameObject.h>
 #include <Timer.h>
-#include <QELogMacros.h>
+#include <Logging/QELogMacros.h>
 
 QEAnimationComponent::QEAnimationComponent()
 {

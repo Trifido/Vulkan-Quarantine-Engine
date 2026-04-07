@@ -34,7 +34,7 @@ int main(int, char**)
     std::wcout << L"Working Directory fijado a: " << exePath.wstring() << L"\n\n";
 #endif
 
-    QEProjectManager::CreateQEProject("QEExample");
+    QEProjectManager::CreateQEProject("QETest");
 
     QEScene scene{};
     QEProjectManager::InitializeDefaultQEScene(scene);

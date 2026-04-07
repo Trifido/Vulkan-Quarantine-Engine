@@ -3,9 +3,6 @@
 #include "QEBaseApp.h"
 #include <memory>
 #include <vector>
-#include <Logs/QEEditorConsole.h>
-#include <Logs/QEEditorConsoleSink.h>
-#include <QEConsoleLogSink.h>
 
 class IEditorPanel;
 class EditorContext;
@@ -18,6 +15,10 @@ class QERenderTarget;
 class QEProjectBrowserPanel;
 class ViewportPanel;
 class EditorHeaderBar;
+class QEEditorConsole;
+class QEEditorConsoleSink;
+class QEConsoleLogSink;
+class ConsolePanel;
 
 class QEEditorApp : public QEBaseApp
 {

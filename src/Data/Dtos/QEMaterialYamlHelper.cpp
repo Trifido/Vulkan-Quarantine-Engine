@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <system_error>
-#include <QELogMacros.h>
+#include <Logging/QELogMacros.h>
 
 namespace fs = std::filesystem;
 

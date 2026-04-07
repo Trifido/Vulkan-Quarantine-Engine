@@ -4,7 +4,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/Exporter.hpp>
 #include <SanitizerHelper.h>
-#include <QELogMacros.h>
+#include <Logging/QELogMacros.h>
 
 std::vector<AnimationData> AnimationImporter::LoadAnimation(std::string animationFilepath, std::unordered_map<std::string, BoneInfo> m_BoneInfoMap)
 {

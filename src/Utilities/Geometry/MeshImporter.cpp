@@ -236,8 +236,6 @@ void MeshImporter::RecreateTangents(std::vector<Vertex>& vertices, std::vector<u
 
 QEMesh MeshImporter::LoadMesh(std::string path)
 {
-    PROFILE_SCOPE("LoadMesh");
-
     fs::path filepath = fs::path(path);
     std::string name = filepath.stem().string();
     fs::path matpath = filepath.parent_path().parent_path() / "Materials";
@@ -280,8 +278,6 @@ QEMesh MeshImporter::LoadMesh(std::string path)
 
 void MeshImporter::ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, QEMesh& mesh, const fs::path& matpath)
 {
-    PROFILE_SCOPE("ProcessNode");
-
     glm::mat4 localTransform = GetGLMMatrix(node->mTransformation);
     glm::mat4 currentTransform = glm::identity<glm::mat4>();
 
@@ -289,7 +285,6 @@ void MeshImporter::ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 par
     for (unsigned int i = 0; i < node->mNumMeshes; i++)
     {
         PROFILE_SCOPE("ProcessMesh");
-
         QEMeshData result = ProcessMesh(scene->mMeshes[node->mMeshes[i]], scene, mesh.BonesInfoMap);
         result.ModelTransform = currentTransform;
 

@@ -5,7 +5,7 @@
 
 #include <QEAssetImportManager.h>
 #include <iostream>
-#include <QELogMacros.h>
+#include <Logging/QELogMacros.h>
 
 namespace
 {

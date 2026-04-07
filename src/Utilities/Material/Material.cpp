@@ -76,7 +76,6 @@ QEMaterial::QEMaterial(std::shared_ptr<ShaderModule> shader_ptr, const MaterialD
         { materialDto.specularTexturePath,  TEXTURE_TYPE::SPECULAR_TYPE }
     };
 
-    PROFILE_SCOPE("QEMaterial from DTO");
     for (const auto& tp : texturePaths)
     {
         this->materialData.AddTexture(tp.second, tp.first);

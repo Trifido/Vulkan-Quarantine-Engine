@@ -1,7 +1,7 @@
 #include "RenderLayerModule.h"
 #include <iostream>
 #include <algorithm>
-#include <QELogMacros.h>
+#include <Logging/QELogMacros.h>
 
 void RenderLayerModule::AddLayer(RenderLayer newLayer)
 {

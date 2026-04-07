@@ -8,7 +8,7 @@
 #include <MeshImporter.h>
 #include "QEMaterialFileHelper.h"
 #include "QEMaterialYamlHelper.h"
-#include <QELogMacros.h>
+#include <Logging/QELogMacros.h>
 
 fs::path QEProjectManager::CURRENT_PROJECT_PATH;
 fs::path QEProjectManager::CURRENT_DEFAULT_SCENE_PATH;

@@ -1,6 +1,6 @@
 #include "VulkanLayerAndExtension.h"
 #include <set>
-#include <QELogMacros.h>
+#include <Logging/QELogMacros.h>
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,

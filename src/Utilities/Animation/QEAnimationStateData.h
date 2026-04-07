@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include <QELogMacros.h>
+#include <Logging/QELogMacros.h>
 
 enum class QEParamType { Bool, Int, Float, Trigger };
 

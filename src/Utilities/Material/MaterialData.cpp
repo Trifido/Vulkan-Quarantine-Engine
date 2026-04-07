@@ -254,7 +254,6 @@ void MaterialData::fillEmptyTextures()
 
 void MaterialData::AddTexture(TEXTURE_TYPE semantic, const std::string& texturePath)
 {
-    PROFILE_SCOPE("MaterialData::AddTexture");
     PathRefForSemantic(*this, semantic) =
         (texturePath.empty() ? "NULL_TEXTURE" : texturePath);
 
@@ -272,7 +271,6 @@ void MaterialData::AddTexture(TEXTURE_TYPE semantic, const std::string& textureP
     }
     else
     {
-        PROFILE_SCOPE("TextureManager::GetOrLoadTextureByPath");
         QEColorSpace cs = ColorSpaceFromSemantic(semantic);
         tex = textureManager->GetOrLoadTextureByPath(texturePath, cs);
     }

@@ -2,7 +2,7 @@
 #include <CustomTexture.h>
 #include <algorithm>
 #include <cctype>
-#include <QELogMacros.h>
+#include <Logging/QELogMacros.h>
 
 TextureManager::TextureManager()
 {

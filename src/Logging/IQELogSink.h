@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QELogLevel.h>
+#include <Logging/QELogLevel.h>
 
 class IQELogSink
 {

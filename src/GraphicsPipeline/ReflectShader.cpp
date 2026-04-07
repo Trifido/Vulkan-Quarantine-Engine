@@ -3,7 +3,7 @@
 #include <cassert>
 #include <thread>
 #include <algorithm>
-#include <QELogMacros.h>
+#include <Logging/QELogMacros.h>
 
 static VkDescriptorType ToVkDescriptorType(SpvReflectDescriptorType t) {
     switch (t) {

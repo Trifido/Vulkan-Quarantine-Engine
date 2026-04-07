@@ -1,5 +1,5 @@
 #include "QEMeshGenerator.h"
-#include <QELogMacros.h>
+#include <Logging/QELogMacros.h>
 
 QEMesh CubeGenerator::GenerateQEMesh()
 {

@@ -20,6 +20,7 @@
 #include "Panels/ViewportPanel.h"
 #include "Panels/EditorHeaderBar.h"
 #include "Panels/QEProjectBrowserPanel.h"
+#include "Panels/ConsolePanel.h"
 #include "Rendering/EditorViewportResources.h"
 #include <QEProjectManager.h>
 #include <QEMeshRenderer.h>
@@ -29,6 +30,9 @@
 #include <QECameraController.h>
 
 #include <Logging/QELogger.h>
+#include <Logging/QEConsoleLogSink.h>
+#include <Editor/Logs/QEEditorConsole.h>
+#include <Editor/Logs/QEEditorConsoleSink.h>
 
 namespace
 {
@@ -46,11 +50,10 @@ void QEEditorApp::OnInitialize()
     // Log
     editorConsole = std::make_unique<QEEditorConsole>();
     editorConsoleSink = std::make_unique<QEEditorConsoleSink>(editorConsole.get());
-
-    QELogger::Get().AddSink(editorConsoleSink.get());
-
     consoleLogSink = std::make_unique<QEConsoleLogSink>();
+
     QELogger::Get().AddSink(consoleLogSink.get());
+    QELogger::Get().AddSink(editorConsoleSink.get());
 
     // Main window & panels
     mainWindow->OnExternalFilesDropped = [this](const std::vector<std::filesystem::path>& paths)
@@ -91,12 +94,6 @@ void QEEditorApp::OnInitialize()
 
 void QEEditorApp::OnShutdown()
 {
-    if (viewportResources)
-    {
-        viewportResources->Cleanup();
-        viewportResources.reset();
-    }
-
     if (editorConsoleSink)
     {
         QELogger::Get().RemoveSink(editorConsoleSink.get());
@@ -105,6 +102,12 @@ void QEEditorApp::OnShutdown()
     if (consoleLogSink)
     {
         QELogger::Get().RemoveSink(consoleLogSink.get());
+    }
+
+    if (viewportResources)
+    {
+        viewportResources->Cleanup();
+        viewportResources.reset();
     }
 }
 
@@ -281,6 +284,10 @@ void QEEditorApp::CreatePanels()
         editorContext.get(),
         selectionManager.get(),
         commandManager.get()));
+
+    panels.emplace_back(std::make_unique<ConsolePanel>(
+        editorContext.get(),
+        editorConsole.get()));
 
     auto viewportPanelLocal = std::make_unique<ViewportPanel>(
         editorContext.get(),
