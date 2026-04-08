@@ -6,26 +6,38 @@
 #include <unordered_map>
 #include <memory>
 #include "QEGameObject.h"
-#include "RenderLayerModule.h"
+#include "QEMeshRenderer.h"
 #include "QESingleton.h"
 #include <fstream>
 #include <vector>
 
+struct QEOrderRenderItem
+{
+    std::shared_ptr<QEGameObject> GameObject;
+    std::shared_ptr<QEMeshRenderer> MeshRenderer;
+    std::shared_ptr<QEMaterial> Material;
+    unsigned int RenderQueue = 0;
+};
+
 class GameObjectManager : public QESingleton<GameObjectManager>
 {
 private:
+
     friend class QESingleton<GameObjectManager>;
-    std::unordered_map<unsigned int, std::unordered_map<std::string, std::shared_ptr<QEGameObject>>> _objects;
-    RenderLayerModule renderLayers;
+
+    std::unordered_map<unsigned int, std::unordered_map<std::string, std::shared_ptr<QEGameObject>>> _objectsByUpdateOrder;
 
 private:
     std::string CheckName(std::string nameGameObject);
-    unsigned int DecideRenderLayer(std::shared_ptr<QEGameObject> go, unsigned int defaultLayer);
+    unsigned int DecideUpdateBucket(std::shared_ptr<QEGameObject> go, unsigned int defaultOrder);
     void RegisterSingle(std::shared_ptr<QEGameObject> go, std::string name);
 
     void UnregisterSingle(const std::shared_ptr<QEGameObject>& go);
     void UnregisterHierarchy(const std::shared_ptr<QEGameObject>& go);
     void DestroyHierarchy(const std::shared_ptr<QEGameObject>& go);
+
+    std::vector<QEOrderRenderItem> BuildRenderItems() const;
+    std::vector<QEOrderRenderItem> BuildShadowRenderItems() const;
 
 public:
     GameObjectManager() = default;
@@ -33,6 +45,8 @@ public:
     void AddGameObject(std::shared_ptr<QEGameObject> object_ptr);
     bool RemoveGameObject(const std::shared_ptr<QEGameObject>& object_ptr);
     bool RenameGameObject(const std::shared_ptr<QEGameObject>& objectPtr, const std::string& newName);
+    bool SetGameObjectUpdateOrder(const std::shared_ptr<QEGameObject>& objectPtr, unsigned int newOrder);
+
     std::shared_ptr<QEGameObject> CreateEmptyGameObject(const std::string& baseName = "Empty GameObject");
 
     std::shared_ptr<QEGameObject> GetGameObject(const std::string& name);
@@ -50,6 +64,7 @@ public:
 
     template<typename T>
     std::shared_ptr<T> FindFirstComponentInScene(const std::string& excludedGameObjectName = "") const;
+
     std::shared_ptr<QEGameComponent> FindGameComponentInScene(const std::string& id);
     std::vector<std::shared_ptr<QEGameObject>> GetRootGameObjects() const;
     std::shared_ptr<QEGameObject> GetGameObjectById(const std::string& id) const;
@@ -58,14 +73,11 @@ public:
 template<typename T>
 std::shared_ptr<T> GameObjectManager::FindFirstComponentInScene(const std::string& excludedGameObjectName) const
 {
-    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); ++idl)
+    for (const auto& bucketPair : _objectsByUpdateOrder)
     {
-        const unsigned int layerId = this->renderLayers.GetLayer(idl);
-        auto layerIt = this->_objects.find(layerId);
-        if (layerIt == this->_objects.end())
-            continue;
+        const auto& bucket = bucketPair.second;
 
-        for (const auto& kv : layerIt->second)
+        for (const auto& kv : bucket)
         {
             const auto& go = kv.second;
             if (!go)

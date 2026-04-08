@@ -10,6 +10,40 @@
 #include <Editor/Core/EditorContext.h>
 #include <Editor/Core/EditorSelectionManager.h>
 
+namespace
+{
+    const char* GetRenderQueueLabel(unsigned int renderQueue)
+    {
+        switch (renderQueue)
+        {
+        case 1000: return "Background";
+        case 2000: return "Geometry";
+        case 3000: return "Transparent";
+        case 3100: return "Particles";
+        case 4000: return "UI";
+        case 5000: return "Debug";
+        case 6000: return "Editor";
+        default:   return "Custom";
+        }
+    }
+
+    const unsigned int kRenderQueueValues[] =
+    {
+        1000, 2000, 3000, 3100, 4000, 5000, 6000
+    };
+
+    const char* kRenderQueueLabels[] =
+    {
+        "Background",
+        "Geometry",
+        "Transparent",
+        "Particles",
+        "UI",
+        "Debug",
+        "Editor"
+    };
+}
+
 MaterialInspectorPanel::MaterialInspectorPanel(
     GameObjectManager* gameObjectManager,
     EditorContext* editorContext,
@@ -100,10 +134,48 @@ void MaterialInspectorPanel::DrawMaterial(const std::shared_ptr<QEMaterial>& mat
     ImGui::Text("Name: %s", material->Name.c_str());
     ImGui::Text("Shader: %s", material->shader ? material->shader->shaderNameID.c_str() : "None");
 
-    int layer = static_cast<int>(material->layer);
-    if (ImGui::DragInt(("Layer##Layer_" + std::to_string(materialIndex)).c_str(), &layer, 1.0f, 0, 64))
+    int currentQueueIndex = 0;
+    for (int i = 0; i < IM_ARRAYSIZE(kRenderQueueValues); ++i)
     {
-        material->layer = static_cast<unsigned int>(layer);
+        if (material->renderQueue == kRenderQueueValues[i])
+        {
+            currentQueueIndex = i;
+            break;
+        }
+    }
+
+    if (ImGui::BeginCombo(
+        ("Render Queue##RenderQueue_" + std::to_string(materialIndex)).c_str(),
+        GetRenderQueueLabel(material->renderQueue)))
+    {
+        for (int i = 0; i < IM_ARRAYSIZE(kRenderQueueValues); ++i)
+        {
+            const bool isSelected = (material->renderQueue == kRenderQueueValues[i]);
+
+            if (ImGui::Selectable(kRenderQueueLabels[i], isSelected))
+            {
+                material->renderQueue = kRenderQueueValues[i];
+            }
+
+            if (isSelected)
+            {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+
+        ImGui::EndCombo();
+    }
+
+    int renderQueueValue = static_cast<int>(material->renderQueue);
+    if (ImGui::DragInt(
+        ("Render Queue Value##RenderQueueValue_" + std::to_string(materialIndex)).c_str(),
+        &renderQueueValue,
+        10.0f,
+        0,
+        100000))
+    {
+        renderQueueValue = std::max(0, renderQueueValue);
+        material->renderQueue = static_cast<unsigned int>(renderQueueValue);
     }
 
     ImGui::Separator();

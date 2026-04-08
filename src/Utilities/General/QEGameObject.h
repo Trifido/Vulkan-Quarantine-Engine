@@ -27,6 +27,7 @@ protected:
 
 public:
     std::string Name;
+    unsigned int UpdateOrder = 0;
     std::list<std::shared_ptr<QEGameComponent>> components;
     std::vector<std::shared_ptr<QEMaterial>>    materials;
     std::vector<std::shared_ptr<QEGameObject>>    childs;
@@ -37,7 +38,6 @@ private:
 
 public:
     QEGameObject(std::string name = "");
-    //QEGameObject(const GameObjectDto& gameObjectDto);
     inline std::string ID() const { return id; }
 
     void QEStart();

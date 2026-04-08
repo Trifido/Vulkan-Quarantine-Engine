@@ -6,10 +6,8 @@
 
 #include <glm/glm.hpp>
 
-// Ajusta estos includes según dónde tengas enums / constantes
-#include "Material.h"          // si aquí está RenderLayer
-#include "MaterialData.h"      // si aquí están máscaras/canales
-// o donde tengas RenderLayer, etc.
+#include "Material.h"
+#include "MaterialData.h"
 
 namespace fs = std::filesystem;
 
@@ -40,7 +38,7 @@ MaterialDto QEMaterialFileHelper::BuildBaseMaterialDto(
     dto.FilePath = ToProjectRelativePath(absoluteMaterialPath, projectRoot);
     dto.ShaderPath = shaderName;
 
-    dto.layer = (int)RenderLayer::SOLID;
+    dto.RenderQueue = static_cast<unsigned int>(RenderQueue::Geometry);
 
     // Scalars legacy
     dto.Opacity = 1.0f;
@@ -88,14 +86,14 @@ MaterialDto QEMaterialFileHelper::BuildBaseMaterialDto(
 MaterialDto QEMaterialFileHelper::BuildDefaultPrimitiveMaterialDto(const fs::path& projectRoot)
 {
     MaterialDto dto = BuildBaseMaterialDto("defaultPrimitiveMat", "default_primitive", projectRoot);
-    dto.layer = (int)RenderLayer::SOLID;
+    dto.RenderQueue = static_cast<unsigned int>(RenderQueue::Geometry);
     return dto;
 }
 
 MaterialDto QEMaterialFileHelper::BuildDefaultParticlesMaterialDto(const fs::path& projectRoot)
 {
     MaterialDto dto = BuildBaseMaterialDto("defaultParticlesMat", "default_particles", projectRoot);
-    dto.layer = (int)RenderLayer::PARTICLES;
+    dto.RenderQueue = static_cast<unsigned int>(RenderQueue::Particles);
 
     // Si quieres, puedes dejar algunos defaults distintos
     dto.Diffuse = glm::vec4(1.0f);
@@ -107,7 +105,7 @@ MaterialDto QEMaterialFileHelper::BuildDefaultParticlesMaterialDto(const fs::pat
 MaterialDto QEMaterialFileHelper::BuildEditorDebugAABBMaterialDto(const fs::path& projectRoot)
 {
     MaterialDto dto = BuildBaseMaterialDto("editorDebugAABB", "shader_aabb_debug", projectRoot);
-    dto.layer = (int)RenderLayer::SOLID;
+    dto.RenderQueue = static_cast<unsigned int>(RenderQueue::Geometry);
 
     dto.Diffuse = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f); // opcional
     return dto;
@@ -116,7 +114,7 @@ MaterialDto QEMaterialFileHelper::BuildEditorDebugAABBMaterialDto(const fs::path
 MaterialDto QEMaterialFileHelper::BuildEditorDebugColliderMaterialDto(const fs::path& projectRoot)
 {
     MaterialDto dto = BuildBaseMaterialDto("editorDebugCollider", "shader_debug_lines", projectRoot);
-    dto.layer = (int)RenderLayer::SOLID;
+    dto.RenderQueue = static_cast<unsigned int>(RenderQueue::Geometry);
 
     dto.Diffuse = glm::vec4(1.0f, 0.5f, 0.0f, 1.0f); // opcional
     return dto;
@@ -125,7 +123,7 @@ MaterialDto QEMaterialFileHelper::BuildEditorDebugColliderMaterialDto(const fs::
 MaterialDto QEMaterialFileHelper::BuildEditorGridMaterialDto(const fs::path& projectRoot)
 {
     MaterialDto dto = BuildBaseMaterialDto("editorGrid", "shader_grid", projectRoot);
-    dto.layer = (int)RenderLayer::SOLID;
+    dto.RenderQueue = static_cast<unsigned int>(RenderQueue::Geometry);
 
     dto.Diffuse = glm::vec4(1.0f);
     return dto;

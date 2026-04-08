@@ -132,7 +132,7 @@ void MaterialManager::InitializeMaterialManager()
         {
             auto mat = std::make_shared<QEMaterial>("defaultParticlesMat", this->default_particles_shader);
             this->AddMaterial(mat);
-            this->_materials["defaultParticlesMat"]->layer = (int)RenderLayer::PARTICLES;
+            this->_materials["defaultParticlesMat"]->renderQueue = static_cast<unsigned int>(RenderQueue::Particles);
         }
     }
 }
@@ -320,7 +320,7 @@ MaterialDto MaterialManager::ReadQEMaterial(std::ifstream& matfile)
     readString(materialDto.ShaderPath);
 
     // Layer
-    matfile.read(reinterpret_cast<char*>(&materialDto.layer), sizeof(int));
+    matfile.read(reinterpret_cast<char*>(&materialDto.RenderQueue), sizeof(int));
 
     // Scalars legacy
     matfile.read(reinterpret_cast<char*>(&materialDto.Opacity), sizeof(float));

@@ -47,7 +47,7 @@ YAML::Node QEMaterialYamlHelper::SerializeMaterialDto(const MaterialDto& dto)
     material["Name"] = dto.Name;
     material["FilePath"] = NormalizeSlashes(dto.FilePath);
     material["ShaderPath"] = dto.ShaderPath;
-    material["Layer"] = dto.layer;
+    material["RenderQueue"] = dto.RenderQueue;
 
     YAML::Node scalars;
     scalars["Opacity"] = dto.Opacity;
@@ -107,7 +107,7 @@ bool QEMaterialYamlHelper::DeserializeMaterialDto(const YAML::Node& root, Materi
     dto.Name = material["Name"] ? material["Name"].as<std::string>() : "";
     dto.FilePath = material["FilePath"] ? NormalizeSlashes(material["FilePath"].as<std::string>()) : "";
     dto.ShaderPath = material["ShaderPath"] ? material["ShaderPath"].as<std::string>() : "";
-    dto.layer = material["Layer"] ? material["Layer"].as<int>() : 1;
+    dto.RenderQueue = material["RenderQueue"] ? material["RenderQueue"].as<unsigned int>() : 1000;
 
     if (const YAML::Node scalars = material["Scalars"])
     {

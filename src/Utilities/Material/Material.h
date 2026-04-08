@@ -4,7 +4,7 @@
 #define QE_MATERIAL_H
 
 #include <glm/glm.hpp>
-#include <RenderLayer.h>
+#include <RenderQueue.h>
 #include <ShaderManager.h>
 #include <ShaderModule.h>
 #include <MaterialData.h>
@@ -28,7 +28,7 @@ private:
 public:
     std::string Name;
     MaterialData materialData;
-    unsigned int layer;
+    unsigned int renderQueue = static_cast<unsigned int>(RenderQueue::Geometry);
     std::shared_ptr<ShaderModule> shader;
     std::shared_ptr<DescriptorBuffer> descriptor;
 

@@ -23,7 +23,7 @@ QEMaterial::QEMaterial(std::string name, std::string filepath)
         this->materialFilePath = p.lexically_normal().string();
     }
 
-    this->layer = (unsigned int)RenderLayer::SOLID;
+    this->renderQueue = static_cast<unsigned int>(this->renderQueue);
     this->lightManager = LightManager::getInstance();
 }
 
@@ -41,7 +41,7 @@ QEMaterial::QEMaterial(std::string name, std::shared_ptr<ShaderModule> shader_pt
 QEMaterial::QEMaterial(std::shared_ptr<ShaderModule> shader_ptr, const MaterialDto& materialDto)
     : QEMaterial(materialDto.Name, shader_ptr, materialDto.FilePath)
 {
-    this->layer = materialDto.layer;
+    this->renderQueue = materialDto.RenderQueue;
 
     this->materialData.Opacity = materialDto.Opacity;
     this->materialData.BumpScaling = materialDto.BumpScaling;
@@ -88,7 +88,7 @@ std::shared_ptr<QEMaterial> QEMaterial::CreateMaterialInstance()
 {
     std::string instanceName = "QEMatInst_" + this->Name;
     std::shared_ptr<QEMaterial> mat_instance = std::make_shared<QEMaterial>(instanceName, this->shader);
-    mat_instance->layer = this->layer;
+    mat_instance->renderQueue = this->renderQueue;
     return mat_instance;
 }
 
@@ -224,7 +224,7 @@ MaterialDto QEMaterial::ToDto() const
     dto.Name = this->Name;
     dto.FilePath = QEProjectManager::ToProjectRelativePath(absMaterialPath);
     dto.ShaderPath = (this->shader ? this->shader->shaderNameID : "default");
-    dto.layer = static_cast<int>(this->layer);
+    dto.RenderQueue = static_cast<unsigned int>(this->renderQueue);
 
     dto.Opacity = this->materialData.Opacity;
     dto.BumpScaling = this->materialData.BumpScaling;

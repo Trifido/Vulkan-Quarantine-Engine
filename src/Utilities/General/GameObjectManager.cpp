@@ -6,38 +6,36 @@
 
 std::string GameObjectManager::CheckName(std::string nameGameObject)
 {
-    std::unordered_map<std::string, std::shared_ptr<QEGameObject>>::const_iterator got;
     std::string newName = nameGameObject;
     unsigned int id = 0;
 
-    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
+    bool exists = false;
+    do
     {
-        do
-        {
-            got = this->_objects[this->renderLayers.GetLayer(idl)].find(newName);
+        exists = false;
 
-            if (got != this->_objects[this->renderLayers.GetLayer(idl)].end())
+        for (const auto& bucketPair : _objectsByUpdateOrder)
+        {
+            const auto& bucket = bucketPair.second;
+            if (bucket.find(newName) != bucket.end())
             {
-                id++;
+                exists = true;
+                ++id;
                 newName = nameGameObject + "_" + std::to_string(id);
+                break;
             }
-        } while (got != this->_objects[this->renderLayers.GetLayer(idl)].end());
-    }
+        }
+    } while (exists);
 
     return newName;
 }
 
-unsigned int GameObjectManager::DecideRenderLayer(std::shared_ptr<QEGameObject> go, unsigned int defaultLayer)
+unsigned int GameObjectManager::DecideUpdateBucket(std::shared_ptr<QEGameObject> go, unsigned int defaultOrder)
 {
-    if (auto mat = go->GetMaterial()) return mat->layer;
+    if (!go)
+        return defaultOrder;
 
-    if (!go->childs.empty())
-    {
-        if (auto matChild = go->childs[0]->GetMaterial())
-            return matChild->layer;
-    }
-
-    return defaultLayer;
+    return go->UpdateOrder;
 }
 
 void GameObjectManager::RegisterSingle(std::shared_ptr<QEGameObject> go, std::string name)
@@ -48,8 +46,8 @@ void GameObjectManager::RegisterSingle(std::shared_ptr<QEGameObject> go, std::st
     name = CheckName(name);
     go->Name = name;
 
-    const unsigned int layer = DecideRenderLayer(go, (unsigned int)RenderLayer::SOLID);
-    this->_objects[layer][name] = go;
+    const unsigned int bucket = DecideUpdateBucket(go, 0u);
+    _objectsByUpdateOrder[bucket][name] = go;
 }
 
 void GameObjectManager::UnregisterSingle(const std::shared_ptr<QEGameObject>& go)
@@ -57,17 +55,14 @@ void GameObjectManager::UnregisterSingle(const std::shared_ptr<QEGameObject>& go
     if (!go)
         return;
 
-    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); ++idl)
+    for (auto& bucketPair : _objectsByUpdateOrder)
     {
-        const unsigned int layerId = this->renderLayers.GetLayer(idl);
-        auto layerIt = this->_objects.find(layerId);
-        if (layerIt == this->_objects.end())
-            continue;
+        auto& bucket = bucketPair.second;
 
-        for (auto it = layerIt->second.begin(); it != layerIt->second.end();)
+        for (auto it = bucket.begin(); it != bucket.end();)
         {
             if (it->second == go)
-                it = layerIt->second.erase(it);
+                it = bucket.erase(it);
             else
                 ++it;
         }
@@ -107,9 +102,11 @@ void GameObjectManager::AddGameObject(std::shared_ptr<QEGameObject> object_ptr)
     std::function<void(std::shared_ptr<QEGameObject>)> dfs =
         [&](std::shared_ptr<QEGameObject> node)
         {
-            for (size_t i = 0; i < node->childs.size(); ++i) {
+            for (size_t i = 0; i < node->childs.size(); ++i)
+            {
                 auto& child = node->childs[i];
-                if (!child) continue;
+                if (!child)
+                    continue;
 
                 RegisterSingle(child, child->Name);
                 dfs(child);
@@ -146,46 +143,70 @@ bool GameObjectManager::RemoveGameObject(const std::shared_ptr<QEGameObject>& ob
     return true;
 }
 
+bool GameObjectManager::SetGameObjectUpdateOrder(const std::shared_ptr<QEGameObject>& objectPtr, unsigned int newOrder)
+{
+    if (!objectPtr)
+        return false;
+
+    if (objectPtr->UpdateOrder == newOrder)
+        return false;
+
+    UnregisterSingle(objectPtr);
+    objectPtr->UpdateOrder = newOrder;
+    RegisterSingle(objectPtr, objectPtr->Name);
+
+    return true;
+}
+
 void GameObjectManager::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
-    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
+    const auto renderItems = BuildRenderItems();
+
+    for (const auto& item : renderItems)
     {
-        for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
-        {
-            auto meshRenderer = model.second->GetComponent<QEMeshRenderer>();
-            if (meshRenderer == nullptr)
-                continue;
-            meshRenderer->SetDrawCommand(commandBuffer, idx);
-        }
+        if (!item.MeshRenderer)
+            continue;
+
+        item.MeshRenderer->SetDrawCommand(commandBuffer, idx);
     }
 }
 
 void GameObjectManager::CSMCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex)
 {
-    for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
+    const auto shadowItems = BuildShadowRenderItems();
+
+    for (const auto& item : shadowItems)
     {
-        auto meshRenderer = model.second->GetComponent<QEMeshRenderer>();
-        if (meshRenderer == nullptr)
+        auto transform = item.GameObject->GetComponent<QETransform>();
+        if (!transform)
             continue;
 
         PushConstantCSMStruct shadowParameters = {};
-        shadowParameters.model = model.second->GetComponent<QETransform>()->GetWorldMatrix();
+        shadowParameters.model = transform->GetWorldMatrix();
         shadowParameters.cascadeIndex = cascadeIndex;
 
-        vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantCSMStruct), &shadowParameters);
-        meshRenderer->SetDrawShadowCommand(commandBuffer, idx, pipelineLayout);
+        vkCmdPushConstants(
+            commandBuffer,
+            pipelineLayout,
+            VK_SHADER_STAGE_ALL,
+            0,
+            sizeof(PushConstantCSMStruct),
+            &shadowParameters);
+
+        item.MeshRenderer->SetDrawShadowCommand(commandBuffer, idx, pipelineLayout);
     }
 }
 
 void GameObjectManager::OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, glm::mat4 viewParameter, glm::vec3 lightPosition)
 {
-    for (auto model : this->_objects[(unsigned int)RenderLayer::SOLID])
+    const auto shadowItems = BuildShadowRenderItems();
+
+    for (const auto& item : shadowItems)
     {
-        auto meshRenderer = model.second->GetComponent<QEMeshRenderer>();
-        if (meshRenderer == nullptr)
+        auto transform = item.GameObject->GetComponent<QETransform>();
+        if (!transform)
             continue;
 
-        auto transform = model.second->GetComponent<QETransform>();
         glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), -lightPosition);
 
         PushConstantOmniShadowStruct shadowParameters = {};
@@ -193,16 +214,25 @@ void GameObjectManager::OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32
         shadowParameters.model = transform->GetWorldMatrix();
         shadowParameters.view = viewParameter;
 
-        vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantOmniShadowStruct), &shadowParameters);
-        meshRenderer->SetDrawShadowCommand(commandBuffer, idx, pipelineLayout);
+        vkCmdPushConstants(
+            commandBuffer,
+            pipelineLayout,
+            VK_SHADER_STAGE_ALL,
+            0,
+            sizeof(PushConstantOmniShadowStruct),
+            &shadowParameters);
+
+        item.MeshRenderer->SetDrawShadowCommand(commandBuffer, idx, pipelineLayout);
     }
 }
 
 void GameObjectManager::ReleaseAllGameObjects()
 {
-    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
+    for (const auto& bucketPair : _objectsByUpdateOrder)
     {
-        for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
+        const auto& bucket = bucketPair.second;
+
+        for (const auto& model : bucket)
         {
             model.second->QEDestroy();
         }
@@ -211,17 +241,17 @@ void GameObjectManager::ReleaseAllGameObjects()
 
 void GameObjectManager::CleanLastResources()
 {
-    this->_objects.clear();
+    _objectsByUpdateOrder.clear();
 }
 
 std::shared_ptr<QEGameObject> GameObjectManager::GetGameObject(const std::string& name)
 {
-    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
+    for (const auto& bucketPair : _objectsByUpdateOrder)
     {
-        unsigned int id = this->renderLayers.GetLayer(idl);
-        auto it = this->_objects[id].find(name);
+        const auto& bucket = bucketPair.second;
+        auto it = bucket.find(name);
 
-        if (it != this->_objects[id].end())
+        if (it != bucket.end())
             return it->second;
     }
 
@@ -233,14 +263,15 @@ YAML::Node GameObjectManager::SerializeGameObjects()
     YAML::Node gameObjectsNode;
     std::unordered_set<std::string> emittedRoots;
 
-    for (unsigned int idl = 0; idl < renderLayers.GetCount(); ++idl)
+    for (const auto& bucketPair : _objectsByUpdateOrder)
     {
-        const unsigned int layerId = renderLayers.GetLayer(idl);
+        const auto& bucket = bucketPair.second;
 
-        for (auto& kv : _objects[layerId])
+        for (const auto& kv : bucket)
         {
-            auto& go = kv.second;
-            if (!go) continue;
+            const auto& go = kv.second;
+            if (!go)
+                continue;
 
             if (go->parent != nullptr)
                 continue;
@@ -260,23 +291,27 @@ void GameObjectManager::DeserializeGameObjects(YAML::Node gameObjects)
     for (auto gameObjectData : gameObjects)
     {
         std::shared_ptr<QEGameObject> root = QEGameObject::FromYaml(gameObjectData);
-        this->AddGameObject(root);
+        AddGameObject(root);
     }
 }
 
 void GameObjectManager::StartQEGameObjects()
 {
-    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
+    for (const auto& bucketPair : _objectsByUpdateOrder)
     {
-        for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
+        const auto& bucket = bucketPair.second;
+
+        for (const auto& model : bucket)
         {
             model.second->QEStart();
         }
     }
 
-    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
+    for (const auto& bucketPair : _objectsByUpdateOrder)
     {
-        for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
+        const auto& bucket = bucketPair.second;
+
+        for (const auto& model : bucket)
         {
             model.second->QEInit();
         }
@@ -285,9 +320,11 @@ void GameObjectManager::StartQEGameObjects()
 
 void GameObjectManager::UpdateQEGameObjects()
 {
-    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
+    for (const auto& bucketPair : _objectsByUpdateOrder)
     {
-        for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
+        const auto& bucket = bucketPair.second;
+
+        for (const auto& model : bucket)
         {
             model.second->QEUpdate();
         }
@@ -296,9 +333,11 @@ void GameObjectManager::UpdateQEGameObjects()
 
 void GameObjectManager::DestroyQEGameObjects()
 {
-    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
+    for (const auto& bucketPair : _objectsByUpdateOrder)
     {
-        for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
+        const auto& bucket = bucketPair.second;
+
+        for (const auto& model : bucket)
         {
             model.second->QEDestroy();
         }
@@ -307,11 +346,13 @@ void GameObjectManager::DestroyQEGameObjects()
 
 std::shared_ptr<QEGameComponent> GameObjectManager::FindGameComponentInScene(const std::string& id)
 {
-    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); idl++)
+    for (const auto& bucketPair : _objectsByUpdateOrder)
     {
-        for (auto model : this->_objects[this->renderLayers.GetLayer(idl)])
+        const auto& bucket = bucketPair.second;
+
+        for (const auto& model : bucket)
         {
-            for (auto component : model.second->components)
+            for (const auto& component : model.second->components)
             {
                 if (component->id == id)
                     return component;
@@ -327,14 +368,11 @@ std::vector<std::shared_ptr<QEGameObject>> GameObjectManager::GetRootGameObjects
     std::vector<std::shared_ptr<QEGameObject>> roots;
     std::unordered_set<std::string> emittedRoots;
 
-    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); ++idl)
+    for (const auto& bucketPair : _objectsByUpdateOrder)
     {
-        const unsigned int layerId = this->renderLayers.GetLayer(idl);
-        auto layerIt = this->_objects.find(layerId);
-        if (layerIt == this->_objects.end())
-            continue;
+        const auto& bucket = bucketPair.second;
 
-        for (const auto& kv : layerIt->second)
+        for (const auto& kv : bucket)
         {
             const auto& go = kv.second;
             if (!go)
@@ -355,14 +393,11 @@ std::vector<std::shared_ptr<QEGameObject>> GameObjectManager::GetRootGameObjects
 
 std::shared_ptr<QEGameObject> GameObjectManager::GetGameObjectById(const std::string& id) const
 {
-    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); ++idl)
+    for (const auto& bucketPair : _objectsByUpdateOrder)
     {
-        const unsigned int layerId = this->renderLayers.GetLayer(idl);
-        auto layerIt = this->_objects.find(layerId);
-        if (layerIt == this->_objects.end())
-            continue;
+        const auto& bucket = bucketPair.second;
 
-        for (const auto& kv : layerIt->second)
+        for (const auto& kv : bucket)
         {
             const auto& go = kv.second;
             if (!go)
@@ -384,35 +419,105 @@ bool GameObjectManager::RenameGameObject(const std::shared_ptr<QEGameObject>& ob
     if (newName.empty())
         return false;
 
-    const std::string trimmedName = newName;
-    if (trimmedName.empty())
+    if (objectPtr->Name == newName)
         return false;
 
-    if (objectPtr->Name == trimmedName)
-        return false;
+    UnregisterSingle(objectPtr);
 
-    for (unsigned int idl = 0; idl < this->renderLayers.GetCount(); ++idl)
+    const std::string uniqueName = CheckName(newName);
+    objectPtr->Name = uniqueName;
+
+    RegisterSingle(objectPtr, objectPtr->Name);
+    return true;
+}
+
+std::vector<QEOrderRenderItem> GameObjectManager::BuildRenderItems() const
+{
+    std::vector<QEOrderRenderItem> items;
+
+    for (const auto& bucketPair : _objectsByUpdateOrder)
     {
-        const unsigned int layerId = this->renderLayers.GetLayer(idl);
-        auto layerIt = this->_objects.find(layerId);
-        if (layerIt == this->_objects.end())
-            continue;
+        const auto& bucket = bucketPair.second;
 
-        for (auto it = layerIt->second.begin(); it != layerIt->second.end(); ++it)
+        for (const auto& kv : bucket)
         {
-            if (it->second == objectPtr)
-            {
-                layerIt->second.erase(it);
-                break;
-            }
+            const auto& go = kv.second;
+            if (!go)
+                continue;
+
+            auto meshRenderer = go->GetComponent<QEMeshRenderer>();
+            if (!meshRenderer)
+                continue;
+
+            auto material = go->GetMaterial();
+            if (!material)
+                continue;
+
+            QEOrderRenderItem item;
+            item.GameObject = go;
+            item.MeshRenderer = meshRenderer;
+            item.Material = material;
+            item.RenderQueue = material->renderQueue;
+
+            items.push_back(item);
         }
     }
 
-    const std::string uniqueName = CheckName(trimmedName);
-    objectPtr->Name = uniqueName;
+    std::sort(items.begin(), items.end(),
+        [](const QEOrderRenderItem& a, const QEOrderRenderItem& b)
+        {
+            if (a.RenderQueue != b.RenderQueue)
+                return a.RenderQueue < b.RenderQueue;
 
-    const unsigned int layer = DecideRenderLayer(objectPtr, (unsigned int)RenderLayer::SOLID);
-    this->_objects[layer][objectPtr->Name] = objectPtr;
+            return a.GameObject->ID() < b.GameObject->ID();
+        });
 
-    return true;
+    return items;
+}
+
+std::vector<QEOrderRenderItem> GameObjectManager::BuildShadowRenderItems() const
+{
+    std::vector<QEOrderRenderItem> items;
+
+    for (const auto& bucketPair : _objectsByUpdateOrder)
+    {
+        const auto& bucket = bucketPair.second;
+
+        for (const auto& kv : bucket)
+        {
+            const auto& go = kv.second;
+            if (!go)
+                continue;
+
+            auto meshRenderer = go->GetComponent<QEMeshRenderer>();
+            if (!meshRenderer)
+                continue;
+
+            auto material = go->GetMaterial();
+            if (!material)
+                continue;
+
+            if (material->renderQueue >= static_cast<unsigned int>(RenderQueue::Transparent))
+                continue;
+
+            QEOrderRenderItem item;
+            item.GameObject = go;
+            item.MeshRenderer = meshRenderer;
+            item.Material = material;
+            item.RenderQueue = material->renderQueue;
+
+            items.push_back(item);
+        }
+    }
+
+    std::sort(items.begin(), items.end(),
+        [](const QEOrderRenderItem& a, const QEOrderRenderItem& b)
+        {
+            if (a.RenderQueue != b.RenderQueue)
+                return a.RenderQueue < b.RenderQueue;
+
+            return a.GameObject->ID() < b.GameObject->ID();
+        });
+
+    return items;
 }

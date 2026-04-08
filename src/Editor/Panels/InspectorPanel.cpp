@@ -638,6 +638,23 @@ void InspectorPanel::Draw()
     ImGui::Text("Children: %d", static_cast<int>(gameObject->childs.size()));
     ImGui::Text("Components: %d", static_cast<int>(gameObject->components.size()));
 
+    int updateOrder = static_cast<int>(gameObject->UpdateOrder);
+    if (ImGui::DragInt("Order", &updateOrder, 1.0f, 0, 100000))
+    {
+        updateOrder = std::max(0, updateOrder);
+
+        if (gameObjectManager)
+        {
+            gameObjectManager->SetGameObjectUpdateOrder(
+                gameObject,
+                static_cast<unsigned int>(updateOrder));
+        }
+        else
+        {
+            gameObject->UpdateOrder = static_cast<unsigned int>(updateOrder);
+        }
+    }
+
     DrawAddComponentPopup(gameObject);
 
     ImGui::Separator();

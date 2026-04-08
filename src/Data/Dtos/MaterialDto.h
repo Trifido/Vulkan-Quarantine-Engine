@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include <string>
 #include <filesystem>
+#include "RenderQueue.h"
 
 namespace fs = std::filesystem;
 
@@ -31,7 +32,7 @@ struct MaterialDto
     std::string Name = "";
     std::string FilePath = "";
     std::string ShaderPath = "";
-    int layer = 1;
+    unsigned int RenderQueue = static_cast<unsigned int>(RenderQueue::Geometry);
 
     float Opacity = 1.0f;
     float BumpScaling = 1.0f;

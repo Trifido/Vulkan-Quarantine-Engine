@@ -960,7 +960,7 @@ void MeshImporter::ExtractAndUpdateMaterials(
         dto.Name = materialName;
         dto.FilePath = QEProjectManager::ToProjectRelativePath(materialPath);
         dto.ShaderPath = "default";
-        dto.layer = 1;
+        dto.RenderQueue = static_cast<unsigned int>(RenderQueue::Geometry);
 
         dto.Opacity = matData.Opacity;
         dto.BumpScaling = matData.BumpScaling;
