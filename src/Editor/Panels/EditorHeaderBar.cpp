@@ -70,6 +70,7 @@ void EditorHeaderBar::DrawWindowMenu()
     {
         ImGui::MenuItem("Hierarchy", nullptr, &editorContext->ShowHierarchy);
         ImGui::MenuItem("Inspector", nullptr, &editorContext->ShowInspector);
+        ImGui::MenuItem("Material Inspector", nullptr, &editorContext->ShowMaterialInspector);
         ImGui::MenuItem("Viewport", nullptr, &editorContext->ShowViewport);
         ImGui::MenuItem("Console", nullptr, &editorContext->ShowConsole);
         ImGui::MenuItem("Content Browser", nullptr, &editorContext->ShowContentBrowser);

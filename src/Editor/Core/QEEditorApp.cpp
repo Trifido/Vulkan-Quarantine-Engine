@@ -22,6 +22,7 @@
 #include "Panels/EditorHeaderBar.h"
 #include "Panels/QEProjectBrowserPanel.h"
 #include "Panels/ConsolePanel.h"
+#include "Panels/MaterialInspectorPanel.h"
 #include "Rendering/EditorViewportResources.h"
 #include <QEProjectManager.h>
 #include <QEMeshRenderer.h>
@@ -292,6 +293,11 @@ void QEEditorApp::CreatePanels()
         editorContext.get(),
         selectionManager.get(),
         commandManager.get()));
+
+    panels.emplace_back(std::make_unique<MaterialInspectorPanel>(
+        gameObjectManager,
+        editorContext.get(),
+        selectionManager.get()));
 
     panels.emplace_back(std::make_unique<ConsolePanel>(
         editorContext.get(),
