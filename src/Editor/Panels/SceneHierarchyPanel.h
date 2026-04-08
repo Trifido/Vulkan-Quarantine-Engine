@@ -10,12 +10,16 @@ class GameObjectManager;
 class QEGameObject;
 struct EditorContext;
 
+class EditorSceneObjectFactory;
+enum class QEPrimitiveType;
+
 class SceneHierarchyPanel : public IEditorPanel
 {
 public:
     SceneHierarchyPanel(GameObjectManager* gameObjectManager,
         EditorContext* editorContext,
-        EditorSelectionManager* selectionManager);
+        EditorSelectionManager* selectionManager,
+        EditorSceneObjectFactory* sceneObjectFactory);
 
     const char* GetName() const override { return "Scene Hierarchy"; }
     void Draw() override;
@@ -26,10 +30,15 @@ private:
     void DrawWindowContextMenu();
     void HandleDeleteShortcut();
 
+    void DrawToolbar();
+    void DrawCreateMenu();
+    void CreatePrimitive(QEPrimitiveType type);
+
 private:
     GameObjectManager* gameObjectManager = nullptr;
     EditorContext* editorContext = nullptr;
     EditorSelectionManager* selectionManager = nullptr;
+    EditorSceneObjectFactory* sceneObjectFactory = nullptr;
 
     std::shared_ptr<QEGameObject> pendingDeleteGameObject = nullptr;
     bool pendingCreateEmptyGameObject = false;

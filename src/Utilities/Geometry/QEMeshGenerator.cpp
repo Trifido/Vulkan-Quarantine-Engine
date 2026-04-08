@@ -508,3 +508,405 @@ QEMesh QEMeshGenerator::GenerateQEMesh()
 
     return mesh;
 }
+
+QEMesh CylinderGenerator::GenerateQEMesh()
+{
+    QEMeshData meshData;
+
+    const float PI = glm::pi<float>();
+    const float halfHeight = height * 0.5f;
+
+    auto& V = meshData.Vertices;
+    auto& I = meshData.Indices;
+
+    // -------------------------
+    // 1. SUPERFICIE LATERAL
+    // -------------------------
+    for (uint32_t y = 0; y <= heightSegments; ++y)
+    {
+        float v = static_cast<float>(y) / static_cast<float>(heightSegments);
+        float py = -halfHeight + v * height;
+
+        for (uint32_t i = 0; i <= radialSegments; ++i)
+        {
+            float u = static_cast<float>(i) / static_cast<float>(radialSegments);
+            float theta = u * 2.0f * PI;
+
+            float x = radius * cosf(theta);
+            float z = radius * sinf(theta);
+
+            glm::vec3 normal = glm::normalize(glm::vec3(x, 0.0f, z));
+            glm::vec3 tangent = glm::normalize(glm::vec3(-sinf(theta), 0.0f, cosf(theta)));
+
+            Vertex vert{};
+            vert.Position = glm::vec4(x, py, z, 1.0f);
+            vert.Normal = glm::vec4(normal, 0.0f);
+            vert.UV = glm::vec2(u, v);
+            vert.Tangent = glm::vec4(tangent, 0.0f);
+
+            V.push_back(vert);
+        }
+    }
+
+    for (uint32_t y = 0; y < heightSegments; ++y)
+    {
+        for (uint32_t i = 0; i < radialSegments; ++i)
+        {
+            uint32_t row1 = y * (radialSegments + 1);
+            uint32_t row2 = (y + 1) * (radialSegments + 1);
+
+            uint32_t a = row1 + i;
+            uint32_t b = row2 + i;
+            uint32_t c = row1 + i + 1;
+            uint32_t d = row2 + i + 1;
+
+            I.push_back(a);
+            I.push_back(b);
+            I.push_back(c);
+
+            I.push_back(c);
+            I.push_back(b);
+            I.push_back(d);
+        }
+    }
+
+    // -------------------------
+    // 2. TAPA SUPERIOR
+    // -------------------------
+    uint32_t topCenterIndex = static_cast<uint32_t>(V.size());
+    {
+        Vertex center{};
+        center.Position = glm::vec4(0.0f, halfHeight, 0.0f, 1.0f);
+        center.Normal = glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
+        center.UV = glm::vec2(0.5f, 0.5f);
+        center.Tangent = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+        V.push_back(center);
+    }
+
+    uint32_t topRingStart = static_cast<uint32_t>(V.size());
+    for (uint32_t i = 0; i <= radialSegments; ++i)
+    {
+        float u = static_cast<float>(i) / static_cast<float>(radialSegments);
+        float theta = u * 2.0f * PI;
+
+        float x = radius * cosf(theta);
+        float z = radius * sinf(theta);
+
+        Vertex vert{};
+        vert.Position = glm::vec4(x, halfHeight, z, 1.0f);
+        vert.Normal = glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
+        vert.UV = glm::vec2(0.5f + 0.5f * cosf(theta), 0.5f + 0.5f * sinf(theta));
+        vert.Tangent = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+        V.push_back(vert);
+    }
+
+    for (uint32_t i = 0; i < radialSegments; ++i)
+    {
+        I.push_back(topCenterIndex);
+        I.push_back(topRingStart + i + 1);
+        I.push_back(topRingStart + i);
+    }
+
+    // -------------------------
+    // 3. TAPA INFERIOR
+    // -------------------------
+    uint32_t bottomCenterIndex = static_cast<uint32_t>(V.size());
+    {
+        Vertex center{};
+        center.Position = glm::vec4(0.0f, -halfHeight, 0.0f, 1.0f);
+        center.Normal = glm::vec4(0.0f, -1.0f, 0.0f, 0.0f);
+        center.UV = glm::vec2(0.5f, 0.5f);
+        center.Tangent = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+        V.push_back(center);
+    }
+
+    uint32_t bottomRingStart = static_cast<uint32_t>(V.size());
+    for (uint32_t i = 0; i <= radialSegments; ++i)
+    {
+        float u = static_cast<float>(i) / static_cast<float>(radialSegments);
+        float theta = u * 2.0f * PI;
+
+        float x = radius * cosf(theta);
+        float z = radius * sinf(theta);
+
+        Vertex vert{};
+        vert.Position = glm::vec4(x, -halfHeight, z, 1.0f);
+        vert.Normal = glm::vec4(0.0f, -1.0f, 0.0f, 0.0f);
+        vert.UV = glm::vec2(0.5f + 0.5f * cosf(theta), 0.5f + 0.5f * sinf(theta));
+        vert.Tangent = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+        V.push_back(vert);
+    }
+
+    for (uint32_t i = 0; i < radialSegments; ++i)
+    {
+        I.push_back(bottomCenterIndex);
+        I.push_back(bottomRingStart + i);
+        I.push_back(bottomRingStart + i + 1);
+    }
+
+    meshData.BoundingBox = {
+        glm::vec3(-radius, -halfHeight, -radius),
+        glm::vec3(radius, halfHeight, radius)
+    };
+
+    return QEMesh("CylinderPrimitive", "QECore", { meshData });
+}
+
+QEMesh PyramidGenerator::GenerateQEMesh()
+{
+    QEMeshData meshData;
+
+    const float h = baseSize * 0.5f;
+    const float halfHeight = height * 0.5f;
+
+    auto AddVertex = [&](const glm::vec3& pos, const glm::vec2& uv)
+        {
+            Vertex v{};
+            v.Position = glm::vec4(pos, 1.0f);
+            v.UV = uv;
+            meshData.Vertices.push_back(v);
+        };
+
+    auto AddTri = [&](const glm::vec3& a, const glm::vec3& b, const glm::vec3& c,
+        const glm::vec2& uva, const glm::vec2& uvb, const glm::vec2& uvc)
+        {
+            uint32_t start = static_cast<uint32_t>(meshData.Vertices.size());
+            AddVertex(a, uva);
+            AddVertex(b, uvb);
+            AddVertex(c, uvc);
+
+            meshData.Indices.push_back(start + 0);
+            meshData.Indices.push_back(start + 1);
+            meshData.Indices.push_back(start + 2);
+        };
+
+    glm::vec3 p0(-h, -halfHeight, -h);
+    glm::vec3 p1(h, -halfHeight, -h);
+    glm::vec3 p2(h, -halfHeight, h);
+    glm::vec3 p3(-h, -halfHeight, h);
+    glm::vec3 apex(0.0f, halfHeight, 0.0f);
+
+    // Base
+    AddTri(p0, p1, p2, { 0.0f, 0.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f });
+    AddTri(p0, p2, p3, { 0.0f, 0.0f }, { 0.0f, 1.0f }, { 1.0f, 1.0f });
+
+    // Caras laterales
+    AddTri(p0, apex, p1, { 0.0f, 0.0f }, { 0.5f, 1.0f }, { 1.0f, 0.0f });
+    AddTri(p1, apex, p2, { 0.0f, 0.0f }, { 0.5f, 1.0f }, { 1.0f, 0.0f });
+    AddTri(p2, apex, p3, { 0.0f, 0.0f }, { 0.5f, 1.0f }, { 1.0f, 0.0f });
+    AddTri(p3, apex, p0, { 0.0f, 0.0f }, { 0.5f, 1.0f }, { 1.0f, 0.0f });
+
+    MeshImporter::RecreateNormals(meshData.Vertices, meshData.Indices);
+    MeshImporter::RecreateTangents(meshData.Vertices, meshData.Indices);
+
+    meshData.BoundingBox = {
+        glm::vec3(-h, -halfHeight, -h),
+        glm::vec3(h, halfHeight, h)
+    };
+
+    return QEMesh("PyramidPrimitive", "QECore", { meshData });
+}
+
+QEMesh TorusGenerator::GenerateQEMesh()
+{
+    QEMeshData meshData;
+    auto& V = meshData.Vertices;
+    auto& I = meshData.Indices;
+
+    const float PI = glm::pi<float>();
+
+    for (uint32_t i = 0; i <= majorSegments; ++i)
+    {
+        float u = static_cast<float>(i) / static_cast<float>(majorSegments);
+        float theta = u * 2.0f * PI;
+
+        float cosTheta = cosf(theta);
+        float sinTheta = sinf(theta);
+
+        for (uint32_t j = 0; j <= minorSegments; ++j)
+        {
+            float v = static_cast<float>(j) / static_cast<float>(minorSegments);
+            float phi = v * 2.0f * PI;
+
+            float cosPhi = cosf(phi);
+            float sinPhi = sinf(phi);
+
+            float ringRadius = majorRadius + minorRadius * cosPhi;
+
+            float x = ringRadius * cosTheta;
+            float y = minorRadius * sinPhi;
+            float z = ringRadius * sinTheta;
+
+            glm::vec3 center(
+                majorRadius * cosTheta,
+                0.0f,
+                majorRadius * sinTheta
+            );
+
+            glm::vec3 pos(x, y, z);
+            glm::vec3 normal = glm::normalize(pos - center);
+
+            glm::vec3 tangent = glm::normalize(glm::vec3(
+                -ringRadius * sinTheta,
+                0.0f,
+                ringRadius * cosTheta
+            ));
+
+            Vertex vert{};
+            vert.Position = glm::vec4(pos, 1.0f);
+            vert.Normal = glm::vec4(normal, 0.0f);
+            vert.UV = glm::vec2(u, v);
+            vert.Tangent = glm::vec4(tangent, 0.0f);
+
+            V.push_back(vert);
+        }
+    }
+
+    for (uint32_t i = 0; i < majorSegments; ++i)
+    {
+        for (uint32_t j = 0; j < minorSegments; ++j)
+        {
+            uint32_t a = i * (minorSegments + 1) + j;
+            uint32_t b = (i + 1) * (minorSegments + 1) + j;
+            uint32_t c = a + 1;
+            uint32_t d = b + 1;
+
+            I.push_back(a);
+            I.push_back(c);
+            I.push_back(b);
+
+            I.push_back(c);
+            I.push_back(d);
+            I.push_back(b);
+        }
+    }
+
+    const float outer = majorRadius + minorRadius;
+    meshData.BoundingBox = {
+        glm::vec3(-outer, -minorRadius, -outer),
+        glm::vec3(outer,  minorRadius,  outer)
+    };
+
+    return QEMesh("TorusPrimitive", "QECore", { meshData });
+}
+
+QEMesh ConeGenerator::GenerateQEMesh()
+{
+    QEMeshData meshData;
+
+    const float PI = glm::pi<float>();
+    const float halfHeight = height * 0.5f;
+
+    auto& V = meshData.Vertices;
+    auto& I = meshData.Indices;
+
+    // -------------------------
+    // 1. SUPERFICIE LATERAL
+    // -------------------------
+    for (uint32_t ySeg = 0; ySeg <= heightSegments; ++ySeg)
+    {
+        float v = static_cast<float>(ySeg) / static_cast<float>(heightSegments);
+        float currentY = -halfHeight + v * height;
+
+        float currentRadius = radius * (1.0f - v);
+
+        for (uint32_t i = 0; i <= radialSegments; ++i)
+        {
+            float u = static_cast<float>(i) / static_cast<float>(radialSegments);
+            float theta = u * 2.0f * PI;
+
+            float cosTheta = cosf(theta);
+            float sinTheta = sinf(theta);
+
+            float x = currentRadius * cosTheta;
+            float z = currentRadius * sinTheta;
+
+            // Normal analítica del cono
+            glm::vec3 normal = glm::normalize(glm::vec3(
+                cosTheta,
+                radius / height,
+                sinTheta
+            ));
+
+            glm::vec3 tangent = glm::normalize(glm::vec3(
+                -sinTheta,
+                0.0f,
+                cosTheta
+            ));
+
+            Vertex vert{};
+            vert.Position = glm::vec4(x, currentY, z, 1.0f);
+            vert.Normal = glm::vec4(normal, 0.0f);
+            vert.UV = glm::vec2(u, v);
+            vert.Tangent = glm::vec4(tangent, 0.0f);
+
+            V.push_back(vert);
+        }
+    }
+
+    for (uint32_t ySeg = 0; ySeg < heightSegments; ++ySeg)
+    {
+        for (uint32_t i = 0; i < radialSegments; ++i)
+        {
+            uint32_t row1 = ySeg * (radialSegments + 1);
+            uint32_t row2 = (ySeg + 1) * (radialSegments + 1);
+
+            uint32_t a = row1 + i;
+            uint32_t b = row2 + i;
+            uint32_t c = row1 + i + 1;
+            uint32_t d = row2 + i + 1;
+
+            I.push_back(a);
+            I.push_back(b);
+            I.push_back(c);
+
+            I.push_back(c);
+            I.push_back(b);
+            I.push_back(d);
+        }
+    }
+
+    // -------------------------
+    // 2. BASE
+    // -------------------------
+    uint32_t baseCenterIndex = static_cast<uint32_t>(V.size());
+    {
+        Vertex center{};
+        center.Position = glm::vec4(0.0f, -halfHeight, 0.0f, 1.0f);
+        center.Normal = glm::vec4(0.0f, -1.0f, 0.0f, 0.0f);
+        center.UV = glm::vec2(0.5f, 0.5f);
+        center.Tangent = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+        V.push_back(center);
+    }
+
+    uint32_t baseRingStart = static_cast<uint32_t>(V.size());
+    for (uint32_t i = 0; i <= radialSegments; ++i)
+    {
+        float u = static_cast<float>(i) / static_cast<float>(radialSegments);
+        float theta = u * 2.0f * PI;
+
+        float x = radius * cosf(theta);
+        float z = radius * sinf(theta);
+
+        Vertex vert{};
+        vert.Position = glm::vec4(x, -halfHeight, z, 1.0f);
+        vert.Normal = glm::vec4(0.0f, -1.0f, 0.0f, 0.0f);
+        vert.UV = glm::vec2(0.5f + 0.5f * cosf(theta), 0.5f + 0.5f * sinf(theta));
+        vert.Tangent = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+        V.push_back(vert);
+    }
+
+    for (uint32_t i = 0; i < radialSegments; ++i)
+    {
+        I.push_back(baseCenterIndex);
+        I.push_back(baseRingStart + i);
+        I.push_back(baseRingStart + i + 1);
+    }
+
+    meshData.BoundingBox = {
+        glm::vec3(-radius, -halfHeight, -radius),
+        glm::vec3(radius, halfHeight, radius)
+    };
+
+    return QEMesh("ConePrimitive", "QECore", { meshData });
+}

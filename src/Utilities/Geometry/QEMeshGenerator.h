@@ -97,6 +97,76 @@ public:
     QEMesh GenerateQEMesh();
 };
 
+// ConcreteStrategy Cylinder
+class CylinderGenerator : public IQEMeshGenerator
+{
+private:
+    float radius = 0.5f;
+    float height = 1.0f;
+    uint32_t radialSegments = 24;
+    uint32_t heightSegments = 1;
+
+public:
+    CylinderGenerator() = default;
+    CylinderGenerator(float r, float h, uint32_t radialSegs = 24, uint32_t heightSegs = 1)
+        : radius(r), height(h), radialSegments(radialSegs), heightSegments(heightSegs) {
+    }
+
+    QEMesh GenerateQEMesh() override;
+};
+
+// ConcreteStrategy Pyramid4
+class PyramidGenerator : public IQEMeshGenerator
+{
+private:
+    float baseSize = 1.0f;
+    float height = 1.0f;
+
+public:
+    PyramidGenerator() = default;
+    PyramidGenerator(float base, float h)
+        : baseSize(base), height(h) {
+    }
+
+    QEMesh GenerateQEMesh() override;
+};
+
+// ConcreteStrategy Torus
+class TorusGenerator : public IQEMeshGenerator
+{
+private:
+    float majorRadius = 0.75f;      
+    float minorRadius = 0.25f;
+    uint32_t majorSegments = 32;
+    uint32_t minorSegments = 16;
+
+public:
+    TorusGenerator() = default;
+    TorusGenerator(float majorR, float minorR, uint32_t majorSegs = 32, uint32_t minorSegs = 16)
+        : majorRadius(majorR), minorRadius(minorR), majorSegments(majorSegs), minorSegments(minorSegs) {
+    }
+
+    QEMesh GenerateQEMesh() override;
+};
+
+// ConcreteStrategy Cone
+class ConeGenerator : public IQEMeshGenerator
+{
+private:
+    float radius = 0.5f;
+    float height = 1.0f;
+    uint32_t radialSegments = 24;
+    uint32_t heightSegments = 1;
+
+public:
+    ConeGenerator() = default;
+    ConeGenerator(float r, float h, uint32_t radialSegs = 24, uint32_t heightSegs = 1)
+        : radius(r), height(h), radialSegments(radialSegs), heightSegments(heightSegs) {
+    }
+
+    QEMesh GenerateQEMesh() override;
+};
+
 // ConcreteStrategy Mesh
 class QEMeshGenerator : public IQEMeshGenerator
 {

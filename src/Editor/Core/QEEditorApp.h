@@ -19,6 +19,7 @@ class QEEditorConsole;
 class QEEditorConsoleSink;
 class QEConsoleLogSink;
 class ConsolePanel;
+class EditorSceneObjectFactory;
 
 class QEEditorApp : public QEBaseApp
 {
@@ -81,4 +82,5 @@ private:
     std::unique_ptr<QEEditorConsole> editorConsole;
     std::unique_ptr<QEEditorConsoleSink> editorConsoleSink;
     std::unique_ptr<QEConsoleLogSink> consoleLogSink;
+    std::unique_ptr<EditorSceneObjectFactory> sceneObjectFactory;
 };

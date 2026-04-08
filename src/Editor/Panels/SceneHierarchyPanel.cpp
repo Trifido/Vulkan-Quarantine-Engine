@@ -6,14 +6,17 @@
 #include <AtmosphereSystem.h>
 #include <Editor/Core/EditorContext.h>
 #include <Editor/Core/EditorSelectionManager.h>
+#include <Editor/Core/EditorSceneObjectFactory.h>
 
 SceneHierarchyPanel::SceneHierarchyPanel(
     GameObjectManager* gameObjectManager,
     EditorContext* editorContext,
-    EditorSelectionManager* selectionManager)
+    EditorSelectionManager* selectionManager,
+    EditorSceneObjectFactory* sceneObjectFactory)
     : gameObjectManager(gameObjectManager)
     , editorContext(editorContext)
     , selectionManager(selectionManager)
+    , sceneObjectFactory(sceneObjectFactory)
 {
 }
 
@@ -25,6 +28,9 @@ void SceneHierarchyPanel::Draw()
     }
 
     ImGui::Begin("Scene Hierarchy", &editorContext->ShowHierarchy);
+
+    DrawToolbar();
+    ImGui::Separator();
 
     if (!gameObjectManager)
     {
@@ -417,4 +423,49 @@ void SceneHierarchyPanel::DrawRenamePopup()
 
         ImGui::EndPopup();
     }
+}
+
+void SceneHierarchyPanel::DrawToolbar()
+{
+    if (ImGui::Button("+"))
+    {
+        ImGui::OpenPopup("CreateSceneObjectPopup");
+    }
+
+    if (ImGui::BeginPopup("CreateSceneObjectPopup"))
+    {
+        DrawCreateMenu();
+        ImGui::EndPopup();
+    }
+}
+
+void SceneHierarchyPanel::DrawCreateMenu()
+{
+    if (ImGui::MenuItem("Empty GameObject"))
+    {
+        pendingCreateEmptyGameObject = true;
+    }
+
+    ImGui::Separator();
+
+    if (ImGui::BeginMenu("3D Object"))
+    {
+        if (ImGui::MenuItem("Cube")) { CreatePrimitive(QEPrimitiveType::Cube); }
+        if (ImGui::MenuItem("Plane")) { CreatePrimitive(QEPrimitiveType::Plane); }
+        if (ImGui::MenuItem("Sphere")) { CreatePrimitive(QEPrimitiveType::Sphere); }
+        if (ImGui::MenuItem("Cylinder")) { CreatePrimitive(QEPrimitiveType::Cylinder); }
+        if (ImGui::MenuItem("Cone")) { CreatePrimitive(QEPrimitiveType::Cone); }
+        if (ImGui::MenuItem("Pyramid")) { CreatePrimitive(QEPrimitiveType::Pyramid); }
+        if (ImGui::MenuItem("Capsule")) { CreatePrimitive(QEPrimitiveType::Capsule); }
+        if (ImGui::MenuItem("Torus")) { CreatePrimitive(QEPrimitiveType::Torus); }
+        ImGui::EndMenu();
+    }
+}
+
+void SceneHierarchyPanel::CreatePrimitive(QEPrimitiveType type)
+{
+    if (!sceneObjectFactory)
+        return;
+
+    sceneObjectFactory->CreatePrimitive(type, 5.0f);
 }

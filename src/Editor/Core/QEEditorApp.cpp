@@ -10,6 +10,7 @@
 #include <Editor/Core/EditorSelectionManager.h>
 #include <Editor/Core/QEGizmoController.h>
 #include <Editor/Core/EditorPickingSystem.h>
+#include <Editor/Core/EditorSceneObjectFactory.h>
 #include <QERenderTarget.h>
 
 #include <Editor/Commands/EditorCommandManager.h>
@@ -88,6 +89,12 @@ void QEEditorApp::OnInitialize()
         {
             SaveScene();
         });
+
+    sceneObjectFactory = std::make_unique<EditorSceneObjectFactory>(
+        gameObjectManager,
+        MaterialManager::getInstance(),
+        selectionManager.get(),
+        sessionManager);
 
     CreatePanels();
 }
@@ -277,7 +284,8 @@ void QEEditorApp::CreatePanels()
     panels.emplace_back(std::make_unique<SceneHierarchyPanel>(
         gameObjectManager,
         editorContext.get(),
-        selectionManager.get()));
+        selectionManager.get(),
+        sceneObjectFactory.get()));
 
     panels.emplace_back(std::make_unique<InspectorPanel>(
         gameObjectManager,
@@ -382,38 +390,10 @@ void QEEditorApp::SaveScene()
 
 void QEEditorApp::SpawnDroppedMesh(const std::string& assetPath)
 {
-    if (assetPath.empty())
+    if (!sceneObjectFactory)
         return;
 
-    std::filesystem::path path(assetPath);
-
-    if (!std::filesystem::exists(path))
-        return;
-
-    std::string ext = path.extension().string();
-    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-
-    if (ext != ".gltf")
-        return;
-
-    const std::string objectName = path.stem().string();
-
-    std::shared_ptr<QEGameObject> newObject = std::make_shared<QEGameObject>(objectName);
-    newObject->AddComponent(std::make_shared<QEGeometryComponent>(std::make_unique<QEMeshGenerator>(path.generic_string())));
-    newObject->AddComponent(std::make_shared<QEMeshRenderer>());
-
-    if (auto transform = newObject->GetComponent<QETransform>())
-    {
-        transform->SetLocalPosition(GetSpawnPositionInFrontOfEditorCamera(5.0f));
-        transform->SetLocalScale(glm::vec3(1.0f, 1.0f, 1.0f));
-    }
-
-    gameObjectManager->AddGameObject(newObject);
-
-    if (selectionManager)
-    {
-        selectionManager->SelectGameObject(newObject);
-    }
+    sceneObjectFactory->CreateDroppedMeshObject(assetPath, 5.0f);
 }
 
 glm::vec3 QEEditorApp::GetSpawnPositionInFrontOfEditorCamera(float distance) const
