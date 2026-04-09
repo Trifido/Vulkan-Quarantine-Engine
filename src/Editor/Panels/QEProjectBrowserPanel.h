@@ -4,6 +4,7 @@
 #include "Editor/Browser/QEProjectAssetItem.h"
 #include <string>
 #include <memory>
+#include <array>
 #include <filesystem>
 #include <imgui.h>
 #include <vulkan/vulkan.h>
@@ -44,6 +45,18 @@ private:
     void DrawImportFooter();
     bool HasVisibleImportFooter() const;
 
+    //Folder
+    void TryCreateNewFolderInPath(const std::filesystem::path& parentFolderPath);
+    void TryDeleteFolderAtPath(const std::filesystem::path& folderPath);
+    void ProcessPendingFolderDelete();
+    void DrawFolderTreeContextMenu(QEProjectAssetItem* item);
+    void DrawAssetTileContextMenu(QEProjectAssetItem* item);
+    void DrawContentsBackgroundContextMenu(QEProjectAssetItem* folder);
+
+    //Rename Folder Popup
+    void RequestRenamePopup(const std::filesystem::path& targetPath);
+    void DrawRenamePopup();
+
 private:
     QEProjectBrowserNavigation _navigation;
     QEProjectIconCache _iconCache;
@@ -51,4 +64,13 @@ private:
     std::vector<std::filesystem::path> _pendingExternalDrops;
     bool _isWindowHovered = false;
     bool _isContentsPanelHovered = false;
+
+    //Delete folder
+    bool _hasPendingFolderDelete = false;
+    std::filesystem::path _pendingFolderDeletePath;
+
+    //Rename folder
+    std::filesystem::path _renamePopupTargetPath;
+    std::array<char, 256> _renamePopupBuffer{};
+    bool _openRenamePopupNextFrame = false;
 };

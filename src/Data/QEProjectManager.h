@@ -26,10 +26,15 @@ class QEProjectManager
 private:
     static fs::path CURRENT_PROJECT_PATH;
     static fs::path CURRENT_DEFAULT_SCENE_PATH;
+
+    static bool IsInsideCurrentProject(const fs::path& path);
+
 public:
     static bool HasCurrentProject();
     static bool CreateQEProject(const std::string& projectName);
     static bool CreateFolder(const fs::path& projectPath, const std::string& folderName);
+    static bool DeletePath(const fs::path& targetPath, bool recursive = true);
+    static bool RenamePath(const fs::path& sourcePath, const std::string& newName);
     static bool CreateYamlScene(const std::string& sceneName = "DefaultScene");
     static bool ImportMeshFile(
         const fs::path& inputFile,
@@ -48,6 +53,10 @@ public:
 
     static bool InitializeDefaultQEScene(QEScene& scene);
     static bool InitializeQEScene(QEScene& scene, const fs::path& sceneName);
+
+    static bool CreateUniqueFolderAt(
+        const fs::path& parentFolderPath,
+        const std::string& baseFolderName = "New Folder");
 
 private:
     static bool CreateDefaultProjectMaterials();

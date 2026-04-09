@@ -89,6 +89,199 @@ bool QEProjectManager::CreateFolder(const fs::path& projectPath, const std::stri
     return fs::exists(folderPath);
 }
 
+bool QEProjectManager::DeletePath(const fs::path& targetPath, bool recursive)
+{
+    if (!HasCurrentProject())
+    {
+        QE_LOG_ERROR_CAT_F("QEProjectManager", "DeletePath - No current project loaded.");
+        return false;
+    }
+
+    const fs::path resolvedTarget = ResolveProjectPath(targetPath);
+
+    if (!fs::exists(resolvedTarget))
+    {
+        QE_LOG_ERROR_CAT_F(
+            "QEProjectManager",
+            "DeletePath - Target path does not exist: {}",
+            resolvedTarget.string());
+        return false;
+    }
+
+    if (!IsInsideCurrentProject(resolvedTarget))
+    {
+        QE_LOG_ERROR_CAT_F(
+            "QEProjectManager",
+            "DeletePath - Target path is outside current project: {}",
+            resolvedTarget.string());
+        return false;
+    }
+
+    std::error_code ec;
+
+    const fs::path projectRoot = fs::weakly_canonical(GetCurrentProjectPath(), ec);
+    if (ec) return false;
+
+    ec.clear();
+    const fs::path scenesRoot = fs::weakly_canonical(GetScenesFolderPath(), ec);
+    if (ec) return false;
+
+    ec.clear();
+    const fs::path assetsRoot = fs::weakly_canonical(GetAssetsFolderPath(), ec);
+    if (ec) return false;
+
+    ec.clear();
+    const fs::path modelsRoot = fs::weakly_canonical(GetModelsFolderPath(), ec);
+    if (ec) return false;
+
+    ec.clear();
+    const fs::path materialsRoot = fs::weakly_canonical(GetMaterialFolderPath(), ec);
+    if (ec) return false;
+
+    ec.clear();
+    const fs::path normalizedTarget = fs::weakly_canonical(resolvedTarget, ec);
+    if (ec) return false;
+
+    if (normalizedTarget == projectRoot ||
+        normalizedTarget == scenesRoot ||
+        normalizedTarget == assetsRoot ||
+        normalizedTarget == modelsRoot ||
+        normalizedTarget == materialsRoot)
+    {
+        QE_LOG_ERROR_CAT_F(
+            "QEProjectManager",
+            "DeletePath - Cannot delete protected project folder: {}",
+            normalizedTarget.string());
+        return false;
+    }
+
+    ec.clear();
+
+    if (fs::is_directory(resolvedTarget))
+    {
+        if (recursive)
+            fs::remove_all(resolvedTarget, ec);
+        else
+            fs::remove(resolvedTarget, ec);
+    }
+    else
+    {
+        fs::remove(resolvedTarget, ec);
+    }
+
+    if (ec)
+    {
+        QE_LOG_ERROR_CAT_F(
+            "QEProjectManager",
+            "DeletePath - Error deleting {} : {}",
+            resolvedTarget.string(),
+            ec.message());
+        return false;
+    }
+
+    return true;
+}
+
+bool QEProjectManager::RenamePath(const fs::path& sourcePath, const std::string& newName)
+{
+    if (!HasCurrentProject())
+    {
+        QE_LOG_ERROR_CAT_F("QEProjectManager", "RenamePath - No current project loaded.");
+        return false;
+    }
+
+    if (newName.empty())
+    {
+        QE_LOG_ERROR_CAT_F("QEProjectManager", "RenamePath - New name is empty.");
+        return false;
+    }
+
+    const fs::path resolvedSource = ResolveProjectPath(sourcePath);
+
+    std::error_code ec;
+
+    const fs::path projectRoot = fs::weakly_canonical(GetCurrentProjectPath(), ec);
+    if (ec) return false;
+
+    ec.clear();
+    const fs::path scenesRoot = fs::weakly_canonical(GetScenesFolderPath(), ec);
+    if (ec) return false;
+
+    ec.clear();
+    const fs::path assetsRoot = fs::weakly_canonical(GetAssetsFolderPath(), ec);
+    if (ec) return false;
+
+    ec.clear();
+    const fs::path modelsRoot = fs::weakly_canonical(GetModelsFolderPath(), ec);
+    if (ec) return false;
+
+    ec.clear();
+    const fs::path materialsRoot = fs::weakly_canonical(GetMaterialFolderPath(), ec);
+    if (ec) return false;
+
+    ec.clear();
+    const fs::path normalizedSource = fs::weakly_canonical(resolvedSource, ec);
+    if (ec) return false;
+
+    if (normalizedSource == projectRoot ||
+        normalizedSource == scenesRoot ||
+        normalizedSource == assetsRoot ||
+        normalizedSource == modelsRoot ||
+        normalizedSource == materialsRoot)
+    {
+        QE_LOG_ERROR_CAT_F(
+            "QEProjectManager",
+            "RenamePath - Cannot rename protected project folder: {}",
+            normalizedSource.string());
+        return false;
+    }
+
+    if (!fs::exists(resolvedSource))
+    {
+        QE_LOG_ERROR_CAT_F(
+            "QEProjectManager",
+            "RenamePath - Source path does not exist: {}",
+            resolvedSource.string());
+        return false;
+    }
+
+    if (!IsInsideCurrentProject(resolvedSource))
+    {
+        QE_LOG_ERROR_CAT_F(
+            "QEProjectManager",
+            "RenamePath - Source path is outside current project: {}",
+            resolvedSource.string());
+        return false;
+    }
+
+    const fs::path targetPath = resolvedSource.parent_path() / newName;
+
+    if (fs::exists(targetPath))
+    {
+        QE_LOG_ERROR_CAT_F(
+            "QEProjectManager",
+            "RenamePath - Target path already exists: {}",
+            targetPath.string());
+        return false;
+    }
+
+    fs::rename(resolvedSource, targetPath, ec);
+
+    if (ec)
+    {
+        QE_LOG_ERROR_CAT_F(
+            "QEProjectManager",
+            "RenamePath - Error renaming {} -> {} : {}",
+            resolvedSource.string(),
+            targetPath.string(),
+            ec.message());
+        return false;
+    }
+
+    return true;
+}
+
+
 bool QEProjectManager::CreateYamlScene(const std::string& sceneName)
 {
     const fs::path sceneDir = CURRENT_PROJECT_PATH / SCENE_FOLDER;
@@ -220,4 +413,89 @@ bool QEProjectManager::CreateDefaultProjectMaterials()
         QEMaterialYamlHelper::WriteMaterialFile(materialFolder / "editorDebugAABB.qemat", debugAABBDto) &&
         QEMaterialYamlHelper::WriteMaterialFile(materialFolder / "editorDebugCollider.qemat", debugColliderDto) &&
         QEMaterialYamlHelper::WriteMaterialFile(materialFolder / "editorGrid.qemat", gridDto);
+}
+
+
+bool QEProjectManager::IsInsideCurrentProject(const fs::path& path)
+{
+    if (!HasCurrentProject())
+        return false;
+
+    std::error_code ec;
+    const fs::path normalizedProject = fs::weakly_canonical(CURRENT_PROJECT_PATH, ec);
+    if (ec)
+        return false;
+
+    ec.clear();
+    const fs::path normalizedPath = fs::weakly_canonical(ResolveProjectPath(path), ec);
+    if (ec)
+        return false;
+
+    auto projectIt = normalizedProject.begin();
+    auto pathIt = normalizedPath.begin();
+
+    for (; projectIt != normalizedProject.end() && pathIt != normalizedPath.end(); ++projectIt, ++pathIt)
+    {
+        if (*projectIt != *pathIt)
+            return false;
+    }
+
+    return projectIt == normalizedProject.end();
+}
+
+bool QEProjectManager::CreateUniqueFolderAt(
+    const fs::path& parentFolderPath,
+    const std::string& baseFolderName)
+{
+    if (!HasCurrentProject())
+    {
+        QE_LOG_ERROR_CAT_F("QEProjectManager", "CreateUniqueFolderAt - No current project loaded.");
+        return false;
+    }
+
+    const fs::path resolvedParent = ResolveProjectPath(parentFolderPath);
+
+    if (!fs::exists(resolvedParent) || !fs::is_directory(resolvedParent))
+    {
+        QE_LOG_ERROR_CAT_F(
+            "QEProjectManager",
+            "CreateUniqueFolderAt - Parent folder does not exist or is not a directory: {}",
+            resolvedParent.string());
+        return false;
+    }
+
+    if (!IsInsideCurrentProject(resolvedParent))
+    {
+        QE_LOG_ERROR_CAT_F(
+            "QEProjectManager",
+            "CreateUniqueFolderAt - Parent folder is outside current project: {}",
+            resolvedParent.string());
+        return false;
+    }
+
+    std::string candidateName = baseFolderName;
+    fs::path candidatePath = resolvedParent / candidateName;
+
+    int index = 1;
+    while (fs::exists(candidatePath))
+    {
+        candidateName = baseFolderName + " " + std::to_string(index);
+        candidatePath = resolvedParent / candidateName;
+        ++index;
+    }
+
+    std::error_code ec;
+    fs::create_directories(candidatePath, ec);
+
+    if (ec)
+    {
+        QE_LOG_ERROR_CAT_F(
+            "QEProjectManager",
+            "CreateUniqueFolderAt - Error creating folder: {} -> {}",
+            candidatePath.string(),
+            ec.message());
+        return false;
+    }
+
+    return fs::exists(candidatePath);
 }

@@ -3,8 +3,10 @@
 #include <algorithm>
 #include <imgui.h>
 
+#include <QEProjectManager.h>
 #include <QEAssetImportManager.h>
 #include <iostream>
+#include <cstring>
 #include <Logging/QELogMacros.h>
 
 namespace
@@ -80,7 +82,7 @@ void QEProjectBrowserPanel::DrawFolderTree(QEProjectAssetItem* item)
         "%s",
         item->Name.c_str());
 
-    if (ImGui::IsItemClicked())
+    if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
     {
         _navigation.SelectFolder(item);
     }
@@ -89,6 +91,8 @@ void QEProjectBrowserPanel::DrawFolderTree(QEProjectAssetItem* item)
     {
         _navigation.SetFolderExpanded(item, isOpen);
     }
+
+    DrawFolderTreeContextMenu(item);
 
     if (isOpen)
     {
@@ -192,12 +196,10 @@ void QEProjectBrowserPanel::DrawFolderContents(QEProjectAssetItem* folder)
     if (folder == nullptr || !folder->IsDirectory)
         return;
 
-    DrawNavigationBar(folder); // 👈 nuevo
+    DrawNavigationBar(folder);
 
     ImGui::Separator();
     ImGui::Spacing();
-
-    // ---- GRID ----
 
     const float availableWidth = ImGui::GetContentRegionAvail().x;
     int columnCount = static_cast<int>(availableWidth / (tileSize + cellPadding));
@@ -216,6 +218,8 @@ void QEProjectBrowserPanel::DrawFolderContents(QEProjectAssetItem* folder)
 
         ImGui::EndTable();
     }
+
+    DrawContentsBackgroundContextMenu(folder);
 }
 
 void QEProjectBrowserPanel::DrawAssetTile(QEProjectAssetItem* item, float tileSizeValue)
@@ -237,14 +241,13 @@ void QEProjectBrowserPanel::DrawAssetTile(QEProjectAssetItem* item, float tileSi
     ImGui::InvisibleButton("##tile", ImVec2(iconAreaSize, totalHeight));
 
     const bool hovered = ImGui::IsItemHovered();
-    const bool clicked = ImGui::IsItemClicked();
 
-    if (clicked)
+    if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
     {
         _navigation.SelectItem(item);
     }
 
-    if (hovered && ImGui::IsMouseDoubleClicked(0) && item->IsDirectory)
+    if (hovered && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && item->IsDirectory)
     {
         _navigation.NavigateToFolder(item, true);
     }
@@ -321,6 +324,8 @@ void QEProjectBrowserPanel::DrawAssetTile(QEProjectAssetItem* item, float tileSi
         IM_COL32(210, 210, 210, 255),
         label.c_str());
 
+    DrawAssetTileContextMenu(item);
+
     ImGui::PopID();
 }
 
@@ -337,6 +342,8 @@ void QEProjectBrowserPanel::Draw()
 
     if (!ImGui::Begin("Project Browser"))
     {
+        DrawRenamePopup();
+        ProcessPendingFolderDelete();
         ImGui::End();
         return;
     }
@@ -402,6 +409,8 @@ void QEProjectBrowserPanel::Draw()
     HandleExternalFileDrops();
     DrawImportFooter();
 
+    DrawRenamePopup();
+    ProcessPendingFolderDelete();
     ImGui::End();
 }
 
@@ -535,4 +544,189 @@ void QEProjectBrowserPanel::HandleExternalFileDrops()
     }
 
     _pendingExternalDrops.clear();
+}
+
+void QEProjectBrowserPanel::TryCreateNewFolderInPath(const std::filesystem::path& parentFolderPath)
+{
+    if (QEProjectManager::CreateUniqueFolderAt(parentFolderPath, "New Folder"))
+    {
+        _navigation.Refresh();
+    }
+}
+
+void QEProjectBrowserPanel::TryDeleteFolderAtPath(const std::filesystem::path& folderPath)
+{
+    _hasPendingFolderDelete = true;
+    _pendingFolderDeletePath = folderPath;
+}
+
+void QEProjectBrowserPanel::ProcessPendingFolderDelete()
+{
+    if (!_hasPendingFolderDelete)
+        return;
+
+    const std::filesystem::path folderPath = _pendingFolderDeletePath;
+
+    _hasPendingFolderDelete = false;
+    _pendingFolderDeletePath.clear();
+
+    if (QEProjectManager::DeletePath(folderPath, true))
+    {
+        _navigation.Refresh();
+    }
+}
+
+void QEProjectBrowserPanel::DrawFolderTreeContextMenu(QEProjectAssetItem* item)
+{
+    if (item == nullptr || !item->IsDirectory)
+        return;
+
+    if (ImGui::BeginPopupContextItem())
+    {
+        if (ImGui::MenuItem("New Folder"))
+        {
+            TryCreateNewFolderInPath(item->AbsolutePath);
+        }
+
+        if (ImGui::MenuItem("Rename"))
+        {
+            RequestRenamePopup(item->AbsolutePath);
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Delete Folder"))
+        {
+            TryDeleteFolderAtPath(item->AbsolutePath);
+        }
+
+        ImGui::EndPopup();
+    }
+}
+
+void QEProjectBrowserPanel::DrawAssetTileContextMenu(QEProjectAssetItem* item)
+{
+    if (item == nullptr || !item->IsDirectory)
+        return;
+
+    if (ImGui::BeginPopupContextItem())
+    {
+        if (ImGui::MenuItem("New Folder"))
+        {
+            TryCreateNewFolderInPath(item->AbsolutePath);
+        }
+
+        if (ImGui::MenuItem("Rename"))
+        {
+            RequestRenamePopup(item->AbsolutePath);
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Delete Folder"))
+        {
+            TryDeleteFolderAtPath(item->AbsolutePath);
+        }
+
+        ImGui::EndPopup();
+    }
+}
+
+void QEProjectBrowserPanel::DrawContentsBackgroundContextMenu(QEProjectAssetItem* folder)
+{
+    if (folder == nullptr || !folder->IsDirectory)
+        return;
+
+    if (ImGui::BeginPopupContextWindow(
+        "ContentsBackgroundContextMenu",
+        ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+    {
+        if (ImGui::MenuItem("New Folder"))
+        {
+            TryCreateNewFolderInPath(folder->AbsolutePath);
+        }
+
+        ImGui::EndPopup();
+    }
+}
+
+void QEProjectBrowserPanel::RequestRenamePopup(const std::filesystem::path& targetPath)
+{
+    _renamePopupTargetPath = targetPath;
+    _renamePopupBuffer.fill('\0');
+
+    const std::string currentName = targetPath.filename().string();
+    std::strncpy(_renamePopupBuffer.data(), currentName.c_str(), _renamePopupBuffer.size() - 1);
+    _renamePopupBuffer[_renamePopupBuffer.size() - 1] = '\0';
+
+    _openRenamePopupNextFrame = true;
+}
+
+void QEProjectBrowserPanel::DrawRenamePopup()
+{
+    if (_openRenamePopupNextFrame)
+    {
+        ImGui::OpenPopup("Rename Folder");
+        _openRenamePopupNextFrame = false;
+    }
+
+    if (ImGui::BeginPopupModal("Rename Folder", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::TextUnformatted("Rename folder");
+        ImGui::Spacing();
+        ImGui::TextWrapped("%s", _renamePopupTargetPath.string().c_str());
+        ImGui::Spacing();
+
+        ImGui::SetNextItemWidth(320.0f);
+        const bool enterPressed = ImGui::InputText(
+            "New name",
+            _renamePopupBuffer.data(),
+            _renamePopupBuffer.size(),
+            ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll);
+
+        if (enterPressed)
+        {
+            const std::string newName = _renamePopupBuffer.data();
+
+            if (!newName.empty())
+            {
+                if (QEProjectManager::RenamePath(_renamePopupTargetPath, newName))
+                {
+                    _navigation.Refresh();
+                    _renamePopupTargetPath.clear();
+                    _renamePopupBuffer.fill('\0');
+                    ImGui::CloseCurrentPopup();
+                }
+            }
+        }
+
+        ImGui::Spacing();
+
+        if (ImGui::Button("Rename", ImVec2(120, 0)))
+        {
+            const std::string newName = _renamePopupBuffer.data();
+
+            if (!newName.empty())
+            {
+                if (QEProjectManager::RenamePath(_renamePopupTargetPath, newName))
+                {
+                    _navigation.Refresh();
+                    _renamePopupTargetPath.clear();
+                    _renamePopupBuffer.fill('\0');
+                    ImGui::CloseCurrentPopup();
+                }
+            }
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Cancel", ImVec2(120, 0)))
+        {
+            _renamePopupTargetPath.clear();
+            _renamePopupBuffer.fill('\0');
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
 }
