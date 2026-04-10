@@ -43,6 +43,9 @@ private:
     void DrawImportFooter();
     bool HasVisibleImportFooter() const;
 
+    void DrawTopBar();
+    void DrawCreateMenu(QEProjectAssetItem* currentFolder);
+
 private:
     QEProjectBrowserNavigation _navigation;
     QEProjectBrowserActions _actions;

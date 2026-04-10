@@ -8,6 +8,7 @@
 #include <iostream>
 #include <cstring>
 #include <Logging/QELogMacros.h>
+#include <Browser/QEProjectAssetCreator.h>
 
 namespace
 {
@@ -355,8 +356,7 @@ void QEProjectBrowserPanel::Draw()
 
     _isWindowHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows);
 
-    if (ImGui::Button("Refresh"))
-        _navigation.Refresh();
+    DrawTopBar();
 
     ImGui::Spacing();
 
@@ -549,4 +549,50 @@ void QEProjectBrowserPanel::HandleExternalFileDrops()
     }
 
     _pendingExternalDrops.clear();
+}
+
+void QEProjectBrowserPanel::DrawTopBar()
+{
+    if (ImGui::Button("Refresh"))
+        _navigation.Refresh();
+
+    ImGui::SameLine();
+
+    DrawCreateMenu(_navigation.GetSelectedFolder());
+}
+
+void QEProjectBrowserPanel::DrawCreateMenu(QEProjectAssetItem* currentFolder)
+{
+    if (currentFolder == nullptr || !currentFolder->IsDirectory)
+        return;
+
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(6.0f, 3.0f));
+
+    if (ImGui::Button("Create"))
+    {
+        ImGui::OpenPopup("CreateAssetPopup");
+    }
+
+    ImGui::PopStyleVar();
+
+    if (ImGui::BeginPopup("CreateAssetPopup"))
+    {
+        if (ImGui::MenuItem("Scene"))
+        {
+            if (QEProjectAssetCreator::CreateSceneAt(currentFolder->AbsolutePath, "New Scene"))
+            {
+                _navigation.Refresh();
+            }
+        }
+
+        if (ImGui::MenuItem("Material"))
+        {
+            if (QEProjectAssetCreator::CreateMaterialAt(currentFolder->AbsolutePath, "New Material"))
+            {
+                _navigation.Refresh();
+            }
+        }
+
+        ImGui::EndPopup();
+    }
 }
