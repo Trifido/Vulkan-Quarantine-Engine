@@ -324,3 +324,25 @@ bool QEProjectBrowserNavigation::ShouldFlattenFolderInTree(const QEProjectAssetI
 
     return onlyKnownAssetSubfolders;
 }
+
+QEProjectAssetItem* QEProjectBrowserNavigation::FindItemByPath(const std::string& absolutePath)
+{
+    return FindItemByPathRecursive(_rootItem.get(), absolutePath);
+}
+
+QEProjectAssetItem* QEProjectBrowserNavigation::FindItemByPathRecursive(QEProjectAssetItem* item, const std::string& absolutePath)
+{
+    if (item == nullptr)
+        return nullptr;
+
+    if (item->AbsolutePath == absolutePath)
+        return item;
+
+    for (const auto& child : item->Children)
+    {
+        if (QEProjectAssetItem* found = FindItemByPathRecursive(child.get(), absolutePath))
+            return found;
+    }
+
+    return nullptr;
+}

@@ -28,6 +28,10 @@ public:
     bool HasChildDirectories(const QEProjectAssetItem* item) const;
     bool ShouldFlattenFolderInTree(const QEProjectAssetItem* item) const;
 
+    QEProjectAssetItem* FindItemByPath(const std::string& absolutePath);
+
+    QEProjectAssetItem* FindItemByPathRecursive(QEProjectAssetItem* item, const std::string& absolutePath);
+
     bool ShouldDisplayPath(const std::filesystem::path& path) const;
     bool IsItemDraggable(const QEProjectAssetItem* item) const;
 

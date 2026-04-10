@@ -4,14 +4,12 @@
 #include "Editor/Browser/QEProjectAssetItem.h"
 #include <string>
 #include <memory>
-#include <array>
 #include <filesystem>
 #include <imgui.h>
 #include <vulkan/vulkan.h>
-#include <unordered_map>
-#include <unordered_set>
 #include "QEProjectBrowserNavigation.h"
 #include "Rendering/QEProjectIconCache.h"
+#include "Editor/Browser/QEProjectBrowserActions.h"
 
 constexpr float tileSize = 92.0f;
 constexpr float cellPadding = 12.0f;
@@ -20,7 +18,7 @@ constexpr float textPadding = 2.0f;
 class QEProjectBrowserPanel : public IEditorPanel
 {
 public:
-    QEProjectBrowserPanel() = default;
+    QEProjectBrowserPanel();
     ~QEProjectBrowserPanel() override = default;
 
     void SetProjectRootPath(const std::filesystem::path& projectRootPath);
@@ -45,32 +43,12 @@ private:
     void DrawImportFooter();
     bool HasVisibleImportFooter() const;
 
-    //Folder
-    void TryCreateNewFolderInPath(const std::filesystem::path& parentFolderPath);
-    void TryDeleteFolderAtPath(const std::filesystem::path& folderPath);
-    void ProcessPendingFolderDelete();
-    void DrawFolderTreeContextMenu(QEProjectAssetItem* item);
-    void DrawAssetTileContextMenu(QEProjectAssetItem* item);
-    void DrawContentsBackgroundContextMenu(QEProjectAssetItem* folder);
-
-    //Rename Folder Popup
-    void RequestRenamePopup(const std::filesystem::path& targetPath);
-    void DrawRenamePopup();
-
 private:
     QEProjectBrowserNavigation _navigation;
+    QEProjectBrowserActions _actions;
     QEProjectIconCache _iconCache;
 
     std::vector<std::filesystem::path> _pendingExternalDrops;
     bool _isWindowHovered = false;
     bool _isContentsPanelHovered = false;
-
-    //Delete folder
-    bool _hasPendingFolderDelete = false;
-    std::filesystem::path _pendingFolderDeletePath;
-
-    //Rename folder
-    std::filesystem::path _renamePopupTargetPath;
-    std::array<char, 256> _renamePopupBuffer{};
-    bool _openRenamePopupNextFrame = false;
 };

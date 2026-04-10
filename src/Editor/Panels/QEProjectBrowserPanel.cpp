@@ -19,6 +19,11 @@ namespace
     }
 }
 
+QEProjectBrowserPanel::QEProjectBrowserPanel()
+    : _actions(_navigation)
+{
+}
+
 void QEProjectBrowserPanel::SetProjectRootPath(const std::filesystem::path& projectRootPath)
 {
     _navigation.SetProjectRootPath(projectRootPath);
@@ -92,7 +97,7 @@ void QEProjectBrowserPanel::DrawFolderTree(QEProjectAssetItem* item)
         _navigation.SetFolderExpanded(item, isOpen);
     }
 
-    DrawFolderTreeContextMenu(item);
+    _actions.DrawFolderTreeContextMenu(item);
 
     if (isOpen)
     {
@@ -219,7 +224,7 @@ void QEProjectBrowserPanel::DrawFolderContents(QEProjectAssetItem* folder)
         ImGui::EndTable();
     }
 
-    DrawContentsBackgroundContextMenu(folder);
+    _actions.DrawContentsBackgroundContextMenu(folder);
 }
 
 void QEProjectBrowserPanel::DrawAssetTile(QEProjectAssetItem* item, float tileSizeValue)
@@ -324,7 +329,7 @@ void QEProjectBrowserPanel::DrawAssetTile(QEProjectAssetItem* item, float tileSi
         IM_COL32(210, 210, 210, 255),
         label.c_str());
 
-    DrawAssetTileContextMenu(item);
+    _actions.DrawAssetTileContextMenu(item);
 
     ImGui::PopID();
 }
@@ -342,8 +347,8 @@ void QEProjectBrowserPanel::Draw()
 
     if (!ImGui::Begin("Project Browser"))
     {
-        DrawRenamePopup();
-        ProcessPendingFolderDelete();
+        _actions.DrawRenamePopup();
+        _actions.ProcessPendingDelete();
         ImGui::End();
         return;
     }
@@ -409,8 +414,8 @@ void QEProjectBrowserPanel::Draw()
     HandleExternalFileDrops();
     DrawImportFooter();
 
-    DrawRenamePopup();
-    ProcessPendingFolderDelete();
+    _actions.DrawRenamePopup();
+    _actions.ProcessPendingDelete();
     ImGui::End();
 }
 
@@ -544,189 +549,4 @@ void QEProjectBrowserPanel::HandleExternalFileDrops()
     }
 
     _pendingExternalDrops.clear();
-}
-
-void QEProjectBrowserPanel::TryCreateNewFolderInPath(const std::filesystem::path& parentFolderPath)
-{
-    if (QEProjectManager::CreateUniqueFolderAt(parentFolderPath, "New Folder"))
-    {
-        _navigation.Refresh();
-    }
-}
-
-void QEProjectBrowserPanel::TryDeleteFolderAtPath(const std::filesystem::path& folderPath)
-{
-    _hasPendingFolderDelete = true;
-    _pendingFolderDeletePath = folderPath;
-}
-
-void QEProjectBrowserPanel::ProcessPendingFolderDelete()
-{
-    if (!_hasPendingFolderDelete)
-        return;
-
-    const std::filesystem::path folderPath = _pendingFolderDeletePath;
-
-    _hasPendingFolderDelete = false;
-    _pendingFolderDeletePath.clear();
-
-    if (QEProjectManager::DeletePath(folderPath, true))
-    {
-        _navigation.Refresh();
-    }
-}
-
-void QEProjectBrowserPanel::DrawFolderTreeContextMenu(QEProjectAssetItem* item)
-{
-    if (item == nullptr || !item->IsDirectory)
-        return;
-
-    if (ImGui::BeginPopupContextItem())
-    {
-        if (ImGui::MenuItem("New Folder"))
-        {
-            TryCreateNewFolderInPath(item->AbsolutePath);
-        }
-
-        if (ImGui::MenuItem("Rename"))
-        {
-            RequestRenamePopup(item->AbsolutePath);
-        }
-
-        ImGui::Separator();
-
-        if (ImGui::MenuItem("Delete Folder"))
-        {
-            TryDeleteFolderAtPath(item->AbsolutePath);
-        }
-
-        ImGui::EndPopup();
-    }
-}
-
-void QEProjectBrowserPanel::DrawAssetTileContextMenu(QEProjectAssetItem* item)
-{
-    if (item == nullptr || !item->IsDirectory)
-        return;
-
-    if (ImGui::BeginPopupContextItem())
-    {
-        if (ImGui::MenuItem("New Folder"))
-        {
-            TryCreateNewFolderInPath(item->AbsolutePath);
-        }
-
-        if (ImGui::MenuItem("Rename"))
-        {
-            RequestRenamePopup(item->AbsolutePath);
-        }
-
-        ImGui::Separator();
-
-        if (ImGui::MenuItem("Delete Folder"))
-        {
-            TryDeleteFolderAtPath(item->AbsolutePath);
-        }
-
-        ImGui::EndPopup();
-    }
-}
-
-void QEProjectBrowserPanel::DrawContentsBackgroundContextMenu(QEProjectAssetItem* folder)
-{
-    if (folder == nullptr || !folder->IsDirectory)
-        return;
-
-    if (ImGui::BeginPopupContextWindow(
-        "ContentsBackgroundContextMenu",
-        ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
-    {
-        if (ImGui::MenuItem("New Folder"))
-        {
-            TryCreateNewFolderInPath(folder->AbsolutePath);
-        }
-
-        ImGui::EndPopup();
-    }
-}
-
-void QEProjectBrowserPanel::RequestRenamePopup(const std::filesystem::path& targetPath)
-{
-    _renamePopupTargetPath = targetPath;
-    _renamePopupBuffer.fill('\0');
-
-    const std::string currentName = targetPath.filename().string();
-    std::strncpy(_renamePopupBuffer.data(), currentName.c_str(), _renamePopupBuffer.size() - 1);
-    _renamePopupBuffer[_renamePopupBuffer.size() - 1] = '\0';
-
-    _openRenamePopupNextFrame = true;
-}
-
-void QEProjectBrowserPanel::DrawRenamePopup()
-{
-    if (_openRenamePopupNextFrame)
-    {
-        ImGui::OpenPopup("Rename Folder");
-        _openRenamePopupNextFrame = false;
-    }
-
-    if (ImGui::BeginPopupModal("Rename Folder", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-    {
-        ImGui::TextUnformatted("Rename folder");
-        ImGui::Spacing();
-        ImGui::TextWrapped("%s", _renamePopupTargetPath.string().c_str());
-        ImGui::Spacing();
-
-        ImGui::SetNextItemWidth(320.0f);
-        const bool enterPressed = ImGui::InputText(
-            "New name",
-            _renamePopupBuffer.data(),
-            _renamePopupBuffer.size(),
-            ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll);
-
-        if (enterPressed)
-        {
-            const std::string newName = _renamePopupBuffer.data();
-
-            if (!newName.empty())
-            {
-                if (QEProjectManager::RenamePath(_renamePopupTargetPath, newName))
-                {
-                    _navigation.Refresh();
-                    _renamePopupTargetPath.clear();
-                    _renamePopupBuffer.fill('\0');
-                    ImGui::CloseCurrentPopup();
-                }
-            }
-        }
-
-        ImGui::Spacing();
-
-        if (ImGui::Button("Rename", ImVec2(120, 0)))
-        {
-            const std::string newName = _renamePopupBuffer.data();
-
-            if (!newName.empty())
-            {
-                if (QEProjectManager::RenamePath(_renamePopupTargetPath, newName))
-                {
-                    _navigation.Refresh();
-                    _renamePopupTargetPath.clear();
-                    _renamePopupBuffer.fill('\0');
-                    ImGui::CloseCurrentPopup();
-                }
-            }
-        }
-
-        ImGui::SameLine();
-
-        if (ImGui::Button("Cancel", ImVec2(120, 0)))
-        {
-            _renamePopupTargetPath.clear();
-            _renamePopupBuffer.fill('\0');
-            ImGui::CloseCurrentPopup();
-        }
-
-        ImGui::EndPopup();
-    }
 }
