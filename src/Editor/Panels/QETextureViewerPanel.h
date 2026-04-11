@@ -26,6 +26,7 @@ private:
 
     void HandleCanvasInput(const ImVec2& canvasPos, const ImVec2& canvasSize);
     void DrawTextureCanvas();
+    void DrawCheckerboard(const ImVec2& minPos, const ImVec2& size) const;
 
 private:
     std::filesystem::path _texturePath;
@@ -36,6 +37,7 @@ private:
 
     float _zoom = 1.0f;
     bool _fitToWindow = true;
+    bool _showCheckerboard = true;
 
     bool _isPanning = false;
     ImVec2 _lastPanMousePos = ImVec2(0.0f, 0.0f);

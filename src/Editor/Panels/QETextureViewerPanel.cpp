@@ -132,10 +132,57 @@ void QETextureViewerPanel::DrawTextureCanvas()
         if (offsetY > 0.0f)
             ImGui::SetCursorPosY(ImGui::GetCursorPosY() + offsetY);
 
+        const ImVec2 imageScreenPos = ImGui::GetCursorScreenPos();
+
+        if (_showCheckerboard)
+        {
+            DrawCheckerboard(imageScreenPos, imageSize);
+
+            ImGui::GetWindowDrawList()->AddRect(
+                imageScreenPos,
+                ImVec2(imageScreenPos.x + imageSize.x, imageScreenPos.y + imageSize.y),
+                IM_COL32(255, 0, 0, 255),
+                0.0f,
+                0,
+                2.0f);
+        }
+
         ImGui::Image(_preview->GetImGuiTexture(), imageSize);
     }
 
     ImGui::EndChild();
+}
+
+void QETextureViewerPanel::DrawCheckerboard(const ImVec2& minPos, const ImVec2& size) const
+{
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
+    if (!drawList || size.x <= 0.0f || size.y <= 0.0f)
+        return;
+
+    const float cellSize = 12.0f;
+
+    const ImU32 colorA = IM_COL32(110, 110, 110, 255);
+    const ImU32 colorB = IM_COL32(150, 150, 150, 255);
+
+    const int cols = static_cast<int>(std::ceil(size.x / cellSize));
+    const int rows = static_cast<int>(std::ceil(size.y / cellSize));
+
+    for (int y = 0; y < rows; ++y)
+    {
+        for (int x = 0; x < cols; ++x)
+        {
+            const float x0 = minPos.x + x * cellSize;
+            const float y0 = minPos.y + y * cellSize;
+            const float x1 = std::min(x0 + cellSize, minPos.x + size.x);
+            const float y1 = std::min(y0 + cellSize, minPos.y + size.y);
+
+            const bool even = ((x + y) % 2) == 0;
+            drawList->AddRectFilled(
+                ImVec2(x0, y0),
+                ImVec2(x1, y1),
+                even ? colorA : colorB);
+        }
+    }
 }
 
 void QETextureViewerPanel::Draw()
@@ -184,12 +231,7 @@ void QETextureViewerPanel::Draw()
 
     ImGui::SameLine();
 
-    if (ImGui::Button("Reload"))
-    {
-        _preview->Cleanup();
-        _loadAttempted = false;
-        _loaded = false;
-    }
+    ImGui::Checkbox("Checker", &_showCheckerboard);
 
     ImGui::SameLine();
 
