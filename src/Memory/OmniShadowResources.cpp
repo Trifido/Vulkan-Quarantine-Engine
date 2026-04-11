@@ -3,6 +3,7 @@
 #include "FrameBufferModule.h"
 #include <SynchronizationModule.h>
 #include <SyncTool.h>
+#include <Helpers/QEMemoryTrack.h>
 
 QueueModule* OmniShadowResources::queueModule;
 VkCommandPool OmniShadowResources::commandPool;
@@ -346,8 +347,8 @@ void OmniShadowResources::Cleanup()
     {
         if (this->shadowMapUBO != nullptr)
         {
-            vkDestroyBuffer(deviceModule->device, this->shadowMapUBO->uniformBuffers[i], nullptr);
-            vkFreeMemory(deviceModule->device, this->shadowMapUBO->uniformBuffersMemory[i], nullptr);
+            QE_DESTROY_BUFFER(deviceModule->device, this->shadowMapUBO->uniformBuffers[i], "OmniShadowResources::Cleanup");
+            QE_FREE_MEMORY(deviceModule->device, this->shadowMapUBO->uniformBuffersMemory[i], "OmniShadowResources::Cleanup");
         }
     }
 
@@ -365,7 +366,7 @@ void OmniShadowResources::Cleanup()
     }
     if (this->cubemapMemory != VK_NULL_HANDLE)
     {
-        vkFreeMemory(deviceModule->device, cubemapMemory, nullptr);
+        QE_FREE_MEMORY(deviceModule->device, cubemapMemory, "OmniShadowResources::Cleanup");
     }
 
     if (this->framebufferDepthImageView != VK_NULL_HANDLE)
@@ -378,7 +379,7 @@ void OmniShadowResources::Cleanup()
     }
     if (this->framebufferDepthImageMemory != VK_NULL_HANDLE)
     {
-        vkFreeMemory(deviceModule->device, framebufferDepthImageMemory, nullptr);
+        QE_FREE_MEMORY(deviceModule->device, framebufferDepthImageMemory, "OmniShadowResources::Cleanup");
     }
 
     for (uint32_t i = 0; i < 6; i++)

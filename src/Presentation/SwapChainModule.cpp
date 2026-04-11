@@ -5,6 +5,7 @@
 #include "ImageMemoryTools.h"
 #include "SwapChainTool.hpp"
 #include <SynchronizationModule.h>
+#include <Helpers/QEMemoryTrack.h>
 
 SwapChainModule::SwapChainModule()
 {
@@ -155,8 +156,8 @@ void SwapChainModule::CleanScreenDataResources()
     {
         if (this->screenData != nullptr)
         {
-            vkDestroyBuffer(deviceModule->device, this->screenData->uniformBuffers[i], nullptr);
-            vkFreeMemory(deviceModule->device, this->screenData->uniformBuffersMemory[i], nullptr);
+            QE_DESTROY_BUFFER(deviceModule->device, this->screenData->uniformBuffers[i], "SwapChainModule::CleanScreenDataResources");
+            QE_FREE_MEMORY(deviceModule->device, this->screenData->uniformBuffersMemory[i], "SwapChainModule::CleanScreenDataResources");
         }
     }
 }

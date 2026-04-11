@@ -1,6 +1,7 @@
 #include "PointShadowDescriptorsManager.h"
 #include "SynchronizationModule.h"
 #include <OmniShadowResources.h>
+#include <Helpers/QEMemoryTrack.h>
 
 PointShadowDescriptorsManager::PointShadowDescriptorsManager()
 {
@@ -151,7 +152,7 @@ void PointShadowDescriptorsManager::SetCubeMapDescriptorWrite(VkWriteDescriptorS
     descriptorWrite.dstBinding = binding;
     descriptorWrite.dstArrayElement = 0;
     descriptorWrite.descriptorType = descriptorType;
-    descriptorWrite.descriptorCount = MAX_NUM_POINT_LIGHTS; // Número de descriptores en el array
+    descriptorWrite.descriptorCount = MAX_NUM_POINT_LIGHTS; // Nï¿½mero de descriptores en el array
     descriptorWrite.pImageInfo = this->renderDescriptorImageInfo.data();
 }
 
@@ -310,7 +311,7 @@ void PointShadowDescriptorsManager::Clean()
 
     if (this->placeholderMemory != VK_NULL_HANDLE)
     {
-        vkFreeMemory(deviceModule->device, this->placeholderMemory, nullptr);
+        QE_FREE_MEMORY(deviceModule->device, this->placeholderMemory, "PointShadowDescriptorsManager::Clean");
         this->placeholderMemory = VK_NULL_HANDLE;
     }
 }

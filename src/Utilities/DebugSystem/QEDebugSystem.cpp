@@ -1,5 +1,6 @@
 #include "QEDebugSystem.h"
 #include <BufferManageModule.h>
+#include <Helpers/QEMemoryTrack.h>
 
 QEDebugSystem::QEDebugSystem()
 {
@@ -11,12 +12,12 @@ void QEDebugSystem::createVertexBuffer(VkDeviceSize requiredBytes)
     if (requiredBytes == 0)
         return;
 
-    // Si ya existe, destruir primero (ojo sincronización si está en uso)
+    // Si ya existe, destruir primero (ojo sincronizaciï¿½n si estï¿½ en uso)
     if (lineVertexMemory != VK_NULL_HANDLE)
     {
         vkDeviceWaitIdle(deviceModule_ptr->device);
-        vkDestroyBuffer(deviceModule_ptr->device, lineVertexBuffer, nullptr);
-        vkFreeMemory(deviceModule_ptr->device, lineVertexMemory, nullptr);
+        QE_DESTROY_BUFFER(deviceModule_ptr->device, lineVertexBuffer, "QEDebugSystem::createVertexBuffer");
+        QE_FREE_MEMORY(deviceModule_ptr->device, lineVertexMemory, "QEDebugSystem::createVertexBuffer");
         lineVertexBuffer = VK_NULL_HANDLE;
         lineVertexMemory = VK_NULL_HANDLE;
         lineVertexCapacity = 0;
@@ -73,8 +74,8 @@ void QEDebugSystem::updateVertexBuffer()
     );
 
     // 4. Limpiar staging buffer
-    vkDestroyBuffer(deviceModule_ptr->device, stagingBuffer, nullptr);
-    vkFreeMemory(deviceModule_ptr->device, stagingMemory, nullptr);
+    QE_DESTROY_BUFFER(deviceModule_ptr->device, stagingBuffer, "QEDebugSystem::updateVertexBuffer");
+    QE_FREE_MEMORY(deviceModule_ptr->device, stagingMemory, "QEDebugSystem::updateVertexBuffer");
 }
 
 void QEDebugSystem::InitializeDebugGraphicResources()
@@ -184,8 +185,8 @@ void QEDebugSystem::Cleanup()
 {
     if (lineVertexMemory != VK_NULL_HANDLE)
     {
-        vkDestroyBuffer(deviceModule_ptr->device, lineVertexBuffer, nullptr);
-        vkFreeMemory(deviceModule_ptr->device, lineVertexMemory, nullptr);
+        QE_DESTROY_BUFFER(deviceModule_ptr->device, lineVertexBuffer, "QEDebugSystem::Cleanup");
+        QE_FREE_MEMORY(deviceModule_ptr->device, lineVertexMemory, "QEDebugSystem::Cleanup");
         lineVertexBuffer = VK_NULL_HANDLE;
         lineVertexMemory = VK_NULL_HANDLE;
     }

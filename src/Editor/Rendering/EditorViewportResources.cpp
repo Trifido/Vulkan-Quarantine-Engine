@@ -10,6 +10,7 @@
 #include <CommandPoolModule.h>
 #include <SwapChainModule.h>
 #include <DepthBufferModule.h>
+#include <Helpers/QEMemoryTrack.h>
 
 EditorViewportResources::EditorViewportResources()
 {
@@ -112,7 +113,7 @@ void EditorViewportResources::CleanupImages()
 
     if (resolveMemory != VK_NULL_HANDLE)
     {
-        vkFreeMemory(deviceModule->device, resolveMemory, nullptr);
+        QE_FREE_MEMORY(deviceModule->device, resolveMemory, "EditorViewportResources::CleanupImages");
         resolveMemory = VK_NULL_HANDLE;
     }
 
@@ -130,7 +131,7 @@ void EditorViewportResources::CleanupImages()
 
     if (msaaColorMemory != VK_NULL_HANDLE)
     {
-        vkFreeMemory(deviceModule->device, msaaColorMemory, nullptr);
+        QE_FREE_MEMORY(deviceModule->device, msaaColorMemory, "EditorViewportResources::CleanupImages");
         msaaColorMemory = VK_NULL_HANDLE;
     }
 
@@ -148,7 +149,7 @@ void EditorViewportResources::CleanupImages()
 
     if (depthMemory != VK_NULL_HANDLE)
     {
-        vkFreeMemory(deviceModule->device, depthMemory, nullptr);
+        QE_FREE_MEMORY(deviceModule->device, depthMemory, "EditorViewportResources::CleanupImages");
         depthMemory = VK_NULL_HANDLE;
     }
 }

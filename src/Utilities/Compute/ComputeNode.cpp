@@ -1,6 +1,7 @@
 #include "ComputeNode.h"
 #include "SynchronizationModule.h"
 #include "BufferManageModule.h"
+#include <Helpers/QEMemoryTrack.h>
 
 ComputeNode::ComputeNode()
 {
@@ -46,8 +47,8 @@ void ComputeNode::FillComputeBuffer(uint32_t numElements, unsigned long long ele
     // Fill ssbo
     this->computeDescriptor->ssboData[0]->FillSSBO(stagingBuffer, bufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
 
-    vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
-    vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
+    QE_DESTROY_BUFFER(deviceModule->device, stagingBuffer, "ComputeNode::FillComputeBuffer");
+    QE_FREE_MEMORY(deviceModule->device, stagingBufferMemory, "ComputeNode::FillComputeBuffer");
 }
 
 void ComputeNode::FillComputeBuffer(uint32_t ssboIndex, VkBuffer buffer, uint32_t bufferSize)

@@ -2,6 +2,7 @@
 #include <stdexcept>
 
 #include "ImageMemoryTools.h"
+#include <Helpers/QEMemoryTrack.h>
 
 
 VkCommandPool BufferManageModule::commandPool;
@@ -58,7 +59,7 @@ void BufferManageModule::createBuffer(VkDeviceSize size, VkBufferUsageFlags usag
         }
         else
         {
-            vkDestroyBuffer(deviceModule.device, buffer, nullptr);
+            QE_DESTROY_BUFFER(deviceModule.device, buffer, "BufferManageModule::createBuffer");
             throw std::runtime_error("Buffer requests VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT but device doesn't have bufferDeviceAddress enabled");
         }
     }
@@ -66,15 +67,18 @@ void BufferManageModule::createBuffer(VkDeviceSize size, VkBufferUsageFlags usag
     // Allocate memory
     if (vkAllocateMemory(deviceModule.device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
     {
-        vkDestroyBuffer(deviceModule.device, buffer, nullptr);
+        QE_DESTROY_BUFFER(deviceModule.device, buffer, "BufferManageModule::createBuffer");
         throw std::runtime_error("failed to allocate buffer memory!");
     }
 
     // Bind memory
     if (vkBindBufferMemory(deviceModule.device, buffer, bufferMemory, 0) != VK_SUCCESS)
     {
-        vkFreeMemory(deviceModule.device, bufferMemory, nullptr);
-        vkDestroyBuffer(deviceModule.device, buffer, nullptr);
+        QE_FREE_MEMORY(deviceModule.device, bufferMemory, "BufferManageModule::createBuffer");
+        QE_DESTROY_BUFFER(deviceModule.device, buffer, "BufferManageModule::createBuffer");
+
+        //vkFreeMemory(deviceModule.device, bufferMemory, nullptr);
+        //vkDestroyBuffer(deviceModule.device, buffer, nullptr);
         throw std::runtime_error("failed to bind buffer memory!");
     }
 }

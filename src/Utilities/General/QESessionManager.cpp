@@ -7,6 +7,7 @@
 #include <SynchronizationModule.h>
 #include <QECameraController.h>
 #include <DebugSystem/QEDebugSystem.h>
+#include <Helpers/QEMemoryTrack.h>
 
 QESessionManager::QESessionManager()
 {
@@ -203,12 +204,18 @@ void QESessionManager::SetupEditor()
         if (!existing)
         {
             std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
-            editorManager->AddEditorObject(grid_ptr, "editor:grid");
             grid_ptr->IsRenderable = true;
+            editorManager->AddEditorObject(grid_ptr, "editor:grid");
         }
         else
         {
             existing->IsRenderable = true;
+
+            auto existingGrid = std::dynamic_pointer_cast<Grid>(existing);
+            if (existingGrid)
+            {
+                existingGrid->EnsureResources();
+            }
         }
     }
 }
@@ -287,8 +294,8 @@ void QESessionManager::ShutdownPersistentResources()
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        vkDestroyBuffer(deviceModule->device, this->cameraUBO->uniformBuffers[i], nullptr);
-        vkFreeMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[i], nullptr);
+        QE_DESTROY_BUFFER(deviceModule->device, this->cameraUBO->uniformBuffers[i], "QESessionManager::ShutdownPersistentResources");
+        QE_FREE_MEMORY(deviceModule->device, this->cameraUBO->uniformBuffersMemory[i], "QESessionManager::ShutdownPersistentResources");
     }
 
     this->cameraUBO.reset();

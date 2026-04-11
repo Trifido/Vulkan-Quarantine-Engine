@@ -9,6 +9,7 @@
 #include <Helpers/ScopedTimer.h>
 #include <ktxvulkan.h>
 #include <filesystem>
+#include <Helpers/QEMemoryTrack.h>
 
 
 VkCommandPool CustomTexture::commandPool;
@@ -223,8 +224,8 @@ void CustomTexture::createTextureImage(std::string path, QEColorSpace cs)
 
     endSingleTimeCommands(deviceModule->device, queueModule->graphicsQueue, *ptrCommandPool, cmd);
 
-    vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
-    vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
+    QE_DESTROY_BUFFER(deviceModule->device, stagingBuffer, "CustomTexture::createTextureImage");
+    QE_FREE_MEMORY(deviceModule->device, stagingBufferMemory, "CustomTexture::createTextureImage");
 
     this->createTextureImageView(imageFormat);
     this->createTextureSampler();
@@ -364,8 +365,8 @@ void CustomTexture::createTextureFromKtx2(const std::string& path, QEColorSpace 
         if (offRes != KTX_SUCCESS)
         {
             endSingleTimeCommands(deviceModule->device, queueModule->graphicsQueue, *ptrCommandPool, cmd);
-            vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
-            vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
+            QE_DESTROY_BUFFER(deviceModule->device, stagingBuffer, "CustomTexture::createTextureFromKtx2");
+            QE_FREE_MEMORY(deviceModule->device, stagingBufferMemory, "CustomTexture::createTextureFromKtx2");
             ktxTexture_Destroy(ktxTexture(kTexture));
             throw std::runtime_error("Failed to get KTX2 mip offset: " + path);
         }
@@ -407,8 +408,8 @@ void CustomTexture::createTextureFromKtx2(const std::string& path, QEColorSpace 
 
     endSingleTimeCommands(deviceModule->device, queueModule->graphicsQueue, *ptrCommandPool, cmd);
 
-    vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
-    vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
+    QE_DESTROY_BUFFER(deviceModule->device, stagingBuffer, "CustomTexture::createTextureFromKtx2");
+    QE_FREE_MEMORY(deviceModule->device, stagingBufferMemory, "CustomTexture::createTextureFromKtx2");
 
     ktxTexture_Destroy(ktxTexture(kTexture));
 
@@ -522,8 +523,8 @@ void CustomTexture::createCubemapTextureImage(std::vector<std::string> paths)
 
     endSingleTimeCommands(deviceModule->device, queueModule->graphicsQueue, *ptrCommandPool, cmd);
 
-    vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
-    vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
+    QE_DESTROY_BUFFER(deviceModule->device, stagingBuffer, "CustomTexture::createCubemapTextureImage");
+    QE_FREE_MEMORY(deviceModule->device, stagingBufferMemory, "CustomTexture::createCubemapTextureImage");
 
     this->createTextureImageView(imageFormat);
     this->createCubemapTextureSampler();
@@ -626,8 +627,8 @@ void CustomTexture::createCubemapTextureImage(std::string path)
 
     endSingleTimeCommands(deviceModule->device, queueModule->graphicsQueue, *ptrCommandPool, cmd);
 
-    vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
-    vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
+    QE_DESTROY_BUFFER(deviceModule->device, stagingBuffer, "CustomTexture::createCubemapTextureImage");
+    QE_FREE_MEMORY(deviceModule->device, stagingBufferMemory, "CustomTexture::createCubemapTextureImage");
 
     this->createTextureImageView(imageFormat);
     this->createCubemapTextureSampler();
@@ -716,8 +717,8 @@ void CustomTexture::createTextureRawImage(aiTexel* rawData, unsigned int width, 
 
     endSingleTimeCommands(deviceModule->device, queueModule->graphicsQueue, *ptrCommandPool, cmd);
 
-    vkDestroyBuffer(deviceModule->device, stagingBuffer, nullptr);
-    vkFreeMemory(deviceModule->device, stagingBufferMemory, nullptr);
+    QE_DESTROY_BUFFER(deviceModule->device, stagingBuffer, "CustomTexture::createTextureRawImage");
+    QE_FREE_MEMORY(deviceModule->device, stagingBufferMemory, "CustomTexture::createTextureRawImage");
 
     this->createTextureImageView(VK_FORMAT_R8G8B8A8_SRGB);
     this->createTextureSampler();
@@ -808,7 +809,7 @@ void CustomTexture::cleanup()
 
     if (deviceMemory != VK_NULL_HANDLE)
     {
-        vkFreeMemory(deviceModule->device, deviceMemory, nullptr);
+        QE_FREE_MEMORY(deviceModule->device, deviceMemory, "CustomTexture::cleanup");
         deviceMemory = VK_NULL_HANDLE;
     }
 }

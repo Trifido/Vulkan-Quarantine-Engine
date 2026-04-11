@@ -1,6 +1,7 @@
 #include "DescriptorBuffer.h"
 #include "SynchronizationModule.h"
 #include <QESessionManager.h>
+#include <Helpers/QEMemoryTrack.h>
 
 DescriptorBuffer::DescriptorBuffer()
 {
@@ -86,7 +87,7 @@ void DescriptorBuffer::CleanLastResources()
 
 void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
 {
-    // Solo set 0 en esta clase (según tu código actual)
+    // Solo set 0 en esta clase (segï¿½n tu cï¿½digo actual)
     const uint32_t TARGET_SET = 0;
 
     auto itSet = shader_ptr->reflectShader.bindings.find(TARGET_SET);
@@ -191,7 +192,7 @@ void DescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shader_ptr)
     poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
     poolInfo.pPoolSizes = poolSizes.data();
 
-    // Tu implementación actual solo aloca MAX_FRAMES_IN_FLIGHT descriptor sets (set 0)
+    // Tu implementaciï¿½n actual solo aloca MAX_FRAMES_IN_FLIGHT descriptor sets (set 0)
     poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
     VkResult res = vkCreateDescriptorPool(deviceModule->device, &poolInfo, nullptr, &descriptorPool);
@@ -311,7 +312,7 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
         const DescriptorBindingReflect& br = kv.second;
         const uint32_t dstBinding = br.binding;
 
-        // Cámara
+        // Cï¿½mara
         if (br.name == "UniformCamera")
         {
             auto cameraUBO = QESessionManager::getInstance()->GetCameraUBO();
@@ -332,7 +333,7 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
         {
             pushUBO(dstBinding, this->ubos["materialUBO"]->uniformBuffers[frameIdx], this->uboSizes["materialUBO"]);
         }
-        // Animación UBO
+        // Animaciï¿½n UBO
         else if (br.name == "UniformAnimation")
         {
             pushUBO(dstBinding, this->ubos["animationUBO"]->uniformBuffers[frameIdx], this->uboSizes["animationUBO"]);
@@ -342,7 +343,7 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
         {
             pushUBO(dstBinding, this->ubos["atmosphereUBO"]->uniformBuffers[frameIdx], this->uboSizes["atmosphereUBO"]);
         }
-        // Partículas UBO
+        // Partï¿½culas UBO
         else if (br.name == "UniformParticleTexture")
         {
             pushUBO(dstBinding, this->ubos["particleSystemUBO"]->uniformBuffers[frameIdx], this->uboSizes["particleSystemUBO"]);
@@ -366,7 +367,7 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
             pushSSBO(dstBinding, this->lightManager->lightTilesSSBO->uniformBuffers[frameIdx], this->lightManager->lightTilesSSBOSize);
         }
 
-        // Meshlets SSBOs (si están en set0)
+        // Meshlets SSBOs (si estï¿½n en set0)
         else if (br.name == "Meshlets")
         {
             pushSSBO(dstBinding, this->ssboData["Meshlets"]->uniformBuffers[frameIdx], this->ssboSize["Meshlets"]);
@@ -456,8 +457,8 @@ void DescriptorBuffer::Cleanup()
             {
                 if (!it->second->uniformBuffers.empty())
                 {
-                    vkDestroyBuffer(deviceModule->device, it->second->uniformBuffers[i], nullptr);
-                    vkFreeMemory(deviceModule->device, it->second->uniformBuffersMemory[i], nullptr);
+                    QE_DESTROY_BUFFER(deviceModule->device, it->second->uniformBuffers[i], "DescriptorBuffer::Cleanup");
+                    QE_FREE_MEMORY(deviceModule->device, it->second->uniformBuffersMemory[i], "DescriptorBuffer::Cleanup");
                     it->second->uniformBuffers[i] = VK_NULL_HANDLE;
                 }
 
@@ -468,10 +469,10 @@ void DescriptorBuffer::Cleanup()
         if (this->ubos["particleSystemUBO"] != nullptr)
         {
             if (i < this->ubos["particleSystemUBO"]->uniformBuffers.size() && this->ubos["particleSystemUBO"]->uniformBuffers[i] != VK_NULL_HANDLE)
-                vkDestroyBuffer(deviceModule->device, this->ubos["particleSystemUBO"]->uniformBuffers[i], nullptr);
+                QE_DESTROY_BUFFER(deviceModule->device, this->ubos["particleSystemUBO"]->uniformBuffers[i], "DescriptorBuffer::Cleanup");
 
             if (i < this->ubos["particleSystemUBO"]->uniformBuffersMemory.size() && this->ubos["particleSystemUBO"]->uniformBuffersMemory[i] != VK_NULL_HANDLE)
-                vkFreeMemory(deviceModule->device, this->ubos["particleSystemUBO"]->uniformBuffersMemory[i], nullptr);
+                QE_FREE_MEMORY(deviceModule->device, this->ubos["particleSystemUBO"]->uniformBuffersMemory[i], "DescriptorBuffer::Cleanup");
         }
     }
 

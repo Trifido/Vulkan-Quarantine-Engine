@@ -1,5 +1,6 @@
 #include "TextureManagerModule.h"
 #include "SyncTool.h"
+#include <Helpers/QEMemoryTrack.h>
 
 QueueModule* TextureManagerModule::queueModule;
 
@@ -219,6 +220,6 @@ void TextureManagerModule::cleanup()
 
     if (this->deviceMemory != VK_NULL_HANDLE)
     {
-        vkFreeMemory(deviceModule->device, deviceMemory, nullptr);
+        QE_FREE_MEMORY(deviceModule->device, deviceMemory, "TextureManagerModule::cleanup");
     }
 }

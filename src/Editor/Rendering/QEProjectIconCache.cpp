@@ -11,6 +11,7 @@
 #include <ImageMemoryTools.h>
 #include <QueueModule.h>
 #include <SyncTool.h>
+#include <Helpers/QEMemoryTrack.h>
 
 QEProjectIconCache::~QEProjectIconCache()
 {
@@ -65,7 +66,7 @@ void QEProjectIconCache::Cleanup()
 
         if (icon.Memory != VK_NULL_HANDLE)
         {
-            vkFreeMemory(device->device, icon.Memory, nullptr);
+            QE_FREE_MEMORY(device->device, icon.Memory, "QEProjectIconCache::Cleanup");
             icon.Memory = VK_NULL_HANDLE;
         }
     }
@@ -119,8 +120,8 @@ bool QEProjectIconCache::LoadIconTexture(QEAssetType type, const std::filesystem
     void* mappedData = nullptr;
     if (vkMapMemory(device->device, stagingBufferMemory, 0, imageSize, 0, &mappedData) != VK_SUCCESS)
     {
-        vkDestroyBuffer(device->device, stagingBuffer, nullptr);
-        vkFreeMemory(device->device, stagingBufferMemory, nullptr);
+        QE_DESTROY_BUFFER(device->device, stagingBuffer, "QEProjectIconCache::LoadIconTexture");
+        QE_FREE_MEMORY(device->device, stagingBufferMemory, "QEProjectIconCache::LoadIconTexture");
         stbi_image_free(pixels);
         return false;
     }
@@ -139,8 +140,8 @@ bool QEProjectIconCache::LoadIconTexture(QEAssetType type, const std::filesystem
         icon.Image,
         icon.Memory))
     {
-        vkDestroyBuffer(device->device, stagingBuffer, nullptr);
-        vkFreeMemory(device->device, stagingBufferMemory, nullptr);
+        QE_DESTROY_BUFFER(device->device, stagingBuffer, "QEProjectIconCache::LoadIconTexture");
+        QE_FREE_MEMORY(device->device, stagingBufferMemory, "QEProjectIconCache::LoadIconTexture");
         return false;
     }
 
@@ -160,8 +161,8 @@ bool QEProjectIconCache::LoadIconTexture(QEAssetType type, const std::filesystem
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-    vkDestroyBuffer(device->device, stagingBuffer, nullptr);
-    vkFreeMemory(device->device, stagingBufferMemory, nullptr);
+    QE_DESTROY_BUFFER(device->device, stagingBuffer, "QEProjectIconCache::LoadIconTexture");
+    QE_FREE_MEMORY(device->device, stagingBufferMemory, "QEProjectIconCache::LoadIconTexture");
 
     icon.ImageView = CreateImageView(
         icon.Image,
@@ -171,7 +172,7 @@ bool QEProjectIconCache::LoadIconTexture(QEAssetType type, const std::filesystem
     if (icon.ImageView == VK_NULL_HANDLE)
     {
         vkDestroyImage(device->device, icon.Image, nullptr);
-        vkFreeMemory(device->device, icon.Memory, nullptr);
+        QE_FREE_MEMORY(device->device, icon.Memory, "QEProjectIconCache::LoadIconTexture");
         return false;
     }
 
@@ -180,7 +181,7 @@ bool QEProjectIconCache::LoadIconTexture(QEAssetType type, const std::filesystem
     {
         vkDestroyImageView(device->device, icon.ImageView, nullptr);
         vkDestroyImage(device->device, icon.Image, nullptr);
-        vkFreeMemory(device->device, icon.Memory, nullptr);
+        QE_FREE_MEMORY(device->device, icon.Memory, "QEProjectIconCache::LoadIconTexture");
         return false;
     }
 
@@ -197,7 +198,7 @@ bool QEProjectIconCache::LoadIconTexture(QEAssetType type, const std::filesystem
         vkDestroySampler(device->device, icon.Sampler, nullptr);
         vkDestroyImageView(device->device, icon.ImageView, nullptr);
         vkDestroyImage(device->device, icon.Image, nullptr);
-        vkFreeMemory(device->device, icon.Memory, nullptr);
+        QE_FREE_MEMORY(device->device, icon.Memory, "QEProjectIconCache::LoadIconTexture");
         return false;
     }
 
@@ -239,7 +240,7 @@ bool QEProjectIconCache::CreateBuffer(
 
     if (vkAllocateMemory(device->device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
     {
-        vkDestroyBuffer(device->device, buffer, nullptr);
+        QE_DESTROY_BUFFER(device->device, buffer, "QEProjectIconCache::CreateBuffer");
         buffer = VK_NULL_HANDLE;
         return false;
     }

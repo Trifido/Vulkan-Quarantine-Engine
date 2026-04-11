@@ -1,5 +1,6 @@
 #include "MaterialData.h"
 #include <Helpers/ScopedTimer.h>
+#include <Helpers/QEMemoryTrack.h>
 
 static uint32_t SlotBitFromType(TEXTURE_TYPE t)
 {
@@ -42,7 +43,7 @@ static std::string& PathRefForSemantic(MaterialData& md, TEXTURE_TYPE s)
     case TEXTURE_TYPE::EMISSIVE_TYPE:  return md.emissiveTexturePath;
     case TEXTURE_TYPE::HEIGHT_TYPE:    return md.heightTexturePath;
     case TEXTURE_TYPE::SPECULAR_TYPE:  return md.specularTexturePath;
-    default: return md.diffuseTexturePath; // no debería usarse
+    default: return md.diffuseTexturePath; // no deberï¿½a usarse
     }
 }
 
@@ -127,7 +128,7 @@ MaterialData::MaterialData()
     AOChan = 0;
     AlphaMode = 0;
 
-    // Índices (slots)
+    // ï¿½ndices (slots)
     IDTextures[TEXTURE_TYPE::DIFFUSE_TYPE] = (int)MAT_TEX_SLOT::BaseColor;
     IDTextures[TEXTURE_TYPE::NORMAL_TYPE] = (int)MAT_TEX_SLOT::Normal;
     IDTextures[TEXTURE_TYPE::EMISSIVE_TYPE] = (int)MAT_TEX_SLOT::Emissive;
@@ -388,8 +389,8 @@ void MaterialData::CleanMaterialUBO()
     {
         if (!materialUBO->uniformBuffers.empty() && materialUBO->uniformBuffers[i] != VK_NULL_HANDLE)
         {
-            vkDestroyBuffer(deviceModule->device, materialUBO->uniformBuffers[i], nullptr);
-            vkFreeMemory(deviceModule->device, materialUBO->uniformBuffersMemory[i], nullptr);
+            QE_DESTROY_BUFFER(deviceModule->device, materialUBO->uniformBuffers[i], "MaterialData::CleanMaterialUBO");
+            QE_FREE_MEMORY(deviceModule->device, materialUBO->uniformBuffersMemory[i], "MaterialData::CleanMaterialUBO");
             materialUBO->uniformBuffers[i] = VK_NULL_HANDLE;
         }
     }

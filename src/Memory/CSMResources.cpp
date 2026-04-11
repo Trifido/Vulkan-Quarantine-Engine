@@ -3,6 +3,7 @@
 #include "FrameBufferModule.h"
 #include <SynchronizationModule.h>
 #include <SyncTool.h>
+#include <Helpers/QEMemoryTrack.h>
 
 QueueModule* CSMResources::queueModule;
 VkCommandPool CSMResources::commandPool;
@@ -212,8 +213,8 @@ void CSMResources::Cleanup()
     {
         if (this->OffscreenShadowMapUBO != nullptr)
         {
-            vkDestroyBuffer(deviceModule->device, this->OffscreenShadowMapUBO->uniformBuffers[i], nullptr);
-            vkFreeMemory(deviceModule->device, this->OffscreenShadowMapUBO->uniformBuffersMemory[i], nullptr);
+            QE_DESTROY_BUFFER(deviceModule->device, this->OffscreenShadowMapUBO->uniformBuffers[i], "CSMResources::Cleanup");
+            QE_FREE_MEMORY(deviceModule->device, this->OffscreenShadowMapUBO->uniformBuffersMemory[i], "CSMResources::Cleanup");
         }
     }
 
@@ -231,7 +232,7 @@ void CSMResources::Cleanup()
     }
     if (this->CSMImageMemory != VK_NULL_HANDLE)
     {
-        vkFreeMemory(deviceModule->device, CSMImageMemory, nullptr);
+        QE_FREE_MEMORY(deviceModule->device, CSMImageMemory, "CSMResources::Cleanup.Cleanup");
     }
   
     for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)

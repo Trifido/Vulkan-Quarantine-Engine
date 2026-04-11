@@ -137,9 +137,32 @@ void ComputeNodeManager::RemoveComputeNodesByPrefix(const std::string& prefix)
     }
 }
 
-void ComputeNodeManager::ResetSceneState()
+void ComputeNodeManager::EraseComputeNode(const std::string& nameComputeNode)
 {
-    // Nothing to do here
+    auto it = _computeNodes.find(nameComputeNode);
+    if (it == _computeNodes.end())
+        return;
+
+    _computeNodes.erase(it);
+}
+
+void ComputeNodeManager::EraseComputeNodesByPrefix(const std::string& prefix)
+{
+    std::vector<std::string> keysToRemove;
+    keysToRemove.reserve(_computeNodes.size());
+
+    for (const auto& it : _computeNodes)
+    {
+        if (it.first.rfind(prefix, 0) == 0)
+        {
+            keysToRemove.push_back(it.first);
+        }
+    }
+
+    for (const auto& key : keysToRemove)
+    {
+        EraseComputeNode(key);
+    }
 }
 
 void ComputeNodeManager::UpsertComputeNode(const std::string& nameComputeNode, std::shared_ptr<ComputeNode> mat_ptr)

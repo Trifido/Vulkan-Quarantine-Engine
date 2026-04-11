@@ -1,5 +1,6 @@
 #include "CSMDescriptorsManager.h"
 #include "SynchronizationModule.h"
+#include <Helpers/QEMemoryTrack.h>
 
 CSMDescriptorsManager::CSMDescriptorsManager()
 {
@@ -348,25 +349,25 @@ void CSMDescriptorsManager::Clean()
     {
         if (this->csmRenderSplitBuffer.uniformBuffers[i] != VK_NULL_HANDLE)
         {
-            vkDestroyBuffer(deviceModule->device, this->csmRenderSplitBuffer.uniformBuffers[i], nullptr);
+            QE_DESTROY_BUFFER(deviceModule->device, this->csmRenderSplitBuffer.uniformBuffers[i], "CSMDescriptorsManager::Clean.csmRenderSplitBuffer");
             this->csmRenderSplitBuffer.uniformBuffers[i] = VK_NULL_HANDLE;
         }
 
         if (this->csmRenderSplitBuffer.uniformBuffersMemory[i] != VK_NULL_HANDLE)
         {
-            vkFreeMemory(deviceModule->device, this->csmRenderSplitBuffer.uniformBuffersMemory[i], nullptr);
+            QE_FREE_MEMORY(deviceModule->device, this->csmRenderSplitBuffer.uniformBuffersMemory[i], "CSMDescriptorsManager::Clean.csmRenderSplitBuffer");
             this->csmRenderSplitBuffer.uniformBuffersMemory[i] = VK_NULL_HANDLE;
         }
 
         if (this->csmRenderViewProjBuffer.uniformBuffers[i] != VK_NULL_HANDLE)
         {
-            vkDestroyBuffer(deviceModule->device, this->csmRenderViewProjBuffer.uniformBuffers[i], nullptr);
+            QE_DESTROY_BUFFER(deviceModule->device, this->csmRenderViewProjBuffer.uniformBuffers[i], "CSMDescriptorsManager::Clean.csmRenderViewProjBuffer");
             this->csmRenderViewProjBuffer.uniformBuffers[i] = VK_NULL_HANDLE;
         }
 
         if (this->csmRenderViewProjBuffer.uniformBuffersMemory[i] != VK_NULL_HANDLE)
         {
-            vkFreeMemory(deviceModule->device, this->csmRenderViewProjBuffer.uniformBuffersMemory[i], nullptr);
+            QE_FREE_MEMORY(deviceModule->device, this->csmRenderViewProjBuffer.uniformBuffersMemory[i], "CSMDescriptorsManager::Clean.csmRenderViewProjBuffer");
             this->csmRenderViewProjBuffer.uniformBuffersMemory[i] = VK_NULL_HANDLE;
         }
     }
@@ -422,7 +423,7 @@ void CSMDescriptorsManager::Clean()
 
     if (this->placeholderMemory != VK_NULL_HANDLE)
     {
-        vkFreeMemory(deviceModule->device, this->placeholderMemory, nullptr);
+        QE_FREE_MEMORY(deviceModule->device, this->placeholderMemory, "CSMDescriptorsManager::Clean.placeholderMemory");
         this->placeholderMemory = VK_NULL_HANDLE;
     }
 }

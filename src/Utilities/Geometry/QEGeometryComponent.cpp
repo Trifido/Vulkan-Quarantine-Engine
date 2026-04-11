@@ -1,6 +1,7 @@
 #include "QEGeometryComponent.h"
 #include "BufferManageModule.h"
 #include <Helpers/ScopedTimer.h>
+#include <Helpers/QEMemoryTrack.h>
 
 DeviceModule* QEGeometryComponent::deviceModule_ptr;
 
@@ -73,8 +74,8 @@ void QEGeometryComponent::ReleaseResources()
     {
         if (indexBufferMemory[i] != VK_NULL_HANDLE)
         {
-            vkDestroyBuffer(deviceModule_ptr->device, indexBuffer[i], nullptr);
-            vkFreeMemory(deviceModule_ptr->device, indexBufferMemory[i], nullptr);
+            QE_DESTROY_BUFFER(deviceModule_ptr->device, indexBuffer[i], "QEGeometryComponent::ReleaseResources");
+            QE_FREE_MEMORY(deviceModule_ptr->device, indexBufferMemory[i], "QEGeometryComponent::ReleaseResources");
             indexBufferMemory[i] = VK_NULL_HANDLE;
         }
     }
@@ -83,8 +84,8 @@ void QEGeometryComponent::ReleaseResources()
     {
         if (vertexBufferMemory[i] != VK_NULL_HANDLE)
         {
-            vkDestroyBuffer(deviceModule_ptr->device, vertexBuffer[i], nullptr);
-            vkFreeMemory(deviceModule_ptr->device, vertexBufferMemory[i], nullptr);
+            QE_DESTROY_BUFFER(deviceModule_ptr->device, vertexBuffer[i], "QEGeometryComponent::ReleaseResources");
+            QE_FREE_MEMORY(deviceModule_ptr->device, vertexBufferMemory[i], "QEGeometryComponent::ReleaseResources");
             vertexBufferMemory[i] = VK_NULL_HANDLE;
         }
     }
@@ -93,8 +94,8 @@ void QEGeometryComponent::ReleaseResources()
     {
         if (animationBufferMemory[i] != VK_NULL_HANDLE)
         {
-            vkDestroyBuffer(deviceModule_ptr->device, animationBuffer[i], nullptr);
-            vkFreeMemory(deviceModule_ptr->device, animationBufferMemory[i], nullptr);
+            QE_DESTROY_BUFFER(deviceModule_ptr->device, animationBuffer[i], "QEGeometryComponent::ReleaseResources");
+            QE_FREE_MEMORY(deviceModule_ptr->device, animationBufferMemory[i], "QEGeometryComponent::ReleaseResources");
             animationBufferMemory[i] = VK_NULL_HANDLE;
         }
     }
@@ -230,6 +231,6 @@ void QEGeometryComponent::CreateGeometryBuffer(VkDeviceSize bufferSize, VkBuffer
     BufferManageModule::createBuffer(bufferSize, usageFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, buffer, memory, *deviceModule_ptr);
     BufferManageModule::copyBuffer(stagingBuffer, buffer, bufferSize, *deviceModule_ptr);
 
-    vkDestroyBuffer(deviceModule_ptr->device, stagingBuffer, nullptr);
-    vkFreeMemory(deviceModule_ptr->device, stagingBufferMemory, nullptr);
+    QE_DESTROY_BUFFER(deviceModule_ptr->device, stagingBuffer, "QEGeometryComponent::CreateGeometryBuffer");
+    QE_FREE_MEMORY(deviceModule_ptr->device, stagingBufferMemory, "QEGeometryComponent::CreateGeometryBuffer");
 }

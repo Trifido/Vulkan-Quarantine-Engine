@@ -145,6 +145,18 @@ public:
         return nullptr;
     }
 
+    void SetMaterial(const std::shared_ptr<QEMaterial>& material)
+    {
+        if (!material)
+            return;
+
+        materials.clear();
+        bindedMaterials.clear();
+
+        materials.push_back(material);
+        bindedMaterials.push_back(material->Name);
+    }
+
     const std::vector<std::shared_ptr<QEMaterial>>& GetMaterials() const
     {
         return materials;

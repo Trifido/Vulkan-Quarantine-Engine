@@ -6,17 +6,29 @@
 
 Grid::Grid()
 {
-    std::shared_ptr<QEGeometryComponent> geometryComponent = std::make_shared<QEGeometryComponent>(std::make_unique<GridGenerator>());
+    std::shared_ptr<QEGeometryComponent> geometryComponent =
+        std::make_shared<QEGeometryComponent>(std::make_unique<GridGenerator>());
+
     this->gridMesh = std::make_unique<QEGameObject>();
     this->gridMesh->AddComponent<QEGeometryComponent>(geometryComponent);
 
+    EnsureResources();
+}
+
+void Grid::EnsureResources()
+{
+    if (!this->gridMesh)
+        return;
+
     ShaderManager* shaderManager = ShaderManager::getInstance();
-
-    this->shader_grid_ptr = shaderManager->GetShader("shader_grid");
-
     MaterialManager* matManager = MaterialManager::getInstance();
 
+    this->shader_grid_ptr = shaderManager->GetShader("shader_grid");
+    if (!this->shader_grid_ptr)
+        return;
+
     std::string nameGrid = "editorGrid";
+
     if (!matManager->Exists(nameGrid))
     {
         this->material_grid_ptr = std::make_shared<QEMaterial>(nameGrid, this->shader_grid_ptr);
@@ -28,9 +40,21 @@ Grid::Grid()
     else
     {
         this->material_grid_ptr = matManager->GetMaterial(nameGrid);
-        this->material_grid_ptr->InitializeMaterialData();
+        if (!this->material_grid_ptr)
+            return;
+
+        this->material_grid_ptr->shader = this->shader_grid_ptr;
+
+        if (!this->material_grid_ptr->descriptor ||
+            !this->material_grid_ptr->shader ||
+            !this->material_grid_ptr->shader->PipelineModule ||
+            this->material_grid_ptr->descriptor->descriptorSets.empty())
+        {
+            this->material_grid_ptr->InitializeMaterialData();
+        }
     }
-    this->gridMesh->AddComponent<QEMaterial>(this->material_grid_ptr);
+
+    this->gridMesh->SetMaterial(this->material_grid_ptr);
 }
 
 void Grid::Draw(VkCommandBuffer& commandBuffer, uint32_t idx)
@@ -52,6 +76,13 @@ void Grid::Draw(VkCommandBuffer& commandBuffer, uint32_t idx)
     if (!mat->descriptor)
         return;
 
+    if (idx >= mat->descriptor->descriptorSets.size())
+        return;
+
+    VkDescriptorSet set = mat->descriptor->descriptorSets[idx];
+    if (set == VK_NULL_HANDLE)
+        return;
+
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
     vkCmdSetDepthTestEnable(commandBuffer, VK_TRUE);
@@ -65,7 +96,7 @@ void Grid::Draw(VkCommandBuffer& commandBuffer, uint32_t idx)
         pipelineModule->pipelineLayout,
         0,
         1,
-        mat->descriptor->getDescriptorSet(idx),
+        &set,
         0,
         nullptr
     );

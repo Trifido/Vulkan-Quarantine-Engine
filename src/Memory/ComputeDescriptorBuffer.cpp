@@ -2,6 +2,7 @@
 #include "SynchronizationModule.h"
 #include "Timer.h"
 #include <QESessionManager.h>
+#include <Helpers/QEMemoryTrack.h>
 
 ComputeDescriptorBuffer::ComputeDescriptorBuffer()
 {
@@ -433,23 +434,16 @@ void ComputeDescriptorBuffer::Cleanup()
             {
                 if (this->ssboData[j]->uniformBuffers[i] != VK_NULL_HANDLE)
                 {
-                    vkDestroyBuffer(deviceModule->device, this->ssboData[j]->uniformBuffers[i], nullptr);
-                    vkFreeMemory(deviceModule->device, this->ssboData[j]->uniformBuffersMemory[i], nullptr);
+                    QE_FREE_MEMORY(deviceModule->device, this->ssboData[j]->uniformBuffersMemory[i], "ComputeDescriptorBuffer::Cleanup.ssboData");
+                    QE_DESTROY_BUFFER(deviceModule->device, this->ssboData[j]->uniformBuffers[i], "ComputeDescriptorBuffer::Cleanup.ssboData");
+
                     this->ssboData[j]->uniformBuffers[i] = VK_NULL_HANDLE;
                 }
             }
         }
-
-        for (auto ubo : ubos)
-        {
-            if (ubo.second->uniformBuffers[i] != VK_NULL_HANDLE)
-            {
-                vkDestroyBuffer(deviceModule->device, ubo.second->uniformBuffers[i], nullptr);
-                vkFreeMemory(deviceModule->device, ubo.second->uniformBuffersMemory[i], nullptr);
-                ubo.second->uniformBuffers[i] = VK_NULL_HANDLE;
-            }
-        }
     }
+
+    this->ubos.clear();
 
     this->ssboData.clear();
 

@@ -17,6 +17,7 @@ public:
     Grid();
     void Draw(VkCommandBuffer& commandBuffer, uint32_t idx);
     void Clean();
+    void EnsureResources();
 };
 
 #endif

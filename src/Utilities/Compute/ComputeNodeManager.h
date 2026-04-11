@@ -31,9 +31,10 @@ public:
 
     void RemoveComputeNode(const std::string& nameComputeNode);
     void RemoveComputeNodesByPrefix(const std::string& prefix);
-    void ResetSceneState();
 
     void UpsertComputeNode(const std::string& nameComputeNode, std::shared_ptr<ComputeNode> mat_ptr);
+    void EraseComputeNode(const std::string& nameComputeNode);
+    void EraseComputeNodesByPrefix(const std::string& prefix);
 
     void RecordComputeNodes(VkCommandBuffer commandBuffer, uint32_t currentFrame);
     void Cleanup();

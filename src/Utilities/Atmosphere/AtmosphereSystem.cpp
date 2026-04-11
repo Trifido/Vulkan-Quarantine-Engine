@@ -9,6 +9,7 @@
 #include <QESessionManager.h>
 #include <Helpers/MathHelpers.h>
 #include <QERenderTarget.h>
+#include <Helpers/QEMemoryTrack.h>
 
 AtmosphereSystem::AtmosphereSystem()
 {
@@ -505,8 +506,8 @@ void AtmosphereSystem::Cleanup()
     {
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-            vkDestroyBuffer(deviceModule->device, this->resolutionUBO->uniformBuffers[i], nullptr);
-            vkFreeMemory(deviceModule->device, this->resolutionUBO->uniformBuffersMemory[i], nullptr);
+            QE_DESTROY_BUFFER(deviceModule->device, this->resolutionUBO->uniformBuffers[i], "AtmosphereSystem::Cleanup");
+            QE_FREE_MEMORY(deviceModule->device, this->resolutionUBO->uniformBuffersMemory[i], "AtmosphereSystem::Cleanup");
         }
         this->resolutionUBO = nullptr;
     }
@@ -515,8 +516,8 @@ void AtmosphereSystem::Cleanup()
     {
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-            vkDestroyBuffer(deviceModule->device, this->atmosphereUBO->uniformBuffers[i], nullptr);
-            vkFreeMemory(deviceModule->device, this->atmosphereUBO->uniformBuffersMemory[i], nullptr);
+            QE_DESTROY_BUFFER(deviceModule->device, this->atmosphereUBO->uniformBuffers[i], "AtmosphereSystem::Cleanup");
+            QE_FREE_MEMORY(deviceModule->device, this->atmosphereUBO->uniformBuffersMemory[i], "AtmosphereSystem::Cleanup");
         }
         this->atmosphereUBO = nullptr;
     }
@@ -711,12 +712,12 @@ void AtmosphereSystem::ApplyEditableAtmosphereDto(const AtmosphereDto& dto, bool
 
 void AtmosphereSystem::ResetSceneState()
 {
-    if (!this->computeNodeManager)
-        return;
-
-    this->computeNodeManager->RemoveComputeNodesByPrefix(TLUT_NODE_NAME);
-    this->computeNodeManager->RemoveComputeNodesByPrefix(MSLUT_NODE_NAME);
-    this->computeNodeManager->RemoveComputeNodesByPrefix(SVLUT_NODE_NAME);
+    if (this->computeNodeManager)
+    {
+        this->computeNodeManager->EraseComputeNodesByPrefix(TLUT_NODE_NAME);
+        this->computeNodeManager->EraseComputeNodesByPrefix(MSLUT_NODE_NAME);
+        this->computeNodeManager->EraseComputeNodesByPrefix(SVLUT_NODE_NAME);
+    }
 
     Cleanup();
     this->sunLight.reset();

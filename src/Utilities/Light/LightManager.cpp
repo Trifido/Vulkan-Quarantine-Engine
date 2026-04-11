@@ -8,6 +8,7 @@
 #include <QESessionManager.h>
 #include <QEGameObject.h>
 #include "QECamera.h"
+#include <Helpers/QEMemoryTrack.h>
 
 bool compareDistance(const LightMap& a, const LightMap& b)
 {
@@ -381,32 +382,32 @@ void LightManager::ShutdownPersistentResources()
     {
         if (this->lightUBO)
         {
-            vkDestroyBuffer(deviceModule->device, this->lightUBO->uniformBuffers[i], nullptr);
-            vkFreeMemory(deviceModule->device, this->lightUBO->uniformBuffersMemory[i], nullptr);
+            QE_DESTROY_BUFFER(deviceModule->device, this->lightUBO->uniformBuffers[i], "LightManager::ShutdownPersistentResources");
+            QE_FREE_MEMORY(deviceModule->device, this->lightUBO->uniformBuffersMemory[i], "LightManager::ShutdownPersistentResources");
         }
 
         if (this->lightSSBO)
         {
-            vkDestroyBuffer(deviceModule->device, this->lightSSBO->uniformBuffers[i], nullptr);
-            vkFreeMemory(deviceModule->device, this->lightSSBO->uniformBuffersMemory[i], nullptr);
+            QE_DESTROY_BUFFER(deviceModule->device, this->lightSSBO->uniformBuffers[i], "LightManager::ShutdownPersistentResources");
+            QE_FREE_MEMORY(deviceModule->device, this->lightSSBO->uniformBuffersMemory[i], "LightManager::ShutdownPersistentResources");
         }
 
         if (this->lightIndexSSBO)
         {
-            vkDestroyBuffer(deviceModule->device, this->lightIndexSSBO->uniformBuffers[i], nullptr);
-            vkFreeMemory(deviceModule->device, this->lightIndexSSBO->uniformBuffersMemory[i], nullptr);
+            QE_DESTROY_BUFFER(deviceModule->device, this->lightIndexSSBO->uniformBuffers[i], "LightManager::ShutdownPersistentResources");
+            QE_FREE_MEMORY(deviceModule->device, this->lightIndexSSBO->uniformBuffersMemory[i], "LightManager::ShutdownPersistentResources");
         }
 
         if (this->lightTilesSSBO)
         {
-            vkDestroyBuffer(deviceModule->device, this->lightTilesSSBO->uniformBuffers[i], nullptr);
-            vkFreeMemory(deviceModule->device, this->lightTilesSSBO->uniformBuffersMemory[i], nullptr);
+            QE_DESTROY_BUFFER(deviceModule->device, this->lightTilesSSBO->uniformBuffers[i], "LightManager::ShutdownPersistentResources");
+            QE_FREE_MEMORY(deviceModule->device, this->lightTilesSSBO->uniformBuffersMemory[i], "LightManager::ShutdownPersistentResources");
         }
 
         if (this->lightBinSSBO)
         {
-            vkDestroyBuffer(deviceModule->device, this->lightBinSSBO->uniformBuffers[i], nullptr);
-            vkFreeMemory(deviceModule->device, this->lightBinSSBO->uniformBuffersMemory[i], nullptr);
+            QE_DESTROY_BUFFER(deviceModule->device, this->lightBinSSBO->uniformBuffers[i], "LightManager::ShutdownPersistentResources");
+            QE_FREE_MEMORY(deviceModule->device, this->lightBinSSBO->uniformBuffersMemory[i], "LightManager::ShutdownPersistentResources");
         }
     }
 }
@@ -621,21 +622,21 @@ void LightManager::ComputeLightTiles()
     uint32_t tileXCount = swapChainModule->swapChainExtent.width / swapChainModule->TILE_SIZE;
     uint32_t tileYCount = swapChainModule->swapChainExtent.height / swapChainModule->TILE_SIZE;
 
-    // Calculamos el número total de entradas de tiles
+    // Calculamos el nï¿½mero total de entradas de tiles
     uint32_t tilesEntryCount = tileXCount * tileYCount * NUM_WORDS;
     uint32_t newTileSize = swapChainModule->TILE_SIZE;
 
-    // Si el número total de entradas de tiles excede el máximo, ajustamos dinámicamente el tamaño del tile
+    // Si el nï¿½mero total de entradas de tiles excede el mï¿½ximo, ajustamos dinï¿½micamente el tamaï¿½o del tile
     while (tilesEntryCount > MAX_NUM_TILES)
     {
-        // Aumentamos el tamaño del tile para reducir el número total de tiles
+        // Aumentamos el tamaï¿½o del tile para reducir el nï¿½mero total de tiles
         newTileSize += 1;
 
-        // Recalculamos el número de tiles con el nuevo tamaño de tile
+        // Recalculamos el nï¿½mero de tiles con el nuevo tamaï¿½o de tile
         tileXCount = swapChainModule->swapChainExtent.width / newTileSize;
         tileYCount = swapChainModule->swapChainExtent.height / newTileSize;
 
-        // Recalculamos el número total de entradas de tiles
+        // Recalculamos el nï¿½mero total de entradas de tiles
         tilesEntryCount = tileXCount * tileYCount * NUM_WORDS;
     }
 
