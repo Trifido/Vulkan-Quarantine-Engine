@@ -48,28 +48,38 @@ private:
 
     DeviceModule* deviceModule = nullptr;
     SwapChainModule* swapChainModule = nullptr;
+    RenderPassModule* renderPassModule = nullptr;
 
     uint32_t currentNumLights = 0;
     std::unordered_map<std::string, std::shared_ptr<QELight>> _lights;
     std::shared_ptr<LightManagerUniform> lightManagerUniform;
+
     std::vector<LightUniform> lightBuffer;
     std::vector<LightMap> sortedLight;
     std::vector<uint32_t> lights_bin;
     std::vector<uint32_t> lights_index;
     std::vector<uint32_t> light_tiles_bits;
 
-    RenderPassModule* renderPassModule = nullptr;
+private:
+    void AddLight(std::shared_ptr<QELight> light_ptr, std::string& name);
+    void SortingLights();
+    void ComputeLightsLUT();
+    void ComputeLightTiles();
+    void UpdateUniform();
 
 public:
-    std::shared_ptr<UniformBufferObject>    lightUBO;
-    std::shared_ptr<UniformBufferObject>    lightSSBO;
-    VkDeviceSize                            lightSSBOSize;
-    std::shared_ptr<UniformBufferObject>    lightIndexSSBO;
-    VkDeviceSize                            lightIndexSSBOSize;
-    std::shared_ptr<UniformBufferObject>    lightTilesSSBO;
-    VkDeviceSize                            lightTilesSSBOSize;
-    std::shared_ptr<UniformBufferObject>    lightBinSSBO;
-    VkDeviceSize                            lightBinSSBOSize;
+    std::shared_ptr<UniformBufferObject> lightUBO;
+    std::shared_ptr<UniformBufferObject> lightSSBO;
+    VkDeviceSize lightSSBOSize = 0;
+
+    std::shared_ptr<UniformBufferObject> lightIndexSSBO;
+    VkDeviceSize lightIndexSSBOSize = 0;
+
+    std::shared_ptr<UniformBufferObject> lightTilesSSBO;
+    VkDeviceSize lightTilesSSBOSize = 0;
+
+    std::shared_ptr<UniformBufferObject> lightBinSSBO;
+    VkDeviceSize lightBinSSBOSize = 0;
 
     std::vector<std::shared_ptr<QEDirectionalLight>> DirLights;
     std::vector<std::shared_ptr<QESpotLight>> SpotLights;
@@ -83,30 +93,33 @@ public:
     std::shared_ptr<ShaderModule> CSMShaderModule;
     std::shared_ptr<ShaderModule> OmniShadowShaderModule;
 
-private:
-    void AddLight(std::shared_ptr<QELight> light_ptr, std::string& name);
-    void SortingLights();
-    void ComputeLightsLUT();
-    void ComputeLightTiles();
-    void UpdateUniform();
-
 public:
-    void AddNewLight(std::shared_ptr<QELight> light_ptr, std::string& name);
     LightManager();
+
     void AddDirShadowMapShader(std::shared_ptr<ShaderModule> shadow_mapping_shader);
     void AddOmniShadowMapShader(std::shared_ptr<ShaderModule> omni_shadow_mapping_shader);
+
     std::shared_ptr<QELight> CreateLight(LightType type, std::string name);
+    void AddNewLight(std::shared_ptr<QELight> light_ptr, std::string& name);
+
     void DeleteLight(std::shared_ptr<QELight> light_ptr, std::string& name);
-    static std::vector <LightDto> GetLightDtos(std::ifstream& file);
+    void DeleteLightByName(const std::string& name);
+
+    void ResetSceneState();
+    void ShutdownPersistentResources();
+
+    static std::vector<LightDto> GetLightDtos(std::ifstream& file);
     void SaveLights(std::ofstream& file);
     std::shared_ptr<QELight> GetLight(std::string name);
+
     void InitializeShadowMaps();
     void Update();
     void UpdateUBOLight();
     void UpdateCSMLights();
-    void CleanLightUBO();
-    void CleanLastResources();
+
+    void ResetShadowSceneState();
     void CleanShadowMapResources();
+    void CleanLastResources();
 };
 
 #endif

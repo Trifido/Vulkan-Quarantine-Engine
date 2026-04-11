@@ -121,17 +121,15 @@ void QEBaseApp::initVulkan()
     this->debugSystem->InitializeDebugGraphicResources();
 
     // Load Scene
-    this->loadScene(this->scene);
+    this->LoadCurrentScene();
 
     this->physicsModule->SetGravity(-20.0f);
-    this->lightManager->InitializeShadowMaps();
-    this->atmosphereSystem->InitializeAtmosphereResources();
     this->synchronizationModule.createSyncObjects();
 
     OnPostInitVulkan();
 }
 
-void QEBaseApp::loadScene(QEScene scene)
+void QEBaseApp::loadScene(QEScene& scene)
 {
     scene.DeserializeScene();
 
@@ -162,11 +160,79 @@ void QEBaseApp::loadScene(QEScene scene)
     atmosphereSystem->LoadAtmosphereDto(scene.atmosphereDto);
 }
 
+bool QEBaseApp::LoadSceneFromPath(const std::filesystem::path& scenePath)
+{
+    if (!std::filesystem::exists(scenePath))
+    {
+        throw std::runtime_error("Scene path does not exist: " + scenePath.string());
+    }
+
+    vkDeviceWaitIdle(deviceModule->device);
+
+    UnloadCurrentScene();
+
+    QEScene newScene;
+    if (!QEProjectManager::InitializeQEScene(newScene, scenePath))
+    {
+        throw std::runtime_error("Failed to initialize scene: " + scenePath.string());
+    }
+
+    this->scene = std::move(newScene);
+    LoadCurrentScene();
+
+    return true;
+}
+
+void QEBaseApp::UnloadCurrentScene()
+{
+    if (sessionManager)
+    {
+        sessionManager->ResetSceneState();
+    }
+
+    if (lightManager)
+    {
+        lightManager->ResetSceneState();
+    }
+
+    if (gameObjectManager)
+    {
+        gameObjectManager->ResetSceneState();
+    }
+
+    if (materialManager)
+    {
+        materialManager->ResetSceneState();
+    }
+
+    if (atmosphereSystem)
+    {
+        atmosphereSystem->ResetSceneState();
+    }
+}
+
+void QEBaseApp::LoadCurrentScene()
+{
+    loadScene(this->scene);
+
+    if (lightManager)
+    {
+        lightManager->InitializeShadowMaps();
+    }
+
+    if (atmosphereSystem)
+    {
+        atmosphereSystem->InitializeAtmosphereResources();
+    }
+}
+
 void QEBaseApp::mainLoop()
 {
     while (!glfwWindowShouldClose(mainWindow->getWindow()))
     {
         glfwPollEvents();
+
+        OnFrameStart();
 
         Timer::getInstance()->UpdateDeltaTime();
         uint32_t currentFrame = (uint32_t)synchronizationModule.GetCurrentFrame();
@@ -212,16 +278,14 @@ void QEBaseApp::cleanUp()
 
     this->shaderManager->Clean();
 
-    //this->OmniShadowResources->cleanup();
     this->cleanUpSwapchain();
-    //this->framebufferModule.cleanupShadowBuffer();
     this->swapchainModule->CleanScreenDataResources();
 
-    this->sessionManager->CleanCameras();
+    this->sessionManager->ShutdownPersistentResources();
+    this->lightManager->ShutdownPersistentResources();
     this->materialManager->CleanPipelines();
     this->computePipelineManager->CleanComputePipeline();
     this->computeNodeManager->Cleanup();
-    this->lightManager->CleanShadowMapResources();
 
     this->atmosphereSystem->Cleanup();
     this->gameObjectManager->ReleaseAllGameObjects();
@@ -229,6 +293,7 @@ void QEBaseApp::cleanUp()
     this->sessionManager->CleanCullingResources();
     this->debugSystem->Cleanup();
 
+    this->lightManager->CleanShadowMapResources();
     this->textureManager->Clean();
 
     this->shaderManager->CleanDescriptorSetLayouts();

@@ -3,6 +3,8 @@
 #include "QEBaseApp.h"
 #include <memory>
 #include <vector>
+#include <filesystem>
+#include <optional>
 
 class IEditorPanel;
 class EditorContext;
@@ -39,6 +41,7 @@ public:
 protected:
     void OnInitialize() override;
     void OnShutdown() override;
+    void OnFrameStart() override;
     void OnBeginFrame() override;
     void OnEndFrame() override;
 
@@ -60,6 +63,7 @@ private:
     void DrawDockspace();
     void HandleShortcuts();
     void SaveScene();
+    void OpenScene(const std::filesystem::path& scenePath);
 
     void SpawnDroppedMesh(const std::string& assetPath);
     glm::vec3 GetSpawnPositionInFrontOfEditorCamera(float distance) const;
@@ -83,4 +87,5 @@ private:
     std::unique_ptr<QEEditorConsoleSink> editorConsoleSink;
     std::unique_ptr<QEConsoleLogSink> consoleLogSink;
     std::unique_ptr<EditorSceneObjectFactory> sceneObjectFactory;
+    std::optional<std::filesystem::path> _pendingSceneOpenPath;
 };

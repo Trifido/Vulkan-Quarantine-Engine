@@ -125,6 +125,8 @@ MaterialManager::MaterialManager()
 void MaterialManager::InitializeMaterialManager()
 {
     this->CreateDefaultPrimitiveMaterial();
+    MarkMaterialPersistent("defaultPrimitiveMat");
+    MarkMaterialPersistent("defaultMeshPrimitiveMat");
 
     if (!this->Exists("defaultParticlesMat"))
     {
@@ -135,6 +137,8 @@ void MaterialManager::InitializeMaterialManager()
             this->_materials["defaultParticlesMat"]->renderQueue = static_cast<unsigned int>(RenderQueue::Particles);
         }
     }
+
+    MarkMaterialPersistent("defaultParticlesMat");
 }
 
 std::shared_ptr<QEMaterial> MaterialManager::GetMaterial(std::string nameMaterial)
@@ -210,42 +214,60 @@ bool MaterialManager::Exists(std::string materialName)
     return true;
 }
 
-
 void MaterialManager::CleanPipelines()
 {
     for (auto& it : _materials)
     {
-        it.second->cleanup();
+        if (it.second)
+        {
+            it.second->cleanup();
+        }
     }
-    // Clean Camera & Lights UBO's
-    LightManager::getInstance()->CleanLightUBO();
 }
 
 void MaterialManager::CleanLastResources()
 {
-
-    for (auto mat : this->_materials)
+    for (auto& mat : this->_materials)
     {
-        mat.second->CleanLastResources();
-        mat.second.reset();
+        if (mat.second)
+        {
+            mat.second->CleanLastResources();
+            mat.second.reset();
+        }
     }
 
     this->_materials.clear();
+    this->_persistentMaterialNames.clear();
+
     this->default_shader.reset();
     this->default_primitive_shader.reset();
+    this->default_particles_shader.reset();
+    this->mesh_shader_test.reset();
+    this->shader_aabb_ptr.reset();
+    this->shader_debug_ptr.reset();
+    this->shader_grid_ptr.reset();
+    this->csm_shader.reset();
+    this->omni_shadow_mapping_shader.reset();
+
     this->default_shader = nullptr;
     this->default_primitive_shader = nullptr;
-    this->mesh_shader_test.reset();
+    this->default_particles_shader = nullptr;
     this->mesh_shader_test = nullptr;
-    this->csm_shader.reset();
+    this->shader_aabb_ptr = nullptr;
+    this->shader_debug_ptr = nullptr;
+    this->shader_grid_ptr = nullptr;
     this->csm_shader = nullptr;
+    this->omni_shadow_mapping_shader = nullptr;
 }
 
 void MaterialManager::UpdateUniforms()
 {
     for (auto& it : _materials)
     {
-        it.second->UpdateUniformData();
+        if (it.second)
+        {
+            it.second->UpdateUniformData();
+        }
     }
 }
 
@@ -445,4 +467,47 @@ void MaterialManager::DeserializeMaterials(YAML::Node materials)
     }
 
     this->LoadMaterialDtos(materialDtos);
+}
+
+void MaterialManager::MarkMaterialPersistent(const std::string& materialName)
+{
+    if (!materialName.empty())
+    {
+        _persistentMaterialNames.insert(materialName);
+    }
+}
+
+bool MaterialManager::IsPersistentMaterial(const std::string& materialName) const
+{
+    return _persistentMaterialNames.find(materialName) != _persistentMaterialNames.end();
+}
+
+void MaterialManager::ResetSceneState()
+{
+    std::vector<std::string> materialsToRemove;
+    materialsToRemove.reserve(_materials.size());
+
+    for (const auto& it : _materials)
+    {
+        if (!IsPersistentMaterial(it.first))
+        {
+            materialsToRemove.push_back(it.first);
+        }
+    }
+
+    for (const auto& materialName : materialsToRemove)
+    {
+        auto it = _materials.find(materialName);
+        if (it == _materials.end())
+            continue;
+
+        if (it->second)
+        {
+            it->second->cleanup();
+            it->second->CleanLastResources();
+            it->second.reset();
+        }
+
+        _materials.erase(materialName);
+    }
 }

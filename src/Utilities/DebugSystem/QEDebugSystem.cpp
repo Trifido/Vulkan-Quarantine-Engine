@@ -92,6 +92,7 @@ void QEDebugSystem::InitializeDebugGraphicResources()
         this->material_debug_ptr->renderQueue = static_cast<unsigned int>(RenderQueue::Editor);
         this->material_debug_ptr->InitializeMaterialData();
         matManager->AddMaterial(this->material_debug_ptr);
+        matManager->MarkMaterialPersistent(nameDebugAABB);
     }
     else
     {

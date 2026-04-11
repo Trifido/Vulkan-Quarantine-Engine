@@ -119,6 +119,16 @@ void QEEditorApp::OnShutdown()
     }
 }
 
+void QEEditorApp::OnFrameStart()
+{
+    if (_pendingSceneOpenPath.has_value())
+    {
+        const auto scenePath = *_pendingSceneOpenPath;
+        _pendingSceneOpenPath.reset();
+        OpenScene(scenePath);
+    }
+}
+
 void QEEditorApp::OnBeginFrame()
 {
     BeginImGuiFrame();
@@ -175,6 +185,15 @@ void QEEditorApp::DrawEditorUI()
     for (auto& panel : panels)
     {
         panel->Draw();
+    }
+
+    if (projectBrowserPanelPtr != nullptr)
+    {
+        auto pendingSceneOpen = projectBrowserPanelPtr->ConsumePendingSceneOpenRequest();
+        if (pendingSceneOpen.has_value())
+        {
+            _pendingSceneOpenPath = *pendingSceneOpen;
+        }
     }
 
     UpdateEditorCameraInputState();
@@ -392,6 +411,36 @@ void QEEditorApp::SaveScene()
     scene.cameraEditor = sessionManager->EditorCamera();
     scene.atmosphereDto = atmosphereSystem->CreateAtmosphereDto();
     scene.SerializeScene();
+}
+
+void QEEditorApp::OpenScene(const std::filesystem::path& scenePath)
+{
+    if (scenePath.empty())
+        return;
+
+    try
+    {
+        if (selectionManager)
+        {
+            selectionManager->ClearSelection();
+        }
+
+        if (commandManager)
+        {
+            commandManager->Clear();
+        }
+
+        LoadSceneFromPath(scenePath);
+
+        if (projectBrowserPanelPtr != nullptr)
+        {
+            projectBrowserPanelPtr->SetProjectRootPath(QEProjectManager::GetCurrentProjectPath());
+        }
+    }
+    catch (const std::exception& e)
+    {
+        QE_LOG_ERROR_CAT_F("QEEditorApp", "Failed to open scene: {}", e.what());
+    }
 }
 
 void QEEditorApp::SpawnDroppedMesh(const std::string& assetPath)

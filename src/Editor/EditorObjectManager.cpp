@@ -3,6 +3,16 @@
 
 void EditorObjectManager::AddEditorObject(std::shared_ptr<EditorObject> object_ptr, std::string name)
 {
+    auto it = this->_objects.find(name);
+
+    if (it != this->_objects.end())
+    {
+        if (it->second)
+        {
+            it->second->Clean();
+        }
+    }
+
     this->_objects[name] = object_ptr;
 }
 

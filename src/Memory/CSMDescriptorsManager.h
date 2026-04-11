@@ -62,6 +62,7 @@ public:
     void BindResources(std::shared_ptr<std::array<CascadeResource, SHADOW_MAP_CASCADE_COUNT>> resources);
     void UpdateResources(int currentFrame);
     void InitializeDescriptorSetLayouts(std::shared_ptr<ShaderModule> offscreen_shader_ptr);
+    void ResetSceneState();
     void Clean();
 
 private:

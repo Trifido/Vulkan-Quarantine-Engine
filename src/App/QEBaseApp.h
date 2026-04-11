@@ -7,6 +7,7 @@
 #include <memory>
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.hpp>
+#include <filesystem>
 
 //  Kernel
 #include "GUIWindow.h"
@@ -27,8 +28,6 @@
 
 //  Physics System
 #include "PhysicsModule.h"
-
-//#include "RayTracingModule.h"
 
 //  Utilities
 #include "QEGameObject.h"
@@ -74,6 +73,7 @@ public:
 protected:
     virtual void OnInitialize() {}
     virtual void OnShutdown() {}
+    virtual void OnFrameStart() {}
     virtual void OnBeginFrame() {}
     virtual void OnEndFrame() {}
     virtual bool IsEditorMode() const { return false; }
@@ -81,9 +81,13 @@ protected:
     virtual void OnPreCleanup() {}
     virtual void OnSwapchainRecreated() {}
 
+    bool LoadSceneFromPath(const std::filesystem::path& scenePath);
+    void UnloadCurrentScene();
+    void LoadCurrentScene();
+
 private:
     void initVulkan();
-    void loadScene(QEScene scene);
+    void loadScene(QEScene& scene);
     void mainLoop();
     void computeFrame(uint32_t currentFrame);
     void drawFrame(uint32_t currentFrame);
@@ -92,49 +96,48 @@ private:
     void cleanManagers();
     void resizeSwapchain(VkResult result, ERROR_RESIZE errorResize);
     void recreateSwapchain();
+
 protected:
-    GUIWindow*              mainWindow;
+    GUIWindow* mainWindow;
 public:
     bool                    framebufferResized = false;
 
 protected:
-    VulkanInstance          vulkanInstance {};
-    VulkanLayerAndExtension layerExtensionModule {};
-    DeviceModule*           deviceModule {};
-    QueueModule*            queueModule {};
-    WindowSurface           windowSurface {};
-    SwapChainModule*        swapchainModule {};
+    VulkanInstance          vulkanInstance{};
+    VulkanLayerAndExtension layerExtensionModule{};
+    DeviceModule* deviceModule{};
+    QueueModule* queueModule{};
+    WindowSurface           windowSurface{};
+    SwapChainModule* swapchainModule{};
     FramebufferModule       framebufferModule;
-    CommandPoolModule*      commandPoolModule {};
+    CommandPoolModule* commandPoolModule{};
     SynchronizationModule   synchronizationModule;
 
-    PhysicsModule*          physicsModule;
+    PhysicsModule* physicsModule;
 
-    DepthBufferModule*      depthBufferModule;
-    AntiAliasingModule*     antialiasingModule;
-    RenderPassModule*       renderPassModule;
-    QEDebugSystem*          debugSystem;
+    DepthBufferModule* depthBufferModule;
+    AntiAliasingModule* antialiasingModule;
+    RenderPassModule* renderPassModule;
+    QEDebugSystem* debugSystem;
 
     bool show_demo_window = true;
     bool show_another_window = true;
     bool isRender = false;
 
-    //RayTracingModule        raytracingModule;
-
     QEScene     scene;
 
-    QESessionManager*   sessionManager{};
-    LightManager*       lightManager {};
-    ShaderManager*      shaderManager{};
-    MaterialManager*    materialManager {};
+    QESessionManager* sessionManager{};
+    LightManager* lightManager{};
+    ShaderManager* shaderManager{};
+    MaterialManager* materialManager{};
     ComputeNodeManager* computeNodeManager{};
-    TextureManager*     textureManager{};
-    GameObjectManager*  gameObjectManager{};
+    TextureManager* textureManager{};
+    GameObjectManager* gameObjectManager{};
     GraphicsPipelineManager* graphicsPipelineManager{};
     ComputePipelineManager* computePipelineManager{};
     ShadowPipelineManager* shadowPipelineManager{};
     ParticleSystemManager* particleSystemManager{};
-    AtmosphereSystem*   atmosphereSystem{};
+    AtmosphereSystem* atmosphereSystem{};
 
-    KeyboardController* keyboard_ptr {};
+    KeyboardController* keyboard_ptr{};
 };

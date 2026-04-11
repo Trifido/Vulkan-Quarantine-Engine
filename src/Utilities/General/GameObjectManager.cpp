@@ -164,7 +164,7 @@ void GameObjectManager::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx
 
     for (const auto& item : renderItems)
     {
-        if (!item.MeshRenderer)
+        if (!item.GameObject || !item.MeshRenderer || !item.Material)
             continue;
 
         item.MeshRenderer->SetDrawCommand(commandBuffer, idx);
@@ -177,6 +177,9 @@ void GameObjectManager::CSMCommand(VkCommandBuffer& commandBuffer, uint32_t idx,
 
     for (const auto& item : shadowItems)
     {
+        if (!item.GameObject || !item.MeshRenderer || !item.Material)
+            continue;
+
         auto transform = item.GameObject->GetComponent<QETransform>();
         if (!transform)
             continue;
@@ -203,6 +206,9 @@ void GameObjectManager::OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32
 
     for (const auto& item : shadowItems)
     {
+        if (!item.GameObject || !item.MeshRenderer || !item.Material)
+            continue;
+
         auto transform = item.GameObject->GetComponent<QETransform>();
         if (!transform)
             continue;
@@ -234,7 +240,10 @@ void GameObjectManager::ReleaseAllGameObjects()
 
         for (const auto& model : bucket)
         {
-            model.second->QEDestroy();
+            if (model.second)
+            {
+                model.second->QEDestroy();
+            }
         }
     }
 }
@@ -520,4 +529,10 @@ std::vector<QEOrderRenderItem> GameObjectManager::BuildShadowRenderItems() const
         });
 
     return items;
+}
+
+void GameObjectManager::ResetSceneState()
+{
+    ReleaseAllGameObjects();
+    CleanLastResources();
 }

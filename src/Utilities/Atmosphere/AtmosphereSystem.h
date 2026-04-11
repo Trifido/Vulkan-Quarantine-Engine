@@ -16,6 +16,9 @@ class AtmosphereSystem : public QESingleton<AtmosphereSystem>, public Serializab
 {
 private:
     const std::string SUN_NAME = "QESunLight";
+    const std::string TLUT_NODE_NAME = "transmittance_lut";
+    const std::string MSLUT_NODE_NAME = "multi_scattering_lut";
+    const std::string SVLUT_NODE_NAME = "sky_view_lut";
     std::shared_ptr<QESunLight> sunLight;
     glm::vec3 sunDirection;
     float sunIntensity;
@@ -93,7 +96,7 @@ public:
         return name;
     }
     QEMetaType* meta() const override {
-        return nullptr; // o un meta vacío si no usas campos “normales”
+        return nullptr;
     }
 
     void LoadAtmosphereDto(AtmosphereDto atmosphereDto);
@@ -103,8 +106,11 @@ public:
     void InitializeAtmosphere();
     void InitializeAtmosphere(AtmosphereType type, const std::string* texturePaths, uint32_t numTextures);
     void DrawCommand(VkCommandBuffer& commandBuffer, uint32_t frameIdx);
+
+    void ResetSceneState();
     void Cleanup();
     void CleanLastResources();
+
     void UpdateSun();
     void UpdateAtmopshereResolution();
     void UpdatePerFrame(uint32_t frame);

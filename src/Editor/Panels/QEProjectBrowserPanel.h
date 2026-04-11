@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 #include <filesystem>
+#include <optional>
 #include <imgui.h>
 #include <vulkan/vulkan.h>
 #include "QEProjectBrowserNavigation.h"
@@ -28,7 +29,11 @@ public:
     void SetPendingExternalDrops(const std::vector<std::filesystem::path>& paths);
     void InitializeIcons();
 
+    std::optional<std::filesystem::path> ConsumePendingSceneOpenRequest();
+
 private:
+    void DrawTopBar();
+    void DrawCreateMenu(QEProjectAssetItem* currentFolder);
     void DrawFolderTree(QEProjectAssetItem* item);
     void DrawBreadcrumbAligned(QEProjectAssetItem* folder, float lineHeight);
     void DrawNavigationBar(QEProjectAssetItem* folder);
@@ -43,15 +48,14 @@ private:
     void DrawImportFooter();
     bool HasVisibleImportFooter() const;
 
-    void DrawTopBar();
-    void DrawCreateMenu(QEProjectAssetItem* currentFolder);
-
 private:
     QEProjectBrowserNavigation _navigation;
     QEProjectBrowserActions _actions;
     QEProjectIconCache _iconCache;
 
     std::vector<std::filesystem::path> _pendingExternalDrops;
+    std::optional<std::filesystem::path> _pendingSceneOpenRequest;
+
     bool _isWindowHovered = false;
     bool _isContentsPanelHovered = false;
 };

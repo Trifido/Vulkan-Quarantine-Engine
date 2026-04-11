@@ -23,6 +23,7 @@ Grid::Grid()
         this->material_grid_ptr->renderQueue = static_cast<unsigned int>(RenderQueue::Editor);
         this->material_grid_ptr->InitializeMaterialData();
         matManager->AddMaterial(this->material_grid_ptr);
+        matManager->MarkMaterialPersistent(nameGrid);
     }
     else
     {
@@ -34,8 +35,22 @@ Grid::Grid()
 
 void Grid::Draw(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
+    if (!this->gridMesh)
+        return;
+
     auto mat = this->gridMesh->GetMaterial();
+    if (!mat)
+        return;
+
+    if (!mat->shader)
+        return;
+
     auto pipelineModule = mat->shader->PipelineModule;
+    if (!pipelineModule)
+        return;
+
+    if (!mat->descriptor)
+        return;
 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 

@@ -9,21 +9,29 @@ QEDirectionalLight::QEDirectionalLight() : QELight()
     this->radius = FLT_MAX;
     this->cascadeSplitLambda = 0.9f;
 
-    if (this->transform == nullptr)
-    {
-        this->transform = std::make_shared<QETransform>();
-    }
-    this->transform->SetLocalPosition(glm::vec3(0.0f, 10.0f, 0.0f));
-    this->transform->SetLocalEulerDegrees(glm::vec3(90.0f, 0.0f, 0.0f));
+    EnsureRuntimeState();
 }
 
 void QEDirectionalLight::Setup(std::shared_ptr<VkRenderPass> renderPass)
 {
+    EnsureRuntimeState();
     this->shadowMappingResourcesPtr = std::make_shared<CSMResources>(renderPass);
 }
 
 void QEDirectionalLight::UpdateUniform()
 {
+    EnsureRuntimeState();
+
+    if (!this->transform)
+        return;
+
+    if (!this->shadowMappingResourcesPtr)
+        return;
+
+    auto activeCamera = QESessionManager::getInstance()->ActiveCamera();
+    if (!activeCamera)
+        return;
+
     QELight::UpdateUniform();
 
     this->uniform->position = this->transform->GetWorldPosition();
@@ -35,7 +43,17 @@ void QEDirectionalLight::UpdateUniform()
 
 void QEDirectionalLight::UpdateCascades()
 {
+    EnsureRuntimeState();
+
     auto activeCamera = QESessionManager::getInstance()->ActiveCamera();
+    if (!activeCamera)
+        return;
+
+    if (!this->transform)
+        return;
+
+    if (!this->shadowMappingResourcesPtr || !this->shadowMappingResourcesPtr->CascadeResourcesPtr)
+        return;
 
     float nearClip = activeCamera->GetNear();
     float farClip = activeCamera->GetFar();
@@ -166,9 +184,16 @@ void QEDirectionalLight::UpdateCascades()
 
         lastSplitDist = splitDist;
     }
+}
 
-    // Importante: si tu UBO Splits espera vec4 con ends:
-    // asegúrate de subir: [end0,end1,end2,end3]
+void QEDirectionalLight::EnsureRuntimeState()
+{
+    if (this->transform == nullptr)
+    {
+        this->transform = std::make_shared<QETransform>();
+        this->transform->SetLocalPosition(glm::vec3(0.0f, 10.0f, 0.0f));
+        this->transform->SetLocalEulerDegrees(glm::vec3(90.0f, 0.0f, 0.0f));
+    }
 }
 
 void QEDirectionalLight::CleanShadowMapResources()

@@ -54,10 +54,14 @@ std::string QEProjectBrowserPanel::GetDisplayAssetName(const QEProjectAssetItem*
     if (item == nullptr)
         return "";
 
-    if (item->IsDirectory)
-        return item->Name;
+    const std::string name = item->Name;
+    if (name.empty())
+        return "";
 
-    std::filesystem::path p(item->Name);
+    if (item->IsDirectory)
+        return name;
+
+    std::filesystem::path p(name);
     return p.stem().string();
 }
 
@@ -253,9 +257,23 @@ void QEProjectBrowserPanel::DrawAssetTile(QEProjectAssetItem* item, float tileSi
         _navigation.SelectItem(item);
     }
 
-    if (hovered && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && item->IsDirectory)
+    if (hovered && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
     {
-        _navigation.NavigateToFolder(item, true);
+        if (item->IsDirectory)
+        {
+            _navigation.NavigateToFolder(item, true);
+        }
+        else
+        {
+            std::filesystem::path assetPath(item->AbsolutePath);
+            std::string ext = assetPath.extension().string();
+            std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+
+            if (ext == ".qescene")
+            {
+                _pendingSceneOpenRequest = assetPath;
+            }
+        }
     }
 
     if (_navigation.IsItemDraggable(item))
@@ -365,7 +383,11 @@ void QEProjectBrowserPanel::Draw()
         ImGui::TextUnformatted("No project loaded.");
         HandleExternalFileDrops();
         DrawImportFooter();
+
+        _actions.DrawRenamePopup();
+        _actions.ProcessPendingDelete();
         ImGui::End();
+
         return;
     }
 
@@ -427,6 +449,16 @@ void QEProjectBrowserPanel::SetPendingExternalDrops(const std::vector<std::files
 void QEProjectBrowserPanel::InitializeIcons()
 {
     _iconCache.Initialize();
+}
+
+std::optional<std::filesystem::path> QEProjectBrowserPanel::ConsumePendingSceneOpenRequest()
+{
+    if (!_pendingSceneOpenRequest.has_value())
+        return std::nullopt;
+
+    auto result = _pendingSceneOpenRequest;
+    _pendingSceneOpenRequest.reset();
+    return result;
 }
 
 bool QEProjectBrowserPanel::IsImportableExternalFile(const std::filesystem::path& path) const

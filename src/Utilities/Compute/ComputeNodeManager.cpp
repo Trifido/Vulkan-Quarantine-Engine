@@ -79,21 +79,80 @@ std::shared_ptr<ComputeNode> ComputeNodeManager::GetComputeNode(std::string name
 
 void ComputeNodeManager::RecordComputeNodes(VkCommandBuffer commandBuffer, uint32_t currentFrame)
 {
-    for (auto it : _computeNodes)
+    for (const auto& it : _computeNodes)
     {
-        it.second->DispatchCommandBuffer(commandBuffer, currentFrame);
+        if (it.second)
+        {
+            it.second->DispatchCommandBuffer(commandBuffer, currentFrame);
+        }
     }
 }
 
 void ComputeNodeManager::Cleanup()
 {
-    for (auto node : _computeNodes)
+    for (auto& node : _computeNodes)
     {
-        node.second->cleanup();
+        if (node.second)
+        {
+            node.second->cleanup();
+        }
     }
 }
 
 void ComputeNodeManager::CleanLastResources()
 {
     this->_computeNodes.clear();
+}
+
+void ComputeNodeManager::RemoveComputeNode(const std::string& nameComputeNode)
+{
+    auto it = _computeNodes.find(nameComputeNode);
+    if (it == _computeNodes.end())
+        return;
+
+    if (it->second)
+    {
+        it->second->cleanup();
+    }
+
+    _computeNodes.erase(it);
+}
+
+void ComputeNodeManager::RemoveComputeNodesByPrefix(const std::string& prefix)
+{
+    std::vector<std::string> keysToRemove;
+    keysToRemove.reserve(_computeNodes.size());
+
+    for (const auto& it : _computeNodes)
+    {
+        if (it.first.rfind(prefix, 0) == 0) // starts_with
+        {
+            keysToRemove.push_back(it.first);
+        }
+    }
+
+    for (const auto& key : keysToRemove)
+    {
+        RemoveComputeNode(key);
+    }
+}
+
+void ComputeNodeManager::ResetSceneState()
+{
+    // Nothing to do here
+}
+
+void ComputeNodeManager::UpsertComputeNode(const std::string& nameComputeNode, std::shared_ptr<ComputeNode> mat_ptr)
+{
+    auto it = _computeNodes.find(nameComputeNode);
+    if (it != _computeNodes.end())
+    {
+        if (it->second)
+        {
+            it->second->cleanup();
+        }
+        _computeNodes.erase(it);
+    }
+
+    _computeNodes[nameComputeNode] = mat_ptr;
 }

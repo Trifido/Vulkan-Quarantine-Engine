@@ -124,6 +124,9 @@ void QESessionManager::UpdateActiveCameraGPUData(uint32_t currentFrame)
     if (_activeCamera == nullptr)
         return;
 
+    if (this->cameraUBO == nullptr)
+        return;
+
     auto deviceModule = DeviceModule::getInstance();
 
     void* data = nullptr;
@@ -187,7 +190,7 @@ void QESessionManager::SetupEditor()
     auto cullingSceneManager = CullingSceneManager::getInstance();
     auto editorManager = EditorObjectManager::getInstance();
 
-    cullingSceneManager->InitializeCullingSceneResources();
+    cullingSceneManager->EnsureInitialized();
     cullingSceneManager->DebugMode = _showCullingAABBDebug;
 
     auto debugSystem = QEDebugSystem::getInstance();
@@ -195,9 +198,18 @@ void QESessionManager::SetupEditor()
 
     if (_isEditor)
     {
-        std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
-        editorManager->AddEditorObject(grid_ptr, "editor:grid");
-        grid_ptr->IsRenderable = _isEditor;
+        auto existing = editorManager->GetObject("editor:grid");
+
+        if (!existing)
+        {
+            std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
+            editorManager->AddEditorObject(grid_ptr, "editor:grid");
+            grid_ptr->IsRenderable = true;
+        }
+        else
+        {
+            existing->IsRenderable = true;
+        }
     }
 }
 
@@ -209,29 +221,22 @@ void QESessionManager::CleanEditorResources()
     editorManager->ResetInstance();
 }
 
-void QESessionManager::CleanCameras()
-{
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-    {
-        if (this->cameraUBO != nullptr)
-        {
-            auto deviceModule = DeviceModule::getInstance();
-            vkDestroyBuffer(deviceModule->device, this->cameraUBO->uniformBuffers[i], nullptr);
-            vkFreeMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[i], nullptr);
-        }
-    }
-}
-
 void QESessionManager::UpdateCullingScene()
 {
-    CullingSceneManager::getInstance()->UpdateCullingScene();
+    auto cullingSceneManager = CullingSceneManager::getInstance();
+    if (cullingSceneManager)
+    {
+        cullingSceneManager->UpdateCullingScene();
+    }
 }
 
 void QESessionManager::CleanCullingResources()
 {
     auto cullingSceneManager = CullingSceneManager::getInstance();
-    cullingSceneManager->CleanUp();
-    cullingSceneManager->ResetInstance();
+    if (cullingSceneManager)
+    {
+        cullingSceneManager->ResetSceneState();
+    }
 }
 
 void QESessionManager::FindNewSceneCamera()
@@ -252,4 +257,39 @@ void QESessionManager::ResolveActiveCamera()
     {
         _activeCamera = _gameCamera ? _gameCamera : _editorCamera;
     }
+}
+
+void QESessionManager::ResetSceneState()
+{
+    _gameCamera.reset();
+
+    if (_isEditor)
+    {
+        _activeCamera = _editorCamera;
+    }
+    else
+    {
+        _activeCamera = nullptr;
+    }
+
+    _newSceneCamera = false;
+    newCameraID.clear();
+
+    CleanCullingResources();
+}
+
+void QESessionManager::ShutdownPersistentResources()
+{
+    if (!this->cameraUBO)
+        return;
+
+    auto deviceModule = DeviceModule::getInstance();
+
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        vkDestroyBuffer(deviceModule->device, this->cameraUBO->uniformBuffers[i], nullptr);
+        vkFreeMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[i], nullptr);
+    }
+
+    this->cameraUBO.reset();
 }

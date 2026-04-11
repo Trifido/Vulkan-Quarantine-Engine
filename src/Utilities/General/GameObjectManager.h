@@ -53,8 +53,11 @@ public:
     void DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
     void CSMCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex);
     void OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, glm::mat4 viewParameter, glm::vec3 lightPosition);
+
+    void ResetSceneState();
     void ReleaseAllGameObjects();
     void CleanLastResources();
+
     YAML::Node SerializeGameObjects();
     void DeserializeGameObjects(YAML::Node gameObjects);
 

@@ -315,6 +315,33 @@ void CSMDescriptorsManager::CreateOffscreenDescriptorSet()
     }
 }
 
+void CSMDescriptorsManager::ResetSceneState()
+{
+    _numDirLights = 0;
+
+    csmOffscreenUBOs.clear();
+    _imageViews.clear();
+    _samplers.clear();
+
+    csmResources.clear();
+    csmSplitDataResources.clear();
+    csmViewProjDataResources.clear();
+
+    offscreenBuffersInfo.clear();
+    renderBuffersInfo.clear();
+    renderDescriptorImageInfo.clear();
+
+    for (size_t i = 0; i < NUM_CSM_SETS; i++)
+    {
+        renderDescriptorSets[i] = VK_NULL_HANDLE;
+
+        for (size_t j = 0; j < MAX_NUM_DIR_LIGHTS; j++)
+        {
+            offscreenDescriptorSets[i][j] = VK_NULL_HANDLE;
+        }
+    }
+}
+
 void CSMDescriptorsManager::Clean()
 {
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
@@ -322,13 +349,25 @@ void CSMDescriptorsManager::Clean()
         if (this->csmRenderSplitBuffer.uniformBuffers[i] != VK_NULL_HANDLE)
         {
             vkDestroyBuffer(deviceModule->device, this->csmRenderSplitBuffer.uniformBuffers[i], nullptr);
+            this->csmRenderSplitBuffer.uniformBuffers[i] = VK_NULL_HANDLE;
+        }
+
+        if (this->csmRenderSplitBuffer.uniformBuffersMemory[i] != VK_NULL_HANDLE)
+        {
             vkFreeMemory(deviceModule->device, this->csmRenderSplitBuffer.uniformBuffersMemory[i], nullptr);
+            this->csmRenderSplitBuffer.uniformBuffersMemory[i] = VK_NULL_HANDLE;
         }
 
         if (this->csmRenderViewProjBuffer.uniformBuffers[i] != VK_NULL_HANDLE)
         {
             vkDestroyBuffer(deviceModule->device, this->csmRenderViewProjBuffer.uniformBuffers[i], nullptr);
+            this->csmRenderViewProjBuffer.uniformBuffers[i] = VK_NULL_HANDLE;
+        }
+
+        if (this->csmRenderViewProjBuffer.uniformBuffersMemory[i] != VK_NULL_HANDLE)
+        {
             vkFreeMemory(deviceModule->device, this->csmRenderViewProjBuffer.uniformBuffersMemory[i], nullptr);
+            this->csmRenderViewProjBuffer.uniformBuffersMemory[i] = VK_NULL_HANDLE;
         }
     }
 
@@ -336,16 +375,13 @@ void CSMDescriptorsManager::Clean()
     {
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-            if (this->offscreenDescriptorSets[i][npl] != VK_NULL_HANDLE)
-            {
-                this->offscreenDescriptorSets[i][npl] = VK_NULL_HANDLE;
-            }
-
-            if (this->renderDescriptorSets[i] != VK_NULL_HANDLE)
-            {
-                this->renderDescriptorSets[i] = VK_NULL_HANDLE;
-            }
+            offscreenDescriptorSets[i][npl] = VK_NULL_HANDLE;
         }
+    }
+
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        renderDescriptorSets[i] = VK_NULL_HANDLE;
     }
 
     if (this->offscreenDescriptorPool != VK_NULL_HANDLE)
@@ -369,20 +405,24 @@ void CSMDescriptorsManager::Clean()
     if (this->placeholderSampler != VK_NULL_HANDLE)
     {
         vkDestroySampler(this->deviceModule->device, this->placeholderSampler, nullptr);
+        this->placeholderSampler = VK_NULL_HANDLE;
     }
 
     if (this->placeholderImageView != VK_NULL_HANDLE)
     {
         vkDestroyImageView(deviceModule->device, this->placeholderImageView, nullptr);
+        this->placeholderImageView = VK_NULL_HANDLE;
     }
 
     if (this->placeholderImage != VK_NULL_HANDLE)
     {
         vkDestroyImage(deviceModule->device, this->placeholderImage, nullptr);
+        this->placeholderImage = VK_NULL_HANDLE;
     }
 
     if (this->placeholderMemory != VK_NULL_HANDLE)
     {
         vkFreeMemory(deviceModule->device, this->placeholderMemory, nullptr);
+        this->placeholderMemory = VK_NULL_HANDLE;
     }
 }

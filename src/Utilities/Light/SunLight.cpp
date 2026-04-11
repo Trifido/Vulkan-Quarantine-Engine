@@ -15,11 +15,16 @@ QESunLight::QESunLight() : QEDirectionalLight()
 
 void QESunLight::UpdateSun()
 {
+    EnsureRuntimeState();
+
+    if (!this->sunUBO)
+        return;
+
     this->UpdateUniform();
 
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {
-        void* data;
+        void* data = nullptr;
         vkMapMemory(deviceModule->device, this->sunUBO->uniformBuffersMemory[currentFrame], 0, sizeof(SunUniform), 0, &data);
         memcpy(data, &uniformData, sizeof(SunUniform));
         vkUnmapMemory(deviceModule->device, this->sunUBO->uniformBuffersMemory[currentFrame]);
@@ -28,7 +33,10 @@ void QESunLight::UpdateSun()
 
 void QESunLight::SetSunEulerDegrees(const glm::vec3& eulerDeg)
 {
+    EnsureRuntimeState();
+
     this->SunEulerDegrees = eulerDeg;
+
     this->transform->SetLocalEulerDegrees(eulerDeg);
 
     glm::vec3 lightDirection = this->transform->Forward();

@@ -143,60 +143,92 @@ std::shared_ptr<QELight> LightManager::CreateLight(LightType type, std::string n
 
 void LightManager::DeleteLight(std::shared_ptr<QELight> light_ptr, std::string& name)
 {
+    if (!light_ptr)
+        return;
+
     switch (light_ptr->lightType)
     {
-        default:
-        case LightType::POINT_LIGHT:
-            {
-                auto it = std::find_if(PointLights.begin(), PointLights.end(),
-                    [light_ptr](const auto& light) { return light->id == light_ptr->id; });
+    default:
+    case LightType::POINT_LIGHT:
+    {
+        auto it = std::find_if(PointLights.begin(), PointLights.end(),
+            [light_ptr](const auto& light) { return light && light->id == light_ptr->id; });
 
-                if (it != PointLights.end())
-                {
-                    int localLightPosition = static_cast<int>(std::distance(PointLights.begin(), it));
-                    PointLights.erase(it);
-                    PointShadowDescritors->DeletePointLightResources(localLightPosition);
-                }
-            }
-            break;
-        case LightType::DIRECTIONAL_LIGHT:
-        case LightType::SUN_LIGHT:
-            {
-                auto it = std::find_if(DirLights.begin(), DirLights.end(),
-                    [light_ptr](const auto& light) { return light->id == light_ptr->id; });
+        if (it != PointLights.end())
+        {
+            int localLightPosition = static_cast<int>(std::distance(PointLights.begin(), it));
+            PointLights.erase(it);
 
-                if (it != DirLights.end())
-                {
-                    int localLightPosition = static_cast<int>(std::distance(DirLights.begin(), it));
-                    DirLights.erase(it);
-                    CSMDescritors->DeleteDirLightResources(localLightPosition);
-                }
-            }
-            break;
-        case LightType::SPOT_LIGHT:
+            if (PointShadowDescritors)
             {
-                auto it = std::find_if(SpotLights.begin(), SpotLights.end(),
-                    [light_ptr](const auto& light) { return light->id == light_ptr->id; });
-
-                if (it != SpotLights.end())
-                {
-                    int localLightPosition = static_cast<int>(std::distance(SpotLights.begin(), it));
-                    SpotLights.erase(it);
-                }
+                PointShadowDescritors->DeletePointLightResources(localLightPosition);
             }
-            break;
+        }
+    }
+    break;
+
+    case LightType::DIRECTIONAL_LIGHT:
+    case LightType::SUN_LIGHT:
+    {
+        auto it = std::find_if(DirLights.begin(), DirLights.end(),
+            [light_ptr](const auto& light) { return light && light->id == light_ptr->id; });
+
+        if (it != DirLights.end())
+        {
+            int localLightPosition = static_cast<int>(std::distance(DirLights.begin(), it));
+            DirLights.erase(it);
+
+            if (CSMDescritors)
+            {
+                CSMDescritors->DeleteDirLightResources(localLightPosition);
+            }
+        }
+    }
+    break;
+
+    case LightType::SPOT_LIGHT:
+    {
+        auto it = std::find_if(SpotLights.begin(), SpotLights.end(),
+            [light_ptr](const auto& light) { return light && light->id == light_ptr->id; });
+
+        if (it != SpotLights.end())
+        {
+            SpotLights.erase(it);
+        }
+    }
+    break;
     }
 
     auto it = std::find_if(_lights.begin(), _lights.end(),
-        [light_ptr](const auto& light) { return light.second->id == light_ptr->id; });
+        [light_ptr](const auto& light) { return light.second && light.second->id == light_ptr->id; });
 
     if (it != _lights.end())
     {
-        int localLightPosition = static_cast<int>(std::distance(_lights.begin(), it));
         _lights.erase(it);
     }
 
-    this->currentNumLights--;
+    lightBuffer.clear();
+    lightBuffer.reserve(MAX_NUM_LIGHT);
+
+    for (auto& entry : _lights)
+    {
+        if (entry.second && entry.second->uniform)
+        {
+            lightBuffer.push_back(*entry.second->uniform);
+        }
+    }
+
+    currentNumLights = static_cast<uint32_t>(_lights.size());
+}
+
+void LightManager::DeleteLightByName(const std::string& name)
+{
+    auto it = _lights.find(name);
+    if (it == _lights.end() || !it->second)
+        return;
+
+    std::string mutableName = it->first;
+    DeleteLight(it->second, mutableName);
 }
 
 std::vector<LightDto> LightManager::GetLightDtos(std::ifstream& file)
@@ -274,13 +306,20 @@ void LightManager::UpdateUniform()
 {
     this->lightManagerUniform->numLights = (uint32_t)std::min(this->_lights.size(), this->MAX_NUM_LIGHT);
 
-    int cont = 0;
+    lightBuffer.clear();
+    lightBuffer.reserve(MAX_NUM_LIGHT);
+
     for (auto& it : this->_lights)
     {
+        if (!it.second)
+            continue;
+
         it.second->UpdateUniform();
 
-        this->lightBuffer[cont] = *it.second->uniform;
-        cont++;
+        if (it.second->uniform)
+        {
+            lightBuffer.push_back(*it.second->uniform);
+        }
     }
 
     this->UpdateUBOLight();
@@ -288,77 +327,192 @@ void LightManager::UpdateUniform()
 
 void LightManager::UpdateUBOLight()
 {
+    const size_t lightCount = lightBuffer.size();
+    const size_t uploadSize = lightCount * sizeof(LightUniform);
+
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {
-        void* data;
+        void* data = nullptr;
         vkMapMemory(this->deviceModule->device, this->lightUBO->uniformBuffersMemory[currentFrame], 0, sizeof(LightManagerUniform), 0, &data);
         memcpy(data, static_cast<const void*>(this->lightManagerUniform.get()), sizeof(LightManagerUniform));
         vkUnmapMemory(this->deviceModule->device, this->lightUBO->uniformBuffersMemory[currentFrame]);
 
-        void* data2;
+        void* data2 = nullptr;
         vkMapMemory(this->deviceModule->device, this->lightSSBO->uniformBuffersMemory[currentFrame], 0, this->lightSSBOSize, 0, &data2);
-        memcpy(data2, this->lightBuffer.data(), this->lightSSBOSize);
+
+        if (uploadSize > 0 && !lightBuffer.empty())
+        {
+            memcpy(data2, lightBuffer.data(), uploadSize);
+        }
+
         vkUnmapMemory(this->deviceModule->device, this->lightSSBO->uniformBuffersMemory[currentFrame]);
     }
 }
 
 void LightManager::UpdateCSMLights()
 {
-    for (auto light : this->DirLights)
+    for (auto& light : this->DirLights)
     {
+        if (!light)
+        {
+            QE_LOG_ERROR_CAT_F("LightManager", "DirLights contains null light");
+            continue;
+        }
+
+        if (!light->transform)
+        {
+            QE_LOG_ERROR_CAT_F("LightManager", "Directional light '{}' has null transform", light->Name);
+            continue;
+        }
+
+        if (!light->shadowMappingResourcesPtr)
+        {
+            QE_LOG_ERROR_CAT_F("LightManager", "Directional light '{}' has null shadowMappingResourcesPtr", light->Name);
+            continue;
+        }
+
         light->UpdateUniform();
     }
 }
 
-void LightManager::CleanLightUBO()
+void LightManager::ShutdownPersistentResources()
 {
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        // Light UBO
-        if (this->lightManagerUniform != nullptr)
+        if (this->lightUBO)
         {
             vkDestroyBuffer(deviceModule->device, this->lightUBO->uniformBuffers[i], nullptr);
             vkFreeMemory(deviceModule->device, this->lightUBO->uniformBuffersMemory[i], nullptr);
+        }
 
+        if (this->lightSSBO)
+        {
             vkDestroyBuffer(deviceModule->device, this->lightSSBO->uniformBuffers[i], nullptr);
             vkFreeMemory(deviceModule->device, this->lightSSBO->uniformBuffersMemory[i], nullptr);
+        }
 
+        if (this->lightIndexSSBO)
+        {
             vkDestroyBuffer(deviceModule->device, this->lightIndexSSBO->uniformBuffers[i], nullptr);
             vkFreeMemory(deviceModule->device, this->lightIndexSSBO->uniformBuffersMemory[i], nullptr);
+        }
 
+        if (this->lightTilesSSBO)
+        {
             vkDestroyBuffer(deviceModule->device, this->lightTilesSSBO->uniformBuffers[i], nullptr);
             vkFreeMemory(deviceModule->device, this->lightTilesSSBO->uniformBuffersMemory[i], nullptr);
+        }
 
+        if (this->lightBinSSBO)
+        {
             vkDestroyBuffer(deviceModule->device, this->lightBinSSBO->uniformBuffers[i], nullptr);
             vkFreeMemory(deviceModule->device, this->lightBinSSBO->uniformBuffersMemory[i], nullptr);
         }
     }
 }
 
+void LightManager::ResetSceneState()
+{
+    ResetShadowSceneState();
+
+    _lights.clear();
+    DirLights.clear();
+    SpotLights.clear();
+    PointLights.clear();
+
+    lightBuffer.clear();
+    sortedLight.clear();
+    lights_bin.clear();
+    lights_index.clear();
+    light_tiles_bits.clear();
+
+    currentNumLights = 0;
+}
+
+void LightManager::ResetShadowSceneState()
+{
+    for (auto& pLight : this->PointLights)
+    {
+        if (pLight)
+            pLight->CleanShadowMapResources();
+    }
+
+    for (auto& dLight : this->DirLights)
+    {
+        if (dLight)
+            dLight->CleanShadowMapResources();
+    }
+
+    if (this->PointShadowDescritors)
+    {
+        this->PointShadowDescritors->ResetSceneState();
+    }
+
+    if (this->CSMDescritors)
+    {
+        this->CSMDescritors->ResetSceneState();
+    }
+}
+
 void LightManager::CleanLastResources()
 {
-    this->_lights.clear();
-    this->lightUBO.reset();
-    this->lightManagerUniform.reset();
+    _lights.clear();
+    DirLights.clear();
+    SpotLights.clear();
+    PointLights.clear();
+
+    lightBuffer.clear();
+    sortedLight.clear();
+    lights_bin.clear();
+    lights_index.clear();
+    light_tiles_bits.clear();
+
+    currentNumLights = 0;
+
+    lightUBO.reset();
+    lightSSBO.reset();
+    lightIndexSSBO.reset();
+    lightTilesSSBO.reset();
+    lightBinSSBO.reset();
+    lightManagerUniform.reset();
+
+    PointShadowDescritors.reset();
+    CSMDescritors.reset();
+
+    CSMPipelineModule.reset();
+    OmniShadowPipelineModule.reset();
+    CSMShaderModule.reset();
+    OmniShadowShaderModule.reset();
 }
 
 void LightManager::CleanShadowMapResources()
 {
-    for (auto pLight : this->PointLights)
+    for (auto& pLight : this->PointLights)
     {
-        pLight->CleanShadowMapResources();
-    }
-    for (auto dLight : this->DirLights)
-    {
-        dLight->CleanShadowMapResources();
-    }
-    for (auto sLight : this->SpotLights)
-    {
-
+        if (pLight)
+            pLight->CleanShadowMapResources();
     }
 
-    this->PointShadowDescritors->Clean();
-    this->CSMDescritors->Clean();
+    for (auto& dLight : this->DirLights)
+    {
+        if (dLight)
+            dLight->CleanShadowMapResources();
+    }
+
+    for (auto& sLight : this->SpotLights)
+    {
+        (void)sLight;
+    }
+
+    if (this->PointShadowDescritors)
+    {
+        this->PointShadowDescritors->Clean();
+    }
+
+    if (this->CSMDescritors)
+    {
+        this->CSMDescritors->Clean();
+    }
 }
 
 void LightManager::AddLight(std::shared_ptr<QELight> light_ptr, std::string& name)
@@ -613,6 +767,18 @@ void LightManager::ComputeLightTiles()
 
 void LightManager::Update()
 {
+    if (_lights.empty())
+    {
+        currentNumLights = 0;
+        lightBuffer.clear();
+        sortedLight.clear();
+        lights_bin.assign(BIN_SLICES, 0);
+        lights_index.clear();
+        light_tiles_bits.clear();
+        UpdateUBOLight();
+        return;
+    }
+
     this->SortingLights();
     this->ComputeLightsLUT();
     this->ComputeLightTiles();
@@ -646,5 +812,8 @@ void LightManager::Update()
     this->UpdateCSMLights();
     this->UpdateUniform();
 
-    this->CSMDescritors->UpdateResources(currentFrame);
+    if (this->CSMDescritors)
+    {
+        this->CSMDescritors->UpdateResources(currentFrame);
+    }
 }

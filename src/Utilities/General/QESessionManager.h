@@ -39,11 +39,15 @@ public:
 
     void SetupEditor();
     void CleanEditorResources();
-    void CleanCameras();
+
     void UpdateCullingScene();
     void CleanCullingResources();
+
     void FindNewSceneCamera();
     void ResolveActiveCamera();
+
+    void ResetSceneState();
+    void ShutdownPersistentResources();
 
     std::shared_ptr<UniformBufferObject> GetCameraUBO() { return this->cameraUBO; }
 

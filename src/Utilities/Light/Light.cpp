@@ -119,6 +119,4 @@ void QELight::QEInit()
 
 void QELight::QEStart()
 {
-    auto lightManager = LightManager::getInstance();
-    lightManager->AddNewLight(std::shared_ptr<QELight>(this, [](QELight*) {}), this->Name);
 }

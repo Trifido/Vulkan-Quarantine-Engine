@@ -23,6 +23,7 @@ public:
     void UpdateUniform() override;
     void CleanShadowMapResources();
     void UpdateCascades();
+    void EnsureRuntimeState();
 };
 
 #endif

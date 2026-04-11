@@ -26,14 +26,18 @@ AtmosphereSystem::~AtmosphereSystem()
 
 void AtmosphereSystem::LoadAtmosphereDto(AtmosphereDto atmosphereDto)
 {
-    this->sunLight = std::static_pointer_cast<QESunLight>(this->lightManager->GetLight(SUN_NAME));
-    if (!this->sunLight)
+    auto existingSun = this->lightManager->GetLight(SUN_NAME);
+    if (existingSun)
     {
-        this->sunLight = std::static_pointer_cast<QESunLight>(
-            this->lightManager->CreateLight(LightType::SUN_LIGHT, this->SUN_NAME)
-        );
-        this->sunLight->QEStart();
+        this->lightManager->DeleteLightByName(SUN_NAME);
     }
+
+    this->sunLight = std::static_pointer_cast<QESunLight>(
+        this->lightManager->CreateLight(LightType::SUN_LIGHT, this->SUN_NAME)
+    );
+
+    std::string sunName = this->SUN_NAME;
+    this->lightManager->AddNewLight(this->sunLight, sunName);
 
     this->sunLight->baseIntensity = atmosphereDto.sunBaseIntensity;
     this->sunLight->SetSunEulerDegrees(atmosphereDto.sunEulerDegrees);
@@ -100,7 +104,14 @@ void AtmosphereSystem::AddTextureResources(const std::string* texturePaths, uint
 
 void AtmosphereSystem::InitializeAtmosphere()
 {
+    if (!this->sunLight)
+        return;
+
     this->SetUpResources();
+
+    if (this->resolutionUBO == nullptr)
+        return;
+
     this->UpdateSun();
     this->CreateDescriptorPool();
     this->CreateDescriptorSet();
@@ -109,7 +120,6 @@ void AtmosphereSystem::InitializeAtmosphere()
 void AtmosphereSystem::SetUpResources()
 {
     this->Cleanup();
-    this->CleanLastResources();
 
     auto shaderManager = ShaderManager::getInstance();
 
@@ -126,6 +136,9 @@ void AtmosphereSystem::SetUpResources()
 
     if (this->atmosphereType == AtmosphereType::PHYSICALLY_BASED_SKY)
     {
+        if (!this->sunLight || !this->sunLight->sunUBO)
+            return;
+
         this->resolutionUBO = std::make_shared<UniformBufferObject>();
         this->resolutionUBO->CreateUniformBuffer(sizeof(ScreenResolutionUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 
@@ -142,7 +155,7 @@ void AtmosphereSystem::SetUpResources()
         this->TLUT_ComputeNode->NElements = 16;
         this->TLUT_ComputeNode->InitializeOutputTextureComputeNode(256, 64, VK_FORMAT_R32G32B32A32_SFLOAT);
         this->TLUT_ComputeNode->computeDescriptor->ubos["AtmosphereUniform"] = this->atmosphereUBO;
-        this->computeNodeManager->AddComputeNode("transmittance_lut", this->TLUT_ComputeNode);
+        this->computeNodeManager->UpsertComputeNode("transmittance_lut", this->TLUT_ComputeNode);
 
         this->MSLUT_ComputeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("multi_scattering_lut"));
         this->MSLUT_ComputeNode->OnDemandCompute = true;
@@ -151,7 +164,7 @@ void AtmosphereSystem::SetUpResources()
         this->MSLUT_ComputeNode->InitializeOutputTextureComputeNode(32, 32, VK_FORMAT_R32G32B32A32_SFLOAT);
         this->MSLUT_ComputeNode->computeDescriptor->inputTextures.push_back(this->TLUT_ComputeNode->computeDescriptor->outputTexture);
         this->MSLUT_ComputeNode->computeDescriptor->ubos["AtmosphereUniform"] = this->atmosphereUBO;
-        this->computeNodeManager->AddComputeNode("multi_scattering_lut", this->MSLUT_ComputeNode);
+        this->computeNodeManager->UpsertComputeNode("multi_scattering_lut", this->MSLUT_ComputeNode);
 
         this->SVLUT_ComputeNode = std::make_shared<ComputeNode>(shaderManager->GetShader("sky_view_lut"));
         this->SVLUT_ComputeNode->OnDemandCompute = true;
@@ -162,7 +175,7 @@ void AtmosphereSystem::SetUpResources()
         this->SVLUT_ComputeNode->computeDescriptor->inputTextures.push_back(this->MSLUT_ComputeNode->computeDescriptor->outputTexture);
         this->SVLUT_ComputeNode->computeDescriptor->ubos["SunUniform"] = this->sunLight->sunUBO;
         this->SVLUT_ComputeNode->computeDescriptor->ubos["AtmosphereUniform"] = this->atmosphereUBO;
-        this->computeNodeManager->AddComputeNode("sky_view_lut", this->SVLUT_ComputeNode);
+        this->computeNodeManager->UpsertComputeNode("sky_view_lut", this->SVLUT_ComputeNode);
 
         this->TLUT_ComputeNode->InitializeComputeNode();
         this->MSLUT_ComputeNode->InitializeComputeNode();
@@ -173,7 +186,6 @@ void AtmosphereSystem::SetUpResources()
     {
     default:
     case AtmosphereType::PHYSICALLY_BASED_SKY:
-
         this->_Mesh = std::make_shared<QEGeometryComponent>(std::make_unique<QuadGenerator>());
         break;
     case AtmosphereType::CUBEMAP:
@@ -322,6 +334,12 @@ void AtmosphereSystem::CreateDescriptorPool()
 
 void AtmosphereSystem::CreateDescriptorSet()
 {
+    if (this->atmosphereType == AtmosphereType::PHYSICALLY_BASED_SKY)
+    {
+        if (!this->TLUT_ComputeNode || !this->SVLUT_ComputeNode || !this->sunLight || !this->sunLight->sunUBO || !this->resolutionUBO || !this->atmosphereUBO)
+            return;
+    }
+
     std::vector<VkDescriptorSetLayout> layouts;
     for (uint32_t i = 0; i < this->environment_shader->descriptorSetLayouts.size(); i++)
     {
@@ -483,16 +501,25 @@ void AtmosphereSystem::Cleanup()
         this->_Mesh = nullptr;
     }
 
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    if (this->resolutionUBO != nullptr)
     {
-        if (this->resolutionUBO != nullptr)
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
             vkDestroyBuffer(deviceModule->device, this->resolutionUBO->uniformBuffers[i], nullptr);
             vkFreeMemory(deviceModule->device, this->resolutionUBO->uniformBuffersMemory[i], nullptr);
         }
+        this->resolutionUBO = nullptr;
     }
 
-    this->resolutionUBO = nullptr;
+    if (this->atmosphereUBO != nullptr)
+    {
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+        {
+            vkDestroyBuffer(deviceModule->device, this->atmosphereUBO->uniformBuffers[i], nullptr);
+            vkFreeMemory(deviceModule->device, this->atmosphereUBO->uniformBuffersMemory[i], nullptr);
+        }
+        this->atmosphereUBO = nullptr;
+    }
 
     if (!this->descriptorSets.empty())
     {
@@ -517,15 +544,43 @@ void AtmosphereSystem::Cleanup()
         this->environmentTexture->cleanup();
         this->environmentTexture = nullptr;
     }
+
+    if (this->TLUT_ComputeNode != nullptr)
+    {
+        this->TLUT_ComputeNode->cleanup();
+        this->TLUT_ComputeNode = nullptr;
+    }
+
+    if (this->MSLUT_ComputeNode != nullptr)
+    {
+        this->MSLUT_ComputeNode->cleanup();
+        this->MSLUT_ComputeNode = nullptr;
+    }
+
+    if (this->SVLUT_ComputeNode != nullptr)
+    {
+        this->SVLUT_ComputeNode->cleanup();
+        this->SVLUT_ComputeNode = nullptr;
+    }
 }
 
 void AtmosphereSystem::CleanLastResources()
 {
+    this->sunLight.reset();
+
     if (this->environment_shader != nullptr)
     {
         this->environment_shader.reset();
         this->environment_shader = nullptr;
     }
+
+    this->TLUT_ComputeNode.reset();
+    this->MSLUT_ComputeNode.reset();
+    this->SVLUT_ComputeNode.reset();
+
+    this->computeNodeManager = nullptr;
+    this->lightManager = nullptr;
+    this->swapChainModule = nullptr;
 }
 
 void AtmosphereSystem::UpdateSun()
@@ -536,42 +591,61 @@ void AtmosphereSystem::UpdateSun()
         throw std::runtime_error("AtmosphereSystem requires an active camera before InitializeAtmosphere.");
     }
 
+    if (!this->sunLight)
+        return;
+
     if (this->atmosphereType == AtmosphereType::PHYSICALLY_BASED_SKY)
     {
         this->sunLight->UpdateSun();
 
-        this->SVLUT_ComputeNode->Compute = true;
+        if (this->SVLUT_ComputeNode)
+        {
+            this->SVLUT_ComputeNode->Compute = true;
+        }
     }
 }
 
 void AtmosphereSystem::UpdateAtmopshereResolution()
 {
-    if (this->atmosphereType == AtmosphereType::PHYSICALLY_BASED_SKY)
+    if (this->atmosphereType != AtmosphereType::PHYSICALLY_BASED_SKY)
+        return;
+
+    if (this->resolutionUBO == nullptr)
+        return;
+
+    auto extraRenderTarget = QESessionManager::getInstance()->ExtraRenderTarget;
+    ScreenResolutionUniform resolution = {};
+
+    if (extraRenderTarget != nullptr)
     {
-        auto extraRenderTarget = QESessionManager::getInstance()->ExtraRenderTarget;
-        ScreenResolutionUniform resolution = {};
+        resolution.resolution = glm::vec2(extraRenderTarget->Extent.width, extraRenderTarget->Extent.height);
+    }
+    else
+    {
+        resolution.resolution = glm::vec2(this->swapChainModule->swapChainExtent.width, this->swapChainModule->swapChainExtent.height);
+    }
 
-        if (extraRenderTarget != nullptr)
-        {
-            resolution.resolution = glm::vec2(extraRenderTarget->Extent.width, extraRenderTarget->Extent.height);
-        }
-        else
-        {
-            resolution.resolution = glm::vec2(this->swapChainModule->swapChainExtent.width, this->swapChainModule->swapChainExtent.height);
-        }
+    for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
+    {
+        void* data = nullptr;
+        vkMapMemory(
+            deviceModule->device,
+            this->resolutionUBO->uniformBuffersMemory[currentFrame],
+            0,
+            sizeof(ScreenResolutionUniform),
+            0,
+            &data);
 
-        for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
-        {
-            void* data;
-            vkMapMemory(deviceModule->device, this->resolutionUBO->uniformBuffersMemory[currentFrame], 0, sizeof(ScreenResolutionUniform), 0, &data);
-            memcpy(data, &resolution, sizeof(ScreenResolutionUniform));
-            vkUnmapMemory(deviceModule->device, this->resolutionUBO->uniformBuffersMemory[currentFrame]);
-        }
+        memcpy(data, &resolution, sizeof(ScreenResolutionUniform));
+        vkUnmapMemory(deviceModule->device, this->resolutionUBO->uniformBuffersMemory[currentFrame]);
     }
 }
 
 void AtmosphereSystem::UpdatePerFrame(uint32_t frame)
 {
+    if (!this->IsInitialized)
+        return;
+
     UpdateSun();
     UpdateAtmopshereResolution();
     UpdateAtmosphereUBO();
@@ -633,4 +707,18 @@ void AtmosphereSystem::ApplyEditableAtmosphereDto(const AtmosphereDto& dto, bool
     {
         this->SVLUT_ComputeNode->Compute = true;
     }
+}
+
+void AtmosphereSystem::ResetSceneState()
+{
+    if (!this->computeNodeManager)
+        return;
+
+    this->computeNodeManager->RemoveComputeNodesByPrefix(TLUT_NODE_NAME);
+    this->computeNodeManager->RemoveComputeNodesByPrefix(MSLUT_NODE_NAME);
+    this->computeNodeManager->RemoveComputeNodesByPrefix(SVLUT_NODE_NAME);
+
+    Cleanup();
+    this->sunLight.reset();
+    this->IsInitialized = false;
 }

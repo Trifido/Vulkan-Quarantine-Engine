@@ -4,12 +4,27 @@
 #include <QESessionManager.h>
 #include "QECamera.h"
 
+void CullingSceneManager::EnsureInitialized()
+{
+    if (this->shader_aabb_ptr != nullptr && this->material_aabb_ptr != nullptr)
+        return;
+
+    InitializeCullingSceneResources();
+}
+
+void CullingSceneManager::ResetSceneState()
+{
+    CleanUp();
+}
+
 void CullingSceneManager::InitializeCullingSceneResources()
 {
-    this->aabb_objects.reserve(32);
+    if (this->aabb_objects.capacity() < 32)
+    {
+        this->aabb_objects.reserve(32);
+    }
 
     ShaderManager* shaderManager = ShaderManager::getInstance();
-
     this->shader_aabb_ptr = shaderManager->GetShader("shader_aabb_debug");
 
     MaterialManager* matManager = MaterialManager::getInstance();
@@ -21,16 +36,24 @@ void CullingSceneManager::InitializeCullingSceneResources()
         this->material_aabb_ptr->renderQueue = static_cast<unsigned int>(RenderQueue::Editor);
         this->material_aabb_ptr->InitializeMaterialData();
         matManager->AddMaterial(this->material_aabb_ptr);
+        matManager->MarkMaterialPersistent(nameDebugAABB);
     }
     else
     {
         this->material_aabb_ptr = matManager->GetMaterial(nameDebugAABB);
-        this->material_aabb_ptr->InitializeMaterialData();
+        if (this->material_aabb_ptr)
+        {
+            this->material_aabb_ptr->InitializeMaterialData();
+        }
     }
 }
 
-std::shared_ptr<AABBObject> CullingSceneManager::GenerateAABB(std::pair<glm::vec3, glm::vec3> aabbData, std::shared_ptr<QETransform> transform_ptr)
+std::shared_ptr<AABBObject> CullingSceneManager::GenerateAABB(
+    std::pair<glm::vec3, glm::vec3> aabbData,
+    std::shared_ptr<QETransform> transform_ptr)
 {
+    EnsureInitialized();
+
     this->aabb_objects.push_back(std::make_shared<AABBObject>());
 
     auto aabbPtr = this->aabb_objects.back();
@@ -57,40 +80,70 @@ void CullingSceneManager::CleanUp()
 
 void CullingSceneManager::DrawDebug(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
-    if (this->DebugMode)
+    if (!this->DebugMode)
+        return;
+
+    if (!this->shader_aabb_ptr || !this->material_aabb_ptr || !this->material_aabb_ptr->descriptor)
+        return;
+
+    auto pipelineModule = this->shader_aabb_ptr->PipelineModule;
+    if (!pipelineModule)
+        return;
+
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
+
+    vkCmdSetDepthTestEnable(commandBuffer, false);
+    vkCmdSetCullMode(commandBuffer, false);
+
+    vkCmdBindDescriptorSets(
+        commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        pipelineModule->pipelineLayout,
+        0,
+        1,
+        this->material_aabb_ptr->descriptor->getDescriptorSet(idx),
+        0,
+        nullptr);
+
+    for (unsigned int i = 0; i < this->aabb_objects.size(); i++)
     {
-        auto pipelineModule = this->shader_aabb_ptr->PipelineModule;
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
+        if (!this->aabb_objects.at(i))
+            continue;
 
-        vkCmdSetDepthTestEnable(commandBuffer, false);
-        vkCmdSetCullMode(commandBuffer, false);
+        auto transform = this->aabb_objects.at(i)->GetTransform();
+        if (!transform)
+            continue;
 
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipelineLayout, 0, 1, this->material_aabb_ptr->descriptor->getDescriptorSet(idx), 0, nullptr);
+        VkDeviceSize offsets[] = { 0 };
+        VkBuffer vertexBuffers[] = { this->aabb_objects.at(i)->vertexBuffer[0] };
+        vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+        vkCmdBindIndexBuffer(commandBuffer, this->aabb_objects.at(i)->indexBuffer[0], 0, VK_INDEX_TYPE_UINT32);
 
-        for (unsigned int i = 0; i < this->aabb_objects.size(); i++)
-        {
-            VkDeviceSize offsets[] = { 0 };
-            VkBuffer vertexBuffers[] = { this->aabb_objects.at(i)->vertexBuffer[0]};
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-            vkCmdBindIndexBuffer(commandBuffer, this->aabb_objects.at(i)->indexBuffer[0], 0, VK_INDEX_TYPE_UINT32);
+        VkShaderStageFlagBits stages = VK_SHADER_STAGE_ALL;
+        auto world = transform->GetWorldMatrix();
+        vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, stages, 0, sizeof(PushConstantStruct), &world);
 
-            VkShaderStageFlagBits stages = VK_SHADER_STAGE_ALL;
-            vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, stages, 0, sizeof(PushConstantStruct), &this->aabb_objects.at(i)->GetTransform()->GetWorldMatrix());
-
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->aabb_objects.at(i)->indices.size()), 1, 0, 0, 0);
-        }
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(this->aabb_objects.at(i)->indices.size()), 1, 0, 0, 0);
     }
 }
 
 void CullingSceneManager::UpdateCullingScene()
 {
     auto activeCamera = QESessionManager::getInstance()->ActiveCamera();
+    if (!activeCamera || !activeCamera->_frustumComponent)
+        return;
+
     if (activeCamera->_frustumComponent->IsComputeCullingActive())
     {
         for (unsigned int i = 0; i < this->aabb_objects.size(); i++)
         {
-            aabb_objects.at(i)->isGameObjectVisible = activeCamera->_frustumComponent->isAABBInside(*this->aabb_objects.at(i));
+            if (!aabb_objects.at(i))
+                continue;
+
+            aabb_objects.at(i)->isGameObjectVisible =
+                activeCamera->_frustumComponent->isAABBInside(*this->aabb_objects.at(i));
         }
+
         activeCamera->_frustumComponent->ActivateComputeCulling(false);
     }
 }

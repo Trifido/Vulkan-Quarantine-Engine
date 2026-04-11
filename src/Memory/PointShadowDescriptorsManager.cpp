@@ -236,6 +236,29 @@ void PointShadowDescriptorsManager::CreateOffscreenDescriptorSet()
     }
 }
 
+void PointShadowDescriptorsManager::ResetSceneState()
+{
+    _numPointLights = 0;
+
+    shadowMapUBOs.clear();
+    _imageViews.clear();
+    _samplers.clear();
+
+    offscreenBuffersInfo.clear();
+    renderBuffersInfo.clear();
+    renderDescriptorImageInfo.clear();
+
+    for (size_t i = 0; i < NUM_POINT_SHADOW_SETS; i++)
+    {
+        renderDescriptorSets[i] = VK_NULL_HANDLE;
+
+        for (size_t j = 0; j < MAX_NUM_POINT_LIGHTS; j++)
+        {
+            offscreenDescriptorSets[i][j] = VK_NULL_HANDLE;
+        }
+    }
+}
+
 void PointShadowDescriptorsManager::Clean()
 {
     for (uint32_t npl = 0; npl < this->_numPointLights; npl++)
@@ -270,20 +293,24 @@ void PointShadowDescriptorsManager::Clean()
     if (this->placeholderSampler != VK_NULL_HANDLE)
     {
         vkDestroySampler(this->deviceModule->device, this->placeholderSampler, nullptr);
+        this->placeholderSampler = VK_NULL_HANDLE;
     }
 
     if (this->placeholderImageView != VK_NULL_HANDLE)
     {
         vkDestroyImageView(deviceModule->device, this->placeholderImageView, nullptr);
+        this->placeholderImageView = VK_NULL_HANDLE;
     }
 
     if (this->placeholderImage != VK_NULL_HANDLE)
     {
         vkDestroyImage(deviceModule->device, this->placeholderImage, nullptr);
+        this->placeholderImage = VK_NULL_HANDLE;
     }
 
     if (this->placeholderMemory != VK_NULL_HANDLE)
     {
         vkFreeMemory(deviceModule->device, this->placeholderMemory, nullptr);
+        this->placeholderMemory = VK_NULL_HANDLE;
     }
 }
