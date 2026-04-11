@@ -504,7 +504,6 @@ void MaterialManager::ResetSceneState()
         if (it->second)
         {
             it->second->cleanup();
-            it->second->CleanLastResources();
             it->second.reset();
         }
 
