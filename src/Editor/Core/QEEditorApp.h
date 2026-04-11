@@ -72,6 +72,8 @@ private:
     glm::vec3 GetSpawnPositionInFrontOfEditorCamera(float distance) const;
     void UpdateEditorCameraInputState();
 
+    void FlushClosedTextureViewerPanels();
+
 private:
     VkDescriptorPool imguiPool{};
     std::unique_ptr<EditorContext> editorContext;
@@ -91,5 +93,7 @@ private:
     std::unique_ptr<QEConsoleLogSink> consoleLogSink;
     std::unique_ptr<EditorSceneObjectFactory> sceneObjectFactory;
     std::optional<std::filesystem::path> _pendingSceneOpenPath;
+
     std::vector<std::unique_ptr<QETextureViewerPanel>> _textureViewerPanels;
+    std::vector<std::unique_ptr<QETextureViewerPanel>> _textureViewerPanelsPendingDestroy;
 };

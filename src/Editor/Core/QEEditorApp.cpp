@@ -122,6 +122,8 @@ void QEEditorApp::OnShutdown()
 
 void QEEditorApp::OnFrameStart()
 {
+    FlushClosedTextureViewerPanels();
+
     if (_pendingSceneOpenPath.has_value())
     {
         const auto scenePath = *_pendingSceneOpenPath;
@@ -503,6 +505,19 @@ void QEEditorApp::UpdateEditorCameraInputState()
     controller->SetInputEnabled(allowInput);
 }
 
+void QEEditorApp::FlushClosedTextureViewerPanels()
+{
+    if (_textureViewerPanelsPendingDestroy.empty())
+        return;
+
+    if (deviceModule && deviceModule->device != VK_NULL_HANDLE)
+    {
+        vkDeviceWaitIdle(deviceModule->device);
+    }
+
+    _textureViewerPanelsPendingDestroy.clear();
+}
+
 void QEEditorApp::QueueExternalDroppedFile(const std::filesystem::path& path)
 {
     _externalDroppedFiles.push_back(path);
@@ -547,8 +562,13 @@ void QEEditorApp::DrawTextureViewerPanels()
         (*it)->Draw();
 
         if (!(*it)->IsOpen())
+        {
+            _textureViewerPanelsPendingDestroy.push_back(std::move(*it));
             it = _textureViewerPanels.erase(it);
+        }
         else
+        {
             ++it;
+        }
     }
 }
