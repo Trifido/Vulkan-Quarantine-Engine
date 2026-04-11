@@ -565,6 +565,15 @@ void QEProjectBrowserPanel::HandleExternalFileDrops()
     if (!_isWindowHovered && !_isContentsPanelHovered)
         return;
 
+    QEProjectAssetItem* selectedFolder = _navigation.GetSelectedFolder();
+    if (selectedFolder == nullptr || !selectedFolder->IsDirectory)
+    {
+        _pendingExternalDrops.clear();
+        return;
+    }
+
+    const std::string targetFolder = selectedFolder->AbsolutePath;
+
     for (const auto& droppedPath : _pendingExternalDrops)
     {
         if (!IsImportableExternalFile(droppedPath))
@@ -572,7 +581,9 @@ void QEProjectBrowserPanel::HandleExternalFileDrops()
 
         try
         {
-            QEAssetImportManager::Get().EnqueueMeshImport(droppedPath.string());
+            QEAssetImportManager::Get().EnqueueMeshImport(
+                droppedPath.string(),
+                targetFolder);
         }
         catch (const std::exception& e)
         {

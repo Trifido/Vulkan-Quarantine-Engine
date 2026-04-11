@@ -28,11 +28,12 @@ QEAssetImportManager::~QEAssetImportManager()
     }
 }
 
-std::shared_ptr<QEImportJob> QEAssetImportManager::EnqueueMeshImport(const std::string& sourcePath)
+std::shared_ptr<QEImportJob> QEAssetImportManager::EnqueueMeshImport(const std::string& sourcePath, const std::string& targetFolder)
 {
     auto job = std::make_shared<QEImportJob>();
     job->Id = _nextId.fetch_add(1, std::memory_order_relaxed);
     job->SourcePath = sourcePath;
+    job->TargetFolder = targetFolder;
     job->DisplayName = std::filesystem::path(sourcePath).filename().string();
     job->State.store(QEImportJobState::Queued, std::memory_order_relaxed);
     job->SetProgress(0.0f, "Queued", "Waiting in queue");
@@ -154,7 +155,7 @@ void QEAssetImportManager::WorkerLoop()
                     job->SetProgress(value, stage, message);
                 };
 
-            QEProjectManager::ImportMeshFile(job->SourcePath, progressCb);
+            QEProjectManager::ImportMeshFile(job->SourcePath, job->TargetFolder, progressCb);
 
             job->SetResultPath(job->SourcePath);
             job->State.store(QEImportJobState::Succeeded, std::memory_order_relaxed);

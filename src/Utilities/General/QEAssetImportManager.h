@@ -33,6 +33,7 @@ struct QEImportJob
     uint64_t Id = 0;
     std::string SourcePath;
     std::string DisplayName;
+    std::string TargetFolder;
 
     std::atomic<QEImportJobState> State{ QEImportJobState::Queued };
     QEImportProgress Progress;
@@ -70,7 +71,9 @@ public:
     QEAssetImportManager();
     ~QEAssetImportManager();
 
-    std::shared_ptr<QEImportJob> EnqueueMeshImport(const std::string& sourcePath);
+    std::shared_ptr<QEImportJob> EnqueueMeshImport(
+        const std::string& sourcePath,
+        const std::string& targetFolder);
 
     void UpdateMainThread();
     std::vector<std::shared_ptr<QEImportJob>> GetJobsSnapshot() const;

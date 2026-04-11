@@ -306,7 +306,10 @@ bool QEProjectManager::CreateYamlScene(const std::string& sceneName)
     return true;
 }
 
-bool QEProjectManager::ImportMeshFile(const fs::path& inputFile, const QEImportProgressCallback& onProgress)
+bool QEProjectManager::ImportMeshFile(
+    const fs::path& inputFile,
+    const fs::path& targetFolder,
+    const QEImportProgressCallback& onProgress)
 {
     if (!fs::exists(inputFile))
     {
@@ -314,21 +317,35 @@ bool QEProjectManager::ImportMeshFile(const fs::path& inputFile, const QEImportP
         return false;
     }
 
-    string filename = inputFile.filename().string();
+    const fs::path resolvedTarget = ResolveProjectPath(targetFolder);
 
-    fs::path folderName = inputFile.parent_path().filename();
-    fs::path modelFolderPath = CURRENT_PROJECT_PATH / ASSETS_FOLDER / MODELS_FOLDER / folderName;
+    if (!IsInsideCurrentProject(resolvedTarget))
+    {
+        QE_LOG_ERROR_CAT_F("QEProjectManager", "ImportMeshFile - Target outside project: {}", resolvedTarget.string());
+        return false;
+    }
 
-    CreateFolder(CURRENT_PROJECT_PATH / ASSETS_FOLDER / MODELS_FOLDER, folderName.string());
-    CreateFolder(modelFolderPath, MESH_FOLDER);
-    CreateFolder(modelFolderPath, TEXTURE_FOLDER);
-    CreateFolder(modelFolderPath, MATERIAL_FOLDER);
-    CreateFolder(modelFolderPath, ANIMATION_FOLDER);
+    if (!fs::exists(resolvedTarget) || !fs::is_directory(resolvedTarget))
+    {
+        QE_LOG_ERROR_CAT_F("QEProjectManager", "ImportMeshFile - Target folder invalid: {}", resolvedTarget.string());
+        return false;
+    }
 
-    fs::path outputMaterialFolderPath = modelFolderPath / MATERIAL_FOLDER;
-    fs::path outputTextureFolderPath = modelFolderPath / TEXTURE_FOLDER;
-    fs::path outputMeshPath = modelFolderPath / MESH_FOLDER / filename;
-    fs::path outputAnimationFolderPath = modelFolderPath / ANIMATION_FOLDER;
+    const std::string filename = inputFile.filename().string();
+
+    fs::path outputMaterialFolderPath = resolvedTarget / MATERIAL_FOLDER;
+    fs::path outputTextureFolderPath = resolvedTarget / TEXTURE_FOLDER;
+    fs::path outputMeshPath = resolvedTarget / MESH_FOLDER / filename;
+    fs::path outputAnimationFolderPath = resolvedTarget / ANIMATION_FOLDER;
+
+    std::error_code ec;
+    fs::create_directories(outputMaterialFolderPath, ec);
+    ec.clear();
+    fs::create_directories(outputTextureFolderPath, ec);
+    ec.clear();
+    fs::create_directories(outputMeshPath.parent_path(), ec);
+    ec.clear();
+    fs::create_directories(outputAnimationFolderPath, ec);
 
     outputMeshPath.replace_extension(".gltf");
 
