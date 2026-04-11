@@ -23,6 +23,7 @@
 #include "Panels/QEProjectBrowserPanel.h"
 #include "Panels/ConsolePanel.h"
 #include "Panels/MaterialInspectorPanel.h"
+#include "Panels/QETextureViewerPanel.h"
 #include "Rendering/EditorViewportResources.h"
 #include <QEProjectManager.h>
 #include <QEMeshRenderer.h>
@@ -187,12 +188,20 @@ void QEEditorApp::DrawEditorUI()
         panel->Draw();
     }
 
+    DrawTextureViewerPanels();
+
     if (projectBrowserPanelPtr != nullptr)
     {
         auto pendingSceneOpen = projectBrowserPanelPtr->ConsumePendingSceneOpenRequest();
         if (pendingSceneOpen.has_value())
         {
             _pendingSceneOpenPath = *pendingSceneOpen;
+        }
+
+        auto pendingTextureOpen = projectBrowserPanelPtr->ConsumePendingTextureOpenRequest();
+        if (pendingTextureOpen.has_value())
+        {
+            OpenTextureViewer(*pendingTextureOpen);
         }
     }
 
@@ -507,4 +516,39 @@ const std::vector<std::filesystem::path>& QEEditorApp::GetExternalDroppedFiles()
 void QEEditorApp::ClearExternalDroppedFiles()
 {
     _externalDroppedFiles.clear();
+}
+
+void QEEditorApp::OpenTextureViewer(const std::filesystem::path& texturePath)
+{
+    auto it = std::find_if(
+        _textureViewerPanels.begin(),
+        _textureViewerPanels.end(),
+        [&](const std::unique_ptr<QETextureViewerPanel>& panel)
+        {
+            return panel && panel->GetTexturePath() == texturePath;
+        });
+
+    if (it != _textureViewerPanels.end())
+        return;
+
+    _textureViewerPanels.push_back(std::make_unique<QETextureViewerPanel>(texturePath));
+}
+
+void QEEditorApp::DrawTextureViewerPanels()
+{
+    for (auto it = _textureViewerPanels.begin(); it != _textureViewerPanels.end();)
+    {
+        if (!(*it))
+        {
+            it = _textureViewerPanels.erase(it);
+            continue;
+        }
+
+        (*it)->Draw();
+
+        if (!(*it)->IsOpen())
+            it = _textureViewerPanels.erase(it);
+        else
+            ++it;
+    }
 }

@@ -22,6 +22,7 @@ class QEEditorConsoleSink;
 class QEConsoleLogSink;
 class ConsolePanel;
 class EditorSceneObjectFactory;
+class QETextureViewerPanel;
 
 class QEEditorApp : public QEBaseApp
 {
@@ -64,6 +65,8 @@ private:
     void HandleShortcuts();
     void SaveScene();
     void OpenScene(const std::filesystem::path& scenePath);
+    void OpenTextureViewer(const std::filesystem::path& texturePath);
+    void DrawTextureViewerPanels();
 
     void SpawnDroppedMesh(const std::string& assetPath);
     glm::vec3 GetSpawnPositionInFrontOfEditorCamera(float distance) const;
@@ -88,4 +91,5 @@ private:
     std::unique_ptr<QEConsoleLogSink> consoleLogSink;
     std::unique_ptr<EditorSceneObjectFactory> sceneObjectFactory;
     std::optional<std::filesystem::path> _pendingSceneOpenPath;
+    std::vector<std::unique_ptr<QETextureViewerPanel>> _textureViewerPanels;
 };

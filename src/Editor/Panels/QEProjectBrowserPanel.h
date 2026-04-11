@@ -30,6 +30,7 @@ public:
     void InitializeIcons();
 
     std::optional<std::filesystem::path> ConsumePendingSceneOpenRequest();
+    std::optional<std::filesystem::path> ConsumePendingTextureOpenRequest();
 
 private:
     void DrawTopBar();
@@ -48,6 +49,8 @@ private:
     void DrawImportFooter();
     bool HasVisibleImportFooter() const;
 
+    bool IsTextureAsset(const std::filesystem::path& path) const;
+
 private:
     QEProjectBrowserNavigation _navigation;
     QEProjectBrowserActions _actions;
@@ -55,6 +58,7 @@ private:
 
     std::vector<std::filesystem::path> _pendingExternalDrops;
     std::optional<std::filesystem::path> _pendingSceneOpenRequest;
+    std::optional<std::filesystem::path> _pendingTextureOpenRequest;
 
     bool _isWindowHovered = false;
     bool _isContentsPanelHovered = false;

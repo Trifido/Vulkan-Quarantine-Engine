@@ -273,6 +273,10 @@ void QEProjectBrowserPanel::DrawAssetTile(QEProjectAssetItem* item, float tileSi
             {
                 _pendingSceneOpenRequest = assetPath;
             }
+            else if (IsTextureAsset(assetPath))
+            {
+                _pendingTextureOpenRequest = assetPath;
+            }
         }
     }
 
@@ -522,10 +526,10 @@ void QEProjectBrowserPanel::DrawImportFooter()
         std::string overlay;
         switch (state)
         {
-        case QEImportJobState::Queued:  overlay = "Queued"; break;
-        case QEImportJobState::Running: overlay = message.empty() ? "Importing..." : message; break;
-        case QEImportJobState::Failed:  overlay = "Failed"; break;
-        default:                        overlay.clear(); break;
+            case QEImportJobState::Queued:  overlay = "Queued"; break;
+            case QEImportJobState::Running: overlay = message.empty() ? "Importing..." : message; break;
+            case QEImportJobState::Failed:  overlay = "Failed"; break;
+            default:                        overlay.clear(); break;
         }
 
         ImGui::ProgressBar(progress, ImVec2(-1.0f, 0.0f), overlay.c_str());
@@ -638,4 +642,28 @@ void QEProjectBrowserPanel::DrawCreateMenu(QEProjectAssetItem* currentFolder)
 
         ImGui::EndPopup();
     }
+}
+
+bool QEProjectBrowserPanel::IsTextureAsset(const std::filesystem::path& path) const
+{
+    std::string ext = path.extension().string();
+    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+
+    return ext == ".png" ||
+        ext == ".jpg" ||
+        ext == ".jpeg" ||
+        ext == ".ktx2" ||
+        ext == ".dds" ||
+        ext == ".tga" ||
+        ext == ".bmp";
+}
+
+std::optional<std::filesystem::path> QEProjectBrowserPanel::ConsumePendingTextureOpenRequest()
+{
+    if (!_pendingTextureOpenRequest.has_value())
+        return std::nullopt;
+
+    auto result = _pendingTextureOpenRequest;
+    _pendingTextureOpenRequest.reset();
+    return result;
 }

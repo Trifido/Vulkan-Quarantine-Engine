@@ -86,6 +86,12 @@ public:
     CustomTexture(aiTexel* data, unsigned int width, unsigned int height, TEXTURE_TYPE type);
     CustomTexture(unsigned int width, unsigned int height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, TEXTURE_TYPE type);
     CustomTexture(std::string path, TEXTURE_TYPE type, QEColorSpace cs);
+
+    int GetWidth() const { return texWidth; }
+    int GetHeight() const { return texHeight; }
+    int GetChannelCount() const { return texChannels; }
+    uint32_t GetMipLevels() const { return mipLevels; }
+
     void createTextureImage(std::string path = NULL);
     void createTextureImage(std::string path, QEColorSpace cs);
     void createCubemapTextureImage(std::string path = NULL);
