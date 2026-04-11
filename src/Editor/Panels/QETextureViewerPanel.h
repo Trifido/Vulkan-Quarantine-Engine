@@ -3,6 +3,7 @@
 #include "IEditorPanel.h"
 #include <filesystem>
 #include <string>
+#include <memory>
 #include <imgui.h>
 
 class QETexturePreview;
@@ -23,6 +24,9 @@ private:
     ImVec2 ComputeFitSize(const ImVec2& avail, int texWidth, int texHeight) const;
     std::string BuildWindowTitle() const;
 
+    void HandleCanvasInput(const ImVec2& canvasPos, const ImVec2& canvasSize);
+    void DrawTextureCanvas();
+
 private:
     std::filesystem::path _texturePath;
     std::string _windowTitle;
@@ -32,6 +36,9 @@ private:
 
     float _zoom = 1.0f;
     bool _fitToWindow = true;
+
+    bool _isPanning = false;
+    ImVec2 _lastPanMousePos = ImVec2(0.0f, 0.0f);
 
     std::unique_ptr<QETexturePreview> _preview;
 };
