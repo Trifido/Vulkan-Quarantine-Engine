@@ -3,6 +3,7 @@
 #include "IEditorPanel.h"
 
 #include <Editor/Core/EditorSelectionManager.h>
+#include <LightType.h>
 #include <memory>
 #include <string>
 
@@ -33,6 +34,7 @@ private:
     void DrawToolbar();
     void DrawCreateMenu();
     void CreatePrimitive(QEPrimitiveType type);
+    void CreateLight(LightType type);
 
 private:
     GameObjectManager* gameObjectManager = nullptr;
@@ -43,7 +45,6 @@ private:
     std::shared_ptr<QEGameObject> pendingDeleteGameObject = nullptr;
     bool pendingCreateEmptyGameObject = false;
 
-//DRAG & DROP
 private:
     bool IsDescendantOf(const std::shared_ptr<QEGameObject>& node, const std::shared_ptr<QEGameObject>& potentialAncestor) const;
     bool ReparentGameObject(const std::shared_ptr<QEGameObject>& child, const std::shared_ptr<QEGameObject>& newParent);
@@ -51,7 +52,6 @@ private:
     std::shared_ptr<QEGameObject> draggingGameObject = nullptr;
     bool dragDropHandledThisFrame = false;
 
-//RENAME QEGAMEOBJECTS
 private:
     void StartRename(const std::shared_ptr<QEGameObject>& gameObject);
     void DrawRenamePopup();

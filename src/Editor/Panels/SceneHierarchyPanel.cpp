@@ -7,6 +7,7 @@
 #include <Editor/Core/EditorContext.h>
 #include <Editor/Core/EditorSelectionManager.h>
 #include <Editor/Core/EditorSceneObjectFactory.h>
+#include <LightType.h>
 
 SceneHierarchyPanel::SceneHierarchyPanel(
     GameObjectManager* gameObjectManager,
@@ -460,6 +461,15 @@ void SceneHierarchyPanel::DrawCreateMenu()
         if (ImGui::MenuItem("Torus")) { CreatePrimitive(QEPrimitiveType::Torus); }
         ImGui::EndMenu();
     }
+
+    if (ImGui::BeginMenu("Light"))
+    {
+        if (ImGui::MenuItem("Point Light")) { CreateLight(LightType::POINT_LIGHT); }
+        if (ImGui::MenuItem("Directional Light")) { CreateLight(LightType::DIRECTIONAL_LIGHT); }
+        if (ImGui::MenuItem("Spot Light")) { CreateLight(LightType::SPOT_LIGHT); }
+
+        ImGui::EndMenu();
+    }
 }
 
 void SceneHierarchyPanel::CreatePrimitive(QEPrimitiveType type)
@@ -468,4 +478,12 @@ void SceneHierarchyPanel::CreatePrimitive(QEPrimitiveType type)
         return;
 
     sceneObjectFactory->CreatePrimitive(type, 5.0f);
+}
+
+void SceneHierarchyPanel::CreateLight(LightType type)
+{
+    if (!sceneObjectFactory)
+        return;
+
+    sceneObjectFactory->CreateLight(type, 5.0f);
 }

@@ -7,48 +7,44 @@
 #include <DeviceModule.h>
 #include <ShaderModule.h>
 
-constexpr uint32_t                  NUM_POINT_SHADOW_SETS = 2;
-constexpr uint32_t                  NUM_POINT_SHADOW_PASSES = 2;
-constexpr uint32_t                  MAX_NUM_POINT_LIGHTS = 10;
+constexpr uint32_t NUM_POINT_SHADOW_SETS = 2;
+constexpr uint32_t NUM_POINT_SHADOW_PASSES = 2;
+constexpr uint32_t MAX_NUM_POINT_LIGHTS = 10;
 
 class PointShadowDescriptorsManager
 {
 private:
-    DeviceModule*                   deviceModule = nullptr;
-    VkPipelineLayout                pipelineLayout[NUM_POINT_SHADOW_PASSES];
+    DeviceModule* deviceModule = nullptr;
+    VkPipelineLayout pipelineLayout[NUM_POINT_SHADOW_PASSES]{};
 
-    VkDescriptorSetLayout           renderDescriptorSetLayout;
-    VkDescriptorSetLayout           offscreenDescriptorSetLayout;
+    VkDescriptorSetLayout renderDescriptorSetLayout = VK_NULL_HANDLE;
+    VkDescriptorSetLayout offscreenDescriptorSetLayout = VK_NULL_HANDLE;
 
-    VkDescriptorPool                renderDescriptorPool;
-    VkDescriptorPool                offscreenDescriptorPool;
+    VkDescriptorPool renderDescriptorPool = VK_NULL_HANDLE;
+    VkDescriptorPool offscreenDescriptorPool = VK_NULL_HANDLE;
 
-    // Offscreen resources
-    uint32_t    _numPointLights = 0;
+    uint32_t _numPointLights = 0;
     std::vector<std::shared_ptr<UniformBufferObject>> shadowMapUBOs;
-    std::vector<VkDescriptorBufferInfo> offscreenBuffersInfo;
 
-    // Render resources
-    std::vector<VkDescriptorBufferInfo> renderBuffersInfo;
     std::vector<VkDescriptorImageInfo> renderDescriptorImageInfo;
-    std::shared_ptr<UniformBufferObject> pointlightIdBuffer;
-    VkDeviceSize sizePointlightIdBuffer;
 
-    // ImageViews & Samplers
-    std::vector<VkImageView>    _imageViews;
-    std::vector<VkSampler>      _samplers;
+    std::vector<VkImageView> _imageViews;
+    std::vector<VkSampler> _samplers;
 
     VkDeviceMemory placeholderMemory = VK_NULL_HANDLE;
     VkImage placeholderImage = VK_NULL_HANDLE;
     VkImageView placeholderImageView = VK_NULL_HANDLE;
     VkSampler placeholderSampler = VK_NULL_HANDLE;
 
+    VkDescriptorBufferInfo offscreenBufferInfo{};
+
 public:
-    VkDescriptorSet offscreenDescriptorSets[NUM_POINT_SHADOW_SETS][MAX_NUM_POINT_LIGHTS];
-    VkDescriptorSet renderDescriptorSets[NUM_POINT_SHADOW_SETS];
+    VkDescriptorSet offscreenDescriptorSets[NUM_POINT_SHADOW_SETS][MAX_NUM_POINT_LIGHTS]{};
+    VkDescriptorSet renderDescriptorSets[NUM_POINT_SHADOW_SETS]{};
 
 public:
     PointShadowDescriptorsManager();
+
     void AddPointLightResources(std::shared_ptr<UniformBufferObject> shadowMapUBO, VkImageView imageView, VkSampler sampler);
     void DeletePointLightResources(int idPos);
     void InitializeDescriptorSetLayouts(std::shared_ptr<ShaderModule> offscreen_shader_ptr);
@@ -57,15 +53,33 @@ public:
 
 private:
     void CreateOffscreenDescriptorPool();
-    void CreateOffscreenDescriptorSet();
-    void SetOffscreenDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize);
     void CreateRenderDescriptorPool();
+
+    void CreateOffscreenDescriptorSet();
     void CreateRenderDescriptorSet();
+
+    void AllocateOffscreenDescriptorSetForLight(uint32_t lightIndex);
+    void UpdateRenderDescriptorSets();
+
+    void SetOffscreenDescriptorWrite(
+        VkWriteDescriptorSet& descriptorWrite,
+        VkDescriptorSet descriptorSet,
+        VkDescriptorType descriptorType,
+        uint32_t binding,
+        VkBuffer buffer,
+        VkDeviceSize bufferSize);
+
+    void SetCubeMapDescriptorWrite(
+        VkWriteDescriptorSet& descriptorWrite,
+        VkDescriptorSet descriptorSet,
+        VkDescriptorType descriptorType,
+        uint32_t binding);
+
     VkDescriptorSetLayout CreateRenderDescriptorSetLayout();
-    void SetCubeMapDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding);
     VkDescriptorBufferInfo GetBufferInfo(VkBuffer buffer, VkDeviceSize bufferSize);
     void CreateCubemapPlaceHolder();
+
+    void WaitForGpuIdle() const;
 };
 
-#endif // !POINT_SHADOW_DESCRIPTOR
-
+#endif

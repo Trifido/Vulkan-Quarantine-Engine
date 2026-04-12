@@ -28,9 +28,15 @@ std::unique_ptr<IQEMeshGenerator> QEGeometryComponent::GetGenerator(std::string 
 {
     if (filepath != "QECore")
     {
+        if (filepath.empty())
+        {
+            return nullptr;
+        }
+
         return std::make_unique<QEMeshGenerator>(filepath);
     }
-    else if (name == "CubePrimitive")
+
+    if (name == "CubePrimitive")
     {
         return std::make_unique<CubeGenerator>();
     }
@@ -62,10 +68,24 @@ std::unique_ptr<IQEMeshGenerator> QEGeometryComponent::GetGenerator(std::string 
     {
         return std::make_unique<CapsuleGenerator>();
     }
-    else
+    else if (name == "ConePrimitive")
     {
-        return std::make_unique<QEMeshGenerator>();
+        return std::make_unique<ConeGenerator>();
     }
+    else if (name == "CylinderPrimitive")
+    {
+        return std::make_unique<CylinderGenerator>();
+    }
+    else if (name == "PyramidPrimitive")
+    {
+        return std::make_unique<PyramidGenerator>();
+    }
+    else if (name == "TorusPrimitive")
+    {
+        return std::make_unique<TorusGenerator>();
+    }
+
+    return nullptr;
 }
 
 void QEGeometryComponent::ReleaseResources()
@@ -118,6 +138,11 @@ void QEGeometryComponent::QEStart()
         generator = GetGenerator(_name, _filepath);
     }
 
+    if (generator == nullptr)
+    {
+        return;
+    }
+
     BuildMesh();
 
     QEGameComponent::QEStart();
@@ -146,6 +171,11 @@ void QEGeometryComponent::QEDestroy()
 
 void QEGeometryComponent::BuildMesh()
 {
+    if (!generator)
+    {
+        return;
+    }
+
     mesh = generator->GenerateQEMesh();
 
     _name = mesh.Name;

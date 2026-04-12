@@ -172,7 +172,30 @@ void CommandPoolModule::setSwapchainImGuiRenderPass(VkFramebuffer& framebuffer, 
 
 void CommandPoolModule::setDirectionalShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, uint32_t idDirlight, uint32_t iCBuffer)
 {
+    if (!lightManager || !lightManager->CSMDescritors)
+        return;
+
+    if (idDirlight >= lightManager->DirLights.size())
+        return;
+
+    if (iCBuffer >= NUM_CSM_SETS)
+        return;
+
     auto dirLight = this->lightManager->DirLights.at(idDirlight);
+    if (!dirLight)
+        return;
+
+    if (!dirLight->shadowMappingResourcesPtr)
+        return;
+
+    if (idDirlight >= MAX_NUM_DIR_LIGHTS)
+        return;
+
+    VkDescriptorSet descriptorSet =
+        lightManager->CSMDescritors->offscreenDescriptorSets[iCBuffer][idDirlight];
+
+    if (descriptorSet == VK_NULL_HANDLE)
+        return;
 
     uint32_t size = dirLight->shadowMappingResourcesPtr->TextureSize;
     auto depthBiasConstant = dirLight->shadowMappingResourcesPtr->DepthBiasConstant;
@@ -181,8 +204,8 @@ void CommandPoolModule::setDirectionalShadowRenderPass(std::shared_ptr<VkRenderP
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = (float)size;
-    viewport.height = (float)size;
+    viewport.width = static_cast<float>(size);
+    viewport.height = static_cast<float>(size);
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
@@ -208,22 +231,30 @@ void CommandPoolModule::setDirectionalShadowRenderPass(std::shared_ptr<VkRenderP
     vkCmdSetDepthBias(commandBuffers[iCBuffer], depthBiasConstant, 0.0f, depthBiasSlope);
     vkCmdSetDepthTestEnable(commandBuffers[iCBuffer], true);
     vkCmdSetDepthWriteEnable(commandBuffers[iCBuffer], true);
-
     vkCmdSetFrontFace(commandBuffers[iCBuffer], VK_FRONT_FACE_CLOCKWISE);
     vkCmdSetCullMode(commandBuffers[iCBuffer], VK_CULL_MODE_FRONT_BIT);
 
     auto pipeline = lightManager->CSMPipelineModule->pipeline;
     auto pipelineLayout = lightManager->CSMPipelineModule->pipelineLayout;
 
-    // One pass per cascade
     for (uint32_t cascadeIndex = 0; cascadeIndex < SHADOW_MAP_CASCADE_COUNT; cascadeIndex++)
     {
-        renderPassInfo.framebuffer = dirLight->shadowMappingResourcesPtr->CascadeResourcesPtr->at(cascadeIndex).frameBuffer;
+        renderPassInfo.framebuffer =
+            dirLight->shadowMappingResourcesPtr->CascadeResourcesPtr->at(cascadeIndex).frameBuffer;
 
         vkCmdBeginRenderPass(commandBuffers[iCBuffer], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline(commandBuffers[iCBuffer], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-        vkCmdBindDescriptorSets(commandBuffers[iCBuffer], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &lightManager->CSMDescritors->offscreenDescriptorSets[iCBuffer][idDirlight], 0, NULL);
+        vkCmdBindDescriptorSets(
+            commandBuffers[iCBuffer],
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            pipelineLayout,
+            0,
+            1,
+            &descriptorSet,
+            0,
+            nullptr);
+
         this->gameObjectManager->CSMCommand(commandBuffers[iCBuffer], iCBuffer, pipelineLayout, cascadeIndex);
 
         vkCmdEndRenderPass(commandBuffers[iCBuffer]);
@@ -232,7 +263,30 @@ void CommandPoolModule::setDirectionalShadowRenderPass(std::shared_ptr<VkRenderP
 
 void CommandPoolModule::setOmniShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, uint32_t idPointlight, uint32_t iCBuffer)
 {
-    auto pointLight = this->lightManager->PointLights.at(idPointlight);
+    if (!lightManager)
+        return;
+
+    if (idPointlight >= lightManager->PointLights.size())
+        return;
+
+    auto pointLight = lightManager->PointLights.at(idPointlight);
+    if (!pointLight)
+        return;
+
+    if (!pointLight->shadowMappingResourcesPtr)
+        return;
+
+    if (!pointLight->transform)
+        return;
+
+    if (!lightManager->PointShadowDescritors)
+        return;
+
+    VkDescriptorSet descriptorSet =
+        lightManager->PointShadowDescritors->offscreenDescriptorSets[iCBuffer][idPointlight];
+
+    if (descriptorSet == VK_NULL_HANDLE)
+        return;
 
     uint32_t size = pointLight->shadowMappingResourcesPtr->TextureSize;
     auto depthBiasConstant = pointLight->shadowMappingResourcesPtr->DepthBiasConstant;

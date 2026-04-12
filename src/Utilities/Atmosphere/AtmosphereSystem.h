@@ -23,6 +23,9 @@ private:
     glm::vec3 sunDirection;
     float sunIntensity;
 
+    AtmosphereDto pendingAtmosphereDto{};
+    bool hasPendingAtmosphereDto = false;
+
 private:
     AtmosphereUniform atmosphereData{};
 
@@ -31,8 +34,12 @@ private:
     void UpdateAtmosphereUBO();
     void MarkAtmosphereLutsDirty();
 
+    void EnsureSunLightCreated();
+    void ApplyPendingSunState();
+
 public:
-    bool IsInitialized;
+    bool IsInitialized = false;
+    bool ResourcesReady = false;
 
 private:
     friend class QESingleton<AtmosphereSystem>; // Permitir acceso al constructor

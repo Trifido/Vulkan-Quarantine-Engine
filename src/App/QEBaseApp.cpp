@@ -133,8 +133,6 @@ void QEBaseApp::loadScene(QEScene& scene)
 {
     scene.DeserializeScene();
 
-    gameObjectManager->StartQEGameObjects();
-
     sessionManager->SetEditorMode(IsEditorMode());
     sessionManager->RegisterSceneCameras();
     sessionManager->ResolveActiveCamera();
@@ -155,6 +153,9 @@ void QEBaseApp::loadScene(QEScene& scene)
 
     lightManager->AddDirShadowMapShader(materialManager->csm_shader);
     lightManager->AddOmniShadowMapShader(materialManager->omni_shadow_mapping_shader);
+
+    gameObjectManager->RegisterSceneLights();
+    gameObjectManager->StartQEGameObjects();
 
     atmosphereSystem = AtmosphereSystem::getInstance();
     atmosphereSystem->LoadAtmosphereDto(scene.atmosphereDto);

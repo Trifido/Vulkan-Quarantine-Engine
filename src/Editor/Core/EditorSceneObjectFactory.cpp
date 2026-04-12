@@ -12,6 +12,11 @@
 #include <QEMeshRenderer.h>
 #include <QEMeshGenerator.h>
 
+#include <LightManager.h>
+#include <PointLight.h>
+#include <DirectionalLight.h>
+#include <SpotLight.h>
+
 #include <filesystem>
 #include <glm/geometric.hpp>
 
@@ -146,4 +151,86 @@ void EditorSceneObjectFactory::FinalizeCreatedObject(const std::shared_ptr<QEGam
     {
         selectionManager->SelectGameObject(gameObject);
     }
+}
+
+std::shared_ptr<QEGameObject> EditorSceneObjectFactory::CreateLight(LightType type, float spawnDistance)
+{
+    if (!gameObjectManager)
+        return nullptr;
+
+    auto lightManager = LightManager::getInstance();
+    if (!lightManager)
+        return nullptr;
+
+    // 1. Nombre base
+    std::string baseName;
+    switch (type)
+    {
+    case LightType::POINT_LIGHT:       baseName = "Point Light"; break;
+    case LightType::DIRECTIONAL_LIGHT: baseName = "Directional Light"; break;
+    case LightType::SPOT_LIGHT:        baseName = "Spot Light"; break;
+    default:                           baseName = "Light"; break;
+    }
+
+    // 2. Crear GameObject
+    auto newObject = std::make_shared<QEGameObject>(baseName);
+
+    // 3. Crear luz
+    auto light = lightManager->CreateLight(type, baseName);
+    if (!light)
+        return nullptr;
+
+    // 4. Añadir componente
+    newObject->AddComponent(light);
+
+    // 5. Añadir a escena
+    gameObjectManager->AddGameObject(newObject);
+
+    // 6. Inicializar valores por defecto
+    switch (type)
+    {
+    case LightType::POINT_LIGHT:
+    {
+        light->diffuse = glm::vec3(1.0f);
+        light->specular = glm::vec3(1.0f);
+        light->SetDistanceEffect(10.0f);
+    }
+    break;
+
+    case LightType::DIRECTIONAL_LIGHT:
+    {
+        light->diffuse = glm::vec3(1.0f);
+        light->specular = glm::vec3(1.0f);
+
+        if (auto transform = newObject->GetComponent<QETransform>())
+        {
+            transform->SetLocalEulerDegrees(glm::vec3(50.0f, -30.0f, 0.0f));
+        }
+    }
+    break;
+
+    case LightType::SPOT_LIGHT:
+    {
+        light->diffuse = glm::vec3(1.0f);
+        light->specular = glm::vec3(1.0f);
+        light->SetDistanceEffect(20.0f);
+
+        if (auto transform = newObject->GetComponent<QETransform>())
+        {
+            transform->SetLocalEulerDegrees(glm::vec3(90.0f, 0.0f, 0.0f));
+        }
+    }
+    break;
+    }
+
+    // 7. Registrar en LightManager (IMPORTANTE)
+    std::string finalName = baseName;
+    lightManager->AddNewLight(light, finalName);
+
+    newObject->Name = finalName;
+
+    // 8. Posición + selección (igual que primitivas)
+    FinalizeCreatedObject(newObject, spawnDistance);
+
+    return newObject;
 }

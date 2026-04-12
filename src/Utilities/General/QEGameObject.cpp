@@ -26,61 +26,61 @@ void QEGameObject::QEStart()
     {
         geometryComponent->QEStart();
 
-        // Set the AABB component
         auto mesh = geometryComponent->GetMesh();
-
-        auto cullingSceneManager = CullingSceneManager::getInstance();
-        auto aabbCulling = cullingSceneManager->GenerateAABB(mesh->BoundingBox, transform);
-        this->AddComponent<AABBObject>(aabbCulling);
-
-        //Set the materials
-        std::set<std::string> matIDs;
-
-        if (mesh->MaterialRel.empty())
+        if (mesh != nullptr)
         {
-            auto mat = this->GetMaterial();
-            if (mat != nullptr)
+            // Set the AABB component
+            auto cullingSceneManager = CullingSceneManager::getInstance();
+            auto aabbCulling = cullingSceneManager->GenerateAABB(mesh->BoundingBox, transform);
+            this->AddComponent<AABBObject>(aabbCulling);
+
+            // Set the materials
+            if (mesh->MaterialRel.empty())
             {
-                mesh->MaterialRel.push_back(mat->Name);
+                auto mat = this->GetMaterial();
+                if (mat != nullptr)
+                {
+                    mesh->MaterialRel.push_back(mat->Name);
+                }
+                else if (!bindedMaterials.empty())
+                {
+                    std::shared_ptr<QEMaterial> material = this->materialManager->GetMaterial(bindedMaterials.front());
+                    if (material != nullptr)
+                    {
+                        mesh->MaterialRel.push_back(material->Name);
+                        this->AddComponent<QEMaterial>(material);
+                    }
+                }
             }
             else
             {
-                std::shared_ptr<QEMaterial> material = this->materialManager->GetMaterial(bindedMaterials.front());
-                if (material != nullptr)
+                for (auto matID : mesh->MaterialRel)
                 {
-                    mesh->MaterialRel.push_back(material->Name);
-                    this->AddComponent<QEMaterial>(material);
+                    std::shared_ptr<QEMaterial> material = this->materialManager->GetMaterial(matID);
+                    if (material != nullptr)
+                    {
+                        this->AddComponent<QEMaterial>(material);
+                    }
                 }
             }
-        }
-        else
-        {
-            for (auto matID : mesh->MaterialRel)
+
+            // Set the animations
+            if (!mesh->AnimationData.empty())
             {
-                std::shared_ptr<QEMaterial> material = this->materialManager->GetMaterial(matID);
-                if (material != nullptr)
+                auto animationComponent = this->GetComponent<QEAnimationComponent>();
+
+                if (animationComponent == nullptr)
                 {
-                    this->AddComponent<QEMaterial>(material);
+                    this->AddComponent<QEAnimationComponent>(std::make_shared<QEAnimationComponent>());
+                    animationComponent = this->GetComponent<QEAnimationComponent>();
                 }
-            }
-        }
 
-        //Set the animations
-        if (mesh->AnimationData.size())
-        {
-            auto animationComponent = this->GetComponent<QEAnimationComponent>();
-
-            if (animationComponent == nullptr)
-            {
-                this->AddComponent<QEAnimationComponent>(std::make_shared<QEAnimationComponent>());
-                animationComponent = this->GetComponent<QEAnimationComponent>();
-            }
-
-            for (auto anim : mesh->AnimationData)
-            {
-                if (anim.m_Duration > 0.0f)
+                for (auto anim : mesh->AnimationData)
                 {
-                    animationComponent->AddAnimation(std::make_shared<Animation>(anim));
+                    if (anim.m_Duration > 0.0f)
+                    {
+                        animationComponent->AddAnimation(std::make_shared<Animation>(anim));
+                    }
                 }
             }
         }

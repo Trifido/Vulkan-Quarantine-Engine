@@ -11,6 +11,9 @@
 #include <fstream>
 #include <vector>
 
+class QELight;
+class LightManager;
+
 struct QEOrderRenderItem
 {
     std::shared_ptr<QEGameObject> GameObject;
@@ -22,7 +25,6 @@ struct QEOrderRenderItem
 class GameObjectManager : public QESingleton<GameObjectManager>
 {
 private:
-
     friend class QESingleton<GameObjectManager>;
 
     std::unordered_map<unsigned int, std::unordered_map<std::string, std::shared_ptr<QEGameObject>>> _objectsByUpdateOrder;
@@ -35,6 +37,9 @@ private:
     void UnregisterSingle(const std::shared_ptr<QEGameObject>& go);
     void UnregisterHierarchy(const std::shared_ptr<QEGameObject>& go);
     void DestroyHierarchy(const std::shared_ptr<QEGameObject>& go);
+
+    void RemoveLightsFromHierarchy(const std::shared_ptr<QEGameObject>& go);
+    void ReindexLightShadowMaps();
 
     std::vector<QEOrderRenderItem> BuildRenderItems() const;
     std::vector<QEOrderRenderItem> BuildShadowRenderItems() const;
@@ -71,6 +76,8 @@ public:
     std::shared_ptr<QEGameComponent> FindGameComponentInScene(const std::string& id);
     std::vector<std::shared_ptr<QEGameObject>> GetRootGameObjects() const;
     std::shared_ptr<QEGameObject> GetGameObjectById(const std::string& id) const;
+
+    void RegisterSceneLights();
 };
 
 template<typename T>

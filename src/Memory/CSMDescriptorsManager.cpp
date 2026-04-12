@@ -18,25 +18,75 @@ CSMDescriptorsManager::CSMDescriptorsManager()
     this->csmRenderViewProjBuffer.CreateSSBO(this->csmViewProjDataBufferSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
 }
 
-void CSMDescriptorsManager::AddDirLightResources(std::shared_ptr<UniformBufferObject> offscreenShadowMapUBO, VkImageView imageView, VkSampler sampler)
+void CSMDescriptorsManager::AddDirLightResources(
+    std::shared_ptr<UniformBufferObject> offscreenShadowMapUBO,
+    VkImageView imageView,
+    VkSampler sampler)
 {
-    if (this->_numDirLights < MAX_NUM_DIR_LIGHTS)
+    if (this->offscreenDescriptorSetLayout == VK_NULL_HANDLE ||
+        this->renderDescriptorSetLayout == VK_NULL_HANDLE ||
+        this->renderDescriptorSets[0] == VK_NULL_HANDLE)
     {
-        this->csmOffscreenUBOs.push_back(offscreenShadowMapUBO);
-        this->_imageViews.push_back(imageView);
-        this->_samplers.push_back(sampler);
-        this->_numDirLights++;
+        return;
+    }
+
+    if (this->_numDirLights >= MAX_NUM_DIR_LIGHTS)
+        return;
+
+    const uint32_t newLightIndex = this->_numDirLights;
+
+    this->csmOffscreenUBOs.push_back(offscreenShadowMapUBO);
+    this->_imageViews.push_back(imageView);
+    this->_samplers.push_back(sampler);
+    this->_numDirLights++;
+
+    if (this->offscreenDescriptorSetLayout == VK_NULL_HANDLE ||
+        this->renderDescriptorSetLayout == VK_NULL_HANDLE)
+    {
+        return;
+    }
+
+    WaitForGpuIdle();
+
+    AllocateOffscreenDescriptorSetForLight(newLightIndex);
+
+    if (this->renderDescriptorSets[0] != VK_NULL_HANDLE)
+    {
+        UpdateRenderDescriptorSets();
     }
 }
 
 void CSMDescriptorsManager::DeleteDirLightResources(int idPos)
 {
-    if (idPos >= 0 && idPos < this->_numDirLights)
+    if (idPos < 0 || static_cast<uint32_t>(idPos) >= this->_numDirLights)
+        return;
+
+    WaitForGpuIdle();
+
+    this->csmOffscreenUBOs.erase(this->csmOffscreenUBOs.begin() + idPos);
+    this->_imageViews.erase(this->_imageViews.begin() + idPos);
+    this->_samplers.erase(this->_samplers.begin() + idPos);
+
+    if (idPos < static_cast<int>(this->csmResources.size()))
     {
-        this->csmOffscreenUBOs.erase(this->csmOffscreenUBOs.begin() + idPos);
-        this->_imageViews.erase(this->_imageViews.begin() + idPos);
-        this->_samplers.erase(this->_samplers.begin() + idPos);
-        this->_numDirLights--;
+        this->csmResources.erase(this->csmResources.begin() + idPos);
+    }
+
+    this->_numDirLights--;
+
+    for (size_t frame = 0; frame < NUM_CSM_SETS; ++frame)
+    {
+        for (uint32_t i = static_cast<uint32_t>(idPos); i < MAX_NUM_DIR_LIGHTS - 1; ++i)
+        {
+            offscreenDescriptorSets[frame][i] = offscreenDescriptorSets[frame][i + 1];
+        }
+
+        offscreenDescriptorSets[frame][MAX_NUM_DIR_LIGHTS - 1] = VK_NULL_HANDLE;
+    }
+
+    if (this->renderDescriptorSets[0] != VK_NULL_HANDLE)
+    {
+        UpdateRenderDescriptorSets();
     }
 }
 
@@ -167,9 +217,15 @@ void CSMDescriptorsManager::CreateCSMPlaceHolder()
     this->placeholderSampler = CSMResources::CreateCSMSampler(this->deviceModule->device);
 }
 
-void CSMDescriptorsManager::SetOffscreenDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize)
+void CSMDescriptorsManager::SetOffscreenDescriptorWrite(
+    VkWriteDescriptorSet& descriptorWrite,
+    VkDescriptorSet descriptorSet,
+    VkDescriptorType descriptorType,
+    uint32_t binding,
+    VkBuffer buffer,
+    VkDeviceSize bufferSize)
 {
-    this->offscreenBuffersInfo[binding] = GetBufferInfo(buffer, bufferSize);
+    this->offscreenBufferInfo = GetBufferInfo(buffer, bufferSize);
 
     descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     descriptorWrite.dstSet = descriptorSet;
@@ -177,8 +233,9 @@ void CSMDescriptorsManager::SetOffscreenDescriptorWrite(VkWriteDescriptorSet& de
     descriptorWrite.dstArrayElement = 0;
     descriptorWrite.descriptorType = descriptorType;
     descriptorWrite.descriptorCount = 1;
-    descriptorWrite.pImageInfo = VK_NULL_HANDLE;
-    descriptorWrite.pBufferInfo = &this->offscreenBuffersInfo[binding];
+    descriptorWrite.pImageInfo = nullptr;
+    descriptorWrite.pBufferInfo = &this->offscreenBufferInfo;
+    descriptorWrite.pTexelBufferView = nullptr;
 }
 
 void CSMDescriptorsManager::SetRenderDescriptorWrite(VkWriteDescriptorSet& descriptorWrite, VkDescriptorSet descriptorSet, VkDescriptorType descriptorType, uint32_t binding, VkBuffer buffer, VkDeviceSize bufferSize)
@@ -224,6 +281,7 @@ void CSMDescriptorsManager::SetCSMDescriptorWrite(VkWriteDescriptorSet& descript
 void CSMDescriptorsManager::CreateRenderDescriptorSet()
 {
     std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, renderDescriptorSetLayout);
+
     VkDescriptorSetAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocInfo.descriptorPool = this->renderDescriptorPool;
@@ -238,17 +296,7 @@ void CSMDescriptorsManager::CreateRenderDescriptorSet()
         throw std::runtime_error("failed to allocate descriptor sets!");
     }
 
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-    {
-        std::vector<VkWriteDescriptorSet> descriptorWrites{};
-        descriptorWrites.resize(3);
-
-        this->SetCSMDescriptorWrite(descriptorWrites[0], this->renderDescriptorSets[i], VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0);
-        this->SetRenderDescriptorWrite(descriptorWrites[1], this->renderDescriptorSets[i], VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, this->csmRenderSplitBuffer.uniformBuffers[i], this->csmSplitDataBufferSize);
-        this->SetRenderDescriptorWrite(descriptorWrites[2], this->renderDescriptorSets[i], VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2, this->csmRenderViewProjBuffer.uniformBuffers[i], this->csmViewProjDataBufferSize);
-
-        vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-    }
+    UpdateRenderDescriptorSets();
 }
 
 VkDescriptorSetLayout CSMDescriptorsManager::CreateRenderDescriptorSetLayout()
@@ -290,29 +338,9 @@ VkDescriptorSetLayout CSMDescriptorsManager::CreateRenderDescriptorSetLayout()
 
 void CSMDescriptorsManager::CreateOffscreenDescriptorSet()
 {
-    VkDescriptorSetAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocInfo.descriptorPool = this->offscreenDescriptorPool;
-    allocInfo.descriptorSetCount = 1;
-    allocInfo.pSetLayouts = &this->offscreenDescriptorSetLayout;
-
-    std::vector<VkWriteDescriptorSet> descriptorWrites{};
-    descriptorWrites.resize(this->_numDirLights);
-    this->offscreenBuffersInfo.resize(this->_numDirLights);
-
-    for (uint32_t ndl = 0; ndl < this->_numDirLights; ndl++)
+    for (uint32_t lightIndex = 0; lightIndex < this->_numDirLights; ++lightIndex)
     {
-        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-        {
-            if (vkAllocateDescriptorSets(deviceModule->device, &allocInfo, &this->offscreenDescriptorSets[i][ndl]) != VK_SUCCESS)
-            {
-                throw std::runtime_error("failed to allocate descriptor sets!");
-            }
-
-            this->SetOffscreenDescriptorWrite(descriptorWrites[ndl], this->offscreenDescriptorSets[i][ndl],
-                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, this->csmOffscreenUBOs[ndl]->uniformBuffers[i], sizeof(CSMUniform));
-            vkUpdateDescriptorSets(deviceModule->device, 1, &descriptorWrites[ndl], 0, nullptr);
-        }
+        this->AllocateOffscreenDescriptorSetForLight(lightIndex);
     }
 }
 
@@ -328,7 +356,6 @@ void CSMDescriptorsManager::ResetSceneState()
     csmSplitDataResources.clear();
     csmViewProjDataResources.clear();
 
-    offscreenBuffersInfo.clear();
     renderBuffersInfo.clear();
     renderDescriptorImageInfo.clear();
 
@@ -426,4 +453,89 @@ void CSMDescriptorsManager::Clean()
         QE_FREE_MEMORY(deviceModule->device, this->placeholderMemory, "CSMDescriptorsManager::Clean.placeholderMemory");
         this->placeholderMemory = VK_NULL_HANDLE;
     }
+}
+
+void CSMDescriptorsManager::AllocateOffscreenDescriptorSetForLight(uint32_t lightIndex)
+{
+    if (lightIndex >= _numDirLights)
+        return;
+
+    if (this->offscreenDescriptorSetLayout == VK_NULL_HANDLE)
+        return;
+
+    VkDescriptorSetAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocInfo.descriptorPool = this->offscreenDescriptorPool;
+    allocInfo.descriptorSetCount = 1;
+    allocInfo.pSetLayouts = &this->offscreenDescriptorSetLayout;
+
+    for (size_t frame = 0; frame < MAX_FRAMES_IN_FLIGHT; ++frame)
+    {
+        if (offscreenDescriptorSets[frame][lightIndex] == VK_NULL_HANDLE)
+        {
+            if (vkAllocateDescriptorSets(deviceModule->device, &allocInfo, &offscreenDescriptorSets[frame][lightIndex]) != VK_SUCCESS)
+            {
+                throw std::runtime_error("failed to allocate CSM offscreen descriptor set!");
+            }
+        }
+
+        VkWriteDescriptorSet write{};
+        this->SetOffscreenDescriptorWrite(
+            write,
+            offscreenDescriptorSets[frame][lightIndex],
+            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            0,
+            this->csmOffscreenUBOs[lightIndex]->uniformBuffers[frame],
+            sizeof(CSMUniform));
+
+        vkUpdateDescriptorSets(deviceModule->device, 1, &write, 0, nullptr);
+    }
+}
+
+void CSMDescriptorsManager::UpdateRenderDescriptorSets()
+{
+    for (size_t frame = 0; frame < MAX_FRAMES_IN_FLIGHT; ++frame)
+    {
+        if (this->renderDescriptorSets[frame] == VK_NULL_HANDLE)
+            continue;
+
+        std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
+
+        this->SetCSMDescriptorWrite(
+            descriptorWrites[0],
+            this->renderDescriptorSets[frame],
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            0);
+
+        this->SetRenderDescriptorWrite(
+            descriptorWrites[1],
+            this->renderDescriptorSets[frame],
+            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            1,
+            this->csmRenderSplitBuffer.uniformBuffers[frame],
+            this->csmSplitDataBufferSize);
+
+        this->SetRenderDescriptorWrite(
+            descriptorWrites[2],
+            this->renderDescriptorSets[frame],
+            VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            2,
+            this->csmRenderViewProjBuffer.uniformBuffers[frame],
+            this->csmViewProjDataBufferSize);
+
+        vkUpdateDescriptorSets(
+            deviceModule->device,
+            static_cast<uint32_t>(descriptorWrites.size()),
+            descriptorWrites.data(),
+            0,
+            nullptr);
+    }
+}
+
+void CSMDescriptorsManager::WaitForGpuIdle() const
+{
+    if (!deviceModule)
+        return;
+
+    vkDeviceWaitIdle(deviceModule->device);
 }

@@ -3,6 +3,12 @@
 #include <GameObjectDto.h>
 #include <QEMeshRenderer.h>
 #include <unordered_set>
+#include <LightManager.h>
+#include <Light.h>
+#include <PointLight.h>
+#include <DirectionalLight.h>
+#include <SpotLight.h>
+#include <SunLight.h>
 
 std::string GameObjectManager::CheckName(std::string nameGameObject)
 {
@@ -137,8 +143,12 @@ bool GameObjectManager::RemoveGameObject(const std::shared_ptr<QEGameObject>& ob
         object_ptr->parent->RemoveChild(object_ptr);
     }
 
+    RemoveLightsFromHierarchy(object_ptr);
+
     DestroyHierarchy(object_ptr);
     UnregisterHierarchy(object_ptr);
+
+    ReindexLightShadowMaps();
 
     return true;
 }
@@ -535,4 +545,89 @@ void GameObjectManager::ResetSceneState()
 {
     ReleaseAllGameObjects();
     CleanLastResources();
+}
+
+void GameObjectManager::RemoveLightsFromHierarchy(const std::shared_ptr<QEGameObject>& go)
+{
+    if (!go)
+        return;
+
+    for (const auto& child : go->childs)
+    {
+        RemoveLightsFromHierarchy(child);
+    }
+
+    auto light = go->GetComponent<QELight>();
+    if (!light)
+        return;
+
+    auto* lightManager = LightManager::getInstance();
+    if (!lightManager)
+        return;
+
+    std::string lightName = light->Name;
+    lightManager->DeleteLight(light, lightName);
+}
+
+void GameObjectManager::ReindexLightShadowMaps()
+{
+    auto* lightManager = LightManager::getInstance();
+    if (!lightManager)
+        return;
+
+    for (uint32_t i = 0; i < lightManager->PointLights.size(); ++i)
+    {
+        if (lightManager->PointLights[i])
+        {
+            lightManager->PointLights[i]->idxShadowMap = i;
+        }
+    }
+
+    for (uint32_t i = 0; i < lightManager->DirLights.size(); ++i)
+    {
+        if (lightManager->DirLights[i])
+        {
+            lightManager->DirLights[i]->idxShadowMap = i;
+        }
+    }
+
+    for (uint32_t i = 0; i < lightManager->SpotLights.size(); ++i)
+    {
+        if (lightManager->SpotLights[i])
+        {
+            lightManager->SpotLights[i]->idxShadowMap = i;
+        }
+    }
+}
+
+void GameObjectManager::RegisterSceneLights()
+{
+    auto* lightManager = LightManager::getInstance();
+    if (!lightManager)
+        return;
+
+    for (const auto& bucketPair : _objectsByUpdateOrder)
+    {
+        const auto& bucket = bucketPair.second;
+
+        for (const auto& kv : bucket)
+        {
+            const auto& go = kv.second;
+            if (!go)
+                continue;
+
+            auto light = go->GetComponent<QELight>();
+            if (!light)
+                continue;
+
+            if (light->ResourcesInitialized)
+                continue;
+
+            std::string lightName = light->Name.empty() ? go->Name : light->Name;
+            lightManager->AddNewLight(light, lightName);
+
+            go->Name = lightName;
+            light->Name = lightName;
+        }
+    }
 }

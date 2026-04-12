@@ -7,9 +7,6 @@ QESpotLight::QESpotLight() : QELight()
 
     this->cutOff = glm::cos(glm::radians(12.5f));
     this->outerCutoff = glm::cos(glm::radians(17.5f));
-
-    this->transform->SetLocalPosition(glm::vec3(0.0f, 10.0f, 0.0f));
-    this->transform->SetLocalEulerDegrees(glm::vec3(90.0f, 0.0f, 0.0f));
 }
 
 QESpotLight::QESpotLight(std::shared_ptr<ShaderModule> shaderModule, std::shared_ptr<VkRenderPass> renderPass) : QESpotLight()

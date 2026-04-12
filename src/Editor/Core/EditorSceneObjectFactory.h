@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <glm/vec3.hpp>
+#include <LightType.h>
 
 class GameObjectManager;
 class MaterialManager;
@@ -34,6 +35,7 @@ public:
 
     std::shared_ptr<QEGameObject> CreatePrimitive(QEPrimitiveType type, float spawnDistance = 5.0f);
     std::shared_ptr<QEGameObject> CreateDroppedMeshObject(const std::string& assetPath, float spawnDistance = 5.0f);
+    std::shared_ptr<QEGameObject> CreateLight(LightType type, float spawnDistance = 5.0f);
 
 private:
     std::string GetPrimitiveName(QEPrimitiveType type) const;

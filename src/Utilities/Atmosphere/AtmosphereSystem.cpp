@@ -27,30 +27,62 @@ AtmosphereSystem::~AtmosphereSystem()
 
 void AtmosphereSystem::LoadAtmosphereDto(AtmosphereDto atmosphereDto)
 {
+    this->pendingAtmosphereDto = atmosphereDto;
+    this->hasPendingAtmosphereDto = true;
+
+    this->atmosphereType = static_cast<AtmosphereType>(atmosphereDto.environmentType);
+    this->IsInitialized = atmosphereDto.hasAtmosphere;
+    this->ResourcesReady = false;
+
+    ApplyDtoToAtmosphereData(atmosphereDto);
+}
+
+void AtmosphereSystem::EnsureSunLightCreated()
+{
     auto existingSun = this->lightManager->GetLight(SUN_NAME);
     if (existingSun)
     {
-        this->lightManager->DeleteLightByName(SUN_NAME);
+        this->sunLight = std::static_pointer_cast<QESunLight>(existingSun);
+        return;
     }
 
     this->sunLight = std::static_pointer_cast<QESunLight>(
         this->lightManager->CreateLight(LightType::SUN_LIGHT, this->SUN_NAME)
     );
 
+    if (!this->sunLight)
+        return;
+
     std::string sunName = this->SUN_NAME;
     this->lightManager->AddNewLight(this->sunLight, sunName);
+}
 
-    this->sunLight->baseIntensity = atmosphereDto.sunBaseIntensity;
-    this->sunLight->SetSunEulerDegrees(atmosphereDto.sunEulerDegrees);
+void AtmosphereSystem::ApplyPendingSunState()
+{
+    if (!this->hasPendingAtmosphereDto)
+        return;
 
-    this->atmosphereType = static_cast<AtmosphereType>(atmosphereDto.environmentType);
-    this->IsInitialized = atmosphereDto.hasAtmosphere;
+    EnsureSunLightCreated();
 
-    ApplyDtoToAtmosphereData(atmosphereDto);
+    if (!this->sunLight)
+        return;
+
+    this->sunLight->baseIntensity = pendingAtmosphereDto.sunBaseIntensity;
+    this->sunLight->SetSunEulerDegrees(pendingAtmosphereDto.sunEulerDegrees);
 }
 
 void AtmosphereSystem::InitializeAtmosphereResources()
 {
+    this->ResourcesReady = false;
+
+    if (!this->IsInitialized)
+        return;
+
+    if (this->hasPendingAtmosphereDto)
+    {
+        ApplyPendingSunState();
+    }
+
     switch (this->atmosphereType)
     {
     case AtmosphereType::CUBEMAP:
@@ -64,6 +96,19 @@ void AtmosphereSystem::InitializeAtmosphereResources()
         this->InitializeAtmosphere();
         break;
     }
+
+    const bool shaderReady =
+        (this->environment_shader != nullptr) &&
+        (this->environment_shader->PipelineModule != nullptr);
+
+    const bool meshReady =
+        (this->atmosphereType == AtmosphereType::PHYSICALLY_BASED_SKY) ||
+        (this->_Mesh != nullptr && this->_Mesh->GetMesh() != nullptr);
+
+    const bool descriptorsReady = !this->descriptorSets.empty();
+
+    this->ResourcesReady = shaderReady && descriptorsReady && meshReady;
+    this->hasPendingAtmosphereDto = false;
 }
 
 AtmosphereDto AtmosphereSystem::CreateAtmosphereDto()
@@ -72,8 +117,13 @@ AtmosphereDto AtmosphereSystem::CreateAtmosphereDto()
 
     dto.hasAtmosphere = this->IsInitialized;
     dto.environmentType = static_cast<int>(this->atmosphereType);
-    dto.sunEulerDegrees = this->sunLight ? this->sunLight->GetSunEulerDegrees() : glm::vec3(0.0f);
-    dto.sunBaseIntensity = this->sunLight ? this->sunLight->baseIntensity : 0.0f;
+    dto.sunEulerDegrees = this->sunLight
+        ? this->sunLight->GetSunEulerDegrees()
+        : this->pendingAtmosphereDto.sunEulerDegrees;
+
+    dto.sunBaseIntensity = this->sunLight
+        ? this->sunLight->baseIntensity
+        : this->pendingAtmosphereDto.sunBaseIntensity;
 
     return dto;
 }
@@ -440,8 +490,30 @@ std::string AtmosphereSystem::GetAbsolutePath(std::string relativePath, std::str
 
 void AtmosphereSystem::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t frameIdx)
 {
-    if (!this->IsInitialized)
+    if (!this->IsInitialized || !this->ResourcesReady)
         return;
+
+    if (this->environment_shader == nullptr)
+        return;
+
+    if (this->environment_shader->PipelineModule == nullptr)
+        return;
+
+    if (frameIdx >= this->descriptorSets.size())
+        return;
+
+    if (this->descriptorSets[frameIdx] == VK_NULL_HANDLE)
+        return;
+
+    if (this->atmosphereType != AtmosphereType::PHYSICALLY_BASED_SKY)
+    {
+        if (this->_Mesh == nullptr)
+            return;
+
+        auto mesh = this->_Mesh->GetMesh();
+        if (mesh == nullptr || this->_Mesh->vertexBuffer.empty() || this->_Mesh->indexBuffer.empty())
+            return;
+    }
 
     if (this->TLUT_ComputeNode != nullptr && this->SVLUT_ComputeNode != nullptr)
     {
@@ -473,16 +545,21 @@ void AtmosphereSystem::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t fram
     vkCmdSetCullMode(commandBuffer, VK_CULL_MODE_NONE);
     vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_COUNTER_CLOCKWISE);
 
-    if (!this->descriptorSets.empty())
-    {
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->environment_shader->PipelineModule->pipelineLayout, 0, 1, &descriptorSets.at(frameIdx), 0, nullptr);
-    }
+    vkCmdBindDescriptorSets(
+        commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        pipelineModule->pipelineLayout,
+        0,
+        1,
+        &descriptorSets[frameIdx],
+        0,
+        nullptr);
 
     if (this->atmosphereType != AtmosphereType::PHYSICALLY_BASED_SKY)
     {
         auto mesh = this->_Mesh->GetMesh();
         VkDeviceSize offsets[] = { 0 };
-        VkBuffer vertexBuffers[] = { this->_Mesh->vertexBuffer[0]};
+        VkBuffer vertexBuffers[] = { this->_Mesh->vertexBuffer[0] };
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
         vkCmdBindIndexBuffer(commandBuffer, this->_Mesh->indexBuffer[0], 0, VK_INDEX_TYPE_UINT32);
 
@@ -496,6 +573,8 @@ void AtmosphereSystem::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t fram
 
 void AtmosphereSystem::Cleanup()
 {
+    this->ResourcesReady = false;
+
     if (_Mesh != nullptr)
     {
         this->_Mesh->QEDestroy();
@@ -722,4 +801,7 @@ void AtmosphereSystem::ResetSceneState()
     Cleanup();
     this->sunLight.reset();
     this->IsInitialized = false;
+    this->ResourcesReady = false;
+    this->hasPendingAtmosphereDto = false;
+    this->pendingAtmosphereDto = AtmosphereDto{};
 }

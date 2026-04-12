@@ -5,8 +5,8 @@
 
 #include <vulkan/vulkan.h>
 #include <DeviceModule.h>
-#include <ShaderModule.h>
 #include <CSMResources.h>
+#include <ShaderModule.h>
 
 constexpr uint32_t                  NUM_CSM_SETS = 2;
 constexpr uint32_t                  NUM_CSM_PASSES = 2;
@@ -15,45 +15,42 @@ constexpr uint32_t                  MAX_NUM_DIR_LIGHTS = 10;
 class CSMDescriptorsManager
 {
 private:
-    DeviceModule*                   deviceModule = nullptr;
-    VkPipelineLayout                pipelineLayout[NUM_CSM_PASSES];
+    DeviceModule* deviceModule = nullptr;
+    VkPipelineLayout pipelineLayout[NUM_CSM_PASSES]{};
 
-    VkDescriptorSetLayout           renderDescriptorSetLayout;
-    VkDescriptorSetLayout           offscreenDescriptorSetLayout;
+    VkDescriptorSetLayout renderDescriptorSetLayout = VK_NULL_HANDLE;
+    VkDescriptorSetLayout offscreenDescriptorSetLayout = VK_NULL_HANDLE;
 
-    VkDescriptorPool                renderDescriptorPool;
-    VkDescriptorPool                offscreenDescriptorPool;
+    VkDescriptorPool renderDescriptorPool = VK_NULL_HANDLE;
+    VkDescriptorPool offscreenDescriptorPool = VK_NULL_HANDLE;
 
-    // Offscreen resources
-    uint32_t    _numDirLights = 0;
+    uint32_t _numDirLights = 0;
     std::vector<std::shared_ptr<UniformBufferObject>> csmOffscreenUBOs;
-    std::vector<VkDescriptorBufferInfo> offscreenBuffersInfo;
 
-    // Render resources
     std::vector<VkDescriptorBufferInfo> renderBuffersInfo;
     std::vector<VkDescriptorImageInfo> renderDescriptorImageInfo;
     UniformBufferObject csmRenderSplitBuffer;
     UniformBufferObject csmRenderViewProjBuffer;
-    VkDeviceSize csmSplitDataBufferSize;
-    VkDeviceSize csmViewProjDataBufferSize;
+    VkDeviceSize csmSplitDataBufferSize = 0;
+    VkDeviceSize csmViewProjDataBufferSize = 0;
 
-    //Bound resources
-    std::vector<std::shared_ptr<std::array<CascadeResource, SHADOW_MAP_CASCADE_COUNT>> > csmResources;
+    std::vector<std::shared_ptr<std::array<CascadeResource, SHADOW_MAP_CASCADE_COUNT>>> csmResources;
     std::vector<float> csmSplitDataResources;
     std::vector<glm::mat4> csmViewProjDataResources;
 
-    // ImageViews & Samplers
-    std::vector<VkImageView>    _imageViews;
-    std::vector<VkSampler>      _samplers;
+    std::vector<VkImageView> _imageViews;
+    std::vector<VkSampler> _samplers;
 
     VkDeviceMemory placeholderMemory = VK_NULL_HANDLE;
     VkImage placeholderImage = VK_NULL_HANDLE;
     VkImageView placeholderImageView = VK_NULL_HANDLE;
     VkSampler placeholderSampler = VK_NULL_HANDLE;
 
+    VkDescriptorBufferInfo offscreenBufferInfo{};
+
 public:
-    VkDescriptorSet offscreenDescriptorSets[NUM_CSM_SETS][MAX_NUM_DIR_LIGHTS];
-    VkDescriptorSet renderDescriptorSets[NUM_CSM_SETS];
+    VkDescriptorSet offscreenDescriptorSets[NUM_CSM_SETS][MAX_NUM_DIR_LIGHTS]{};
+    VkDescriptorSet renderDescriptorSets[NUM_CSM_SETS]{};
 
 public:
     CSMDescriptorsManager();
@@ -64,6 +61,10 @@ public:
     void InitializeDescriptorSetLayouts(std::shared_ptr<ShaderModule> offscreen_shader_ptr);
     void ResetSceneState();
     void Clean();
+
+    void AllocateOffscreenDescriptorSetForLight(uint32_t lightIndex);
+    void UpdateRenderDescriptorSets();
+    void WaitForGpuIdle() const;
 
 private:
     void CreateOffscreenDescriptorPool();
