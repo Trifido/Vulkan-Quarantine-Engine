@@ -116,7 +116,7 @@ public:
     std::shared_ptr<QELight> GetLight(std::string name);
 
     void InitializeShadowMaps();
-    void Update();
+    void Update(uint32_t currentFrame);
     void UpdateUBOLight();
     void UpdateCSMLights();
 

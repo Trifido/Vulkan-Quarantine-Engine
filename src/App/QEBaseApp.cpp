@@ -244,36 +244,44 @@ void QEBaseApp::mainLoop()
 
         this->debugSystem->ClearLines();
 
-        // Start GameObjects 
+        // Start GameObjects
         this->gameObjectManager->StartQEGameObjects();
 
-        //PHYSIC SYSTEM
+        // PHYSICS
         int physicsSteps = Timer::getInstance()->ComputeFixedSteps();
         for (int i = 0; i < physicsSteps; ++i)
             physicsModule->ComputePhysics(Timer::getInstance()->FixedDelta);
         physicsModule->UpdateDebugPhysicsDrawer();
 
-        // UPDATE GameObjects 
+        // UPDATE GameObjects
         this->gameObjectManager->UpdateQEGameObjects();
 
         // UPDATE CULLING SCENE
         this->sessionManager->UpdateCullingScene();
 
-        // UPDATE LIGHT SYSTEM
-        this->lightManager->Update();
+        // UI / editor interaction happens here
+        OnBeginFrame();
+        OnEndFrame();
 
-        // UPDATE ATMOSPHERE
+        // Ensure camera CPU data is up to date after editor interaction
+        if (auto activeCamera = this->sessionManager->ActiveCamera())
+        {
+            activeCamera->UpdateCamera();
+        }
+
+        // UPDATE LIGHT SYSTEM AFTER editor edits
+        this->lightManager->Update(currentFrame);
+
+        // UPDATE ATMOSPHERE AFTER editor edits
         this->atmosphereSystem->UpdatePerFrame(currentFrame);
 
         // UPDATE DEBUG BUFFERS
         this->debugSystem->UpdateGraphicBuffers();
 
-        OnBeginFrame();
-        OnEndFrame();
-
         this->computeFrame(currentFrame);
         this->drawFrame(currentFrame);
     }
+
     vkDeviceWaitIdle(deviceModule->device);
 }
 

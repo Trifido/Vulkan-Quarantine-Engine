@@ -664,6 +664,9 @@ void LightManager::ComputeLightTiles()
         const uint32_t light_index = this->lights_index[i];
         LightUniform& light = this->lightBuffer.at(light_index);
 
+        if (light.lightType == DIRECTIONAL_LIGHT || light.lightType == SUN_LIGHT)
+            continue;
+
         glm::vec4 pos{ light.position.x, light.position.y, light.position.z, 1.0f };
         float radius = light.radius;
 
@@ -771,7 +774,7 @@ void LightManager::ComputeLightTiles()
     }
 }
 
-void LightManager::Update()
+void LightManager::Update(uint32_t currentFrame)
 {
     if (_lights.empty())
     {
@@ -788,8 +791,6 @@ void LightManager::Update()
     this->SortingLights();
     this->ComputeLightsLUT();
     this->ComputeLightTiles();
-
-    uint32_t currentFrame = static_cast<uint32_t>(SynchronizationModule::GetCurrentFrame());
 
     if (!this->lights_index.empty())
     {
