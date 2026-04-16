@@ -104,6 +104,8 @@ void LightManager::AddNewLight(std::shared_ptr<QELight> light_ptr, std::string& 
                 this->DirLights.back()->shadowMappingResourcesPtr->CSMSampler);
 
             this->CSMDescritors->BindResources(this->DirLights.back()->shadowMappingResourcesPtr->CascadeResourcesPtr);
+
+            SyncDirectionalLightIndices();
             break;
 
         case LightType::SPOT_LIGHT:
@@ -182,6 +184,9 @@ void LightManager::DeleteLight(std::shared_ptr<QELight> light_ptr, std::string& 
             if (CSMDescritors)
             {
                 CSMDescritors->DeleteDirLightResources(localLightPosition);
+
+                ReindexShadowMaps();
+                SyncDirectionalLightIndices();
             }
         }
     }
@@ -816,5 +821,35 @@ void LightManager::Update()
     if (this->CSMDescritors)
     {
         this->CSMDescritors->UpdateResources(currentFrame);
+    }
+}
+
+void LightManager::ReindexShadowMaps()
+{
+    for (uint32_t i = 0; i < DirLights.size(); ++i)
+    {
+        if (DirLights[i])
+        {
+            DirLights[i]->idxShadowMap = i;
+        }
+    }
+
+    for (uint32_t i = 0; i < PointLights.size(); ++i)
+    {
+        if (PointLights[i])
+        {
+            PointLights[i]->idxShadowMap = i;
+        }
+    }
+}
+
+void LightManager::SyncDirectionalLightIndices()
+{
+    for (uint32_t i = 0; i < DirLights.size(); ++i)
+    {
+        if (DirLights[i])
+        {
+            DirLights[i]->idxShadowMap = i;
+        }
     }
 }

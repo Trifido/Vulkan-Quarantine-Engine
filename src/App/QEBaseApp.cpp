@@ -154,7 +154,6 @@ void QEBaseApp::loadScene(QEScene& scene)
     lightManager->AddDirShadowMapShader(materialManager->csm_shader);
     lightManager->AddOmniShadowMapShader(materialManager->omni_shadow_mapping_shader);
 
-    gameObjectManager->RegisterSceneLights();
     gameObjectManager->StartQEGameObjects();
 
     atmosphereSystem = AtmosphereSystem::getInstance();
@@ -219,6 +218,11 @@ void QEBaseApp::LoadCurrentScene()
     if (lightManager)
     {
         lightManager->InitializeShadowMaps();
+    }
+
+    if (gameObjectManager)
+    {
+        gameObjectManager->RegisterSceneLights();
     }
 
     if (atmosphereSystem)

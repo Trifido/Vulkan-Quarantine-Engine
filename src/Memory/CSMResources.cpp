@@ -127,7 +127,11 @@ void CSMResources::CreateCSMResources(std::shared_ptr<VkRenderPass> renderPass)
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         1);
 
-    this->TransitionImageLayout(deviceModule->device, this->CSMImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+    this->TransitionImageLayout(
+        deviceModule->device,
+        this->CSMImage,
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
 
     this->CSMImageView = this->CreateImageView(this->deviceModule->device, this->CSMImage, this->shadowFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 0, SHADOW_MAP_CASCADE_COUNT);
     this->CSMSampler = CreateCSMSampler(this->deviceModule->device);

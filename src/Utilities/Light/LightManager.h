@@ -67,6 +67,9 @@ private:
     void ComputeLightTiles();
     void UpdateUniform();
 
+    void ReindexShadowMaps();
+    void SyncDirectionalLightIndices();
+
 public:
     std::shared_ptr<UniformBufferObject> lightUBO;
     std::shared_ptr<UniformBufferObject> lightSSBO;

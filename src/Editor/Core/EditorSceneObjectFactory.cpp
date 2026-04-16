@@ -204,7 +204,7 @@ std::shared_ptr<QEGameObject> EditorSceneObjectFactory::CreateLight(LightType ty
 
         if (auto transform = newObject->GetComponent<QETransform>())
         {
-            transform->SetLocalEulerDegrees(glm::vec3(50.0f, -30.0f, 0.0f));
+            transform->SetLocalEulerDegrees(glm::vec3(-50.0f, 75.0f, 0.0f));
         }
     }
     break;
