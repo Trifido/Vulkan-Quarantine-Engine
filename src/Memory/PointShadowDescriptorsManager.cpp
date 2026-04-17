@@ -321,20 +321,31 @@ void PointShadowDescriptorsManager::UpdateRenderDescriptorSets()
 
 void PointShadowDescriptorsManager::ResetSceneState()
 {
+    WaitForGpuIdle();
+
+    if (this->offscreenDescriptorPool != VK_NULL_HANDLE)
+    {
+        vkResetDescriptorPool(deviceModule->device, this->offscreenDescriptorPool, 0);
+    }
+
+    if (this->renderDescriptorPool != VK_NULL_HANDLE)
+    {
+        vkResetDescriptorPool(deviceModule->device, this->renderDescriptorPool, 0);
+    }
+
     _numPointLights = 0;
 
     shadowMapUBOs.clear();
     _imageViews.clear();
     _samplers.clear();
     renderDescriptorImageInfo.clear();
-
     offscreenBufferInfo = {};
 
-    for (size_t i = 0; i < NUM_POINT_SHADOW_SETS; ++i)
+    for (size_t i = 0; i < NUM_POINT_SHADOW_SETS; i++)
     {
         renderDescriptorSets[i] = VK_NULL_HANDLE;
 
-        for (size_t j = 0; j < MAX_NUM_POINT_LIGHTS; ++j)
+        for (size_t j = 0; j < MAX_NUM_POINT_LIGHTS; j++)
         {
             offscreenDescriptorSets[i][j] = VK_NULL_HANDLE;
         }

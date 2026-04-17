@@ -346,6 +346,18 @@ void CSMDescriptorsManager::CreateOffscreenDescriptorSet()
 
 void CSMDescriptorsManager::ResetSceneState()
 {
+    WaitForGpuIdle();
+
+    if (this->offscreenDescriptorPool != VK_NULL_HANDLE)
+    {
+        vkResetDescriptorPool(deviceModule->device, this->offscreenDescriptorPool, 0);
+    }
+
+    if (this->renderDescriptorPool != VK_NULL_HANDLE)
+    {
+        vkResetDescriptorPool(deviceModule->device, this->renderDescriptorPool, 0);
+    }
+
     _numDirLights = 0;
 
     csmOffscreenUBOs.clear();
@@ -358,6 +370,7 @@ void CSMDescriptorsManager::ResetSceneState()
 
     renderBuffersInfo.clear();
     renderDescriptorImageInfo.clear();
+    offscreenBufferInfo = {};
 
     for (size_t i = 0; i < NUM_CSM_SETS; i++)
     {
