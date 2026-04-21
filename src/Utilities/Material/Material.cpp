@@ -56,6 +56,7 @@ QEMaterial::QEMaterial(std::shared_ptr<ShaderModule> shader_ptr, const MaterialD
     this->materialData.ClearcoatRoughness = materialDto.ClearcoatRoughness;
     this->materialData.AlphaCutoff = materialDto.AlphaCutoff;
     this->materialData.AlphaMode = materialDto.AlphaMode;
+    this->materialData.DoubleSided = materialDto.DoubleSided;
 
     this->materialData.Diffuse = materialDto.Diffuse;
     this->materialData.Ambient = materialDto.Ambient;
@@ -256,6 +257,7 @@ MaterialDto QEMaterial::ToDto() const
     dto.roughnessChan = this->materialData.RoughnessChan;
     dto.aoChan = this->materialData.AOChan;
     dto.AlphaMode = this->materialData.AlphaMode;
+    dto.DoubleSided = this->materialData.DoubleSided;
 
     dto.diffuseTexturePath = ToMaterialRelativePath(this->materialData.diffuseTexturePath, absMaterialPath);
     dto.normalTexturePath = ToMaterialRelativePath(this->materialData.normalTexturePath, absMaterialPath);

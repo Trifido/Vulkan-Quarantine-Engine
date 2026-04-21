@@ -4,6 +4,7 @@
 
 #include <assimp/material.h>
 #include <assimp/scene.h>
+#include <assimp/GltfMaterial.h>
 
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
@@ -46,7 +47,7 @@ private:
     std::string fileExtension;
     std::string texturePath;
 
-    // Nuevo buffer “plano” para UBO
+    // Flat CPU-side buffer for the material UBO.
     std::vector<uint8_t> materialBuffer;
 
     std::unordered_map<std::string, FieldInfo> materialFields;
@@ -76,6 +77,7 @@ public:
     uint32_t RoughnessChan = 0;
     uint32_t AOChan = 0;
     uint32_t AlphaMode = 0;
+    bool DoubleSided = false;
 
     // Colors
     glm::vec4 Diffuse = glm::vec4(1.0f);
@@ -162,6 +164,7 @@ public:
     uint32_t GetMetallicChan() const { return MetallicChan; }
     uint32_t GetRoughnessChan() const { return RoughnessChan; }
     uint32_t GetAOChan() const { return AOChan; }
+    bool IsDoubleSided() const { return DoubleSided; }
 };
 
 #endif // MATERIAL_DATA_H

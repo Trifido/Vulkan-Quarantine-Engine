@@ -12,6 +12,16 @@
 
 namespace
 {
+    const char* GetAlphaModeLabel(uint32_t alphaMode)
+    {
+        switch (alphaMode)
+        {
+        case 1: return "Mask";
+        case 2: return "Blend";
+        default: return "Opaque";
+        }
+    }
+
     const char* GetRenderQueueLabel(unsigned int renderQueue)
     {
         switch (renderQueue)
@@ -248,6 +258,42 @@ void MaterialInspectorPanel::DrawMaterial(const std::shared_ptr<QEMaterial>& mat
     if (ImGui::DragFloat(("AlphaCutoff##AlphaCutoff_" + std::to_string(materialIndex)).c_str(), &alphaCutoff, 0.01f, 0.0f, 1.0f))
     {
         material->materialData.SetMaterialField("AlphaCutoff", alphaCutoff);
+    }
+
+    if (ImGui::BeginCombo(
+        ("Alpha Mode##AlphaMode_" + std::to_string(materialIndex)).c_str(),
+        GetAlphaModeLabel(material->materialData.AlphaMode)))
+    {
+        const char* labels[] = { "Opaque", "Mask", "Blend" };
+        for (int i = 0; i < 3; ++i)
+        {
+            const bool isSelected = (static_cast<int>(material->materialData.AlphaMode) == i);
+            if (ImGui::Selectable(labels[i], isSelected))
+            {
+                material->materialData.SetMaterialField("AlphaMode", i);
+                if (i == 2 && material->renderQueue < static_cast<unsigned int>(RenderQueue::Transparent))
+                {
+                    material->renderQueue = static_cast<unsigned int>(RenderQueue::Transparent);
+                }
+                else if (i != 2 && material->renderQueue == static_cast<unsigned int>(RenderQueue::Transparent))
+                {
+                    material->renderQueue = static_cast<unsigned int>(RenderQueue::Geometry);
+                }
+            }
+
+            if (isSelected)
+            {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+
+        ImGui::EndCombo();
+    }
+
+    bool doubleSided = material->materialData.DoubleSided;
+    if (ImGui::Checkbox(("Double Sided##DoubleSided_" + std::to_string(materialIndex)).c_str(), &doubleSided))
+    {
+        material->materialData.SetMaterialField("DoubleSided", doubleSided ? 1 : 0);
     }
 
     ImGui::Separator();

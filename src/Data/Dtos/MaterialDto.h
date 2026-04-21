@@ -68,6 +68,7 @@ struct MaterialDto
     uint32_t roughnessChan = 0;
     uint32_t aoChan = 0;
     uint32_t AlphaMode = 0;
+    bool DoubleSided = false;
 
     MaterialDto() = default;
 
@@ -94,11 +95,11 @@ struct MaterialDto
             // Si es relativo (ej. "../Textures/foo.jpg"), resolver desde carpeta Materials
             fs::path resolved = (materialsFolder / inPath).lexically_normal();
 
-            // Si por algún motivo resolved acaba siendo directorio, no machacar: intenta mantener filename original
-            // (Esto solo ocurriría si p fuera "../Textures/" sin nombre)
+            // Si por algÃºn motivo resolved acaba siendo directorio, no machacar: intenta mantener filename original
+            // (Esto solo ocurrirÃ­a si p fuera "../Textures/" sin nombre)
             if (resolved.has_filename() == false || resolved.filename().string().empty())
             {
-                // Caso patológico: deja NULL para que se note el error en vez de ruta inválida
+                // Caso patolÃ³gico: deja NULL para que se note el error en vez de ruta invÃ¡lida
                 p = "NULL_TEXTURE";
                 return;
             }

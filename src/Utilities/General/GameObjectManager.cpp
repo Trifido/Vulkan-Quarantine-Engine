@@ -1,4 +1,4 @@
-﻿#include "GameObjectManager.h"
+#include "GameObjectManager.h"
 #include <iostream>
 #include <GameObjectDto.h>
 #include <QEMeshRenderer.h>
@@ -9,6 +9,9 @@
 #include <DirectionalLight.h>
 #include <SpotLight.h>
 #include <SunLight.h>
+#include <QECamera.h>
+#include <QESessionManager.h>
+#include <QETransform.h>
 
 std::string GameObjectManager::CheckName(std::string nameGameObject)
 {
@@ -453,6 +456,11 @@ bool GameObjectManager::RenameGameObject(const std::shared_ptr<QEGameObject>& ob
 std::vector<QEOrderRenderItem> GameObjectManager::BuildRenderItems() const
 {
     std::vector<QEOrderRenderItem> items;
+    glm::vec3 cameraPosition(0.0f);
+    if (auto activeCamera = QESessionManager::getInstance()->ActiveCamera())
+    {
+        cameraPosition = glm::vec3(activeCamera->CameraData->Position);
+    }
 
     for (const auto& bucketPair : _objectsByUpdateOrder)
     {
@@ -477,6 +485,11 @@ std::vector<QEOrderRenderItem> GameObjectManager::BuildRenderItems() const
             item.MeshRenderer = meshRenderer;
             item.Material = material;
             item.RenderQueue = material->renderQueue;
+            if (auto transform = go->GetComponent<QETransform>())
+            {
+                const glm::vec3 delta = transform->GetWorldPosition() - cameraPosition;
+                item.CameraDistanceSq = glm::dot(delta, delta);
+            }
 
             items.push_back(item);
         }
@@ -487,6 +500,11 @@ std::vector<QEOrderRenderItem> GameObjectManager::BuildRenderItems() const
         {
             if (a.RenderQueue != b.RenderQueue)
                 return a.RenderQueue < b.RenderQueue;
+
+            const bool aTransparent = a.RenderQueue >= static_cast<unsigned int>(RenderQueue::Transparent);
+            const bool bTransparent = b.RenderQueue >= static_cast<unsigned int>(RenderQueue::Transparent);
+            if (aTransparent && bTransparent && a.CameraDistanceSq != b.CameraDistanceSq)
+                return a.CameraDistanceSq > b.CameraDistanceSq;
 
             return a.GameObject->ID() < b.GameObject->ID();
         });

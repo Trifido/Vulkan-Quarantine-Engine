@@ -49,12 +49,6 @@ void QEMeshRenderer::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx
     auto pipelineModule = this->materialComponents[0]->shader->PipelineModule;
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineModule->pipeline);
 
-    vkCmdSetDepthTestEnable(commandBuffer, true);
-    vkCmdSetDepthWriteEnable(commandBuffer, true);
-
-    vkCmdSetCullMode(commandBuffer, true);
-    vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
-
     auto qeMesh = this->geometryComponent->GetMesh();
     for (int i = 0; i < this->geometryComponent->indexBuffer.size(); i++)
     {
@@ -77,6 +71,14 @@ void QEMeshRenderer::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx
 
         std::string materialID = qeMesh->MaterialRel[i];
         auto material = this->Owner->GetMaterial(materialID);
+        const bool isBlended = material &&
+            (material->materialData.AlphaMode == 2u ||
+             material->renderQueue >= static_cast<unsigned int>(RenderQueue::Transparent));
+
+        vkCmdSetDepthTestEnable(commandBuffer, true);
+        vkCmdSetDepthWriteEnable(commandBuffer, isBlended ? VK_FALSE : VK_TRUE);
+        vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
+
         material->BindDescriptors(commandBuffer, idx);
 
         vkCmdPushConstants(commandBuffer, pipelineModule->pipelineLayout, VK_SHADER_STAGE_ALL, 0, sizeof(PushConstantStruct), &this->transformComponent->GetWorldMatrix());
@@ -99,6 +101,7 @@ void QEMeshRenderer::SetDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32
         return;
 
     auto animator_ptr = (this->animationComponent != nullptr) ? this->animationComponent->animator : nullptr;
+    auto qeMesh = this->geometryComponent->GetMesh();
     for (int i = 0; i < geometryComponent->indexBuffer.size(); i++)
     {
         if (!this->IsMeshShaderPipeline)
@@ -116,6 +119,35 @@ void QEMeshRenderer::SetDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32
                 vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
             }
             vkCmdBindIndexBuffer(commandBuffer, geometryComponent->indexBuffer[i], 0, VK_INDEX_TYPE_UINT32);
+        }
+
+        if (qeMesh && i < qeMesh->MaterialRel.size())
+        {
+            auto material = this->Owner->GetMaterial(qeMesh->MaterialRel[i]);
+            if (material)
+            {
+                const bool disableShadowCulling =
+                    material->materialData.DoubleSided ||
+                    material->materialData.AlphaMode != 0u;
+
+                vkCmdSetCullMode(
+                    commandBuffer,
+                    disableShadowCulling ? VK_CULL_MODE_NONE : VK_CULL_MODE_FRONT_BIT);
+
+                if (material->HasDescriptorBuffer())
+                {
+                    vkCmdBindDescriptorSets(
+                        commandBuffer,
+                        VK_PIPELINE_BIND_POINT_GRAPHICS,
+                        pipelineLayout,
+                        1,
+                        1,
+                        material->descriptor->getDescriptorSet(idx),
+                        0,
+                        nullptr);
+                }
+
+            }
         }
 
         if (this->IsMeshShaderPipeline)

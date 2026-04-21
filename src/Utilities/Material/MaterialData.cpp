@@ -43,7 +43,7 @@ static std::string& PathRefForSemantic(MaterialData& md, TEXTURE_TYPE s)
     case TEXTURE_TYPE::EMISSIVE_TYPE:  return md.emissiveTexturePath;
     case TEXTURE_TYPE::HEIGHT_TYPE:    return md.heightTexturePath;
     case TEXTURE_TYPE::SPECULAR_TYPE:  return md.specularTexturePath;
-    default: return md.diffuseTexturePath; // no deber�a usarse
+    default: return md.diffuseTexturePath; // Fallback, should not be used.
     }
 }
 
@@ -127,8 +127,9 @@ MaterialData::MaterialData()
     RoughnessChan = 0;
     AOChan = 0;
     AlphaMode = 0;
+    DoubleSided = false;
 
-    // �ndices (slots)
+    // Texture slot indices.
     IDTextures[TEXTURE_TYPE::DIFFUSE_TYPE] = (int)MAT_TEX_SLOT::BaseColor;
     IDTextures[TEXTURE_TYPE::NORMAL_TYPE] = (int)MAT_TEX_SLOT::Normal;
     IDTextures[TEXTURE_TYPE::EMISSIVE_TYPE] = (int)MAT_TEX_SLOT::Emissive;
@@ -168,6 +169,30 @@ void MaterialData::ImportAssimpMaterial(aiMaterial* material)
     material->Get(AI_MATKEY_REFLECTIVITY, Reflectivity);
     material->Get(AI_MATKEY_SHININESS_STRENGTH, Shininess_Strength);
     material->Get(AI_MATKEY_REFRACTI, Refractivity);
+
+    int twoSided = 0;
+    if (material->Get(AI_MATKEY_TWOSIDED, twoSided) == AI_SUCCESS)
+    {
+        DoubleSided = (twoSided != 0);
+    }
+
+    aiString alphaMode;
+    if (material->Get(AI_MATKEY_GLTF_ALPHAMODE, alphaMode) == AI_SUCCESS)
+    {
+        const std::string mode = alphaMode.C_Str();
+        if (mode == "MASK")
+            AlphaMode = 1u;
+        else if (mode == "BLEND")
+            AlphaMode = 2u;
+        else
+            AlphaMode = 0u;
+    }
+
+    float alphaCutoff = AlphaCutoff;
+    if (material->Get(AI_MATKEY_GLTF_ALPHACUTOFF, alphaCutoff) == AI_SUCCESS)
+    {
+        AlphaCutoff = alphaCutoff;
+    }
 
     // --- PBR: Clearcoat (KHR_materials_clearcoat, etc.) ---
     {
@@ -461,6 +486,8 @@ void MaterialData::SetMaterialField(const std::string& nameField_, int value)
     if (nameField == "idxMetallic") { idxMetallic = value;  UpdateMaterialDataRaw("idxMetallic", &idxMetallic, sizeof(idxMetallic)); return; }
     if (nameField == "idxRoughness") { idxRoughness = value; UpdateMaterialDataRaw("idxRoughness", &idxRoughness, sizeof(idxRoughness)); return; }
     if (nameField == "idxAO") { idxAO = value;        UpdateMaterialDataRaw("idxAO", &idxAO, sizeof(idxAO)); return; }
+    if (nameField == "AlphaMode") { AlphaMode = static_cast<uint32_t>(std::max(value, 0)); UpdateMaterialDataRaw("AlphaMode", &AlphaMode, sizeof(AlphaMode)); return; }
+    if (nameField == "DoubleSided") { DoubleSided = (value != 0); return; }
 }
 
 void MaterialData::SetTextureSlot(uint32_t slot, const std::shared_ptr<CustomTexture>& tex, bool isReal)
@@ -479,6 +506,7 @@ void MaterialData::ApplyDtoPacking(const MaterialDto& dto)
     RoughnessChan = dto.roughnessChan;
     AOChan = dto.aoChan;
     AlphaMode = dto.AlphaMode;
+    DoubleSided = dto.DoubleSided;
 
     UpdateMaterialDataRaw("metallicChan", &MetallicChan, sizeof(MetallicChan));
     UpdateMaterialDataRaw("roughnessChan", &RoughnessChan, sizeof(RoughnessChan));

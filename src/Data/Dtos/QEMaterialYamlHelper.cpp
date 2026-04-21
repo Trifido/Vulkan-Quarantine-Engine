@@ -63,6 +63,7 @@ YAML::Node QEMaterialYamlHelper::SerializeMaterialDto(const MaterialDto& dto)
     scalars["ClearcoatRoughness"] = dto.ClearcoatRoughness;
     scalars["AlphaCutoff"] = dto.AlphaCutoff;
     scalars["AlphaMode"] = dto.AlphaMode;
+    scalars["DoubleSided"] = dto.DoubleSided;
     material["Scalars"] = scalars;
 
     YAML::Node colors;
@@ -124,6 +125,7 @@ bool QEMaterialYamlHelper::DeserializeMaterialDto(const YAML::Node& root, Materi
         dto.ClearcoatRoughness = scalars["ClearcoatRoughness"] ? scalars["ClearcoatRoughness"].as<float>() : 0.1f;
         dto.AlphaCutoff = scalars["AlphaCutoff"] ? scalars["AlphaCutoff"].as<float>() : 0.5f;
         dto.AlphaMode = scalars["AlphaMode"] ? scalars["AlphaMode"].as<uint32_t>() : 0u;
+        dto.DoubleSided = scalars["DoubleSided"] ? scalars["DoubleSided"].as<bool>() : false;
     }
 
     if (const YAML::Node colors = material["Colors"])

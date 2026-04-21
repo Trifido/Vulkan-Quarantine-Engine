@@ -2,6 +2,8 @@
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
+#include <cstddef>
+#include <Vertex.h>
 
 ShaderModule::ShaderModule(std::string shaderId)
 {
@@ -355,14 +357,58 @@ void ShaderModule::SetAttributeDescriptions(std::vector<VkVertexInputAttributeDe
     size_t numAttributes = this->reflectShader.inputVariables.size();
     attributeDescriptions.resize(numAttributes);
 
-    uint32_t offset = 0;
-
     for (uint16_t id = 0; id < numAttributes; id++)
     {
+        uint32_t offset = 0;
+        const uint32_t location = this->reflectShader.inputVariables[id].location;
+
+        if (this->graphicsPipelineData.vertexBufferStride == sizeof(Vertex))
+        {
+            switch (location)
+            {
+            case 0:
+                offset = static_cast<uint32_t>(offsetof(Vertex, Position));
+                break;
+            case 1:
+                offset = static_cast<uint32_t>(offsetof(Vertex, Normal));
+                break;
+            case 2:
+                offset = static_cast<uint32_t>(offsetof(Vertex, UV));
+                break;
+            case 3:
+                offset = static_cast<uint32_t>(offsetof(Vertex, Tangent));
+                break;
+            default:
+                offset = 0;
+                break;
+            }
+        }
+        else if (this->graphicsPipelineData.vertexBufferStride == sizeof(DebugVertex))
+        {
+            switch (location)
+            {
+            case 0:
+                offset = static_cast<uint32_t>(offsetof(DebugVertex, pos));
+                break;
+            case 1:
+                offset = static_cast<uint32_t>(offsetof(DebugVertex, col));
+                break;
+            default:
+                offset = 0;
+                break;
+            }
+        }
+        else
+        {
+            for (uint16_t prev = 0; prev < id; prev++)
+            {
+                offset += this->reflectShader.inputVariables[prev].size;
+            }
+        }
+
         attributeDescriptions[id].binding = 0;
-        attributeDescriptions[id].location = this->reflectShader.inputVariables[id].location;
+        attributeDescriptions[id].location = location;
         attributeDescriptions[id].format = this->reflectShader.inputVariables[id].format;
         attributeDescriptions[id].offset = offset;
-        offset += this->reflectShader.inputVariables[id].size;
     }
 }

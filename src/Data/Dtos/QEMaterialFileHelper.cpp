@@ -69,8 +69,9 @@ MaterialDto QEMaterialFileHelper::BuildBaseMaterialDto(
     dto.metallicChan = 2u;
     dto.roughnessChan = 1u;
     dto.aoChan = 0u;
+    dto.DoubleSided = false;
 
-    // Textures vacías
+    // Textures vacÃ­as
     dto.diffuseTexturePath.clear();
     dto.normalTexturePath.clear();
     dto.metallicTexturePath.clear();

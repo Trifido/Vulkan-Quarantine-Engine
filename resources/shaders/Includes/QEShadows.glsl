@@ -82,10 +82,14 @@ float GetCSMVisibility(
     mat4 vp0,
     mat4 vp1,
     uint c0,
-    uint c1
+    uint c1,
+    uint materialAlphaMode
 ){
     float ndotl = clamp(dot(normalize(normalWorld), normalize(lightDirWorld)), 0.0, 1.0);
     float receiverBiasScale = mix(2.5, 1.0, ndotl);
+
+    if (materialAlphaMode == 1u)
+        receiverBiasScale *= 1.75;
 
     float end0   = (c0 == 0u) ? splitsEnd.x : (c0 == 1u) ? splitsEnd.y : (c0 == 2u) ? splitsEnd.z : splitsEnd.w;
     float start0 = (c0 == 0u) ? 0.0        : (c0 == 1u) ? splitsEnd.x : (c0 == 2u) ? splitsEnd.y : splitsEnd.z;
@@ -178,13 +182,16 @@ float ComputeSpotFilterPCF(sampler2D shadowMap, vec4 shadowCoord)
     return sum / float(count);
 }
 
-float GetSpotVisibility(sampler2D shadowMap, vec3 fragPosWorld, mat4 viewProj)
+float GetSpotVisibility(sampler2D shadowMap, vec3 fragPosWorld, mat4 viewProj, uint materialAlphaMode)
 {
     vec4 shadowCoord = (biasMat * viewProj) * vec4(fragPosWorld, 1.0);
     if (shadowCoord.w <= 0.0)
         return 1.0;
 
     shadowCoord /= shadowCoord.w;
+    if (materialAlphaMode == 1u)
+        shadowCoord.z -= 0.0025;
+
     return ComputeSpotFilterPCF(shadowMap, shadowCoord);
 }
 

@@ -101,6 +101,11 @@ void ShadowPipelineModule::CompileDirectionalShadowPipeline(std::vector<VkPipeli
     std::vector<VkDynamicState> dynamicStates = {
         VK_DYNAMIC_STATE_VIEWPORT,
         VK_DYNAMIC_STATE_SCISSOR,
+        VK_DYNAMIC_STATE_FRONT_FACE,
+        VK_DYNAMIC_STATE_CULL_MODE,
+        VK_DYNAMIC_STATE_DEPTH_TEST_ENABLE,
+        VK_DYNAMIC_STATE_DEPTH_WRITE_ENABLE,
+        VK_DYNAMIC_STATE_DEPTH_BIAS
     };
 
     VkPipelineDynamicStateCreateInfo dynamicState{};
@@ -139,7 +144,7 @@ void ShadowPipelineModule::CompileDirectionalShadowPipeline(std::vector<VkPipeli
 
     VkGraphicsPipelineCreateInfo pipelineInfo{};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.stageCount = 1;
+    pipelineInfo.stageCount = static_cast<uint32_t>(shaderInfo.size());
     pipelineInfo.pStages = shaderInfo.data();
     pipelineInfo.pVertexInputState = &vertexInfo;
     pipelineInfo.pInputAssemblyState = &inputAssembly;
@@ -232,6 +237,7 @@ void ShadowPipelineModule::CompileOmniShadowPipeline(std::vector<VkPipelineShade
         VK_DYNAMIC_STATE_VIEWPORT,
         VK_DYNAMIC_STATE_SCISSOR,
         VK_DYNAMIC_STATE_FRONT_FACE,
+        VK_DYNAMIC_STATE_CULL_MODE,
         VK_DYNAMIC_STATE_DEPTH_TEST_ENABLE,
         VK_DYNAMIC_STATE_DEPTH_WRITE_ENABLE,
         VK_DYNAMIC_STATE_DEPTH_BIAS

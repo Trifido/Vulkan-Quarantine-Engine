@@ -986,6 +986,12 @@ void MeshImporter::ExtractAndUpdateMaterials(
         dto.roughnessChan = roughnessChan;
         dto.aoChan = aoChan;
         dto.AlphaMode = matData.AlphaMode;
+        dto.DoubleSided = matData.DoubleSided;
+
+        if (dto.AlphaMode == 2u)
+        {
+            dto.RenderQueue = static_cast<unsigned int>(RenderQueue::Transparent);
+        }
 
         auto importSlot = [&](std::string& src, std::string& dst, TEXTURE_TYPE semantic, QEColorSpace colorSpace)
             {

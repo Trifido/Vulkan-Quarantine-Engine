@@ -46,6 +46,7 @@ vec3 ComputeDirectionalLightPBR(
     float roughness,
     float clearcoat,
     float clearcoatRoughness,
+    uint materialAlphaMode,
     sampler2DArray shadowMap,
     vec4 splitsEnd,
     float viewDepth,
@@ -60,7 +61,7 @@ vec3 ComputeDirectionalLightPBR(
 
     float visibility = GetCSMVisibility(
         shadowMap, splitsEnd, viewDepth, fragPosWorld, N_base, L,
-        vp0, vp1, c0, c1
+        vp0, vp1, c0, c1, materialAlphaMode
     );
 
     vec3 brdfBase = BRDF_CookTorrance(N_base, V, L, baseColor, metallic, roughness);
@@ -84,6 +85,7 @@ vec3 ComputeSpotLightPBR(
     float roughness,
     float clearcoat,
     float clearcoatRoughness,
+    uint materialAlphaMode,
     sampler2D shadowMap,
     mat4 viewProj
 ){
@@ -98,7 +100,7 @@ vec3 ComputeSpotLightPBR(
     float intensity = clamp((theta - light.outerCutoff) / eps, 0.0, 1.0);
 
     vec3 radiance = light.diffuse;
-    float visibility = GetSpotVisibility(shadowMap, fragPosWorld, viewProj);
+    float visibility = GetSpotVisibility(shadowMap, fragPosWorld, viewProj, materialAlphaMode);
 
     vec3 brdfBase = BRDF_CookTorrance(N_base, V, L, baseColor, metallic, roughness);
     vec3 brdfCoat = BRDF_Clearcoat(N_coat, V, L, clearcoat, clearcoatRoughness);

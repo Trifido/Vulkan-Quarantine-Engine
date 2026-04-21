@@ -94,8 +94,8 @@ layout (set = 3, binding = 1) readonly buffer spotViewProjs
 void main()
 {
     vec4 base = QE_GetBaseColorAlpha(uboMaterial, texSampler, fs_in.TexCoords);
-    //if (uboMaterial.AlphaMode == 1u && base.a < uboMaterial.AlphaCutoff)
-    //    discard;
+    if (QE_ShouldDiscardAlpha(uboMaterial, base))
+        discard;
         
     vec4 pos_camera_space = cameraData.view * vec4(fs_in.FragPos, 1.0);
     float z_far = cameraData.cameraParams[1];
@@ -128,7 +128,7 @@ void main()
     float coatRough = clamp(uboMaterial.ClearcoatRoughness, 0.03, 1.0);
 
     vec3 albedoColor = base.rgb;
-    float alpha = base.a * uboMaterial.Opacity;
+    float alpha = QE_GetEffectiveAlpha(uboMaterial, base);
 
     vec3 emissiveColor = QE_GetEmissiveColor(uboMaterial, texSampler, fs_in.TexCoords);
 
@@ -183,6 +183,7 @@ void main()
                         lights[gli], fragPos, N_base, N_coat, V,
                         albedoColor, metallic, roughness,
                         clearcoat, coatRough,
+                        uboMaterial.AlphaMode,
                         QE_DirectionalShadowmaps[nonuniformEXT(si)],
                         splits, viewDepth,
                         vp0, vp1, c0, c1
@@ -196,6 +197,7 @@ void main()
                         lights[gli], fragPos, N_base, N_coat, V,
                         albedoColor, metallic, roughness,
                         clearcoat, coatRough,
+                        uboMaterial.AlphaMode,
                         QE_SpotShadowmaps[nonuniformEXT(si)],
                         QE_SpotViewProj[si]
                     );
