@@ -188,6 +188,11 @@ void QEDirectionalLight::UpdateCascades()
 
 void QEDirectionalLight::EnsureRuntimeState()
 {
+    if (ResolveTransformFromOwner())
+    {
+        return;
+    }
+
     if (this->transform == nullptr)
     {
         this->transform = std::make_shared<QETransform>();

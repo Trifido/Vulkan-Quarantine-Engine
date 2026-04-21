@@ -13,6 +13,7 @@ class OmniShadowResources
 private:
     DeviceModule* deviceModule;
     SwapChainModule* swapchainModule = nullptr;
+    VkFormat framebufferDepthFormat = VK_FORMAT_UNDEFINED;
 
     // Shadow Render Image
     VkImage cubemapImage = VK_NULL_HANDLE;
@@ -55,6 +56,9 @@ public:
     OmniShadowResources(std::shared_ptr<VkRenderPass> renderPass);
     void UpdateUBOShadowMap(OmniShadowUniform omniParameters);
 
+    static VkFormat GetSupportedColorFormat(DeviceModule* deviceModule);
+    static VkFormat GetSupportedDepthFormat(DeviceModule* deviceModule);
+    static bool HasStencilComponent(VkFormat format);
     static VkSampler CreateCubemapSampler(VkDevice device);
     static VkImageView CreateCubemapImageView(VkDevice device, VkImage& image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels = 1);
     static VkImage AllocateCubemapImage(VkDevice device, VkPhysicalDevice physicalDevice, VkDeviceMemory& mapMemory, uint32_t pixelSize,

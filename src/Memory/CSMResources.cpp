@@ -12,9 +12,9 @@ uint32_t CSMResources::TextureSize;
 CSMResources::CSMResources()
 {
     this->TextureSize = 2048;
-    this->shadowFormat = VK_FORMAT_D32_SFLOAT;
     this->deviceModule = DeviceModule::getInstance();
     this->swapchainModule = SwapChainModule::getInstance();
+    this->shadowFormat = GetSupportedShadowFormat(this->deviceModule);
 
     this->CascadeResourcesPtr = std::make_shared<std::array<CascadeResource, SHADOW_MAP_CASCADE_COUNT>>();
     this->OffscreenShadowMapUBO = std::make_shared<UniformBufferObject>();
@@ -73,7 +73,12 @@ VkImageView CSMResources::CreateImageView(VkDevice device, VkImage& image, VkFor
     viewInfo.image = image;
     viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
     viewInfo.format = format;
-    viewInfo.components = { VK_COMPONENT_SWIZZLE_R };
+    viewInfo.components = {
+        VK_COMPONENT_SWIZZLE_IDENTITY,
+        VK_COMPONENT_SWIZZLE_IDENTITY,
+        VK_COMPONENT_SWIZZLE_IDENTITY,
+        VK_COMPONENT_SWIZZLE_IDENTITY
+    };
 
     viewInfo.subresourceRange.aspectMask = aspectFlags;
     viewInfo.subresourceRange.baseMipLevel = 0;
@@ -86,6 +91,31 @@ VkImageView CSMResources::CreateImageView(VkDevice device, VkImage& image, VkFor
     }
 
     return resultImageView;
+}
+
+VkFormat CSMResources::GetSupportedShadowFormat(DeviceModule* deviceModule)
+{
+    auto format = deviceModule->findSupportedFormat(
+        {
+            VK_FORMAT_D32_SFLOAT,
+            VK_FORMAT_D16_UNORM,
+            VK_FORMAT_D24_UNORM_S8_UINT,
+            VK_FORMAT_D32_SFLOAT_S8_UINT
+        },
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT);
+
+    if (format == VK_FORMAT_UNDEFINED)
+    {
+        throw std::runtime_error("failed to find a supported sampled depth format for CSM!");
+    }
+
+    return format;
+}
+
+bool CSMResources::HasStencilComponent(VkFormat format)
+{
+    return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
 
 VkSampler CSMResources::CreateCSMSampler(VkDevice device)
@@ -130,6 +160,7 @@ void CSMResources::CreateCSMResources(std::shared_ptr<VkRenderPass> renderPass)
     this->TransitionImageLayout(
         deviceModule->device,
         this->CSMImage,
+        this->shadowFormat,
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
 
@@ -176,7 +207,7 @@ void CSMResources::UpdateOffscreenUBOShadowMap()
     }
 }
 
-void CSMResources::TransitionImageLayout(VkDevice device, VkImage& newImage, VkImageLayout oldLayout, VkImageLayout newLayout)
+void CSMResources::TransitionImageLayout(VkDevice device, VkImage& newImage, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
 {
     VkCommandBuffer commandBuffer = beginSingleTimeCommands(device, commandPool);
 
@@ -187,25 +218,27 @@ void CSMResources::TransitionImageLayout(VkDevice device, VkImage& newImage, VkI
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.image = newImage; // Tu VkImage
-    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT; // Máscara de aspecto
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+    if (HasStencilComponent(format))
+    {
+        barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+    }
     barrier.subresourceRange.baseMipLevel = 0;
     barrier.subresourceRange.levelCount = 1;
     barrier.subresourceRange.baseArrayLayer = 0;
     barrier.subresourceRange.layerCount = SHADOW_MAP_CASCADE_COUNT;
 
-    // Define los accesos para sincronización
-    barrier.srcAccessMask = 0; // No hay acceso previo
-    barrier.dstAccessMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT; // Acceso esperado en shaders
+    barrier.srcAccessMask = 0;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-    // Define las etapas del pipeline
     vkCmdPipelineBarrier(
         commandBuffer,
-        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, // Etapa fuente
-        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, // Etapa destino
-        0, // Flags
-        0, nullptr, // Barreras de memoria
-        0, nullptr, // Barreras de buffer
-        1, &barrier // Barrera de imagen
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        0,
+        0, nullptr,
+        0, nullptr,
+        1, &barrier
     );
 
     endSingleTimeCommands(device, queueModule->graphicsQueue, commandPool, commandBuffer);

@@ -47,6 +47,7 @@ public:
     virtual void UpdateUniform();
     void SetDistanceEffect(float radiusEffect);
     float GetDistanceEffect() { return this->radius; }
+    bool ResolveTransformFromOwner();
 
     void QEStart() override;
 protected:

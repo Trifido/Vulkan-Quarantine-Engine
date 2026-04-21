@@ -25,6 +25,9 @@ void QESpotLight::UpdateUniform()
 {
     QELight::UpdateUniform();
 
+    if (!ResolveTransformFromOwner())
+        return;
+
     this->uniform->cutOff = this->cutOff;
     this->uniform->outerCutoff = this->outerCutoff;
     this->uniform->position = this->transform->GetWorldPosition();

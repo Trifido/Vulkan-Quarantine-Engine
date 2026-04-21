@@ -201,19 +201,32 @@ VkDescriptorBufferInfo CSMDescriptorsManager::GetBufferInfo(VkBuffer buffer, VkD
 
 void CSMDescriptorsManager::CreateCSMPlaceHolder()
 {
+    const VkFormat shadowFormat = CSMResources::GetSupportedShadowFormat(deviceModule);
+
     this->placeholderImage = CSMResources::AllocateImage(
         deviceModule->device,
         deviceModule->physicalDevice,
         this->placeholderMemory,
         1,
-        VK_FORMAT_D32_SFLOAT,
+        shadowFormat,
         VK_IMAGE_TILING_OPTIMAL,
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         1);
 
-    CSMResources::TransitionImageLayout(deviceModule->device, this->placeholderImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
+    CSMResources::TransitionImageLayout(
+        deviceModule->device,
+        this->placeholderImage,
+        shadowFormat,
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
 
-    this->placeholderImageView = CSMResources::CreateImageView(this->deviceModule->device, this->placeholderImage, VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT, 0, CSM_NUM);
+    this->placeholderImageView = CSMResources::CreateImageView(
+        this->deviceModule->device,
+        this->placeholderImage,
+        shadowFormat,
+        VK_IMAGE_ASPECT_DEPTH_BIT,
+        0,
+        CSM_NUM);
     this->placeholderSampler = CSMResources::CreateCSMSampler(this->deviceModule->device);
 }
 
@@ -274,7 +287,7 @@ void CSMDescriptorsManager::SetCSMDescriptorWrite(VkWriteDescriptorSet& descript
     descriptorWrite.dstBinding = binding;
     descriptorWrite.dstArrayElement = 0;
     descriptorWrite.descriptorType = descriptorType;
-    descriptorWrite.descriptorCount = MAX_NUM_DIR_LIGHTS; // Número de descriptores en el array
+    descriptorWrite.descriptorCount = MAX_NUM_DIR_LIGHTS; // NÃºmero de descriptores en el array
     descriptorWrite.pImageInfo = this->renderDescriptorImageInfo.data();
 }
 

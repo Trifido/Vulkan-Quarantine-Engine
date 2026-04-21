@@ -10,6 +10,8 @@
 #include <PlaneCollider.h>
 #include <BoxCollider.h>
 #include "PhysicsBody.h"
+#include <CSMResources.h>
+#include <OmniShadowResources.h>
 
 QEBaseApp::QEBaseApp()
 {
@@ -79,8 +81,10 @@ void QEBaseApp::initVulkan()
     //Creamos el Render Pass
     renderPassModule = RenderPassModule::getInstance();
     renderPassModule->CreateRenderPass(swapchainModule->swapChainImageFormat, depthBufferModule->findDepthFormat(), *antialiasingModule->msaaSamples);
-    renderPassModule->CreateDirShadowRenderPass(VK_FORMAT_D32_SFLOAT);
-    renderPassModule->CreateOmniShadowRenderPass(VK_FORMAT_R32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT);
+    renderPassModule->CreateDirShadowRenderPass(CSMResources::GetSupportedShadowFormat(deviceModule));
+    renderPassModule->CreateOmniShadowRenderPass(
+        OmniShadowResources::GetSupportedColorFormat(deviceModule),
+        OmniShadowResources::GetSupportedDepthFormat(deviceModule));
 
     renderPassModule->CreateViewportRenderPass(
         swapchainModule->swapChainImageFormat,
@@ -531,8 +535,10 @@ void QEBaseApp::recreateSwapchain()
         depthBufferModule->findDepthFormat(),
         *antialiasingModule->msaaSamples);
 
-    renderPassModule->CreateDirShadowRenderPass(VK_FORMAT_D32_SFLOAT);
-    renderPassModule->CreateOmniShadowRenderPass(VK_FORMAT_R32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT);
+    renderPassModule->CreateDirShadowRenderPass(CSMResources::GetSupportedShadowFormat(deviceModule));
+    renderPassModule->CreateOmniShadowRenderPass(
+        OmniShadowResources::GetSupportedColorFormat(deviceModule),
+        OmniShadowResources::GetSupportedDepthFormat(deviceModule));
     renderPassModule->CreateViewportRenderPass(
         swapchainModule->swapChainImageFormat,
         depthBufferModule->findDepthFormat(),

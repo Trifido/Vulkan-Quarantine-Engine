@@ -365,6 +365,8 @@ void LightManager::UpdateCSMLights()
             continue;
         }
 
+        light->EnsureRuntimeState();
+
         if (!light->transform)
         {
             QE_LOG_ERROR_CAT_F("LightManager", "Directional light '{}' has null transform", light->Name);
@@ -596,6 +598,22 @@ void LightManager::ComputeLightsLUT()
         for (uint32_t i = 0; i < this->sortedLight.size(); i++)
         {
             const LightMap& light = this->sortedLight.at(i);
+            const LightUniform& lightUniform = this->lightBuffer.at(light.id);
+
+            if (lightUniform.lightType == DIRECTIONAL_LIGHT || lightUniform.lightType == SUN_LIGHT)
+            {
+                if (i < min_light_id)
+                {
+                    min_light_id = i;
+                }
+
+                if (i > max_light_id)
+                {
+                    max_light_id = i;
+                }
+
+                continue;
+            }
 
             bool isInside = light.projected_z >= bin_min && light.projected_z <= bin_max;
             bool isInsideMinor = light.projected_z_min <= bin_min && light.projected_z_min <= bin_max && light.projected_z >= bin_min;
@@ -665,7 +683,18 @@ void LightManager::ComputeLightTiles()
         LightUniform& light = this->lightBuffer.at(light_index);
 
         if (light.lightType == DIRECTIONAL_LIGHT || light.lightType == SUN_LIGHT)
+        {
+            uint32_t word_index = i / 32;
+            uint32_t bit_index = i % 32;
+            uint32_t mask = (1u << bit_index);
+
+            for (uint32_t tile_entry = word_index; tile_entry < tiles_entry_count; tile_entry += NUM_WORDS)
+            {
+                light_tiles_bits[tile_entry] |= mask;
+            }
+
             continue;
+        }
 
         glm::vec4 pos{ light.position.x, light.position.y, light.position.z, 1.0f };
         float radius = light.radius;

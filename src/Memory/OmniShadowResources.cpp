@@ -12,9 +12,10 @@ uint32_t OmniShadowResources::TextureSize;
 OmniShadowResources::OmniShadowResources()
 {
     this->TextureSize = 2048;
-    this->shadowFormat = VK_FORMAT_D32_SFLOAT;
     this->deviceModule = DeviceModule::getInstance();
     this->swapchainModule = SwapChainModule::getInstance();
+    this->shadowFormat = GetSupportedColorFormat(this->deviceModule);
+    this->framebufferDepthFormat = GetSupportedDepthFormat(this->deviceModule);
 
     this->shadowMapUBO = std::make_shared<UniformBufferObject>();
     this->shadowMapUBO->CreateUniformBuffer(sizeof(OmniShadowUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
@@ -22,7 +23,6 @@ OmniShadowResources::OmniShadowResources()
 
 OmniShadowResources::OmniShadowResources(std::shared_ptr<VkRenderPass> renderPass) : OmniShadowResources()
 {
-    this->shadowFormat = VK_FORMAT_R32_SFLOAT;
     this->CreateOmniShadowMapResources(renderPass);
 }
 
@@ -41,13 +41,11 @@ VkImage OmniShadowResources::CreateFramebufferDepthImage(VkDeviceMemory& deviceI
     imageCreateInfo.arrayLayers = 1;
     imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    // Image of the framebuffer is blit source
     imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    imageCreateInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    imageCreateInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    // Depth stencil attachment
-    imageCreateInfo.format = VK_FORMAT_D32_SFLOAT_S8_UINT;
-    imageCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    imageCreateInfo.format = this->framebufferDepthFormat;
+    imageCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
     vkCreateImage(this->deviceModule->device, &imageCreateInfo, nullptr, &resultImage);
 
@@ -71,6 +69,12 @@ VkImageView OmniShadowResources::CreateImageView(VkDevice device, VkImage image,
     viewInfo.image = image;
     viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
     viewInfo.format = format;
+    viewInfo.components = {
+        VK_COMPONENT_SWIZZLE_IDENTITY,
+        VK_COMPONENT_SWIZZLE_IDENTITY,
+        VK_COMPONENT_SWIZZLE_IDENTITY,
+        VK_COMPONENT_SWIZZLE_IDENTITY
+    };
     viewInfo.subresourceRange.aspectMask = aspectFlags;
     viewInfo.subresourceRange.baseMipLevel = 0;
     viewInfo.subresourceRange.levelCount = mipLevels;
@@ -133,7 +137,12 @@ VkImageView OmniShadowResources::CreateCubemapImageView(VkDevice device, VkImage
     viewInfo.image = image;
     viewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
     viewInfo.format = format;
-    viewInfo.components = { VK_COMPONENT_SWIZZLE_R };
+    viewInfo.components = {
+        VK_COMPONENT_SWIZZLE_IDENTITY,
+        VK_COMPONENT_SWIZZLE_IDENTITY,
+        VK_COMPONENT_SWIZZLE_IDENTITY,
+        VK_COMPONENT_SWIZZLE_IDENTITY
+    };
 
     viewInfo.subresourceRange.aspectMask = aspectFlags;
     viewInfo.subresourceRange.baseMipLevel = 0;
@@ -155,7 +164,12 @@ std::array<VkImageView, 6> OmniShadowResources::CreateCubemapFacesImageView(VkDe
     viewInfo.image = image;
     viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
     viewInfo.format = format;
-    viewInfo.components = { VK_COMPONENT_SWIZZLE_R };
+    viewInfo.components = {
+        VK_COMPONENT_SWIZZLE_IDENTITY,
+        VK_COMPONENT_SWIZZLE_IDENTITY,
+        VK_COMPONENT_SWIZZLE_IDENTITY,
+        VK_COMPONENT_SWIZZLE_IDENTITY
+    };
 
     viewInfo.subresourceRange.aspectMask = aspectFlags;
     viewInfo.subresourceRange.baseMipLevel = 0;
@@ -204,6 +218,49 @@ VkSampler OmniShadowResources::CreateCubemapSampler(VkDevice device)
     }
 
     return resultSampler;
+}
+
+VkFormat OmniShadowResources::GetSupportedColorFormat(DeviceModule* deviceModule)
+{
+    auto format = deviceModule->findSupportedFormat(
+        {
+            VK_FORMAT_R32_SFLOAT,
+            VK_FORMAT_R16_SFLOAT
+        },
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT);
+
+    if (format == VK_FORMAT_UNDEFINED)
+    {
+        throw std::runtime_error("failed to find a supported color format for omni shadows!");
+    }
+
+    return format;
+}
+
+VkFormat OmniShadowResources::GetSupportedDepthFormat(DeviceModule* deviceModule)
+{
+    auto format = deviceModule->findSupportedFormat(
+        {
+            VK_FORMAT_D32_SFLOAT,
+            VK_FORMAT_D24_UNORM_S8_UINT,
+            VK_FORMAT_D32_SFLOAT_S8_UINT,
+            VK_FORMAT_D16_UNORM
+        },
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+
+    if (format == VK_FORMAT_UNDEFINED)
+    {
+        throw std::runtime_error("failed to find a supported depth format for omni shadows!");
+    }
+
+    return format;
+}
+
+bool OmniShadowResources::HasStencilComponent(VkFormat format)
+{
+    return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
 
 void OmniShadowResources::TransitionMultiImagesLayout(VkDevice device, VkImage& newImage, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageSubresourceRange subresourceRange)
@@ -297,14 +354,22 @@ void OmniShadowResources::CreateOmniShadowMapResources(std::shared_ptr<VkRenderP
     this->framebufferDepthImage = this->CreateFramebufferDepthImage(this->framebufferDepthImageMemory);
 
     VkImageSubresourceRange subresourceRangeDepth = {};
-    subresourceRangeDepth.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+    subresourceRangeDepth.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+    if (HasStencilComponent(this->framebufferDepthFormat))
+    {
+        subresourceRangeDepth.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+    }
     subresourceRangeDepth.baseMipLevel = 0;
     subresourceRangeDepth.levelCount = 1;
     subresourceRangeDepth.baseArrayLayer = 0;
     subresourceRangeDepth.layerCount = 1;
     this->TransitionMultiImagesLayout(this->deviceModule->device, this->framebufferDepthImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, subresourceRangeDepth);
 
-    this->framebufferDepthImageView = this->CreateImageView(this->deviceModule->device, this->framebufferDepthImage, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
+    this->framebufferDepthImageView = this->CreateImageView(
+        this->deviceModule->device,
+        this->framebufferDepthImage,
+        this->framebufferDepthFormat,
+        subresourceRangeDepth.aspectMask);
 
     //Framebuffers
     this->PrepareFramebuffers(renderPass, this->framebufferDepthImageView, this->cubemapFacesImageViews);

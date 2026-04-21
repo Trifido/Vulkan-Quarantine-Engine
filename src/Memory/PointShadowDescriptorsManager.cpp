@@ -130,12 +130,14 @@ VkDescriptorBufferInfo PointShadowDescriptorsManager::GetBufferInfo(VkBuffer buf
 
 void PointShadowDescriptorsManager::CreateCubemapPlaceHolder()
 {
+    const VkFormat shadowColorFormat = OmniShadowResources::GetSupportedColorFormat(deviceModule);
+
     this->placeholderImage = OmniShadowResources::AllocateCubemapImage(
         deviceModule->device,
         deviceModule->physicalDevice,
         this->placeholderMemory,
         1,
-        VK_FORMAT_R32_SFLOAT,
+        shadowColorFormat,
         VK_IMAGE_TILING_OPTIMAL,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         1);
@@ -157,7 +159,7 @@ void PointShadowDescriptorsManager::CreateCubemapPlaceHolder()
     this->placeholderImageView = OmniShadowResources::CreateCubemapImageView(
         this->deviceModule->device,
         this->placeholderImage,
-        VK_FORMAT_R32_SFLOAT,
+        shadowColorFormat,
         VK_IMAGE_ASPECT_COLOR_BIT);
 }
 

@@ -15,6 +15,12 @@ void QEPointLight::UpdateUniform()
 {
     QELight::UpdateUniform();
 
+    if (!ResolveTransformFromOwner())
+        return;
+
+    if (!this->shadowMappingResourcesPtr)
+        return;
+
     this->uniform->position = this->transform->GetWorldPosition();
     this->uniform->radius = this->radius;
     this->uniform->idxShadowMap = this->idxShadowMap;

@@ -82,6 +82,8 @@ QELight::QELight()
 
 void QELight::UpdateUniform()
 {
+    ResolveTransformFromOwner();
+
     this->uniform->lightType = this->lightType;
     this->uniform->specular = this->specular;
     this->uniform->diffuse = this->diffuse;
@@ -107,14 +109,29 @@ void QELight::SetDistanceEffect(float radiusEffect)
     }
 }
 
-void QELight::QEInit()
+bool QELight::ResolveTransformFromOwner()
 {
     if (this->Owner == nullptr)
     {
-        return;
+        return this->transform != nullptr;
     }
 
-    this->transform = this->Owner->GetComponent<QETransform>();
+    if (auto ownerTransform = this->Owner->GetComponent<QETransform>())
+    {
+        if (this->transform != ownerTransform)
+        {
+            this->transform = ownerTransform;
+        }
+
+        return true;
+    }
+
+    return this->transform != nullptr;
+}
+
+void QELight::QEInit()
+{
+    ResolveTransformFromOwner();
 }
 
 void QELight::QEStart()
