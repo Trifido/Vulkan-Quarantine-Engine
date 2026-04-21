@@ -20,7 +20,7 @@ const mat4 biasMat = mat4(
 	0.5, 0.5, 0.0, 1.0 
 );
 
-float ComputeCSMTextureProj(sampler2DArray shadowMap, vec4 shadowCoord, vec2 offset, uint cascadeIndex)
+float ComputeCSMTextureProj(sampler2DArray shadowMap, vec4 shadowCoord, vec2 offset, uint cascadeIndex, float receiverBiasScale)
 {
     if (shadowCoord.x < 0.0 || shadowCoord.x > 1.0 ||
         shadowCoord.y < 0.0 || shadowCoord.y > 1.0 ||
@@ -37,13 +37,14 @@ float ComputeCSMTextureProj(sampler2DArray shadowMap, vec4 shadowCoord, vec2 off
         (cascadeIndex == 1u) ? 3.0 :
         (cascadeIndex == 2u) ? 6.0 : 10.0
     );
+    baseBias *= receiverBiasScale;
 
     float closest = texture(shadowMap, vec3(shadowCoord.st + offset, cascadeIndex)).r;
 
     return (closest < shadowCoord.z - baseBias) ? SHADOW_OPACITY : 1.0;
 }
 
-float ComputeCSMFilterPCF(sampler2DArray shadowMap, vec4 shadowCoord, uint cascadeIndex)
+float ComputeCSMFilterPCF(sampler2DArray shadowMap, vec4 shadowCoord, uint cascadeIndex, float receiverBiasScale)
 {
     ivec3 dim = textureSize(shadowMap, 0);
     ivec2 texDim = dim.xy;
@@ -63,7 +64,7 @@ float ComputeCSMFilterPCF(sampler2DArray shadowMap, vec4 shadowCoord, uint casca
     {
         for (int y = -range; y <= range; y++)
         {
-            sum += ComputeCSMTextureProj(shadowMap, shadowCoord, vec2(dx*x, dy*y), cascadeIndex);
+            sum += ComputeCSMTextureProj(shadowMap, shadowCoord, vec2(dx*x, dy*y), cascadeIndex, receiverBiasScale);
             count++;
         }
     }
@@ -76,15 +77,28 @@ float GetCSMVisibility(
     vec4 splitsEnd,
     float viewDepth,
     vec3 fragPosWorld,
+    vec3 normalWorld,
+    vec3 lightDirWorld,
     mat4 vp0,
     mat4 vp1,
     uint c0,
     uint c1
 ){
+    float ndotl = clamp(dot(normalize(normalWorld), normalize(lightDirWorld)), 0.0, 1.0);
+    float receiverBiasScale = mix(2.5, 1.0, ndotl);
+
+    float end0   = (c0 == 0u) ? splitsEnd.x : (c0 == 1u) ? splitsEnd.y : (c0 == 2u) ? splitsEnd.z : splitsEnd.w;
+    float start0 = (c0 == 0u) ? 0.0        : (c0 == 1u) ? splitsEnd.x : (c0 == 2u) ? splitsEnd.y : splitsEnd.z;
+    float range0 = max(end0 - start0, 1e-4);
+
+    // Transicion suave, pero muy contenida, para evitar reintroducir una franja amplia.
+    float fade = min(0.015 * range0, 2.0);
+    float t = clamp((viewDepth - (end0 - fade)) / max(fade, 1e-4), 0.0, 1.0);
+
     vec4 sc0 = (biasMat * vp0) * vec4(fragPosWorld, 1.0);
     vec4 proj0 = sc0 / sc0.w;
 
-    float sh0 = ComputeCSMFilterPCF(shadowMap, proj0, c0);
+    float sh0 = ComputeCSMFilterPCF(shadowMap, proj0, c0, receiverBiasScale);
 
     // La mezcla amplia entre cascadas estaba introduciendo una franja visible a distancia.
     // Usamos la cascada seleccionada como fuente principal y solo hacemos fallback a la
@@ -94,11 +108,18 @@ float GetCSMVisibility(
         proj0.z < 0.0 || proj0.z > 1.0)
     {
         vec4 sc1 = (biasMat * vp1) * vec4(fragPosWorld, 1.0);
-        float sh1 = ComputeCSMFilterPCF(shadowMap, sc1 / sc1.w, c1);
+        float sh1 = ComputeCSMFilterPCF(shadowMap, sc1 / sc1.w, c1, receiverBiasScale);
         return sh1;
     }
 
-    return sh0;
+    if (t <= 0.0 || c0 == c1)
+        return sh0;
+
+    vec4 sc1 = (biasMat * vp1) * vec4(fragPosWorld, 1.0);
+    vec4 proj1 = sc1 / sc1.w;
+    float sh1 = ComputeCSMFilterPCF(shadowMap, proj1, c1, receiverBiasScale);
+
+    return mix(sh0, sh1, t);
 }
 
 float GetCMVisibility(samplerCube cubeMap, vec3 lightVec, float currentDepth)

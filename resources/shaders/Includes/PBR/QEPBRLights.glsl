@@ -59,7 +59,7 @@ vec3 ComputeDirectionalLightPBR(
     vec3 radiance = light.diffuse;
 
     float visibility = GetCSMVisibility(
-        shadowMap, splitsEnd, viewDepth, fragPosWorld,
+        shadowMap, splitsEnd, viewDepth, fragPosWorld, N_base, L,
         vp0, vp1, c0, c1
     );
 
