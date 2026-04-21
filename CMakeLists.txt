@@ -4,6 +4,13 @@ project(QuarantineEngine)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if (MSVC)
+  set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+  set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMake")
+endif()
+
+set(BUILD_TESTING OFF CACHE BOOL "Disable third-party test/dashboard targets" FORCE)
+
 # Usar /MDd y /MD
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
@@ -270,18 +277,40 @@ target_compile_definitions(QuarantineEngine PRIVATE GLM_ENABLE_EXPERIMENTAL)
 # Ocultar dependencias en VS
 # ------------------------------
 
-function(hide_from_vs TARGET_NAME)
-  if (MSVC AND TARGET ${TARGET_NAME})
-    set_target_properties(${TARGET_NAME} PROPERTIES FOLDER "Dependencies")
+function(assign_vs_folder FOLDER_NAME)
+  if (NOT MSVC)
+    return()
   endif()
+
+  foreach(TARGET_NAME IN LISTS ARGN)
+    if (TARGET ${TARGET_NAME})
+      set_target_properties(${TARGET_NAME} PROPERTIES FOLDER "${FOLDER_NAME}")
+    endif()
+  endforeach()
 endfunction()
 
-foreach(TARGET_NAME
-  glfw imgui imguizmo assimp
-  SPIRV-Reflect meshoptimizer glm zlibstatic yaml-cpp
+assign_vs_folder("Dependencies"
+  Jolt
+  SPIRV-Reflect
+  assimp
+  astcenc-avx2-static
+  glfw
+  glm
+  imgui
+  imguizmo
+  ktx
+  ktx_read
+  ktx_version
+  meshoptimizer
+  objUtil
+  obj_basisu_cbind
+  yaml-cpp
+  zlibstatic
 )
-  hide_from_vs(${TARGET_NAME})
-endforeach()
+
+assign_vs_folder("Dependencies/GLFW"
+  update_mappings
+)
 
 # ------------------------------
 # Post-build: copiar DLLs (solo necesarias)
