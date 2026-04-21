@@ -86,6 +86,7 @@ public:
     bool isShaderReflected = false;
     bool HasPointShadows = false;
     bool HasDirectionalShadows = false;
+    bool HasSpotShadows = false;
     std::vector<ReflectedMember> materialUBOMembers;
     std::vector<std::string> animationUBOComponents;
     VkDeviceSize materialBufferSize = 0;

@@ -83,6 +83,13 @@ layout (set = 2, binding = 2) readonly buffer cascadeViewProjs
     mat4 QE_CascadeViewProj[];
 };
 
+layout(set = 3, binding = 0) uniform sampler2D QE_SpotShadowmaps[10];
+
+layout (set = 3, binding = 1) readonly buffer spotViewProjs
+{
+    mat4 QE_SpotViewProj[];
+};
+
 void main()
 {
     vec4 base = QE_GetBaseColorAlpha(uboMaterial, texSampler, fs_in.TexCoords);
@@ -179,10 +186,14 @@ void main()
                 }
                 else
                 {
+                    uint si = lights[gli].idxShadowMap;
+
                     resultSpot += ComputeSpotLightPBR(
                         lights[gli], fragPos, N_base, N_coat, V,
                         albedoColor, metallic, roughness,
-                        clearcoat, coatRough
+                        clearcoat, coatRough,
+                        QE_SpotShadowmaps[nonuniformEXT(si)],
+                        QE_SpotViewProj[si]
                     );
                 }
             }

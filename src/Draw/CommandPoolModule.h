@@ -45,6 +45,7 @@ private:
     void setSwapchainImGuiRenderPass(VkFramebuffer& framebuffer, uint32_t iCBuffer);
     void setDirectionalShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, uint32_t idDirlight, uint32_t iCBuffer);
     void setOmniShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, uint32_t idPointlight, uint32_t iCBuffer);
+    void setSpotShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, uint32_t idSpotlight, uint32_t iCBuffer);
     void updateCubeMapFace(uint32_t faceIdx, std::shared_ptr<VkRenderPass> renderPass, uint32_t idPointlight, VkCommandBuffer commandBuffer, uint32_t iCBuffer);
 public:
     CommandPoolModule();

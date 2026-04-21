@@ -57,7 +57,7 @@ public:
     void UpdateOffscreenUBOShadowMap();
     static VkFormat GetSupportedShadowFormat(DeviceModule* deviceModule);
     static bool HasStencilComponent(VkFormat format);
-    static void TransitionImageLayout(VkDevice device, VkImage& newImage, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+    static void TransitionImageLayout(VkDevice device, VkImage& newImage, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t layerCount = SHADOW_MAP_CASCADE_COUNT);
 
     static VkSampler CreateCSMSampler(VkDevice device);
     static VkImageView CreateImageView(VkDevice device, VkImage& image, VkFormat format, VkImageAspectFlags aspectFlags, int baseArrayLayer, int layerCount, uint32_t mipLevels = 1);

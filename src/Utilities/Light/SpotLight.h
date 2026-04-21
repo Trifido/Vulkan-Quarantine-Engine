@@ -3,25 +3,19 @@
 #define SPOT_LIGHT_H
 
 #include "Light.h"
-#include "OmniShadowResources.h"
-#include <ShaderModule.h>
-#include <DescriptorBuffer.h>
-
-class DescriptorBuffer;
+#include <SpotShadowResources.h>
 
 class QESpotLight : public QELight
 {
     REFLECTABLE_DERIVED_COMPONENT(QESpotLight, QELight)
 public:
-    //std::shared_ptr<OmniShadowResources> shadowMappingPtr = nullptr;
-
-    std::shared_ptr<UniformBufferObject> shadowMapUBO = nullptr;
-    //std::shared_ptr<DescriptorBuffer> descriptorBuffer = nullptr;
+    std::shared_ptr<SpotShadowResources> shadowMappingResourcesPtr = nullptr;
 
 public:
     QESpotLight();
-    QESpotLight(std::shared_ptr<ShaderModule> shaderModule, std::shared_ptr<VkRenderPass> renderPass);
+    void Setup(std::shared_ptr<VkRenderPass> renderPass);
     void UpdateUniform() override;
+    void CleanShadowMapResources();
 };
 
 #endif

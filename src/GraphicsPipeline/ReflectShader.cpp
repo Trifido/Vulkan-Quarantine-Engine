@@ -806,6 +806,10 @@ void ReflectShader::CheckShadowMaps(SpvReflectDescriptorSet* set)
             {
                 this->HasDirectionalShadows = true;
             }
+            else if (strcmp(set->bindings[b]->name, "QE_SpotShadowmaps") == 0)
+            {
+                this->HasSpotShadows = true;
+            }
         }
     }
 }

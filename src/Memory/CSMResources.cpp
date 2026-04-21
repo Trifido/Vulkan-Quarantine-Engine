@@ -207,7 +207,7 @@ void CSMResources::UpdateOffscreenUBOShadowMap()
     }
 }
 
-void CSMResources::TransitionImageLayout(VkDevice device, VkImage& newImage, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
+void CSMResources::TransitionImageLayout(VkDevice device, VkImage& newImage, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t layerCount)
 {
     VkCommandBuffer commandBuffer = beginSingleTimeCommands(device, commandPool);
 
@@ -226,7 +226,7 @@ void CSMResources::TransitionImageLayout(VkDevice device, VkImage& newImage, VkF
     barrier.subresourceRange.baseMipLevel = 0;
     barrier.subresourceRange.levelCount = 1;
     barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount = SHADOW_MAP_CASCADE_COUNT;
+    barrier.subresourceRange.layerCount = layerCount;
 
     barrier.srcAccessMask = 0;
     barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;

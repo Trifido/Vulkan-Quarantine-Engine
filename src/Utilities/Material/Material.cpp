@@ -186,6 +186,11 @@ void QEMaterial::BindDescriptors(VkCommandBuffer& commandBuffer, uint32_t idx)
     {
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->shader->PipelineModule->pipelineLayout, 2, 1, &lightManager->CSMDescritors->renderDescriptorSets[idx], 0, nullptr);
     }
+
+    if (this->shader->reflectShader.HasSpotShadows)
+    {
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->shader->PipelineModule->pipelineLayout, 3, 1, &lightManager->SpotShadowDescritors->renderDescriptorSets[idx], 0, nullptr);
+    }
 }
 
 void QEMaterial::RenameMaterial(std::string newName)

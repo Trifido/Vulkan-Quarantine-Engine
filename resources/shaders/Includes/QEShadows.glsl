@@ -109,4 +109,51 @@ float GetCMVisibility(samplerCube cubeMap, vec3 lightVec, float currentDepth)
     return mix(SHADOW_OPACITY, 1.0, visibility);
 }
 
+float ComputeSpotTextureProj(sampler2D shadowMap, vec4 shadowCoord, vec2 offset)
+{
+    if (shadowCoord.w <= 0.0)
+        return 1.0;
+
+    if (shadowCoord.x < 0.0 || shadowCoord.x > 1.0 ||
+        shadowCoord.y < 0.0 || shadowCoord.y > 1.0 ||
+        shadowCoord.z < 0.0 || shadowCoord.z > 1.0)
+        return 1.0;
+
+    const float bias = 0.0015;
+    float closest = texture(shadowMap, shadowCoord.st + offset).r;
+
+    return (closest < shadowCoord.z - bias) ? SHADOW_OPACITY : 1.0;
+}
+
+float ComputeSpotFilterPCF(sampler2D shadowMap, vec4 shadowCoord)
+{
+    ivec2 texDim = textureSize(shadowMap, 0);
+    float dx = 1.25 / float(texDim.x);
+    float dy = 1.25 / float(texDim.y);
+
+    float sum = 0.0;
+    int count = 0;
+
+    for (int x = -1; x <= 1; ++x)
+    {
+        for (int y = -1; y <= 1; ++y)
+        {
+            sum += ComputeSpotTextureProj(shadowMap, shadowCoord, vec2(dx * x, dy * y));
+            count++;
+        }
+    }
+
+    return sum / float(count);
+}
+
+float GetSpotVisibility(sampler2D shadowMap, vec3 fragPosWorld, mat4 viewProj)
+{
+    vec4 shadowCoord = (biasMat * viewProj) * vec4(fragPosWorld, 1.0);
+    if (shadowCoord.w <= 0.0)
+        return 1.0;
+
+    shadowCoord /= shadowCoord.w;
+    return ComputeSpotFilterPCF(shadowMap, shadowCoord);
+}
+
 #endif

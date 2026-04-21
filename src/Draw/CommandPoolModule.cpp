@@ -319,6 +319,88 @@ void CommandPoolModule::setOmniShadowRenderPass(std::shared_ptr<VkRenderPass> re
     }
 }
 
+void CommandPoolModule::setSpotShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, uint32_t idSpotlight, uint32_t iCBuffer)
+{
+    if (!lightManager || !lightManager->SpotShadowDescritors || !lightManager->CSMPipelineModule)
+        return;
+
+    if (idSpotlight >= lightManager->SpotLights.size())
+        return;
+
+    if (iCBuffer >= NUM_SPOT_SHADOW_SETS)
+        return;
+
+    auto spotLight = lightManager->SpotLights.at(idSpotlight);
+    if (!spotLight || !spotLight->shadowMappingResourcesPtr)
+        return;
+
+    if (idSpotlight >= MAX_NUM_SPOT_LIGHTS)
+        return;
+
+    VkDescriptorSet descriptorSet =
+        lightManager->SpotShadowDescritors->offscreenDescriptorSets[iCBuffer][idSpotlight];
+
+    if (descriptorSet == VK_NULL_HANDLE)
+        return;
+
+    uint32_t size = spotLight->shadowMappingResourcesPtr->TextureSize;
+    auto depthBiasConstant = spotLight->shadowMappingResourcesPtr->DepthBiasConstant;
+    auto depthBiasSlope = spotLight->shadowMappingResourcesPtr->DepthBiasSlope;
+
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = static_cast<float>(size);
+    viewport.height = static_cast<float>(size);
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent.width = size;
+    scissor.extent.height = size;
+
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = *renderPass;
+    renderPassInfo.framebuffer = spotLight->shadowMappingResourcesPtr->frameBuffer;
+    renderPassInfo.renderArea.offset = { 0, 0 };
+    renderPassInfo.renderArea.extent.width = size;
+    renderPassInfo.renderArea.extent.height = size;
+
+    VkClearValue clearValues{};
+    clearValues.depthStencil = { 1.0f, 0 };
+    renderPassInfo.clearValueCount = 1;
+    renderPassInfo.pClearValues = &clearValues;
+
+    vkCmdSetViewport(commandBuffers[iCBuffer], 0, 1, &viewport);
+    vkCmdSetScissor(commandBuffers[iCBuffer], 0, 1, &scissor);
+    vkCmdSetDepthBias(commandBuffers[iCBuffer], depthBiasConstant, 0.0f, depthBiasSlope);
+    vkCmdSetDepthTestEnable(commandBuffers[iCBuffer], true);
+    vkCmdSetDepthWriteEnable(commandBuffers[iCBuffer], true);
+    vkCmdSetFrontFace(commandBuffers[iCBuffer], VK_FRONT_FACE_CLOCKWISE);
+    vkCmdSetCullMode(commandBuffers[iCBuffer], VK_CULL_MODE_FRONT_BIT);
+
+    auto pipeline = lightManager->CSMPipelineModule->pipeline;
+    auto pipelineLayout = lightManager->CSMPipelineModule->pipelineLayout;
+
+    vkCmdBeginRenderPass(commandBuffers[iCBuffer], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(commandBuffers[iCBuffer], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+    vkCmdBindDescriptorSets(
+        commandBuffers[iCBuffer],
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        pipelineLayout,
+        0,
+        1,
+        &descriptorSet,
+        0,
+        nullptr);
+
+    this->gameObjectManager->CSMCommand(commandBuffers[iCBuffer], iCBuffer, pipelineLayout, 0);
+
+    vkCmdEndRenderPass(commandBuffers[iCBuffer]);
+}
+
 void CommandPoolModule::updateCubeMapFace(uint32_t faceIdx, std::shared_ptr<VkRenderPass> renderPass, uint32_t idPointlight, VkCommandBuffer commandBuffer, uint32_t iCBuffer)
 {
     VkClearValue clearValues[2];
@@ -400,6 +482,11 @@ void CommandPoolModule::Render(FramebufferModule* framebufferModule, const QERen
     for (uint32_t idPointLight = 0; idPointLight < this->lightManager->PointLights.size(); idPointLight++)
     {
         this->setOmniShadowRenderPass(this->renderPassModule->OmniShadowMappingRenderPass, idPointLight, currentFrame);
+    }
+
+    for (uint32_t idSpotLight = 0; idSpotLight < this->lightManager->SpotLights.size(); idSpotLight++)
+    {
+        this->setSpotShadowRenderPass(this->renderPassModule->DirShadowMappingRenderPass, idSpotLight, currentFrame);
     }
 
     const bool hasEditorViewport = (extraRenderTarget != nullptr && extraRenderTarget->Valid());

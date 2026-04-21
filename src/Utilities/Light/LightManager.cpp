@@ -47,6 +47,7 @@ LightManager::LightManager()
 
     this->PointShadowDescritors = std::make_shared<PointShadowDescriptorsManager>();
     this->CSMDescritors = std::make_shared<CSMDescriptorsManager>();
+    this->SpotShadowDescritors = std::make_shared<SpotShadowDescriptorsManager>();
 }
 
 void LightManager::AddDirShadowMapShader(std::shared_ptr<ShaderModule> shadow_mapping_shader)
@@ -110,7 +111,15 @@ void LightManager::AddNewLight(std::shared_ptr<QELight> light_ptr, std::string& 
 
         case LightType::SPOT_LIGHT:
             this->SpotLights.push_back(std::dynamic_pointer_cast<QESpotLight>(light_ptr));
+            this->SpotLights.back()->Setup(this->renderPassModule->DirShadowMappingRenderPass);
+            this->SpotLights.back()->idxShadowMap = (uint32_t)this->SpotLights.size() - 1;
             this->AddLight(light_ptr, name);
+
+            this->SpotShadowDescritors->AddSpotLightResources(
+                this->SpotLights.back()->shadowMappingResourcesPtr->OffscreenShadowMapUBO,
+                this->SpotLights.back()->shadowMappingResourcesPtr->ShadowImageView,
+                this->SpotLights.back()->shadowMappingResourcesPtr->ShadowSampler);
+            this->SpotShadowDescritors->BindResources(this->SpotLights.back()->shadowMappingResourcesPtr);
             break;
     }
 
@@ -136,7 +145,7 @@ std::shared_ptr<QELight> LightManager::CreateLight(LightType type, std::string n
             break;
 
         case LightType::SPOT_LIGHT:
-            newLight = std::make_shared<QESpotLight>(this->CSMShaderModule, this->renderPassModule->DirShadowMappingRenderPass);
+            newLight = std::make_shared<QESpotLight>();
             break;
     }
 
@@ -199,7 +208,14 @@ void LightManager::DeleteLight(std::shared_ptr<QELight> light_ptr, std::string& 
 
         if (it != SpotLights.end())
         {
+            int localLightPosition = static_cast<int>(std::distance(SpotLights.begin(), it));
             SpotLights.erase(it);
+
+            if (SpotShadowDescritors)
+            {
+                SpotShadowDescritors->DeleteSpotLightResources(localLightPosition);
+                ReindexShadowMaps();
+            }
         }
     }
     break;
@@ -306,6 +322,7 @@ void LightManager::InitializeShadowMaps()
 {
     this->PointShadowDescritors->InitializeDescriptorSetLayouts(this->OmniShadowShaderModule);
     this->CSMDescritors->InitializeDescriptorSetLayouts(this->CSMShaderModule);
+    this->SpotShadowDescritors->InitializeDescriptorSetLayouts(this->CSMShaderModule);
 }
 
 void LightManager::UpdateUniform()
@@ -451,6 +468,12 @@ void LightManager::ResetShadowSceneState()
             dLight->CleanShadowMapResources();
     }
 
+    for (auto& sLight : this->SpotLights)
+    {
+        if (sLight)
+            sLight->CleanShadowMapResources();
+    }
+
     if (this->PointShadowDescritors)
     {
         this->PointShadowDescritors->ResetSceneState();
@@ -459,6 +482,11 @@ void LightManager::ResetShadowSceneState()
     if (this->CSMDescritors)
     {
         this->CSMDescritors->ResetSceneState();
+    }
+
+    if (this->SpotShadowDescritors)
+    {
+        this->SpotShadowDescritors->ResetSceneState();
     }
 }
 
@@ -486,6 +514,7 @@ void LightManager::CleanLastResources()
 
     PointShadowDescritors.reset();
     CSMDescritors.reset();
+    SpotShadowDescritors.reset();
 
     CSMPipelineModule.reset();
     OmniShadowPipelineModule.reset();
@@ -509,7 +538,8 @@ void LightManager::CleanShadowMapResources()
 
     for (auto& sLight : this->SpotLights)
     {
-        (void)sLight;
+        if (sLight)
+            sLight->CleanShadowMapResources();
     }
 
     if (this->PointShadowDescritors)
@@ -520,6 +550,11 @@ void LightManager::CleanShadowMapResources()
     if (this->CSMDescritors)
     {
         this->CSMDescritors->Clean();
+    }
+
+    if (this->SpotShadowDescritors)
+    {
+        this->SpotShadowDescritors->Clean();
     }
 }
 
@@ -642,6 +677,9 @@ void LightManager::ComputeLightsLUT()
 void LightManager::ComputeLightTiles()
 {
     auto activeCamera = QESessionManager::getInstance()->ActiveCamera();
+    if (!activeCamera)
+        return;
+
     uint32_t tileXCount = swapChainModule->swapChainExtent.width / swapChainModule->TILE_SIZE;
     uint32_t tileYCount = swapChainModule->swapChainExtent.height / swapChainModule->TILE_SIZE;
 
@@ -676,10 +714,15 @@ void LightManager::ComputeLightTiles()
     float tile_size_inv = 1.0f / newTileSize;
 
     uint32_t tile_stride = tile_x_count * NUM_WORDS;
+    const uint32_t visibleLightCount = static_cast<uint32_t>(
+        std::min(this->lights_index.size(), this->lightBuffer.size()));
 
-    for (uint32_t i = 0; i < this->currentNumLights; i++)
+    for (uint32_t i = 0; i < visibleLightCount; i++)
     {
-        const uint32_t light_index = this->lights_index[i];
+        const uint32_t light_index = this->lights_index.at(i);
+        if (light_index >= this->lightBuffer.size())
+            continue;
+
         LightUniform& light = this->lightBuffer.at(light_index);
 
         if (light.lightType == DIRECTIONAL_LIGHT || light.lightType == SUN_LIGHT)
@@ -792,12 +835,15 @@ void LightManager::ComputeLightTiles()
 
         for (uint32_t y = first_tile_y; y <= last_tile_y; ++y) {
             for (uint32_t x = first_tile_x; x <= last_tile_x; ++x) {
-                uint32_t array_index = y * tile_stride + x;
+                uint32_t array_index = y * tile_stride + x * NUM_WORDS;
 
                 uint32_t word_index = i / 32;
                 uint32_t bit_index = i % 32;
 
-                light_tiles_bits[array_index + word_index] |= (1 << bit_index);
+                if (array_index + word_index < light_tiles_bits.size())
+                {
+                    light_tiles_bits[array_index + word_index] |= (1u << bit_index);
+                }
             }
         }
     }
@@ -818,6 +864,7 @@ void LightManager::Update(uint32_t currentFrame)
     }
 
     this->SortingLights();
+    this->currentNumLights = static_cast<uint32_t>(this->lights_index.size());
     this->ComputeLightsLUT();
     this->ComputeLightTiles();
 
@@ -852,6 +899,11 @@ void LightManager::Update(uint32_t currentFrame)
     {
         this->CSMDescritors->UpdateResources(currentFrame);
     }
+
+    if (this->SpotShadowDescritors)
+    {
+        this->SpotShadowDescritors->UpdateResources(currentFrame);
+    }
 }
 
 void LightManager::ReindexShadowMaps()
@@ -869,6 +921,14 @@ void LightManager::ReindexShadowMaps()
         if (PointLights[i])
         {
             PointLights[i]->idxShadowMap = i;
+        }
+    }
+
+    for (uint32_t i = 0; i < SpotLights.size(); ++i)
+    {
+        if (SpotLights[i])
+        {
+            SpotLights[i]->idxShadowMap = i;
         }
     }
 }

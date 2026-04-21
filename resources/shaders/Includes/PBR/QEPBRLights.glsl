@@ -83,7 +83,9 @@ vec3 ComputeSpotLightPBR(
     float metallic,
     float roughness,
     float clearcoat,
-    float clearcoatRoughness
+    float clearcoatRoughness,
+    sampler2D shadowMap,
+    mat4 viewProj
 ){
     vec3 lightVec = light.position - fragPosWorld;
     float dist = length(lightVec);
@@ -96,6 +98,7 @@ vec3 ComputeSpotLightPBR(
     float intensity = clamp((theta - light.outerCutoff) / eps, 0.0, 1.0);
 
     vec3 radiance = light.diffuse;
+    float visibility = GetSpotVisibility(shadowMap, fragPosWorld, viewProj);
 
     vec3 brdfBase = BRDF_CookTorrance(N_base, V, L, baseColor, metallic, roughness);
     vec3 brdfCoat = BRDF_Clearcoat(N_coat, V, L, clearcoat, clearcoatRoughness);
@@ -103,7 +106,7 @@ vec3 ComputeSpotLightPBR(
     float coatAtten = 1.0 - 0.25 * saturate(clearcoat);
     vec3 lighting = (brdfBase * coatAtten + brdfCoat);
 
-    return lighting * radiance * (intensity * attenuation);
+    return lighting * radiance * (intensity * attenuation) * visibility;
 }
 
 

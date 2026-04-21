@@ -16,6 +16,7 @@
 #include <DescriptorBuffer.h>
 #include <PointShadowDescriptorsManager.h>
 #include <CSMDescriptorsManager.h>
+#include <SpotShadowDescriptorsManager.h>
 
 #include <ShadowPipelineModule.h>
 
@@ -90,6 +91,7 @@ public:
 
     std::shared_ptr<PointShadowDescriptorsManager> PointShadowDescritors;
     std::shared_ptr<CSMDescriptorsManager> CSMDescritors;
+    std::shared_ptr<SpotShadowDescriptorsManager> SpotShadowDescritors;
     std::shared_ptr<ShadowPipelineModule> CSMPipelineModule;
     std::shared_ptr<ShadowPipelineModule> OmniShadowPipelineModule;
 
