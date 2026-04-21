@@ -81,8 +81,9 @@ void QEDirectionalLight::UpdateCascades()
     // Matriz inversa de cámara (NDC->World)
     glm::mat4 invCam = glm::inverse(activeCamera->CameraData->ViewProjection);
 
-    // Resolución (si la tienes por cascada, usa la de i)
-    const float shadowMapRes = 2048.f;
+    const float shadowMapRes = this->shadowMappingResourcesPtr
+        ? static_cast<float>(this->shadowMappingResourcesPtr->TextureSize)
+        : 2048.0f;
 
     for (uint32_t i = 0; i < SHADOW_MAP_CASCADE_COUNT; i++)
     {
@@ -110,15 +111,29 @@ void QEDirectionalLight::UpdateCascades()
         // Slice el frustum usando lastSplitDist/splitDist (0..1)
         for (uint32_t j = 0; j < 4; j++)
         {
-            glm::vec3 dist = frustumCorners[j + 4] - frustumCorners[j];
-            frustumCorners[j] = frustumCorners[j] + dist * lastSplitDist;
-            frustumCorners[j + 4] = frustumCorners[j] + dist * splitDist;
+            const glm::vec3 cornerNear = frustumCorners[j];
+            const glm::vec3 cornerFar = frustumCorners[j + 4];
+            const glm::vec3 dist = cornerFar - cornerNear;
+
+            frustumCorners[j] = cornerNear + dist * lastSplitDist;
+            frustumCorners[j + 4] = cornerNear + dist * splitDist;
         }
 
         // Centro del slice
         glm::vec3 frustumCenter(0.0f);
         for (uint32_t j = 0; j < 8; j++) frustumCenter += frustumCorners[j];
         frustumCenter /= 8.0f;
+
+        // Usamos una esfera envolvente para estabilizar las cascadas frente a la rotacion
+        // de la camara. Un AABB ajustado en light-space reduce cobertura, pero provoca
+        // cambios visibles entre cascadas cuando rota el frustum.
+        float radius = 0.0f;
+        for (uint32_t j = 0; j < 8; ++j)
+        {
+            radius = std::max(radius, glm::length(frustumCorners[j] - frustumCenter));
+        }
+        radius = std::max(radius, 1.0f);
+        radius = std::ceil(radius * 16.0f) / 16.0f;
 
         // Dirección de luz normalizada
         glm::vec3 lightDir = glm::normalize(this->transform->Forward());
@@ -130,7 +145,8 @@ void QEDirectionalLight::UpdateCascades()
         glm::vec3 eye = frustumCenter - lightDir * 100.0f;
         glm::mat4 lightView = glm::lookAtRH(eye, frustumCenter, up);
 
-        // Bounds en light-space (de los 8 corners)
+        // Bounds en light-space. Z sigue saliendo de los corners reales para no recortar casters,
+        // pero X/Y se estabilizan con la esfera envolvente.
         glm::vec3 minLS(std::numeric_limits<float>::max());
         glm::vec3 maxLS(-std::numeric_limits<float>::max());
 
@@ -141,12 +157,19 @@ void QEDirectionalLight::UpdateCascades()
             maxLS = glm::max(maxLS, glm::vec3(v));
         }
 
-        // Margen para casters/PCF (ajusta según escena)
+        glm::vec3 centerLS = glm::vec3(lightView * glm::vec4(frustumCenter, 1.0f));
+
+        minLS.x = centerLS.x - radius;
+        maxLS.x = centerLS.x + radius;
+        minLS.y = centerLS.y - radius;
+        maxLS.y = centerLS.y + radius;
+
+        // Margen para casters/PCF (ajusta segun escena)
         const float zMargin = 50.0f;
         minLS.z -= zMargin;
         maxLS.z += zMargin;
 
-        // Snap del volumen a la rejilla de texels (estabilización real)
+        // Snap del centro del volumen a la rejilla de texels para eliminar swimming.
         float width = (maxLS.x - minLS.x);
         float height = (maxLS.y - minLS.y);
 
@@ -157,12 +180,13 @@ void QEDirectionalLight::UpdateCascades()
         float unitsPerTexelX = width / shadowMapRes;
         float unitsPerTexelY = height / shadowMapRes;
 
-        minLS.x = std::floor(minLS.x / unitsPerTexelX) * unitsPerTexelX;
-        minLS.y = std::floor(minLS.y / unitsPerTexelY) * unitsPerTexelY;
+        centerLS.x = std::floor(centerLS.x / unitsPerTexelX) * unitsPerTexelX;
+        centerLS.y = std::floor(centerLS.y / unitsPerTexelY) * unitsPerTexelY;
 
-        // Mantén el tamaño (no vuelvas a recalcular max con floor independiente)
-        maxLS.x = minLS.x + width;
-        maxLS.y = minLS.y + height;
+        minLS.x = centerLS.x - width * 0.5f;
+        maxLS.x = centerLS.x + width * 0.5f;
+        minLS.y = centerLS.y - height * 0.5f;
+        maxLS.y = centerLS.y + height * 0.5f;
 
         // En lookAtRH, los puntos delante suelen tener z negativo.
         // Para orthoRH_ZO: near/far son positivos a lo largo del -Z de la cámara (light view).

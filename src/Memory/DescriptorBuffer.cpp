@@ -321,7 +321,7 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
         // Pantalla
         else if (br.name == "ScreenData")
         {
-            pushUBO(dstBinding, this->swapChainModule->screenData->uniformBuffers[frameIdx], sizeof(glm::uvec2));
+            pushUBO(dstBinding, this->swapChainModule->screenData->uniformBuffers[frameIdx], sizeof(ScreenDataUniform));
         }
         // Light manager (int numLights)
         else if (br.name == "UniformManagerLight")

@@ -134,12 +134,18 @@ VkExtent2D SwapChainModule::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& cap
 
 void SwapChainModule::UpdateScreenData()
 {
-    this->pixelTileSize = { this->swapChainExtent.width / this->currentTileSize, this->swapChainExtent.height / this->currentTileSize };
+    const uint32_t tileSize = std::max(1u, static_cast<uint32_t>(this->currentTileSize));
+    const uint32_t tileCountX = std::max(1u, (this->swapChainExtent.width + tileSize - 1u) / tileSize);
+    const uint32_t tileCountY = std::max(1u, (this->swapChainExtent.height + tileSize - 1u) / tileSize);
+
+    this->screenDataValues.tilePixelSize = glm::uvec2(tileSize, tileSize);
+    this->screenDataValues.tileCount = glm::uvec2(tileCountX, tileCountY);
+
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {
         void* data;
-        vkMapMemory(deviceModule->device, this->screenData->uniformBuffersMemory[currentFrame], 0, sizeof(glm::vec2), 0, &data);
-        memcpy(data, &this->pixelTileSize, sizeof(glm::vec2));
+        vkMapMemory(deviceModule->device, this->screenData->uniformBuffersMemory[currentFrame], 0, sizeof(ScreenDataUniform), 0, &data);
+        memcpy(data, &this->screenDataValues, sizeof(ScreenDataUniform));
         vkUnmapMemory(deviceModule->device, this->screenData->uniformBuffersMemory[currentFrame]);
     }
 }
@@ -147,7 +153,7 @@ void SwapChainModule::UpdateScreenData()
 void SwapChainModule::InitializeScreenDataResources()
 {
     this->screenData = std::make_shared<UniformBufferObject>();
-    this->screenData->CreateUniformBuffer(sizeof(glm::vec2), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->screenData->CreateUniformBuffer(sizeof(ScreenDataUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 }
 
 void SwapChainModule::CleanScreenDataResources()

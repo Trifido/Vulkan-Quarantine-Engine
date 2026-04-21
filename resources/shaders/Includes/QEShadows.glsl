@@ -27,9 +27,16 @@ float ComputeCSMTextureProj(sampler2DArray shadowMap, vec4 shadowCoord, vec2 off
         shadowCoord.z < 0.0 || shadowCoord.z > 1.0)
         return 1.0;
 
-    float baseBias = (cascadeIndex == 0u) ? 0.00010 :
-                     (cascadeIndex == 1u) ? 0.00020 :
-                     (cascadeIndex == 2u) ? 0.00035 : 0.00050;
+    ivec3 dim = textureSize(shadowMap, 0);
+    float texelDepth = 1.0 / max(float(dim.x), 1.0);
+
+    // Las cascadas lejanas cubren mucho mas mundo por texel y necesitan bastante mas bias
+    // para evitar acne uniforme en superficies planas al cruzar de cascada.
+    float baseBias = texelDepth * (
+        (cascadeIndex == 0u) ? 1.5 :
+        (cascadeIndex == 1u) ? 3.0 :
+        (cascadeIndex == 2u) ? 6.0 : 10.0
+    );
 
     float closest = texture(shadowMap, vec3(shadowCoord.st + offset, cascadeIndex)).r;
 
@@ -74,20 +81,24 @@ float GetCSMVisibility(
     uint c0,
     uint c1
 ){
-    float end0   = (c0 == 0u) ? splitsEnd.x : (c0 == 1u) ? splitsEnd.y : (c0 == 2u) ? splitsEnd.z : splitsEnd.w;
-    float start0 = (c0 == 0u) ? 0.0        : (c0 == 1u) ? splitsEnd.x : (c0 == 2u) ? splitsEnd.y : splitsEnd.z;
-
-    float range0 = max(end0 - start0, 1e-4);
-    float fade   = (c0 == 0u) ? (0.03 * range0) : (0.06 * range0);
-    float t      = clamp((viewDepth - (end0 - fade)) / max(fade, 1e-4), 0.0, 1.0);
-
     vec4 sc0 = (biasMat * vp0) * vec4(fragPosWorld, 1.0);
-    vec4 sc1 = (biasMat * vp1) * vec4(fragPosWorld, 1.0);
+    vec4 proj0 = sc0 / sc0.w;
 
-    float sh0 = ComputeCSMFilterPCF(shadowMap, sc0 / sc0.w, c0);
-    float sh1 = ComputeCSMFilterPCF(shadowMap, sc1 / sc1.w, c1);
+    float sh0 = ComputeCSMFilterPCF(shadowMap, proj0, c0);
 
-    return mix(sh0, sh1, t);
+    // La mezcla amplia entre cascadas estaba introduciendo una franja visible a distancia.
+    // Usamos la cascada seleccionada como fuente principal y solo hacemos fallback a la
+    // siguiente cuando la proyeccion cae fuera del atlas de la cascada actual.
+    if (proj0.x < 0.0 || proj0.x > 1.0 ||
+        proj0.y < 0.0 || proj0.y > 1.0 ||
+        proj0.z < 0.0 || proj0.z > 1.0)
+    {
+        vec4 sc1 = (biasMat * vp1) * vec4(fragPosWorld, 1.0);
+        float sh1 = ComputeCSMFilterPCF(shadowMap, sc1 / sc1.w, c1);
+        return sh1;
+    }
+
+    return sh0;
 }
 
 float GetCMVisibility(samplerCube cubeMap, vec3 lightVec, float currentDepth)

@@ -66,7 +66,8 @@ layout(set = 0, binding = 7) uniform sampler2D texSampler[QE_NUM_TEX];
 
 layout(set = 0, binding = 8) uniform ScreenData 
 {
-    uvec2 pix_tile_size;
+    uvec2 tilePixelSize;
+    uvec2 tileCount;
 } screenData;
 
 layout(set = 1, binding = 0) uniform samplerCube QE_PointShadowCubemaps[10];
@@ -108,9 +109,12 @@ void main()
     uint min_light_id = bin_value & 0xFFFF;
     uint max_light_id = ( bin_value >> 16 ) & 0xFFFF;
 
-    uvec2 tile = uvec2(gl_FragCoord.xy / screenData.pix_tile_size);
-    uint stride = uint( NUM_WORDS ) * screenData.pix_tile_size.x;
-    uint address = tile.y * stride + tile.x;
+    uvec2 tile = uvec2(gl_FragCoord.xy / vec2(screenData.tilePixelSize));
+    tile.x = min(tile.x, max(screenData.tileCount.x, 1u) - 1u);
+    tile.y = min(tile.y, max(screenData.tileCount.y, 1u) - 1u);
+
+    uint stride = uint(NUM_WORDS) * screenData.tileCount.x;
+    uint address = tile.y * stride + tile.x * uint(NUM_WORDS);
 
     vec3 fragPos = fs_in.FragPos;
     vec3 V = normalize(cameraData.position.xyz - fragPos);

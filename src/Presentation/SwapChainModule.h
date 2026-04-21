@@ -31,7 +31,7 @@ private:
     DeviceModule* deviceModule;
     VkSwapchainKHR swapChain;
     uint32_t numSwapChainImages;
-    glm::vec2 pixelTileSize;
+    ScreenDataUniform screenDataValues{};
     float currentTileSize;
     bool enabledVSync = true;
 

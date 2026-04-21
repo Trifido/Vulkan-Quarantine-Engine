@@ -46,6 +46,12 @@ struct ScreenResolutionUniform
     glm::vec2 resolution;
 };
 
+struct alignas(16) ScreenDataUniform
+{
+    glm::uvec2 tilePixelSize;
+    glm::uvec2 tileCount;
+};
+
 struct MaterialUniform
 {
     glm::vec4 Diffuse;
