@@ -132,7 +132,7 @@ void QEMeshRenderer::SetDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32
 
                 vkCmdSetCullMode(
                     commandBuffer,
-                    disableShadowCulling ? VK_CULL_MODE_NONE : VK_CULL_MODE_FRONT_BIT);
+                    disableShadowCulling ? VK_CULL_MODE_NONE : VK_CULL_MODE_BACK_BIT);
 
                 if (material->HasDescriptorBuffer())
                 {

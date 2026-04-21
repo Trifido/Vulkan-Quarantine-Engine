@@ -1,4 +1,4 @@
-#include "CommandPoolModule.h"
+﻿#include "CommandPoolModule.h"
 #include "QueueFamiliesModule.h"
 
 #include <stdexcept>
@@ -232,7 +232,7 @@ void CommandPoolModule::setDirectionalShadowRenderPass(std::shared_ptr<VkRenderP
     vkCmdSetDepthTestEnable(commandBuffers[iCBuffer], true);
     vkCmdSetDepthWriteEnable(commandBuffers[iCBuffer], true);
     vkCmdSetFrontFace(commandBuffers[iCBuffer], VK_FRONT_FACE_CLOCKWISE);
-    vkCmdSetCullMode(commandBuffers[iCBuffer], VK_CULL_MODE_FRONT_BIT);
+    vkCmdSetCullMode(commandBuffers[iCBuffer], VK_CULL_MODE_BACK_BIT);
 
     auto pipeline = lightManager->CSMPipelineModule->pipeline;
     auto pipelineLayout = lightManager->CSMPipelineModule->pipelineLayout;
@@ -379,7 +379,7 @@ void CommandPoolModule::setSpotShadowRenderPass(std::shared_ptr<VkRenderPass> re
     vkCmdSetDepthTestEnable(commandBuffers[iCBuffer], true);
     vkCmdSetDepthWriteEnable(commandBuffers[iCBuffer], true);
     vkCmdSetFrontFace(commandBuffers[iCBuffer], VK_FRONT_FACE_CLOCKWISE);
-    vkCmdSetCullMode(commandBuffers[iCBuffer], VK_CULL_MODE_FRONT_BIT);
+    vkCmdSetCullMode(commandBuffers[iCBuffer], VK_CULL_MODE_BACK_BIT);
 
     auto pipeline = lightManager->CSMPipelineModule->pipeline;
     auto pipelineLayout = lightManager->CSMPipelineModule->pipelineLayout;
@@ -594,3 +594,5 @@ void CommandPoolModule::CleanLastResources()
     this->computeNodeManager = nullptr;
     this->cullingSceneManager = nullptr;
 }
+
+

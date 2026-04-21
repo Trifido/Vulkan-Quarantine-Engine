@@ -32,8 +32,8 @@ public:
     static uint32_t TextureSize;
     VkFormat shadowFormat;
 
-    float DepthBiasConstant = 1.25f;
-    float DepthBiasSlope = 1.75f;
+    float DepthBiasConstant = 0.10f;
+    float DepthBiasSlope = 0.50f;
 
 public:
     std::shared_ptr<UniformBufferObject> shadowMapUBO = nullptr;
