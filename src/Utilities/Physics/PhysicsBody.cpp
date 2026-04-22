@@ -13,6 +13,8 @@
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Collision/CollisionGroup.h>
+#include <Jolt/Physics/Body/BodyLock.h>
+#include <Jolt/Physics/Body/MotionProperties.h>
 
 using namespace JPH;
 
@@ -21,6 +23,10 @@ PhysicsBody::PhysicsBody()
     this->UpdateType(PhysicBodyType::STATIC_BODY);
     this->CollisionGroup = CollisionFlag::COL_SCENE;
     this->CollisionMask = CollisionFlag::COL_ALL;
+    this->Friction = 0.2f;
+    this->Restitution = 0.0f;
+    this->LinearDamping = 0.05f;
+    this->AngularDamping = 0.05f;
 }
 
 PhysicsBody::PhysicsBody(const PhysicBodyType& type)
@@ -28,6 +34,10 @@ PhysicsBody::PhysicsBody(const PhysicBodyType& type)
     this->UpdateType(type);
     this->CollisionGroup = CollisionFlag::COL_SCENE;
     this->CollisionMask = CollisionFlag::COL_ALL;
+    this->Friction = 0.2f;
+    this->Restitution = 0.0f;
+    this->LinearDamping = 0.05f;
+    this->AngularDamping = 0.05f;
 }
 
 void PhysicsBody::UpdateType(const PhysicBodyType &type)
@@ -161,6 +171,11 @@ void PhysicsBody::Initialize()
         s.mOverrideMassProperties = EOverrideMassProperties::CalculateInertia;
         s.mMassPropertiesOverride.mMass = glm::max(0.0001f, this->Mass);
     }
+
+    s.mFriction = glm::max(0.0f, this->Friction);
+    s.mRestitution = glm::max(0.0f, this->Restitution);
+    s.mLinearDamping = glm::max(0.0f, this->LinearDamping);
+    s.mAngularDamping = glm::max(0.0f, this->AngularDamping);
 
     this->body = PhysicsModule::getInstance()->AddRigidBody(s, JPH::EActivation::Activate);
 
@@ -416,23 +431,33 @@ void PhysicsBody::PushTransformToPhysics(bool resetVelocities)
 void PhysicsBody::SyncShapeAndBodyToEditorState()
 {
     const bool colliderChanged = HasColliderDefinitionChanged();
-    const bool bodyConfigChanged = HasBodyConfigurationChanged();
+    const bool bodyRecreationChanged = HasBodyRecreationConfigurationChanged();
+    const bool bodyMaterialChanged = HasBodyMaterialConfigurationChanged();
 
-    if (!colliderChanged && !bodyConfigChanged)
+    if (!colliderChanged && !bodyRecreationChanged && !bodyMaterialChanged)
         return;
 
-    if (bodyConfigChanged)
+    if (bodyRecreationChanged)
     {
         RecreateBody();
         return;
     }
 
-    RebuildScaledShapeFromCollider();
-    if (!collider->colShape || body.IsInvalid())
-        return;
+    if (colliderChanged)
+    {
+        RebuildScaledShapeFromCollider();
+        if (!collider->colShape || body.IsInvalid())
+            return;
 
-    auto& bodies = PhysicsModule::getInstance()->Bodies();
-    bodies.SetShape(body, collider->colShape.GetPtr(), Type == PhysicBodyType::RIGID_BODY, JPH::EActivation::Activate);
+        auto& bodies = PhysicsModule::getInstance()->Bodies();
+        bodies.SetShape(body, collider->colShape.GetPtr(), Type == PhysicBodyType::RIGID_BODY, JPH::EActivation::Activate);
+    }
+
+    if (bodyMaterialChanged)
+    {
+        ApplyRuntimeMaterialProperties();
+    }
+
     CaptureStateSnapshot();
 }
 
@@ -448,6 +473,10 @@ void PhysicsBody::CaptureStateSnapshot()
     lastCollisionGroup = CollisionGroup;
     lastCollisionMask = CollisionMask;
     lastMass = Mass;
+    lastFriction = Friction;
+    lastRestitution = Restitution;
+    lastLinearDamping = LinearDamping;
+    lastAngularDamping = AngularDamping;
     lastColliderVecA = glm::vec3(0.0f);
     lastColliderFloatA = 0.0f;
     lastColliderKind = DetectColliderKind(collider);
@@ -507,12 +536,40 @@ bool PhysicsBody::HasColliderDefinitionChanged() const
     return false;
 }
 
-bool PhysicsBody::HasBodyConfigurationChanged() const
+bool PhysicsBody::HasBodyRecreationConfigurationChanged() const
 {
     return Type != lastBodyType
         || CollisionGroup != lastCollisionGroup
         || CollisionMask != lastCollisionMask
         || fabsf(Mass - lastMass) > 0.0001f;
+}
+
+bool PhysicsBody::HasBodyMaterialConfigurationChanged() const
+{
+    return fabsf(Friction - lastFriction) > 0.0001f
+        || fabsf(Restitution - lastRestitution) > 0.0001f
+        || fabsf(LinearDamping - lastLinearDamping) > 0.0001f
+        || fabsf(AngularDamping - lastAngularDamping) > 0.0001f;
+}
+
+void PhysicsBody::ApplyRuntimeMaterialProperties()
+{
+    if (body.IsInvalid())
+        return;
+
+    auto& bodies = PhysicsModule::getInstance()->Bodies();
+    bodies.SetFriction(body, glm::max(0.0f, Friction));
+    bodies.SetRestitution(body, glm::max(0.0f, Restitution));
+
+    JPH::BodyLockWrite lock(PhysicsModule::getInstance()->World().GetBodyLockInterface(), body);
+    if (!lock.Succeeded())
+        return;
+
+    if (JPH::MotionProperties* motionProperties = lock.GetBody().GetMotionPropertiesUnchecked())
+    {
+        motionProperties->SetLinearDamping(glm::max(0.0f, LinearDamping));
+        motionProperties->SetAngularDamping(glm::max(0.0f, AngularDamping));
+    }
 }
 
 void PhysicsBody::DestroyRuntimeBody()

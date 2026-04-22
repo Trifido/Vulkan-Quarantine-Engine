@@ -40,7 +40,7 @@ private:
     std::unique_ptr<JPH::TempAllocatorImpl>   m_temp;
     std::unique_ptr<JPH::JobSystemThreadPool> m_jobs;
     JPH::PhysicsSystem m_system;
-    JPH::Vec3 m_gravity = JPH::Vec3(0.0f, -10.0f, 0.0f);
+    JPH::Vec3 m_gravity = JPH::Vec3(0.0f, -20.0f, 0.0f);
     std::vector<JPH::BodyID> m_bodies;
     std::vector<QECharacterController*> m_characters;
 

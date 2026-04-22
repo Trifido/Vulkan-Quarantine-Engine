@@ -19,6 +19,7 @@ public:
     string sceneName;
     std::shared_ptr<QECamera> cameraEditor = NULL;
     AtmosphereDto atmosphereDto;
+    float physicsGravity = -20.0f;
 
 public:
     QEScene();

@@ -127,7 +127,6 @@ void QEBaseApp::initVulkan()
     // Load Scene
     this->LoadCurrentScene();
 
-    this->physicsModule->SetGravity(-20.0f);
     this->synchronizationModule.createSyncObjects();
 
     OnPostInitVulkan();
@@ -136,6 +135,7 @@ void QEBaseApp::initVulkan()
 void QEBaseApp::loadScene(QEScene& scene)
 {
     scene.DeserializeScene();
+    physicsModule->SetGravity(scene.physicsGravity);
 
     sessionManager->SetEditorMode(IsEditorMode());
     sessionManager->RegisterSceneCameras();

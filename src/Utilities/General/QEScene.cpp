@@ -2,6 +2,11 @@
 #include <GameObjectManager.h>
 #include <QESessionManager.h>
 
+namespace
+{
+    constexpr float kDefaultSceneGravity = -20.0f;
+}
+
 QEScene::QEScene()
 {
 }
@@ -40,6 +45,7 @@ bool QEScene::SerializeScene()
 
     YAML::Node root;
     root["AtmosphereDto"] = SerializeAtmosphere(atmosphereDto);
+    root["PhysicsSettings"]["Gravity"] = physicsGravity;
     root["Materials"] = materialManager->SerializeMaterials();
     root["GameObjects"] = gameObjectManager->SerializeGameObjects();
 
@@ -63,6 +69,8 @@ bool QEScene::DeserializeScene()
 {
     auto gameObjectManager = GameObjectManager::getInstance();
     auto materialManager = MaterialManager::getInstance();
+
+    physicsGravity = kDefaultSceneGravity;
 
     namespace fs = std::filesystem;
     const fs::path filePath = this->scenePath / this->sceneName;
@@ -94,6 +102,22 @@ bool QEScene::DeserializeScene()
     else
     {
         QE_LOG_WARN_CAT("QEScene", "'AtmosphereDto' node not found in YAML. Using defaults.");
+    }
+
+    if (auto n = root["PhysicsSettings"])
+    {
+        if (auto gravityNode = n["Gravity"])
+        {
+            physicsGravity = gravityNode.as<float>();
+        }
+        else
+        {
+            QE_LOG_WARN_CAT("QEScene", "'PhysicsSettings.Gravity' node not found in YAML. Using default gravity.");
+        }
+    }
+    else
+    {
+        QE_LOG_WARN_CAT("QEScene", "'PhysicsSettings' node not found in YAML. Using default gravity.");
     }
 
     if (auto n = root["Materials"])

@@ -35,6 +35,10 @@ private:
     glm::vec3 lastColliderVecA{ 0.0f };
     float lastColliderFloatA{ 0.0f };
     float lastColliderMargin{ 0.0f };
+    float lastFriction{ 0.2f };
+    float lastRestitution{ 0.0f };
+    float lastLinearDamping{ 0.05f };
+    float lastAngularDamping{ 0.05f };
     PhysicBodyType lastBodyType{ STATIC_BODY };
     CollisionFlag lastCollisionGroup{ COL_SCENE };
     CollisionFlag lastCollisionMask{ COL_ALL };
@@ -52,6 +56,10 @@ public:
     REFLECT_PROPERTY(glm::vec3, Inertia)
     REFLECT_PROPERTY(CollisionFlag, CollisionGroup)
     REFLECT_PROPERTY(CollisionFlag, CollisionMask)
+    REFLECT_PROPERTY(float, Friction)
+    REFLECT_PROPERTY(float, Restitution)
+    REFLECT_PROPERTY(float, LinearDamping)
+    REFLECT_PROPERTY(float, AngularDamping)
 
 public:
     PhysicsBody();
@@ -73,7 +81,9 @@ private:
     void SyncShapeAndBodyToEditorState();
     void CaptureStateSnapshot();
     bool HasColliderDefinitionChanged() const;
-    bool HasBodyConfigurationChanged() const;
+    bool HasBodyRecreationConfigurationChanged() const;
+    bool HasBodyMaterialConfigurationChanged() const;
+    void ApplyRuntimeMaterialProperties();
     void DestroyRuntimeBody();
     void RecreateBody();
     JPH::ObjectLayer ResolveObjectLayer(const PhysicBodyType type, const CollisionFlag group);

@@ -85,7 +85,8 @@ void QEEditorApp::OnInitialize()
     headerBar = std::make_unique<EditorHeaderBar>(
         editorContext.get(),
         commandManager.get(),
-        sessionManager);
+        sessionManager,
+        physicsModule);
 
     headerBar->SetOnSaveRequested([this]()
         {
@@ -423,6 +424,7 @@ void QEEditorApp::SaveScene()
 {
     scene.cameraEditor = sessionManager->EditorCamera();
     scene.atmosphereDto = atmosphereSystem->CreateAtmosphereDto();
+    scene.physicsGravity = physicsModule->GetGravity();
     scene.SerializeScene();
 }
 

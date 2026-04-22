@@ -6,20 +6,24 @@
 #include <QESessionManager.h>
 #include <QECamera.h>
 #include <QECameraController.h>
+#include <PhysicsModule.h>
 #include <QEGameObject.h>
 
 namespace
 {
     static constexpr const char* kEditorCameraPopupId = "EditorCameraSettingsPopup";
+    static constexpr const char* kPhysicsSettingsPopupId = "PhysicsSettingsPopup";
 }
 
 EditorHeaderBar::EditorHeaderBar(
     EditorContext* editorContext,
     EditorCommandManager* commandManager,
-    QESessionManager* sessionManager)
+    QESessionManager* sessionManager,
+    PhysicsModule* physicsModule)
     : editorContext(editorContext)
     , commandManager(commandManager)
     , sessionManager(sessionManager)
+    , physicsModule(physicsModule)
 {
 }
 
@@ -111,6 +115,8 @@ void EditorHeaderBar::DrawDebugMenu()
 void EditorHeaderBar::DrawCameraSetup()
 {
     DrawEditorCameraButton();
+    ImGui::SameLine();
+    DrawPhysicsSettingsButton();
 }
 
 void EditorHeaderBar::DrawEditorCameraButton()
@@ -181,6 +187,68 @@ void EditorHeaderBar::DrawEditorCameraPopup()
         {
             ImGui::DragFloat("Speed", &controller->Speed, 0.1f, 0.01f, 1000.0f, "%.2f");
             ImGui::DragFloat("Mouse Sensitivity", &controller->MouseSensitivity, 0.001f, 0.001f, 10.0f, "%.3f");
+        }
+
+        ImGui::EndPopup();
+    }
+}
+
+void EditorHeaderBar::DrawPhysicsSettingsButton()
+{
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyleColorVec4(ImGuiCol_HeaderHovered));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGui::GetStyleColorVec4(ImGuiCol_HeaderActive));
+
+    if (ImGui::Button("Physics"))
+    {
+        ImGui::OpenPopup(kPhysicsSettingsPopupId);
+    }
+
+    ImGui::PopStyleColor(3);
+
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::SetTooltip("Physics settings");
+    }
+
+    DrawPhysicsSettingsPopup();
+}
+
+void EditorHeaderBar::DrawPhysicsSettingsPopup()
+{
+    if (ImGui::BeginPopup(kPhysicsSettingsPopupId))
+    {
+        ImGui::TextUnformatted("Physics Settings");
+        ImGui::Separator();
+
+        if (!physicsModule)
+        {
+            ImGui::TextUnformatted("PhysicsModule is null.");
+        }
+        else
+        {
+            float gravity = physicsModule->GetGravity();
+            if (ImGui::DragFloat("Gravity", &gravity, 0.1f, -200.0f, 200.0f, "%.2f"))
+            {
+                physicsModule->SetGravity(gravity);
+            }
+
+            ImGui::Text("Tracked Bodies: %d", static_cast<int>(physicsModule->GetTrackedBodyCount()));
+        }
+
+        ImGui::Separator();
+
+        if (!sessionManager)
+        {
+            ImGui::TextUnformatted("Session manager not found.");
+        }
+        else
+        {
+            bool showColliders = sessionManager->ShowColliderDebug();
+            if (ImGui::Checkbox("Show Collider Debug", &showColliders))
+            {
+                sessionManager->SetShowColliderDebug(showColliders);
+            }
         }
 
         ImGui::EndPopup();
