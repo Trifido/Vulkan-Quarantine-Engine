@@ -21,4 +21,14 @@ enum CollisionFlag
     COL_ALL = -1
 };
 
+inline constexpr unsigned int QEPhysicsCollisionMaskAll()
+{
+    return static_cast<unsigned int>(COL_DEFAULT)
+        | static_cast<unsigned int>(COL_PLAYER)
+        | static_cast<unsigned int>(COL_SCENE)
+        | static_cast<unsigned int>(COL_ENEMY)
+        | static_cast<unsigned int>(COL_TRIGGER);
+}
+
 #endif // !PHYSICS_TYPES_H
+

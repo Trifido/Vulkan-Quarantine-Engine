@@ -1,4 +1,6 @@
 #include <BoxCollider.h>
+#include <AABBObject.h>
+#include <QEGameObject.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 
 using namespace JPH;
@@ -18,6 +20,34 @@ const glm::vec3 BoxCollider::GetSize()
     return this->Size;
 }
 
+bool BoxCollider::TryAutoFit()
+{
+    if (!Owner)
+        return false;
+
+    auto boundingBox = Owner->GetComponentInChildren<AABBObject>(true);
+    if (!boundingBox)
+        return false;
+
+    SetSize(glm::max(boundingBox->Size * 0.5f, glm::vec3(0.001f)));
+    SetColliderPivot(boundingBox->Center);
+    return true;
+}
+
+void BoxCollider::QEInit()
+{
+    if (QEInitialized())
+        return;
+
+    _autoFitted = TryAutoFit();
+    QECollider::QEInit();
+}
+
+void BoxCollider::QEUpdate()
+{
+    QECollider::QEUpdate();
+}
+
 void BoxCollider::SetSize(const glm::vec3& value)
 {
     Size = value;
@@ -30,3 +60,4 @@ void BoxCollider::SetSize(const glm::vec3& value)
     else
         colShape = nullptr;
 }
+

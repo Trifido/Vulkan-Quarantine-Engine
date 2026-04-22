@@ -8,6 +8,7 @@
 
 #include <Reflectable.h>
 #include <glm/glm.hpp>
+#include <PhysicsTypes.h>
 
 namespace
 {
@@ -66,7 +67,9 @@ namespace InspectorPropertyDrawer
             t == typeid(std::string) ||
             t == typeid(glm::vec2) ||
             t == typeid(glm::vec3) ||
-            t == typeid(glm::vec4);
+            t == typeid(glm::vec4) ||
+            t == typeid(PhysicBodyType) ||
+            t == typeid(CollisionFlag);
     }
 
     bool DrawField(
@@ -132,6 +135,69 @@ namespace InspectorPropertyDrawer
         {
             return ImGui::DragFloat4(label.c_str(), &reinterpret_cast<glm::vec4*>(fieldPtr)->x, 0.1f);
         }
+        else if (t == typeid(PhysicBodyType))
+        {
+            static const char* items[] = { "Static", "Rigid", "Kinematic" };
+            auto* value = reinterpret_cast<PhysicBodyType*>(fieldPtr);
+            int current = *value == RIGID_BODY ? 1 : (*value == KINEMATIC_BODY ? 2 : 0);
+            if (ImGui::Combo(label.c_str(), &current, items, IM_ARRAYSIZE(items)))
+            {
+                *value = current == 1 ? RIGID_BODY : (current == 2 ? KINEMATIC_BODY : STATIC_BODY);
+                return true;
+            }
+            return false;
+        }
+        else if (t == typeid(CollisionFlag))
+        {
+            auto* value = reinterpret_cast<CollisionFlag*>(fieldPtr);
+
+            if (field.name == "CollisionMask")
+            {
+                unsigned int maskValue = *value == COL_ALL ? QEPhysicsCollisionMaskAll() : static_cast<unsigned int>(*value);
+                bool changed = false;
+
+                if (ImGui::TreeNode(label.c_str()))
+                {
+                    struct Entry { const char* name; CollisionFlag flag; };
+                    static const Entry entries[] = {
+                        { "Default", COL_DEFAULT },
+                        { "Player", COL_PLAYER },
+                        { "Scene", COL_SCENE },
+                        { "Enemy", COL_ENEMY },
+                        { "Trigger", COL_TRIGGER }
+                    };
+
+                    for (const Entry& entry : entries)
+                    {
+                        bool enabled = (maskValue & static_cast<unsigned int>(entry.flag)) != 0;
+                        if (ImGui::Checkbox(entry.name, &enabled))
+                        {
+                            if (enabled)
+                                maskValue |= static_cast<unsigned int>(entry.flag);
+                            else
+                                maskValue &= ~static_cast<unsigned int>(entry.flag);
+                            changed = true;
+                        }
+                    }
+
+                    ImGui::TreePop();
+                }
+
+                if (changed)
+                    *value = static_cast<CollisionFlag>(maskValue);
+
+                return changed;
+            }
+
+            static const char* items[] = { "Scene", "Player", "Enemy", "Trigger" };
+            int current = *value == COL_PLAYER ? 1 : (*value == COL_ENEMY ? 2 : (*value == COL_TRIGGER ? 3 : 0));
+            if (ImGui::Combo(label.c_str(), &current, items, IM_ARRAYSIZE(items)))
+            {
+                *value = current == 1 ? COL_PLAYER : (current == 2 ? COL_ENEMY : (current == 3 ? COL_TRIGGER : COL_SCENE));
+                return true;
+            }
+            return false;
+        }
 
         return false;
     }
@@ -174,3 +240,4 @@ namespace InspectorPropertyDrawer
         return changed;
     }
 }
+

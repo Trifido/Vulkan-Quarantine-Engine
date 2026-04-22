@@ -2,11 +2,29 @@
 #include <iostream>
 #include <algorithm>
 #include <QECharacterController.h>
+#include <PhysicsBody.h>
 
 using namespace JPH;
 
 namespace
 {
+    class QECollisionMaskFilter final : public GroupFilter
+    {
+    public:
+        bool CanCollide(const CollisionGroup& inGroup1, const CollisionGroup& inGroup2) const override
+        {
+            const uint32_t groupA = inGroup1.GetGroupID();
+            const uint32_t groupB = inGroup2.GetGroupID();
+            const uint32_t maskA = inGroup1.GetSubGroupID();
+            const uint32_t maskB = inGroup2.GetSubGroupID();
+
+            if (groupA == 0 || groupB == 0)
+                return false;
+
+            return (maskA & groupB) != 0 && (maskB & groupA) != 0;
+        }
+    };
+
     enum BroadPhaseLayers : uint8 { BPL_STATIC, BPL_MOVING, BPL_NUM };
 
     class BPLayerInterface final : public BroadPhaseLayerInterface
@@ -15,7 +33,7 @@ namespace
         BPLayerInterface() {
             for (int i = 0; i < 32; ++i) mMap[i] = JPH::BroadPhaseLayer(BPL_MOVING);
 
-            // Mapeos explícitos
+            // Mapeos explÃ­citos
             mMap[Layers::SCENE_STATIC] = JPH::BroadPhaseLayer(BPL_STATIC);
             mMap[Layers::TRIGGER_STATIC] = JPH::BroadPhaseLayer(BPL_STATIC);
 
@@ -49,7 +67,7 @@ namespace
     class ObjectVsBroadPhaseFilter final : public ObjectVsBroadPhaseLayerFilter {
     public:
         bool ShouldCollide(ObjectLayer inLayer, BroadPhaseLayer inBPL) const override {
-            // Static sólo prueba contra MOVING
+            // Static sÃ³lo prueba contra MOVING
             if (inBPL == JPH::BroadPhaseLayer(BPL_STATIC))
                 return (
                     inLayer == Layers::PLAYER ||
@@ -58,7 +76,7 @@ namespace
                     inLayer == Layers::TRIGGER_MOVING
                     );
 
-            // MOVING contra todo (estático + móviles)
+            // MOVING contra todo (estÃ¡tico + mÃ³viles)
             return true;
         }
     };
@@ -67,33 +85,22 @@ namespace
     public:
         bool ShouldCollide(ObjectLayer a, ObjectLayer b) const override
         {
-            auto isScene = [](ObjectLayer l) { return l == Layers::SCENE_STATIC || l == Layers::SCENE_MOVING; };
-            auto isTrigger = [](ObjectLayer l) { return l == Layers::TRIGGER_STATIC || l == Layers::TRIGGER_MOVING; };
+            auto isStaticLayer = [](ObjectLayer l)
+            {
+                return l == Layers::SCENE_STATIC || l == Layers::TRIGGER_STATIC;
+            };
 
-            // Triggers: siempre dejan pasar para detectar
-            if (isTrigger(a) || isTrigger(b)) return true;
+            if (isStaticLayer(a) && isStaticLayer(b))
+                return false;
 
-            // Escena con escena (STATIC <-> MOVING, MOVING <-> MOVING, etc.)
-            if (isScene(a) && isScene(b))
-                return true;
-
-            // PLAYER con SCENE
-            if ((a == Layers::PLAYER && isScene(b)) || (b == Layers::PLAYER && isScene(a))) return true;
-
-            // PLAYER con ENEMY
-            if ((a == Layers::PLAYER && b == Layers::ENEMY) || (b == Layers::PLAYER && a == Layers::ENEMY)) return true;
-
-            // SCENE con ENEMY
-            if ((isScene(a) && b == Layers::ENEMY) || (isScene(b) && a == Layers::ENEMY)) return true;
-
-            return false;
+            return true;
         }
     };
 }
 
 PhysicsModule::PhysicsModule()
 {
-    // Jolt: disponer de allocator y fábrica
+    // Jolt: disponer de allocator y fÃ¡brica
     RegisterDefaultAllocator();
     Factory::sInstance = new Factory();
     RegisterTypes();
@@ -109,6 +116,7 @@ PhysicsModule::PhysicsModule()
     m_broadphaseLayers = std::make_unique<BPLayerInterface>();
     m_objectVsBPLFilter = std::make_unique<ObjectVsBroadPhaseFilter>();
     m_pairFilter = std::make_unique<ObjectLayerPairFilterEx>();
+    m_collisionFilter = new QECollisionMaskFilter();
 
     // Init del PhysicsSystem
     constexpr uint32 max_bodies = 8192;
@@ -126,7 +134,7 @@ PhysicsModule::PhysicsModule()
         *m_pairFilter
     );
 
-    // Gravedad (estándar del mundo, distinta de la que uses para CharacterVirtual)
+    // Gravedad (estÃ¡ndar del mundo, distinta de la que uses para CharacterVirtual)
     m_system.SetGravity(m_gravity);
 
     // Crear renderer de debug para Jolt
@@ -175,6 +183,31 @@ void PhysicsModule::UnregisterCharacter(QECharacterController* cc)
         m_characters.erase(it);
 }
 
+void PhysicsModule::RegisterBodyComponent(PhysicsBody* bodyComponent)
+{
+    if (!bodyComponent)
+        return;
+
+    if (std::find(m_bodyComponents.begin(), m_bodyComponents.end(), bodyComponent) == m_bodyComponents.end())
+        m_bodyComponents.push_back(bodyComponent);
+}
+
+void PhysicsModule::UnregisterBodyComponent(PhysicsBody* bodyComponent)
+{
+    auto it = std::find(m_bodyComponents.begin(), m_bodyComponents.end(), bodyComponent);
+    if (it != m_bodyComponents.end())
+        m_bodyComponents.erase(it);
+}
+
+void PhysicsModule::SyncEditorBodies()
+{
+    for (PhysicsBody* bodyComponent : m_bodyComponents)
+    {
+        if (bodyComponent)
+            bodyComponent->RefreshEditorState();
+    }
+}
+
 void PhysicsModule::ComputePhysics(float fixedDt)
 {
     m_system.Update(fixedDt, /*collisionSteps*/1, m_temp.get(), m_jobs.get());
@@ -207,3 +240,4 @@ void PhysicsModule::UpdateDebugPhysicsDrawer()
 
     DebugDrawer->NextFrame();
 }
+

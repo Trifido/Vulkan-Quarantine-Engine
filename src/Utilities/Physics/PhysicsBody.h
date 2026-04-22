@@ -22,11 +22,24 @@ class PhysicsBody : public QEGameComponent
 private:
     std::shared_ptr<QETransform> transform;
     std::shared_ptr<QECollider> collider;
+    std::shared_ptr<QECollider> previousCollider;
 
-    // Estado previo/actual para interpolación
+    // Estado previo/actual para interpolaciÃ³n
     glm::vec3 prevPos{}, currPos{};
     glm::quat prevRot{}, currRot{};
     bool hasCurr{ false };
+    bool applyingPhysicsTransform{ false };
+    uint32_t lastTransformVersion{ 0 };
+
+    glm::vec3 lastWorldScale{ 1.0f };
+    glm::vec3 lastColliderVecA{ 0.0f };
+    float lastColliderFloatA{ 0.0f };
+    float lastColliderMargin{ 0.0f };
+    PhysicBodyType lastBodyType{ STATIC_BODY };
+    CollisionFlag lastCollisionGroup{ COL_SCENE };
+    CollisionFlag lastCollisionMask{ COL_ALL };
+    float lastMass{ 0.0f };
+    int lastColliderKind{ 0 };
 
     // Epsilons
     float posEps = 0.0005f;
@@ -38,6 +51,7 @@ public:
     REFLECT_PROPERTY(float, Mass)
     REFLECT_PROPERTY(glm::vec3, Inertia)
     REFLECT_PROPERTY(CollisionFlag, CollisionGroup)
+    REFLECT_PROPERTY(CollisionFlag, CollisionMask)
 
 public:
     PhysicsBody();
@@ -49,12 +63,22 @@ public:
     void QEInit() override;
     void QEUpdate() override;
     void QEDestroy() override;
+    void RefreshEditorState();
 private:
     void Initialize();
     void copyTransformtoGLM();
     void RebuildScaledShapeFromCollider();
     void UpdateTransform();
+    void PushTransformToPhysics(bool resetVelocities);
+    void SyncShapeAndBodyToEditorState();
+    void CaptureStateSnapshot();
+    bool HasColliderDefinitionChanged() const;
+    bool HasBodyConfigurationChanged() const;
+    void DestroyRuntimeBody();
+    void RecreateBody();
     JPH::ObjectLayer ResolveObjectLayer(const PhysicBodyType type, const CollisionFlag group);
+    static CollisionFlag SanitizeCollisionGroup(CollisionFlag group);
+    static unsigned int SanitizeCollisionMask(CollisionFlag mask);
 
     static inline JPH::Vec3  toJPH(const glm::vec3& v);
     static inline JPH::Quat  toJPH(const glm::quat& q);
@@ -63,3 +87,4 @@ private:
 };
 
 #endif
+

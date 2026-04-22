@@ -141,6 +141,8 @@ void QEEditorApp::OnBeginFrame()
 void QEEditorApp::OnEndFrame()
 {
     EndImGuiFrame();
+    physicsModule->SyncEditorBodies();
+    physicsModule->UpdateDebugPhysicsDrawer();
 }
 
 void QEEditorApp::OnPostInitVulkan()

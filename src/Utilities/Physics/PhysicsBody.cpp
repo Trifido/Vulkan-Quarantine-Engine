@@ -12,19 +12,22 @@
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Collision/CollisionGroup.h>
 
 using namespace JPH;
 
 PhysicsBody::PhysicsBody()
 {
     this->UpdateType(PhysicBodyType::STATIC_BODY);
-    this->CollisionGroup = CollisionFlag::COL_NOTHING;
+    this->CollisionGroup = CollisionFlag::COL_SCENE;
+    this->CollisionMask = CollisionFlag::COL_ALL;
 }
 
 PhysicsBody::PhysicsBody(const PhysicBodyType& type)
 {
     this->UpdateType(type);
-    this->CollisionGroup = CollisionFlag::COL_NOTHING;
+    this->CollisionGroup = CollisionFlag::COL_SCENE;
+    this->CollisionMask = CollisionFlag::COL_ALL;
 }
 
 void PhysicsBody::UpdateType(const PhysicBodyType &type)
@@ -48,6 +51,21 @@ static inline bool closeRot(const glm::quat& a, glm::quat b, float angleEpsRad)
     return fabsf(angle) <= angleEpsRad;
 }
 
+static int DetectColliderKind(const std::shared_ptr<QECollider>& collider)
+{
+    if (!collider)
+        return 0;
+    if (std::dynamic_pointer_cast<BoxCollider>(collider))
+        return 1;
+    if (std::dynamic_pointer_cast<SphereCollider>(collider))
+        return 2;
+    if (std::dynamic_pointer_cast<CapsuleCollider>(collider))
+        return 3;
+    if (std::dynamic_pointer_cast<PlaneCollider>(collider))
+        return 4;
+    return 5;
+}
+
 
 void PhysicsBody::UpdateInertia(const glm::vec3 &localInertia)
 {
@@ -64,18 +82,19 @@ void PhysicsBody::UpdateTransform()
 
 JPH::ObjectLayer PhysicsBody::ResolveObjectLayer(const PhysicBodyType type, const CollisionFlag group)
 {
+    const CollisionFlag effectiveGroup = SanitizeCollisionGroup(group);
     const bool moving = (type != PhysicBodyType::STATIC_BODY);
 
-    if (group == CollisionFlag::COL_SCENE)
+    if (effectiveGroup == CollisionFlag::COL_SCENE)
         return moving ? Layers::SCENE_MOVING : Layers::SCENE_STATIC;
 
-    if (group == CollisionFlag::COL_PLAYER)
+    if (effectiveGroup == CollisionFlag::COL_PLAYER)
         return Layers::PLAYER;
 
-    if (group == CollisionFlag::COL_ENEMY)
+    if (effectiveGroup == CollisionFlag::COL_ENEMY)
         return Layers::ENEMY;
 
-    if (group == CollisionFlag::COL_TRIGGER)
+    if (effectiveGroup == CollisionFlag::COL_TRIGGER)
         return moving ? Layers::TRIGGER_MOVING : Layers::TRIGGER_STATIC;
 
     // Fallback
@@ -125,10 +144,17 @@ void PhysicsBody::Initialize()
         layer
     );
 
-    if (this->CollisionGroup == CollisionFlag::COL_TRIGGER)
+    const CollisionFlag effectiveGroup = SanitizeCollisionGroup(this->CollisionGroup);
+    if (effectiveGroup == CollisionFlag::COL_TRIGGER)
     {
         s.mIsSensor = true;
     }
+
+    s.mCollisionGroup = JPH::CollisionGroup(
+        PhysicsModule::getInstance()->GetCollisionFilter(),
+        static_cast<JPH::CollisionGroup::GroupID>(effectiveGroup),
+        static_cast<JPH::CollisionGroup::SubGroupID>(SanitizeCollisionMask(this->CollisionMask))
+    );
 
     if (motion == EMotionType::Dynamic)
     {
@@ -142,6 +168,8 @@ void PhysicsBody::Initialize()
     prevPos = pos; prevRot = rot;
     hasCurr = true;
 
+    CaptureStateSnapshot();
+    lastTransformVersion = transform->GetWorldVersion();
     _QEInitialized = true;
 }
 
@@ -176,11 +204,14 @@ void PhysicsBody::copyTransformtoGLM()
         localM = glm::inverse(parentWorld) * worldM;
     }
 
+    applyingPhysicsTransform = true;
     transform->SetFromMatrix(localM);
+    applyingPhysicsTransform = false;
 
     currPos = newPos;
     currRot = newRot;
     hasCurr = true;
+    lastTransformVersion = transform->GetWorldVersion();
 }
 
 void PhysicsBody::RebuildScaledShapeFromCollider()
@@ -254,10 +285,9 @@ void PhysicsBody::RebuildScaledShapeFromCollider()
     else if (auto plane = std::dynamic_pointer_cast<PlaneCollider>(collider))
     {
         float thickness = plane->GetSize();
+        glm::vec2 extents = plane->GetExtents();
 
-        float scaleXZ = glm::max(glm::abs(worldScale.x), glm::abs(worldScale.z));
-
-        BoxShapeSettings settings(Vec3(1000.0f, thickness, 1000.0f));
+        BoxShapeSettings settings(Vec3(extents.x * glm::abs(worldScale.x), thickness * glm::abs(worldScale.y), extents.y * glm::abs(worldScale.z)));
         settings.mConvexRadius = 0.0f;
 
         if (auto res = settings.Create(); res.IsValid())
@@ -304,6 +334,7 @@ void PhysicsBody::QEInit()
     if (this->collider && this->transform)
     {
         this->Initialize();
+        PhysicsModule::getInstance()->RegisterBodyComponent(this);
         QEGameComponent::QEInit();
     }
 }
@@ -315,32 +346,221 @@ void PhysicsBody::QEUpdate()
     this->collider = this->Owner->GetComponentInChildren<QECollider>(true);
     this->transform = this->Owner->GetComponent<QETransform>();
 
+    if (!this->collider)
+    {
+        DestroyRuntimeBody();
+        previousCollider.reset();
+        return;
+    }
+
     if (this->collider && this->transform && !this->QEInitialized())
     {
         this->Initialize();
+        PhysicsModule::getInstance()->RegisterBodyComponent(this);
         QEGameComponent::QEInit();
     }
 
     if (this->QEInitialized())
     {
+        RefreshEditorState();
         UpdateTransform();
     }
 }
 
 void PhysicsBody::QEDestroy()
 {
-    if (this->body.IsInvalid())
+    PhysicsModule::getInstance()->UnregisterBodyComponent(this);
+    DestroyRuntimeBody();
+    QEGameComponent::QEDestroy();
+}
+
+void PhysicsBody::RefreshEditorState()
+{
+    if (!this->QEInitialized() || !transform || !collider)
+        return;
+
+    SyncShapeAndBodyToEditorState();
+
+    const uint32_t currentVersion = transform->GetWorldVersion();
+    if (!applyingPhysicsTransform && currentVersion != lastTransformVersion)
     {
-        QEGameComponent::QEDestroy();
+        PushTransformToPhysics(true);
+        lastTransformVersion = currentVersion;
+    }
+}
+
+void PhysicsBody::PushTransformToPhysics(bool resetVelocities)
+{
+    if (body.IsInvalid() || !transform)
+        return;
+
+    auto& bodies = PhysicsModule::getInstance()->Bodies();
+    const glm::vec3 worldPos = transform->GetWorldPosition();
+    const glm::quat worldRot = transform->GetWorldRotation();
+    bodies.SetPositionAndRotationWhenChanged(
+        body,
+        JPH::RVec3(worldPos.x, worldPos.y, worldPos.z),
+        toJPH(worldRot),
+        JPH::EActivation::Activate);
+
+    if (resetVelocities && Type == PhysicBodyType::RIGID_BODY)
+    {
+        bodies.SetLinearAndAngularVelocity(body, JPH::Vec3::sZero(), JPH::Vec3::sZero());
+    }
+
+    currPos = worldPos;
+    currRot = worldRot;
+    hasCurr = true;
+}
+
+void PhysicsBody::SyncShapeAndBodyToEditorState()
+{
+    const bool colliderChanged = HasColliderDefinitionChanged();
+    const bool bodyConfigChanged = HasBodyConfigurationChanged();
+
+    if (!colliderChanged && !bodyConfigChanged)
+        return;
+
+    if (bodyConfigChanged)
+    {
+        RecreateBody();
         return;
     }
 
-    auto& bi = PhysicsModule::getInstance()->Bodies();
-    bi.RemoveBody(this->body);
-    bi.DestroyBody(this->body);
-    this->body = BodyID();
+    RebuildScaledShapeFromCollider();
+    if (!collider->colShape || body.IsInvalid())
+        return;
 
-    QEGameComponent::QEDestroy();
+    auto& bodies = PhysicsModule::getInstance()->Bodies();
+    bodies.SetShape(body, collider->colShape.GetPtr(), Type == PhysicBodyType::RIGID_BODY, JPH::EActivation::Activate);
+    CaptureStateSnapshot();
+}
+
+void PhysicsBody::CaptureStateSnapshot()
+{
+    if (!transform || !collider)
+        return;
+
+    previousCollider = collider;
+    lastWorldScale = transform->GetWorldScale();
+    lastColliderMargin = collider->CollisionMargin;
+    lastBodyType = Type;
+    lastCollisionGroup = CollisionGroup;
+    lastCollisionMask = CollisionMask;
+    lastMass = Mass;
+    lastColliderVecA = glm::vec3(0.0f);
+    lastColliderFloatA = 0.0f;
+    lastColliderKind = DetectColliderKind(collider);
+
+    if (auto box = std::dynamic_pointer_cast<BoxCollider>(collider))
+    {
+        lastColliderVecA = box->GetSize();
+    }
+    else if (auto sphere = std::dynamic_pointer_cast<SphereCollider>(collider))
+    {
+        lastColliderFloatA = sphere->GetRadius();
+    }
+    else if (auto capsule = std::dynamic_pointer_cast<CapsuleCollider>(collider))
+    {
+        lastColliderFloatA = capsule->GetRadius();
+        lastColliderVecA.x = capsule->GetHeight();
+    }
+    else if (auto plane = std::dynamic_pointer_cast<PlaneCollider>(collider))
+    {
+        lastColliderFloatA = plane->GetSize();
+        glm::vec2 extents = plane->GetExtents();
+        lastColliderVecA = glm::vec3(extents.x, extents.y, 0.0f);
+    }
+}
+
+bool PhysicsBody::HasColliderDefinitionChanged() const
+{
+    if (!transform || !collider)
+        return false;
+
+    if (collider != previousCollider)
+        return true;
+
+    if (DetectColliderKind(collider) != lastColliderKind)
+        return true;
+
+    if (!closePos(transform->GetWorldScale(), lastWorldScale, 0.0001f))
+        return true;
+
+    if (fabsf(collider->CollisionMargin - lastColliderMargin) > 0.0001f)
+        return true;
+
+    if (auto box = std::dynamic_pointer_cast<BoxCollider>(collider))
+        return !closePos(box->GetSize(), lastColliderVecA, 0.0001f);
+
+    if (auto sphere = std::dynamic_pointer_cast<SphereCollider>(collider))
+        return fabsf(sphere->GetRadius() - lastColliderFloatA) > 0.0001f;
+
+    if (auto capsule = std::dynamic_pointer_cast<CapsuleCollider>(collider))
+        return fabsf(capsule->GetRadius() - lastColliderFloatA) > 0.0001f
+            || fabsf(capsule->GetHeight() - lastColliderVecA.x) > 0.0001f;
+
+    if (auto plane = std::dynamic_pointer_cast<PlaneCollider>(collider))
+        return fabsf(plane->GetSize() - lastColliderFloatA) > 0.0001f
+            || !closePos(glm::vec3(plane->GetExtents().x, plane->GetExtents().y, 0.0f), lastColliderVecA, 0.0001f);
+
+    return false;
+}
+
+bool PhysicsBody::HasBodyConfigurationChanged() const
+{
+    return Type != lastBodyType
+        || CollisionGroup != lastCollisionGroup
+        || CollisionMask != lastCollisionMask
+        || fabsf(Mass - lastMass) > 0.0001f;
+}
+
+void PhysicsBody::DestroyRuntimeBody()
+{
+    if (!this->body.IsInvalid())
+    {
+        PhysicsModule::getInstance()->RemoveRigidBody(body);
+        this->body = JPH::BodyID();
+    }
+
+    _QEInitialized = false;
+    hasCurr = false;
+}
+
+void PhysicsBody::RecreateBody()
+{
+    DestroyRuntimeBody();
+    Initialize();
+}
+
+CollisionFlag PhysicsBody::SanitizeCollisionGroup(CollisionFlag group)
+{
+    switch (group)
+    {
+    case COL_PLAYER:
+    case COL_SCENE:
+    case COL_ENEMY:
+    case COL_TRIGGER:
+        return group;
+    case COL_DEFAULT:
+    case COL_NOTHING:
+    default:
+        return COL_SCENE;
+    }
+}
+
+unsigned int PhysicsBody::SanitizeCollisionMask(CollisionFlag mask)
+{
+    const unsigned int validMask = QEPhysicsCollisionMaskAll();
+    unsigned int result = static_cast<unsigned int>(mask);
+    if (mask == COL_ALL)
+        result = validMask;
+
+    result &= validMask;
+    if (result == 0)
+        result = validMask;
+
+    return result;
 }
 
 inline JPH::Vec3 PhysicsBody::toJPH(const glm::vec3& v)
@@ -363,3 +583,4 @@ inline glm::quat PhysicsBody::toGLM(const JPH::Quat& q)
 {
     return glm::quat(q.GetW(), q.GetX(), q.GetY(), q.GetZ());
 }
+

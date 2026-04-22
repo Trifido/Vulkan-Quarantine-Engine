@@ -13,6 +13,7 @@
 #include <Jolt/Core/TempAllocator.h>
 #include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/Physics/Body/BodyInterface.h>
+#include <Jolt/Physics/Collision/GroupFilter.h>
 
 namespace Layers
 {
@@ -29,6 +30,7 @@ namespace Layers
 }
 
 class QECharacterController;
+class PhysicsBody;
 
 class PhysicsModule : public QESingleton<PhysicsModule>
 {
@@ -45,6 +47,8 @@ private:
     std::unique_ptr<JPH::BroadPhaseLayerInterface> m_broadphaseLayers;
     std::unique_ptr<JPH::ObjectVsBroadPhaseLayerFilter> m_objectVsBPLFilter;
     std::unique_ptr<JPH::ObjectLayerPairFilter> m_pairFilter;
+    JPH::Ref<JPH::GroupFilter> m_collisionFilter;
+    std::vector<PhysicsBody*> m_bodyComponents;
 public:
     JoltDebugRenderer* DebugDrawer = nullptr;
 
@@ -81,9 +85,14 @@ public:
     void RemoveRigidBody(JPH::BodyID id);
     void RegisterCharacter(QECharacterController* cc);
     void UnregisterCharacter(QECharacterController* cc);
+    void RegisterBodyComponent(PhysicsBody* bodyComponent);
+    void UnregisterBodyComponent(PhysicsBody* bodyComponent);
+    const JPH::GroupFilter* GetCollisionFilter() const { return m_collisionFilter.GetPtr(); }
+    void SyncEditorBodies();
 
     ~PhysicsModule();
 };
 
 #endif
+
 

@@ -10,10 +10,17 @@ class BoxCollider : public QECollider
 protected:
     REFLECT_PROPERTY(glm::vec3, Size)
 public:
+    void QEInit() override;
+    void QEUpdate() override;
+
     BoxCollider();
     BoxCollider(const glm::vec3& newSize);
     const glm::vec3 GetSize();
     void SetSize(const glm::vec3& value);
+
+private:
+    bool TryAutoFit();
 };
 
 #endif 
+

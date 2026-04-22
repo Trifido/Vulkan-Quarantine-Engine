@@ -255,7 +255,6 @@ void QEBaseApp::mainLoop()
         int physicsSteps = Timer::getInstance()->ComputeFixedSteps();
         for (int i = 0; i < physicsSteps; ++i)
             physicsModule->ComputePhysics(Timer::getInstance()->FixedDelta);
-        physicsModule->UpdateDebugPhysicsDrawer();
 
         // UPDATE GameObjects
         this->gameObjectManager->UpdateQEGameObjects();
@@ -553,3 +552,4 @@ void QEBaseApp::recreateSwapchain()
 
     OnSwapchainRecreated();
 }
+
