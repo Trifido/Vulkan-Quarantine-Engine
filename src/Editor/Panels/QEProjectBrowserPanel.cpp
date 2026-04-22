@@ -273,6 +273,10 @@ void QEProjectBrowserPanel::DrawAssetTile(QEProjectAssetItem* item, float tileSi
             {
                 _pendingSceneOpenRequest = assetPath;
             }
+            else if (IsMaterialAsset(assetPath))
+            {
+                _pendingMaterialOpenRequest = assetPath;
+            }
             else if (IsTextureAsset(assetPath))
             {
                 _pendingTextureOpenRequest = assetPath;
@@ -658,6 +662,13 @@ bool QEProjectBrowserPanel::IsTextureAsset(const std::filesystem::path& path) co
         ext == ".bmp";
 }
 
+bool QEProjectBrowserPanel::IsMaterialAsset(const std::filesystem::path& path) const
+{
+    std::string ext = path.extension().string();
+    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+    return ext == ".qemat";
+}
+
 std::optional<std::filesystem::path> QEProjectBrowserPanel::ConsumePendingTextureOpenRequest()
 {
     if (!_pendingTextureOpenRequest.has_value())
@@ -665,5 +676,15 @@ std::optional<std::filesystem::path> QEProjectBrowserPanel::ConsumePendingTextur
 
     auto result = _pendingTextureOpenRequest;
     _pendingTextureOpenRequest.reset();
+    return result;
+}
+
+std::optional<std::filesystem::path> QEProjectBrowserPanel::ConsumePendingMaterialOpenRequest()
+{
+    if (!_pendingMaterialOpenRequest.has_value())
+        return std::nullopt;
+
+    auto result = _pendingMaterialOpenRequest;
+    _pendingMaterialOpenRequest.reset();
     return result;
 }

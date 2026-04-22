@@ -154,6 +154,47 @@ std::shared_ptr<QEMaterial> MaterialManager::GetMaterial(std::string nameMateria
     return _materials[nameMaterial];
 }
 
+std::shared_ptr<QEMaterial> MaterialManager::LoadMaterialFromFile(const std::filesystem::path& materialPath)
+{
+    if (materialPath.empty())
+        return nullptr;
+
+    const fs::path resolvedPath = QEProjectManager::ResolveProjectPath(materialPath);
+
+    MaterialDto materialDto;
+    if (!QEMaterialYamlHelper::ReadMaterialFile(resolvedPath, materialDto))
+    {
+        QE_LOG_ERROR_CAT_F("QEMaterial", "Error reading the material: {}", resolvedPath.string());
+        return nullptr;
+    }
+
+    materialDto.UpdateTexturePaths(resolvedPath.parent_path());
+
+    if (materialDto.Name.empty())
+    {
+        materialDto.Name = resolvedPath.stem().string();
+    }
+
+    materialDto.FilePath = QEProjectManager::ToProjectRelativePath(resolvedPath);
+
+    auto shaderManager = ShaderManager::getInstance();
+    auto shader = shaderManager->GetShader(materialDto.ShaderPath);
+    if (!shader)
+    {
+        shader = default_shader;
+    }
+
+    auto existing = GetMaterial(materialDto.Name);
+    if (existing)
+    {
+        return existing;
+    }
+
+    auto material = std::make_shared<QEMaterial>(shader, materialDto);
+    AddMaterial(material);
+    return GetMaterial(material->Name);
+}
+
 void MaterialManager::AddMaterial(std::shared_ptr<QEMaterial> mat_ptr)
 {
     std::string nameMaterial = CheckName(mat_ptr->Name);

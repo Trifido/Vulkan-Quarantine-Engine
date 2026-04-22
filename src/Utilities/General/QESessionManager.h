@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <string>
+#include <functional>
 #include <vulkan/vulkan.h>
 #include <QESingleton.h>
 #include <QERenderTarget.h>
@@ -32,6 +33,7 @@ public:
     void FreeCameraResources();
 
     void UpdateActiveCameraGPUData(uint32_t currentFrame);
+    void UpdateCameraGPUData(const std::shared_ptr<QECamera>& camera, uint32_t currentFrame);
 
     void UpdateEditorCameraViewportSize(uint32_t width, uint32_t height);
     void UpdateGameCameraViewportSize(uint32_t width, uint32_t height);
@@ -60,6 +62,7 @@ public:
 public:
     std::string NameCameraEditor = "QECameraEditor";
     const QERenderTarget* ExtraRenderTarget = nullptr;
+    std::function<void(VkCommandBuffer&, uint32_t)> ExtraEditorPass;
 
 private:
     bool _isEditor = false;

@@ -315,7 +315,7 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
         // C�mara
         if (br.name == "UniformCamera")
         {
-            auto cameraUBO = QESessionManager::getInstance()->GetCameraUBO();
+            auto cameraUBO = cameraOverrideUBO ? cameraOverrideUBO : QESessionManager::getInstance()->GetCameraUBO();
             pushUBO(dstBinding, cameraUBO->uniformBuffers[frameIdx], sizeof(UniformCamera));
         }
         // Pantalla

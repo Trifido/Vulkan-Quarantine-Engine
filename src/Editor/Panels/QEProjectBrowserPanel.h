@@ -31,6 +31,7 @@ public:
 
     std::optional<std::filesystem::path> ConsumePendingSceneOpenRequest();
     std::optional<std::filesystem::path> ConsumePendingTextureOpenRequest();
+    std::optional<std::filesystem::path> ConsumePendingMaterialOpenRequest();
 
 private:
     void DrawTopBar();
@@ -50,6 +51,7 @@ private:
     bool HasVisibleImportFooter() const;
 
     bool IsTextureAsset(const std::filesystem::path& path) const;
+    bool IsMaterialAsset(const std::filesystem::path& path) const;
 
 private:
     QEProjectBrowserNavigation _navigation;
@@ -59,6 +61,7 @@ private:
     std::vector<std::filesystem::path> _pendingExternalDrops;
     std::optional<std::filesystem::path> _pendingSceneOpenRequest;
     std::optional<std::filesystem::path> _pendingTextureOpenRequest;
+    std::optional<std::filesystem::path> _pendingMaterialOpenRequest;
 
     bool _isWindowHovered = false;
     bool _isContentsPanelHovered = false;

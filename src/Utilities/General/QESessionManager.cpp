@@ -122,10 +122,12 @@ void QESessionManager::FreeCameraResources()
 
 void QESessionManager::UpdateActiveCameraGPUData(uint32_t currentFrame)
 {
-    if (_activeCamera == nullptr)
-        return;
+    UpdateCameraGPUData(_activeCamera, currentFrame);
+}
 
-    if (this->cameraUBO == nullptr)
+void QESessionManager::UpdateCameraGPUData(const std::shared_ptr<QECamera>& camera, uint32_t currentFrame)
+{
+    if (camera == nullptr || !camera->CameraData || this->cameraUBO == nullptr)
         return;
 
     auto deviceModule = DeviceModule::getInstance();
@@ -141,7 +143,7 @@ void QESessionManager::UpdateActiveCameraGPUData(uint32_t currentFrame)
 
     memcpy(
         data,
-        static_cast<const void*>(this->_activeCamera->CameraData.get()),
+        static_cast<const void*>(camera->CameraData.get()),
         sizeof(UniformCamera));
 
     vkUnmapMemory(deviceModule->device, this->cameraUBO->uniformBuffersMemory[currentFrame]);

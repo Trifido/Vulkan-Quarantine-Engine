@@ -10,6 +10,7 @@ struct EditorContext
     bool ShowHierarchy = true;
     bool ShowInspector = true;
     bool ShowMaterialInspector = true;
+    bool ShowMaterialEditor = false;
     bool ShowViewport = true;
     bool ShowConsole = true;
     bool ShowContentBrowser = true;

@@ -5,6 +5,7 @@
 #include <Numbered.h>
 #include <GameObjectDto.h>
 #include <QECharacterController.h>
+#include <QEGeometryComponent.h>
 #include <Material.h>
 #include <yaml-cpp/yaml.h>
 #include <string>
@@ -155,6 +156,14 @@ public:
 
         materials.push_back(material);
         bindedMaterials.push_back(material->Name);
+
+        if (auto geometry = GetComponent<QEGeometryComponent>())
+        {
+            if (auto mesh = geometry->GetMesh())
+            {
+                mesh->MaterialRel.resize(mesh->MeshData.size(), material->Name);
+            }
+        }
     }
 
     const std::vector<std::shared_ptr<QEMaterial>>& GetMaterials() const

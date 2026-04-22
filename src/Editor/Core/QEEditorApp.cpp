@@ -23,10 +23,12 @@
 #include "Panels/QEProjectBrowserPanel.h"
 #include "Panels/ConsolePanel.h"
 #include "Panels/MaterialInspectorPanel.h"
+#include "Panels/MaterialEditorPanel.h"
 #include "Panels/QETextureViewerPanel.h"
 #include "Rendering/EditorViewportResources.h"
 #include <QEProjectManager.h>
 #include <QEMeshRenderer.h>
+#include <Material.h>
 #include <algorithm>
 
 #include <QECamera.h>
@@ -154,6 +156,10 @@ void QEEditorApp::OnPostInitVulkan()
 void QEEditorApp::OnPreCleanup()
 {
     vkDeviceWaitIdle(deviceModule->device);
+    if (sessionManager)
+    {
+        sessionManager->ExtraEditorPass = {};
+    }
     panels.clear();
 
     sessionManager->CleanEditorResources();
@@ -167,6 +173,11 @@ void QEEditorApp::OnSwapchainRecreated()
         viewportResources->Rebuild();
         SetAdditionalSceneRenderTarget();
         atmosphereSystem->UpdateAtmopshereResolution();
+    }
+
+    if (materialEditorPanelPtr)
+    {
+        materialEditorPanelPtr->RebuildPreview();
     }
 }
 
@@ -207,6 +218,12 @@ void QEEditorApp::DrawEditorUI()
         if (pendingTextureOpen.has_value())
         {
             OpenTextureViewer(*pendingTextureOpen);
+        }
+
+        auto pendingMaterialOpen = projectBrowserPanelPtr->ConsumePendingMaterialOpenRequest();
+        if (pendingMaterialOpen.has_value())
+        {
+            OpenMaterialEditor(*pendingMaterialOpen);
         }
     }
 
@@ -330,7 +347,22 @@ void QEEditorApp::CreatePanels()
     panels.emplace_back(std::make_unique<MaterialInspectorPanel>(
         gameObjectManager,
         editorContext.get(),
-        selectionManager.get()));
+        selectionManager.get(),
+        [this](const std::shared_ptr<QEMaterial>& material)
+        {
+            OpenMaterialEditor(material);
+        }));
+
+    auto materialEditorPanelLocal = std::make_unique<MaterialEditorPanel>(
+        editorContext.get(),
+        MaterialManager::getInstance(),
+        deviceModule,
+        renderPassModule,
+        commandPoolModule,
+        queueModule);
+
+    materialEditorPanelPtr = materialEditorPanelLocal.get();
+    panels.emplace_back(std::move(materialEditorPanelLocal));
 
     panels.emplace_back(std::make_unique<ConsolePanel>(
         editorContext.get(),
@@ -362,6 +394,18 @@ void QEEditorApp::CreatePanels()
 
     projectBrowserPanelPtr = projectBrowserPanelLocal.get();
     panels.emplace_back(std::move(projectBrowserPanelLocal));
+
+    if (sessionManager && materialEditorPanelPtr)
+    {
+        sessionManager->ExtraEditorPass =
+            [this](VkCommandBuffer& commandBuffer, uint32_t currentFrame)
+            {
+                if (materialEditorPanelPtr)
+                {
+                    materialEditorPanelPtr->RenderPreview(commandBuffer, currentFrame);
+                }
+            };
+    }
 }
 
 void QEEditorApp::DrawDockspace()
@@ -551,6 +595,22 @@ void QEEditorApp::OpenTextureViewer(const std::filesystem::path& texturePath)
         return;
 
     _textureViewerPanels.push_back(std::make_unique<QETextureViewerPanel>(texturePath));
+}
+
+void QEEditorApp::OpenMaterialEditor(const std::filesystem::path& materialPath)
+{
+    if (!materialEditorPanelPtr)
+        return;
+
+    materialEditorPanelPtr->OpenMaterialFromFile(materialPath);
+}
+
+void QEEditorApp::OpenMaterialEditor(const std::shared_ptr<QEMaterial>& material)
+{
+    if (!materialEditorPanelPtr)
+        return;
+
+    materialEditorPanelPtr->OpenMaterial(material);
 }
 
 void QEEditorApp::DrawTextureViewerPanels()

@@ -45,6 +45,7 @@ public:
     void InitializeMaterialManager();
 
     std::shared_ptr<QEMaterial> GetMaterial(std::string nameMaterial);
+    std::shared_ptr<QEMaterial> LoadMaterialFromFile(const std::filesystem::path& materialPath);
     void AddMaterial(std::shared_ptr<QEMaterial> mat_ptr);
     void AddMaterial(QEMaterial mat);
 

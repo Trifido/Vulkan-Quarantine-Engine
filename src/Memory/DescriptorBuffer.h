@@ -51,11 +51,15 @@ private:
 public:
     DescriptorBuffer();
     DescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr);
+    void SetCameraOverrideUBO(const std::shared_ptr<UniformBufferObject>& cameraUBO) { this->cameraOverrideUBO = cameraUBO; }
     void SetMeshletBuffers(std::shared_ptr<Meshlet> meshlets_ptr);
     void InitializeDescriptorSets(std::shared_ptr<ShaderModule> shader_ptr);
     VkDescriptorSet* getDescriptorSet(size_t id) { return &descriptorSets.at(id); }
     void CleanLastResources();
     void Cleanup();
+
+private:
+    std::shared_ptr<UniformBufferObject> cameraOverrideUBO = nullptr;
 };
 
 #endif // !DESCRIPTOR_BUFFER_H

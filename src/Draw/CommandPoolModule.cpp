@@ -5,6 +5,7 @@
 
 #include <backends/imgui_impl_vulkan.h>
 #include <SynchronizationModule.h>
+#include <QESessionManager.h>
 
 CommandPoolModule::CommandPoolModule()
 {
@@ -494,6 +495,13 @@ void CommandPoolModule::Render(FramebufferModule* framebufferModule, const QERen
     if (hasEditorViewport)
     {
         this->RenderSceneToTarget(*extraRenderTarget, currentFrame);
+
+        auto sessionManager = QESessionManager::getInstance();
+        if (sessionManager && sessionManager->ExtraEditorPass)
+        {
+            sessionManager->ExtraEditorPass(commandBuffers[currentFrame], currentFrame);
+        }
+
         this->setSwapchainImGuiRenderPass(framebufferModule->swapChainFramebuffers[swapchainModule->currentImage], currentFrame);
     }
     else
