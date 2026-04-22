@@ -52,6 +52,19 @@ public:
     DescriptorBuffer();
     DescriptorBuffer(std::shared_ptr<ShaderModule> shader_ptr);
     void SetCameraOverrideUBO(const std::shared_ptr<UniformBufferObject>& cameraUBO) { this->cameraOverrideUBO = cameraUBO; }
+    void SetLightOverrides(
+        const std::shared_ptr<UniformBufferObject>& lightUBO,
+        const std::shared_ptr<UniformBufferObject>& lightSSBO,
+        const std::shared_ptr<UniformBufferObject>& lightIndexSSBO,
+        const std::shared_ptr<UniformBufferObject>& lightBinSSBO,
+        const std::shared_ptr<UniformBufferObject>& lightTilesSSBO)
+    {
+        this->lightOverrideUBO = lightUBO;
+        this->lightOverrideSSBO = lightSSBO;
+        this->lightIndexOverrideSSBO = lightIndexSSBO;
+        this->lightBinOverrideSSBO = lightBinSSBO;
+        this->lightTilesOverrideSSBO = lightTilesSSBO;
+    }
     void SetMeshletBuffers(std::shared_ptr<Meshlet> meshlets_ptr);
     void InitializeDescriptorSets(std::shared_ptr<ShaderModule> shader_ptr);
     VkDescriptorSet* getDescriptorSet(size_t id) { return &descriptorSets.at(id); }
@@ -60,6 +73,11 @@ public:
 
 private:
     std::shared_ptr<UniformBufferObject> cameraOverrideUBO = nullptr;
+    std::shared_ptr<UniformBufferObject> lightOverrideUBO = nullptr;
+    std::shared_ptr<UniformBufferObject> lightOverrideSSBO = nullptr;
+    std::shared_ptr<UniformBufferObject> lightIndexOverrideSSBO = nullptr;
+    std::shared_ptr<UniformBufferObject> lightBinOverrideSSBO = nullptr;
+    std::shared_ptr<UniformBufferObject> lightTilesOverrideSSBO = nullptr;
 };
 
 #endif // !DESCRIPTOR_BUFFER_H

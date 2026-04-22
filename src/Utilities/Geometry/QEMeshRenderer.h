@@ -30,6 +30,7 @@ public:
     void QEInit() override;
     void QEUpdate() override;
     void QEDestroy() override;
+    void RefreshMaterials();
 
     void SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
     void SetDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout);

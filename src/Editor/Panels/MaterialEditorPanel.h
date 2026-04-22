@@ -38,6 +38,7 @@ public:
 private:
     void DrawToolbar();
     void DrawPreview();
+    void HandlePreviewInteraction();
     void DrawProperties();
     void SyncPreview();
 

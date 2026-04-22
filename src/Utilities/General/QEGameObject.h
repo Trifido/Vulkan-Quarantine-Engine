@@ -6,6 +6,7 @@
 #include <GameObjectDto.h>
 #include <QECharacterController.h>
 #include <QEGeometryComponent.h>
+#include <QEMeshRenderer.h>
 #include <Material.h>
 #include <yaml-cpp/yaml.h>
 #include <string>
@@ -163,6 +164,11 @@ public:
             {
                 mesh->MaterialRel.resize(mesh->MeshData.size(), material->Name);
             }
+        }
+
+        if (auto meshRenderer = GetComponent<QEMeshRenderer>())
+        {
+            meshRenderer->RefreshMaterials();
         }
     }
 

@@ -221,10 +221,29 @@ void MaterialEditorPanel::DrawPreview()
     if (_previewRenderer.IsReady())
     {
         ImGui::Image(_previewRenderer.GetImGuiTexture(), previewSize);
+        HandlePreviewInteraction();
     }
     else
     {
         ImGui::Dummy(previewSize);
+    }
+}
+
+void MaterialEditorPanel::HandlePreviewInteraction()
+{
+    if (!ImGui::IsItemHovered())
+        return;
+
+    ImGuiIO& io = ImGui::GetIO();
+
+    if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+    {
+        _previewRenderer.Orbit(io.MouseDelta.x * 0.35f, io.MouseDelta.y * 0.35f);
+    }
+
+    if (io.MouseWheel != 0.0f)
+    {
+        _previewRenderer.Zoom(-io.MouseWheel * 0.2f);
     }
 }
 

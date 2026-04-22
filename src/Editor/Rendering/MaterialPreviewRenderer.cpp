@@ -1,6 +1,9 @@
 #include "MaterialPreviewRenderer.h"
 
 #include <array>
+#include <algorithm>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 #include <DeviceModule.h>
 #include <RenderPassModule.h>
@@ -20,8 +23,11 @@
 
 namespace
 {
-    constexpr float kPreviewCameraHeight = 0.85f;
     constexpr float kPreviewCameraDistance = 2.75f;
+    constexpr float kPreviewMinDistance = 0.75f;
+    constexpr float kPreviewMaxDistance = 8.0f;
+    constexpr float kPreviewMinPitch = -80.0f;
+    constexpr float kPreviewMaxPitch = 80.0f;
 }
 
 MaterialPreviewRenderer::~MaterialPreviewRenderer()
@@ -49,6 +55,25 @@ void MaterialPreviewRenderer::Initialize(
 
 void MaterialPreviewRenderer::Cleanup()
 {
+    auto cleanupUBO = [&](const std::shared_ptr<UniformBufferObject>& ubo, const char* tag)
+    {
+        if (!ubo || !deviceModule)
+            return;
+
+        for (size_t i = 0; i < ubo->uniformBuffers.size(); ++i)
+        {
+            if (ubo->uniformBuffers[i] != VK_NULL_HANDLE)
+            {
+                QE_DESTROY_BUFFER(deviceModule->device, ubo->uniformBuffers[i], tag);
+            }
+
+            if (ubo->uniformBuffersMemory[i] != VK_NULL_HANDLE)
+            {
+                QE_FREE_MEMORY(deviceModule->device, ubo->uniformBuffersMemory[i], tag);
+            }
+        }
+    };
+
     if (_renderResources.IsValid())
     {
         _renderResources.Cleanup();
@@ -82,23 +107,19 @@ void MaterialPreviewRenderer::Cleanup()
     _material.reset();
     _previewMaterial.reset();
 
-    if (_previewCameraUBO && deviceModule)
-    {
-        for (size_t i = 0; i < _previewCameraUBO->uniformBuffers.size(); ++i)
-        {
-            if (_previewCameraUBO->uniformBuffers[i] != VK_NULL_HANDLE)
-            {
-                QE_DESTROY_BUFFER(deviceModule->device, _previewCameraUBO->uniformBuffers[i], "MaterialPreviewRenderer::Cleanup");
-            }
-
-            if (_previewCameraUBO->uniformBuffersMemory[i] != VK_NULL_HANDLE)
-            {
-                QE_FREE_MEMORY(deviceModule->device, _previewCameraUBO->uniformBuffersMemory[i], "MaterialPreviewRenderer::Cleanup");
-            }
-        }
-    }
+    cleanupUBO(_previewCameraUBO, "MaterialPreviewRenderer::Cleanup");
+    cleanupUBO(_previewLightUBO, "MaterialPreviewRenderer::Cleanup");
+    cleanupUBO(_previewLightSSBO, "MaterialPreviewRenderer::Cleanup");
+    cleanupUBO(_previewLightIndexSSBO, "MaterialPreviewRenderer::Cleanup");
+    cleanupUBO(_previewLightBinSSBO, "MaterialPreviewRenderer::Cleanup");
+    cleanupUBO(_previewLightTilesSSBO, "MaterialPreviewRenderer::Cleanup");
 
     _previewCameraUBO.reset();
+    _previewLightUBO.reset();
+    _previewLightSSBO.reset();
+    _previewLightIndexSSBO.reset();
+    _previewLightBinSSBO.reset();
+    _previewLightTilesSSBO.reset();
     _initialized = false;
 }
 
@@ -124,6 +145,12 @@ void MaterialPreviewRenderer::SetMaterial(const std::shared_ptr<QEMaterial>& mat
         if (_previewMaterial->descriptor)
         {
             _previewMaterial->descriptor->SetCameraOverrideUBO(_previewCameraUBO);
+            _previewMaterial->descriptor->SetLightOverrides(
+                _previewLightUBO,
+                _previewLightSSBO,
+                _previewLightIndexSSBO,
+                _previewLightBinSSBO,
+                _previewLightTilesSSBO);
         }
 
         _previewMaterial->InitializeMaterialData();
@@ -169,6 +196,19 @@ void MaterialPreviewRenderer::SyncFromMaterial(const std::shared_ptr<QEMaterial>
 void MaterialPreviewRenderer::SetPreviewShape(PreviewShape shape)
 {
     _previewShape = shape;
+}
+
+void MaterialPreviewRenderer::Orbit(float deltaYawDegrees, float deltaPitchDegrees)
+{
+    _orbitYawDegrees += deltaYawDegrees;
+    _orbitPitchDegrees = std::clamp(_orbitPitchDegrees + deltaPitchDegrees, kPreviewMinPitch, kPreviewMaxPitch);
+    UpdateCameraTransform();
+}
+
+void MaterialPreviewRenderer::Zoom(float deltaDistance)
+{
+    _orbitDistance = std::clamp(_orbitDistance + deltaDistance, kPreviewMinDistance, kPreviewMaxDistance);
+    UpdateCameraTransform();
 }
 
 void MaterialPreviewRenderer::Resize(uint32_t width, uint32_t height)
@@ -272,15 +312,17 @@ void MaterialPreviewRenderer::EnsurePreviewScene()
     _camera = _cameraObject->GetComponent<QECamera>();
     _previewCameraUBO = std::make_shared<UniformBufferObject>();
     _previewCameraUBO->CreateUniformBuffer(sizeof(UniformCamera), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    InitializePreviewLightingOverrides();
 
     if (auto transform = _cameraObject->GetComponent<QETransform>())
     {
-        transform->SetLocalPosition(glm::vec3(0.0f, kPreviewCameraHeight, kPreviewCameraDistance));
-        transform->SetLocalEulerDegrees(glm::vec3(-12.0f, 0.0f, 0.0f));
+        transform->SetLocalPosition(glm::vec3(0.0f, 0.0f, kPreviewCameraDistance));
+        transform->SetLocalEulerDegrees(glm::vec3(_orbitPitchDegrees, _orbitYawDegrees, 0.0f));
     }
 
     _cameraObject->QEStart();
     _cameraObject->QEInit();
+    UpdateCameraTransform();
 
     _sphereObject = CreatePreviewObject(QEPrimitiveType::Sphere, "MaterialPreviewSphere");
     _planeObject = CreatePreviewObject(QEPrimitiveType::Plane, "MaterialPreviewPlane");
@@ -289,6 +331,84 @@ void MaterialPreviewRenderer::EnsurePreviewScene()
     if (auto transform = _planeObject ? _planeObject->GetComponent<QETransform>() : nullptr)
     {
         transform->SetLocalScale(glm::vec3(1.0f));
+    }
+}
+
+void MaterialPreviewRenderer::InitializePreviewLightingOverrides()
+{
+    auto lightManager = LightManager::getInstance();
+    if (!lightManager)
+        return;
+
+    _previewLightUBO = std::make_shared<UniformBufferObject>();
+    _previewLightUBO->CreateUniformBuffer(sizeof(LightManagerUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+
+    _previewLightSSBO = std::make_shared<UniformBufferObject>();
+    _previewLightSSBO->CreateSSBO(lightManager->lightSSBOSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+
+    _previewLightIndexSSBO = std::make_shared<UniformBufferObject>();
+    _previewLightIndexSSBO->CreateSSBO(lightManager->lightIndexSSBOSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+
+    _previewLightBinSSBO = std::make_shared<UniformBufferObject>();
+    _previewLightBinSSBO->CreateSSBO(lightManager->lightBinSSBOSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+
+    _previewLightTilesSSBO = std::make_shared<UniformBufferObject>();
+    _previewLightTilesSSBO->CreateSSBO(lightManager->lightTilesSSBOSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+
+    LightManagerUniform zeroLightData{};
+    zeroLightData.numLights = 0;
+
+    std::vector<uint8_t> zeroLights(lightManager->lightSSBOSize, 0);
+    std::vector<uint8_t> zeroIndices(lightManager->lightIndexSSBOSize, 0);
+    std::vector<uint32_t> zeroBins(lightManager->lightBinSSBOSize / sizeof(uint32_t), 1u);
+    std::vector<uint8_t> zeroTiles(lightManager->lightTilesSSBOSize, 0);
+
+    for (uint32_t frame = 0; frame < MAX_FRAMES_IN_FLIGHT; ++frame)
+    {
+        void* data = nullptr;
+        vkMapMemory(deviceModule->device, _previewLightUBO->uniformBuffersMemory[frame], 0, sizeof(LightManagerUniform), 0, &data);
+        memcpy(data, &zeroLightData, sizeof(LightManagerUniform));
+        vkUnmapMemory(deviceModule->device, _previewLightUBO->uniformBuffersMemory[frame]);
+
+        vkMapMemory(deviceModule->device, _previewLightSSBO->uniformBuffersMemory[frame], 0, lightManager->lightSSBOSize, 0, &data);
+        memcpy(data, zeroLights.data(), zeroLights.size());
+        vkUnmapMemory(deviceModule->device, _previewLightSSBO->uniformBuffersMemory[frame]);
+
+        vkMapMemory(deviceModule->device, _previewLightIndexSSBO->uniformBuffersMemory[frame], 0, lightManager->lightIndexSSBOSize, 0, &data);
+        memcpy(data, zeroIndices.data(), zeroIndices.size());
+        vkUnmapMemory(deviceModule->device, _previewLightIndexSSBO->uniformBuffersMemory[frame]);
+
+        vkMapMemory(deviceModule->device, _previewLightBinSSBO->uniformBuffersMemory[frame], 0, lightManager->lightBinSSBOSize, 0, &data);
+        memcpy(data, zeroBins.data(), lightManager->lightBinSSBOSize);
+        vkUnmapMemory(deviceModule->device, _previewLightBinSSBO->uniformBuffersMemory[frame]);
+
+        vkMapMemory(deviceModule->device, _previewLightTilesSSBO->uniformBuffersMemory[frame], 0, lightManager->lightTilesSSBOSize, 0, &data);
+        memcpy(data, zeroTiles.data(), zeroTiles.size());
+        vkUnmapMemory(deviceModule->device, _previewLightTilesSSBO->uniformBuffersMemory[frame]);
+    }
+}
+
+void MaterialPreviewRenderer::UpdateCameraTransform()
+{
+    if (!_cameraObject)
+        return;
+
+    const float yaw = glm::radians(_orbitYawDegrees);
+    const float pitch = glm::radians(_orbitPitchDegrees);
+
+    glm::vec3 offset{};
+    offset.x = _orbitDistance * cosf(pitch) * sinf(yaw);
+    offset.y = _orbitDistance * sinf(-pitch);
+    offset.z = _orbitDistance * cosf(pitch) * cosf(yaw);
+
+    if (auto transform = _cameraObject->GetComponent<QETransform>())
+    {
+        const glm::vec3 cameraPosition = _orbitTarget + offset;
+        const glm::mat4 view = glm::lookAtRH(cameraPosition, _orbitTarget, glm::vec3(0.0f, 1.0f, 0.0f));
+        const glm::quat worldRotation = glm::normalize(glm::quat_cast(glm::inverse(glm::mat3(view))));
+
+        transform->SetLocalPosition(cameraPosition);
+        transform->SetLocalRotation(worldRotation);
     }
 }
 

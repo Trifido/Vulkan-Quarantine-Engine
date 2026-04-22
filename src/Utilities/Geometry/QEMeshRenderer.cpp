@@ -18,7 +18,7 @@ void QEMeshRenderer::QEInit()
 {
     animationComponent = this->Owner->GetComponent<QEAnimationComponent>();
     geometryComponent = this->Owner->GetComponent<QEGeometryComponent>();
-    materialComponents = this->Owner->GetMaterials();
+    RefreshMaterials();
     transformComponent = this->Owner->GetComponent<QETransform>();
 
     if (this->IsMeshShaderPipeline)
@@ -38,6 +38,14 @@ void QEMeshRenderer::QEUpdate()
 void QEMeshRenderer::QEDestroy()
 {
     QEGameComponent::QEDestroy();
+}
+
+void QEMeshRenderer::RefreshMaterials()
+{
+    if (!this->Owner)
+        return;
+
+    materialComponents = this->Owner->GetMaterials();
 }
 
 void QEMeshRenderer::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx)
@@ -71,6 +79,16 @@ void QEMeshRenderer::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx
 
         std::string materialID = qeMesh->MaterialRel[i];
         auto material = this->Owner->GetMaterial(materialID);
+        if (!material)
+        {
+            material = this->Owner->GetMaterial();
+        }
+
+        if (!material)
+        {
+            continue;
+        }
+
         const bool isBlended = material &&
             (material->materialData.AlphaMode == 2u ||
              material->renderQueue >= static_cast<unsigned int>(RenderQueue::Transparent));
