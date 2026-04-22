@@ -238,7 +238,7 @@ void MaterialEditorPanel::HandlePreviewInteraction()
 
     if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
     {
-        _previewRenderer.Orbit(io.MouseDelta.x * 0.35f, io.MouseDelta.y * 0.35f);
+        _previewRenderer.Orbit(-io.MouseDelta.x * 0.35f, -io.MouseDelta.y * 0.35f);
     }
 
     if (io.MouseWheel != 0.0f)

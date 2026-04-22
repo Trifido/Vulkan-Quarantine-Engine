@@ -355,35 +355,54 @@ void MaterialPreviewRenderer::InitializePreviewLightingOverrides()
     _previewLightTilesSSBO = std::make_shared<UniformBufferObject>();
     _previewLightTilesSSBO->CreateSSBO(lightManager->lightTilesSSBOSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
 
-    LightManagerUniform zeroLightData{};
-    zeroLightData.numLights = 0;
+    LightManagerUniform previewLightData{};
+    previewLightData.numLights = 1;
 
-    std::vector<uint8_t> zeroLights(lightManager->lightSSBOSize, 0);
-    std::vector<uint8_t> zeroIndices(lightManager->lightIndexSSBOSize, 0);
-    std::vector<uint32_t> zeroBins(lightManager->lightBinSSBOSize / sizeof(uint32_t), 1u);
-    std::vector<uint8_t> zeroTiles(lightManager->lightTilesSSBOSize, 0);
+    std::vector<uint8_t> previewLights(lightManager->lightSSBOSize, 0);
+    std::vector<uint8_t> previewIndices(lightManager->lightIndexSSBOSize, 0);
+    std::vector<uint32_t> previewBins(lightManager->lightBinSSBOSize / sizeof(uint32_t), 0u);
+    std::vector<uint32_t> previewTiles(lightManager->lightTilesSSBOSize / sizeof(uint32_t), 1u);
+
+    LightUniform directionalLight{};
+    directionalLight.position = glm::vec3(0.0f, 2.5f, 2.0f);
+    directionalLight.lightType = 1u;
+    directionalLight.diffuse = glm::vec3(2.25f);
+    directionalLight.specular = glm::vec3(1.0f);
+    directionalLight.direction = glm::normalize(glm::vec3(-0.35f, -0.8f, -0.45f));
+    directionalLight.constant = 1.0f;
+    directionalLight.linear = 0.0f;
+    directionalLight.quadratic = 0.0f;
+    directionalLight.cutOff = 0.0f;
+    directionalLight.outerCutoff = 0.0f;
+    directionalLight.radius = 100.0f;
+    directionalLight.idxShadowMap = 0u;
+
+    memcpy(previewLights.data(), &directionalLight, sizeof(LightUniform));
+
+    const uint32_t lightIndex = 0u;
+    memcpy(previewIndices.data(), &lightIndex, sizeof(uint32_t));
 
     for (uint32_t frame = 0; frame < MAX_FRAMES_IN_FLIGHT; ++frame)
     {
         void* data = nullptr;
         vkMapMemory(deviceModule->device, _previewLightUBO->uniformBuffersMemory[frame], 0, sizeof(LightManagerUniform), 0, &data);
-        memcpy(data, &zeroLightData, sizeof(LightManagerUniform));
+        memcpy(data, &previewLightData, sizeof(LightManagerUniform));
         vkUnmapMemory(deviceModule->device, _previewLightUBO->uniformBuffersMemory[frame]);
 
         vkMapMemory(deviceModule->device, _previewLightSSBO->uniformBuffersMemory[frame], 0, lightManager->lightSSBOSize, 0, &data);
-        memcpy(data, zeroLights.data(), zeroLights.size());
+        memcpy(data, previewLights.data(), previewLights.size());
         vkUnmapMemory(deviceModule->device, _previewLightSSBO->uniformBuffersMemory[frame]);
 
         vkMapMemory(deviceModule->device, _previewLightIndexSSBO->uniformBuffersMemory[frame], 0, lightManager->lightIndexSSBOSize, 0, &data);
-        memcpy(data, zeroIndices.data(), zeroIndices.size());
+        memcpy(data, previewIndices.data(), previewIndices.size());
         vkUnmapMemory(deviceModule->device, _previewLightIndexSSBO->uniformBuffersMemory[frame]);
 
         vkMapMemory(deviceModule->device, _previewLightBinSSBO->uniformBuffersMemory[frame], 0, lightManager->lightBinSSBOSize, 0, &data);
-        memcpy(data, zeroBins.data(), lightManager->lightBinSSBOSize);
+        memcpy(data, previewBins.data(), lightManager->lightBinSSBOSize);
         vkUnmapMemory(deviceModule->device, _previewLightBinSSBO->uniformBuffersMemory[frame]);
 
         vkMapMemory(deviceModule->device, _previewLightTilesSSBO->uniformBuffersMemory[frame], 0, lightManager->lightTilesSSBOSize, 0, &data);
-        memcpy(data, zeroTiles.data(), zeroTiles.size());
+        memcpy(data, previewTiles.data(), lightManager->lightTilesSSBOSize);
         vkUnmapMemory(deviceModule->device, _previewLightTilesSSBO->uniformBuffersMemory[frame]);
     }
 }
