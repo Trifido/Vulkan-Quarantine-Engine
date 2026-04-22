@@ -36,6 +36,10 @@ private:
 
     void EnsureSunLightCreated();
     void ApplyPendingSunState();
+    void RemoveSunLightFromScene();
+    void SyncSunLightState();
+    void RemoveAtmosphereComputeNodes();
+    void CleanupEnvironmentShader();
 
 public:
     bool IsInitialized = false;
@@ -46,7 +50,7 @@ private:
 
     DeviceModule* deviceModule;
     LightManager* lightManager = nullptr;
-    ComputeNodeManager* computeNodeManager;
+    ComputeNodeManager* computeNodeManager = nullptr;
     SwapChainModule* swapChainModule;
 
     std::shared_ptr<CustomTexture> outputTexture;

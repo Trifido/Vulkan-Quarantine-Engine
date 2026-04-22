@@ -345,6 +345,8 @@ namespace
             changedVisualOnly = true;
         }
 
+        ImGui::BeginDisabled(!dto.hasAtmosphere);
+
         glm::vec3 sunEuler = dto.sunEulerDegrees;
         if (ImGui::DragFloat3("Sun Rotation", &sunEuler.x, 0.5f))
         {
@@ -428,6 +430,8 @@ namespace
             if (ImGui::DragFloat("Sun Glow", &dto.sunGlow, 0.01f, 0.0f, 100.0f))
                 changedVisualOnly = true;
         }
+
+        ImGui::EndDisabled();
 
         if (changedPhysical || changedVisualOnly || changedSunOnly)
         {

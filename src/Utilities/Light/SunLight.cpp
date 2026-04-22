@@ -1,5 +1,6 @@
 #include "SunLight.h"
 #include <SynchronizationModule.h>
+#include <Helpers/QEMemoryTrack.h>
 
 QESunLight::QESunLight() : QEDirectionalLight()
 {
@@ -29,6 +30,33 @@ void QESunLight::UpdateSun()
         memcpy(data, &uniformData, sizeof(SunUniform));
         vkUnmapMemory(deviceModule->device, this->sunUBO->uniformBuffersMemory[currentFrame]);
     }
+}
+
+void QESunLight::CleanupSunResources()
+{
+    this->CleanShadowMapResources();
+
+    if (!this->sunUBO)
+        return;
+
+    for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        if (this->sunUBO->uniformBuffers[i] != VK_NULL_HANDLE)
+        {
+            QE_DESTROY_BUFFER(deviceModule->device, this->sunUBO->uniformBuffers[i], "QESunLight::CleanupSunResources");
+            this->sunUBO->uniformBuffers[i] = VK_NULL_HANDLE;
+        }
+
+        if (this->sunUBO->uniformBuffersMemory[i] != VK_NULL_HANDLE)
+        {
+            QE_FREE_MEMORY(deviceModule->device, this->sunUBO->uniformBuffersMemory[i], "QESunLight::CleanupSunResources");
+            this->sunUBO->uniformBuffersMemory[i] = VK_NULL_HANDLE;
+        }
+    }
+
+    this->sunUBO.reset();
+    this->sunUBO = nullptr;
+    this->ResourcesInitialized = false;
 }
 
 void QESunLight::SetSunEulerDegrees(const glm::vec3& eulerDeg)

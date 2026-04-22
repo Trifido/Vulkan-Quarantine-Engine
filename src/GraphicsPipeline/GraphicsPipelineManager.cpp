@@ -98,3 +98,17 @@ std::shared_ptr<GraphicsPipelineModule> GraphicsPipelineManager::RegisterNewGrap
     this->_graphicsPipelines[shader.id]->CompileGraphicsPipeline(shader.shaderStages, shader.vertexInputInfo, descriptorLayouts);
     return this->_graphicsPipelines[shader.id];
 }
+
+void GraphicsPipelineManager::RemoveGraphicsPipeline(const std::string& pipelineId)
+{
+    auto it = this->_graphicsPipelines.find(pipelineId);
+    if (it == this->_graphicsPipelines.end())
+        return;
+
+    if (it->second)
+    {
+        it->second->CleanPipelineData();
+    }
+
+    this->_graphicsPipelines.erase(it);
+}

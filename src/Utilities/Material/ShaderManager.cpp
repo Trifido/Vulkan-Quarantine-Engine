@@ -38,10 +38,27 @@ void ShaderManager::AddShader(std::shared_ptr<ShaderModule> shader_ptr)
     _shaders[name] = shader_ptr;
 }
 
+void ShaderManager::UpsertShader(std::shared_ptr<ShaderModule> shader_ptr)
+{
+    if (!shader_ptr)
+        return;
+
+    _shaders[shader_ptr->shaderNameID] = shader_ptr;
+}
+
 void ShaderManager::AddShader(ShaderModule shader)
 {
     std::string name = CheckName(shader.shaderNameID);
     _shaders[name] = std::make_shared<ShaderModule>(shader);
+}
+
+void ShaderManager::RemoveShader(const std::string& shaderName)
+{
+    auto it = _shaders.find(shaderName);
+    if (it == _shaders.end())
+        return;
+
+    _shaders.erase(it);
 }
 
 bool ShaderManager::Exists(std::string shaderName)

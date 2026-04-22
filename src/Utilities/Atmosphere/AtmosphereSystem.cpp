@@ -10,6 +10,7 @@
 #include <Helpers/MathHelpers.h>
 #include <QERenderTarget.h>
 #include <Helpers/QEMemoryTrack.h>
+#include <GraphicsPipelineManager.h>
 
 AtmosphereSystem::AtmosphereSystem()
 {
@@ -71,17 +72,89 @@ void AtmosphereSystem::ApplyPendingSunState()
     this->sunLight->SetSunEulerDegrees(pendingAtmosphereDto.sunEulerDegrees);
 }
 
-void AtmosphereSystem::InitializeAtmosphereResources()
+void AtmosphereSystem::RemoveSunLightFromScene()
 {
-    this->ResourcesReady = false;
-
-    if (!this->IsInitialized)
+    if (!this->lightManager)
         return;
+
+    if (auto existingSun = this->lightManager->GetLight(SUN_NAME))
+    {
+        std::string sunName = this->SUN_NAME;
+        this->lightManager->DeleteLight(existingSun, sunName);
+    }
+
+    this->sunLight.reset();
+}
+
+void AtmosphereSystem::SyncSunLightState()
+{
+    if (!this->IsInitialized)
+    {
+        RemoveSunLightFromScene();
+        return;
+    }
 
     if (this->hasPendingAtmosphereDto)
     {
         ApplyPendingSunState();
     }
+    else
+    {
+        EnsureSunLightCreated();
+    }
+}
+
+void AtmosphereSystem::RemoveAtmosphereComputeNodes()
+{
+    if (!this->computeNodeManager)
+        return;
+
+    this->computeNodeManager->RemoveComputeNodesByPrefix(TLUT_NODE_NAME);
+    this->computeNodeManager->RemoveComputeNodesByPrefix(MSLUT_NODE_NAME);
+    this->computeNodeManager->RemoveComputeNodesByPrefix(SVLUT_NODE_NAME);
+}
+
+void AtmosphereSystem::CleanupEnvironmentShader()
+{
+    if (!this->environment_shader)
+        return;
+
+    auto shaderManager = ShaderManager::getInstance();
+    auto graphicsPipelineManager = GraphicsPipelineManager::getInstance();
+
+    if (this->environment_shader->PipelineModule)
+    {
+        this->environment_shader->PipelineModule->CleanPipelineData();
+    }
+
+    this->environment_shader->CleanDescriptorSetLayout();
+    this->environment_shader->cleanup();
+
+    if (graphicsPipelineManager)
+    {
+        graphicsPipelineManager->RemoveGraphicsPipeline(this->environment_shader->id);
+    }
+
+    if (shaderManager)
+    {
+        shaderManager->RemoveShader(this->environment_shader->shaderNameID);
+    }
+
+    this->environment_shader.reset();
+    this->environment_shader = nullptr;
+}
+
+void AtmosphereSystem::InitializeAtmosphereResources()
+{
+    this->ResourcesReady = false;
+
+    if (!this->IsInitialized)
+    {
+        RemoveSunLightFromScene();
+        return;
+    }
+
+    SyncSunLightState();
 
     switch (this->atmosphereType)
     {
@@ -183,7 +256,7 @@ void AtmosphereSystem::SetUpResources()
     this->environment_shader = std::make_shared<ShaderModule>(
         ShaderModule("environment_map", absolute_sky_vert_shader_path, absolute_sky_frag_shader_path, pipelineData)
     );
-    shaderManager->AddShader(this->environment_shader);
+    shaderManager->UpsertShader(this->environment_shader);
 
     if (this->atmosphereType == AtmosphereType::PHYSICALLY_BASED_SKY)
     {
@@ -573,12 +646,40 @@ void AtmosphereSystem::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t fram
 
 void AtmosphereSystem::Cleanup()
 {
+    if (!this->deviceModule || this->deviceModule->device == VK_NULL_HANDLE)
+        return;
+
+    vkDeviceWaitIdle(this->deviceModule->device);
+
     this->ResourcesReady = false;
 
     if (_Mesh != nullptr)
     {
         this->_Mesh->QEDestroy();
         this->_Mesh = nullptr;
+    }
+
+    RemoveAtmosphereComputeNodes();
+    this->TLUT_ComputeNode = nullptr;
+    this->MSLUT_ComputeNode = nullptr;
+    this->SVLUT_ComputeNode = nullptr;
+
+    if (!this->descriptorSets.empty())
+    {
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+        {
+            if (this->descriptorSets[i] != VK_NULL_HANDLE)
+            {
+                this->descriptorSets[i] = VK_NULL_HANDLE;
+            }
+        }
+        this->descriptorSets.clear();
+    }
+
+    if (this->descriptorPool != VK_NULL_HANDLE)
+    {
+        vkDestroyDescriptorPool(deviceModule->device, this->descriptorPool, nullptr);
+        this->descriptorPool = VK_NULL_HANDLE;
     }
 
     if (this->resolutionUBO != nullptr)
@@ -601,58 +702,19 @@ void AtmosphereSystem::Cleanup()
         this->atmosphereUBO = nullptr;
     }
 
-    if (!this->descriptorSets.empty())
-    {
-        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-        {
-            if (this->descriptorSets[i] != VK_NULL_HANDLE)
-            {
-                this->descriptorSets[i] = VK_NULL_HANDLE;
-            }
-        }
-        this->descriptorSets.clear();
-    }
-
-    if (this->descriptorPool != VK_NULL_HANDLE)
-    {
-        vkDestroyDescriptorPool(deviceModule->device, this->descriptorPool, nullptr);
-        this->descriptorPool = VK_NULL_HANDLE;
-    }
-
     if (this->environmentTexture != nullptr)
     {
         this->environmentTexture->cleanup();
         this->environmentTexture = nullptr;
     }
 
-    if (this->TLUT_ComputeNode != nullptr)
-    {
-        this->TLUT_ComputeNode->cleanup();
-        this->TLUT_ComputeNode = nullptr;
-    }
-
-    if (this->MSLUT_ComputeNode != nullptr)
-    {
-        this->MSLUT_ComputeNode->cleanup();
-        this->MSLUT_ComputeNode = nullptr;
-    }
-
-    if (this->SVLUT_ComputeNode != nullptr)
-    {
-        this->SVLUT_ComputeNode->cleanup();
-        this->SVLUT_ComputeNode = nullptr;
-    }
+    CleanupEnvironmentShader();
 }
 
 void AtmosphereSystem::CleanLastResources()
 {
     this->sunLight.reset();
-
-    if (this->environment_shader != nullptr)
-    {
-        this->environment_shader.reset();
-        this->environment_shader = nullptr;
-    }
+    CleanupEnvironmentShader();
 
     this->TLUT_ComputeNode.reset();
     this->MSLUT_ComputeNode.reset();
@@ -766,8 +828,35 @@ AtmosphereDto AtmosphereSystem::GetEditableAtmosphereDto()
 
 void AtmosphereSystem::ApplyEditableAtmosphereDto(const AtmosphereDto& dto, bool rebuildLuts)
 {
+    const bool previousInitialized = this->IsInitialized;
+    const AtmosphereType previousAtmosphereType = this->atmosphereType;
+
+    this->pendingAtmosphereDto = dto;
+    this->hasPendingAtmosphereDto = true;
     this->IsInitialized = dto.hasAtmosphere;
     this->atmosphereType = static_cast<AtmosphereType>(dto.environmentType);
+
+    if (!this->IsInitialized)
+    {
+        Cleanup();
+        RemoveSunLightFromScene();
+        return;
+    }
+
+    SyncSunLightState();
+
+    ApplyDtoToAtmosphereData(dto);
+
+    const bool requiresResourceRebuild =
+        !previousInitialized ||
+        !this->ResourcesReady ||
+        previousAtmosphereType != this->atmosphereType;
+
+    if (requiresResourceRebuild)
+    {
+        InitializeAtmosphereResources();
+        return;
+    }
 
     if (this->sunLight)
     {
@@ -776,8 +865,8 @@ void AtmosphereSystem::ApplyEditableAtmosphereDto(const AtmosphereDto& dto, bool
         this->sunLight->UpdateSun();
     }
 
-    ApplyDtoToAtmosphereData(dto);
     UpdateAtmosphereUBO();
+    this->hasPendingAtmosphereDto = false;
 
     if (rebuildLuts)
     {
@@ -791,13 +880,6 @@ void AtmosphereSystem::ApplyEditableAtmosphereDto(const AtmosphereDto& dto, bool
 
 void AtmosphereSystem::ResetSceneState()
 {
-    if (this->computeNodeManager)
-    {
-        this->computeNodeManager->EraseComputeNodesByPrefix(TLUT_NODE_NAME);
-        this->computeNodeManager->EraseComputeNodesByPrefix(MSLUT_NODE_NAME);
-        this->computeNodeManager->EraseComputeNodesByPrefix(SVLUT_NODE_NAME);
-    }
-
     Cleanup();
     this->sunLight.reset();
     this->IsInitialized = false;

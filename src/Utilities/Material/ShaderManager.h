@@ -24,6 +24,8 @@ public:
     std::shared_ptr<ShaderModule> GetShader(std::string nameMaterial);
     void AddShader(std::shared_ptr<ShaderModule> shader_ptr);
     void AddShader(ShaderModule shader);
+    void UpsertShader(std::shared_ptr<ShaderModule> shader_ptr);
+    void RemoveShader(const std::string& shaderName);
     bool Exists(std::string shaderName);
     void Clean();
     void CleanDescriptorSetLayouts();

@@ -227,5 +227,10 @@ void QEDirectionalLight::EnsureRuntimeState()
 
 void QEDirectionalLight::CleanShadowMapResources()
 {
+    if (!this->shadowMappingResourcesPtr)
+        return;
+
     this->shadowMappingResourcesPtr->Cleanup();
+    this->shadowMappingResourcesPtr.reset();
+    this->shadowMappingResourcesPtr = nullptr;
 }

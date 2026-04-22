@@ -182,6 +182,23 @@ void LightManager::DeleteLight(std::shared_ptr<QELight> light_ptr, std::string& 
     case LightType::DIRECTIONAL_LIGHT:
     case LightType::SUN_LIGHT:
     {
+        if (light_ptr->lightType == LightType::SUN_LIGHT)
+        {
+            auto sunLight = std::dynamic_pointer_cast<QESunLight>(light_ptr);
+            if (sunLight)
+            {
+                sunLight->CleanupSunResources();
+            }
+        }
+        else
+        {
+            auto directionalLight = std::dynamic_pointer_cast<QEDirectionalLight>(light_ptr);
+            if (directionalLight)
+            {
+                directionalLight->CleanShadowMapResources();
+            }
+        }
+
         auto it = std::find_if(DirLights.begin(), DirLights.end(),
             [light_ptr](const auto& light) { return light && light->id == light_ptr->id; });
 

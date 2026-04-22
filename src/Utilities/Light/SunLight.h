@@ -20,6 +20,7 @@ public:
 public:
     QESunLight();
     void UpdateSun();
+    void CleanupSunResources();
     void SetSunEulerDegrees(const glm::vec3& eulerDeg);
     glm::vec3 GetSunEulerDegrees() { return this->SunEulerDegrees; }
 };

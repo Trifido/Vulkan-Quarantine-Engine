@@ -451,7 +451,6 @@ void ComputeDescriptorBuffer::Cleanup()
     {
         for (int i = 0; i < this->inputTextures.size(); i++)
         {
-            this->inputTextures[i]->cleanup();
             this->inputTextures[i].reset();
             this->inputTextures[i] = nullptr;
         }

@@ -106,6 +106,9 @@ void ComputeNode::InitializeComputeBuffer(uint32_t idBuffer, uint32_t bufferSize
 
 void ComputeNode::DispatchCommandBuffer(VkCommandBuffer commandBuffer, uint32_t currentFrame)
 {
+    if (!this->computeDescriptor || !this->computeShader || !this->computeShader->ComputePipelineModule)
+        return;
+
     if (this->OnDemandCompute && !this->Compute)
     {
         this->UpdateOutputTextureState(commandBuffer);
@@ -203,6 +206,9 @@ void ComputeNode::TransitionInputTexturesToReadable(VkCommandBuffer commandBuffe
 
 void ComputeNode::UpdateOutputTextureState(VkCommandBuffer commandBuffer)
 {
+    if (!this->computeDescriptor)
+        return;
+
     auto outputTexture = this->computeDescriptor->outputTexture;
 
     if (outputTexture == nullptr)
