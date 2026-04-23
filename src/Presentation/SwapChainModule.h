@@ -32,6 +32,7 @@ private:
     VkSwapchainKHR swapChain;
     uint32_t numSwapChainImages;
     ScreenDataUniform screenDataValues{};
+    std::vector<bool> screenDataDirty;
     float currentTileSize;
     bool enabledVSync = true;
 
@@ -44,6 +45,8 @@ public:
     void InitializeScreenDataResources();
     void CleanScreenDataResources();
     void UpdateTileSize(float newTileSize);
+    void UpdateScreenData(const VkExtent2D& extent);
+    void UpdateScreenData(const VkExtent2D& extent, uint32_t frameIndex);
 private:
     VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
     VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);

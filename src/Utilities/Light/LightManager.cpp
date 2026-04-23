@@ -695,8 +695,15 @@ void LightManager::ComputeLightTiles()
     if (!activeCamera)
         return;
 
-    uint32_t tileXCount = (swapChainModule->swapChainExtent.width + swapChainModule->TILE_SIZE - 1) / swapChainModule->TILE_SIZE;
-    uint32_t tileYCount = (swapChainModule->swapChainExtent.height + swapChainModule->TILE_SIZE - 1) / swapChainModule->TILE_SIZE;
+    VkExtent2D renderExtent = swapChainModule->swapChainExtent;
+    auto sessionManager = QESessionManager::getInstance();
+    if (sessionManager && sessionManager->ExtraRenderTarget && sessionManager->ExtraRenderTarget->Valid())
+    {
+        renderExtent = sessionManager->ExtraRenderTarget->Extent;
+    }
+
+    uint32_t tileXCount = (renderExtent.width + swapChainModule->TILE_SIZE - 1) / swapChainModule->TILE_SIZE;
+    uint32_t tileYCount = (renderExtent.height + swapChainModule->TILE_SIZE - 1) / swapChainModule->TILE_SIZE;
 
     // Calculamos el n�mero total de entradas de tiles
     uint32_t tilesEntryCount = tileXCount * tileYCount * NUM_WORDS;
@@ -709,14 +716,16 @@ void LightManager::ComputeLightTiles()
         newTileSize += 1;
 
         // Recalculamos el n�mero de tiles con el nuevo tama�o de tile
-        tileXCount = (swapChainModule->swapChainExtent.width + newTileSize - 1) / newTileSize;
-        tileYCount = (swapChainModule->swapChainExtent.height + newTileSize - 1) / newTileSize;
+        tileXCount = (renderExtent.width + newTileSize - 1) / newTileSize;
+        tileYCount = (renderExtent.height + newTileSize - 1) / newTileSize;
 
         // Recalculamos el n�mero total de entradas de tiles
         tilesEntryCount = tileXCount * tileYCount * NUM_WORDS;
     }
 
+    const uint32_t currentFrame = static_cast<uint32_t>(SynchronizationModule::GetCurrentFrame());
     this->swapChainModule->UpdateTileSize((float)newTileSize);
+    this->swapChainModule->UpdateScreenData(renderExtent, currentFrame);
 
     const uint32_t tile_x_count = tileXCount;
     const uint32_t tile_y_count = tileYCount;
@@ -817,10 +826,10 @@ void LightManager::ComputeLightTiles()
         aabb.w = -1 * aabb_min.y;
         aabb.y = -1 * aabb_max.y;
 
-        glm::vec4 aabb_screen{ (aabb.x * 0.5f + 0.5f) * (swapChainModule->swapChainExtent.width - 1),
-                           (aabb.y * 0.5f + 0.5f) * (swapChainModule->swapChainExtent.height - 1),
-                           (aabb.z * 0.5f + 0.5f) * (swapChainModule->swapChainExtent.width - 1),
-                           (aabb.w * 0.5f + 0.5f) * (swapChainModule->swapChainExtent.height - 1) };
+        glm::vec4 aabb_screen{ (aabb.x * 0.5f + 0.5f) * (renderExtent.width - 1),
+                           (aabb.y * 0.5f + 0.5f) * (renderExtent.height - 1),
+                           (aabb.z * 0.5f + 0.5f) * (renderExtent.width - 1),
+                           (aabb.w * 0.5f + 0.5f) * (renderExtent.height - 1) };
 
         float width = aabb_screen.z - aabb_screen.x;
         float height = aabb_screen.w - aabb_screen.y;
@@ -835,7 +844,7 @@ void LightManager::ComputeLightTiles()
         float max_x = min_x + width;
         float max_y = min_y + height;
 
-        if (min_x > swapChainModule->swapChainExtent.width || min_y > swapChainModule->swapChainExtent.height) {
+        if (min_x > renderExtent.width || min_y > renderExtent.height) {
             continue;
         }
 
@@ -846,8 +855,8 @@ void LightManager::ComputeLightTiles()
         min_x = glm::max(min_x, 0.0f);
         min_y = glm::max(min_y, 0.0f);
 
-        max_x = glm::min(max_x, (float)swapChainModule->swapChainExtent.width);
-        max_y = glm::min(max_y, (float)swapChainModule->swapChainExtent.height);
+        max_x = glm::min(max_x, (float)renderExtent.width);
+        max_y = glm::min(max_y, (float)renderExtent.height);
 
         uint32_t first_tile_x = (uint32_t)(min_x * tile_size_inv);
         uint32_t last_tile_x = glm::min(tile_x_count - 1, (uint32_t)(max_x * tile_size_inv));

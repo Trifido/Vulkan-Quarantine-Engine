@@ -11,6 +11,7 @@ SwapChainModule::SwapChainModule()
 {
     deviceModule = DeviceModule::getInstance();
     this->currentTileSize = (float)this->TILE_SIZE;
+    this->screenDataDirty.assign(MAX_FRAMES_IN_FLIGHT, true);
 }
 
 void SwapChainModule::createSwapChain(VkSurfaceKHR& surface, GLFWwindow* window)
@@ -134,20 +135,82 @@ VkExtent2D SwapChainModule::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& cap
 
 void SwapChainModule::UpdateScreenData()
 {
-    const uint32_t tileSize = std::max(1u, static_cast<uint32_t>(this->currentTileSize));
-    const uint32_t tileCountX = std::max(1u, (this->swapChainExtent.width + tileSize - 1u) / tileSize);
-    const uint32_t tileCountY = std::max(1u, (this->swapChainExtent.height + tileSize - 1u) / tileSize);
+    UpdateScreenData(this->swapChainExtent);
+}
 
-    this->screenDataValues.tilePixelSize = glm::uvec2(tileSize, tileSize);
-    this->screenDataValues.tileCount = glm::uvec2(tileCountX, tileCountY);
+void SwapChainModule::UpdateScreenData(const VkExtent2D& extent)
+{
+    if (!this->screenData)
+    {
+        return;
+    }
+
+    const uint32_t tileSize = std::max(1u, static_cast<uint32_t>(this->currentTileSize));
+    const uint32_t safeWidth = std::max(1u, extent.width);
+    const uint32_t safeHeight = std::max(1u, extent.height);
+    const uint32_t tileCountX = std::max(1u, (safeWidth + tileSize - 1u) / tileSize);
+    const uint32_t tileCountY = std::max(1u, (safeHeight + tileSize - 1u) / tileSize);
+
+    ScreenDataUniform newValues{};
+    newValues.tilePixelSize = glm::uvec2(tileSize, tileSize);
+    newValues.tileCount = glm::uvec2(tileCountX, tileCountY);
+
+    if (this->screenDataValues.tilePixelSize != newValues.tilePixelSize ||
+        this->screenDataValues.tileCount != newValues.tileCount)
+    {
+        this->screenDataValues = newValues;
+        std::fill(this->screenDataDirty.begin(), this->screenDataDirty.end(), true);
+    }
 
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {
+        if (!this->screenDataDirty[currentFrame])
+        {
+            continue;
+        }
+
         void* data;
         vkMapMemory(deviceModule->device, this->screenData->uniformBuffersMemory[currentFrame], 0, sizeof(ScreenDataUniform), 0, &data);
         memcpy(data, &this->screenDataValues, sizeof(ScreenDataUniform));
         vkUnmapMemory(deviceModule->device, this->screenData->uniformBuffersMemory[currentFrame]);
+        this->screenDataDirty[currentFrame] = false;
     }
+}
+
+void SwapChainModule::UpdateScreenData(const VkExtent2D& extent, uint32_t frameIndex)
+{
+    if (!this->screenData || frameIndex >= MAX_FRAMES_IN_FLIGHT)
+    {
+        return;
+    }
+
+    const uint32_t tileSize = std::max(1u, static_cast<uint32_t>(this->currentTileSize));
+    const uint32_t safeWidth = std::max(1u, extent.width);
+    const uint32_t safeHeight = std::max(1u, extent.height);
+    const uint32_t tileCountX = std::max(1u, (safeWidth + tileSize - 1u) / tileSize);
+    const uint32_t tileCountY = std::max(1u, (safeHeight + tileSize - 1u) / tileSize);
+
+    ScreenDataUniform newValues{};
+    newValues.tilePixelSize = glm::uvec2(tileSize, tileSize);
+    newValues.tileCount = glm::uvec2(tileCountX, tileCountY);
+
+    if (this->screenDataValues.tilePixelSize != newValues.tilePixelSize ||
+        this->screenDataValues.tileCount != newValues.tileCount)
+    {
+        this->screenDataValues = newValues;
+        std::fill(this->screenDataDirty.begin(), this->screenDataDirty.end(), true);
+    }
+
+    if (!this->screenDataDirty[frameIndex])
+    {
+        return;
+    }
+
+    void* data = nullptr;
+    vkMapMemory(deviceModule->device, this->screenData->uniformBuffersMemory[frameIndex], 0, sizeof(ScreenDataUniform), 0, &data);
+    memcpy(data, &this->screenDataValues, sizeof(ScreenDataUniform));
+    vkUnmapMemory(deviceModule->device, this->screenData->uniformBuffersMemory[frameIndex]);
+    this->screenDataDirty[frameIndex] = false;
 }
 
 void SwapChainModule::InitializeScreenDataResources()
@@ -170,5 +233,11 @@ void SwapChainModule::CleanScreenDataResources()
 
 void SwapChainModule::UpdateTileSize(float newTileSize)
 {
+    if (this->currentTileSize == newTileSize)
+    {
+        return;
+    }
+
     this->currentTileSize = newTileSize;
+    std::fill(this->screenDataDirty.begin(), this->screenDataDirty.end(), true);
 }
