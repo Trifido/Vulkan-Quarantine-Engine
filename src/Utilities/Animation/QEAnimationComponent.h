@@ -18,6 +18,10 @@ private:
     REFLECT_PROPERTY(std::vector<AnimationState>, States)
     std::unordered_map<std::string, AnimationState> _states;
     REFLECT_PROPERTY(std::vector<QETransition>, Transitions)
+    REFLECT_PROPERTY(std::vector<std::string>, BoolParameters)
+    REFLECT_PROPERTY(std::vector<std::string>, IntParameters)
+    REFLECT_PROPERTY(std::vector<std::string>, FloatParameters)
+    REFLECT_PROPERTY(std::vector<std::string>, TriggerParameters)
     std::unordered_map<std::string, std::vector<QETransition>> _transitionsFrom;
 
     std::unordered_map<std::string, std::shared_ptr<Animation>> _animations;
@@ -28,6 +32,7 @@ private:
 
 private:
     QEParam& ensureParam_(const std::string& name, QEParamType desired);
+    void RebuildStateMachineCaches();
     void ClearAllTriggers();
     void ChangeState(const std::string& toId);
     void ChangeState(const std::string& toId, const QETransition& tr);
@@ -42,9 +47,25 @@ public:
     void AddAnimation(std::shared_ptr<Animation> animation_ptr);
     void AddAnimation(Animation animation);
     std::shared_ptr<Animation> GetAnimation(std::string name);
+    std::vector<std::string> GetAnimationClipNames() const;
 
     void AddAnimationState(AnimationState state, bool isEntryState = false);
     void AddTransition(const QETransition& t);
+    const std::vector<AnimationState>& GetAnimationStates() const;
+    const std::vector<QETransition>& GetAnimationTransitions() const;
+    const std::vector<std::string>& GetBoolParameterNames() const;
+    const std::vector<std::string>& GetIntParameterNames() const;
+    const std::vector<std::string>& GetFloatParameterNames() const;
+    const std::vector<std::string>& GetTriggerParameterNames() const;
+    bool TryGetDeclaredParameterType(const std::string& name, QEParamType& outType) const;
+    void SetStateMachineData(
+        const std::vector<AnimationState>& states,
+        const std::vector<QETransition>& transitions,
+        const std::string& entryStateId);
+    void SetBoolParameterNames(const std::vector<std::string>& boolNames);
+    void SetIntParameterNames(const std::vector<std::string>& intNames);
+    void SetFloatParameterNames(const std::vector<std::string>& floatNames);
+    void SetTriggerParameterNames(const std::vector<std::string>& triggerNames);
     void SetBool(const std::string& name, bool v);
     void SetInt(const std::string& name, int v);
     void SetFloat(const std::string& name, float v);

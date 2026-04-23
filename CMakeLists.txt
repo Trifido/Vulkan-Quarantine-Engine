@@ -154,6 +154,7 @@ set(IMGUIZMO_DIR ${CMAKE_SOURCE_DIR}/extern/ImGuizmo)
 
 add_library(imguizmo STATIC
   ${IMGUIZMO_DIR}/ImGuizmo.cpp
+  ${IMGUIZMO_DIR}/GraphEditor.cpp
 )
 
 target_include_directories(imguizmo PUBLIC

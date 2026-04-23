@@ -11,6 +11,7 @@ struct EditorContext
     bool ShowInspector = true;
     bool ShowMaterialInspector = true;
     bool ShowMaterialEditor = false;
+    bool ShowAnimationGraph = true;
     bool ShowViewport = true;
     bool ShowConsole = true;
     bool ShowContentBrowser = true;

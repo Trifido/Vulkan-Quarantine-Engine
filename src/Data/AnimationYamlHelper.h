@@ -54,7 +54,7 @@ namespace YAML
             Node childrenNode;
             for (const auto& c : an.children)
             {
-                childrenNode.push_back(c); // recursivo: convert<AnimationNode> ser· usado
+                childrenNode.push_back(c); // recursivo: convert<AnimationNode> ser√° usado
             }
             node["children"] = childrenNode;
             return node;
@@ -73,7 +73,7 @@ namespace YAML
             {
                 for (const auto& cnode : node["children"])
                 {
-                    AnimationNode child = cnode.as<AnimationNode>(); // recursiÛn
+                    AnimationNode child = cnode.as<AnimationNode>(); // recursi√≥n
                     an.children.push_back(std::move(child));
                 }
             }
@@ -187,7 +187,7 @@ namespace YAML
             for (const auto& ks : b.m_Scales) scales.push_back(ks);
             n["scales"] = scales;
 
-            // Los contadores son derivados; si quieres, puedes guardarlos tambiÈn:
+            // Los contadores son derivados; si quieres, puedes guardarlos tambi√©n:
             n["numPositions"] = static_cast<int>(b.m_Positions.size());
             n["numRotations"] = static_cast<int>(b.m_Rotations.size());
             n["numScalings"] = static_cast<int>(b.m_Scales.size());
@@ -223,7 +223,7 @@ namespace YAML
                 }
             }
 
-            // Recalcular contadores (m·s robusto que confiar en YAML):
+            // Recalcular contadores (m√°s robusto que confiar en YAML):
             b.m_NumPositions = static_cast<int>(b.m_Positions.size());
             b.m_NumRotations = static_cast<int>(b.m_Rotations.size());
             b.m_NumScalings = static_cast<int>(b.m_Scales.size());
@@ -293,6 +293,7 @@ namespace YAML
             node["priority"] = rhs.priority;
             node["hasExitTime"] = rhs.hasExitTime;
             node["exitTimeNormalized"] = rhs.exitTimeNormalized;
+            node["blendDuration"] = rhs.blendDuration;
 
             // conditions: seq
             Node conds(NodeType::Sequence);
@@ -312,6 +313,7 @@ namespace YAML
             rhs.priority = node["priority"] ? node["priority"].as<int>() : 0;
             rhs.hasExitTime = node["hasExitTime"] ? node["hasExitTime"].as<bool>() : false;
             rhs.exitTimeNormalized = node["exitTimeNormalized"] ? node["exitTimeNormalized"].as<float>() : 1.0f;
+            rhs.blendDuration = node["blendDuration"] ? node["blendDuration"].as<float>() : 0.2f;
 
             rhs.conditions.clear();
             if (auto conds = node["conditions"]; conds && conds.IsSequence())

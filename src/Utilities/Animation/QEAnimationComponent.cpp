@@ -1,4 +1,5 @@
-#include "QEAnimationComponent.h"
+ï»¿#include "QEAnimationComponent.h"
+
 #include <QEGameObject.h>
 #include <Timer.h>
 #include <Logging/QELogMacros.h>
@@ -6,6 +7,26 @@
 QEAnimationComponent::QEAnimationComponent()
 {
     this->animator = std::make_shared<Animator>();
+}
+
+void QEAnimationComponent::RebuildStateMachineCaches()
+{
+    _states.clear();
+    for (const auto& state : States)
+    {
+        _states[state.Id] = state;
+    }
+
+    _transitionsFrom.clear();
+    for (const auto& transition : Transitions)
+    {
+        _transitionsFrom[transition.fromState].push_back(transition);
+    }
+
+    for (auto& [_, transitions] : _transitionsFrom)
+    {
+        std::sort(transitions.begin(), transitions.end(), [](const auto& a, const auto& b) { return a.priority > b.priority; });
+    }
 }
 
 void QEAnimationComponent::AddAnimation(std::shared_ptr<Animation> animation_ptr)
@@ -46,6 +67,20 @@ std::shared_ptr<Animation> QEAnimationComponent::GetAnimation(std::string name)
     return nullptr;
 }
 
+std::vector<std::string> QEAnimationComponent::GetAnimationClipNames() const
+{
+    std::vector<std::string> names;
+    names.reserve(_animations.size());
+
+    for (const auto& [name, _] : _animations)
+    {
+        names.push_back(name);
+    }
+
+    std::sort(names.begin(), names.end());
+    return names;
+}
+
 void QEAnimationComponent::AddAnimationState(AnimationState state, bool isEntryState)
 {
     if (this->_states.find(state.Id) == this->_states.end())
@@ -68,6 +103,145 @@ void QEAnimationComponent::AddTransition(const QETransition& t)
     Transitions.push_back(t);
 }
 
+const std::vector<AnimationState>& QEAnimationComponent::GetAnimationStates() const
+{
+    return States;
+}
+
+const std::vector<QETransition>& QEAnimationComponent::GetAnimationTransitions() const
+{
+    return Transitions;
+}
+
+const std::vector<std::string>& QEAnimationComponent::GetBoolParameterNames() const
+{
+    return BoolParameters;
+}
+
+const std::vector<std::string>& QEAnimationComponent::GetIntParameterNames() const
+{
+    return IntParameters;
+}
+
+const std::vector<std::string>& QEAnimationComponent::GetFloatParameterNames() const
+{
+    return FloatParameters;
+}
+
+const std::vector<std::string>& QEAnimationComponent::GetTriggerParameterNames() const
+{
+    return TriggerParameters;
+}
+
+bool QEAnimationComponent::TryGetDeclaredParameterType(const std::string& name, QEParamType& outType) const
+{
+    if (std::find(BoolParameters.begin(), BoolParameters.end(), name) != BoolParameters.end())
+    {
+        outType = QEParamType::Bool;
+        return true;
+    }
+
+    if (std::find(IntParameters.begin(), IntParameters.end(), name) != IntParameters.end())
+    {
+        outType = QEParamType::Int;
+        return true;
+    }
+
+    if (std::find(FloatParameters.begin(), FloatParameters.end(), name) != FloatParameters.end())
+    {
+        outType = QEParamType::Float;
+        return true;
+    }
+
+    if (std::find(TriggerParameters.begin(), TriggerParameters.end(), name) != TriggerParameters.end())
+    {
+        outType = QEParamType::Trigger;
+        return true;
+    }
+
+    return false;
+}
+
+void QEAnimationComponent::SetStateMachineData(
+    const std::vector<AnimationState>& states,
+    const std::vector<QETransition>& transitions,
+    const std::string& entryStateId)
+{
+    States = states;
+    Transitions = transitions;
+
+    RebuildStateMachineCaches();
+
+    currentState = AnimationState{};
+
+    if (!entryStateId.empty())
+    {
+        auto entryIt = _states.find(entryStateId);
+        if (entryIt != _states.end())
+        {
+            currentState = entryIt->second;
+            return;
+        }
+    }
+
+    if (!States.empty())
+    {
+        currentState = States.front();
+    }
+}
+
+void QEAnimationComponent::SetBoolParameterNames(const std::vector<std::string>& boolNames)
+{
+    BoolParameters = boolNames;
+
+    for (const auto& paramName : BoolParameters)
+    {
+        if (!paramName.empty())
+        {
+            ensureParam_(paramName, QEParamType::Bool);
+        }
+    }
+}
+
+void QEAnimationComponent::SetIntParameterNames(const std::vector<std::string>& intNames)
+{
+    IntParameters = intNames;
+
+    for (const auto& paramName : IntParameters)
+    {
+        if (!paramName.empty())
+        {
+            ensureParam_(paramName, QEParamType::Int);
+        }
+    }
+}
+
+void QEAnimationComponent::SetFloatParameterNames(const std::vector<std::string>& floatNames)
+{
+    FloatParameters = floatNames;
+
+    for (const auto& paramName : FloatParameters)
+    {
+        if (!paramName.empty())
+        {
+            ensureParam_(paramName, QEParamType::Float);
+        }
+    }
+}
+
+void QEAnimationComponent::SetTriggerParameterNames(const std::vector<std::string>& triggerNames)
+{
+    TriggerParameters = triggerNames;
+
+    for (const auto& triggerName : TriggerParameters)
+    {
+        if (!triggerName.empty())
+        {
+            ensureParam_(triggerName, QEParamType::Trigger);
+        }
+    }
+}
+
 QEParam& QEAnimationComponent::ensureParam_(const std::string& name, QEParamType desired)
 {
     auto it = _params.find(name);
@@ -88,7 +262,7 @@ QEParam& QEAnimationComponent::ensureParam_(const std::string& name, QEParamType
             p.type == QEParamType::Bool ? "Bool" :
             p.type == QEParamType::Int ? "Int" :
             p.type == QEParamType::Float ? "Float" :
-            /*Trigger*/                      "Trigger";
+            "Trigger";
         const char* toT =
             desired == QEParamType::Bool ? "Bool" :
             desired == QEParamType::Int ? "Int" :
@@ -167,29 +341,30 @@ bool QEAnimationComponent::CheckCondition(const QECondition& c)
     const QEParam& p = it->second;
     auto cmp = [&](float a, float b)
         {
-        switch (c.op) {
-        case QEOp::Equal:         return a == b;
-        case QEOp::NotEqual:      return a != b;
-        case QEOp::Greater:       return a > b;
-        case QEOp::Less:          return a < b;
-        case QEOp::GreaterEqual:  return a >= b;
-        case QEOp::LessEqual:     return a <= b;
-        }
-        return false;
+            switch (c.op)
+            {
+            case QEOp::Equal:         return a == b;
+            case QEOp::NotEqual:      return a != b;
+            case QEOp::Greater:       return a > b;
+            case QEOp::Less:          return a < b;
+            case QEOp::GreaterEqual:  return a >= b;
+            case QEOp::LessEqual:     return a <= b;
+            }
+            return false;
         };
 
     switch (p.type)
     {
-        case QEParamType::Bool:    return cmp(p.value.b ? 1.f : 0.f, c.value);
-        case QEParamType::Int:     return cmp((float)p.value.i, c.value);
-        case QEParamType::Float:   return cmp(p.value.f, c.value);
-        case QEParamType::Trigger:
-        {
-            if (p.trigger)
-                _triggersUsedThisFrame.insert(c.param);
+    case QEParamType::Bool:    return cmp(p.value.b ? 1.f : 0.f, c.value);
+    case QEParamType::Int:     return cmp((float)p.value.i, c.value);
+    case QEParamType::Float:   return cmp(p.value.f, c.value);
+    case QEParamType::Trigger:
+    {
+        if (p.trigger)
+            _triggersUsedThisFrame.insert(c.param);
 
-            return p.trigger;
-        }
+        return p.trigger;
+    }
     }
 
     return false;
@@ -197,7 +372,11 @@ bool QEAnimationComponent::CheckCondition(const QECondition& c)
 
 bool QEAnimationComponent::AreAllConditionsTrue(const QETransition& t)
 {
-    for (auto& c : t.conditions) if (!CheckCondition(c)) return false;
+    for (auto& c : t.conditions)
+    {
+        if (!CheckCondition(c))
+            return false;
+    }
     return true;
 }
 
@@ -237,7 +416,7 @@ const QETransition* QEAnimationComponent::FindValidTransition()
 
 void QEAnimationComponent::ConsumeTriggersUsed(const QETransition& t)
 {
-    for(const auto& c : t.conditions)
+    for (const auto& c : t.conditions)
     {
         auto it = _params.find(c.param);
         if (it != _params.end() && it->second.type == QEParamType::Trigger)
@@ -284,7 +463,7 @@ bool QEAnimationComponent::GetBool(const std::string& name) const
     const QEParam& p = it->second;
     if (p.type != QEParamType::Bool)
     {
-        QE_LOG_WARN_CAT_F("QEAnimationComponent", "GetBool({}) llamado sobre parámetro no-bool.", name);
+        QE_LOG_WARN_CAT_F("QEAnimationComponent", "GetBool({}) called on a non-bool parameter.", name);
         return false;
     }
     return p.value.b;
@@ -298,7 +477,7 @@ int QEAnimationComponent::GetInt(const std::string& name) const
     const QEParam& p = it->second;
     if (p.type != QEParamType::Int)
     {
-        QE_LOG_INFO_CAT_F("QEAnimationComponent", "GetInt({}) llamado sobre parámetro no-int.", name);
+        QE_LOG_INFO_CAT_F("QEAnimationComponent", "GetInt({}) called on a non-int parameter.", name);
         return 0;
     }
     return p.value.i;
@@ -312,7 +491,7 @@ float QEAnimationComponent::GetFloat(const std::string& name) const
     const QEParam& p = it->second;
     if (p.type != QEParamType::Float)
     {
-        QE_LOG_WARN_CAT_F("QEAnimationComponent", "GetFloat({}) llamado sobre parámetro no-float.", name);
+        QE_LOG_WARN_CAT_F("QEAnimationComponent", "GetFloat({}) called on a non-float parameter.", name);
         return 0.0f;
     }
     return p.value.f;
@@ -326,10 +505,10 @@ bool QEAnimationComponent::IsTriggerSet(const std::string& name) const
     const QEParam& p = it->second;
     if (p.type != QEParamType::Trigger)
     {
-        QE_LOG_WARN_CAT_F("QEAnimationComponent", "IsTriggerSet({}) llamado sobre parámetro no-trigger.", name);
+        QE_LOG_WARN_CAT_F("QEAnimationComponent", "IsTriggerSet({}) called on a non-trigger parameter.", name);
         return false;
     }
-    return p.trigger; // true si el trigger está activo
+    return p.trigger;
 }
 
 void QEAnimationComponent::CleanLastResources()
@@ -407,23 +586,40 @@ void QEAnimationComponent::QEDestroy()
 
 void QEAnimationComponent::QEInit()
 {
-    if (_states.empty())
+    if (_states.empty() || _transitionsFrom.empty())
     {
-        for (const auto& s : States) {
-            _states[s.Id] = s;
+        RebuildStateMachineCaches();
+    }
+
+    for (const auto& paramName : BoolParameters)
+    {
+        if (!paramName.empty())
+        {
+            ensureParam_(paramName, QEParamType::Bool);
         }
     }
 
-    if (_transitionsFrom.empty())
+    for (const auto& paramName : IntParameters)
     {
-        for (const auto& t : Transitions)
+        if (!paramName.empty())
         {
-            _transitionsFrom[t.fromState].push_back(t);
+            ensureParam_(paramName, QEParamType::Int);
         }
-        for (auto& kv : _transitionsFrom)
+    }
+
+    for (const auto& paramName : FloatParameters)
+    {
+        if (!paramName.empty())
         {
-            auto& v = kv.second;
-            std::sort(v.begin(), v.end(), [](const auto& a, const auto& b) { return a.priority > b.priority; });
+            ensureParam_(paramName, QEParamType::Float);
+        }
+    }
+
+    for (const auto& triggerName : TriggerParameters)
+    {
+        if (!triggerName.empty())
+        {
+            ensureParam_(triggerName, QEParamType::Trigger);
         }
     }
 
@@ -431,7 +627,7 @@ void QEAnimationComponent::QEInit()
     if (entryState != this->_states.end())
     {
         std::string animationClip = entryState->second.AnimationClip;
-        auto entryAnimation  = this->_animations.find(animationClip);
+        auto entryAnimation = this->_animations.find(animationClip);
 
         if (entryAnimation != this->_animations.end())
         {

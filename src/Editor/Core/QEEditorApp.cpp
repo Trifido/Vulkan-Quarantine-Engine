@@ -18,6 +18,7 @@
 #include "Panels/IEditorPanel.h"
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/InspectorPanel.h"
+#include "Panels/AnimationGraphPanel.h"
 #include "Panels/ViewportPanel.h"
 #include "Panels/EditorHeaderBar.h"
 #include "Panels/QEProjectBrowserPanel.h"
@@ -343,6 +344,10 @@ void QEEditorApp::CreatePanels()
         editorContext.get(),
         selectionManager.get(),
         commandManager.get()));
+
+    panels.emplace_back(std::make_unique<AnimationGraphPanel>(
+        editorContext.get(),
+        selectionManager.get()));
 
     panels.emplace_back(std::make_unique<MaterialInspectorPanel>(
         gameObjectManager,
