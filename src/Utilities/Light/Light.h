@@ -48,6 +48,7 @@ public:
     void SetDistanceEffect(float radiusEffect);
     float GetDistanceEffect() { return this->radius; }
     bool ResolveTransformFromOwner();
+    void SanitizeParameters();
 
     void QEStart() override;
 protected:

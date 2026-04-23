@@ -20,6 +20,8 @@
 #include <AtmosphereSystem.h>
 #include <PhysicsTypes.h>
 #include <Reflectable.h>
+#include <Light.h>
+#include <LightType.h>
 
 #include <Editor/Core/EditorContext.h>
 #include <Editor/Core/EditorSelectionManager.h>
@@ -39,6 +41,37 @@ namespace
             return true;
 
         return false;
+    }
+
+    bool ShouldSkipLightField(QELight* light, const QEMetaField& field)
+    {
+        if (!light)
+            return false;
+
+        if (field.name == "lightType" || field.name == "idxShadowMap")
+            return true;
+
+        switch (light->lightType)
+        {
+        case LightType::POINT_LIGHT:
+            return field.name == "cutOff" ||
+                field.name == "outerCutoff";
+
+        case LightType::SPOT_LIGHT:
+            return false;
+
+        case LightType::DIRECTIONAL_LIGHT:
+        case LightType::SUN_LIGHT:
+            return field.name == "constant" ||
+                field.name == "linear" ||
+                field.name == "quadratic" ||
+                field.name == "radius" ||
+                field.name == "cutOff" ||
+                field.name == "outerCutoff";
+
+        default:
+            return false;
+        }
     }
 
     bool IsSupportedFieldType(const std::type_index& type)
@@ -136,6 +169,48 @@ namespace
         return false;
     }
 
+    bool DrawLightSpecificField(QELight* light, const QEMetaField& field, const std::string& label, bool& handled)
+    {
+        handled = false;
+
+        if (!light)
+            return false;
+
+        if (field.name == "cutOff" && light->lightType == LightType::SPOT_LIGHT)
+        {
+            handled = true;
+            float innerAngle = glm::degrees(glm::acos(glm::clamp(light->cutOff, -1.0f, 1.0f)));
+            float outerAngle = glm::degrees(glm::acos(glm::clamp(light->outerCutoff, -1.0f, 1.0f)));
+            innerAngle = glm::clamp(innerAngle, 0.0f, outerAngle);
+
+            if (ImGui::DragFloat(label.c_str(), &innerAngle, 0.1f, 0.0f, 89.0f, "%.1f deg"))
+            {
+                innerAngle = glm::clamp(innerAngle, 0.0f, outerAngle);
+                light->cutOff = glm::cos(glm::radians(innerAngle));
+                return true;
+            }
+            return false;
+        }
+
+        if (field.name == "outerCutoff" && light->lightType == LightType::SPOT_LIGHT)
+        {
+            handled = true;
+            float innerAngle = glm::degrees(glm::acos(glm::clamp(light->cutOff, -1.0f, 1.0f)));
+            float outerAngle = glm::degrees(glm::acos(glm::clamp(light->outerCutoff, -1.0f, 1.0f)));
+            outerAngle = glm::clamp(outerAngle, innerAngle, 89.5f);
+
+            if (ImGui::DragFloat(label.c_str(), &outerAngle, 0.1f, 0.0f, 89.5f, "%.1f deg"))
+            {
+                outerAngle = glm::clamp(outerAngle, innerAngle, 89.5f);
+                light->outerCutoff = glm::cos(glm::radians(outerAngle));
+                return true;
+            }
+            return false;
+        }
+
+        return false;
+    }
+
     bool DrawReflectedField(
         SerializableComponent* object,
         const QEMetaField& field,
@@ -147,6 +222,12 @@ namespace
         if (ShouldSkipField(field))
             return false;
 
+        if (auto* light = dynamic_cast<QELight*>(object))
+        {
+            if (ShouldSkipLightField(light, field))
+                return false;
+        }
+
         if (!IsSupportedFieldType(field.type))
             return false;
 
@@ -155,6 +236,13 @@ namespace
             return false;
 
         const std::string label = BuildWidgetLabel(field.name, widgetId);
+        if (auto* light = dynamic_cast<QELight*>(object))
+        {
+            bool handled = false;
+            const bool changed = DrawLightSpecificField(light, field, label, handled);
+            if (handled)
+                return changed;
+        }
 
         if (field.type == typeid(bool))
         {
@@ -174,6 +262,10 @@ namespace
         }
         else if (field.type == typeid(float))
         {
+            if (field.name == "constant" || field.name == "linear" || field.name == "quadratic" || field.name == "radius")
+            {
+                return ImGui::DragFloat(label.c_str(), reinterpret_cast<float*>(fieldPtr), 0.1f, 0.0f, 100000.0f);
+            }
             return ImGui::DragFloat(label.c_str(), reinterpret_cast<float*>(fieldPtr), 0.1f);
         }
         else if (field.type == typeid(double))
@@ -366,6 +458,12 @@ namespace
 
                 if (ShouldSkipField(field))
                     continue;
+
+                if (auto* light = dynamic_cast<QELight*>(component))
+                {
+                    if (ShouldSkipLightField(light, field))
+                        continue;
+                }
 
                 if (!IsSupportedFieldType(field.type))
                     continue;

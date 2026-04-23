@@ -444,10 +444,24 @@ bool GameObjectManager::RenameGameObject(const std::shared_ptr<QEGameObject>& ob
     if (objectPtr->Name == newName)
         return false;
 
+    const std::string previousObjectName = objectPtr->Name;
+    auto light = objectPtr->GetComponent<QELight>();
+    const std::string previousLightName = light ? light->Name : std::string{};
+
     UnregisterSingle(objectPtr);
 
     const std::string uniqueName = CheckName(newName);
     objectPtr->Name = uniqueName;
+    if (light)
+    {
+        light->Name = uniqueName;
+
+        if (auto* lightManager = LightManager::getInstance())
+        {
+            const std::string oldRegisteredName = previousLightName.empty() ? previousObjectName : previousLightName;
+            lightManager->RenameLight(oldRegisteredName, uniqueName, light);
+        }
+    }
 
     RegisterSingle(objectPtr, objectPtr->Name);
     return true;

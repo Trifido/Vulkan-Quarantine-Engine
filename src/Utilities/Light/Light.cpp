@@ -1,5 +1,7 @@
 #include "Light.h"
 #include <QEGameObject.h>
+#include <algorithm>
+#include <glm/common.hpp>
 
 AttenuationData ATTENUATION_TAB[12] = {
         AttenuationData{
@@ -82,6 +84,7 @@ QELight::QELight()
 
 void QELight::UpdateUniform()
 {
+    SanitizeParameters();
     ResolveTransformFromOwner();
 
     this->uniform->lightType = this->lightType;
@@ -96,7 +99,8 @@ void QELight::UpdateUniform()
 
 void QELight::SetDistanceEffect(float radiusEffect)
 {
-    this->radius = radiusEffect;
+    this->radius = std::max(radiusEffect, 0.001f);
+    this->constant = 1.0f;
 
     for (int i = 0; i < NUM_ATTENUATIONS; i++)
     {
@@ -106,6 +110,49 @@ void QELight::SetDistanceEffect(float radiusEffect)
             this->quadratic = ATTENUATION_TAB[i].Quadratic;
             return;
         }
+    }
+
+    this->linear = ATTENUATION_TAB[NUM_ATTENUATIONS - 1].Linear;
+    this->quadratic = ATTENUATION_TAB[NUM_ATTENUATIONS - 1].Quadratic;
+}
+
+void QELight::SanitizeParameters()
+{
+    this->constant = std::max(this->constant, 0.0f);
+    this->linear = std::max(this->linear, 0.0f);
+    this->quadratic = std::max(this->quadratic, 0.0f);
+    this->radius = std::max(this->radius, 0.001f);
+    this->diffuse = glm::max(this->diffuse, glm::vec3(0.0f));
+    this->specular = glm::max(this->specular, glm::vec3(0.0f));
+
+    switch (this->lightType)
+    {
+    case LightType::POINT_LIGHT:
+        this->cutOff = 0.0f;
+        this->outerCutoff = 0.0f;
+        break;
+
+    case LightType::SPOT_LIGHT:
+    {
+        const float innerAngleDeg = glm::clamp(glm::degrees(glm::acos(glm::clamp(this->cutOff, -1.0f, 1.0f))), 0.0f, 89.0f);
+        const float outerAngleDeg = glm::clamp(glm::degrees(glm::acos(glm::clamp(this->outerCutoff, -1.0f, 1.0f))), innerAngleDeg, 89.5f);
+
+        this->cutOff = glm::cos(glm::radians(innerAngleDeg));
+        this->outerCutoff = glm::cos(glm::radians(outerAngleDeg));
+        break;
+    }
+
+    case LightType::DIRECTIONAL_LIGHT:
+    case LightType::SUN_LIGHT:
+        this->constant = 1.0f;
+        this->linear = 0.0f;
+        this->quadratic = 0.0f;
+        this->cutOff = 0.0f;
+        this->outerCutoff = 0.0f;
+        break;
+
+    default:
+        break;
     }
 }
 

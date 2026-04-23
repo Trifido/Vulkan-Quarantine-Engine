@@ -270,6 +270,53 @@ void LightManager::DeleteLightByName(const std::string& name)
     DeleteLight(it->second, mutableName);
 }
 
+bool LightManager::RenameLight(const std::string& oldName, const std::string& newName, const std::shared_ptr<QELight>& light_ptr)
+{
+    if (newName.empty())
+        return false;
+
+    std::shared_ptr<QELight> resolvedLight = light_ptr;
+    auto oldIt = _lights.end();
+
+    if (!oldName.empty())
+    {
+        oldIt = _lights.find(oldName);
+        if (oldIt != _lights.end())
+        {
+            resolvedLight = oldIt->second;
+        }
+    }
+
+    if (!resolvedLight)
+    {
+        for (auto it = _lights.begin(); it != _lights.end(); ++it)
+        {
+            if (it->second == light_ptr)
+            {
+                oldIt = it;
+                resolvedLight = it->second;
+                break;
+            }
+        }
+    }
+
+    if (!resolvedLight)
+        return false;
+
+    auto newIt = _lights.find(newName);
+    if (newIt != _lights.end() && newIt->second != resolvedLight)
+        return false;
+
+    if (oldIt != _lights.end() && oldIt->second == resolvedLight && oldIt->first != newName)
+    {
+        _lights.erase(oldIt);
+    }
+
+    _lights[newName] = resolvedLight;
+    resolvedLight->Name = newName;
+    return true;
+}
+
 std::vector<LightDto> LightManager::GetLightDtos(std::ifstream& file)
 {
     std::vector<LightDto> lightDtos;

@@ -109,6 +109,7 @@ public:
 
     void DeleteLight(std::shared_ptr<QELight> light_ptr, std::string& name);
     void DeleteLightByName(const std::string& name);
+    bool RenameLight(const std::string& oldName, const std::string& newName, const std::shared_ptr<QELight>& light_ptr = nullptr);
 
     void ResetSceneState();
     void ShutdownPersistentResources();
