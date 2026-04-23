@@ -20,12 +20,13 @@ public:
 
     void SetEditorMode(bool value);
 
-    void SetDebugMode(bool value);
     void SetShowColliderDebug(bool value);
     void SetShowCullingAABBDebug(bool value);
+    void SetShowEditorGrid(bool value);
 
     bool ShowColliderDebug() const { return _showColliderDebug; }
     bool ShowCullingAABBDebug() const { return _showCullingAABBDebug; }
+    bool ShowEditorGrid() const { return _showEditorGrid; }
 
     void RegisterActiveSceneCamera();
     void RegisterSceneCameras();
@@ -66,11 +67,11 @@ public:
 
 private:
     bool _isEditor = false;
-    bool _isDebugMode = false;
     bool _newSceneCamera = false;
 
     bool _showColliderDebug = false;
     bool _showCullingAABBDebug = false;
+    bool _showEditorGrid = true;
 
     std::string newCameraID;
 

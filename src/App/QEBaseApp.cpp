@@ -140,7 +140,8 @@ void QEBaseApp::loadScene(QEScene& scene)
     sessionManager->SetEditorMode(IsEditorMode());
     sessionManager->RegisterSceneCameras();
     sessionManager->ResolveActiveCamera();
-    sessionManager->SetDebugMode(false);
+    sessionManager->SetShowColliderDebug(false);
+    sessionManager->SetShowCullingAABBDebug(false);
 
     if (IsEditorMode())
     {

@@ -92,6 +92,12 @@ void EditorHeaderBar::DrawDebugMenu()
 
     if (ImGui::BeginMenu("Debug"))
     {
+        const bool showGrid = sessionManager->ShowEditorGrid();
+        if (ImGui::MenuItem("Grid", nullptr, showGrid))
+        {
+            sessionManager->SetShowEditorGrid(!showGrid);
+        }
+
         const bool showColliders = sessionManager->ShowColliderDebug();
         if (ImGui::MenuItem("Colliders", nullptr, showColliders))
         {

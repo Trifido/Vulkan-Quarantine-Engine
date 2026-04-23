@@ -46,13 +46,6 @@ void QESessionManager::SetEditorMode(bool value)
     ResolveActiveCamera();
 }
 
-void QESessionManager::SetDebugMode(bool value)
-{
-    _isDebugMode = value;
-    SetShowColliderDebug(value);
-    SetShowCullingAABBDebug(value);
-}
-
 void QESessionManager::SetShowColliderDebug(bool value)
 {
     _showColliderDebug = value;
@@ -72,6 +65,21 @@ void QESessionManager::SetShowCullingAABBDebug(bool value)
     if (cullingSceneManager)
     {
         cullingSceneManager->DebugMode = value;
+    }
+}
+
+void QESessionManager::SetShowEditorGrid(bool value)
+{
+    _showEditorGrid = value;
+
+    auto editorManager = EditorObjectManager::getInstance();
+    if (!editorManager)
+        return;
+
+    auto grid = editorManager->GetObject("editor:grid");
+    if (grid)
+    {
+        grid->IsRenderable = value;
     }
 }
 
@@ -206,12 +214,12 @@ void QESessionManager::SetupEditor()
         if (!existing)
         {
             std::shared_ptr<Grid> grid_ptr = std::make_shared<Grid>();
-            grid_ptr->IsRenderable = true;
+            grid_ptr->IsRenderable = _showEditorGrid;
             editorManager->AddEditorObject(grid_ptr, "editor:grid");
         }
         else
         {
-            existing->IsRenderable = true;
+            existing->IsRenderable = _showEditorGrid;
 
             auto existingGrid = std::dynamic_pointer_cast<Grid>(existing);
             if (existingGrid)
