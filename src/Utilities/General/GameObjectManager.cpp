@@ -180,7 +180,7 @@ void GameObjectManager::DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx
         if (!item.GameObject || !item.MeshRenderer || !item.Material)
             continue;
 
-        item.MeshRenderer->SetDrawCommand(commandBuffer, idx);
+        item.MeshRenderer->SetDrawCommand(commandBuffer, idx, item.SubMeshIndex);
     }
 }
 
@@ -209,7 +209,7 @@ void GameObjectManager::CSMCommand(VkCommandBuffer& commandBuffer, uint32_t idx,
             sizeof(PushConstantCSMStruct),
             &shadowParameters);
 
-        item.MeshRenderer->SetDrawShadowCommand(commandBuffer, idx, pipelineLayout);
+        item.MeshRenderer->SetDrawShadowCommand(commandBuffer, idx, pipelineLayout, item.SubMeshIndex);
     }
 }
 
@@ -241,7 +241,7 @@ void GameObjectManager::OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32
             sizeof(PushConstantOmniShadowStruct),
             &shadowParameters);
 
-        item.MeshRenderer->SetDrawShadowCommand(commandBuffer, idx, pipelineLayout);
+        item.MeshRenderer->SetDrawShadowCommand(commandBuffer, idx, pipelineLayout, item.SubMeshIndex);
     }
 }
 
@@ -476,22 +476,43 @@ std::vector<QEOrderRenderItem> GameObjectManager::BuildRenderItems() const
             if (!meshRenderer)
                 continue;
 
-            auto material = go->GetMaterial();
-            if (!material)
+            auto geometry = go->GetComponent<QEGeometryComponent>();
+            if (!geometry)
                 continue;
 
-            QEOrderRenderItem item;
-            item.GameObject = go;
-            item.MeshRenderer = meshRenderer;
-            item.Material = material;
-            item.RenderQueue = material->renderQueue;
-            if (auto transform = go->GetComponent<QETransform>())
-            {
-                const glm::vec3 delta = transform->GetWorldPosition() - cameraPosition;
-                item.CameraDistanceSq = glm::dot(delta, delta);
-            }
+            auto mesh = geometry->GetMesh();
+            if (!mesh)
+                continue;
 
-            items.push_back(item);
+            const auto subMeshCount = static_cast<uint32_t>(mesh->MeshData.size());
+            for (uint32_t subMeshIndex = 0; subMeshIndex < subMeshCount; ++subMeshIndex)
+            {
+                std::shared_ptr<QEMaterial> material = nullptr;
+                if (subMeshIndex < mesh->MaterialRel.size())
+                {
+                    material = go->GetMaterial(mesh->MaterialRel[subMeshIndex]);
+                }
+                if (!material)
+                {
+                    material = go->GetMaterial();
+                }
+                if (!material)
+                    continue;
+
+                QEOrderRenderItem item;
+                item.GameObject = go;
+                item.MeshRenderer = meshRenderer;
+                item.Material = material;
+                item.SubMeshIndex = subMeshIndex;
+                item.RenderQueue = material->renderQueue;
+                if (auto transform = go->GetComponent<QETransform>())
+                {
+                    const glm::vec3 delta = transform->GetWorldPosition() - cameraPosition;
+                    item.CameraDistanceSq = glm::dot(delta, delta);
+                }
+
+                items.push_back(item);
+            }
         }
     }
 
@@ -530,20 +551,41 @@ std::vector<QEOrderRenderItem> GameObjectManager::BuildShadowRenderItems() const
             if (!meshRenderer)
                 continue;
 
-            auto material = go->GetMaterial();
-            if (!material)
+            auto geometry = go->GetComponent<QEGeometryComponent>();
+            if (!geometry)
                 continue;
 
-            if (material->renderQueue >= static_cast<unsigned int>(RenderQueue::Transparent))
+            auto mesh = geometry->GetMesh();
+            if (!mesh)
                 continue;
 
-            QEOrderRenderItem item;
-            item.GameObject = go;
-            item.MeshRenderer = meshRenderer;
-            item.Material = material;
-            item.RenderQueue = material->renderQueue;
+            const auto subMeshCount = static_cast<uint32_t>(mesh->MeshData.size());
+            for (uint32_t subMeshIndex = 0; subMeshIndex < subMeshCount; ++subMeshIndex)
+            {
+                std::shared_ptr<QEMaterial> material = nullptr;
+                if (subMeshIndex < mesh->MaterialRel.size())
+                {
+                    material = go->GetMaterial(mesh->MaterialRel[subMeshIndex]);
+                }
+                if (!material)
+                {
+                    material = go->GetMaterial();
+                }
+                if (!material)
+                    continue;
 
-            items.push_back(item);
+                if (material->renderQueue >= static_cast<unsigned int>(RenderQueue::Transparent))
+                    continue;
+
+                QEOrderRenderItem item;
+                item.GameObject = go;
+                item.MeshRenderer = meshRenderer;
+                item.Material = material;
+                item.SubMeshIndex = subMeshIndex;
+                item.RenderQueue = material->renderQueue;
+
+                items.push_back(item);
+            }
         }
     }
 

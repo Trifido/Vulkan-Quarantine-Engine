@@ -19,6 +19,7 @@ struct QEOrderRenderItem
     std::shared_ptr<QEGameObject> GameObject;
     std::shared_ptr<QEMeshRenderer> MeshRenderer;
     std::shared_ptr<QEMaterial> Material;
+    uint32_t SubMeshIndex = 0;
     unsigned int RenderQueue = 0;
     float CameraDistanceSq = 0.0f;
 };

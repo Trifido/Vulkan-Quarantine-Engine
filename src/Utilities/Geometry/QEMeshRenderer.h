@@ -33,7 +33,9 @@ public:
     void RefreshMaterials();
 
     void SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
+    void SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx, uint32_t subMeshIndex);
     void SetDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout);
+    void SetDrawShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, uint32_t subMeshIndex);
 };
 
 #endif // !QE_MESH_RENDERER_H
