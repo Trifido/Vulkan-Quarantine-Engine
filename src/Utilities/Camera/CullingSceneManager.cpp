@@ -6,8 +6,13 @@
 
 void CullingSceneManager::EnsureInitialized()
 {
-    if (this->shader_aabb_ptr != nullptr && this->material_aabb_ptr != nullptr)
+    if (this->shader_aabb_ptr != nullptr &&
+        this->material_aabb_ptr != nullptr &&
+        this->material_aabb_ptr->descriptor != nullptr &&
+        !this->material_aabb_ptr->descriptor->descriptorSets.empty())
+    {
         return;
+    }
 
     InitializeCullingSceneResources();
 }
@@ -15,6 +20,8 @@ void CullingSceneManager::EnsureInitialized()
 void CullingSceneManager::ResetSceneState()
 {
     CleanUp();
+    this->material_aabb_ptr = nullptr;
+    this->shader_aabb_ptr = nullptr;
 }
 
 void CullingSceneManager::InitializeCullingSceneResources()
@@ -43,6 +50,7 @@ void CullingSceneManager::InitializeCullingSceneResources()
         this->material_aabb_ptr = matManager->GetMaterial(nameDebugAABB);
         if (this->material_aabb_ptr)
         {
+            this->material_aabb_ptr->shader = this->shader_aabb_ptr;
             this->material_aabb_ptr->InitializeMaterialData();
         }
     }
@@ -83,7 +91,12 @@ void CullingSceneManager::DrawDebug(VkCommandBuffer& commandBuffer, uint32_t idx
     if (!this->DebugMode)
         return;
 
+    EnsureInitialized();
+
     if (!this->shader_aabb_ptr || !this->material_aabb_ptr || !this->material_aabb_ptr->descriptor)
+        return;
+
+    if (idx >= this->material_aabb_ptr->descriptor->descriptorSets.size())
         return;
 
     auto pipelineModule = this->shader_aabb_ptr->PipelineModule;

@@ -111,6 +111,11 @@ void QEMaterial::CleanLastResources()
 
 void QEMaterial::InitializeMaterialData()
 {
+    if (this->hasDescriptorBuffer && !this->descriptor)
+    {
+        this->descriptor = std::make_shared<DescriptorBuffer>(this->shader);
+    }
+
     if (this->hasDescriptorBuffer && !this->IsInitialized)
     {
         this->materialData.InitializeUBOMaterial(this->shader);
@@ -131,6 +136,7 @@ void QEMaterial::cleanup()
         this->descriptor->Cleanup();
     }
     this->materialData.CleanMaterialUBO();
+    this->IsInitialized = false;
 }
 
 void QEMaterial::UpdateUniformData()
