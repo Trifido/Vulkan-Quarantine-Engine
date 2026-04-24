@@ -14,6 +14,7 @@ public:
     std::shared_ptr<Animator> animator;
 
 private:
+    REFLECT_PROPERTY(std::string, GraphAssetPath)
     REFLECT_PROPERTY(bool, AutoStart)
     REFLECT_PROPERTY(AnimationState, currentState)
     REFLECT_PROPERTY(std::vector<AnimationState>, States)
@@ -74,6 +75,8 @@ public:
     void SetInt(const std::string& name, int v);
     void SetFloat(const std::string& name, float v);
     void SetTrigger(const std::string& name, bool value = true);
+    void SetGraphAssetPath(const std::string& path);
+    const std::string& GetGraphAssetPath() const;
     void SetAutoStart(bool autoStart);
     bool GetAutoStart() const;
     void StartEntryPlayback();

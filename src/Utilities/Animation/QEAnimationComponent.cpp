@@ -465,6 +465,16 @@ void QEAnimationComponent::SetTrigger(const std::string& name, bool value)
     p.trigger = value;
 }
 
+void QEAnimationComponent::SetGraphAssetPath(const std::string& path)
+{
+    GraphAssetPath = path;
+}
+
+const std::string& QEAnimationComponent::GetGraphAssetPath() const
+{
+    return GraphAssetPath;
+}
+
 void QEAnimationComponent::SetAutoStart(bool autoStart)
 {
     AutoStart = autoStart;

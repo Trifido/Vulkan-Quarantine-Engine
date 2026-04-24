@@ -1,6 +1,7 @@
 #include "QEGameObject.h"
 #include <QEAnimationComponent.h>
 #include <CullingSceneManager.h>
+#include <QEAnimationGraphAssetHelper.h>
 
 QEGameObject::QEGameObject(std::string name)
 {
@@ -150,7 +151,14 @@ YAML::Node QEGameObject::ToYaml() const
         if (!comp->IsSerializable())
             continue;
 
-        comps.push_back(serializeComponent(comp.get()));
+        if (auto* animationComponent = dynamic_cast<QEAnimationComponent*>(comp.get()))
+        {
+            comps.push_back(QEAnimationGraphAssetHelper::SerializeAnimationComponentReference(*animationComponent));
+        }
+        else
+        {
+            comps.push_back(serializeComponent(comp.get()));
+        }
     }
 
     auto mats = node["materials"];
@@ -199,6 +207,11 @@ std::shared_ptr<QEGameObject> QEGameObject::FromYaml(const YAML::Node& node)
             // binario: convertir a shared_ptr y bind
             std::shared_ptr<QEGameComponent> sptr(uptr.release());
             sptr->BindGameObject(go.get());
+
+            if (auto animationComponent = std::dynamic_pointer_cast<QEAnimationComponent>(sptr))
+            {
+                QEAnimationGraphAssetHelper::LoadAnimationComponentFromReference(*animationComponent, cnode);
+            }
 
             if (auto tr = std::dynamic_pointer_cast<QETransform>(sptr))
             {
