@@ -26,7 +26,9 @@ bool QEProjectIconCache::Initialize()
     ok &= LoadIconTexture(QEAssetType::Folder, "../../src/Editor/Icons/folder.png");
     ok &= LoadIconTexture(QEAssetType::Scene, "../../src/Editor/Icons/scene.png");
     ok &= LoadIconTexture(QEAssetType::Material, "../../src/Editor/Icons/material.png");
-    ok &= LoadIconTexture(QEAssetType::Shader, "../../src/Editor/Icons/material.png");
+    ok &= LoadIconTexture(QEAssetType::Shader, "../../src/Editor/Icons/shader.png");
+    ok &= LoadIconTexture(QEAssetType::Graph, "../../src/Editor/Icons/graph.png");
+    ok &= LoadIconTexture(QEAssetType::Spv, "../../src/Editor/Icons/spv.png");
     ok &= LoadIconTexture(QEAssetType::Texture, "../../src/Editor/Icons/texture.png");
     ok &= LoadIconTexture(QEAssetType::Mesh, "../../src/Editor/Icons/mesh.png");
     ok &= LoadIconTexture(QEAssetType::Animation, "../../src/Editor/Icons/animation.png");

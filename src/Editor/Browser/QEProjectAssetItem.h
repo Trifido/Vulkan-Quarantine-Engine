@@ -10,6 +10,8 @@ enum class QEAssetType
     Scene,
     Material,
     Shader,
+    Graph,
+    Spv,
     Texture,
     Mesh,
     Animation,

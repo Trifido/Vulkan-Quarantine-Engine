@@ -31,14 +31,15 @@ QEAssetType QEProjectBrowserNavigation::GetAssetTypeFromPath(const std::filesyst
     std::string ext = path.extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
-    if (ext == ".qescene") return QEAssetType::Scene;
-    if (ext == ".qemat")   return QEAssetType::Material;
+    if (ext == ".qescene")  return QEAssetType::Scene;
+    if (ext == ".qemat")    return QEAssetType::Material;
     if (ext == ".qeshader") return QEAssetType::Shader;
-    if (ext == ".spv")     return QEAssetType::Shader;
+    if (ext == ".qegraph")  return QEAssetType::Graph;
+    if (ext == ".spv")      return QEAssetType::Spv;
     if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".ktx2") return QEAssetType::Texture;
-    if (ext == ".gltf")    return QEAssetType::Mesh;
-    if (ext == ".glb")     return QEAssetType::Animation;
-    if (ext == ".bin")     return QEAssetType::Unknown;
+    if (ext == ".gltf")     return QEAssetType::Mesh;
+    if (ext == ".glb")      return QEAssetType::Animation;
+    if (ext == ".bin")      return QEAssetType::Unknown;
 
     return QEAssetType::Unknown;
 }
