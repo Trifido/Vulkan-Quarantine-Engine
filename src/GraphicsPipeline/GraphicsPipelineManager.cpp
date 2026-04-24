@@ -93,7 +93,11 @@ std::shared_ptr<GraphicsPipelineModule> GraphicsPipelineManager::RegisterNewGrap
     this->_graphicsPipelines[shader.id] = std::make_shared<GraphicsPipelineModule>();
     this->_graphicsPipelines[shader.id]->PoligonMode = pipelineData.polygonMode;
     this->_graphicsPipelines[shader.id]->inputTopology = pipelineData.topology;
+    this->_graphicsPipelines[shader.id]->cullMode = pipelineData.cullMode;
+    this->_graphicsPipelines[shader.id]->frontFace = pipelineData.frontFace;
     this->_graphicsPipelines[shader.id]->lineWidth = pipelineData.lineWidth;
+    this->_graphicsPipelines[shader.id]->depthTestEnabled = pipelineData.DepthTestEnabled ? VK_TRUE : VK_FALSE;
+    this->_graphicsPipelines[shader.id]->depthWriteEnabled = pipelineData.DepthWriteEnabled ? VK_TRUE : VK_FALSE;
     this->_graphicsPipelines[shader.id]->renderPass = this->defaultRenderPass;
     this->_graphicsPipelines[shader.id]->CompileGraphicsPipeline(shader.shaderStages, shader.vertexInputInfo, descriptorLayouts);
     return this->_graphicsPipelines[shader.id];

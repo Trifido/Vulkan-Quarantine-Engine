@@ -19,6 +19,12 @@ enum class QEImportJobState
     Failed
 };
 
+enum class QEImportJobType
+{
+    Mesh,
+    Shader
+};
+
 struct QEImportProgress
 {
     std::atomic<float> Value{ 0.0f };
@@ -31,6 +37,7 @@ struct QEImportProgress
 struct QEImportJob
 {
     uint64_t Id = 0;
+    QEImportJobType Type = QEImportJobType::Mesh;
     std::string SourcePath;
     std::string DisplayName;
     std::string TargetFolder;
@@ -72,6 +79,9 @@ public:
     ~QEAssetImportManager();
 
     std::shared_ptr<QEImportJob> EnqueueMeshImport(
+        const std::string& sourcePath,
+        const std::string& targetFolder);
+    std::shared_ptr<QEImportJob> EnqueueShaderImport(
         const std::string& sourcePath,
         const std::string& targetFolder);
 

@@ -3,8 +3,10 @@
 #include "IEditorPanel.h"
 #include <memory>
 #include <functional>
+#include <filesystem>
 
 class GameObjectManager;
+class MaterialManager;
 struct EditorContext;
 class EditorSelectionManager;
 class QEMaterial;
@@ -14,6 +16,7 @@ class MaterialInspectorPanel : public IEditorPanel
 public:
     MaterialInspectorPanel(
         GameObjectManager* gameObjectManager,
+        MaterialManager* materialManager,
         EditorContext* editorContext,
         EditorSelectionManager* selectionManager,
         std::function<void(const std::shared_ptr<QEMaterial>&)> onOpenMaterialEditor);
@@ -22,11 +25,16 @@ public:
     void Draw() override;
 
 private:
+    void DrawToolbar(const std::shared_ptr<class QEGameObject>& gameObject);
     void DrawMaterialEntry(const std::shared_ptr<QEMaterial>& material, int materialIndex);
+    bool DrawAddMaterialPopup(const std::shared_ptr<class QEGameObject>& gameObject, const char* popupId);
+    void DeleteSelectedMaterial(const std::shared_ptr<class QEGameObject>& gameObject);
 
 private:
     GameObjectManager* gameObjectManager = nullptr;
+    MaterialManager* materialManager = nullptr;
     EditorContext* editorContext = nullptr;
     EditorSelectionManager* selectionManager = nullptr;
     std::function<void(const std::shared_ptr<QEMaterial>&)> onOpenMaterialEditor;
+    int selectedMaterialIndex = -1;
 };

@@ -5,6 +5,7 @@
 
 #include <QEProjectManager.h>
 #include <QEAssetImportManager.h>
+#include <QEShaderSourceImporter.h>
 #include <iostream>
 #include <cstring>
 #include <Logging/QELogMacros.h>
@@ -277,6 +278,10 @@ void QEProjectBrowserPanel::DrawAssetTile(QEProjectAssetItem* item, float tileSi
             {
                 _pendingMaterialOpenRequest = assetPath;
             }
+            else if (assetPath.extension() == ".qeshader")
+            {
+                _pendingShaderOpenRequest = assetPath;
+            }
             else if (IsTextureAsset(assetPath))
             {
                 _pendingTextureOpenRequest = assetPath;
@@ -480,7 +485,11 @@ bool QEProjectBrowserPanel::IsImportableExternalFile(const std::filesystem::path
     std::string ext = path.extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
-    return ext == ".gltf" || ext == ".glb" || ext == ".fbx" || ext == ".obj";
+    return ext == ".gltf" ||
+        ext == ".glb" ||
+        ext == ".fbx" ||
+        ext == ".obj" ||
+        IsShaderSourceAsset(path);
 }
 
 void QEProjectBrowserPanel::DrawImportFooter()
@@ -589,9 +598,18 @@ void QEProjectBrowserPanel::HandleExternalFileDrops()
 
         try
         {
-            QEAssetImportManager::Get().EnqueueMeshImport(
-                droppedPath.string(),
-                targetFolder);
+            if (IsShaderSourceAsset(droppedPath))
+            {
+                QEAssetImportManager::Get().EnqueueShaderImport(
+                    droppedPath.string(),
+                    targetFolder);
+            }
+            else
+            {
+                QEAssetImportManager::Get().EnqueueMeshImport(
+                    droppedPath.string(),
+                    targetFolder);
+            }
         }
         catch (const std::exception& e)
         {
@@ -644,6 +662,14 @@ void QEProjectBrowserPanel::DrawCreateMenu(QEProjectAssetItem* currentFolder)
             }
         }
 
+        if (ImGui::MenuItem("Shader"))
+        {
+            if (QEProjectAssetCreator::CreateShaderAt(currentFolder->AbsolutePath, "New Shader"))
+            {
+                _navigation.Refresh();
+            }
+        }
+
         ImGui::EndPopup();
     }
 }
@@ -669,6 +695,11 @@ bool QEProjectBrowserPanel::IsMaterialAsset(const std::filesystem::path& path) c
     return ext == ".qemat";
 }
 
+bool QEProjectBrowserPanel::IsShaderSourceAsset(const std::filesystem::path& path) const
+{
+    return QEShaderSourceImporter::IsSupportedShaderSourceFile(path);
+}
+
 std::optional<std::filesystem::path> QEProjectBrowserPanel::ConsumePendingTextureOpenRequest()
 {
     if (!_pendingTextureOpenRequest.has_value())
@@ -686,5 +717,15 @@ std::optional<std::filesystem::path> QEProjectBrowserPanel::ConsumePendingMateri
 
     auto result = _pendingMaterialOpenRequest;
     _pendingMaterialOpenRequest.reset();
+    return result;
+}
+
+std::optional<std::filesystem::path> QEProjectBrowserPanel::ConsumePendingShaderOpenRequest()
+{
+    if (!_pendingShaderOpenRequest.has_value())
+        return std::nullopt;
+
+    auto result = _pendingShaderOpenRequest;
+    _pendingShaderOpenRequest.reset();
     return result;
 }

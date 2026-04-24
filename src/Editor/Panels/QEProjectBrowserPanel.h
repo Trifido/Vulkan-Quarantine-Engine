@@ -32,6 +32,7 @@ public:
     std::optional<std::filesystem::path> ConsumePendingSceneOpenRequest();
     std::optional<std::filesystem::path> ConsumePendingTextureOpenRequest();
     std::optional<std::filesystem::path> ConsumePendingMaterialOpenRequest();
+    std::optional<std::filesystem::path> ConsumePendingShaderOpenRequest();
 
 private:
     void DrawTopBar();
@@ -52,6 +53,7 @@ private:
 
     bool IsTextureAsset(const std::filesystem::path& path) const;
     bool IsMaterialAsset(const std::filesystem::path& path) const;
+    bool IsShaderSourceAsset(const std::filesystem::path& path) const;
 
 private:
     QEProjectBrowserNavigation _navigation;
@@ -62,6 +64,7 @@ private:
     std::optional<std::filesystem::path> _pendingSceneOpenRequest;
     std::optional<std::filesystem::path> _pendingTextureOpenRequest;
     std::optional<std::filesystem::path> _pendingMaterialOpenRequest;
+    std::optional<std::filesystem::path> _pendingShaderOpenRequest;
 
     bool _isWindowHovered = false;
     bool _isContentsPanelHovered = false;

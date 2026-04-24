@@ -172,6 +172,138 @@ public:
         }
     }
 
+    void SetMaterialAt(size_t materialIndex, const std::shared_ptr<QEMaterial>& material)
+    {
+        if (!material)
+            return;
+
+        if (materials.size() <= materialIndex)
+        {
+            materials.resize(materialIndex + 1);
+        }
+
+        if (bindedMaterials.size() <= materialIndex)
+        {
+            bindedMaterials.resize(materialIndex + 1);
+        }
+
+        const std::string previousMaterialName =
+            !bindedMaterials[materialIndex].empty()
+            ? bindedMaterials[materialIndex]
+            : (materials[materialIndex] ? materials[materialIndex]->Name : "");
+
+        materials[materialIndex] = material;
+        bindedMaterials[materialIndex] = material->Name;
+
+        if (auto geometry = GetComponent<QEGeometryComponent>())
+        {
+            if (auto mesh = geometry->GetMesh())
+            {
+                if (mesh->MaterialRel.empty())
+                {
+                    mesh->MaterialRel.resize(mesh->MeshData.size(), material->Name);
+                }
+                else if (!previousMaterialName.empty())
+                {
+                    for (auto& materialRel : mesh->MaterialRel)
+                    {
+                        if (materialRel == previousMaterialName)
+                        {
+                            materialRel = material->Name;
+                        }
+                    }
+                }
+                else if (materialIndex < mesh->MaterialRel.size())
+                {
+                    mesh->MaterialRel[materialIndex] = material->Name;
+                }
+            }
+        }
+
+        if (auto meshRenderer = GetComponent<QEMeshRenderer>())
+        {
+            meshRenderer->RefreshMaterials();
+        }
+    }
+
+    bool AddMaterialBinding(const std::shared_ptr<QEMaterial>& material)
+    {
+        if (!material)
+            return false;
+
+        const auto duplicated = std::find_if(
+            materials.begin(),
+            materials.end(),
+            [&](const std::shared_ptr<QEMaterial>& current)
+            {
+                return current && current->id == material->id;
+            });
+
+        if (duplicated != materials.end())
+            return false;
+
+        materials.push_back(material);
+        bindedMaterials.push_back(material->Name);
+
+        if (auto geometry = GetComponent<QEGeometryComponent>())
+        {
+            if (auto mesh = geometry->GetMesh())
+            {
+                if (mesh->MaterialRel.size() < mesh->MeshData.size())
+                {
+                    mesh->MaterialRel.push_back(material->Name);
+                }
+            }
+        }
+
+        if (auto meshRenderer = GetComponent<QEMeshRenderer>())
+        {
+            meshRenderer->RefreshMaterials();
+        }
+
+        return true;
+    }
+
+    bool RemoveMaterialAt(size_t materialIndex)
+    {
+        if (materialIndex >= materials.size() || materialIndex >= bindedMaterials.size())
+            return false;
+
+        const std::string removedMaterialName = bindedMaterials[materialIndex];
+
+        materials.erase(materials.begin() + static_cast<std::ptrdiff_t>(materialIndex));
+        bindedMaterials.erase(bindedMaterials.begin() + static_cast<std::ptrdiff_t>(materialIndex));
+
+        if (auto geometry = GetComponent<QEGeometryComponent>())
+        {
+            if (auto mesh = geometry->GetMesh())
+            {
+                const std::string replacementName =
+                    materials.empty() ? "" : materials.front()->Name;
+
+                for (auto& materialRel : mesh->MaterialRel)
+                {
+                    if (materialRel == removedMaterialName)
+                    {
+                        materialRel = replacementName;
+                    }
+                }
+
+                while (!mesh->MaterialRel.empty() && mesh->MaterialRel.back().empty())
+                {
+                    mesh->MaterialRel.pop_back();
+                }
+            }
+        }
+
+        if (auto meshRenderer = GetComponent<QEMeshRenderer>())
+        {
+            meshRenderer->RefreshMaterials();
+        }
+
+        return true;
+    }
+
     const std::vector<std::shared_ptr<QEMaterial>>& GetMaterials() const
     {
         return materials;

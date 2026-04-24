@@ -9,6 +9,7 @@
 #include <Vertex.h>
 #include <QEProjectManager.h>
 #include <QEMaterialYamlHelper.h>
+#include <QEShaderAssetLoader.h>
 #include <Helpers/ScopedTimer.h>
 
 std::string MaterialManager::CheckName(std::string nameMaterial)
@@ -178,7 +179,22 @@ std::shared_ptr<QEMaterial> MaterialManager::LoadMaterialFromFile(const std::fil
     materialDto.FilePath = QEProjectManager::ToProjectRelativePath(resolvedPath);
 
     auto shaderManager = ShaderManager::getInstance();
-    auto shader = shaderManager->GetShader(materialDto.ShaderPath);
+    std::shared_ptr<ShaderModule> shader;
+
+    {
+        std::string shaderPathLower = materialDto.ShaderPath;
+        std::transform(shaderPathLower.begin(), shaderPathLower.end(), shaderPathLower.begin(), ::tolower);
+
+        if (!materialDto.ShaderPath.empty() && QEShaderAssetLoader::IsShaderAssetPath(materialDto.ShaderPath))
+        {
+            shader = QEShaderAssetLoader::LoadShaderAsset(materialDto.ShaderPath);
+        }
+        else
+        {
+            shader = shaderManager->GetShader(materialDto.ShaderPath);
+        }
+    }
+
     if (!shader)
     {
         shader = default_shader;
@@ -191,6 +207,10 @@ std::shared_ptr<QEMaterial> MaterialManager::LoadMaterialFromFile(const std::fil
     }
 
     auto material = std::make_shared<QEMaterial>(shader, materialDto);
+    if (QEShaderAssetLoader::IsShaderAssetPath(materialDto.ShaderPath))
+    {
+        material->SetShaderAssetPath(materialDto.ShaderPath);
+    }
     AddMaterial(material);
     return GetMaterial(material->Name);
 }
@@ -432,11 +452,36 @@ void MaterialManager::LoadMaterialDtos(std::vector<MaterialDto>& materialDtos)
     auto shaderManager = ShaderManager::getInstance();
     for (auto& it : materialDtos)
     {
-        auto shader = shaderManager->GetShader(it.ShaderPath);
+        std::shared_ptr<ShaderModule> shader;
+
+        if (!it.ShaderPath.empty() && QEShaderAssetLoader::IsShaderAssetPath(it.ShaderPath))
+        {
+            shader = QEShaderAssetLoader::LoadShaderAsset(it.ShaderPath);
+        }
+        else
+        {
+            shader = shaderManager->GetShader(it.ShaderPath);
+        }
+
+        if (!shader)
+        {
+            QE_LOG_WARN_CAT_F(
+                "MaterialManager",
+                "Shader '{}' could not be resolved while loading material '{}'. Falling back to default shader.",
+                it.ShaderPath,
+                it.Name);
+            shader = default_shader;
+        }
 
         if (!this->Exists(it.Name))
         {
-            this->AddMaterial(std::make_shared<QEMaterial>(QEMaterial(shader, it)));
+            auto material = std::make_shared<QEMaterial>(QEMaterial(shader, it));
+            if (QEShaderAssetLoader::IsShaderAssetPath(it.ShaderPath))
+            {
+                material->SetShaderAssetPath(it.ShaderPath);
+            }
+
+            this->AddMaterial(material);
         }
     }
 }

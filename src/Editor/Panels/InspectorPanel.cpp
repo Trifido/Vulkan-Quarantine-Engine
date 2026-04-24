@@ -332,21 +332,35 @@ namespace
     bool DrawTransformInspector(
         const std::shared_ptr<QEGameObject>& gameObject,
         const std::shared_ptr<QETransform>& transform,
-        EditorCommandManager* commandManager)
+        EditorCommandManager* commandManager,
+        bool isSelected,
+        bool& selectedThisFrame)
     {
         if (!gameObject || !transform)
             return false;
 
         bool requestRemove = false;
+        const ImGuiTreeNodeFlags headerFlags =
+            ImGuiTreeNodeFlags_DefaultOpen |
+            ImGuiTreeNodeFlags_Framed |
+            ImGuiTreeNodeFlags_OpenOnArrow |
+            ImGuiTreeNodeFlags_OpenOnDoubleClick |
+            (isSelected ? ImGuiTreeNodeFlags_Selected : 0);
 
-        if (ImGui::CollapsingHeader("QETransform", ImGuiTreeNodeFlags_DefaultOpen))
+        const bool isOpen = ImGui::TreeNodeEx("QETransformHeader", headerFlags, "QETransform");
+        if (ImGui::IsItemClicked())
         {
-            if (ImGui::BeginPopupContextItem("QETransformContext"))
-            {
-                ImGui::TextUnformatted("QETransform cannot be removed.");
-                ImGui::EndPopup();
-            }
+            selectedThisFrame = true;
+        }
 
+        if (ImGui::BeginPopupContextItem("QETransformContext"))
+        {
+            ImGui::TextUnformatted("QETransform cannot be removed.");
+            ImGui::EndPopup();
+        }
+
+        if (isOpen)
+        {
             glm::vec3 position = transform->localPosition;
             glm::vec3 rotation = glm::degrees(glm::eulerAngles(transform->localRotation));
             glm::vec3 scale = transform->localScale;
@@ -412,6 +426,8 @@ namespace
                     transform->SetLocalScale(scale);
                 }
             }
+
+            ImGui::TreePop();
         }
 
         ImGui::Separator();
@@ -420,7 +436,9 @@ namespace
 
     bool DrawGenericComponentInspector(
         QEGameComponent* component,
-        const std::string& uniquePrefix)
+        const std::string& uniquePrefix,
+        bool isSelected,
+        bool& selectedThisFrame)
     {
         if (!component)
             return false;
@@ -435,18 +453,31 @@ namespace
         bool requestRemove = false;
         const std::string headerLabel = component->getTypeName();
 
-        if (ImGui::CollapsingHeader(headerLabel.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
-        {
-            if (ImGui::BeginPopupContextItem((uniquePrefix + "_context").c_str()))
-            {
-                if (ImGui::MenuItem("Remove Component"))
-                {
-                    requestRemove = true;
-                }
+        const ImGuiTreeNodeFlags headerFlags =
+            ImGuiTreeNodeFlags_DefaultOpen |
+            ImGuiTreeNodeFlags_Framed |
+            ImGuiTreeNodeFlags_OpenOnArrow |
+            ImGuiTreeNodeFlags_OpenOnDoubleClick |
+            (isSelected ? ImGuiTreeNodeFlags_Selected : 0);
 
-                ImGui::EndPopup();
+        const bool isOpen = ImGui::TreeNodeEx((uniquePrefix + "_header").c_str(), headerFlags, "%s", headerLabel.c_str());
+        if (ImGui::IsItemClicked())
+        {
+            selectedThisFrame = true;
+        }
+
+        if (ImGui::BeginPopupContextItem((uniquePrefix + "_context").c_str()))
+        {
+            if (ImGui::MenuItem("Remove Component"))
+            {
+                requestRemove = true;
             }
 
+            ImGui::EndPopup();
+        }
+
+        if (isOpen)
+        {
             const auto fields = meta->allFields();
 
             int drawnFields = 0;
@@ -488,6 +519,8 @@ namespace
             {
                 ImGui::TextUnformatted("No supported serializable fields.");
             }
+
+            ImGui::TreePop();
         }
 
         ImGui::Separator();
@@ -787,6 +820,7 @@ void InspectorPanel::Draw()
 
     if (selectionManager && selectionManager->IsAtmosphereSelected())
     {
+        selectedComponentIndex = -1;
         DrawAtmosphereInspector();
         ImGui::End();
         return;
@@ -794,6 +828,7 @@ void InspectorPanel::Draw()
 
     if (!selectionManager || !selectionManager->HasSelection())
     {
+        selectedComponentIndex = -1;
         ImGui::TextUnformatted("No GameObject selected.");
         ImGui::End();
         return;
@@ -803,6 +838,7 @@ void InspectorPanel::Draw()
 
     if (!gameObject)
     {
+        selectedComponentIndex = -1;
         ImGui::TextUnformatted("Selected GameObject no longer exists.");
         selectionManager->ClearSelection();
         ImGui::End();
@@ -833,6 +869,15 @@ void InspectorPanel::Draw()
 
     DrawAddComponentPopup(gameObject);
 
+    ImGui::SameLine();
+    const bool hasSelectedRemovableComponent = selectedComponentIndex > 0;
+    ImGui::BeginDisabled(!hasSelectedRemovableComponent);
+    if (ImGui::Button("Delete Component"))
+    {
+        DeleteSelectedComponent(gameObject);
+    }
+    ImGui::EndDisabled();
+
     ImGui::Separator();
 
     std::shared_ptr<QEGameComponent> componentToRemove = nullptr;
@@ -846,17 +891,32 @@ void InspectorPanel::Draw()
             continue;
 
         bool requestRemove = false;
+        bool selectedThisFrame = false;
 
         if (auto transform = std::dynamic_pointer_cast<QETransform>(component))
         {
-            requestRemove = DrawTransformInspector(gameObject, transform, commandManager);
+            requestRemove = DrawTransformInspector(
+                gameObject,
+                transform,
+                commandManager,
+                selectedComponentIndex == componentIndex,
+                selectedThisFrame);
         }
         else
         {
             const std::string uniquePrefix =
                 "comp_" + gameObject->ID() + "_" + std::to_string(componentIndex);
 
-            requestRemove = DrawGenericComponentInspector(component.get(), uniquePrefix);
+            requestRemove = DrawGenericComponentInspector(
+                component.get(),
+                uniquePrefix,
+                selectedComponentIndex == componentIndex,
+                selectedThisFrame);
+        }
+
+        if (selectedThisFrame)
+        {
+            selectedComponentIndex = componentIndex;
         }
 
         if (requestRemove)
@@ -871,8 +931,49 @@ void InspectorPanel::Draw()
     if (componentToRemove)
     {
         gameObject->RemoveComponent(componentToRemove);
+        if (selectedComponentIndex >= static_cast<int>(gameObject->components.size()))
+        {
+            selectedComponentIndex = static_cast<int>(gameObject->components.size()) - 1;
+        }
+    }
+
+    const bool canDeleteWithKeyboard =
+        hasSelectedRemovableComponent &&
+        ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) &&
+        ImGui::IsKeyPressed(ImGuiKey_Delete, false) &&
+        !ImGui::GetIO().WantTextInput;
+
+    if (canDeleteWithKeyboard)
+    {
+        DeleteSelectedComponent(gameObject);
     }
 
     ImGui::End();
+}
+
+void InspectorPanel::DeleteSelectedComponent(const std::shared_ptr<QEGameObject>& gameObject)
+{
+    if (!gameObject)
+        return;
+
+    if (selectedComponentIndex <= 0)
+        return;
+
+    if (selectedComponentIndex >= static_cast<int>(gameObject->components.size()))
+        return;
+
+    auto it = gameObject->components.begin();
+    std::advance(it, selectedComponentIndex);
+    auto component = (it != gameObject->components.end()) ? *it : nullptr;
+    if (!component)
+        return;
+
+    if (!gameObject->RemoveComponent(component))
+        return;
+
+    if (selectedComponentIndex >= static_cast<int>(gameObject->components.size()))
+    {
+        selectedComponentIndex = static_cast<int>(gameObject->components.size()) - 1;
+    }
 }
 

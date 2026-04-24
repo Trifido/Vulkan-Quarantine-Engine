@@ -6,6 +6,8 @@ GraphicsPipelineModule::GraphicsPipelineModule() : PipelineModule()
     this->swapChainModule = SwapChainModule::getInstance();
     this->antialiasingModule = AntiAliasingModule::getInstance();
     this->depthBufferMode = VK_TRUE;
+    this->depthTestEnabled = VK_TRUE;
+    this->depthWriteEnabled = VK_TRUE;
 }
 GraphicsPipelineModule::~GraphicsPipelineModule()
 {
@@ -46,8 +48,8 @@ void GraphicsPipelineModule::CompileGraphicsPipeline(std::vector<VkPipelineShade
 
     rasterizer.polygonMode = this->PoligonMode;
     rasterizer.lineWidth = this->lineWidth;
-    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-    rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    rasterizer.cullMode = this->cullMode;
+    rasterizer.frontFace = this->frontFace;
 
     rasterizer.depthBiasEnable = VK_FALSE;
     rasterizer.depthBiasConstantFactor = 0.0f; // Optional
@@ -101,8 +103,8 @@ void GraphicsPipelineModule::CompileGraphicsPipeline(std::vector<VkPipelineShade
 
     VkPipelineDepthStencilStateCreateInfo depthStencil{};
     depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depthStencil.depthTestEnable = this->depthBufferMode;
-    depthStencil.depthWriteEnable = this->depthBufferMode;
+    depthStencil.depthTestEnable = this->depthTestEnabled;
+    depthStencil.depthWriteEnable = this->depthWriteEnabled;
     depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
     depthStencil.depthBoundsTestEnable = VK_FALSE;
     depthStencil.minDepthBounds = 0.0f; // Optional

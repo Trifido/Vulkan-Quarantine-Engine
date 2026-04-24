@@ -9,6 +9,7 @@ enum class QEAssetType
     Folder,
     Scene,
     Material,
+    Shader,
     Texture,
     Mesh,
     Animation,

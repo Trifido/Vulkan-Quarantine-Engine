@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include <QEProjectManager.h>
+#include <QEShaderSourceImporter.h>
 
 QEAssetImportManager& QEAssetImportManager::Get()
 {
@@ -32,6 +33,28 @@ std::shared_ptr<QEImportJob> QEAssetImportManager::EnqueueMeshImport(const std::
 {
     auto job = std::make_shared<QEImportJob>();
     job->Id = _nextId.fetch_add(1, std::memory_order_relaxed);
+    job->Type = QEImportJobType::Mesh;
+    job->SourcePath = sourcePath;
+    job->TargetFolder = targetFolder;
+    job->DisplayName = std::filesystem::path(sourcePath).filename().string();
+    job->State.store(QEImportJobState::Queued, std::memory_order_relaxed);
+    job->SetProgress(0.0f, "Queued", "Waiting in queue");
+
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _jobs.push_back(job);
+        _pending.push(job);
+    }
+
+    _cv.notify_one();
+    return job;
+}
+
+std::shared_ptr<QEImportJob> QEAssetImportManager::EnqueueShaderImport(const std::string& sourcePath, const std::string& targetFolder)
+{
+    auto job = std::make_shared<QEImportJob>();
+    job->Id = _nextId.fetch_add(1, std::memory_order_relaxed);
+    job->Type = QEImportJobType::Shader;
     job->SourcePath = sourcePath;
     job->TargetFolder = targetFolder;
     job->DisplayName = std::filesystem::path(sourcePath).filename().string();
@@ -155,9 +178,21 @@ void QEAssetImportManager::WorkerLoop()
                     job->SetProgress(value, stage, message);
                 };
 
-            QEProjectManager::ImportMeshFile(job->SourcePath, job->TargetFolder, progressCb);
+            if (job->Type == QEImportJobType::Mesh)
+            {
+                QEProjectManager::ImportMeshFile(job->SourcePath, job->TargetFolder, progressCb);
+                job->SetResultPath(job->SourcePath);
+            }
+            else
+            {
+                const auto outputPath = QEShaderSourceImporter::ImportShaderSource(
+                    job->SourcePath,
+                    job->TargetFolder,
+                    progressCb);
 
-            job->SetResultPath(job->SourcePath);
+                job->SetResultPath(outputPath.string());
+            }
+
             job->State.store(QEImportJobState::Succeeded, std::memory_order_relaxed);
             job->SetProgress(1.0f, "Completed", "Import finished");
         }

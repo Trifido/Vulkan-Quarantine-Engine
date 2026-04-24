@@ -33,6 +33,8 @@ QEAssetType QEProjectBrowserNavigation::GetAssetTypeFromPath(const std::filesyst
 
     if (ext == ".qescene") return QEAssetType::Scene;
     if (ext == ".qemat")   return QEAssetType::Material;
+    if (ext == ".qeshader") return QEAssetType::Shader;
+    if (ext == ".spv")     return QEAssetType::Shader;
     if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".ktx2") return QEAssetType::Texture;
     if (ext == ".gltf")    return QEAssetType::Mesh;
     if (ext == ".glb")     return QEAssetType::Animation;

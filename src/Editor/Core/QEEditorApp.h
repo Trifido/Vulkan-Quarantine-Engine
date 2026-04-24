@@ -24,6 +24,7 @@ class ConsolePanel;
 class EditorSceneObjectFactory;
 class QETextureViewerPanel;
 class MaterialEditorPanel;
+class ShaderEditorPanel;
 class QEMaterial;
 
 class QEEditorApp : public QEBaseApp
@@ -71,6 +72,7 @@ private:
     void DrawTextureViewerPanels();
     void OpenMaterialEditor(const std::filesystem::path& materialPath);
     void OpenMaterialEditor(const std::shared_ptr<QEMaterial>& material);
+    void OpenShaderEditor(const std::filesystem::path& shaderPath);
 
     void SpawnDroppedMesh(const std::string& assetPath);
     glm::vec3 GetSpawnPositionInFrontOfEditorCamera(float distance) const;
@@ -101,4 +103,5 @@ private:
     std::vector<std::unique_ptr<QETextureViewerPanel>> _textureViewerPanels;
     std::vector<std::unique_ptr<QETextureViewerPanel>> _textureViewerPanelsPendingDestroy;
     MaterialEditorPanel* materialEditorPanelPtr = nullptr;
+    ShaderEditorPanel* shaderEditorPanelPtr = nullptr;
 };

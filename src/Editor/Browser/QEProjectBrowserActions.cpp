@@ -92,6 +92,7 @@ const char* QEProjectBrowserActions::GetDeleteMenuLabel(const QEProjectAssetItem
     case QEAssetType::Folder:    return "Delete Folder";
     case QEAssetType::Scene:     return "Delete Scene";
     case QEAssetType::Material:  return "Delete Material";
+    case QEAssetType::Shader:    return "Delete Shader";
     case QEAssetType::Texture:   return "Delete Texture";
     case QEAssetType::Mesh:      return "Delete Mesh";
     case QEAssetType::Animation: return "Delete Animation";
@@ -110,6 +111,7 @@ const char* QEProjectBrowserActions::GetRenamePopupTitle(const QEProjectAssetIte
     case QEAssetType::Folder:    return "Rename Folder";
     case QEAssetType::Scene:     return "Rename Scene";
     case QEAssetType::Material:  return "Rename Material";
+    case QEAssetType::Shader:    return "Rename Shader";
     case QEAssetType::Texture:   return "Rename Texture";
     case QEAssetType::Mesh:      return "Rename Mesh";
     case QEAssetType::Animation: return "Rename Animation";
@@ -128,6 +130,7 @@ const char* QEProjectBrowserActions::GetRenamePopupLabel(const QEProjectAssetIte
     case QEAssetType::Folder:    return "Rename folder";
     case QEAssetType::Scene:     return "Rename scene";
     case QEAssetType::Material:  return "Rename material";
+    case QEAssetType::Shader:    return "Rename shader";
     case QEAssetType::Texture:   return "Rename texture";
     case QEAssetType::Mesh:      return "Rename mesh";
     case QEAssetType::Animation: return "Rename animation";

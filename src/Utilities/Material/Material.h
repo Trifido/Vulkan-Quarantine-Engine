@@ -20,6 +20,7 @@ private:
     bool isMeshShaderEnabled = false;
     LightManager* lightManager;
     std::string materialFilePath;
+    std::string shaderAssetPath;
 
     static std::string ToMaterialRelativePath(
         const std::string& assetPath,
@@ -48,6 +49,9 @@ public:
     void RenameMaterial(std::string newName);
     std::string SaveMaterialFile();
     MaterialDto ToDto() const;
+    bool ApplyShader(const std::shared_ptr<ShaderModule>& shaderPtr, const std::string& assetPath = "");
+    void SetShaderAssetPath(const std::string& path) { shaderAssetPath = path; }
+    const std::string& GetShaderAssetPath() const { return shaderAssetPath; }
 };
 
 #endif // !MATERIAL_H

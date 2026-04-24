@@ -15,6 +15,8 @@ private:
 
 public:
     VkPrimitiveTopology inputTopology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    VkCullModeFlags cullMode = VK_CULL_MODE_BACK_BIT;
+    VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
     enum PolygonRenderType
     {
@@ -32,6 +34,8 @@ public:
     VkPolygonMode PoligonMode = VkPolygonMode::VK_POLYGON_MODE_FILL;
     std::shared_ptr<VkRenderPass> renderPass = nullptr;
     float lineWidth = 1.0f;
+    VkBool32 depthTestEnabled = VK_TRUE;
+    VkBool32 depthWriteEnabled = VK_TRUE;
 
 public:
     GraphicsPipelineModule();

@@ -30,7 +30,7 @@ QEMaterial::QEMaterial(std::string name, std::string filepath)
 QEMaterial::QEMaterial(std::string name, std::shared_ptr<ShaderModule> shader_ptr, std::string filepath) : QEMaterial(name, filepath)
 {
     this->shader = shader_ptr;
-    this->hasDescriptorBuffer = shader_ptr->reflectShader.bindings.size() > 0;
+    this->hasDescriptorBuffer = (shader_ptr != nullptr) && shader_ptr->reflectShader.bindings.size() > 0;
 
     if (this->hasDescriptorBuffer)
     {
@@ -235,7 +235,9 @@ MaterialDto QEMaterial::ToDto() const
 
     dto.Name = this->Name;
     dto.FilePath = QEProjectManager::ToProjectRelativePath(absMaterialPath);
-    dto.ShaderPath = (this->shader ? this->shader->shaderNameID : "default");
+    dto.ShaderPath = !this->shaderAssetPath.empty()
+        ? this->shaderAssetPath
+        : (this->shader ? this->shader->shaderNameID : "default");
     dto.RenderQueue = static_cast<unsigned int>(this->renderQueue);
 
     dto.Opacity = this->materialData.Opacity;
@@ -275,6 +277,33 @@ MaterialDto QEMaterial::ToDto() const
     dto.aoTexturePath = ToMaterialRelativePath(this->materialData.aoTexturePath, absMaterialPath);
 
     return dto;
+}
+
+bool QEMaterial::ApplyShader(const std::shared_ptr<ShaderModule>& shaderPtr, const std::string& assetPath)
+{
+    if (!shaderPtr)
+        return false;
+
+    if (this->descriptor)
+    {
+        this->descriptor->Cleanup();
+        this->descriptor.reset();
+        this->descriptor = nullptr;
+    }
+
+    this->materialData.CleanMaterialUBO();
+    this->IsInitialized = false;
+    this->shader = shaderPtr;
+    this->shaderAssetPath = assetPath;
+    this->hasDescriptorBuffer = shaderPtr->reflectShader.bindings.size() > 0;
+
+    if (this->hasDescriptorBuffer)
+    {
+        this->descriptor = std::make_shared<DescriptorBuffer>(this->shader);
+    }
+
+    this->InitializeMaterialData();
+    return true;
 }
 
 std::string QEMaterial::ToMaterialRelativePath(

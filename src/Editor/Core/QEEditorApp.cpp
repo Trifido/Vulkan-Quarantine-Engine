@@ -25,11 +25,13 @@
 #include "Panels/ConsolePanel.h"
 #include "Panels/MaterialInspectorPanel.h"
 #include "Panels/MaterialEditorPanel.h"
+#include "Panels/ShaderEditorPanel.h"
 #include "Panels/QETextureViewerPanel.h"
 #include "Rendering/EditorViewportResources.h"
 #include <QEProjectManager.h>
 #include <QEMeshRenderer.h>
 #include <Material.h>
+#include <MaterialManager.h>
 #include <algorithm>
 
 #include <QECamera.h>
@@ -226,6 +228,12 @@ void QEEditorApp::DrawEditorUI()
         {
             OpenMaterialEditor(*pendingMaterialOpen);
         }
+
+        auto pendingShaderOpen = projectBrowserPanelPtr->ConsumePendingShaderOpenRequest();
+        if (pendingShaderOpen.has_value())
+        {
+            OpenShaderEditor(*pendingShaderOpen);
+        }
     }
 
     UpdateEditorCameraInputState();
@@ -351,6 +359,7 @@ void QEEditorApp::CreatePanels()
 
     panels.emplace_back(std::make_unique<MaterialInspectorPanel>(
         gameObjectManager,
+        MaterialManager::getInstance(),
         editorContext.get(),
         selectionManager.get(),
         [this](const std::shared_ptr<QEMaterial>& material)
@@ -368,6 +377,11 @@ void QEEditorApp::CreatePanels()
 
     materialEditorPanelPtr = materialEditorPanelLocal.get();
     panels.emplace_back(std::move(materialEditorPanelLocal));
+
+    auto shaderEditorPanelLocal = std::make_unique<ShaderEditorPanel>(
+        editorContext.get());
+    shaderEditorPanelPtr = shaderEditorPanelLocal.get();
+    panels.emplace_back(std::move(shaderEditorPanelLocal));
 
     panels.emplace_back(std::make_unique<ConsolePanel>(
         editorContext.get(),
@@ -608,6 +622,14 @@ void QEEditorApp::OpenMaterialEditor(const std::filesystem::path& materialPath)
         return;
 
     materialEditorPanelPtr->OpenMaterialFromFile(materialPath);
+}
+
+void QEEditorApp::OpenShaderEditor(const std::filesystem::path& shaderPath)
+{
+    if (!shaderEditorPanelPtr)
+        return;
+
+    shaderEditorPanelPtr->OpenShaderFromFile(shaderPath);
 }
 
 void QEEditorApp::OpenMaterialEditor(const std::shared_ptr<QEMaterial>& material)

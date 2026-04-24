@@ -40,6 +40,8 @@ private:
     void DrawPreview();
     void HandlePreviewInteraction();
     void DrawProperties();
+    void DrawShaderReflection();
+    bool DrawShaderPickerPopup(const char* popupId);
     void SyncPreview();
 
 private:

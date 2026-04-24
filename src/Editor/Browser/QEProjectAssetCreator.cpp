@@ -2,7 +2,9 @@
 
 #include <QEProjectManager.h>
 #include <QEMaterialYamlHelper.h>
+#include <QEShaderYamlHelper.h>
 #include <MaterialDto.h>
+#include <QEShaderAsset.h>
 #include <Logging/QELogMacros.h>
 
 namespace
@@ -106,4 +108,33 @@ bool QEProjectAssetCreator::CreateMaterialAt(const fs::path& parentFolderPath, c
     dto.RenderQueue = static_cast<unsigned int>(RenderQueue::Geometry);
 
     return QEMaterialYamlHelper::WriteMaterialFile(outputPath, dto);
+}
+
+bool QEProjectAssetCreator::CreateShaderAt(const fs::path& parentFolderPath, const std::string& baseName)
+{
+    if (!ValidateParentFolder(parentFolderPath))
+        return false;
+
+    const fs::path resolvedParent = QEProjectManager::ResolveProjectPath(parentFolderPath);
+    const fs::path outputPath = BuildUniqueFilePath(resolvedParent, baseName, ".qeshader");
+
+    QEShaderAsset asset{};
+    asset.Name = outputPath.stem().string();
+    asset.FilePath = outputPath.generic_string();
+    asset.EntryPoint = "main";
+    asset.PipelineType = QEShaderPipelineType::Graphics;
+    asset.Graphics.HasVertexData = true;
+    asset.Graphics.VertexStride = 0;
+    asset.Graphics.Topology = QEShaderTopology::TriangleList;
+    asset.Graphics.PolygonMode = QEShaderPolygonMode::Fill;
+    asset.Graphics.CullMode = QEShaderCullMode::Back;
+    asset.Graphics.FrontFace = QEShaderFrontFace::CounterClockwise;
+    asset.Graphics.DepthTest = true;
+    asset.Graphics.DepthWrite = true;
+    asset.Graphics.LineWidth = 1.0f;
+    asset.Graphics.IsMeshShader = false;
+    asset.Shadow.Enabled = false;
+    asset.Shadow.Mode = ShadowMappingMode::NONE;
+
+    return QEShaderYamlHelper::WriteShaderFile(outputPath, asset);
 }

@@ -1,10 +1,14 @@
 #include "MaterialEditorPanel.h"
 
 #include <algorithm>
+#include <array>
+#include <vector>
 
 #include <imgui.h>
 
 #include <DeviceModule.h>
+#include <QEProjectManager.h>
+#include <QEShaderAssetLoader.h>
 #include <RenderPassModule.h>
 #include <CommandPoolModule.h>
 #include <QueueModule.h>
@@ -171,6 +175,18 @@ void MaterialEditorPanel::DrawToolbar()
 {
     ImGui::Text("Material: %s", _material->Name.c_str());
     ImGui::Text("Shader: %s", _material->shader ? _material->shader->shaderNameID.c_str() : "None");
+
+    const std::string shaderAssetLabel = _material->GetShaderAssetPath().empty()
+        ? "Legacy runtime shader"
+        : _material->GetShaderAssetPath();
+    ImGui::TextWrapped("Shader Asset: %s", shaderAssetLabel.c_str());
+
+    if (ImGui::Button("Select Shader"))
+    {
+        ImGui::OpenPopup("MaterialShaderPicker");
+    }
+
+    DrawShaderPickerPopup("MaterialShaderPicker");
 
     if (ImGui::Button("Save"))
     {
@@ -399,10 +415,162 @@ void MaterialEditorPanel::DrawProperties()
         changed = true;
     }
 
+    DrawShaderReflection();
+
     if (changed)
     {
         SyncPreview();
     }
+}
+
+void MaterialEditorPanel::DrawShaderReflection()
+{
+    if (!_material || !_material->shader)
+        return;
+
+    auto& reflect = _material->shader->reflectShader;
+
+    ImGui::SeparatorText("Shader Reflection");
+
+    ImGui::Text("Material UBO: %s", reflect.isUBOMaterial ? "Yes" : "No");
+    ImGui::Text("Input Stride: %u", reflect.inputStrideSize);
+    ImGui::Text("Directional Shadows: %s", reflect.HasDirectionalShadows ? "Yes" : "No");
+    ImGui::Text("Point Shadows: %s", reflect.HasPointShadows ? "Yes" : "No");
+    ImGui::Text("Spot Shadows: %s", reflect.HasSpotShadows ? "Yes" : "No");
+
+    if (!reflect.isUBOMaterial)
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 210, 120, 255));
+        ImGui::TextWrapped("This shader does not expose the expected material UBO. Material properties may not affect rendering.");
+        ImGui::PopStyleColor();
+    }
+
+    if (ImGui::TreeNode("Descriptor Bindings"))
+    {
+        for (const auto& [setIndex, bindingMap] : reflect.bindings)
+        {
+            const std::string setLabel = "Set " + std::to_string(setIndex);
+            if (ImGui::TreeNode(setLabel.c_str()))
+            {
+                for (const auto& [bindingIndex, binding] : bindingMap)
+                {
+                    ImGui::BulletText(
+                        "Binding %u - %s (array: %u)",
+                        bindingIndex,
+                        binding.name.c_str(),
+                        binding.arraySize);
+                }
+
+                ImGui::TreePop();
+            }
+        }
+
+        ImGui::TreePop();
+    }
+
+    if (!reflect.materialUBOMembers.empty() && ImGui::TreeNode("Material UBO Members"))
+    {
+        for (const auto& member : reflect.materialUBOMembers)
+        {
+            ImGui::BulletText(
+                "%s (offset: %u, size: %u)",
+                member.name.c_str(),
+                member.offset,
+                member.size);
+        }
+
+        ImGui::TreePop();
+    }
+
+    if (!reflect.inputVariables.empty() && ImGui::TreeNode("Vertex Inputs"))
+    {
+        for (const auto& input : reflect.inputVariables)
+        {
+            ImGui::BulletText(
+                "Location %u - %s [%s] (%u bytes)",
+                input.location,
+                input.name.c_str(),
+                input.type.c_str(),
+                input.size);
+        }
+
+        ImGui::TreePop();
+    }
+}
+
+bool MaterialEditorPanel::DrawShaderPickerPopup(const char* popupId)
+{
+    if (!_material)
+        return false;
+
+    if (!ImGui::BeginPopup(popupId))
+        return false;
+
+    static std::array<char, 256> searchBuffer{};
+    ImGui::InputTextWithHint("##MaterialShaderSearch", "Search .qeshader...", searchBuffer.data(), searchBuffer.size());
+    ImGui::Separator();
+
+    std::string search = searchBuffer.data();
+    std::transform(search.begin(), search.end(), search.begin(), ::tolower);
+
+    std::vector<std::filesystem::path> candidatePaths;
+    const std::filesystem::path projectRoot = QEProjectManager::GetCurrentProjectPath();
+
+    if (!projectRoot.empty() && std::filesystem::exists(projectRoot))
+    {
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(projectRoot))
+        {
+            if (!entry.is_regular_file())
+                continue;
+
+            if (!QEShaderAssetLoader::IsShaderAssetPath(entry.path()))
+                continue;
+
+            std::string relativePath = QEProjectManager::ToProjectRelativePath(entry.path());
+            std::string lowered = relativePath;
+            std::transform(lowered.begin(), lowered.end(), lowered.begin(), ::tolower);
+
+            if (!search.empty() && lowered.find(search) == std::string::npos)
+                continue;
+
+            candidatePaths.push_back(entry.path());
+        }
+    }
+
+    std::sort(candidatePaths.begin(), candidatePaths.end());
+
+    bool changed = false;
+
+    if (ImGui::BeginChild("MaterialShaderPickerList", ImVec2(520.0f, 260.0f), true))
+    {
+        for (const auto& candidatePath : candidatePaths)
+        {
+            const std::string relativePath = QEProjectManager::ToProjectRelativePath(candidatePath);
+            if (ImGui::Selectable(relativePath.c_str()))
+            {
+                auto shader = QEShaderAssetLoader::LoadShaderAsset(relativePath);
+                if (shader && _material->ApplyShader(shader, relativePath))
+                {
+                    changed = true;
+                    SyncPreview();
+                }
+
+                std::fill(searchBuffer.begin(), searchBuffer.end(), '\0');
+                ImGui::CloseCurrentPopup();
+                break;
+            }
+        }
+    }
+    ImGui::EndChild();
+
+    if (ImGui::Button("Close"))
+    {
+        std::fill(searchBuffer.begin(), searchBuffer.end(), '\0');
+        ImGui::CloseCurrentPopup();
+    }
+
+    ImGui::EndPopup();
+    return changed;
 }
 
 void MaterialEditorPanel::SyncPreview()
