@@ -14,6 +14,7 @@ public:
     std::shared_ptr<Animator> animator;
 
 private:
+    REFLECT_PROPERTY(bool, AutoStart)
     REFLECT_PROPERTY(AnimationState, currentState)
     REFLECT_PROPERTY(std::vector<AnimationState>, States)
     std::unordered_map<std::string, AnimationState> _states;
@@ -31,6 +32,7 @@ private:
     std::unordered_set<std::string> _triggersUsedThisFrame;
     std::string _activeTransitionFromState;
     std::string _activeTransitionToState;
+    bool _hasStartedPlayback = false;
 
 private:
     QEParam& ensureParam_(const std::string& name, QEParamType desired);
@@ -72,6 +74,10 @@ public:
     void SetInt(const std::string& name, int v);
     void SetFloat(const std::string& name, float v);
     void SetTrigger(const std::string& name, bool value = true);
+    void SetAutoStart(bool autoStart);
+    bool GetAutoStart() const;
+    void StartEntryPlayback();
+    bool HasStartedPlayback() const;
 
     AnimationState GetCurrentState() const;
     bool IsInStateTransition() const;

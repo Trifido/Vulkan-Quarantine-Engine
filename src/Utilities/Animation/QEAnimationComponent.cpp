@@ -7,6 +7,7 @@
 QEAnimationComponent::QEAnimationComponent()
 {
     this->animator = std::make_shared<Animator>();
+    this->AutoStart = false;
 }
 
 void QEAnimationComponent::RebuildStateMachineCaches()
@@ -191,6 +192,7 @@ void QEAnimationComponent::SetStateMachineData(
 
     _activeTransitionFromState.clear();
     _activeTransitionToState.clear();
+    _hasStartedPlayback = false;
 }
 
 void QEAnimationComponent::SetBoolParameterNames(const std::vector<std::string>& boolNames)
@@ -463,6 +465,45 @@ void QEAnimationComponent::SetTrigger(const std::string& name, bool value)
     p.trigger = value;
 }
 
+void QEAnimationComponent::SetAutoStart(bool autoStart)
+{
+    AutoStart = autoStart;
+}
+
+bool QEAnimationComponent::GetAutoStart() const
+{
+    return AutoStart;
+}
+
+void QEAnimationComponent::StartEntryPlayback()
+{
+    auto entryState = _states.find(currentState.Id);
+    if (entryState != _states.end())
+    {
+        auto entryAnimation = _animations.find(entryState->second.AnimationClip);
+        if (entryAnimation != _animations.end())
+        {
+            animator->PlayAnimation(entryAnimation->second, entryState->second.Loop);
+            _hasStartedPlayback = true;
+            _activeTransitionFromState.clear();
+            _activeTransitionToState.clear();
+            return;
+        }
+    }
+
+    auto anim = _animations.begin();
+    if (anim != _animations.end())
+    {
+        this->animator->PlayAnimation(anim->second, true);
+        _hasStartedPlayback = true;
+    }
+}
+
+bool QEAnimationComponent::HasStartedPlayback() const
+{
+    return _hasStartedPlayback;
+}
+
 AnimationState QEAnimationComponent::GetCurrentState() const
 {
     return currentState;
@@ -588,6 +629,11 @@ void QEAnimationComponent::QEStart()
 
 void QEAnimationComponent::QEUpdate()
 {
+    if (!_hasStartedPlayback)
+    {
+        return;
+    }
+
     animator->UpdateAnimation(Timer::DeltaTime, currentState.Loop);
 
     if (!animator->IsInTransition())
@@ -667,25 +713,17 @@ void QEAnimationComponent::QEInit()
         }
     }
 
-    auto entryState = this->_states.find(this->currentState.Id);
-    if (entryState != this->_states.end())
+    _hasStartedPlayback = false;
+    if (AutoStart)
     {
-        std::string animationClip = entryState->second.AnimationClip;
-        auto entryAnimation = this->_animations.find(animationClip);
-
-        if (entryAnimation != this->_animations.end())
-        {
-            this->animator->PlayAnimation(entryAnimation->second, entryState->second.Loop);
-        }
+        StartEntryPlayback();
     }
     else
     {
-        auto anim = _animations.begin();
-
-        if (anim != _animations.end())
-        {
-            this->animator->PlayAnimation(anim->second, true);
-        }
+        // In editor we still want the mesh posed, even if the state machine
+        // should wait for an explicit start.
+        StartEntryPlayback();
+        _hasStartedPlayback = false;
     }
 
     QEGameComponent::QEInit();

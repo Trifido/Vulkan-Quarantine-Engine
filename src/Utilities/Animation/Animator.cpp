@@ -163,12 +163,10 @@ void Animator::UpdateAnimation(float dt, bool loop)
 
 void Animator::PlayAnimation(std::shared_ptr<Animation> pAnimation, bool loop)
 {
-    if (pAnimation == m_CurrentAnimation)
-        return;
-
     m_CurrentTime = 0.0f;
     m_CurrentAnimation = pAnimation;
     m_loop = loop;
+    mFade = CrossFadeState{};
 
     auto rootNode = m_CurrentAnimation->GetRootNode();
     CalculateBoneTransform(&rootNode, glm::mat4(1.0f));

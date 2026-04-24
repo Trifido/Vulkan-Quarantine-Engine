@@ -1045,13 +1045,19 @@ void AnimationGraphPanel::DrawContextMenu(
 
 void AnimationGraphPanel::DrawPropertiesPane(QEAnimationComponent& component, SessionGraphState& sessionGraph)
 {
+    const QEAnimationGraphNode* selectedNode = nullptr;
     const QEAnimationGraphNode* selectedStateNode = nullptr;
+    const QEAnimationGraphNode* selectedEntryNode = nullptr;
     if (sessionGraph.SelectedNodeIds.size() == 1)
     {
-        selectedStateNode = FindNodeById(sessionGraph.GraphData, *sessionGraph.SelectedNodeIds.begin());
-        if (selectedStateNode && selectedStateNode->Kind == QEAnimationGraphNodeKind::Entry)
+        selectedNode = FindNodeById(sessionGraph.GraphData, *sessionGraph.SelectedNodeIds.begin());
+        if (selectedNode && selectedNode->Kind == QEAnimationGraphNodeKind::Entry)
         {
-            selectedStateNode = nullptr;
+            selectedEntryNode = selectedNode;
+        }
+        else
+        {
+            selectedStateNode = selectedNode;
         }
     }
 
@@ -1062,7 +1068,25 @@ void AnimationGraphPanel::DrawPropertiesPane(QEAnimationComponent& component, Se
 
     ImGui::BeginChild("AnimationGraphProperties", ImVec2(0.0f, 0.0f), true);
 
-    if (selectedStateNode)
+    if (selectedEntryNode)
+    {
+        ImGui::SeparatorText("Entry");
+
+        bool autoStart = component.GetAutoStart();
+        if (ImGui::Checkbox("Auto Start", &autoStart))
+        {
+            component.SetAutoStart(autoStart);
+        }
+
+        if (!component.HasStartedPlayback() && ImGui::Button("Start Now"))
+        {
+            component.StartEntryPlayback();
+        }
+
+        ImGui::Text("Target State: %s", selectedEntryNode->StateId.empty() ? "<none>" : selectedEntryNode->StateId.c_str());
+        ImGui::SeparatorText("Transitions");
+    }
+    else if (selectedStateNode)
     {
         ImGui::SeparatorText("State");
 
@@ -1161,7 +1185,7 @@ void AnimationGraphPanel::DrawPropertiesPane(QEAnimationComponent& component, Se
     }
     else
     {
-        ImGui::TextUnformatted("Select a state node to edit it.");
+        ImGui::TextUnformatted("Select an entry or state node to edit it.");
         ImGui::SeparatorText("Transitions");
     }
 
