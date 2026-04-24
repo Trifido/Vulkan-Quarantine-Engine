@@ -19,6 +19,19 @@ namespace
     constexpr const char* kContextMenuId = "AnimationGraphContextMenu";
     constexpr int kMaxStateSlots = 8;
 
+    const char* ToString(QEParamType type)
+    {
+        switch (type)
+        {
+        case QEParamType::Bool: return "Bool";
+        case QEParamType::Int: return "Int";
+        case QEParamType::Float: return "Float";
+        case QEParamType::Trigger: return "Trigger";
+        }
+
+        return "Unknown";
+    }
+
     const char* ToString(QEOp op)
     {
         switch (op)
@@ -490,7 +503,7 @@ AnimationGraphPanel::AnimationGraphPanel(
 {
     _graphOptions.mNodeSlotRadius = 6.0f;
     _graphOptions.mNodeSlotHoverFactor = 1.15f;
-    _graphOptions.mMinimap = ImRect(0.77f, 0.74f, 0.99f, 0.99f);
+    _graphOptions.mMinimap = ImRect(0.0f, 0.0f, 0.0f, 0.0f);
     _graphOptions.mDrawIONameOnHover = false;
 }
 
@@ -533,10 +546,14 @@ void AnimationGraphPanel::Draw()
     DrawToolbar(gameObject, *animationComponent, sessionGraph);
     ImGui::Separator();
 
-    if (ImGui::BeginTable("AnimationGraphLayout", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_SizingStretchProp))
+    if (ImGui::BeginTable("AnimationGraphLayout", 3, ImGuiTableFlags_Resizable | ImGuiTableFlags_SizingStretchProp))
     {
-        ImGui::TableSetupColumn("Graph", ImGuiTableColumnFlags_WidthStretch, 0.68f);
-        ImGui::TableSetupColumn("Properties", ImGuiTableColumnFlags_WidthStretch, 0.32f);
+        ImGui::TableSetupColumn("Parameters", ImGuiTableColumnFlags_WidthStretch, 0.22f);
+        ImGui::TableSetupColumn("Graph", ImGuiTableColumnFlags_WidthStretch, 0.50f);
+        ImGui::TableSetupColumn("Properties", ImGuiTableColumnFlags_WidthStretch, 0.28f);
+
+        ImGui::TableNextColumn();
+        DrawParametersPane(*animationComponent, sessionGraph);
 
         ImGui::TableNextColumn();
         DrawGraphArea(gameObject, *animationComponent, sessionGraph);
@@ -602,6 +619,208 @@ void AnimationGraphPanel::DrawToolbar(
         sessionGraph.SelectedNodeIds.clear();
         sessionGraph.SelectedLinkId.clear();
     }
+}
+
+void AnimationGraphPanel::DrawParametersPane(QEAnimationComponent& component, SessionGraphState& sessionGraph)
+{
+    ImGui::BeginChild("AnimationGraphParameters", ImVec2(0.0f, 0.0f), true);
+
+    auto patchParameterNameInTransitions = [&](const std::string& oldName, const std::string& newName)
+    {
+        auto transitionsToPatch = component.GetAnimationTransitions();
+        for (auto& transitionToPatch : transitionsToPatch)
+        {
+            for (auto& conditionToPatch : transitionToPatch.conditions)
+            {
+                if (conditionToPatch.param == oldName)
+                {
+                    conditionToPatch.param = newName;
+                }
+            }
+        }
+        return transitionsToPatch;
+    };
+
+    auto removeParameterFromTransitions = [&](const std::string& removedName)
+    {
+        auto transitionsToPatch = component.GetAnimationTransitions();
+        for (auto& transitionToPatch : transitionsToPatch)
+        {
+            transitionToPatch.conditions.erase(
+                std::remove_if(
+                    transitionToPatch.conditions.begin(),
+                    transitionToPatch.conditions.end(),
+                    [&](const QECondition& conditionToPatch)
+                    {
+                        return conditionToPatch.param == removedName;
+                    }),
+                transitionToPatch.conditions.end());
+        }
+        return transitionsToPatch;
+    };
+
+    auto applyParameterEdits = [&](const std::vector<std::string>& boolNames,
+                                   const std::vector<std::string>& intNames,
+                                   const std::vector<std::string>& floatNames,
+                                   const std::vector<std::string>& triggerNames,
+                                   const std::vector<QETransition>& transitionsToPatch)
+    {
+        component.SetBoolParameterNames(boolNames);
+        component.SetIntParameterNames(intNames);
+        component.SetFloatParameterNames(floatNames);
+        component.SetTriggerParameterNames(triggerNames);
+        component.SetStateMachineData(component.GetAnimationStates(), transitionsToPatch, component.GetCurrentState().Id);
+    };
+
+    struct ParameterEntry
+    {
+        QEParamType Type;
+        std::string Name;
+    };
+
+    std::vector<ParameterEntry> parameterEntries;
+    for (const auto& name : component.GetBoolParameterNames())
+        parameterEntries.push_back({ QEParamType::Bool, name });
+    for (const auto& name : component.GetIntParameterNames())
+        parameterEntries.push_back({ QEParamType::Int, name });
+    for (const auto& name : component.GetFloatParameterNames())
+        parameterEntries.push_back({ QEParamType::Float, name });
+    for (const auto& name : component.GetTriggerParameterNames())
+        parameterEntries.push_back({ QEParamType::Trigger, name });
+
+    ImGui::TextUnformatted("Parameters");
+    ImGui::Separator();
+
+    int paramToRemove = -1;
+    for (size_t i = 0; i < parameterEntries.size(); ++i)
+    {
+        ImGui::PushID(1000 + static_cast<int>(i));
+
+        ImGui::Text("%s", ToString(parameterEntries[i].Type));
+        ImGui::SameLine();
+
+        char nameBuffer[128] = {};
+        std::strncpy(nameBuffer, parameterEntries[i].Name.c_str(), sizeof(nameBuffer) - 1);
+        if (ImGui::InputText("##ParameterName", nameBuffer, sizeof(nameBuffer)))
+        {
+            const std::string updatedName = nameBuffer;
+            if (!updatedName.empty())
+            {
+                auto boolNames = component.GetBoolParameterNames();
+                auto intNames = component.GetIntParameterNames();
+                auto floatNames = component.GetFloatParameterNames();
+                auto triggerNames = component.GetTriggerParameterNames();
+                auto transitionsToPatch = patchParameterNameInTransitions(parameterEntries[i].Name, updatedName);
+
+                auto renameInList = [&](std::vector<std::string>& names)
+                {
+                    auto it = std::find(names.begin(), names.end(), parameterEntries[i].Name);
+                    if (it != names.end())
+                    {
+                        *it = updatedName;
+                    }
+                };
+
+                switch (parameterEntries[i].Type)
+                {
+                case QEParamType::Bool: renameInList(boolNames); break;
+                case QEParamType::Int: renameInList(intNames); break;
+                case QEParamType::Float: renameInList(floatNames); break;
+                case QEParamType::Trigger: renameInList(triggerNames); break;
+                }
+
+                applyParameterEdits(boolNames, intNames, floatNames, triggerNames, transitionsToPatch);
+            }
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("X"))
+        {
+            paramToRemove = static_cast<int>(i);
+        }
+
+        ImGui::PopID();
+    }
+
+    if (paramToRemove >= 0)
+    {
+        const auto& param = parameterEntries[paramToRemove];
+        auto boolNames = component.GetBoolParameterNames();
+        auto intNames = component.GetIntParameterNames();
+        auto floatNames = component.GetFloatParameterNames();
+        auto triggerNames = component.GetTriggerParameterNames();
+        auto transitionsToPatch = removeParameterFromTransitions(param.Name);
+
+        auto removeFromList = [&](std::vector<std::string>& names)
+        {
+            names.erase(std::remove(names.begin(), names.end(), param.Name), names.end());
+        };
+
+        switch (param.Type)
+        {
+        case QEParamType::Bool: removeFromList(boolNames); break;
+        case QEParamType::Int: removeFromList(intNames); break;
+        case QEParamType::Float: removeFromList(floatNames); break;
+        case QEParamType::Trigger: removeFromList(triggerNames); break;
+        }
+
+        applyParameterEdits(boolNames, intNames, floatNames, triggerNames, transitionsToPatch);
+    }
+
+    ImGui::SeparatorText("Add");
+
+    const std::array<QEParamType, 4> paramTypes = {
+        QEParamType::Bool,
+        QEParamType::Int,
+        QEParamType::Float,
+        QEParamType::Trigger
+    };
+
+    if (ImGui::BeginCombo("Type", ToString(sessionGraph.NewParameterType)))
+    {
+        for (int i = 0; i < static_cast<int>(paramTypes.size()); ++i)
+        {
+            const bool selected = (paramTypes[i] == sessionGraph.NewParameterType);
+            if (ImGui::Selectable(ToString(paramTypes[i]), selected))
+            {
+                sessionGraph.NewParameterType = paramTypes[i];
+            }
+
+            if (selected)
+            {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+        ImGui::EndCombo();
+    }
+
+    if (ImGui::Button("Add Parameter"))
+    {
+        auto boolNames = component.GetBoolParameterNames();
+        auto intNames = component.GetIntParameterNames();
+        auto floatNames = component.GetFloatParameterNames();
+        auto triggerNames = component.GetTriggerParameterNames();
+
+        switch (sessionGraph.NewParameterType)
+        {
+        case QEParamType::Bool:
+            boolNames.push_back("bool_" + std::to_string(static_cast<int>(boolNames.size()) + 1));
+            break;
+        case QEParamType::Int:
+            intNames.push_back("int_" + std::to_string(static_cast<int>(intNames.size()) + 1));
+            break;
+        case QEParamType::Float:
+            floatNames.push_back("float_" + std::to_string(static_cast<int>(floatNames.size()) + 1));
+            break;
+        case QEParamType::Trigger:
+            triggerNames.push_back("trigger_" + std::to_string(static_cast<int>(triggerNames.size()) + 1));
+            break;
+        }
+
+        applyParameterEdits(boolNames, intNames, floatNames, triggerNames, component.GetAnimationTransitions());
+    }
+
+    ImGui::EndChild();
 }
 
 void AnimationGraphPanel::DrawGraphArea(
@@ -710,8 +929,7 @@ void AnimationGraphPanel::DrawPropertiesPane(QEAnimationComponent& component, Se
 
     if (selectedStateNode)
     {
-        ImGui::TextUnformatted("State");
-        ImGui::Separator();
+        ImGui::SeparatorText("State");
 
         auto states = component.GetAnimationStates();
         auto stateIt = std::find_if(
@@ -786,152 +1004,6 @@ void AnimationGraphPanel::DrawPropertiesPane(QEAnimationComponent& component, Se
         {
             ImGui::TextUnformatted("Runtime state not found.");
         }
-
-        auto patchParameterNameInTransitions = [&](const std::string& oldName, const std::string& newName)
-        {
-            auto transitionsToPatch = component.GetAnimationTransitions();
-            for (auto& transitionToPatch : transitionsToPatch)
-            {
-                for (auto& conditionToPatch : transitionToPatch.conditions)
-                {
-                    if (conditionToPatch.param == oldName)
-                    {
-                        conditionToPatch.param = newName;
-                    }
-                }
-            }
-            return transitionsToPatch;
-        };
-
-        auto removeParameterFromTransitions = [&](const std::string& removedName)
-        {
-            auto transitionsToPatch = component.GetAnimationTransitions();
-            for (auto& transitionToPatch : transitionsToPatch)
-            {
-                transitionToPatch.conditions.erase(
-                    std::remove_if(
-                        transitionToPatch.conditions.begin(),
-                        transitionToPatch.conditions.end(),
-                        [&](const QECondition& conditionToPatch)
-                        {
-                            return conditionToPatch.param == removedName;
-                        }),
-                    transitionToPatch.conditions.end());
-            }
-            return transitionsToPatch;
-        };
-
-        auto applyParameterEdits = [&](const std::vector<std::string>& boolNames,
-                                       const std::vector<std::string>& intNames,
-                                       const std::vector<std::string>& floatNames,
-                                       const std::vector<std::string>& triggerNames,
-                                       const std::vector<QETransition>& transitionsToPatch)
-        {
-            component.SetBoolParameterNames(boolNames);
-            component.SetIntParameterNames(intNames);
-            component.SetFloatParameterNames(floatNames);
-            component.SetTriggerParameterNames(triggerNames);
-            component.SetStateMachineData(component.GetAnimationStates(), transitionsToPatch, component.GetCurrentState().Id);
-        };
-
-        auto drawParameterList = [&](const char* sectionLabel,
-                                     const char* addButtonLabel,
-                                     std::vector<std::string> names,
-                                     QEParamType type,
-                                     int idBase,
-                                     const std::string& newPrefix)
-        {
-            ImGui::SeparatorText(sectionLabel);
-
-            int paramToRemove = -1;
-            for (size_t i = 0; i < names.size(); ++i)
-            {
-                ImGui::PushID(static_cast<int>(i) + idBase);
-
-                char nameBuffer[128] = {};
-                std::strncpy(nameBuffer, names[i].c_str(), sizeof(nameBuffer) - 1);
-                if (ImGui::InputText("Name", nameBuffer, sizeof(nameBuffer)))
-                {
-                    const std::string updatedName = nameBuffer;
-                    if (!updatedName.empty())
-                    {
-                        const std::string oldName = names[i];
-                        names[i] = updatedName;
-
-                        const auto transitionsToPatch = patchParameterNameInTransitions(oldName, updatedName);
-                        auto boolNames = component.GetBoolParameterNames();
-                        auto intNames = component.GetIntParameterNames();
-                        auto floatNames = component.GetFloatParameterNames();
-                        auto triggerNames = component.GetTriggerParameterNames();
-
-                        switch (type)
-                        {
-                        case QEParamType::Bool: boolNames = names; break;
-                        case QEParamType::Int: intNames = names; break;
-                        case QEParamType::Float: floatNames = names; break;
-                        case QEParamType::Trigger: triggerNames = names; break;
-                        }
-
-                        applyParameterEdits(boolNames, intNames, floatNames, triggerNames, transitionsToPatch);
-                    }
-                }
-
-                ImGui::SameLine();
-                if (ImGui::Button("X"))
-                {
-                    paramToRemove = static_cast<int>(i);
-                }
-
-                ImGui::PopID();
-            }
-
-            if (paramToRemove >= 0)
-            {
-                const std::string removedName = names[paramToRemove];
-                names.erase(names.begin() + paramToRemove);
-
-                const auto transitionsToPatch = removeParameterFromTransitions(removedName);
-                auto boolNames = component.GetBoolParameterNames();
-                auto intNames = component.GetIntParameterNames();
-                auto floatNames = component.GetFloatParameterNames();
-                auto triggerNames = component.GetTriggerParameterNames();
-
-                switch (type)
-                {
-                case QEParamType::Bool: boolNames = names; break;
-                case QEParamType::Int: intNames = names; break;
-                case QEParamType::Float: floatNames = names; break;
-                case QEParamType::Trigger: triggerNames = names; break;
-                }
-
-                applyParameterEdits(boolNames, intNames, floatNames, triggerNames, transitionsToPatch);
-            }
-
-            if (ImGui::Button(addButtonLabel))
-            {
-                names.push_back(newPrefix + std::to_string(static_cast<int>(names.size()) + 1));
-                auto boolNames = component.GetBoolParameterNames();
-                auto intNames = component.GetIntParameterNames();
-                auto floatNames = component.GetFloatParameterNames();
-                auto triggerNames = component.GetTriggerParameterNames();
-
-                switch (type)
-                {
-                case QEParamType::Bool: boolNames = names; break;
-                case QEParamType::Int: intNames = names; break;
-                case QEParamType::Float: floatNames = names; break;
-                case QEParamType::Trigger: triggerNames = names; break;
-                }
-
-                applyParameterEdits(boolNames, intNames, floatNames, triggerNames, component.GetAnimationTransitions());
-            }
-        };
-
-        drawParameterList("Bool Parameters", "Add Bool", component.GetBoolParameterNames(), QEParamType::Bool, 1000, "bool_");
-        drawParameterList("Int Parameters", "Add Int", component.GetIntParameterNames(), QEParamType::Int, 2000, "int_");
-        drawParameterList("Float Parameters", "Add Float", component.GetFloatParameterNames(), QEParamType::Float, 3000, "float_");
-        drawParameterList("Trigger Parameters", "Add Trigger", component.GetTriggerParameterNames(), QEParamType::Trigger, 4000, "trigger_");
-
         ImGui::SeparatorText("Transitions");
     }
     else

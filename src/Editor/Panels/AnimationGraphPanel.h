@@ -27,6 +27,7 @@ public:
         QEAnimationGraphEditorData GraphData;
         std::unordered_set<std::string> SelectedNodeIds;
         std::string SelectedLinkId;
+        QEParamType NewParameterType = QEParamType::Bool;
     };
 
     AnimationGraphPanel(
@@ -63,6 +64,7 @@ private:
 private:
     SessionGraphState& GetOrCreateSessionGraph(const std::shared_ptr<QEGameObject>& gameObject, QEAnimationComponent& component);
     void DrawToolbar(const std::shared_ptr<QEGameObject>& gameObject, QEAnimationComponent& component, SessionGraphState& sessionGraph);
+    void DrawParametersPane(QEAnimationComponent& component, SessionGraphState& sessionGraph);
     void DrawGraphArea(const std::shared_ptr<QEGameObject>& gameObject, QEAnimationComponent& component, SessionGraphState& sessionGraph);
     void DrawContextMenu(const std::shared_ptr<QEGameObject>& gameObject, QEAnimationComponent& component, SessionGraphState& sessionGraph);
     void DrawPropertiesPane(QEAnimationComponent& component, SessionGraphState& sessionGraph);
