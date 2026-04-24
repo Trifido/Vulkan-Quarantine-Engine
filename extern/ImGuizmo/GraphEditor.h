@@ -139,6 +139,7 @@ struct Delegate
     
     virtual const size_t GetLinkCount() = 0;
     virtual const Link GetLink(LinkIndex index) = 0;
+    virtual ImU32 GetLinkColor(LinkIndex) { return 0; }
 
     virtual ~Delegate() = default;
 };

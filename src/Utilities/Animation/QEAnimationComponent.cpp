@@ -188,6 +188,9 @@ void QEAnimationComponent::SetStateMachineData(
     {
         currentState = States.front();
     }
+
+    _activeTransitionFromState.clear();
+    _activeTransitionToState.clear();
 }
 
 void QEAnimationComponent::SetBoolParameterNames(const std::vector<std::string>& boolNames)
@@ -297,6 +300,8 @@ void QEAnimationComponent::ChangeState(const std::string& toId)
     }
 
     currentState = it->second;
+    _activeTransitionFromState.clear();
+    _activeTransitionToState.clear();
 
     ClearAllTriggers();
 
@@ -317,6 +322,7 @@ void QEAnimationComponent::ChangeState(const std::string& toId, const QETransiti
     }
 
     const bool prevLoop = currentState.Loop;
+    const std::string previousStateId = currentState.Id;
     AnimationState nextState = it->second;
 
     auto nextClip = GetAnimation(nextState.AnimationClip);
@@ -325,10 +331,17 @@ void QEAnimationComponent::ChangeState(const std::string& toId, const QETransiti
         QE_LOG_ERROR_CAT_F("QEAnimationComponent", "Clip not found: {}", nextState.AnimationClip);
         return;
     }
-
-    currentState = nextState;
+    _activeTransitionFromState = previousStateId;
+    _activeTransitionToState = nextState.Id;
 
     animator->CrossFadeTo(nextClip, tr.blendDuration, nextState.Loop, prevLoop);
+
+    if (!animator->IsInTransition())
+    {
+        currentState = nextState;
+        _activeTransitionFromState.clear();
+        _activeTransitionToState.clear();
+    }
 
     ClearAllTriggers();
 }
@@ -455,6 +468,23 @@ AnimationState QEAnimationComponent::GetCurrentState() const
     return currentState;
 }
 
+bool QEAnimationComponent::IsInStateTransition() const
+{
+    return animator && animator->IsInTransition() &&
+        !_activeTransitionFromState.empty() &&
+        !_activeTransitionToState.empty();
+}
+
+std::string QEAnimationComponent::GetActiveTransitionFromState() const
+{
+    return _activeTransitionFromState;
+}
+
+std::string QEAnimationComponent::GetActiveTransitionToState() const
+{
+    return _activeTransitionToState;
+}
+
 bool QEAnimationComponent::GetBool(const std::string& name) const
 {
     auto it = _params.find(name);
@@ -562,6 +592,20 @@ void QEAnimationComponent::QEUpdate()
 
     if (!animator->IsInTransition())
     {
+        if (!_activeTransitionToState.empty())
+        {
+            auto transitionedState = _states.find(_activeTransitionToState);
+            if (transitionedState != _states.end())
+            {
+                currentState = transitionedState->second;
+            }
+
+            _activeTransitionFromState.clear();
+            _activeTransitionToState.clear();
+            _triggersUsedThisFrame.clear();
+            return;
+        }
+
         if (auto* tr = FindValidTransition())
         {
             ConsumeTriggersUsed(*tr);

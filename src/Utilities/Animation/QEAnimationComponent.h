@@ -29,6 +29,8 @@ private:
     std::unordered_map<std::string, QEParam> _params;
 
     std::unordered_set<std::string> _triggersUsedThisFrame;
+    std::string _activeTransitionFromState;
+    std::string _activeTransitionToState;
 
 private:
     QEParam& ensureParam_(const std::string& name, QEParamType desired);
@@ -72,6 +74,9 @@ public:
     void SetTrigger(const std::string& name, bool value = true);
 
     AnimationState GetCurrentState() const;
+    bool IsInStateTransition() const;
+    std::string GetActiveTransitionFromState() const;
+    std::string GetActiveTransitionToState() const;
     bool GetBool(const std::string& name) const;
     int  GetInt(const std::string& name) const;
     float GetFloat(const std::string& name) const;

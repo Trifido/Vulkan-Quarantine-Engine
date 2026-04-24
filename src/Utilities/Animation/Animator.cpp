@@ -278,9 +278,15 @@ void Animator::CrossFadeTo(std::shared_ptr<Animation> next, float durationSec, b
         return;
     }
 
-    // Si ya es la misma, no haces nada
+    // Si el siguiente estado reutiliza el mismo clip, hay que reiniciar el tiempo.
+    // Si no, una state machine con dos estados sobre el mismo clip se quedaria
+    // clavada al final y volveria a disparar el exit time inmediatamente.
     if (next == m_CurrentAnimation && !mFade.active)
+    {
+        m_CurrentTime = 0.0f;
+        m_loop = loopNext;
         return;
+    }
 
     mFade.active = true;
     mFade.elapsed = 0.0f;

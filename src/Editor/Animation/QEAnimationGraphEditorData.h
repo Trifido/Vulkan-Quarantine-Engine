@@ -29,6 +29,8 @@ struct QEAnimationGraphNode
     // Layout-only editor data.
     glm::vec2 Position = glm::vec2(0.0f);
     glm::vec2 Size = glm::vec2(220.0f, 110.0f);
+    int InputSlotCount = 1;
+    int OutputSlotCount = 1;
 };
 
 struct QEAnimationGraphLink

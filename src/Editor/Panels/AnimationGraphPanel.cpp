@@ -145,42 +145,46 @@ namespace
 
     int FindNextFreeSourceSlot(const QEAnimationGraphEditorData& graphData, const std::string& fromNodeId)
     {
+        const auto* node = FindNodeById(graphData, fromNodeId);
+        const int slotLimit = node ? std::clamp(node->OutputSlotCount, 1, kMaxStateSlots) : kMaxStateSlots;
         std::array<bool, kMaxStateSlots> used{};
         for (const auto& link : graphData.Links)
         {
-            if (link.FromNodeId == fromNodeId && link.SourceSlot >= 0 && link.SourceSlot < kMaxStateSlots)
+            if (link.FromNodeId == fromNodeId && link.SourceSlot >= 0 && link.SourceSlot < slotLimit)
             {
                 used[link.SourceSlot] = true;
             }
         }
 
-        for (int slot = 0; slot < kMaxStateSlots; ++slot)
+        for (int slot = 0; slot < slotLimit; ++slot)
         {
             if (!used[slot])
                 return slot;
         }
 
-        return kMaxStateSlots - 1;
+        return slotLimit - 1;
     }
 
     int FindNextFreeTargetSlot(const QEAnimationGraphEditorData& graphData, const std::string& toNodeId)
     {
+        const auto* node = FindNodeById(graphData, toNodeId);
+        const int slotLimit = node ? std::clamp(node->InputSlotCount, 1, kMaxStateSlots) : kMaxStateSlots;
         std::array<bool, kMaxStateSlots> used{};
         for (const auto& link : graphData.Links)
         {
-            if (link.ToNodeId == toNodeId && link.TargetSlot >= 0 && link.TargetSlot < kMaxStateSlots)
+            if (link.ToNodeId == toNodeId && link.TargetSlot >= 0 && link.TargetSlot < slotLimit)
             {
                 used[link.TargetSlot] = true;
             }
         }
 
-        for (int slot = 0; slot < kMaxStateSlots; ++slot)
+        for (int slot = 0; slot < slotLimit; ++slot)
         {
             if (!used[slot])
                 return slot;
         }
 
-        return kMaxStateSlots - 1;
+        return slotLimit - 1;
     }
 
     std::string MakeStateNodeId(const std::string& stateId)
@@ -209,6 +213,42 @@ namespace
             const std::string pairKey = link.FromStateId + "->" + link.ToStateId;
             link.TransitionOrdinal = ordinalsByPair[pairKey]++;
             link.Id = MakeTransitionLinkId(link.FromStateId, link.ToStateId, link.TransitionOrdinal);
+        }
+    }
+
+    int MakeStateTemplateIndex(int inputCount, int outputCount)
+    {
+        const int clampedInput = std::clamp(inputCount, 1, kMaxStateSlots);
+        const int clampedOutput = std::clamp(outputCount, 1, kMaxStateSlots);
+        return 1 + (clampedInput - 1) * kMaxStateSlots + (clampedOutput - 1);
+    }
+
+    void NormalizeNodeSlotCounts(QEAnimationGraphEditorData& graphData)
+    {
+        std::unordered_map<std::string, int> incomingCounts;
+        std::unordered_map<std::string, int> outgoingCounts;
+
+        for (auto& link : graphData.Links)
+        {
+            if (link.FromNodeId != "entry")
+            {
+                link.SourceSlot = std::min(outgoingCounts[link.FromNodeId]++, kMaxStateSlots - 1);
+            }
+
+            link.TargetSlot = std::min(incomingCounts[link.ToNodeId]++, kMaxStateSlots - 1);
+        }
+
+        for (auto& node : graphData.Nodes)
+        {
+            if (node.Kind == QEAnimationGraphNodeKind::Entry)
+            {
+                node.InputSlotCount = 0;
+                node.OutputSlotCount = 1;
+                continue;
+            }
+
+            node.InputSlotCount = std::clamp(std::max(node.InputSlotCount, incomingCounts[node.Id]), 1, kMaxStateSlots);
+            node.OutputSlotCount = std::clamp(std::max(node.OutputSlotCount, outgoingCounts[node.Id]), 1, kMaxStateSlots);
         }
     }
 
@@ -282,8 +322,8 @@ namespace
             if (inputNodeIndex >= _sessionGraph.GraphData.Nodes.size() || outputNodeIndex >= _sessionGraph.GraphData.Nodes.size())
                 return;
 
-            const auto& fromNode = _sessionGraph.GraphData.Nodes[inputNodeIndex];
-            const auto& toNode = _sessionGraph.GraphData.Nodes[outputNodeIndex];
+            auto& fromNode = _sessionGraph.GraphData.Nodes[inputNodeIndex];
+            auto& toNode = _sessionGraph.GraphData.Nodes[outputNodeIndex];
 
             if (fromNode.Kind == QEAnimationGraphNodeKind::Entry)
             {
@@ -310,9 +350,64 @@ namespace
                 entryLink.ToStateId = toNode.StateId;
                 entryLink.TargetSlot = FindNextFreeTargetSlot(_sessionGraph.GraphData, toNode.Id);
                 _sessionGraph.GraphData.Links.insert(_sessionGraph.GraphData.Links.begin(), entryLink);
+                NormalizeNodeSlotCounts(_sessionGraph.GraphData);
                 _panel.SetEntryNode(_sessionGraph, toNode.StateId);
                 _panel.ApplyGraphToComponent(_component, _sessionGraph);
                 return;
+            }
+
+            if (FindNextFreeSourceSlot(_sessionGraph.GraphData, fromNode.Id) == std::max(0, fromNode.OutputSlotCount - 1) &&
+                fromNode.OutputSlotCount < kMaxStateSlots)
+            {
+                bool allUsed = true;
+                for (int slot = 0; slot < fromNode.OutputSlotCount; ++slot)
+                {
+                    bool used = false;
+                    for (const auto& existingLink : _sessionGraph.GraphData.Links)
+                    {
+                        if (existingLink.FromNodeId == fromNode.Id && existingLink.SourceSlot == slot)
+                        {
+                            used = true;
+                            break;
+                        }
+                    }
+                    if (!used)
+                    {
+                        allUsed = false;
+                        break;
+                    }
+                }
+                if (allUsed)
+                {
+                    fromNode.OutputSlotCount++;
+                }
+            }
+
+            if (FindNextFreeTargetSlot(_sessionGraph.GraphData, toNode.Id) == std::max(0, toNode.InputSlotCount - 1) &&
+                toNode.InputSlotCount < kMaxStateSlots)
+            {
+                bool allUsed = true;
+                for (int slot = 0; slot < toNode.InputSlotCount; ++slot)
+                {
+                    bool used = false;
+                    for (const auto& existingLink : _sessionGraph.GraphData.Links)
+                    {
+                        if (existingLink.ToNodeId == toNode.Id && existingLink.TargetSlot == slot)
+                        {
+                            used = true;
+                            break;
+                        }
+                    }
+                    if (!used)
+                    {
+                        allUsed = false;
+                        break;
+                    }
+                }
+                if (allUsed)
+                {
+                    toNode.InputSlotCount++;
+                }
             }
 
             QEAnimationGraphLink link;
@@ -323,6 +418,7 @@ namespace
             link.SourceSlot = FindNextFreeSourceSlot(_sessionGraph.GraphData, fromNode.Id);
             link.TargetSlot = FindNextFreeTargetSlot(_sessionGraph.GraphData, toNode.Id);
             _sessionGraph.GraphData.Links.push_back(link);
+            NormalizeNodeSlotCounts(_sessionGraph.GraphData);
             NormalizeLinks(_sessionGraph.GraphData);
             if (!_sessionGraph.GraphData.Links.empty())
             {
@@ -350,6 +446,7 @@ namespace
                 _panel.SetEntryNode(_sessionGraph, "");
             }
 
+            NormalizeNodeSlotCounts(_sessionGraph.GraphData);
             NormalizeLinks(_sessionGraph.GraphData);
             _panel.ApplyGraphToComponent(_component, _sessionGraph);
         }
@@ -379,10 +476,39 @@ namespace
             const AnimationState& state = stateIt->second;
             const std::string clipText = "Clip: " + (state.AnimationClip.empty() ? std::string("<none>") : state.AnimationClip);
             const std::string loopText = std::string("Loop: ") + (state.Loop ? "true" : "false");
+            const std::string currentStateId = _component.GetCurrentState().Id;
+            const bool isCurrentState = (!currentStateId.empty() && node.Id == MakeStateNodeId(currentStateId));
+
+            if (isCurrentState)
+            {
+                drawList->AddRect(rectangle.Min, rectangle.Max, IM_COL32(34, 197, 94, 255), 4.0f, 0, 3.0f);
+                drawList->AddText(ImVec2(rectangle.Max.x - 70.0f, rectangle.Min.y + 8.0f), IM_COL32(134, 239, 172, 255), "ACTIVE");
+            }
 
             drawList->AddText(cursor, IM_COL32(220, 220, 220, 255), clipText.c_str());
             cursor.y += 18.0f;
             drawList->AddText(cursor, IM_COL32(180, 220, 180, 255), loopText.c_str());
+        }
+
+        ImU32 GetLinkColor(GraphEditor::LinkIndex index) override
+        {
+            if (index >= _sessionGraph.GraphData.Links.size())
+                return 0;
+
+            if (!_component.IsInStateTransition())
+                return 0;
+
+            const auto& link = _sessionGraph.GraphData.Links[index];
+            if (link.FromNodeId == "entry")
+                return 0;
+
+            if (link.FromStateId == _component.GetActiveTransitionFromState() &&
+                link.ToStateId == _component.GetActiveTransitionToState())
+            {
+                return IM_COL32(34, 197, 94, 255);
+            }
+
+            return 0;
         }
 
         void RightClick(GraphEditor::NodeIndex nodeIndex, GraphEditor::SlotIndex slotIndexInput, GraphEditor::SlotIndex slotIndexOutput) override
@@ -396,14 +522,14 @@ namespace
 
         const size_t GetTemplateCount() override
         {
-            return 2;
+            return 1 + static_cast<size_t>(kMaxStateSlots * kMaxStateSlots);
         }
 
         const GraphEditor::Template GetTemplate(GraphEditor::TemplateIndex index) override
         {
             static const char* entryOutputs[] = { "Out" };
-            static const char* stateInputs[] = { "In 0", "In 1", "In 2", "In 3", "In 4", "In 5", "In 6", "In 7" };
-            static const char* stateOutputs[] = { "Out 0", "Out 1", "Out 2", "Out 3", "Out 4", "Out 5", "Out 6", "Out 7" };
+            static const char* stateInputs[] = { "In", "In", "In", "In", "In", "In", "In", "In" };
+            static const char* stateOutputs[] = { "Out", "Out", "Out", "Out", "Out", "Out", "Out", "Out" };
             static ImU32 entryOutputColors[] = { IM_COL32(234, 179, 8, 255) };
             static ImU32 stateInputColors[] =
             {
@@ -428,21 +554,26 @@ namespace
                     1,
                     entryOutputs,
                     entryOutputColors
-                },
-                {
-                    IM_COL32(30, 64, 175, 255),
-                    IM_COL32(30, 41, 59, 255),
-                    IM_COL32(51, 65, 85, 255),
-                    kMaxStateSlots,
-                    stateInputs,
-                    stateInputColors,
-                    kMaxStateSlots,
-                    stateOutputs,
-                    stateOutputColors
                 }
             };
 
-            return templates[index];
+            if (index == 0)
+            {
+                return templates[0];
+            }
+
+            const int stateTemplateIndex = static_cast<int>(index) - 1;
+            GraphEditor::Template stateTemplate{};
+            stateTemplate.mHeaderColor = IM_COL32(30, 64, 175, 255);
+            stateTemplate.mBackgroundColor = IM_COL32(30, 41, 59, 255);
+            stateTemplate.mBackgroundColorOver = IM_COL32(51, 65, 85, 255);
+            stateTemplate.mInputCount = static_cast<ImU8>(1 + (stateTemplateIndex / kMaxStateSlots));
+            stateTemplate.mInputNames = stateInputs;
+            stateTemplate.mInputColors = stateInputColors;
+            stateTemplate.mOutputCount = static_cast<ImU8>(1 + (stateTemplateIndex % kMaxStateSlots));
+            stateTemplate.mOutputNames = stateOutputs;
+            stateTemplate.mOutputColors = stateOutputColors;
+            return stateTemplate;
         }
 
         const size_t GetNodeCount() override
@@ -456,7 +587,9 @@ namespace
             return GraphEditor::Node
             {
                 node.Title.c_str(),
-                node.Kind == QEAnimationGraphNodeKind::Entry ? 0u : 1u,
+                node.Kind == QEAnimationGraphNodeKind::Entry
+                    ? 0u
+                    : static_cast<GraphEditor::TemplateIndex>(MakeStateTemplateIndex(node.InputSlotCount, node.OutputSlotCount)),
                 ImRect(
                     ImVec2(node.Position.x, node.Position.y),
                     ImVec2(node.Position.x + node.Size.x, node.Position.y + node.Size.y)),
@@ -501,6 +634,7 @@ AnimationGraphPanel::AnimationGraphPanel(
     : editorContext(editorContext)
     , selectionManager(selectionManager)
 {
+    _graphOptions.mLineThickness = 3.0f;
     _graphOptions.mNodeSlotRadius = 6.0f;
     _graphOptions.mNodeSlotHoverFactor = 1.15f;
     _graphOptions.mMinimap = ImRect(0.0f, 0.0f, 0.0f, 0.0f);
@@ -578,6 +712,7 @@ AnimationGraphPanel::SessionGraphState& AnimationGraphPanel::GetOrCreateSessionG
     if (inserted || it->second.GraphData.Nodes.empty())
     {
         it->second.GraphData = QEAnimationGraphRuntimeAdapter::BuildEditorData(component);
+        NormalizeNodeSlotCounts(it->second.GraphData);
         it->second.SelectedNodeIds.clear();
         it->second.SelectedLinkId.clear();
     }
@@ -943,6 +1078,7 @@ void AnimationGraphPanel::DrawPropertiesPane(QEAnimationComponent& component, Se
         if (stateIt != states.end())
         {
             AnimationState state = *stateIt;
+            auto* editableNode = FindNodeById(sessionGraph.GraphData, selectedStateNode->Id);
 
             char idBuffer[256] = {};
             std::strncpy(idBuffer, state.Id.c_str(), sizeof(idBuffer) - 1);
@@ -991,6 +1127,23 @@ void AnimationGraphPanel::DrawPropertiesPane(QEAnimationComponent& component, Se
                 UpdateState(sessionGraph, component, state.Id, state);
             }
 
+            if (editableNode)
+            {
+                int inputSlots = editableNode->InputSlotCount;
+                if (ImGui::DragInt("Input Slots", &inputSlots, 0.1f, 1, kMaxStateSlots))
+                {
+                    editableNode->InputSlotCount = std::clamp(inputSlots, 1, kMaxStateSlots);
+                    NormalizeNodeSlotCounts(sessionGraph.GraphData);
+                }
+
+                int outputSlots = editableNode->OutputSlotCount;
+                if (ImGui::DragInt("Output Slots", &outputSlots, 0.1f, 1, kMaxStateSlots))
+                {
+                    editableNode->OutputSlotCount = std::clamp(outputSlots, 1, kMaxStateSlots);
+                    NormalizeNodeSlotCounts(sessionGraph.GraphData);
+                }
+            }
+
             if (ImGui::Button("Delete State"))
             {
                 const std::string nodeIdToDelete = selectedStateNode->Id;
@@ -1021,7 +1174,7 @@ void AnimationGraphPanel::DrawPropertiesPane(QEAnimationComponent& component, Se
 
         if (selectedStateNode)
         {
-            if (link.FromStateId != selectedStateNode->StateId && link.ToStateId != selectedStateNode->StateId)
+            if (link.FromStateId != selectedStateNode->StateId)
                 continue;
         }
 
@@ -1281,6 +1434,7 @@ void AnimationGraphPanel::RequestContextMenu(const std::string& objectId, int no
 void AnimationGraphPanel::ApplyGraphToComponent(QEAnimationComponent& component, SessionGraphState& sessionGraph)
 {
     RemoveDanglingLinks(sessionGraph);
+    NormalizeNodeSlotCounts(sessionGraph.GraphData);
     NormalizeLinks(sessionGraph.GraphData);
     QEAnimationGraphRuntimeAdapter::ApplyEditorData(component, sessionGraph.GraphData);
 }
@@ -1292,6 +1446,7 @@ void AnimationGraphPanel::RefreshGraphFromComponent(const std::shared_ptr<QEGame
 
     auto& sessionGraph = _sessionGraphs[gameObject->ID()];
     sessionGraph.GraphData = QEAnimationGraphRuntimeAdapter::BuildEditorData(component, &sessionGraph.GraphData);
+    NormalizeNodeSlotCounts(sessionGraph.GraphData);
 
     std::unordered_set<std::string> validNodeIds;
     for (const auto& node : sessionGraph.GraphData.Nodes)

@@ -46,6 +46,8 @@ namespace YAML
             node["StateId"] = rhs.StateId;
             node["Position"] = rhs.Position;
             node["Size"] = rhs.Size;
+            node["InputSlotCount"] = rhs.InputSlotCount;
+            node["OutputSlotCount"] = rhs.OutputSlotCount;
             return node;
         }
 
@@ -62,6 +64,8 @@ namespace YAML
             rhs.StateId = node["StateId"] ? node["StateId"].as<std::string>() : "";
             rhs.Position = node["Position"] ? node["Position"].as<glm::vec2>() : glm::vec2(0.0f);
             rhs.Size = node["Size"] ? node["Size"].as<glm::vec2>() : glm::vec2(220.0f, 110.0f);
+            rhs.InputSlotCount = node["InputSlotCount"] ? node["InputSlotCount"].as<int>() : 1;
+            rhs.OutputSlotCount = node["OutputSlotCount"] ? node["OutputSlotCount"].as<int>() : 1;
             return true;
         }
     };

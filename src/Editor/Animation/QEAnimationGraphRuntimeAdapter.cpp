@@ -9,6 +9,8 @@
 
 namespace
 {
+    constexpr int kMaxStateSlots = 8;
+
     struct TransitionKey
     {
         std::string FromStateId;
@@ -78,6 +80,19 @@ namespace QEAnimationGraphRuntimeAdapter
         const auto& states = component.GetAnimationStates();
         const auto& transitions = component.GetAnimationTransitions();
         const AnimationState currentState = component.GetCurrentState();
+        std::unordered_map<std::string, int> incomingCounts;
+        std::unordered_map<std::string, int> outgoingCounts;
+
+        if (!currentState.Id.empty())
+        {
+            incomingCounts[currentState.Id]++;
+        }
+
+        for (const auto& transition : transitions)
+        {
+            outgoingCounts[transition.fromState]++;
+            incomingCounts[transition.toState]++;
+        }
 
         QEAnimationGraphNode entryNode;
         entryNode.Id = "entry";
@@ -86,6 +101,8 @@ namespace QEAnimationGraphRuntimeAdapter
         entryNode.StateId = currentState.Id;
         entryNode.Position = glm::vec2(-340.0f, 0.0f);
         entryNode.Size = glm::vec2(180.0f, 90.0f);
+        entryNode.InputSlotCount = 0;
+        entryNode.OutputSlotCount = 1;
 
         if (auto it = previousNodes.find(entryNode.Id); it != previousNodes.end())
         {
@@ -107,11 +124,15 @@ namespace QEAnimationGraphRuntimeAdapter
             node.Position = glm::vec2(
                 120.0f + static_cast<float>(i % 4) * 280.0f,
                 static_cast<float>(i / 4) * 180.0f);
+            node.InputSlotCount = std::clamp(std::max(1, incomingCounts[state.Id]), 1, kMaxStateSlots);
+            node.OutputSlotCount = std::clamp(std::max(1, outgoingCounts[state.Id]), 1, kMaxStateSlots);
 
             if (auto it = previousNodes.find(node.Id); it != previousNodes.end())
             {
                 node.Position = it->second.Position;
                 node.Size = it->second.Size;
+                node.InputSlotCount = std::clamp(std::max(it->second.InputSlotCount, incomingCounts[state.Id]), 1, kMaxStateSlots);
+                node.OutputSlotCount = std::clamp(std::max(it->second.OutputSlotCount, outgoingCounts[state.Id]), 1, kMaxStateSlots);
             }
 
             editorData.Nodes.push_back(node);

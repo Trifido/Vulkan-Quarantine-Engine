@@ -183,11 +183,19 @@ static void DisplayLinks(Delegate& delegate,
 
         bool highlightCons = hoveredNode == link.mInputNodeIndex || hoveredNode == link.mOutputNodeIndex;
         uint32_t col = delegate.GetTemplate(nodeInput.mTemplateIndex).mHeaderColor | (highlightCons ? 0xF0F0F0 : 0);
+        if (const ImU32 customLinkColor = delegate.GetLinkColor(linkIndex))
+        {
+            col = customLinkColor;
+        }
         if (options.mDisplayLinksAsCurves)
         {
             // curves
-             drawList->AddBezierCubic(p1, p1 + ImVec2(50, 0) * factor, p2 + ImVec2(-50, 0) * factor, p2, 0xFF000000, options.mLineThickness * 1.5f * factor);
-             drawList->AddBezierCubic(p1, p1 + ImVec2(50, 0) * factor, p2 + ImVec2(-50, 0) * factor, p2, col, options.mLineThickness * 1.5f * factor);
+             const float dx = fabsf(p2.x - p1.x);
+             const float handle = ImClamp(dx * 0.35f, 28.0f * factor, 90.0f * factor);
+             const ImVec2 c1 = p1 + ImVec2(handle, 0.0f);
+             const ImVec2 c2 = p2 + ImVec2(-handle, 0.0f);
+             drawList->AddBezierCubic(p1, c1, c2, p2, 0xFF000000, options.mLineThickness * 1.35f * factor);
+             drawList->AddBezierCubic(p1, c1, c2, p2, col, options.mLineThickness * 1.35f * factor);
              /*
             ImVec2 p10 = p1 + ImVec2(20.f * factor, 0.f);
             ImVec2 p20 = p2 - ImVec2(20.f * factor, 0.f);
