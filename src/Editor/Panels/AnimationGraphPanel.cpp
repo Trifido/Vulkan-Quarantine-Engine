@@ -2,6 +2,7 @@
 
 #include <imgui.h>
 
+#include <Data/QEAnimationGraphAssetHelper.h>
 #include <Editor/Animation/QEAnimationGraphRuntimeAdapter.h>
 #include <Editor/Core/EditorContext.h>
 #include <Editor/Core/EditorSelectionManager.h>
@@ -11,6 +12,7 @@
 #include <algorithm>
 #include <array>
 #include <cstring>
+#include <filesystem>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -195,6 +197,16 @@ namespace
     std::string MakeTransitionLinkId(const std::string& fromStateId, const std::string& toStateId, int ordinal)
     {
         return "link:" + fromStateId + ":" + toStateId + ":" + std::to_string(ordinal);
+    }
+
+    std::string GetGraphDisplayName(const std::string& graphAssetPath)
+    {
+        if (graphAssetPath.empty())
+        {
+            return "<none>";
+        }
+
+        return std::filesystem::path(graphAssetPath).stem().string();
     }
 
     void NormalizeLinks(QEAnimationGraphEditorData& graphData)
@@ -709,12 +721,15 @@ AnimationGraphPanel::SessionGraphState& AnimationGraphPanel::GetOrCreateSessionG
 {
     const std::string objectId = gameObject ? gameObject->ID() : std::string{};
     auto [it, inserted] = _sessionGraphs.try_emplace(objectId);
-    if (inserted || it->second.GraphData.Nodes.empty())
+    const std::string currentGraphAssetPath = QEAnimationGraphAssetHelper::GetGraphAssetPathOrDefault(component);
+    if (inserted || it->second.GraphData.Nodes.empty() || it->second.LoadedGraphAssetPath != currentGraphAssetPath)
     {
         it->second.GraphData = QEAnimationGraphRuntimeAdapter::BuildEditorData(component);
         NormalizeNodeSlotCounts(it->second.GraphData);
         it->second.SelectedNodeIds.clear();
         it->second.SelectedLinkId.clear();
+        it->second.LoadedGraphAssetPath = currentGraphAssetPath;
+        it->second.RenameGraphNameBuffer = GetGraphDisplayName(currentGraphAssetPath);
     }
 
     return it->second;
@@ -726,9 +741,92 @@ void AnimationGraphPanel::DrawToolbar(
     SessionGraphState& sessionGraph)
 {
     ImGui::Text("Object: %s", gameObject ? gameObject->Name.c_str() : "None");
+    ImGui::SameLine();
+    ImGui::TextDisabled("|");
+    ImGui::SameLine();
     ImGui::Text("States: %d", static_cast<int>(component.GetAnimationStates().size()));
     ImGui::SameLine();
     ImGui::Text("Transitions: %d", static_cast<int>(component.GetAnimationTransitions().size()));
+
+    const std::string currentGraphAssetPath = QEAnimationGraphAssetHelper::GetGraphAssetPathOrDefault(component);
+    const auto availableGraphAssets = QEAnimationGraphAssetHelper::ListGraphAssets(component);
+
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted("Graph");
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(220.0f);
+    if (ImGui::BeginCombo("##AnimationGraphAsset", GetGraphDisplayName(currentGraphAssetPath).c_str()))
+    {
+        for (const auto& graphAssetPath : availableGraphAssets)
+        {
+            const bool selected = (graphAssetPath == currentGraphAssetPath);
+            const std::string label = GetGraphDisplayName(graphAssetPath);
+            if (ImGui::Selectable(label.c_str(), selected))
+            {
+                QEAnimationGraphAssetHelper::SaveGraphAsset(component);
+                if (QEAnimationGraphAssetHelper::LoadGraphAsset(component, graphAssetPath))
+                {
+                    RefreshGraphFromComponent(gameObject, component);
+                    sessionGraph.LoadedGraphAssetPath = QEAnimationGraphAssetHelper::GetGraphAssetPathOrDefault(component);
+                    sessionGraph.RenameGraphNameBuffer = GetGraphDisplayName(sessionGraph.LoadedGraphAssetPath);
+                }
+            }
+
+            if (selected)
+            {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+        ImGui::EndCombo();
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button("New Graph"))
+    {
+        QEAnimationGraphAssetHelper::SaveGraphAsset(component);
+        if (QEAnimationGraphAssetHelper::CreateGraphAsset(component, "default", true))
+        {
+            const std::string createdGraphPath = component.GetGraphAssetPath();
+            QEAnimationGraphAssetHelper::LoadGraphAsset(component, createdGraphPath);
+            RefreshGraphFromComponent(gameObject, component);
+            sessionGraph.LoadedGraphAssetPath = QEAnimationGraphAssetHelper::GetGraphAssetPathOrDefault(component);
+            sessionGraph.RenameGraphNameBuffer = GetGraphDisplayName(sessionGraph.LoadedGraphAssetPath);
+        }
+    }
+
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(140.0f);
+    char graphNameBuffer[128] = {};
+    std::strncpy(graphNameBuffer, sessionGraph.RenameGraphNameBuffer.c_str(), sizeof(graphNameBuffer) - 1);
+    if (ImGui::InputTextWithHint("##GraphName", "Graph Name", graphNameBuffer, sizeof(graphNameBuffer)))
+    {
+        sessionGraph.RenameGraphNameBuffer = graphNameBuffer;
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button("Rename Graph"))
+    {
+        QEAnimationGraphAssetHelper::SaveGraphAsset(component);
+        if (QEAnimationGraphAssetHelper::RenameGraphAsset(component, sessionGraph.RenameGraphNameBuffer))
+        {
+            sessionGraph.LoadedGraphAssetPath = QEAnimationGraphAssetHelper::GetGraphAssetPathOrDefault(component);
+            sessionGraph.RenameGraphNameBuffer = GetGraphDisplayName(sessionGraph.LoadedGraphAssetPath);
+        }
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button("Delete Graph"))
+    {
+        QEAnimationGraphAssetHelper::SaveGraphAsset(component);
+        if (QEAnimationGraphAssetHelper::DeleteGraphAsset(component))
+        {
+            RefreshGraphFromComponent(gameObject, component);
+            sessionGraph.LoadedGraphAssetPath = QEAnimationGraphAssetHelper::GetGraphAssetPathOrDefault(component);
+            sessionGraph.RenameGraphNameBuffer = GetGraphDisplayName(sessionGraph.LoadedGraphAssetPath);
+        }
+    }
+
+    ImGui::Spacing();
 
     if (ImGui::Button("Refresh From Runtime"))
     {

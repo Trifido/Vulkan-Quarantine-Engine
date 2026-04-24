@@ -28,6 +28,8 @@ public:
         std::unordered_set<std::string> SelectedNodeIds;
         std::string SelectedLinkId;
         QEParamType NewParameterType = QEParamType::Bool;
+        std::string LoadedGraphAssetPath;
+        std::string RenameGraphNameBuffer;
     };
 
     AnimationGraphPanel(
