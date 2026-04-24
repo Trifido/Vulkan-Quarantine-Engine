@@ -78,6 +78,7 @@ public:
     std::shared_ptr<QEGameComponent> FindGameComponentInScene(const std::string& id);
     std::vector<std::shared_ptr<QEGameObject>> GetRootGameObjects() const;
     std::shared_ptr<QEGameObject> GetGameObjectById(const std::string& id) const;
+    void RemoveMaterialReferences(const std::string& materialName);
 
     void RegisterSceneLights();
 };

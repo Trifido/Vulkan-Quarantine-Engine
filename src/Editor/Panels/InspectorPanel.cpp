@@ -869,15 +869,6 @@ void InspectorPanel::Draw()
 
     DrawAddComponentPopup(gameObject);
 
-    ImGui::SameLine();
-    const bool hasSelectedRemovableComponent = selectedComponentIndex > 0;
-    ImGui::BeginDisabled(!hasSelectedRemovableComponent);
-    if (ImGui::Button("Delete Component"))
-    {
-        DeleteSelectedComponent(gameObject);
-    }
-    ImGui::EndDisabled();
-
     ImGui::Separator();
 
     std::shared_ptr<QEGameComponent> componentToRemove = nullptr;
@@ -938,7 +929,7 @@ void InspectorPanel::Draw()
     }
 
     const bool canDeleteWithKeyboard =
-        hasSelectedRemovableComponent &&
+        selectedComponentIndex > 0 &&
         ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) &&
         ImGui::IsKeyPressed(ImGuiKey_Delete, false) &&
         !ImGui::GetIO().WantTextInput;

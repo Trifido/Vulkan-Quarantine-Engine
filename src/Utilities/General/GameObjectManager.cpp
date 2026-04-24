@@ -433,6 +433,52 @@ std::shared_ptr<QEGameObject> GameObjectManager::GetGameObjectById(const std::st
     return nullptr;
 }
 
+void GameObjectManager::RemoveMaterialReferences(const std::string& materialName)
+{
+    if (materialName.empty())
+        return;
+
+    for (const auto& bucketPair : _objectsByUpdateOrder)
+    {
+        const auto& bucket = bucketPair.second;
+
+        for (const auto& kv : bucket)
+        {
+            const auto& go = kv.second;
+            if (!go)
+                continue;
+
+            bool removedAny = false;
+            for (size_t materialIndex = 0; materialIndex < go->materials.size();)
+            {
+                const auto& material = go->materials[materialIndex];
+                if (material && material->Name == materialName)
+                {
+                    go->RemoveMaterialAt(materialIndex);
+                    removedAny = true;
+                    continue;
+                }
+
+                ++materialIndex;
+            }
+
+            if (!removedAny)
+                continue;
+
+            if (auto geometry = go->GetComponent<QEGeometryComponent>())
+            {
+                if (auto mesh = geometry->GetMesh())
+                {
+                    if (mesh->MaterialRel.empty() && !go->materials.empty())
+                    {
+                        mesh->MaterialRel.resize(mesh->MeshData.size(), go->materials.front()->Name);
+                    }
+                }
+            }
+        }
+    }
+}
+
 bool GameObjectManager::RenameGameObject(const std::shared_ptr<QEGameObject>& objectPtr, const std::string& newName)
 {
     if (!objectPtr)

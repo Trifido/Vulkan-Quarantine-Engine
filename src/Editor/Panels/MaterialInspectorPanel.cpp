@@ -55,7 +55,6 @@ void MaterialInspectorPanel::Draw()
     if (!selectionManager || !selectionManager->HasSelection())
     {
         ImGui::TextUnformatted("No GameObject selected.");
-        selectedMaterialIndex = -1;
         ImGui::End();
         return;
     }
@@ -68,16 +67,11 @@ void MaterialInspectorPanel::Draw()
         {
             selectionManager->ClearSelection();
         }
-        selectedMaterialIndex = -1;
         ImGui::End();
         return;
     }
 
     const auto& materials = gameObject->GetMaterials();
-    if (selectedMaterialIndex >= static_cast<int>(materials.size()))
-    {
-        selectedMaterialIndex = materials.empty() ? -1 : static_cast<int>(materials.size()) - 1;
-    }
 
     ImGui::Text("GameObject: %s", gameObject->Name.c_str());
     ImGui::Text("Materials: %d", static_cast<int>(materials.size()));
@@ -112,37 +106,6 @@ void MaterialInspectorPanel::DrawToolbar(const std::shared_ptr<QEGameObject>& ga
     {
         ImGui::OpenPopup("AddMaterialPopup");
     }
-
-    ImGui::SameLine();
-
-    const bool hasSelection =
-        gameObject &&
-        selectedMaterialIndex >= 0 &&
-        selectedMaterialIndex < static_cast<int>(gameObject->GetMaterials().size());
-
-    ImGui::BeginDisabled(!hasSelection);
-    if (ImGui::Button("Delete Material"))
-    {
-        DeleteSelectedMaterial(gameObject);
-    }
-    ImGui::EndDisabled();
-
-    if (hasSelection)
-    {
-        ImGui::SameLine();
-        ImGui::Text("Selected: %s", gameObject->GetMaterials()[selectedMaterialIndex]->Name.c_str());
-    }
-
-    const bool canDeleteWithKeyboard =
-        hasSelection &&
-        ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) &&
-        ImGui::IsKeyPressed(ImGuiKey_Delete, false) &&
-        !ImGui::GetIO().WantTextInput;
-
-    if (canDeleteWithKeyboard)
-    {
-        DeleteSelectedMaterial(gameObject);
-    }
 }
 
 void MaterialInspectorPanel::DrawMaterialEntry(const std::shared_ptr<QEMaterial>& material, int materialIndex)
@@ -155,11 +118,7 @@ void MaterialInspectorPanel::DrawMaterialEntry(const std::shared_ptr<QEMaterial>
     const std::string shaderName = material->shader ? material->shader->shaderNameID : "None";
     const std::string label = material->Name + " [" + shaderName + "]";
 
-    const bool isSelected = (selectedMaterialIndex == materialIndex);
-    if (ImGui::Selectable(label.c_str(), isSelected))
-    {
-        selectedMaterialIndex = materialIndex;
-    }
+    ImGui::Selectable(label.c_str(), false);
 
     if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
     {
@@ -167,6 +126,18 @@ void MaterialInspectorPanel::DrawMaterialEntry(const std::shared_ptr<QEMaterial>
         {
             onOpenMaterialEditor(material);
         }
+    }
+
+    const std::string popupId = "MaterialEntryContext_" + std::to_string(materialIndex);
+    if (ImGui::BeginPopupContextItem(popupId.c_str()))
+    {
+        if (ImGui::MenuItem("Remove Material"))
+        {
+            auto gameObject = selectionManager ? selectionManager->GetSelectedGameObject() : nullptr;
+            DeleteMaterialAt(gameObject, materialIndex);
+        }
+
+        ImGui::EndPopup();
     }
 
     ImGui::PopID();
@@ -248,11 +219,7 @@ bool MaterialInspectorPanel::DrawAddMaterialPopup(const std::shared_ptr<QEGameOb
                 if (ImGui::Selectable(relativePath.c_str()))
                 {
                     auto material = materialManager->LoadMaterialFromFile(relativePath);
-                    if (material && gameObject->AddMaterialBinding(material))
-                    {
-                        selectedMaterialIndex = static_cast<int>(gameObject->GetMaterials().size()) - 1;
-                        changed = true;
-                    }
+                    changed = material && gameObject->AddMaterialBinding(material);
 
                     std::fill(searchBuffer.begin(), searchBuffer.end(), '\0');
                     setFocusToSearch = true;
@@ -275,24 +242,13 @@ bool MaterialInspectorPanel::DrawAddMaterialPopup(const std::shared_ptr<QEGameOb
     return changed;
 }
 
-void MaterialInspectorPanel::DeleteSelectedMaterial(const std::shared_ptr<QEGameObject>& gameObject)
+void MaterialInspectorPanel::DeleteMaterialAt(const std::shared_ptr<QEGameObject>& gameObject, int materialIndex)
 {
     if (!gameObject)
         return;
 
-    if (selectedMaterialIndex < 0)
+    if (materialIndex < 0)
         return;
 
-    if (!gameObject->RemoveMaterialAt(static_cast<size_t>(selectedMaterialIndex)))
-        return;
-
-    const auto& materials = gameObject->GetMaterials();
-    if (materials.empty())
-    {
-        selectedMaterialIndex = -1;
-    }
-    else if (selectedMaterialIndex >= static_cast<int>(materials.size()))
-    {
-        selectedMaterialIndex = static_cast<int>(materials.size()) - 1;
-    }
+    gameObject->RemoveMaterialAt(static_cast<size_t>(materialIndex));
 }

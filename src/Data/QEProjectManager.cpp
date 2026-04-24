@@ -8,10 +8,39 @@
 #include <MeshImporter.h>
 #include "QEMaterialFileHelper.h"
 #include "QEMaterialYamlHelper.h"
+#include "QEShaderYamlHelper.h"
+#include <MaterialManager.h>
 #include <Logging/QELogMacros.h>
 
 fs::path QEProjectManager::CURRENT_PROJECT_PATH;
 fs::path QEProjectManager::CURRENT_DEFAULT_SCENE_PATH;
+
+namespace
+{
+    bool SyncRenamedMaterialAssetFile(const fs::path& targetPath)
+    {
+        MaterialDto materialDto;
+        if (!QEMaterialYamlHelper::ReadMaterialFile(targetPath, materialDto))
+            return false;
+
+        materialDto.Name = targetPath.stem().string();
+        materialDto.FilePath = QEProjectManager::ToProjectRelativePath(targetPath);
+
+        return QEMaterialYamlHelper::WriteMaterialFile(targetPath, materialDto);
+    }
+
+    bool SyncRenamedShaderAssetFile(const fs::path& targetPath)
+    {
+        QEShaderAsset shaderAsset;
+        if (!QEShaderYamlHelper::ReadShaderFile(targetPath, shaderAsset))
+            return false;
+
+        shaderAsset.Name = targetPath.stem().string();
+        shaderAsset.FilePath = QEProjectManager::ToProjectRelativePath(targetPath);
+
+        return QEShaderYamlHelper::WriteShaderFile(targetPath, shaderAsset);
+    }
+}
 
 fs::path QEProjectManager::GetCurrentProjectPath()
 {
@@ -155,6 +184,9 @@ bool QEProjectManager::DeletePath(const fs::path& targetPath, bool recursive)
         return false;
     }
 
+    std::string extensionLower = resolvedTarget.extension().string();
+    std::transform(extensionLower.begin(), extensionLower.end(), extensionLower.begin(), ::tolower);
+
     ec.clear();
 
     if (fs::is_directory(resolvedTarget))
@@ -177,6 +209,11 @@ bool QEProjectManager::DeletePath(const fs::path& targetPath, bool recursive)
             resolvedTarget.string(),
             ec.message());
         return false;
+    }
+
+    if (extensionLower == ".qemat")
+    {
+        MaterialManager::getInstance()->RemoveMaterialAsset(resolvedTarget);
     }
 
     return true;
@@ -265,6 +302,7 @@ bool QEProjectManager::RenamePath(const fs::path& sourcePath, const std::string&
         return false;
     }
 
+    const fs::path sourceExtension = resolvedSource.extension();
     fs::rename(resolvedSource, targetPath, ec);
 
     if (ec)
@@ -276,6 +314,19 @@ bool QEProjectManager::RenamePath(const fs::path& sourcePath, const std::string&
             targetPath.string(),
             ec.message());
         return false;
+    }
+
+    std::string extensionLower = sourceExtension.string();
+    std::transform(extensionLower.begin(), extensionLower.end(), extensionLower.begin(), ::tolower);
+
+    if (extensionLower == ".qemat")
+    {
+        SyncRenamedMaterialAssetFile(targetPath);
+        MaterialManager::getInstance()->SyncRenamedMaterialAsset(resolvedSource, targetPath);
+    }
+    else if (extensionLower == ".qeshader")
+    {
+        SyncRenamedShaderAssetFile(targetPath);
     }
 
     return true;

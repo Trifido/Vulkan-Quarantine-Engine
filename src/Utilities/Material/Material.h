@@ -52,6 +52,8 @@ public:
     bool ApplyShader(const std::shared_ptr<ShaderModule>& shaderPtr, const std::string& assetPath = "");
     void SetShaderAssetPath(const std::string& path) { shaderAssetPath = path; }
     const std::string& GetShaderAssetPath() const { return shaderAssetPath; }
+    const std::string& GetMaterialFilePath() const { return materialFilePath; }
+    void SetMaterialFilePath(const std::string& path) { materialFilePath = path; }
 };
 
 #endif // !MATERIAL_H

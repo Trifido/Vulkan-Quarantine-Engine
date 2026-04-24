@@ -10,6 +10,7 @@
 #include <QEProjectManager.h>
 #include <QEMaterialYamlHelper.h>
 #include <QEShaderAssetLoader.h>
+#include <GameObjectManager.h>
 #include <Helpers/ScopedTimer.h>
 
 std::string MaterialManager::CheckName(std::string nameMaterial)
@@ -171,10 +172,7 @@ std::shared_ptr<QEMaterial> MaterialManager::LoadMaterialFromFile(const std::fil
 
     materialDto.UpdateTexturePaths(resolvedPath.parent_path());
 
-    if (materialDto.Name.empty())
-    {
-        materialDto.Name = resolvedPath.stem().string();
-    }
+    materialDto.Name = resolvedPath.stem().string();
 
     materialDto.FilePath = QEProjectManager::ToProjectRelativePath(resolvedPath);
 
@@ -213,6 +211,78 @@ std::shared_ptr<QEMaterial> MaterialManager::LoadMaterialFromFile(const std::fil
     }
     AddMaterial(material);
     return GetMaterial(material->Name);
+}
+
+bool MaterialManager::RemoveMaterialAsset(const std::filesystem::path& materialPath)
+{
+    if (materialPath.empty())
+        return false;
+
+    const fs::path resolvedPath = QEProjectManager::ResolveProjectPath(materialPath).lexically_normal();
+    const std::string materialName = resolvedPath.stem().string();
+
+    auto it = _materials.find(materialName);
+    if (it == _materials.end())
+        return false;
+
+    if (IsPersistentMaterial(materialName))
+    {
+        QE_LOG_WARN_CAT_F(
+            "MaterialManager",
+            "Material '{}' is persistent and will not be removed from memory.",
+            materialName);
+        return false;
+    }
+
+    GameObjectManager::getInstance()->RemoveMaterialReferences(materialName);
+
+    if (it->second)
+    {
+        it->second->cleanup();
+        it->second.reset();
+    }
+
+    _materials.erase(it);
+    _persistentMaterialNames.erase(materialName);
+    return true;
+}
+
+bool MaterialManager::SyncRenamedMaterialAsset(const std::filesystem::path& oldPath, const std::filesystem::path& newPath)
+{
+    const fs::path resolvedOldPath = QEProjectManager::ResolveProjectPath(oldPath).lexically_normal();
+    const fs::path resolvedNewPath = QEProjectManager::ResolveProjectPath(newPath).lexically_normal();
+    const std::string newMaterialName = resolvedNewPath.stem().string();
+
+    for (auto it = _materials.begin(); it != _materials.end(); ++it)
+    {
+        const auto& material = it->second;
+        if (!material)
+            continue;
+
+        fs::path materialPath = QEProjectManager::ResolveProjectPath(material->GetMaterialFilePath()).lexically_normal();
+        if (materialPath != resolvedOldPath)
+            continue;
+
+        std::shared_ptr<QEMaterial> materialPtr = material;
+        const std::string oldMaterialName = it->first;
+        const bool wasPersistent = IsPersistentMaterial(oldMaterialName);
+
+        _materials.erase(it);
+        _persistentMaterialNames.erase(oldMaterialName);
+
+        materialPtr->RenameMaterial(newMaterialName);
+        materialPtr->SetMaterialFilePath(resolvedNewPath.string());
+        _materials[newMaterialName] = materialPtr;
+
+        if (wasPersistent)
+        {
+            _persistentMaterialNames.insert(newMaterialName);
+        }
+
+        return true;
+    }
+
+    return false;
 }
 
 void MaterialManager::AddMaterial(std::shared_ptr<QEMaterial> mat_ptr)
@@ -541,6 +611,8 @@ void MaterialManager::DeserializeMaterials(YAML::Node materials)
                 }
 
                 materialDto.UpdateTexturePaths(resolvedPath.parent_path());
+                materialDto.Name = resolvedPath.stem().string();
+                materialDto.FilePath = QEProjectManager::ToProjectRelativePath(resolvedPath);
 
                 materialDtos.push_back(materialDto);
             }

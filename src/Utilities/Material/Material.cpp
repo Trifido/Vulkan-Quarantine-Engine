@@ -179,7 +179,9 @@ void QEMaterial::SetMeshShaderPipeline(bool value)
 
 void QEMaterial::BindDescriptors(VkCommandBuffer& commandBuffer, uint32_t idx)
 {
-    if (this->HasDescriptorBuffer())
+    if (this->HasDescriptorBuffer() &&
+        this->descriptor &&
+        idx < this->descriptor->descriptorSets.size())
     {
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->shader->PipelineModule->pipelineLayout, 0, 1, descriptor->getDescriptorSet(idx), 0, nullptr);
     }

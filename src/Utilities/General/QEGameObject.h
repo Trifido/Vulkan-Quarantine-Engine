@@ -194,6 +194,7 @@ public:
 
         materials[materialIndex] = material;
         bindedMaterials[materialIndex] = material->Name;
+        material->InitializeMaterialData();
 
         if (auto geometry = GetComponent<QEGeometryComponent>())
         {
@@ -244,6 +245,7 @@ public:
 
         materials.push_back(material);
         bindedMaterials.push_back(material->Name);
+        material->InitializeMaterialData();
 
         if (auto geometry = GetComponent<QEGeometryComponent>())
         {

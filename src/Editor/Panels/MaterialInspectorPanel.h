@@ -28,7 +28,7 @@ private:
     void DrawToolbar(const std::shared_ptr<class QEGameObject>& gameObject);
     void DrawMaterialEntry(const std::shared_ptr<QEMaterial>& material, int materialIndex);
     bool DrawAddMaterialPopup(const std::shared_ptr<class QEGameObject>& gameObject, const char* popupId);
-    void DeleteSelectedMaterial(const std::shared_ptr<class QEGameObject>& gameObject);
+    void DeleteMaterialAt(const std::shared_ptr<class QEGameObject>& gameObject, int materialIndex);
 
 private:
     GameObjectManager* gameObjectManager = nullptr;
@@ -36,5 +36,4 @@ private:
     EditorContext* editorContext = nullptr;
     EditorSelectionManager* selectionManager = nullptr;
     std::function<void(const std::shared_ptr<QEMaterial>&)> onOpenMaterialEditor;
-    int selectedMaterialIndex = -1;
 };
