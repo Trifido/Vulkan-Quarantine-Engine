@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <AtmosphereDto.h>
 #include <MeshImporter.h>
+#include <QETextureImporter.h>
 #include "QEMaterialFileHelper.h"
 #include "QEMaterialYamlHelper.h"
 #include "QEShaderYamlHelper.h"
@@ -17,6 +18,40 @@ fs::path QEProjectManager::CURRENT_DEFAULT_SCENE_PATH;
 
 namespace
 {
+    std::string ToLowerCopy(const std::string& value)
+    {
+        std::string result = value;
+        std::transform(result.begin(), result.end(), result.begin(), ::tolower);
+        return result;
+    }
+
+    QETextureImportSettings BuildTextureImportSettings(const fs::path& inputFile)
+    {
+        QETextureImportSettings settings{};
+        settings.semantic = TEXTURE_TYPE::NULL_TYPE;
+        settings.colorSpace = QEColorSpace::SRGB;
+        settings.generateMipmaps = true;
+        settings.overwrite = false;
+
+        const std::string stem = ToLowerCopy(inputFile.stem().string());
+
+        const bool isLinearTexture =
+            stem.find("normal") != std::string::npos ||
+            stem.find("_n") != std::string::npos ||
+            stem.find("rough") != std::string::npos ||
+            stem.find("metal") != std::string::npos ||
+            stem.find("ao") != std::string::npos ||
+            stem.find("orm") != std::string::npos ||
+            stem.find("height") != std::string::npos ||
+            stem.find("spec") != std::string::npos ||
+            stem.find("mask") != std::string::npos;
+
+        if (isLinearTexture)
+            settings.colorSpace = QEColorSpace::Linear;
+
+        return settings;
+    }
+
     bool SyncRenamedMaterialAssetFile(const fs::path& targetPath)
     {
         MaterialDto materialDto;
@@ -408,6 +443,83 @@ bool QEProjectManager::ImportMeshFile(
         outputAnimationFolderPath.string(),
         onProgress
     );
+}
+
+bool QEProjectManager::ImportTextureFile(
+    const fs::path& inputFile,
+    const fs::path& targetFolder,
+    const QEImportProgressCallback& onProgress)
+{
+    if (!fs::exists(inputFile))
+    {
+        QE_LOG_ERROR_CAT_F("QEProjectManager", "ImportTextureFile - Error opening the file: {}", inputFile.string());
+        return false;
+    }
+
+    const fs::path resolvedTarget = ResolveProjectPath(targetFolder);
+
+    if (!IsInsideCurrentProject(resolvedTarget))
+    {
+        QE_LOG_ERROR_CAT_F("QEProjectManager", "ImportTextureFile - Target outside project: {}", resolvedTarget.string());
+        return false;
+    }
+
+    if (!fs::exists(resolvedTarget) || !fs::is_directory(resolvedTarget))
+    {
+        QE_LOG_ERROR_CAT_F("QEProjectManager", "ImportTextureFile - Target folder invalid: {}", resolvedTarget.string());
+        return false;
+    }
+
+    if (onProgress)
+        onProgress(0.1f, "Preparing", "Resolving texture import");
+
+    fs::path outputPath = resolvedTarget / inputFile.stem();
+    outputPath.replace_extension(".ktx2");
+
+    std::string ext = ToLowerCopy(inputFile.extension().string());
+    if (ext == ".ktx2")
+    {
+        std::error_code ec;
+        fs::create_directories(outputPath.parent_path(), ec);
+        if (ec)
+        {
+            QE_LOG_ERROR_CAT_F("QEProjectManager", "ImportTextureFile - Error creating target folder: {}", ec.message());
+            return false;
+        }
+
+        fs::copy_file(inputFile, outputPath, fs::copy_options::skip_existing, ec);
+        if (ec && ec.value() != 0)
+        {
+            QE_LOG_ERROR_CAT_F("QEProjectManager", "ImportTextureFile - Error copying KTX2: {}", ec.message());
+            return false;
+        }
+
+        if (onProgress)
+            onProgress(1.0f, "Completed", "Texture copied");
+
+        return true;
+    }
+
+    QETextureImportSettings settings = BuildTextureImportSettings(inputFile);
+
+    if (onProgress)
+        onProgress(0.35f, "Converting", "Encoding texture to KTX2");
+
+    QETextureImportResult result = QETextureImporter::ImportToKtx2(
+        inputFile.string(),
+        outputPath.string(),
+        settings);
+
+    if (!result.success)
+    {
+        QE_LOG_ERROR_CAT_F("QEProjectManager", "ImportTextureFile - {}", result.error);
+        return false;
+    }
+
+    if (onProgress)
+        onProgress(1.0f, "Completed", "Texture imported");
+
+    return true;
 }
 
 bool QEProjectManager::ImportAnimationFile(const fs::path& inputFile, const fs::path& folderPath)

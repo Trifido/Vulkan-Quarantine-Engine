@@ -40,6 +40,10 @@ public:
         const fs::path& inputFile,
         const fs::path& targetFolder,
         const QEImportProgressCallback& onProgress = nullptr);
+    static bool ImportTextureFile(
+        const fs::path& inputFile,
+        const fs::path& targetFolder,
+        const QEImportProgressCallback& onProgress = nullptr);
     static bool ImportAnimationFile(const fs::path& inputFile, const fs::path& folderPath);
     static fs::path GetMaterialFolderPath();
 

@@ -71,6 +71,27 @@ std::shared_ptr<QEImportJob> QEAssetImportManager::EnqueueShaderImport(const std
     return job;
 }
 
+std::shared_ptr<QEImportJob> QEAssetImportManager::EnqueueTextureImport(const std::string& sourcePath, const std::string& targetFolder)
+{
+    auto job = std::make_shared<QEImportJob>();
+    job->Id = _nextId.fetch_add(1, std::memory_order_relaxed);
+    job->Type = QEImportJobType::Texture;
+    job->SourcePath = sourcePath;
+    job->TargetFolder = targetFolder;
+    job->DisplayName = std::filesystem::path(sourcePath).filename().string();
+    job->State.store(QEImportJobState::Queued, std::memory_order_relaxed);
+    job->SetProgress(0.0f, "Queued", "Waiting in queue");
+
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _jobs.push_back(job);
+        _pending.push(job);
+    }
+
+    _cv.notify_one();
+    return job;
+}
+
 void QEAssetImportManager::UpdateMainThread()
 {
     std::queue<std::shared_ptr<QEImportJob>> finishedLocal;
@@ -183,7 +204,7 @@ void QEAssetImportManager::WorkerLoop()
                 QEProjectManager::ImportMeshFile(job->SourcePath, job->TargetFolder, progressCb);
                 job->SetResultPath(job->SourcePath);
             }
-            else
+            else if (job->Type == QEImportJobType::Shader)
             {
                 const auto outputPath = QEShaderSourceImporter::ImportShaderSource(
                     job->SourcePath,
@@ -191,6 +212,13 @@ void QEAssetImportManager::WorkerLoop()
                     progressCb);
 
                 job->SetResultPath(outputPath.string());
+            }
+            else
+            {
+                QEProjectManager::ImportTextureFile(job->SourcePath, job->TargetFolder, progressCb);
+                std::filesystem::path resultPath = std::filesystem::path(job->TargetFolder) / std::filesystem::path(job->SourcePath).stem();
+                resultPath.replace_extension(".ktx2");
+                job->SetResultPath(resultPath.string());
             }
 
             job->State.store(QEImportJobState::Succeeded, std::memory_order_relaxed);

@@ -22,7 +22,8 @@ enum class QEImportJobState
 enum class QEImportJobType
 {
     Mesh,
-    Shader
+    Shader,
+    Texture
 };
 
 struct QEImportProgress
@@ -82,6 +83,9 @@ public:
         const std::string& sourcePath,
         const std::string& targetFolder);
     std::shared_ptr<QEImportJob> EnqueueShaderImport(
+        const std::string& sourcePath,
+        const std::string& targetFolder);
+    std::shared_ptr<QEImportJob> EnqueueTextureImport(
         const std::string& sourcePath,
         const std::string& targetFolder);
 

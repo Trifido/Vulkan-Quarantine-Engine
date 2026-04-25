@@ -489,6 +489,7 @@ bool QEProjectBrowserPanel::IsImportableExternalFile(const std::filesystem::path
         ext == ".glb" ||
         ext == ".fbx" ||
         ext == ".obj" ||
+        IsTextureAsset(path) ||
         IsShaderSourceAsset(path);
 }
 
@@ -601,6 +602,12 @@ void QEProjectBrowserPanel::HandleExternalFileDrops()
             if (IsShaderSourceAsset(droppedPath))
             {
                 QEAssetImportManager::Get().EnqueueShaderImport(
+                    droppedPath.string(),
+                    targetFolder);
+            }
+            else if (IsTextureAsset(droppedPath))
+            {
+                QEAssetImportManager::Get().EnqueueTextureImport(
                     droppedPath.string(),
                     targetFolder);
             }
