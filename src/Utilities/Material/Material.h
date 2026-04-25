@@ -11,6 +11,9 @@
 #include <DescriptorBuffer.h>
 #include <LightManager.h>
 #include <MaterialDto.h>
+#include <PointShadowDescriptorsManager.h>
+#include <CSMDescriptorsManager.h>
+#include <SpotShadowDescriptorsManager.h>
 
 class QEMaterial : public Numbered
 {
@@ -21,6 +24,9 @@ private:
     LightManager* lightManager;
     std::string materialFilePath;
     std::string shaderAssetPath;
+    std::shared_ptr<PointShadowDescriptorsManager> pointShadowDescriptorsOverride = nullptr;
+    std::shared_ptr<CSMDescriptorsManager> directionalShadowDescriptorsOverride = nullptr;
+    std::shared_ptr<SpotShadowDescriptorsManager> spotShadowDescriptorsOverride = nullptr;
 
     static std::string ToMaterialRelativePath(
         const std::string& assetPath,
@@ -53,6 +59,15 @@ public:
     std::string SaveMaterialFile();
     MaterialDto ToDto() const;
     bool ApplyShader(const std::shared_ptr<ShaderModule>& shaderPtr, const std::string& assetPath = "");
+    void SetShadowDescriptorOverrides(
+        const std::shared_ptr<PointShadowDescriptorsManager>& pointShadowDescriptors,
+        const std::shared_ptr<CSMDescriptorsManager>& directionalShadowDescriptors,
+        const std::shared_ptr<SpotShadowDescriptorsManager>& spotShadowDescriptors)
+    {
+        pointShadowDescriptorsOverride = pointShadowDescriptors;
+        directionalShadowDescriptorsOverride = directionalShadowDescriptors;
+        spotShadowDescriptorsOverride = spotShadowDescriptors;
+    }
     void SetShaderAssetPath(const std::string& path) { shaderAssetPath = path; }
     const std::string& GetShaderAssetPath() const { return shaderAssetPath; }
     const std::string& GetMaterialFilePath() const { return materialFilePath; }

@@ -211,19 +211,29 @@ void QEMaterial::BindDescriptors(VkCommandBuffer& commandBuffer, uint32_t idx)
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->shader->PipelineModule->pipelineLayout, 0, 1, descriptor->getDescriptorSet(idx), 0, nullptr);
     }
 
-    if (this->shader->reflectShader.HasPointShadows)
+    auto* pointShadowDescriptors = pointShadowDescriptorsOverride ? pointShadowDescriptorsOverride.get() : lightManager->PointShadowDescritors.get();
+    auto* directionalShadowDescriptors = directionalShadowDescriptorsOverride ? directionalShadowDescriptorsOverride.get() : lightManager->CSMDescritors.get();
+    auto* spotShadowDescriptors = spotShadowDescriptorsOverride ? spotShadowDescriptorsOverride.get() : lightManager->SpotShadowDescritors.get();
+
+    if (this->shader->reflectShader.HasPointShadows &&
+        pointShadowDescriptors &&
+        idx < MAX_FRAMES_IN_FLIGHT)
     {
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->shader->PipelineModule->pipelineLayout, 1, 1, &lightManager->PointShadowDescritors->renderDescriptorSets[idx], 0, nullptr);
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->shader->PipelineModule->pipelineLayout, 1, 1, &pointShadowDescriptors->renderDescriptorSets[idx], 0, nullptr);
     }
 
-    if (this->shader->reflectShader.HasDirectionalShadows)
+    if (this->shader->reflectShader.HasDirectionalShadows &&
+        directionalShadowDescriptors &&
+        idx < MAX_FRAMES_IN_FLIGHT)
     {
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->shader->PipelineModule->pipelineLayout, 2, 1, &lightManager->CSMDescritors->renderDescriptorSets[idx], 0, nullptr);
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->shader->PipelineModule->pipelineLayout, 2, 1, &directionalShadowDescriptors->renderDescriptorSets[idx], 0, nullptr);
     }
 
-    if (this->shader->reflectShader.HasSpotShadows)
+    if (this->shader->reflectShader.HasSpotShadows &&
+        spotShadowDescriptors &&
+        idx < MAX_FRAMES_IN_FLIGHT)
     {
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->shader->PipelineModule->pipelineLayout, 3, 1, &lightManager->SpotShadowDescritors->renderDescriptorSets[idx], 0, nullptr);
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->shader->PipelineModule->pipelineLayout, 3, 1, &spotShadowDescriptors->renderDescriptorSets[idx], 0, nullptr);
     }
 }
 

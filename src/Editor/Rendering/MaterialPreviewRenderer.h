@@ -16,6 +16,9 @@ class QueueModule;
 class QEMaterial;
 class QEGameObject;
 class QECamera;
+class PointShadowDescriptorsManager;
+class CSMDescriptorsManager;
+class SpotShadowDescriptorsManager;
 
 class MaterialPreviewRenderer
 {
@@ -75,6 +78,9 @@ private:
     std::shared_ptr<UniformBufferObject> _previewLightIndexSSBO;
     std::shared_ptr<UniformBufferObject> _previewLightBinSSBO;
     std::shared_ptr<UniformBufferObject> _previewLightTilesSSBO;
+    std::shared_ptr<PointShadowDescriptorsManager> _previewPointShadowDescriptors;
+    std::shared_ptr<CSMDescriptorsManager> _previewDirectionalShadowDescriptors;
+    std::shared_ptr<SpotShadowDescriptorsManager> _previewSpotShadowDescriptors;
 
     std::shared_ptr<QEGameObject> _cameraObject;
     std::shared_ptr<QECamera> _camera;

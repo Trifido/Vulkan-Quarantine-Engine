@@ -20,6 +20,7 @@
 #include <DeviceModule.h>
 #include <Helpers/QEMemoryTrack.h>
 #include <QEProjectManager.h>
+#include <LightManager.h>
 
 namespace
 {
@@ -114,6 +115,24 @@ void MaterialPreviewRenderer::Cleanup()
     cleanupUBO(_previewLightBinSSBO, "MaterialPreviewRenderer::Cleanup");
     cleanupUBO(_previewLightTilesSSBO, "MaterialPreviewRenderer::Cleanup");
 
+    if (_previewPointShadowDescriptors)
+    {
+        _previewPointShadowDescriptors->Clean();
+        _previewPointShadowDescriptors.reset();
+    }
+
+    if (_previewDirectionalShadowDescriptors)
+    {
+        _previewDirectionalShadowDescriptors->Clean();
+        _previewDirectionalShadowDescriptors.reset();
+    }
+
+    if (_previewSpotShadowDescriptors)
+    {
+        _previewSpotShadowDescriptors->Clean();
+        _previewSpotShadowDescriptors.reset();
+    }
+
     _previewCameraUBO.reset();
     _previewLightUBO.reset();
     _previewLightSSBO.reset();
@@ -152,6 +171,10 @@ void MaterialPreviewRenderer::SetMaterial(const std::shared_ptr<QEMaterial>& mat
                 _previewLightBinSSBO,
                 _previewLightTilesSSBO);
         }
+        _previewMaterial->SetShadowDescriptorOverrides(
+            _previewPointShadowDescriptors,
+            _previewDirectionalShadowDescriptors,
+            _previewSpotShadowDescriptors);
 
         _previewMaterial->InitializeMaterialData();
         SyncFromMaterial(_material);
@@ -364,6 +387,21 @@ void MaterialPreviewRenderer::InitializePreviewLightingOverrides()
     _previewLightTilesSSBO = std::make_shared<UniformBufferObject>();
     _previewLightTilesSSBO->CreateSSBO(lightManager->lightTilesSSBOSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
 
+    _previewPointShadowDescriptors = std::make_shared<PointShadowDescriptorsManager>();
+    _previewDirectionalShadowDescriptors = std::make_shared<CSMDescriptorsManager>();
+    _previewSpotShadowDescriptors = std::make_shared<SpotShadowDescriptorsManager>();
+
+    if (lightManager->OmniShadowShaderModule)
+    {
+        _previewPointShadowDescriptors->InitializeDescriptorSetLayouts(lightManager->OmniShadowShaderModule);
+    }
+
+    if (lightManager->CSMShaderModule)
+    {
+        _previewDirectionalShadowDescriptors->InitializeDescriptorSetLayouts(lightManager->CSMShaderModule);
+        _previewSpotShadowDescriptors->InitializeDescriptorSetLayouts(lightManager->CSMShaderModule);
+    }
+
     LightManagerUniform previewLightData{};
     previewLightData.numLights = 1;
 
@@ -413,6 +451,16 @@ void MaterialPreviewRenderer::InitializePreviewLightingOverrides()
         vkMapMemory(deviceModule->device, _previewLightTilesSSBO->uniformBuffersMemory[frame], 0, lightManager->lightTilesSSBOSize, 0, &data);
         memcpy(data, previewTiles.data(), lightManager->lightTilesSSBOSize);
         vkUnmapMemory(deviceModule->device, _previewLightTilesSSBO->uniformBuffersMemory[frame]);
+
+        if (_previewDirectionalShadowDescriptors)
+        {
+            _previewDirectionalShadowDescriptors->UpdateResources(static_cast<int>(frame));
+        }
+
+        if (_previewSpotShadowDescriptors)
+        {
+            _previewSpotShadowDescriptors->UpdateResources(static_cast<int>(frame));
+        }
     }
 }
 

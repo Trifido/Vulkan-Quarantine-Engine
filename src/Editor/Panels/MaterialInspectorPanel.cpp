@@ -128,7 +128,10 @@ void MaterialInspectorPanel::DrawMaterialEntry(
     const std::string label =
         material->Name + " [" + shaderName + "]" + (useCopy ? " (Copy)" : "");
 
-    ImGui::Selectable(label.c_str(), false);
+    const float checkboxWidth = ImGui::CalcTextSize("UseCopy").x + ImGui::GetFrameHeight() + 16.0f;
+    const float selectableWidth = std::max(1.0f, ImGui::GetContentRegionAvail().x - checkboxWidth);
+
+    ImGui::Selectable(label.c_str(), false, 0, ImVec2(selectableWidth, 0.0f));
 
     if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
     {
@@ -139,7 +142,18 @@ void MaterialInspectorPanel::DrawMaterialEntry(
     }
 
     bool useCopyToggle = useCopy;
-    if (ImGui::Checkbox("UseCopy", &useCopyToggle))
+    ImGui::SameLine();
+    ImGui::Checkbox("UseCopy", &useCopyToggle);
+
+    if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+    {
+        if (onOpenMaterialEditor)
+        {
+            onOpenMaterialEditor(material);
+        }
+    }
+
+    if (useCopy != useCopyToggle)
     {
         gameObject->SetMaterialUseCopy(static_cast<size_t>(materialIndex), useCopyToggle);
     }
