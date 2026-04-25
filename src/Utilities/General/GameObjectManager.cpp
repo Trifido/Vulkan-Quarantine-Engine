@@ -671,6 +671,11 @@ std::vector<QEOrderRenderItem> GameObjectManager::BuildShadowRenderItems() const
 
 void GameObjectManager::ResetSceneState()
 {
+    if (auto* deviceModule = DeviceModule::getInstance())
+    {
+        vkDeviceWaitIdle(deviceModule->device);
+    }
+
     ReleaseAllGameObjects();
     CleanLastResources();
 }

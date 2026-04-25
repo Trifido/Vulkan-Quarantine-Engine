@@ -9,6 +9,7 @@
 #include <QEMeshGenerator.h>
 #include <Meshlet.h>
 #include <memory> 
+#include <QEGeometryResourceCache.h>
 
 class QEGeometryComponent : public QEGameComponent
 {
@@ -21,6 +22,7 @@ protected:
     std::vector<VkDeviceMemory> vertexBufferMemory = { VK_NULL_HANDLE };
     std::vector<VkDeviceMemory> indexBufferMemory = { VK_NULL_HANDLE };
     std::vector<VkDeviceMemory> animationBufferMemory = { VK_NULL_HANDLE };
+    bool ownsBuffersDirectly = false;
 
     virtual void CreateIndexBuffers();
     virtual void CreateVertexBuffers();
@@ -29,7 +31,7 @@ protected:
 
 private:
     std::unique_ptr<IQEMeshGenerator> generator;
-    QEMesh mesh;
+    std::shared_ptr<QEGeometrySharedResource> geometryResource;
 
 public:
     QEGeometryComponent() = default;
@@ -64,6 +66,8 @@ public:
 private:
     void CreateMeshlets();
     void ReleaseResources();
+    std::string BuildResourceKey() const;
+    void SyncResourceViews();
 };
 
 #endif

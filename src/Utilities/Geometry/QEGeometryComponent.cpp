@@ -2,26 +2,27 @@
 #include "BufferManageModule.h"
 #include <Helpers/ScopedTimer.h>
 #include <Helpers/QEMemoryTrack.h>
+#include <filesystem>
 
 DeviceModule* QEGeometryComponent::deviceModule_ptr;
 
 QEMesh* QEGeometryComponent::GetMesh()
 {
-    if (mesh.MeshData.empty())
+    if (!geometryResource || geometryResource->Mesh.MeshData.empty())
     {
         return nullptr;
     }
 
-    return &mesh;
+    return &geometryResource->Mesh;
 }
 
 size_t QEGeometryComponent::GetIndicesCount(uint32_t meshIndex) const
 {
-    if (meshIndex < 0 || meshIndex >= mesh.MeshData.size())
+    if (!geometryResource || meshIndex >= geometryResource->Mesh.MeshData.size())
     {
         throw std::out_of_range("Mesh index out of range");
     }
-    return mesh.MeshData[meshIndex].Indices.size();
+    return geometryResource->Mesh.MeshData[meshIndex].Indices.size();
 }
 
 std::unique_ptr<IQEMeshGenerator> QEGeometryComponent::GetGenerator(std::string name, std::string filepath)
@@ -90,35 +91,52 @@ std::unique_ptr<IQEMeshGenerator> QEGeometryComponent::GetGenerator(std::string 
 
 void QEGeometryComponent::ReleaseResources()
 {
-    for(int i = 0; i < indexBufferMemory.size(); i++)
+    if (geometryResource)
     {
-        if (indexBufferMemory[i] != VK_NULL_HANDLE)
+        geometryResource.reset();
+    }
+
+    if (ownsBuffersDirectly && deviceModule_ptr != nullptr)
+    {
+        for (int i = 0; i < indexBufferMemory.size(); i++)
         {
-            QE_DESTROY_BUFFER(deviceModule_ptr->device, indexBuffer[i], "QEGeometryComponent::ReleaseResources");
-            QE_FREE_MEMORY(deviceModule_ptr->device, indexBufferMemory[i], "QEGeometryComponent::ReleaseResources");
-            indexBufferMemory[i] = VK_NULL_HANDLE;
+            if (indexBufferMemory[i] != VK_NULL_HANDLE)
+            {
+                QE_DESTROY_BUFFER(deviceModule_ptr->device, indexBuffer[i], "QEGeometryComponent::ReleaseResources");
+                QE_FREE_MEMORY(deviceModule_ptr->device, indexBufferMemory[i], "QEGeometryComponent::ReleaseResources");
+                indexBufferMemory[i] = VK_NULL_HANDLE;
+            }
+        }
+
+        for (int i = 0; i < vertexBufferMemory.size(); i++)
+        {
+            if (vertexBufferMemory[i] != VK_NULL_HANDLE)
+            {
+                QE_DESTROY_BUFFER(deviceModule_ptr->device, vertexBuffer[i], "QEGeometryComponent::ReleaseResources");
+                QE_FREE_MEMORY(deviceModule_ptr->device, vertexBufferMemory[i], "QEGeometryComponent::ReleaseResources");
+                vertexBufferMemory[i] = VK_NULL_HANDLE;
+            }
+        }
+
+        for (int i = 0; i < animationBufferMemory.size(); i++)
+        {
+            if (animationBufferMemory[i] != VK_NULL_HANDLE)
+            {
+                QE_DESTROY_BUFFER(deviceModule_ptr->device, animationBuffer[i], "QEGeometryComponent::ReleaseResources");
+                QE_FREE_MEMORY(deviceModule_ptr->device, animationBufferMemory[i], "QEGeometryComponent::ReleaseResources");
+                animationBufferMemory[i] = VK_NULL_HANDLE;
+            }
         }
     }
 
-    for(int i = 0; i < vertexBufferMemory.size(); i++)
-    {
-        if (vertexBufferMemory[i] != VK_NULL_HANDLE)
-        {
-            QE_DESTROY_BUFFER(deviceModule_ptr->device, vertexBuffer[i], "QEGeometryComponent::ReleaseResources");
-            QE_FREE_MEMORY(deviceModule_ptr->device, vertexBufferMemory[i], "QEGeometryComponent::ReleaseResources");
-            vertexBufferMemory[i] = VK_NULL_HANDLE;
-        }
-    }
-
-    for(int i = 0; i < animationBufferMemory.size(); i++)
-    {
-        if (animationBufferMemory[i] != VK_NULL_HANDLE)
-        {
-            QE_DESTROY_BUFFER(deviceModule_ptr->device, animationBuffer[i], "QEGeometryComponent::ReleaseResources");
-            QE_FREE_MEMORY(deviceModule_ptr->device, animationBufferMemory[i], "QEGeometryComponent::ReleaseResources");
-            animationBufferMemory[i] = VK_NULL_HANDLE;
-        }
-    }
+    ownsBuffersDirectly = false;
+    vertexBuffer.clear();
+    indexBuffer.clear();
+    animationBuffer.clear();
+    vertexBufferMemory.clear();
+    indexBufferMemory.clear();
+    animationBufferMemory.clear();
+    meshlets_ptr.clear();
 }
 
 void QEGeometryComponent::QEStart()
@@ -176,79 +194,65 @@ void QEGeometryComponent::BuildMesh()
         return;
     }
 
-    mesh = generator->GenerateQEMesh();
+    ReleaseResources();
 
-    _name = mesh.Name;
-    _filepath = mesh.FilePath;
+    geometryResource = QEGeometryResourceCache::Acquire(
+        BuildResourceKey(),
+        [this]()
+        {
+            return generator->GenerateQEMesh();
+        });
 
-    CreateIndexBuffers();
-    CreateVertexBuffers();
-    CreateAnimationVertexBuffers();
-    CreateMeshlets();
+    if (!geometryResource)
+    {
+        return;
+    }
+
+    _name = geometryResource->Mesh.Name;
+    _filepath = geometryResource->Mesh.FilePath;
+
+    SyncResourceViews();
 }
 
 void QEGeometryComponent::CreateMeshlets()
 {
-    meshlets_ptr.resize(mesh.MeshData.size());
-    for (int i = 0; i < mesh.MeshData.size(); i++)
-    {
-        meshlets_ptr[i] = std::make_shared<Meshlet>();
-        meshlets_ptr[i]->GenerateMeshlet(mesh.MeshData[i].Vertices, mesh.MeshData[i].Indices);
-    }
+    SyncResourceViews();
 }
 
 void QEGeometryComponent::CreateIndexBuffers()
 {
-    indexBuffer.resize(mesh.MeshData.size());
-    indexBufferMemory.resize(mesh.MeshData.size());
-    for (int i = 0; i < mesh.MeshData.size(); i++)
+    if (!geometryResource)
     {
-        VkDeviceSize bufferSize = sizeof(mesh.MeshData[i].Indices[0]) * mesh.MeshData[i].Indices.size();
-
-        if (bufferSize == 0)
-        {
-            return;
-        }
-
-        VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
-        CreateGeometryBuffer(bufferSize, usageFlags, mesh.MeshData[i].Indices.data(), indexBuffer[i], indexBufferMemory[i]);
+        return;
     }
+
+    SyncResourceViews();
 }
 
 void QEGeometryComponent::CreateVertexBuffers()
 {
-    vertexBuffer.resize(mesh.MeshData.size());
-    vertexBufferMemory.resize(mesh.MeshData.size());
-    for (int i = 0; i < mesh.MeshData.size(); i++)
+    if (!geometryResource)
     {
-        VkDeviceSize bufferSize = sizeof(mesh.MeshData[i].Vertices[0]) * mesh.MeshData[i].Vertices.size();
-        if (bufferSize == 0)
-        {
-            return;
-        }
-        VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-        CreateGeometryBuffer(bufferSize, usageFlags, mesh.MeshData[i].Vertices.data(), vertexBuffer[i], vertexBufferMemory[i]);
+        return;
     }
+
+    SyncResourceViews();
 }
 
 void QEGeometryComponent::CreateAnimationVertexBuffers()
 {
-    animationBuffer.resize(mesh.MeshData.size());
-    animationBufferMemory.resize(mesh.MeshData.size());
-    for (int i = 0; i < mesh.MeshData.size(); i++)
+    if (!geometryResource)
     {
-        VkDeviceSize bufferSize = sizeof(mesh.MeshData[i].AnimationVertexData[0]) * mesh.MeshData[i].AnimationVertexData.size();
-        if (bufferSize == 0)
-        {
-            return;
-        }
-        VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-        CreateGeometryBuffer(bufferSize, usageFlags, mesh.MeshData[i].AnimationVertexData.data(), animationBuffer[i], animationBufferMemory[i]);
+        return;
     }
+
+    SyncResourceViews();
 }
 
 void QEGeometryComponent::CreateGeometryBuffer(VkDeviceSize bufferSize, VkBufferUsageFlags usageFlags, const void* dataArray, VkBuffer& buffer, VkDeviceMemory& memory)
 {
+    ownsBuffersDirectly = true;
+
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
     BufferManageModule::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory, *deviceModule_ptr);
@@ -263,4 +267,61 @@ void QEGeometryComponent::CreateGeometryBuffer(VkDeviceSize bufferSize, VkBuffer
 
     QE_DESTROY_BUFFER(deviceModule_ptr->device, stagingBuffer, "QEGeometryComponent::CreateGeometryBuffer");
     QE_FREE_MEMORY(deviceModule_ptr->device, stagingBufferMemory, "QEGeometryComponent::CreateGeometryBuffer");
+}
+
+std::string QEGeometryComponent::BuildResourceKey() const
+{
+    namespace fs = std::filesystem;
+
+    if (_filepath == "QECore")
+    {
+        return "QECore::" + _name;
+    }
+
+    if (_filepath.empty())
+    {
+        return {};
+    }
+
+    std::error_code ec;
+    fs::path meshPath = fs::path(_filepath);
+    fs::path canonicalPath = fs::weakly_canonical(meshPath, ec);
+    if (ec)
+    {
+        canonicalPath = fs::absolute(meshPath, ec);
+        if (ec)
+        {
+            return meshPath.lexically_normal().generic_string();
+        }
+    }
+
+    return canonicalPath.lexically_normal().generic_string();
+}
+
+void QEGeometryComponent::SyncResourceViews()
+{
+    if (!geometryResource)
+    {
+        return;
+    }
+
+    const size_t subMeshCount = geometryResource->Mesh.MeshData.size();
+
+    vertexBuffer.resize(subMeshCount, VK_NULL_HANDLE);
+    indexBuffer.resize(subMeshCount, VK_NULL_HANDLE);
+    animationBuffer.resize(subMeshCount, VK_NULL_HANDLE);
+    vertexBufferMemory.resize(subMeshCount, VK_NULL_HANDLE);
+    indexBufferMemory.resize(subMeshCount, VK_NULL_HANDLE);
+    animationBufferMemory.resize(subMeshCount, VK_NULL_HANDLE);
+    meshlets_ptr = geometryResource->Meshlets;
+
+    for (size_t i = 0; i < subMeshCount; ++i)
+    {
+        vertexBuffer[i] = geometryResource->VertexBuffers[i].Buffer;
+        vertexBufferMemory[i] = geometryResource->VertexBuffers[i].Memory;
+        indexBuffer[i] = geometryResource->IndexBuffers[i].Buffer;
+        indexBufferMemory[i] = geometryResource->IndexBuffers[i].Memory;
+        animationBuffer[i] = geometryResource->AnimationBuffers[i].Buffer;
+        animationBufferMemory[i] = geometryResource->AnimationBuffers[i].Memory;
+    }
 }
