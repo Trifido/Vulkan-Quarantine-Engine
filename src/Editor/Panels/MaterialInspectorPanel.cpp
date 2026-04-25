@@ -93,7 +93,7 @@ void MaterialInspectorPanel::Draw()
 
     for (int i = 0; i < static_cast<int>(materials.size()); ++i)
     {
-        DrawMaterialEntry(materials[i], i);
+        DrawMaterialEntry(gameObject, materials[i], i);
     }
 
     DrawAddMaterialPopup(gameObject, "AddMaterialPopup");
@@ -108,15 +108,25 @@ void MaterialInspectorPanel::DrawToolbar(const std::shared_ptr<QEGameObject>& ga
     }
 }
 
-void MaterialInspectorPanel::DrawMaterialEntry(const std::shared_ptr<QEMaterial>& material, int materialIndex)
+void MaterialInspectorPanel::DrawMaterialEntry(
+    const std::shared_ptr<QEGameObject>& gameObject,
+    const std::shared_ptr<QEMaterial>& material,
+    int materialIndex)
 {
-    if (!material)
+    if (!gameObject || !material)
         return;
 
     ImGui::PushID(materialIndex);
 
     const std::string shaderName = material->shader ? material->shader->shaderNameID : "None";
-    const std::string label = material->Name + " [" + shaderName + "]";
+    const bool useCopy = gameObject->IsMaterialUsingCopy(static_cast<size_t>(materialIndex));
+    const auto& bindings = gameObject->GetMaterialBindings();
+    const std::string sourceName =
+        materialIndex >= 0 && static_cast<size_t>(materialIndex) < bindings.size()
+        ? bindings[materialIndex].SourceMaterialName
+        : material->Name;
+    const std::string label =
+        material->Name + " [" + shaderName + "]" + (useCopy ? " (Copy)" : "");
 
     ImGui::Selectable(label.c_str(), false);
 
@@ -128,12 +138,28 @@ void MaterialInspectorPanel::DrawMaterialEntry(const std::shared_ptr<QEMaterial>
         }
     }
 
+    bool useCopyToggle = useCopy;
+    if (ImGui::Checkbox("UseCopy", &useCopyToggle))
+    {
+        gameObject->SetMaterialUseCopy(static_cast<size_t>(materialIndex), useCopyToggle);
+    }
+
+    if (useCopy)
+    {
+        ImGui::SameLine();
+        ImGui::TextDisabled("Source: %s", sourceName.c_str());
+    }
+
     const std::string popupId = "MaterialEntryContext_" + std::to_string(materialIndex);
     if (ImGui::BeginPopupContextItem(popupId.c_str()))
     {
+        if (useCopy && ImGui::MenuItem("Disable Copy"))
+        {
+            gameObject->SetMaterialUseCopy(static_cast<size_t>(materialIndex), false);
+        }
+
         if (ImGui::MenuItem("Remove Material"))
         {
-            auto gameObject = selectionManager ? selectionManager->GetSelectedGameObject() : nullptr;
             DeleteMaterialAt(gameObject, materialIndex);
         }
 

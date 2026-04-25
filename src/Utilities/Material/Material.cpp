@@ -85,11 +85,27 @@ QEMaterial::QEMaterial(std::shared_ptr<ShaderModule> shader_ptr, const MaterialD
     this->materialData.ApplyDtoPacking(materialDto);
 }
 
-std::shared_ptr<QEMaterial> QEMaterial::CreateMaterialInstance()
+std::shared_ptr<QEMaterial> QEMaterial::CreateMaterialInstance(
+    const std::string& instanceName,
+    const std::string& instanceFilePath)
 {
-    std::string instanceName = "QEMatInst_" + this->Name;
-    std::shared_ptr<QEMaterial> mat_instance = std::make_shared<QEMaterial>(instanceName, this->shader);
+    MaterialDto dto = this->ToDto();
+    dto.Name = instanceName.empty() ? ("QEMatInst_" + this->Name) : instanceName;
+
+    if (!instanceFilePath.empty())
+    {
+        dto.FilePath = instanceFilePath;
+    }
+    else
+    {
+        fs::path defaultPath = QEProjectManager::GetMaterialFolderPath();
+        defaultPath /= dto.Name + ".qemat";
+        dto.FilePath = QEProjectManager::ToProjectRelativePath(defaultPath);
+    }
+
+    auto mat_instance = std::make_shared<QEMaterial>(this->shader, dto);
     mat_instance->renderQueue = this->renderQueue;
+    mat_instance->shaderAssetPath = this->shaderAssetPath;
     return mat_instance;
 }
 

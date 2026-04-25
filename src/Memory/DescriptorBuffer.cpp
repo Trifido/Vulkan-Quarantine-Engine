@@ -448,6 +448,12 @@ void DescriptorBuffer::RefreshDescriptorSets(std::shared_ptr<ShaderModule> shade
     if (!shader_ptr || descriptorSets.empty())
         return;
 
+    // Editor-side material changes can arrive while descriptor sets from
+    // previous frames are still referenced by pending command buffers.
+    // Since these refreshes are infrequent and interactive, we prefer a
+    // conservative sync point over updating sets that are still in flight.
+    vkDeviceWaitIdle(deviceModule->device);
+
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
         std::vector<VkWriteDescriptorSet> descriptorWrites{};

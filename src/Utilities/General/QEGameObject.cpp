@@ -2,6 +2,34 @@
 #include <QEAnimationComponent.h>
 #include <CullingSceneManager.h>
 #include <QEAnimationGraphAssetHelper.h>
+#include <QEProjectManager.h>
+#include <cctype>
+
+namespace
+{
+    std::string SanitizeMaterialInstanceToken(const std::string& value)
+    {
+        std::string sanitized;
+        sanitized.reserve(value.size());
+
+        for (unsigned char c : value)
+        {
+            if (std::isalnum(c) || c == '_' || c == '-')
+            {
+                sanitized.push_back(static_cast<char>(c));
+            }
+            else
+            {
+                sanitized.push_back('_');
+            }
+        }
+
+        if (sanitized.empty())
+            sanitized = "MaterialCopy";
+
+        return sanitized;
+    }
+}
 
 QEGameObject::QEGameObject(std::string name)
 {
@@ -43,9 +71,9 @@ void QEGameObject::QEStart()
                 {
                     mesh->MaterialRel.push_back(mat->Name);
                 }
-                else if (!bindedMaterials.empty())
+                else if (!materialBindings.empty())
                 {
-                    std::shared_ptr<QEMaterial> material = this->materialManager->GetMaterial(bindedMaterials.front());
+                    std::shared_ptr<QEMaterial> material = this->materialManager->GetMaterial(ResolveMaterialBindingName(0));
                     if (material != nullptr)
                     {
                         mesh->MaterialRel.push_back(material->Name);
@@ -162,8 +190,14 @@ YAML::Node QEGameObject::ToYaml() const
     }
 
     auto mats = node["materials"];
-    for (const auto& mat : materials)
-        mats.push_back(mat->Name);
+    for (size_t materialIndex = 0; materialIndex < materials.size(); ++materialIndex)
+    {
+        YAML::Node materialNode;
+        materialNode["Source"] = ResolveMaterialSourceName(materialIndex);
+        materialNode["Bound"] = ResolveMaterialBindingName(materialIndex);
+        materialNode["UseCopy"] = IsMaterialUsingCopy(materialIndex);
+        mats.push_back(materialNode);
+    }
 
     auto chs = node["children"];
     for (const auto& ch : childs)
@@ -228,7 +262,27 @@ std::shared_ptr<QEGameObject> QEGameObject::FromYaml(const YAML::Node& node)
     {
         for (const auto& matnode : node["materials"])
         {
-            go->bindedMaterials.push_back(matnode.as<std::string>());
+            MaterialBindingInfo binding;
+
+            if (matnode.IsScalar())
+            {
+                binding.SourceMaterialName = matnode.as<std::string>();
+                binding.BoundMaterialName = binding.SourceMaterialName;
+            }
+            else
+            {
+                binding.SourceMaterialName = matnode["Source"] ? matnode["Source"].as<std::string>() : "";
+                binding.BoundMaterialName = matnode["Bound"] ? matnode["Bound"].as<std::string>() : "";
+                binding.UseCopy = matnode["UseCopy"] ? matnode["UseCopy"].as<bool>() : false;
+
+                if (binding.SourceMaterialName.empty())
+                    binding.SourceMaterialName = binding.BoundMaterialName;
+
+                if (binding.BoundMaterialName.empty())
+                    binding.BoundMaterialName = binding.SourceMaterialName;
+            }
+
+            go->materialBindings.push_back(binding);
         }
     }
 
@@ -297,6 +351,128 @@ void QEGameObject::InitializeResources()
     this->materialManager = MaterialManager::getInstance();
 
     AddComponent<QETransform>(std::make_shared<QETransform>());
+}
+
+void QEGameObject::EnsureMaterialBindingIndex(size_t materialIndex)
+{
+    if (materialBindings.size() <= materialIndex)
+    {
+        materialBindings.resize(materialIndex + 1);
+    }
+}
+
+void QEGameObject::UpdateMaterialBinding(
+    size_t materialIndex,
+    const std::string& sourceMaterialName,
+    const std::string& boundMaterialName,
+    bool useCopy)
+{
+    EnsureMaterialBindingIndex(materialIndex);
+    materialBindings[materialIndex].SourceMaterialName = sourceMaterialName;
+    materialBindings[materialIndex].BoundMaterialName = boundMaterialName;
+    materialBindings[materialIndex].UseCopy = useCopy;
+}
+
+std::string QEGameObject::ResolveMaterialBindingName(size_t materialIndex) const
+{
+    if (materialIndex >= materialBindings.size())
+        return "";
+
+    if (!materialBindings[materialIndex].BoundMaterialName.empty())
+        return materialBindings[materialIndex].BoundMaterialName;
+
+    if (!materialBindings[materialIndex].SourceMaterialName.empty())
+        return materialBindings[materialIndex].SourceMaterialName;
+
+    if (materialIndex < materials.size() && materials[materialIndex])
+        return materials[materialIndex]->Name;
+
+    return "";
+}
+
+std::string QEGameObject::ResolveMaterialSourceName(size_t materialIndex) const
+{
+    if (materialIndex < materialBindings.size() &&
+        !materialBindings[materialIndex].SourceMaterialName.empty())
+    {
+        return materialBindings[materialIndex].SourceMaterialName;
+    }
+
+    return ResolveMaterialBindingName(materialIndex);
+}
+
+std::string QEGameObject::GetBoundMaterialFilePath(size_t materialIndex) const
+{
+    if (materialIndex < materials.size() && materials[materialIndex])
+    {
+        return materials[materialIndex]->GetMaterialFilePath();
+    }
+
+    const std::string boundMaterialName = ResolveMaterialBindingName(materialIndex);
+    if (boundMaterialName.empty() || !materialManager)
+        return "";
+
+    auto material = materialManager->GetMaterial(boundMaterialName);
+    return material ? material->GetMaterialFilePath() : "";
+}
+
+void QEGameObject::DeleteOwnedMaterialCopy(const std::string& materialPath)
+{
+    if (!materialPath.empty())
+    {
+        QEProjectManager::DeletePath(materialPath, false);
+    }
+}
+
+bool QEGameObject::IsMaterialUsingCopy(size_t materialIndex) const
+{
+    return materialIndex < materialBindings.size() && materialBindings[materialIndex].UseCopy;
+}
+
+bool QEGameObject::SetMaterialUseCopy(size_t materialIndex, bool useCopy)
+{
+    if (materialIndex >= materials.size() || materialIndex >= materialBindings.size())
+        return false;
+
+    auto currentMaterial = materials[materialIndex];
+    if (!currentMaterial || !materialManager)
+        return false;
+
+    if (materialBindings[materialIndex].UseCopy == useCopy)
+        return false;
+
+    if (useCopy)
+    {
+        const std::string sourceMaterialName = ResolveMaterialSourceName(materialIndex);
+        const std::string copyBaseName =
+            SanitizeMaterialInstanceToken(Name) + "_" +
+            SanitizeMaterialInstanceToken(sourceMaterialName) + "_" +
+            std::to_string(materialIndex);
+        const std::filesystem::path copyPath =
+            QEProjectManager::GetMaterialFolderPath() / "Instances" / (copyBaseName + ".qemat");
+
+        auto materialCopy = currentMaterial->CreateMaterialInstance(
+            copyBaseName,
+            QEProjectManager::ToProjectRelativePath(copyPath));
+        if (!materialCopy)
+            return false;
+
+        materialManager->AddMaterial(materialCopy);
+        materialCopy->SaveMaterialFile();
+
+        SetMaterialAt(materialIndex, materialCopy);
+        UpdateMaterialBinding(materialIndex, sourceMaterialName, materialCopy->Name, true);
+        return true;
+    }
+
+    const std::string sourceMaterialName = ResolveMaterialSourceName(materialIndex);
+    auto sourceMaterial = materialManager->GetMaterial(sourceMaterialName);
+    if (!sourceMaterial)
+        return false;
+
+    SetMaterialAt(materialIndex, sourceMaterial);
+    UpdateMaterialBinding(materialIndex, sourceMaterialName, sourceMaterial->Name, false);
+    return true;
 }
 
 bool QEGameObject::RemoveComponent(const std::shared_ptr<QEGameComponent>& component_ptr)

@@ -40,7 +40,9 @@ public:
     void CleanLastResources();
 
     void cleanup();
-    std::shared_ptr<QEMaterial> CreateMaterialInstance();
+    std::shared_ptr<QEMaterial> CreateMaterialInstance(
+        const std::string& instanceName = "",
+        const std::string& instanceFilePath = "");
     void InitializeMaterialData();
     void UpdateUniformData();
     void RefreshDescriptorBindings();

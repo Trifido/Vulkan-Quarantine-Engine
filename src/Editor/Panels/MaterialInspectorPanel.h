@@ -26,7 +26,10 @@ public:
 
 private:
     void DrawToolbar(const std::shared_ptr<class QEGameObject>& gameObject);
-    void DrawMaterialEntry(const std::shared_ptr<QEMaterial>& material, int materialIndex);
+    void DrawMaterialEntry(
+        const std::shared_ptr<class QEGameObject>& gameObject,
+        const std::shared_ptr<QEMaterial>& material,
+        int materialIndex);
     bool DrawAddMaterialPopup(const std::shared_ptr<class QEGameObject>& gameObject, const char* popupId);
     void DeleteMaterialAt(const std::shared_ptr<class QEGameObject>& gameObject, int materialIndex);
 

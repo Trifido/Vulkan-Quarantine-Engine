@@ -17,10 +17,18 @@ class QEGameObject : Numbered
 {
     friend class CullingSceneManager;
 
+public:
+    struct MaterialBindingInfo
+    {
+        std::string SourceMaterialName;
+        std::string BoundMaterialName;
+        bool UseCopy = false;
+    };
+
 private:
     bool _isStarted = false;
     bool _isDestroyed = false;
-    std::vector<std::string> bindedMaterials;
+    std::vector<MaterialBindingInfo> materialBindings;
 
 protected:
     DeviceModule*       deviceModule = nullptr;
@@ -37,6 +45,16 @@ public:
 
 private:
     void InitializeResources();
+    void EnsureMaterialBindingIndex(size_t materialIndex);
+    void UpdateMaterialBinding(
+        size_t materialIndex,
+        const std::string& sourceMaterialName,
+        const std::string& boundMaterialName,
+        bool useCopy);
+    std::string ResolveMaterialBindingName(size_t materialIndex) const;
+    std::string ResolveMaterialSourceName(size_t materialIndex) const;
+    std::string GetBoundMaterialFilePath(size_t materialIndex) const;
+    void DeleteOwnedMaterialCopy(const std::string& materialPath);
 
 public:
     QEGameObject(std::string name = "");
@@ -71,8 +89,29 @@ public:
             if (it != materials.end())
                 return false;
 
+            const size_t materialIndex = materials.size();
             materials.push_back(component_ptr);
-            bindedMaterials.push_back(component_ptr->Name);
+
+            if (materialBindings.size() <= materialIndex)
+            {
+                MaterialBindingInfo binding;
+                binding.SourceMaterialName = component_ptr->Name;
+                binding.BoundMaterialName = component_ptr->Name;
+                materialBindings.push_back(binding);
+            }
+            else
+            {
+                if (materialBindings[materialIndex].SourceMaterialName.empty())
+                {
+                    materialBindings[materialIndex].SourceMaterialName = component_ptr->Name;
+                }
+
+                if (materialBindings[materialIndex].BoundMaterialName.empty())
+                {
+                    materialBindings[materialIndex].BoundMaterialName = component_ptr->Name;
+                }
+            }
+
             return true;
         }
         else
@@ -152,11 +191,23 @@ public:
         if (!material)
             return;
 
+        std::vector<std::string> removedCopyPaths;
+        for (size_t materialIndex = 0; materialIndex < materialBindings.size(); ++materialIndex)
+        {
+            if (materialBindings[materialIndex].UseCopy)
+            {
+                removedCopyPaths.push_back(GetBoundMaterialFilePath(materialIndex));
+            }
+        }
+
         materials.clear();
-        bindedMaterials.clear();
+        materialBindings.clear();
 
         materials.push_back(material);
-        bindedMaterials.push_back(material->Name);
+        MaterialBindingInfo binding;
+        binding.SourceMaterialName = material->Name;
+        binding.BoundMaterialName = material->Name;
+        materialBindings.push_back(binding);
 
         if (auto geometry = GetComponent<QEGeometryComponent>())
         {
@@ -170,6 +221,11 @@ public:
         {
             meshRenderer->RefreshMaterials();
         }
+
+        for (const auto& removedCopyPath : removedCopyPaths)
+        {
+            DeleteOwnedMaterialCopy(removedCopyPath);
+        }
     }
 
     void SetMaterialAt(size_t materialIndex, const std::shared_ptr<QEMaterial>& material)
@@ -182,18 +238,19 @@ public:
             materials.resize(materialIndex + 1);
         }
 
-        if (bindedMaterials.size() <= materialIndex)
-        {
-            bindedMaterials.resize(materialIndex + 1);
-        }
-
         const std::string previousMaterialName =
-            !bindedMaterials[materialIndex].empty()
-            ? bindedMaterials[materialIndex]
+            !ResolveMaterialBindingName(materialIndex).empty()
+            ? ResolveMaterialBindingName(materialIndex)
             : (materials[materialIndex] ? materials[materialIndex]->Name : "");
+        const bool removedCopy = materialIndex < materialBindings.size() && materialBindings[materialIndex].UseCopy;
+        const std::string removedCopyPath = removedCopy ? GetBoundMaterialFilePath(materialIndex) : "";
+        const std::string sourceMaterialName =
+            materialIndex < materialBindings.size() && !materialBindings[materialIndex].SourceMaterialName.empty()
+            ? materialBindings[materialIndex].SourceMaterialName
+            : material->Name;
 
         materials[materialIndex] = material;
-        bindedMaterials[materialIndex] = material->Name;
+        UpdateMaterialBinding(materialIndex, sourceMaterialName, material->Name, false);
         material->InitializeMaterialData();
 
         if (auto geometry = GetComponent<QEGeometryComponent>())
@@ -225,6 +282,11 @@ public:
         {
             meshRenderer->RefreshMaterials();
         }
+
+        if (removedCopy)
+        {
+            DeleteOwnedMaterialCopy(removedCopyPath);
+        }
     }
 
     bool AddMaterialBinding(const std::shared_ptr<QEMaterial>& material)
@@ -244,7 +306,10 @@ public:
             return false;
 
         materials.push_back(material);
-        bindedMaterials.push_back(material->Name);
+        MaterialBindingInfo binding;
+        binding.SourceMaterialName = material->Name;
+        binding.BoundMaterialName = material->Name;
+        materialBindings.push_back(binding);
         material->InitializeMaterialData();
 
         if (auto geometry = GetComponent<QEGeometryComponent>())
@@ -268,13 +333,15 @@ public:
 
     bool RemoveMaterialAt(size_t materialIndex)
     {
-        if (materialIndex >= materials.size() || materialIndex >= bindedMaterials.size())
+        if (materialIndex >= materials.size() || materialIndex >= materialBindings.size())
             return false;
 
-        const std::string removedMaterialName = bindedMaterials[materialIndex];
+        const MaterialBindingInfo removedBinding = materialBindings[materialIndex];
+        const std::string removedMaterialName = removedBinding.BoundMaterialName;
+        const std::string removedCopyPath = removedBinding.UseCopy ? GetBoundMaterialFilePath(materialIndex) : "";
 
         materials.erase(materials.begin() + static_cast<std::ptrdiff_t>(materialIndex));
-        bindedMaterials.erase(bindedMaterials.begin() + static_cast<std::ptrdiff_t>(materialIndex));
+        materialBindings.erase(materialBindings.begin() + static_cast<std::ptrdiff_t>(materialIndex));
 
         if (auto geometry = GetComponent<QEGeometryComponent>())
         {
@@ -303,6 +370,11 @@ public:
             meshRenderer->RefreshMaterials();
         }
 
+        if (removedBinding.UseCopy)
+        {
+            DeleteOwnedMaterialCopy(removedCopyPath);
+        }
+
         return true;
     }
 
@@ -310,6 +382,14 @@ public:
     {
         return materials;
     }
+
+    const std::vector<MaterialBindingInfo>& GetMaterialBindings() const
+    {
+        return materialBindings;
+    }
+
+    bool IsMaterialUsingCopy(size_t materialIndex) const;
+    bool SetMaterialUseCopy(size_t materialIndex, bool useCopy);
 
     bool AddComponent(const std::shared_ptr<QEGameComponent>& component_ptr)
     {
