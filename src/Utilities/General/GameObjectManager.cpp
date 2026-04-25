@@ -146,6 +146,14 @@ bool GameObjectManager::RemoveGameObject(const std::shared_ptr<QEGameObject>& ob
         object_ptr->parent->RemoveChild(object_ptr);
     }
 
+    // Scene editing can delete a hierarchy while its buffers are still
+    // referenced by command buffers submitted in previous frames.
+    // For this editor-side path, synchronize before releasing GPU resources.
+    if (auto* deviceModule = DeviceModule::getInstance())
+    {
+        vkDeviceWaitIdle(deviceModule->device);
+    }
+
     RemoveLightsFromHierarchy(object_ptr);
 
     DestroyHierarchy(object_ptr);
