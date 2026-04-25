@@ -9,6 +9,7 @@
 
 #include <Editor/Core/EditorContext.h>
 #include <Logging/QELogMacros.h>
+#include <MaterialManager.h>
 #include <QEProjectManager.h>
 #include <QEShaderYamlHelper.h>
 
@@ -393,6 +394,8 @@ bool ShaderEditorPanel::Save()
         QE_LOG_ERROR_CAT_F("ShaderEditorPanel", "Could not save shader asset {}", _shaderPath.string());
         return false;
     }
+
+    MaterialManager::getInstance()->ReloadShaderAsset(_shaderPath);
 
     _isDirty = false;
     return true;

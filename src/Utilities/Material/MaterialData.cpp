@@ -278,7 +278,87 @@ void MaterialData::fillEmptyTextures()
     }
 }
 
-void MaterialData::AddTexture(TEXTURE_TYPE semantic, const std::string& texturePath)
+void MaterialData::RecalculateTextureState()
+{
+    TexMask = 0;
+
+    idxDiffuse = (int)MAT_TEX_SLOT::BaseColor;
+    idxNormal = (int)MAT_TEX_SLOT::Normal;
+    idxSpecular = (int)MAT_TEX_SLOT::Reserved7;
+    idxEmissive = (int)MAT_TEX_SLOT::Emissive;
+    idxHeight = (int)MAT_TEX_SLOT::Height;
+    idxMetallic = (int)MAT_TEX_SLOT::Metallic;
+    idxRoughness = (int)MAT_TEX_SLOT::Roughness;
+    idxAO = (int)MAT_TEX_SLOT::AO;
+
+    auto hasRealTexture = [&](TEXTURE_TYPE semantic) -> bool
+        {
+            const int slot = SlotFromType(semantic);
+            if (slot < 0 || slot >= TOTAL_NUM_TEXTURES)
+                return false;
+
+            const auto& tex = texture_vector->at((size_t)slot);
+            return tex && tex != emptyTexture;
+        };
+
+    auto setBitIfReal = [&](TEXTURE_TYPE semantic)
+        {
+            if (!hasRealTexture(semantic))
+                return;
+
+            const uint32_t bit = SlotBitFromType(semantic);
+            if (bit)
+                TexMask |= bit;
+        };
+
+    setBitIfReal(TEXTURE_TYPE::DIFFUSE_TYPE);
+    setBitIfReal(TEXTURE_TYPE::NORMAL_TYPE);
+    setBitIfReal(TEXTURE_TYPE::METALNESS_TYPE);
+    setBitIfReal(TEXTURE_TYPE::ROUGHNESS_TYPE);
+    setBitIfReal(TEXTURE_TYPE::AO_TYPE);
+    setBitIfReal(TEXTURE_TYPE::EMISSIVE_TYPE);
+    setBitIfReal(TEXTURE_TYPE::HEIGHT_TYPE);
+    setBitIfReal(TEXTURE_TYPE::SPECULAR_TYPE);
+
+    const auto metallic = findTextureByType(TEXTURE_TYPE::METALNESS_TYPE);
+    const auto roughness = findTextureByType(TEXTURE_TYPE::ROUGHNESS_TYPE);
+
+    if (metallic && roughness &&
+        metallic == roughness &&
+        metallic != emptyTexture)
+    {
+        idxMetallic = (int)MAT_TEX_SLOT::Metallic;
+        idxRoughness = idxMetallic;
+        MetallicChan = 2;
+        RoughnessChan = 1;
+    }
+    else
+    {
+        if (hasRealTexture(TEXTURE_TYPE::METALNESS_TYPE))
+            MetallicChan = 0;
+
+        if (hasRealTexture(TEXTURE_TYPE::ROUGHNESS_TYPE))
+            RoughnessChan = 0;
+    }
+
+    if (hasRealTexture(TEXTURE_TYPE::AO_TYPE))
+        AOChan = 0;
+
+    UpdateMaterialDataRaw("idxDiffuse", &idxDiffuse, sizeof(idxDiffuse));
+    UpdateMaterialDataRaw("idxNormal", &idxNormal, sizeof(idxNormal));
+    UpdateMaterialDataRaw("idxSpecular", &idxSpecular, sizeof(idxSpecular));
+    UpdateMaterialDataRaw("idxEmissive", &idxEmissive, sizeof(idxEmissive));
+    UpdateMaterialDataRaw("idxHeight", &idxHeight, sizeof(idxHeight));
+    UpdateMaterialDataRaw("idxMetallic", &idxMetallic, sizeof(idxMetallic));
+    UpdateMaterialDataRaw("idxRoughness", &idxRoughness, sizeof(idxRoughness));
+    UpdateMaterialDataRaw("idxAO", &idxAO, sizeof(idxAO));
+    UpdateMaterialDataRaw("metallicChan", &MetallicChan, sizeof(MetallicChan));
+    UpdateMaterialDataRaw("roughnessChan", &RoughnessChan, sizeof(RoughnessChan));
+    UpdateMaterialDataRaw("aoChan", &AOChan, sizeof(AOChan));
+    UpdateMaterialDataRaw("texMask", &TexMask, sizeof(TexMask));
+}
+
+void MaterialData::SetTexture(TEXTURE_TYPE semantic, const std::string& texturePath)
 {
     PathRefForSemantic(*this, semantic) =
         (texturePath.empty() ? "NULL_TEXTURE" : texturePath);
@@ -305,39 +385,12 @@ void MaterialData::AddTexture(TEXTURE_TYPE semantic, const std::string& textureP
 
     texture_vector->at((size_t)slot) = tex;
     Textures[semantic] = tex;
+    RecalculateTextureState();
+}
 
-    bool isReal = !texturePath.empty() && texturePath != "NULL_TEXTURE" && texturePath[0] != '*';
-    if (isReal)
-    {
-        uint32_t bit = SlotBitFromType(semantic);
-        if (bit)
-        {
-            TexMask |= bit;
-            UpdateMaterialDataRaw("texMask", &TexMask, sizeof(TexMask));
-        }
-    }
-
-    auto m = findTextureByType(TEXTURE_TYPE::METALNESS_TYPE);
-    auto r = findTextureByType(TEXTURE_TYPE::ROUGHNESS_TYPE);
-
-    if (m && r && m == r && m != emptyTexture)
-    {
-        idxMetallic = (int)MAT_TEX_SLOT::Metallic;
-        idxRoughness = idxMetallic;
-
-        MetallicChan = 2;
-        RoughnessChan = 1;
-
-        UpdateMaterialDataRaw("idxMetallic", &idxMetallic, sizeof(idxMetallic));
-        UpdateMaterialDataRaw("idxRoughness", &idxRoughness, sizeof(idxRoughness));
-        UpdateMaterialDataRaw("metallicChan", &MetallicChan, sizeof(MetallicChan));
-        UpdateMaterialDataRaw("roughnessChan", &RoughnessChan, sizeof(RoughnessChan));
-
-        TexMask |= (1u << (uint32_t)MAT_TEX_SLOT::Metallic);
-        TexMask |= (1u << (uint32_t)MAT_TEX_SLOT::Roughness);
-        UpdateMaterialDataRaw("texMask", &TexMask, sizeof(TexMask));
-    }
-
+void MaterialData::AddTexture(TEXTURE_TYPE semantic, const std::string& texturePath)
+{
+    SetTexture(semantic, texturePath);
 }
 
 void MaterialData::CleanLastResources()

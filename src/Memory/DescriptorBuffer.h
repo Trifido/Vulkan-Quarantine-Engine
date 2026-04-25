@@ -67,6 +67,7 @@ public:
     }
     void SetMeshletBuffers(std::shared_ptr<Meshlet> meshlets_ptr);
     void InitializeDescriptorSets(std::shared_ptr<ShaderModule> shader_ptr);
+    void RefreshDescriptorSets(std::shared_ptr<ShaderModule> shader_ptr);
     VkDescriptorSet* getDescriptorSet(size_t id) { return &descriptorSets.at(id); }
     void CleanLastResources();
     void Cleanup();

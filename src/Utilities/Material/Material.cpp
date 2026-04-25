@@ -147,6 +147,15 @@ void QEMaterial::UpdateUniformData()
     }
 }
 
+void QEMaterial::RefreshDescriptorBindings()
+{
+    if (!this->shader || !this->hasDescriptorBuffer || !this->descriptor)
+        return;
+
+    this->descriptor->textures = this->materialData.texture_vector;
+    this->descriptor->RefreshDescriptorSets(this->shader);
+}
+
 void QEMaterial::SetMeshShaderPipeline(bool value)
 {
     if (this->isMeshShaderEnabled != value)

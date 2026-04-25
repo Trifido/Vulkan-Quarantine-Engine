@@ -135,6 +135,7 @@ private:
     std::shared_ptr<CustomTexture> findTextureByType(TEXTURE_TYPE newtype);
     std::string GetTexture(const aiScene* scene, aiMaterial* mat, aiTextureType type, TEXTURE_TYPE textureType);
     void fillEmptyTextures();
+    void RecalculateTextureState();
 
     static glm::vec4 ToVec4(const aiColor4D& c)
     {
@@ -145,6 +146,7 @@ public:
     MaterialData();
 
     void AddTexture(TEXTURE_TYPE semantic, const std::string& texturePath);
+    void SetTexture(TEXTURE_TYPE semantic, const std::string& texturePath);
 
     void ImportAssimpMaterial(aiMaterial* material);
 

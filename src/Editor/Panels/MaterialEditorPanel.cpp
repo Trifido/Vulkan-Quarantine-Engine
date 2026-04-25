@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdio>
 #include <vector>
 
 #include <imgui.h>
@@ -20,6 +21,43 @@
 
 namespace
 {
+    struct TextureSlotEditorDef
+    {
+        const char* Label;
+        TEXTURE_TYPE Semantic;
+        std::string MaterialData::* PathMember;
+    };
+
+    const TextureSlotEditorDef kTextureSlotDefs[] =
+    {
+        { "Base Color", TEXTURE_TYPE::DIFFUSE_TYPE, &MaterialData::diffuseTexturePath },
+        { "Normal",     TEXTURE_TYPE::NORMAL_TYPE, &MaterialData::normalTexturePath },
+        { "Metallic",   TEXTURE_TYPE::METALNESS_TYPE, &MaterialData::metallicTexturePath },
+        { "Roughness",  TEXTURE_TYPE::ROUGHNESS_TYPE, &MaterialData::roughnessTexturePath },
+        { "AO",         TEXTURE_TYPE::AO_TYPE, &MaterialData::aoTexturePath },
+        { "Emissive",   TEXTURE_TYPE::EMISSIVE_TYPE, &MaterialData::emissiveTexturePath },
+        { "Height",     TEXTURE_TYPE::HEIGHT_TYPE, &MaterialData::heightTexturePath },
+        { "Specular",   TEXTURE_TYPE::SPECULAR_TYPE, &MaterialData::specularTexturePath }
+    };
+
+    std::string ToLowerCopy(std::string value)
+    {
+        std::transform(value.begin(), value.end(), value.begin(), ::tolower);
+        return value;
+    }
+
+    bool IsSupportedTexturePath(const std::filesystem::path& path)
+    {
+        const std::string ext = ToLowerCopy(path.extension().string());
+        return ext == ".png" ||
+            ext == ".jpg" ||
+            ext == ".jpeg" ||
+            ext == ".ktx2" ||
+            ext == ".dds" ||
+            ext == ".tga" ||
+            ext == ".bmp";
+    }
+
     const char* GetPreviewShapeLabel(MaterialPreviewRenderer::PreviewShape shape)
     {
         switch (shape)
@@ -94,6 +132,7 @@ MaterialEditorPanel::~MaterialEditorPanel()
 void MaterialEditorPanel::OpenMaterial(const std::shared_ptr<QEMaterial>& material)
 {
     _material = material;
+    _lastKnownShader = _material ? _material->shader : nullptr;
 
     if (editorContext)
     {
@@ -149,6 +188,12 @@ void MaterialEditorPanel::Draw()
         ImGui::TextUnformatted("No material selected.");
         ImGui::End();
         return;
+    }
+
+    if (_material->shader != _lastKnownShader)
+    {
+        _lastKnownShader = _material->shader;
+        _previewRenderer.SetMaterial(_material);
     }
 
     DrawToolbar();
@@ -415,11 +460,74 @@ void MaterialEditorPanel::DrawProperties()
         changed = true;
     }
 
+    DrawTextureSlots();
+
     DrawShaderReflection();
 
     if (changed)
     {
         SyncPreview();
+    }
+}
+
+void MaterialEditorPanel::DrawTextureSlots()
+{
+    if (!_material)
+        return;
+
+    ImGui::SeparatorText("Textures");
+
+    for (const auto& slotDef : kTextureSlotDefs)
+    {
+        std::string& texturePath = _material->materialData.*(slotDef.PathMember);
+        const bool hasTexture = !texturePath.empty() && texturePath != "NULL_TEXTURE";
+
+        ImGui::PushID(static_cast<int>(slotDef.Semantic));
+        ImGui::TextUnformatted(slotDef.Label);
+
+        const std::string displayName = hasTexture
+            ? QEProjectManager::ToProjectRelativePath(texturePath)
+            : "None";
+
+        std::array<char, 512> displayBuffer{};
+        std::snprintf(displayBuffer.data(), displayBuffer.size(), "%s", displayName.c_str());
+
+        ImGui::SetNextItemWidth(-110.0f);
+        ImGui::InputText("##TexturePath", displayBuffer.data(), displayBuffer.size(), ImGuiInputTextFlags_ReadOnly);
+
+        if (ImGui::BeginDragDropTarget())
+        {
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("QE_PROJECT_ASSET_PATH"))
+            {
+                if (payload->Data && payload->DataSize > 0)
+                {
+                    const char* droppedPath = static_cast<const char*>(payload->Data);
+                    const std::filesystem::path textureAssetPath(droppedPath);
+                    if (IsSupportedTexturePath(textureAssetPath))
+                    {
+                        AssignTexture(slotDef.Semantic, textureAssetPath);
+                    }
+                }
+            }
+
+            ImGui::EndDragDropTarget();
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("Pick"))
+        {
+            ImGui::OpenPopup("TexturePicker");
+        }
+
+        DrawTexturePickerPopup("TexturePicker", slotDef.Semantic);
+
+        ImGui::SameLine();
+        if (ImGui::Button("Clear"))
+        {
+            AssignTexture(slotDef.Semantic, {});
+        }
+
+        ImGui::PopID();
     }
 }
 
@@ -571,6 +679,88 @@ bool MaterialEditorPanel::DrawShaderPickerPopup(const char* popupId)
 
     ImGui::EndPopup();
     return changed;
+}
+
+bool MaterialEditorPanel::DrawTexturePickerPopup(const char* popupId, TEXTURE_TYPE semantic)
+{
+    if (!_material)
+        return false;
+
+    if (!ImGui::BeginPopup(popupId))
+        return false;
+
+    static std::array<char, 256> searchBuffer{};
+    ImGui::InputTextWithHint("##MaterialTextureSearch", "Search texture...", searchBuffer.data(), searchBuffer.size());
+    ImGui::Separator();
+
+    std::string search = ToLowerCopy(searchBuffer.data());
+    std::vector<std::filesystem::path> candidatePaths;
+    const std::filesystem::path projectRoot = QEProjectManager::GetCurrentProjectPath();
+
+    if (!projectRoot.empty() && std::filesystem::exists(projectRoot))
+    {
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(projectRoot))
+        {
+            if (!entry.is_regular_file())
+                continue;
+
+            if (!IsSupportedTexturePath(entry.path()))
+                continue;
+
+            std::string relativePath = QEProjectManager::ToProjectRelativePath(entry.path());
+            std::string lowered = ToLowerCopy(relativePath);
+
+            if (!search.empty() && lowered.find(search) == std::string::npos)
+                continue;
+
+            candidatePaths.push_back(entry.path());
+        }
+    }
+
+    std::sort(candidatePaths.begin(), candidatePaths.end());
+
+    bool changed = false;
+
+    if (ImGui::BeginChild("MaterialTexturePickerList", ImVec2(520.0f, 260.0f), true))
+    {
+        for (const auto& candidatePath : candidatePaths)
+        {
+            const std::string relativePath = QEProjectManager::ToProjectRelativePath(candidatePath);
+            if (ImGui::Selectable(relativePath.c_str()))
+            {
+                AssignTexture(semantic, candidatePath);
+                changed = true;
+                std::fill(searchBuffer.begin(), searchBuffer.end(), '\0');
+                ImGui::CloseCurrentPopup();
+                break;
+            }
+        }
+    }
+    ImGui::EndChild();
+
+    if (ImGui::Button("Close"))
+    {
+        std::fill(searchBuffer.begin(), searchBuffer.end(), '\0');
+        ImGui::CloseCurrentPopup();
+    }
+
+    ImGui::EndPopup();
+    return changed;
+}
+
+void MaterialEditorPanel::AssignTexture(TEXTURE_TYPE semantic, const std::filesystem::path& texturePath)
+{
+    if (!_material)
+        return;
+
+    const std::string normalizedPath = texturePath.empty()
+        ? "NULL_TEXTURE"
+        : QEProjectManager::ResolveProjectPath(texturePath).lexically_normal().string();
+
+    _material->materialData.SetTexture(semantic, normalizedPath);
+    _material->RefreshDescriptorBindings();
+    _material->UpdateUniformData();
+    SyncPreview();
 }
 
 void MaterialEditorPanel::SyncPreview()

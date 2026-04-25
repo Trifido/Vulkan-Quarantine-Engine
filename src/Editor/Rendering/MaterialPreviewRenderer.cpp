@@ -190,6 +190,15 @@ void MaterialPreviewRenderer::SyncFromMaterial(const std::shared_ptr<QEMaterial>
     _previewMaterial->materialData.SetMaterialField("AlphaCutoff", material->materialData.AlphaCutoff);
     _previewMaterial->materialData.SetMaterialField("AlphaMode", static_cast<int>(material->materialData.AlphaMode));
     _previewMaterial->materialData.SetMaterialField("DoubleSided", material->materialData.DoubleSided ? 1 : 0);
+    _previewMaterial->materialData.SetTexture(TEXTURE_TYPE::DIFFUSE_TYPE, material->materialData.diffuseTexturePath);
+    _previewMaterial->materialData.SetTexture(TEXTURE_TYPE::NORMAL_TYPE, material->materialData.normalTexturePath);
+    _previewMaterial->materialData.SetTexture(TEXTURE_TYPE::METALNESS_TYPE, material->materialData.metallicTexturePath);
+    _previewMaterial->materialData.SetTexture(TEXTURE_TYPE::ROUGHNESS_TYPE, material->materialData.roughnessTexturePath);
+    _previewMaterial->materialData.SetTexture(TEXTURE_TYPE::AO_TYPE, material->materialData.aoTexturePath);
+    _previewMaterial->materialData.SetTexture(TEXTURE_TYPE::EMISSIVE_TYPE, material->materialData.emissiveTexturePath);
+    _previewMaterial->materialData.SetTexture(TEXTURE_TYPE::HEIGHT_TYPE, material->materialData.heightTexturePath);
+    _previewMaterial->materialData.SetTexture(TEXTURE_TYPE::SPECULAR_TYPE, material->materialData.specularTexturePath);
+    _previewMaterial->RefreshDescriptorBindings();
     _previewMaterial->UpdateUniformData();
 }
 

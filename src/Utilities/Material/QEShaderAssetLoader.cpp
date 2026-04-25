@@ -29,7 +29,7 @@ bool QEShaderAssetLoader::IsShaderAssetPath(const fs::path& path)
     return ToLower(path.extension().string()) == ".qeshader";
 }
 
-std::shared_ptr<ShaderModule> QEShaderAssetLoader::LoadShaderAsset(const fs::path& shaderAssetPath)
+std::shared_ptr<ShaderModule> QEShaderAssetLoader::LoadShaderAsset(const fs::path& shaderAssetPath, bool forceReload)
 {
     const fs::path resolvedAssetPath = QEProjectManager::ResolveProjectPath(shaderAssetPath);
 
@@ -43,8 +43,11 @@ std::shared_ptr<ShaderModule> QEShaderAssetLoader::LoadShaderAsset(const fs::pat
     const std::string shaderId = BuildShaderId(resolvedAssetPath);
     auto shaderManager = ShaderManager::getInstance();
 
-    if (auto existingShader = shaderManager->GetShader(shaderId))
-        return existingShader;
+    if (!forceReload)
+    {
+        if (auto existingShader = shaderManager->GetShader(shaderId))
+            return existingShader;
+    }
 
     const GraphicsPipelineData pipelineData = BuildGraphicsPipelineData(asset);
 

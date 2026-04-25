@@ -46,6 +46,7 @@ public:
 
     std::shared_ptr<QEMaterial> GetMaterial(std::string nameMaterial);
     std::shared_ptr<QEMaterial> LoadMaterialFromFile(const std::filesystem::path& materialPath);
+    bool ReloadShaderAsset(const std::filesystem::path& shaderAssetPath);
     bool RemoveMaterialAsset(const std::filesystem::path& materialPath);
     bool SyncRenamedMaterialAsset(const std::filesystem::path& oldPath, const std::filesystem::path& newPath);
     void AddMaterial(std::shared_ptr<QEMaterial> mat_ptr);

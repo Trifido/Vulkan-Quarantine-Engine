@@ -213,6 +213,32 @@ std::shared_ptr<QEMaterial> MaterialManager::LoadMaterialFromFile(const std::fil
     return GetMaterial(material->Name);
 }
 
+bool MaterialManager::ReloadShaderAsset(const std::filesystem::path& shaderAssetPath)
+{
+    const fs::path resolvedShaderPath = QEProjectManager::ResolveProjectPath(shaderAssetPath).lexically_normal();
+    const std::string relativeShaderPath = QEProjectManager::ToProjectRelativePath(resolvedShaderPath);
+
+    auto shader = QEShaderAssetLoader::LoadShaderAsset(relativeShaderPath, true);
+    if (!shader)
+        return false;
+
+    bool anyUpdated = false;
+
+    for (auto& [name, material] : _materials)
+    {
+        if (!material)
+            continue;
+
+        if (material->GetShaderAssetPath() != relativeShaderPath)
+            continue;
+
+        if (material->ApplyShader(shader, relativeShaderPath))
+            anyUpdated = true;
+    }
+
+    return anyUpdated;
+}
+
 bool MaterialManager::RemoveMaterialAsset(const std::filesystem::path& materialPath)
 {
     if (materialPath.empty())

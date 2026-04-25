@@ -443,6 +443,19 @@ void DescriptorBuffer::InitializeDescriptorSets(std::shared_ptr<ShaderModule> sh
     }
 }
 
+void DescriptorBuffer::RefreshDescriptorSets(std::shared_ptr<ShaderModule> shader_ptr)
+{
+    if (!shader_ptr || descriptorSets.empty())
+        return;
+
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        std::vector<VkWriteDescriptorSet> descriptorWrites{};
+        descriptorWrites = this->GetDescriptorWrites(shader_ptr, (uint32_t)i);
+        vkUpdateDescriptorSets(deviceModule->device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+    }
+}
+
 void DescriptorBuffer::CleanDescriptorSetPool()
 {
     vkDestroyDescriptorPool(deviceModule->device, this->descriptorPool, nullptr);

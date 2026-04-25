@@ -18,7 +18,7 @@ class QEShaderAssetLoader
 {
 public:
     static bool IsShaderAssetPath(const fs::path& path);
-    static std::shared_ptr<ShaderModule> LoadShaderAsset(const fs::path& shaderAssetPath);
+    static std::shared_ptr<ShaderModule> LoadShaderAsset(const fs::path& shaderAssetPath, bool forceReload = false);
     static std::string BuildShaderId(const fs::path& shaderAssetPath);
 
 private:

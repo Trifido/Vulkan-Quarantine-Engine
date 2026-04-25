@@ -111,10 +111,12 @@ void QEMeshRenderer::SetDrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx
     const bool isBlended =
         material->materialData.AlphaMode == 2u ||
         material->renderQueue >= static_cast<unsigned int>(RenderQueue::Transparent);
+    const bool disableCulling = material->materialData.DoubleSided;
 
     vkCmdSetDepthTestEnable(commandBuffer, true);
     vkCmdSetDepthWriteEnable(commandBuffer, isBlended ? VK_FALSE : VK_TRUE);
-    vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
+    vkCmdSetFrontFace(commandBuffer, pipelineModule->frontFace);
+    vkCmdSetCullMode(commandBuffer, disableCulling ? VK_CULL_MODE_NONE : pipelineModule->cullMode);
 
     material->BindDescriptors(commandBuffer, idx);
 

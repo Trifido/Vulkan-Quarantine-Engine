@@ -6,6 +6,7 @@
 #include <memory>
 
 #include <Editor/Rendering/MaterialPreviewRenderer.h>
+#include <TextureTypes.h>
 
 class EditorContext;
 class MaterialManager;
@@ -14,6 +15,7 @@ class RenderPassModule;
 class CommandPoolModule;
 class QueueModule;
 class QEMaterial;
+class ShaderModule;
 
 class MaterialEditorPanel : public IEditorPanel
 {
@@ -40,14 +42,18 @@ private:
     void DrawPreview();
     void HandlePreviewInteraction();
     void DrawProperties();
+    void DrawTextureSlots();
     void DrawShaderReflection();
     bool DrawShaderPickerPopup(const char* popupId);
+    bool DrawTexturePickerPopup(const char* popupId, TEXTURE_TYPE semantic);
+    void AssignTexture(TEXTURE_TYPE semantic, const std::filesystem::path& texturePath);
     void SyncPreview();
 
 private:
     EditorContext* editorContext = nullptr;
     MaterialManager* materialManager = nullptr;
     std::shared_ptr<QEMaterial> _material;
+    std::shared_ptr<ShaderModule> _lastKnownShader = nullptr;
     std::filesystem::path _materialPath;
     MaterialPreviewRenderer _previewRenderer;
 };

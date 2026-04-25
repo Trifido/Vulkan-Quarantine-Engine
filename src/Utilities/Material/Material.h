@@ -43,6 +43,7 @@ public:
     std::shared_ptr<QEMaterial> CreateMaterialInstance();
     void InitializeMaterialData();
     void UpdateUniformData();
+    void RefreshDescriptorBindings();
     bool HasDescriptorBuffer() { return this->hasDescriptorBuffer; }
     void SetMeshShaderPipeline(bool value);
     void BindDescriptors(VkCommandBuffer& commandBuffer, uint32_t idx);
