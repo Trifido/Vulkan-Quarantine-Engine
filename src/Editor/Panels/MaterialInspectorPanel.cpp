@@ -143,7 +143,7 @@ void MaterialInspectorPanel::DrawMaterialEntry(
 
     bool useCopyToggle = useCopy;
     ImGui::SameLine();
-    ImGui::Checkbox("UseCopy", &useCopyToggle);
+    ImGui::Checkbox("Use Copy", &useCopyToggle);
 
     if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
     {
@@ -156,12 +156,6 @@ void MaterialInspectorPanel::DrawMaterialEntry(
     if (useCopy != useCopyToggle)
     {
         gameObject->SetMaterialUseCopy(static_cast<size_t>(materialIndex), useCopyToggle);
-    }
-
-    if (useCopy)
-    {
-        ImGui::SameLine();
-        ImGui::TextDisabled("Source: %s", sourceName.c_str());
     }
 
     const std::string popupId = "MaterialEntryContext_" + std::to_string(materialIndex);

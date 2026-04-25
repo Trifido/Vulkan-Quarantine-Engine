@@ -90,6 +90,8 @@ std::shared_ptr<QEMaterial> QEMaterial::CreateMaterialInstance(
     const std::string& instanceFilePath)
 {
     MaterialDto dto = this->ToDto();
+    const fs::path sourceMaterialPath = QEProjectManager::ResolveProjectPath(dto.FilePath);
+    dto.UpdateTexturePaths(sourceMaterialPath.parent_path());
     dto.Name = instanceName.empty() ? ("QEMatInst_" + this->Name) : instanceName;
 
     if (!instanceFilePath.empty())
