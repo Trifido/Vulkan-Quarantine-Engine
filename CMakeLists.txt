@@ -10,8 +10,6 @@ if (MSVC)
 endif()
 
 set(BUILD_TESTING OFF CACHE BOOL "Disable third-party test/dashboard targets" FORCE)
-
-# Usar /MDd y /MD
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
 include(FetchContent)
@@ -31,10 +29,8 @@ endif()
 # FetchContent dependencies
 # ------------------------------
 
-# Antes de FetchContent_Declare(glfw), fuerza GLFW como estática
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
-# GLFW
 FetchContent_Declare(
   glfw
   GIT_REPOSITORY https://github.com/glfw/glfw.git
@@ -45,11 +41,9 @@ set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
-
 FetchContent_MakeAvailable(glfw)
 set_target_properties(glfw PROPERTIES DEBUG_POSTFIX "d")
 
-# GLM
 FetchContent_Declare(
   glm
   GIT_REPOSITORY https://github.com/g-truc/glm.git
@@ -58,7 +52,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glm)
 
-# stb
 FetchContent_Declare(
   stb
   GIT_REPOSITORY https://github.com/nothings/stb.git
@@ -67,7 +60,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(stb)
 
-# yaml-cpp
 FetchContent_Declare(
   yaml-cpp
   GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
@@ -79,20 +71,17 @@ set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(yaml-cpp)
 
-# KTX / libktx
 FetchContent_Declare(
   ktx
   GIT_REPOSITORY https://github.com/KhronosGroup/KTX-Software.git
   GIT_TAG v4.4.2
   GIT_SHALLOW TRUE
 )
-
 set(KTX_FEATURE_TESTS OFF CACHE BOOL "" FORCE)
 set(KTX_FEATURE_TOOLS OFF CACHE BOOL "" FORCE)
 set(KTX_FEATURE_GL_UPLOAD OFF CACHE BOOL "" FORCE)
 set(KTX_FEATURE_VK_UPLOAD ON CACHE BOOL "" FORCE)
 set(KTX_FEATURE_LOADTEST_APPS OFF CACHE BOOL "" FORCE)
-
 FetchContent_MakeAvailable(ktx)
 
 # ------------------------------
@@ -113,7 +102,7 @@ set(ASSIMP_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "" FORCE)
 add_subdirectory(extern/assimp EXCLUDE_FROM_ALL)
 
-file(GLOB SPIRV_REFLECT_SRC 
+file(GLOB SPIRV_REFLECT_SRC
   extern/SPIRV-Reflect/spirv_reflect.c
   extern/SPIRV-Reflect/spirv_reflect.h
 )
@@ -151,131 +140,139 @@ target_include_directories(imgui PUBLIC
 # ------------------------------
 
 set(IMGUIZMO_DIR ${CMAKE_SOURCE_DIR}/extern/ImGuizmo)
-
 add_library(imguizmo STATIC
   ${IMGUIZMO_DIR}/ImGuizmo.cpp
   ${IMGUIZMO_DIR}/GraphEditor.cpp
 )
-
 target_include_directories(imguizmo PUBLIC
   ${IMGUIZMO_DIR}
   ${IMGUI_DIR}
   ${IMGUI_DIR}/backends
 )
-
 target_link_libraries(imguizmo PUBLIC imgui)
 
 # ------------------------------
-# Source Files
+# Source collection helpers
 # ------------------------------
 
-file(GLOB_RECURSE ENGINE_SRC CONFIGURE_DEPENDS src/*.cpp)
-file(GLOB_RECURSE ENGINE_HDR CONFIGURE_DEPENDS src/*.h)
-add_executable(QuarantineEngine ${ENGINE_SRC} ${ENGINE_HDR})
-
-if (MSVC)
-  target_compile_options(QuarantineEngine PRIVATE /Zc:__cplusplus)
-  add_compile_options(/MP)
-endif()
-
-# + /MP para que cl.exe compile en paralelo
-if(MSVC)
-  target_compile_options(QuarantineEngine PRIVATE /MP)
-  # Fuerza en el .vcxproj el checkbox de multiprocesador
-  set_target_properties(QuarantineEngine
-    PROPERTIES
-      VS_GLOBAL_MultiProcessorCompilation "true"
+function(qe_collect_source_tree ROOT_DIR OUT_SRC OUT_HDR OUT_INC)
+  file(GLOB_RECURSE TREE_SRC CONFIGURE_DEPENDS
+    ${ROOT_DIR}/*.cpp
   )
-endif()
+  file(GLOB_RECURSE TREE_HDR CONFIGURE_DEPENDS
+    ${ROOT_DIR}/*.h
+    ${ROOT_DIR}/*.hpp
+  )
+
+  set(TREE_INC ${ROOT_DIR})
+  foreach(FILE ${TREE_SRC} ${TREE_HDR})
+    get_filename_component(DIR "${FILE}" DIRECTORY)
+    list(APPEND TREE_INC "${DIR}")
+  endforeach()
+
+  list(REMOVE_DUPLICATES TREE_INC)
+
+  set(${OUT_SRC} ${TREE_SRC} PARENT_SCOPE)
+  set(${OUT_HDR} ${TREE_HDR} PARENT_SCOPE)
+  set(${OUT_INC} ${TREE_INC} PARENT_SCOPE)
+endfunction()
+
+function(qe_assign_source_groups GROUP_ROOT ROOT_DIR)
+  foreach(FILE ${ARGN})
+    file(RELATIVE_PATH REL_PATH "${ROOT_DIR}" "${FILE}")
+    get_filename_component(DIR "${REL_PATH}" PATH)
+    if (DIR STREQUAL "")
+      set(GROUP "${GROUP_ROOT}")
+    else()
+      string(REPLACE "/" "\\" GROUP "${DIR}")
+      set(GROUP "${GROUP_ROOT}\\${GROUP}")
+    endif()
+    source_group("${GROUP}" FILES "${FILE}")
+  endforeach()
+endfunction()
+
+function(qe_configure_msvc TARGET_NAME)
+  if (MSVC)
+    target_compile_options(${TARGET_NAME} PRIVATE /Zc:__cplusplus /MP)
+    set_target_properties(${TARGET_NAME}
+      PROPERTIES
+        VS_GLOBAL_MultiProcessorCompilation "true"
+    )
+  endif()
+endfunction()
+
+qe_collect_source_tree("${CMAKE_SOURCE_DIR}/src/QuarantineEngine" QE_SRC QE_HDR QE_INC)
+qe_collect_source_tree("${CMAKE_SOURCE_DIR}/src/QuarantineEditor" QE_EDITOR_SRC QE_EDITOR_HDR QE_EDITOR_INC)
 
 # ------------------------------
-# Visual Studio Folder Grouping
+# QuarantineEngine target
 # ------------------------------
 
-foreach(FILE ${ENGINE_SRC} ${ENGINE_HDR})
-  file(RELATIVE_PATH REL_PATH "${CMAKE_SOURCE_DIR}/src" "${FILE}")
-  get_filename_component(DIR "${REL_PATH}" PATH)
-  string(REPLACE "/" "\\" GROUP "${DIR}")
-  source_group("${GROUP}" FILES "${FILE}")
-endforeach()
+add_library(QuarantineEngine STATIC ${QE_SRC} ${QE_HDR})
+qe_configure_msvc(QuarantineEngine)
+qe_assign_source_groups("QuarantineEngine" "${CMAKE_SOURCE_DIR}/src/QuarantineEngine" ${QE_SRC} ${QE_HDR})
 
-# ------------------------------
-# Include Paths
-# ------------------------------
-
-target_include_directories(QuarantineEngine PRIVATE
-  ${CMAKE_SOURCE_DIR}/src
-  ${CMAKE_SOURCE_DIR}/src/App
-  ${CMAKE_SOURCE_DIR}/src/Data
-  ${CMAKE_SOURCE_DIR}/src/Data/Dtos
-  ${CMAKE_SOURCE_DIR}/src/Draw
-  ${CMAKE_SOURCE_DIR}/src/Editor
-  ${CMAKE_SOURCE_DIR}/src/GraphicsPipeline
-  ${CMAKE_SOURCE_DIR}/src/GUI
-  ${CMAKE_SOURCE_DIR}/src/Input
-  ${CMAKE_SOURCE_DIR}/src/Memory
-  ${CMAKE_SOURCE_DIR}/src/Presentation
-  ${CMAKE_SOURCE_DIR}/src/Presentation/Grid
-  ${CMAKE_SOURCE_DIR}/src/RayTracing
-  ${CMAKE_SOURCE_DIR}/src/SetUp
-  ${CMAKE_SOURCE_DIR}/src/Templates
-  ${CMAKE_SOURCE_DIR}/src/Utilities
-  ${CMAKE_SOURCE_DIR}/src/Utilities/Animation
-  ${CMAKE_SOURCE_DIR}/src/Utilities/Atmosphere
-  ${CMAKE_SOURCE_DIR}/src/Utilities/Camera
-  ${CMAKE_SOURCE_DIR}/src/Utilities/Compute
-  ${CMAKE_SOURCE_DIR}/src/Utilities/Controller
-  ${CMAKE_SOURCE_DIR}/src/Utilities/General
-  ${CMAKE_SOURCE_DIR}/src/Utilities/Geometry
-  ${CMAKE_SOURCE_DIR}/src/Utilities/Light
-  ${CMAKE_SOURCE_DIR}/src/Utilities/Material
-  ${CMAKE_SOURCE_DIR}/src/Utilities/Particles
-  ${CMAKE_SOURCE_DIR}/src/Utilities/Physics
-  
-
-  ${glfw_SOURCE_DIR}/include
-  ${glm_SOURCE_DIR}
-  ${stb_SOURCE_DIR}
-  ${yaml_cpp_SOURCE_DIR}/include
-  ${IMGUI_DIR}
-  ${IMGUI_DIR}/backends
-  ${CMAKE_SOURCE_DIR}/extern/assimp/include
-  ${CMAKE_SOURCE_DIR}/extern/SPIRV-Reflect
-  ${CMAKE_SOURCE_DIR}/extern
-  ${Vulkan_INCLUDE_DIR}
+target_include_directories(QuarantineEngine
+  PUBLIC
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/src/QuarantineEngine/Utilities
+    ${QE_INC}
+    ${glfw_SOURCE_DIR}/include
+    ${glm_SOURCE_DIR}
+    ${stb_SOURCE_DIR}
+    ${yaml_cpp_SOURCE_DIR}/include
+    ${IMGUI_DIR}
+    ${IMGUI_DIR}/backends
+    ${CMAKE_SOURCE_DIR}/extern/assimp/include
+    ${CMAKE_SOURCE_DIR}/extern/SPIRV-Reflect
+    ${CMAKE_SOURCE_DIR}/extern
+    ${Vulkan_INCLUDE_DIR}
 )
 
+target_link_libraries(QuarantineEngine
+  PUBLIC
+    glfw
+    imgui
+    Vulkan::Vulkan
+    assimp
+    Jolt
+    SPIRV-Reflect
+    meshoptimizer
+    yaml-cpp
+    ktx
+)
+
+target_compile_definitions(QuarantineEngine PUBLIC GLM_ENABLE_EXPERIMENTAL)
+
 # ------------------------------
-# Linking
+# QuarantineEditor target
 # ------------------------------
 
-target_link_directories(QuarantineEngine PRIVATE
-  # En Debug: busca en build/lib/Debug
+add_executable(QuarantineEditor ${QE_EDITOR_SRC} ${QE_EDITOR_HDR})
+qe_configure_msvc(QuarantineEditor)
+qe_assign_source_groups("QuarantineEditor" "${CMAKE_SOURCE_DIR}/src/QuarantineEditor" ${QE_EDITOR_SRC} ${QE_EDITOR_HDR})
+
+target_include_directories(QuarantineEditor
+  PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${QE_EDITOR_INC}
+)
+
+target_link_directories(QuarantineEditor PRIVATE
   $<$<CONFIG:Debug>:${CMAKE_BINARY_DIR}/lib/Debug>
-  # En Release: busca en build/lib/Release
   $<$<CONFIG:Release>:${CMAKE_BINARY_DIR}/lib/Release>
 )
-target_link_libraries(QuarantineEngine
-  glfw
-  imgui
-  Vulkan::Vulkan
-  assimp
-  Jolt
-  SPIRV-Reflect
-  meshoptimizer
-  imguizmo
-  yaml-cpp
-  ktx
+
+target_link_libraries(QuarantineEditor
+  PRIVATE
+    QuarantineEngine
+    imguizmo
 )
 
-# ------------------------------
-# Habilitar extensiones GLM
-# ------------------------------
-
-target_compile_definitions(QuarantineEngine PRIVATE GLM_ENABLE_EXPERIMENTAL)
+target_compile_definitions(QuarantineEditor PRIVATE GLM_ENABLE_EXPERIMENTAL)
 
 # ------------------------------
-# Ocultar dependencias en VS
+# Visual Studio folders
 # ------------------------------
 
 function(assign_vs_folder FOLDER_NAME)
@@ -290,6 +287,8 @@ function(assign_vs_folder FOLDER_NAME)
   endforeach()
 endfunction()
 
+assign_vs_folder("Engine" QuarantineEngine)
+assign_vs_folder("Editor" QuarantineEditor)
 assign_vs_folder("Dependencies"
   Jolt
   SPIRV-Reflect
@@ -308,29 +307,25 @@ assign_vs_folder("Dependencies"
   yaml-cpp
   zlibstatic
 )
-
-assign_vs_folder("Dependencies/GLFW"
-  update_mappings
-)
+assign_vs_folder("Dependencies/GLFW" update_mappings)
 
 # ------------------------------
-# Post-build: copiar DLLs (solo necesarias)
+# Post-build: copy runtime DLLs
 # ------------------------------
 
-if(WIN32)
-  add_custom_command(TARGET QuarantineEngine POST_BUILD
+if (WIN32)
+  add_custom_command(TARGET QuarantineEditor POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       $<TARGET_FILE:assimp>
       $<TARGET_FILE:Jolt>
       $<TARGET_FILE:meshoptimizer>
       $<TARGET_FILE:yaml-cpp>
       $<TARGET_FILE:glfw>
-      $<TARGET_FILE_DIR:QuarantineEngine>
+      $<TARGET_FILE_DIR:QuarantineEditor>
   )
 endif()
 
 if (MSVC)
-  # Función para excluir un target del build por defecto en VS
   function(exclude_from_vs_build tgt)
     if (TARGET ${tgt})
       set_target_properties(${tgt}
@@ -340,7 +335,6 @@ if (MSVC)
     endif()
   endfunction()
 
-  # Lista de tus dependencias que quieres compilar sólo una vez
   foreach(dep
     glfw
     glm
@@ -355,10 +349,8 @@ if (MSVC)
     exclude_from_vs_build(${dep})
   endforeach()
 
-  # Indica a Visual Studio que QuarantineEngine sea el proyecto de inicio
   set_property(
     DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    PROPERTY VS_STARTUP_PROJECT QuarantineEngine
+    PROPERTY VS_STARTUP_PROJECT QuarantineEditor
   )
-
 endif()

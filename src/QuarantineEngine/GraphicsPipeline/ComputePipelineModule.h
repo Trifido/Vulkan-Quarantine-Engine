@@ -1,0 +1,24 @@
+#pragma once
+#ifndef COMPUTE_PIPELINE_MODULE_H
+#define COMPUTE_PIPELINE_MODULE_H
+
+#include "ShaderModule.h"
+#include "ComputeDescriptorModule.h"
+#include <AntiAliasingModule.h>
+#include <PipelineModule.h>
+
+class ComputePipelineModule : public PipelineModule
+{
+public:
+    void CompileComputePipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, std::vector<VkDescriptorSetLayout> descriptorLayouts);
+    void cleanup(VkPipeline pipeline, VkPipelineLayout pipelineLayout);
+};
+
+
+
+namespace QE
+{
+    using ::ComputePipelineModule;
+} // namespace QE
+// QE namespace aliases
+#endif

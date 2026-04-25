@@ -1,0 +1,612 @@
+﻿#include "CommandPoolModule.h"
+#include "QueueFamiliesModule.h"
+
+#include <stdexcept>
+
+#include <backends/imgui_impl_vulkan.h>
+#include <SynchronizationModule.h>
+#include <QESessionManager.h>
+
+CommandPoolModule::CommandPoolModule()
+{
+    deviceModule = DeviceModule::getInstance();
+    swapchainModule = SwapChainModule::getInstance();
+
+    gameObjectManager = GameObjectManager::getInstance();
+    computeNodeManager = ComputeNodeManager::getInstance();
+    cullingSceneManager = CullingSceneManager::getInstance();
+    lightManager = LightManager::getInstance();
+    renderPassModule = RenderPassModule::getInstance();
+    atmosphereSystem = AtmosphereSystem::getInstance();
+    debugSystem = QEDebugSystem::getInstance();
+
+    this->ClearColor = glm::vec3(0.0f);
+}
+
+void CommandPoolModule::createCommandPool(VkSurfaceKHR& surface)
+{
+    QueueFamilyIndices queueFamilyIndices = QueueFamilyIndices::findQueueFamilies(deviceModule->physicalDevice, surface);
+
+    VkCommandPoolCreateInfo poolInfo = {};
+    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT; // Optional
+
+    if (vkCreateCommandPool(deviceModule->device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create command pool!");
+    }
+
+    VkCommandPoolCreateInfo computePoolInfo = {};
+    computePoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    computePoolInfo.queueFamilyIndex = queueFamilyIndices.computeFamily.value();
+    computePoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT; // Optional
+
+    if (vkCreateCommandPool(deviceModule->device, &computePoolInfo, nullptr, &computeCommandPool) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create compute command pool!");
+    }
+}
+
+void CommandPoolModule::createCommandBuffers()
+{
+    commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+    computeCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool = this->commandPool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
+
+    if (vkAllocateCommandBuffers(deviceModule->device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
+        throw std::runtime_error("failed to allocate command buffers!");
+    }
+
+    VkCommandBufferAllocateInfo computeAllocInfo{};
+    computeAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    computeAllocInfo.commandPool = this->computeCommandPool;
+    computeAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    computeAllocInfo.commandBufferCount = (uint32_t)computeCommandBuffers.size();
+
+    if (vkAllocateCommandBuffers(deviceModule->device, &computeAllocInfo, computeCommandBuffers.data()) != VK_SUCCESS) {
+        throw std::runtime_error("failed to allocate command buffers!");
+    }
+}
+
+void CommandPoolModule::recreateCommandBuffers()
+{
+    commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool = this->commandPool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
+
+    if (vkAllocateCommandBuffers(deviceModule->device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
+        throw std::runtime_error("failed to allocate command buffers!");
+    }
+}
+
+void CommandPoolModule::setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t iCBuffer)
+{
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = (float)swapchainModule->swapChainExtent.width;
+    viewport.height = (float)swapchainModule->swapChainExtent.height;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent = swapchainModule->swapChainExtent;
+
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = *(this->renderPassModule->DefaultRenderPass);
+    renderPassInfo.framebuffer = framebuffer;
+    renderPassInfo.renderArea.offset = { 0, 0 };
+    renderPassInfo.renderArea.extent = swapchainModule->swapChainExtent;
+
+    std::array<VkClearValue, 3> clearValues{};
+    clearValues[0].color = { this->ClearColor.x, this->ClearColor.y, this->ClearColor.z, 1.0f };
+    clearValues[1].depthStencil = { 1.0f, 0 };
+    clearValues[2].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+    renderPassInfo.pClearValues = clearValues.data();
+
+    vkCmdBeginRenderPass(commandBuffers[iCBuffer], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    vkCmdSetViewport(commandBuffers[iCBuffer], 0, 1, &viewport);
+    vkCmdSetScissor(commandBuffers[iCBuffer], 0, 1, &scissor);
+
+    this->atmosphereSystem->DrawCommand(commandBuffers[iCBuffer], iCBuffer);
+    this->gameObjectManager->DrawCommand(commandBuffers[iCBuffer], iCBuffer);
+    auto sessionManager = QESessionManager::getInstance();
+    if (sessionManager && sessionManager->ExtraScenePass)
+    {
+        sessionManager->ExtraScenePass(commandBuffers[iCBuffer], iCBuffer);
+    }
+    this->cullingSceneManager->DrawDebug(commandBuffers[iCBuffer], iCBuffer);
+    this->debugSystem->DrawDebugLines(commandBuffers[iCBuffer], iCBuffer);
+
+    vkCmdEndRenderPass(commandBuffers[iCBuffer]);
+}
+
+void CommandPoolModule::setSwapchainImGuiRenderPass(VkFramebuffer& framebuffer, uint32_t iCBuffer)
+{
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = (float)swapchainModule->swapChainExtent.width;
+    viewport.height = (float)swapchainModule->swapChainExtent.height;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent = swapchainModule->swapChainExtent;
+
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = *(this->renderPassModule->DefaultRenderPass);
+    renderPassInfo.framebuffer = framebuffer;
+    renderPassInfo.renderArea.offset = { 0, 0 };
+    renderPassInfo.renderArea.extent = swapchainModule->swapChainExtent;
+
+    std::array<VkClearValue, 3> clearValues{};
+    clearValues[0].color = { this->ClearColor.x, this->ClearColor.y, this->ClearColor.z, 1.0f };
+    clearValues[1].depthStencil = { 1.0f, 0 };
+    clearValues[2].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+    renderPassInfo.pClearValues = clearValues.data();
+
+    vkCmdBeginRenderPass(commandBuffers[iCBuffer], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    vkCmdSetViewport(commandBuffers[iCBuffer], 0, 1, &viewport);
+    vkCmdSetScissor(commandBuffers[iCBuffer], 0, 1, &scissor);
+
+    if (ImGui::GetDrawData() != nullptr)
+    {
+        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[iCBuffer]);
+    }
+
+    vkCmdEndRenderPass(commandBuffers[iCBuffer]);
+}
+
+void CommandPoolModule::setDirectionalShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, uint32_t idDirlight, uint32_t iCBuffer)
+{
+    if (!lightManager || !lightManager->CSMDescritors)
+        return;
+
+    if (idDirlight >= lightManager->DirLights.size())
+        return;
+
+    if (iCBuffer >= NUM_CSM_SETS)
+        return;
+
+    auto dirLight = this->lightManager->DirLights.at(idDirlight);
+    if (!dirLight)
+        return;
+
+    if (!dirLight->shadowMappingResourcesPtr)
+        return;
+
+    if (idDirlight >= MAX_NUM_DIR_LIGHTS)
+        return;
+
+    VkDescriptorSet descriptorSet =
+        lightManager->CSMDescritors->offscreenDescriptorSets[iCBuffer][idDirlight];
+
+    if (descriptorSet == VK_NULL_HANDLE)
+        return;
+
+    uint32_t size = dirLight->shadowMappingResourcesPtr->TextureSize;
+    auto depthBiasConstant = dirLight->shadowMappingResourcesPtr->DepthBiasConstant;
+    auto depthBiasSlope = dirLight->shadowMappingResourcesPtr->DepthBiasSlope;
+
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = static_cast<float>(size);
+    viewport.height = static_cast<float>(size);
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent.width = size;
+    scissor.extent.height = size;
+
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = *renderPass;
+    renderPassInfo.renderArea.offset = { 0, 0 };
+    renderPassInfo.renderArea.extent.width = size;
+    renderPassInfo.renderArea.extent.height = size;
+
+    VkClearValue clearValues{};
+    clearValues.depthStencil = { 1.0f, 0 };
+    renderPassInfo.clearValueCount = 1;
+    renderPassInfo.pClearValues = &clearValues;
+
+    vkCmdSetViewport(commandBuffers[iCBuffer], 0, 1, &viewport);
+    vkCmdSetScissor(commandBuffers[iCBuffer], 0, 1, &scissor);
+    vkCmdSetDepthBias(commandBuffers[iCBuffer], depthBiasConstant, 0.0f, depthBiasSlope);
+    vkCmdSetDepthTestEnable(commandBuffers[iCBuffer], true);
+    vkCmdSetDepthWriteEnable(commandBuffers[iCBuffer], true);
+    vkCmdSetFrontFace(commandBuffers[iCBuffer], VK_FRONT_FACE_CLOCKWISE);
+    vkCmdSetCullMode(commandBuffers[iCBuffer], VK_CULL_MODE_BACK_BIT);
+
+    auto pipeline = lightManager->CSMPipelineModule->pipeline;
+    auto pipelineLayout = lightManager->CSMPipelineModule->pipelineLayout;
+
+    for (uint32_t cascadeIndex = 0; cascadeIndex < SHADOW_MAP_CASCADE_COUNT; cascadeIndex++)
+    {
+        renderPassInfo.framebuffer =
+            dirLight->shadowMappingResourcesPtr->CascadeResourcesPtr->at(cascadeIndex).frameBuffer;
+
+        vkCmdBeginRenderPass(commandBuffers[iCBuffer], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBindPipeline(commandBuffers[iCBuffer], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+
+        vkCmdBindDescriptorSets(
+            commandBuffers[iCBuffer],
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            pipelineLayout,
+            0,
+            1,
+            &descriptorSet,
+            0,
+            nullptr);
+
+        this->gameObjectManager->CSMCommand(commandBuffers[iCBuffer], iCBuffer, pipelineLayout, cascadeIndex);
+
+        vkCmdEndRenderPass(commandBuffers[iCBuffer]);
+    }
+}
+
+void CommandPoolModule::setOmniShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, uint32_t idPointlight, uint32_t iCBuffer)
+{
+    if (!lightManager)
+        return;
+
+    if (idPointlight >= lightManager->PointLights.size())
+        return;
+
+    auto pointLight = lightManager->PointLights.at(idPointlight);
+    if (!pointLight)
+        return;
+
+    if (!pointLight->shadowMappingResourcesPtr)
+        return;
+
+    if (!pointLight->transform)
+        return;
+
+    if (!lightManager->PointShadowDescritors)
+        return;
+
+    VkDescriptorSet descriptorSet =
+        lightManager->PointShadowDescritors->offscreenDescriptorSets[iCBuffer][idPointlight];
+
+    if (descriptorSet == VK_NULL_HANDLE)
+        return;
+
+    uint32_t size = pointLight->shadowMappingResourcesPtr->TextureSize;
+    auto depthBiasConstant = pointLight->shadowMappingResourcesPtr->DepthBiasConstant;
+    auto depthBiasSlope = pointLight->shadowMappingResourcesPtr->DepthBiasSlope;
+
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = (float)size;
+    viewport.height = (float)size;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent.width = size;
+    scissor.extent.height = size;
+
+    vkCmdSetViewport(commandBuffers[iCBuffer], 0, 1, &viewport);
+    vkCmdSetScissor(commandBuffers[iCBuffer], 0, 1, &scissor);
+
+    vkCmdSetDepthBias(commandBuffers[iCBuffer], depthBiasConstant, 0.0f, depthBiasSlope);
+    vkCmdSetDepthTestEnable(commandBuffers[iCBuffer], true);
+    vkCmdSetDepthWriteEnable(commandBuffers[iCBuffer], true);
+    vkCmdSetFrontFace(commandBuffers[iCBuffer], VK_FRONT_FACE_CLOCKWISE);
+
+    for (uint32_t faceId = 0; faceId < 6; faceId++)
+    {
+        this->updateCubeMapFace(faceId, renderPass, idPointlight, commandBuffers[iCBuffer], iCBuffer);
+    }
+}
+
+void CommandPoolModule::setSpotShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, uint32_t idSpotlight, uint32_t iCBuffer)
+{
+    if (!lightManager || !lightManager->SpotShadowDescritors || !lightManager->CSMPipelineModule)
+        return;
+
+    if (idSpotlight >= lightManager->SpotLights.size())
+        return;
+
+    if (iCBuffer >= NUM_SPOT_SHADOW_SETS)
+        return;
+
+    auto spotLight = lightManager->SpotLights.at(idSpotlight);
+    if (!spotLight || !spotLight->shadowMappingResourcesPtr)
+        return;
+
+    if (idSpotlight >= MAX_NUM_SPOT_LIGHTS)
+        return;
+
+    VkDescriptorSet descriptorSet =
+        lightManager->SpotShadowDescritors->offscreenDescriptorSets[iCBuffer][idSpotlight];
+
+    if (descriptorSet == VK_NULL_HANDLE)
+        return;
+
+    uint32_t size = spotLight->shadowMappingResourcesPtr->TextureSize;
+    auto depthBiasConstant = spotLight->shadowMappingResourcesPtr->DepthBiasConstant;
+    auto depthBiasSlope = spotLight->shadowMappingResourcesPtr->DepthBiasSlope;
+
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = static_cast<float>(size);
+    viewport.height = static_cast<float>(size);
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent.width = size;
+    scissor.extent.height = size;
+
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = *renderPass;
+    renderPassInfo.framebuffer = spotLight->shadowMappingResourcesPtr->frameBuffer;
+    renderPassInfo.renderArea.offset = { 0, 0 };
+    renderPassInfo.renderArea.extent.width = size;
+    renderPassInfo.renderArea.extent.height = size;
+
+    VkClearValue clearValues{};
+    clearValues.depthStencil = { 1.0f, 0 };
+    renderPassInfo.clearValueCount = 1;
+    renderPassInfo.pClearValues = &clearValues;
+
+    vkCmdSetViewport(commandBuffers[iCBuffer], 0, 1, &viewport);
+    vkCmdSetScissor(commandBuffers[iCBuffer], 0, 1, &scissor);
+    vkCmdSetDepthBias(commandBuffers[iCBuffer], depthBiasConstant, 0.0f, depthBiasSlope);
+    vkCmdSetDepthTestEnable(commandBuffers[iCBuffer], true);
+    vkCmdSetDepthWriteEnable(commandBuffers[iCBuffer], true);
+    vkCmdSetFrontFace(commandBuffers[iCBuffer], VK_FRONT_FACE_CLOCKWISE);
+    vkCmdSetCullMode(commandBuffers[iCBuffer], VK_CULL_MODE_BACK_BIT);
+
+    auto pipeline = lightManager->CSMPipelineModule->pipeline;
+    auto pipelineLayout = lightManager->CSMPipelineModule->pipelineLayout;
+
+    vkCmdBeginRenderPass(commandBuffers[iCBuffer], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(commandBuffers[iCBuffer], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+    vkCmdBindDescriptorSets(
+        commandBuffers[iCBuffer],
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        pipelineLayout,
+        0,
+        1,
+        &descriptorSet,
+        0,
+        nullptr);
+
+    this->gameObjectManager->CSMCommand(commandBuffers[iCBuffer], iCBuffer, pipelineLayout, 0);
+
+    vkCmdEndRenderPass(commandBuffers[iCBuffer]);
+}
+
+void CommandPoolModule::updateCubeMapFace(uint32_t faceIdx, std::shared_ptr<VkRenderPass> renderPass, uint32_t idPointlight, VkCommandBuffer commandBuffer, uint32_t iCBuffer)
+{
+    VkClearValue clearValues[2];
+    clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+    clearValues[1].depthStencil = { 1.0f, 0 };
+
+    auto pointLight = this->lightManager->PointLights.at(idPointlight);
+    uint32_t size = pointLight->shadowMappingResourcesPtr->TextureSize;
+
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = *renderPass;
+    renderPassInfo.framebuffer = pointLight->shadowMappingResourcesPtr->CubemapFacesFrameBuffers[faceIdx];
+    renderPassInfo.renderArea.offset = { 0, 0 };
+    renderPassInfo.renderArea.extent.width = size;
+    renderPassInfo.renderArea.extent.height = size;
+    renderPassInfo.clearValueCount = 2;
+    renderPassInfo.pClearValues = clearValues;
+
+    glm::mat4 viewMatrix = glm::mat4(1.0f);
+    switch (faceIdx)
+    {
+    case 0: // POSITIVE_X
+        viewMatrix = glm::rotate(viewMatrix, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        viewMatrix = glm::rotate(viewMatrix, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        break;
+    case 1:	// NEGATIVE_X
+        viewMatrix = glm::rotate(viewMatrix, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        viewMatrix = glm::rotate(viewMatrix, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        break;
+    case 2:	// POSITIVE_Y
+        viewMatrix = glm::rotate(viewMatrix, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        break;
+    case 3:	// NEGATIVE_Y
+        viewMatrix = glm::rotate(viewMatrix, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        break;
+    case 4:	// POSITIVE_Z
+        viewMatrix = glm::rotate(viewMatrix, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        break;
+    case 5:	// NEGATIVE_Z
+        viewMatrix = glm::rotate(viewMatrix, glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        break;
+    }
+
+    auto pipeline = lightManager->OmniShadowPipelineModule->pipeline;
+    auto pipelineLayout = lightManager->OmniShadowPipelineModule->pipelineLayout;
+
+    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &lightManager->PointShadowDescritors->offscreenDescriptorSets[iCBuffer][idPointlight], 0, NULL);
+
+    this->gameObjectManager->OmniShadowCommand(commandBuffers[iCBuffer], iCBuffer, pipelineLayout, viewMatrix, pointLight->transform->GetWorldPosition());
+
+    vkCmdEndRenderPass(commandBuffer);
+}
+
+void CommandPoolModule::Render(FramebufferModule* framebufferModule, const QERenderTarget* extraRenderTarget)
+{
+    uint32_t currentFrame = (uint32_t)SynchronizationModule::GetCurrentFrame();
+    VkCommandBuffer cmd = commandBuffers[currentFrame];
+
+    vkResetCommandBuffer(cmd, 0);
+
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    beginInfo.pInheritanceInfo = nullptr;
+
+    if (vkBeginCommandBuffer(cmd, &beginInfo) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to begin recording command buffer!");
+    }
+
+    for (uint32_t idDirLight = 0; idDirLight < this->lightManager->DirLights.size(); idDirLight++)
+    {
+        this->setDirectionalShadowRenderPass(this->renderPassModule->DirShadowMappingRenderPass, idDirLight, currentFrame);
+    }
+
+    for (uint32_t idPointLight = 0; idPointLight < this->lightManager->PointLights.size(); idPointLight++)
+    {
+        this->setOmniShadowRenderPass(this->renderPassModule->OmniShadowMappingRenderPass, idPointLight, currentFrame);
+    }
+
+    for (uint32_t idSpotLight = 0; idSpotLight < this->lightManager->SpotLights.size(); idSpotLight++)
+    {
+        this->setSpotShadowRenderPass(this->renderPassModule->DirShadowMappingRenderPass, idSpotLight, currentFrame);
+    }
+
+    const bool hasEditorViewport = (extraRenderTarget != nullptr && extraRenderTarget->Valid());
+
+    if (hasEditorViewport)
+    {
+        this->RenderSceneToTarget(*extraRenderTarget, currentFrame);
+
+        auto sessionManager = QESessionManager::getInstance();
+        if (sessionManager && sessionManager->ExtraEditorPass)
+        {
+            sessionManager->ExtraEditorPass(commandBuffers[currentFrame], currentFrame);
+        }
+
+        this->setSwapchainImGuiRenderPass(framebufferModule->swapChainFramebuffers[swapchainModule->currentImage], currentFrame);
+    }
+    else
+    {
+        this->setCustomRenderPass(framebufferModule->swapChainFramebuffers[swapchainModule->currentImage], currentFrame);
+    }
+
+    if (vkEndCommandBuffer(cmd) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to record command buffer!");
+    }
+}
+
+void CommandPoolModule::RenderSceneToTarget(const QERenderTarget& renderTarget, uint32_t iCBuffer)
+{
+    if (!renderTarget.Valid())
+    {
+        return;
+    }
+
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = static_cast<float>(renderTarget.Extent.width);
+    viewport.height = static_cast<float>(renderTarget.Extent.height);
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent = renderTarget.Extent;
+
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = renderTarget.RenderPass;
+    renderPassInfo.framebuffer = renderTarget.Framebuffer;
+    renderPassInfo.renderArea.offset = { 0, 0 };
+    renderPassInfo.renderArea.extent = renderTarget.Extent;
+
+    std::array<VkClearValue, 3> clearValues{};
+    clearValues[0].color = { this->ClearColor.x, this->ClearColor.y, this->ClearColor.z, 1.0f };
+    clearValues[1].depthStencil = { 1.0f, 0 };
+    clearValues[2].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+    renderPassInfo.pClearValues = clearValues.data();
+
+    vkCmdBeginRenderPass(commandBuffers[iCBuffer], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    vkCmdSetViewport(commandBuffers[iCBuffer], 0, 1, &viewport);
+    vkCmdSetScissor(commandBuffers[iCBuffer], 0, 1, &scissor);
+
+    this->atmosphereSystem->DrawCommand(commandBuffers[iCBuffer], iCBuffer);
+    this->gameObjectManager->DrawCommand(commandBuffers[iCBuffer], iCBuffer);
+    auto sessionManager = QESessionManager::getInstance();
+    if (sessionManager && sessionManager->ExtraScenePass)
+    {
+        sessionManager->ExtraScenePass(commandBuffers[iCBuffer], iCBuffer);
+    }
+    this->cullingSceneManager->DrawDebug(commandBuffers[iCBuffer], iCBuffer);
+    this->debugSystem->DrawDebugLines(commandBuffers[iCBuffer], iCBuffer);
+
+    vkCmdEndRenderPass(commandBuffers[iCBuffer]);
+}
+
+void CommandPoolModule::RenderEditorViewport(const QERenderTarget& renderTarget, uint32_t iCBuffer)
+{
+    RenderSceneToTarget(renderTarget, iCBuffer);
+}
+
+void CommandPoolModule::recordComputeCommandBuffer(VkCommandBuffer commandBuffer)
+{
+    auto currentFrame = SynchronizationModule::GetCurrentFrame();
+    vkResetCommandBuffer(computeCommandBuffers[currentFrame], 0);
+
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
+        throw std::runtime_error("failed to begin recording compute command buffer!");
+    }
+
+    computeNodeManager->RecordComputeNodes(commandBuffer, (uint32_t)currentFrame);
+
+    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+        throw std::runtime_error("failed to record compute command buffer!");
+    }
+}
+
+void CommandPoolModule::cleanup()
+{
+    vkDestroyCommandPool(deviceModule->device, computeCommandPool, nullptr);
+    vkDestroyCommandPool(deviceModule->device, commandPool, nullptr);
+}
+
+void CommandPoolModule::CleanLastResources()
+{
+    this->deviceModule = nullptr;
+    this->swapchainModule = nullptr;
+    this->gameObjectManager = nullptr;
+    this->computeNodeManager = nullptr;
+    this->cullingSceneManager = nullptr;
+}
+
+
