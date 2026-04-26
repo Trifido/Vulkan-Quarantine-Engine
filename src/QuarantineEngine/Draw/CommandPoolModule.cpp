@@ -122,9 +122,9 @@ void CommandPoolModule::setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t
     this->atmosphereSystem->DrawCommand(commandBuffers[iCBuffer], iCBuffer);
     this->gameObjectManager->DrawCommand(commandBuffers[iCBuffer], iCBuffer);
     auto sessionManager = QESessionManager::getInstance();
-    if (sessionManager && sessionManager->ExtraScenePass)
+    if (sessionManager && sessionManager->GetExtraScenePass())
     {
-        sessionManager->ExtraScenePass(commandBuffers[iCBuffer], iCBuffer);
+        sessionManager->GetExtraScenePass()(commandBuffers[iCBuffer], iCBuffer);
     }
     this->cullingSceneManager->DrawDebug(commandBuffers[iCBuffer], iCBuffer);
     this->debugSystem->DrawDebugLines(commandBuffers[iCBuffer], iCBuffer);
@@ -176,16 +176,16 @@ void CommandPoolModule::setSwapchainImGuiRenderPass(VkFramebuffer& framebuffer, 
 
 void CommandPoolModule::setDirectionalShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, uint32_t idDirlight, uint32_t iCBuffer)
 {
-    if (!lightManager || !lightManager->CSMDescritors)
+    if (!lightManager || !lightManager->GetCSMDescriptors())
         return;
 
-    if (idDirlight >= lightManager->DirLights.size())
+    if (idDirlight >= lightManager->GetDirectionalLights().size())
         return;
 
     if (iCBuffer >= NUM_CSM_SETS)
         return;
 
-    auto dirLight = this->lightManager->DirLights.at(idDirlight);
+    auto dirLight = this->lightManager->GetDirectionalLights().at(idDirlight);
     if (!dirLight)
         return;
 
@@ -196,7 +196,7 @@ void CommandPoolModule::setDirectionalShadowRenderPass(std::shared_ptr<VkRenderP
         return;
 
     VkDescriptorSet descriptorSet =
-        lightManager->CSMDescritors->offscreenDescriptorSets[iCBuffer][idDirlight];
+        lightManager->GetCSMDescriptors()->offscreenDescriptorSets[iCBuffer][idDirlight];
 
     if (descriptorSet == VK_NULL_HANDLE)
         return;
@@ -238,8 +238,8 @@ void CommandPoolModule::setDirectionalShadowRenderPass(std::shared_ptr<VkRenderP
     vkCmdSetFrontFace(commandBuffers[iCBuffer], VK_FRONT_FACE_CLOCKWISE);
     vkCmdSetCullMode(commandBuffers[iCBuffer], VK_CULL_MODE_BACK_BIT);
 
-    auto pipeline = lightManager->CSMPipelineModule->pipeline;
-    auto pipelineLayout = lightManager->CSMPipelineModule->pipelineLayout;
+    auto pipeline = lightManager->GetCSMPipelineModule()->pipeline;
+    auto pipelineLayout = lightManager->GetCSMPipelineModule()->pipelineLayout;
 
     for (uint32_t cascadeIndex = 0; cascadeIndex < SHADOW_MAP_CASCADE_COUNT; cascadeIndex++)
     {
@@ -270,10 +270,10 @@ void CommandPoolModule::setOmniShadowRenderPass(std::shared_ptr<VkRenderPass> re
     if (!lightManager)
         return;
 
-    if (idPointlight >= lightManager->PointLights.size())
+    if (idPointlight >= lightManager->GetPointLights().size())
         return;
 
-    auto pointLight = lightManager->PointLights.at(idPointlight);
+    auto pointLight = lightManager->GetPointLights().at(idPointlight);
     if (!pointLight)
         return;
 
@@ -283,11 +283,11 @@ void CommandPoolModule::setOmniShadowRenderPass(std::shared_ptr<VkRenderPass> re
     if (!pointLight->transform)
         return;
 
-    if (!lightManager->PointShadowDescritors)
+    if (!lightManager->GetPointShadowDescriptors())
         return;
 
     VkDescriptorSet descriptorSet =
-        lightManager->PointShadowDescritors->offscreenDescriptorSets[iCBuffer][idPointlight];
+        lightManager->GetPointShadowDescriptors()->offscreenDescriptorSets[iCBuffer][idPointlight];
 
     if (descriptorSet == VK_NULL_HANDLE)
         return;
@@ -325,16 +325,16 @@ void CommandPoolModule::setOmniShadowRenderPass(std::shared_ptr<VkRenderPass> re
 
 void CommandPoolModule::setSpotShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, uint32_t idSpotlight, uint32_t iCBuffer)
 {
-    if (!lightManager || !lightManager->SpotShadowDescritors || !lightManager->CSMPipelineModule)
+    if (!lightManager || !lightManager->GetSpotShadowDescriptors() || !lightManager->GetCSMPipelineModule())
         return;
 
-    if (idSpotlight >= lightManager->SpotLights.size())
+    if (idSpotlight >= lightManager->GetSpotLights().size())
         return;
 
     if (iCBuffer >= NUM_SPOT_SHADOW_SETS)
         return;
 
-    auto spotLight = lightManager->SpotLights.at(idSpotlight);
+    auto spotLight = lightManager->GetSpotLights().at(idSpotlight);
     if (!spotLight || !spotLight->shadowMappingResourcesPtr)
         return;
 
@@ -342,7 +342,7 @@ void CommandPoolModule::setSpotShadowRenderPass(std::shared_ptr<VkRenderPass> re
         return;
 
     VkDescriptorSet descriptorSet =
-        lightManager->SpotShadowDescritors->offscreenDescriptorSets[iCBuffer][idSpotlight];
+        lightManager->GetSpotShadowDescriptors()->offscreenDescriptorSets[iCBuffer][idSpotlight];
 
     if (descriptorSet == VK_NULL_HANDLE)
         return;
@@ -385,8 +385,8 @@ void CommandPoolModule::setSpotShadowRenderPass(std::shared_ptr<VkRenderPass> re
     vkCmdSetFrontFace(commandBuffers[iCBuffer], VK_FRONT_FACE_CLOCKWISE);
     vkCmdSetCullMode(commandBuffers[iCBuffer], VK_CULL_MODE_BACK_BIT);
 
-    auto pipeline = lightManager->CSMPipelineModule->pipeline;
-    auto pipelineLayout = lightManager->CSMPipelineModule->pipelineLayout;
+    auto pipeline = lightManager->GetCSMPipelineModule()->pipeline;
+    auto pipelineLayout = lightManager->GetCSMPipelineModule()->pipelineLayout;
 
     vkCmdBeginRenderPass(commandBuffers[iCBuffer], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
     vkCmdBindPipeline(commandBuffers[iCBuffer], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
@@ -411,7 +411,7 @@ void CommandPoolModule::updateCubeMapFace(uint32_t faceIdx, std::shared_ptr<VkRe
     clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
     clearValues[1].depthStencil = { 1.0f, 0 };
 
-    auto pointLight = this->lightManager->PointLights.at(idPointlight);
+    auto pointLight = this->lightManager->GetPointLights().at(idPointlight);
     uint32_t size = pointLight->shadowMappingResourcesPtr->TextureSize;
 
     VkRenderPassBeginInfo renderPassInfo{};
@@ -449,12 +449,12 @@ void CommandPoolModule::updateCubeMapFace(uint32_t faceIdx, std::shared_ptr<VkRe
         break;
     }
 
-    auto pipeline = lightManager->OmniShadowPipelineModule->pipeline;
-    auto pipelineLayout = lightManager->OmniShadowPipelineModule->pipelineLayout;
+    auto pipeline = lightManager->GetOmniShadowPipelineModule()->pipeline;
+    auto pipelineLayout = lightManager->GetOmniShadowPipelineModule()->pipelineLayout;
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &lightManager->PointShadowDescritors->offscreenDescriptorSets[iCBuffer][idPointlight], 0, NULL);
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &lightManager->GetPointShadowDescriptors()->offscreenDescriptorSets[iCBuffer][idPointlight], 0, NULL);
 
     this->gameObjectManager->OmniShadowCommand(commandBuffers[iCBuffer], iCBuffer, pipelineLayout, viewMatrix, pointLight->transform->GetWorldPosition());
 
@@ -478,17 +478,17 @@ void CommandPoolModule::Render(FramebufferModule* framebufferModule, const QERen
         throw std::runtime_error("failed to begin recording command buffer!");
     }
 
-    for (uint32_t idDirLight = 0; idDirLight < this->lightManager->DirLights.size(); idDirLight++)
+    for (uint32_t idDirLight = 0; idDirLight < this->lightManager->GetDirectionalLights().size(); idDirLight++)
     {
         this->setDirectionalShadowRenderPass(this->renderPassModule->DirShadowMappingRenderPass, idDirLight, currentFrame);
     }
 
-    for (uint32_t idPointLight = 0; idPointLight < this->lightManager->PointLights.size(); idPointLight++)
+    for (uint32_t idPointLight = 0; idPointLight < this->lightManager->GetPointLights().size(); idPointLight++)
     {
         this->setOmniShadowRenderPass(this->renderPassModule->OmniShadowMappingRenderPass, idPointLight, currentFrame);
     }
 
-    for (uint32_t idSpotLight = 0; idSpotLight < this->lightManager->SpotLights.size(); idSpotLight++)
+    for (uint32_t idSpotLight = 0; idSpotLight < this->lightManager->GetSpotLights().size(); idSpotLight++)
     {
         this->setSpotShadowRenderPass(this->renderPassModule->DirShadowMappingRenderPass, idSpotLight, currentFrame);
     }
@@ -500,9 +500,9 @@ void CommandPoolModule::Render(FramebufferModule* framebufferModule, const QERen
         this->RenderSceneToTarget(*extraRenderTarget, currentFrame);
 
         auto sessionManager = QESessionManager::getInstance();
-        if (sessionManager && sessionManager->ExtraEditorPass)
+        if (sessionManager && sessionManager->GetExtraEditorPass())
         {
-            sessionManager->ExtraEditorPass(commandBuffers[currentFrame], currentFrame);
+            sessionManager->GetExtraEditorPass()(commandBuffers[currentFrame], currentFrame);
         }
 
         this->setSwapchainImGuiRenderPass(framebufferModule->swapChainFramebuffers[swapchainModule->currentImage], currentFrame);
@@ -560,9 +560,9 @@ void CommandPoolModule::RenderSceneToTarget(const QERenderTarget& renderTarget, 
     this->atmosphereSystem->DrawCommand(commandBuffers[iCBuffer], iCBuffer);
     this->gameObjectManager->DrawCommand(commandBuffers[iCBuffer], iCBuffer);
     auto sessionManager = QESessionManager::getInstance();
-    if (sessionManager && sessionManager->ExtraScenePass)
+    if (sessionManager && sessionManager->GetExtraScenePass())
     {
-        sessionManager->ExtraScenePass(commandBuffers[iCBuffer], iCBuffer);
+        sessionManager->GetExtraScenePass()(commandBuffers[iCBuffer], iCBuffer);
     }
     this->cullingSceneManager->DrawDebug(commandBuffers[iCBuffer], iCBuffer);
     this->debugSystem->DrawDebugLines(commandBuffers[iCBuffer], iCBuffer);

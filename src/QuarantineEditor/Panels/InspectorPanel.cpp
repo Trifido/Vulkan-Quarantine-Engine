@@ -850,6 +850,17 @@ void InspectorPanel::Draw()
     ImGui::Text("Children: %d", static_cast<int>(gameObject->childs.size()));
     ImGui::Text("Components: %d", static_cast<int>(gameObject->components.size()));
 
+    bool isActive = gameObject->QEActive;
+    if (ImGui::Checkbox("Active", &isActive))
+    {
+        gameObject->QEActive = isActive;
+    }
+
+    if (!gameObject->IsActiveInHierarchy() && gameObject->QEActive)
+    {
+        ImGui::TextDisabled("Inactive in hierarchy (parent disabled)");
+    }
+
     int updateOrder = static_cast<int>(gameObject->UpdateOrder);
     if (ImGui::DragInt("Order", &updateOrder, 1.0f, 0, 100000))
     {

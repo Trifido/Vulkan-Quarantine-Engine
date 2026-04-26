@@ -32,7 +32,6 @@ private:
 public:
     static bool HasCurrentProject();
     static bool CreateQEProject(const std::string& projectName);
-    static bool CreateFolder(const fs::path& projectPath, const std::string& folderName);
     static bool DeletePath(const fs::path& targetPath, bool recursive = true);
     static bool RenamePath(const fs::path& sourcePath, const std::string& newName);
     static bool CreateYamlScene(const std::string& sceneName = "DefaultScene");
@@ -48,10 +47,6 @@ public:
     static fs::path GetMaterialFolderPath();
 
     static fs::path GetCurrentProjectPath();
-    static fs::path GetCurrentDefaultScenePath();
-    static fs::path GetScenesFolderPath();
-    static fs::path GetAssetsFolderPath();
-    static fs::path GetModelsFolderPath();
 
     static fs::path ResolveProjectPath(const fs::path& path);
     static std::string ToProjectRelativePath(const fs::path& path);
@@ -64,6 +59,10 @@ public:
         const std::string& baseFolderName = "New Folder");
 
 private:
+    static bool CreateFolder(const fs::path& projectPath, const std::string& folderName);
+    static fs::path GetScenesFolderPath();
+    static fs::path GetAssetsFolderPath();
+    static fs::path GetModelsFolderPath();
     static bool CreateDefaultProjectMaterials();
 };
 

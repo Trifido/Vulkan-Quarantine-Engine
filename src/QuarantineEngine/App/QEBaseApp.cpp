@@ -155,8 +155,8 @@ void QEBaseApp::loadScene(QEScene& scene)
     activeCamera->UpdateViewportSize(swapchainModule->swapChainExtent);
     activeCamera->UpdateCamera();
 
-    lightManager->AddDirShadowMapShader(materialManager->csm_shader);
-    lightManager->AddOmniShadowMapShader(materialManager->omni_shadow_mapping_shader);
+    lightManager->AddDirShadowMapShader(materialManager->GetCSMShader());
+    lightManager->AddOmniShadowMapShader(materialManager->GetOmniShadowMappingShader());
 
     gameObjectManager->StartQEGameObjects();
 
@@ -466,7 +466,7 @@ void QEBaseApp::drawFrame(uint32_t currentFrame)
     this->sessionManager->UpdateActiveCameraGPUData(currentFrame);
     this->materialManager->UpdateUniforms();
 
-    commandPoolModule->Render(&framebufferModule, this->sessionManager->ExtraRenderTarget);
+    commandPoolModule->Render(&framebufferModule, this->sessionManager->GetExtraRenderTarget());
 
     synchronizationModule.submitCommandBuffer(
         commandPoolModule->getCommandBuffer(currentFrame),
@@ -496,9 +496,8 @@ void QEBaseApp::resizeSwapchain(VkResult result, ERROR_RESIZE errorResize)
     }
     else
     {
-        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized)
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
         {
-            framebufferResized = false;
             recreateSwapchain();
         }
         else if (result != VK_SUCCESS)

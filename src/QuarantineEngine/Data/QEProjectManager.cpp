@@ -82,11 +82,6 @@ fs::path QEProjectManager::GetCurrentProjectPath()
     return CURRENT_PROJECT_PATH;
 }
 
-fs::path QEProjectManager::GetCurrentDefaultScenePath()
-{
-    return CURRENT_DEFAULT_SCENE_PATH;
-}
-
 fs::path QEProjectManager::GetScenesFolderPath()
 {
     return CURRENT_PROJECT_PATH / SCENE_FOLDER;

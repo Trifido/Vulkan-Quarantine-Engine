@@ -348,19 +348,6 @@ void MaterialManager::CreateDefaultPrimitiveMaterial()
     }
 }
 
-void MaterialManager::CreateMaterial(std::string& nameMaterial)
-{
-    nameMaterial = CheckName(nameMaterial);
-    this->AddMaterial(std::make_shared<QEMaterial>(nameMaterial, this->default_shader));
-}
-
-void MaterialManager::CreateMeshShaderMaterial(std::string& nameMaterial)
-{
-    nameMaterial = CheckName(nameMaterial);
-    this->AddMaterial(std::make_shared<QEMaterial>(nameMaterial, this->mesh_shader_test));
-    //_materials[nameMaterial]->SetMeshShaderPipeline(true);
-}
-
 bool MaterialManager::Exists(std::string materialName)
 {
     std::unordered_map<std::string, std::shared_ptr<QEMaterial>>::const_iterator got = _materials.find(materialName);
@@ -369,6 +356,16 @@ bool MaterialManager::Exists(std::string materialName)
         return false;
 
     return true;
+}
+
+std::shared_ptr<ShaderModule> MaterialManager::GetCSMShader() const
+{
+    return csm_shader;
+}
+
+std::shared_ptr<ShaderModule> MaterialManager::GetOmniShadowMappingShader() const
+{
+    return omni_shadow_mapping_shader;
 }
 
 void MaterialManager::CleanPipelines()
@@ -578,25 +575,6 @@ void MaterialManager::LoadMaterialDtos(std::vector<MaterialDto>& materialDtos)
             }
 
             this->AddMaterial(material);
-        }
-    }
-}
-
-void MaterialManager::SaveMaterials(std::ofstream& file)
-{
-    int materialCount = static_cast<int>(_materials.size());
-    file.write(reinterpret_cast<const char*>(&materialCount), sizeof(int));
-
-    for (auto& it : _materials)
-    {
-        std::string materialPath = it.second->SaveMaterialFile();
-
-        int materialPathLength = static_cast<int>(materialPath.length());
-
-        if (materialPathLength > 0)
-        {
-            file.write(reinterpret_cast<const char*>(&materialPathLength), sizeof(int));
-            file.write(materialPath.c_str(), materialPathLength);
         }
     }
 }

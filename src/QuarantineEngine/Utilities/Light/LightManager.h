@@ -67,11 +67,6 @@ private:
     void ComputeLightsLUT();
     void ComputeLightTiles();
     void UpdateUniform();
-
-    void ReindexShadowMaps();
-    void SyncDirectionalLightIndices();
-
-public:
     std::shared_ptr<UniformBufferObject> lightUBO;
     std::shared_ptr<UniformBufferObject> lightSSBO;
     VkDeviceSize lightSSBOSize = 0;
@@ -98,6 +93,9 @@ public:
     std::shared_ptr<ShaderModule> CSMShaderModule;
     std::shared_ptr<ShaderModule> OmniShadowShaderModule;
 
+    void ReindexShadowMaps();
+    void SyncDirectionalLightIndices();
+
 public:
     LightManager();
 
@@ -117,6 +115,25 @@ public:
     static std::vector<LightDto> GetLightDtos(std::ifstream& file);
     void SaveLights(std::ofstream& file);
     std::shared_ptr<QELight> GetLight(std::string name);
+    const std::shared_ptr<UniformBufferObject>& GetLightUBO() const;
+    const std::shared_ptr<UniformBufferObject>& GetLightSSBO() const;
+    VkDeviceSize GetLightSSBOSize() const;
+    const std::shared_ptr<UniformBufferObject>& GetLightIndexSSBO() const;
+    VkDeviceSize GetLightIndexSSBOSize() const;
+    const std::shared_ptr<UniformBufferObject>& GetLightTilesSSBO() const;
+    VkDeviceSize GetLightTilesSSBOSize() const;
+    const std::shared_ptr<UniformBufferObject>& GetLightBinSSBO() const;
+    VkDeviceSize GetLightBinSSBOSize() const;
+    const std::vector<std::shared_ptr<QEDirectionalLight>>& GetDirectionalLights() const;
+    const std::vector<std::shared_ptr<QESpotLight>>& GetSpotLights() const;
+    const std::vector<std::shared_ptr<QEPointLight>>& GetPointLights() const;
+    const std::shared_ptr<PointShadowDescriptorsManager>& GetPointShadowDescriptors() const;
+    const std::shared_ptr<CSMDescriptorsManager>& GetCSMDescriptors() const;
+    const std::shared_ptr<SpotShadowDescriptorsManager>& GetSpotShadowDescriptors() const;
+    const std::shared_ptr<ShadowPipelineModule>& GetCSMPipelineModule() const;
+    const std::shared_ptr<ShadowPipelineModule>& GetOmniShadowPipelineModule() const;
+    const std::shared_ptr<ShaderModule>& GetCSMShaderModule() const;
+    const std::shared_ptr<ShaderModule>& GetOmniShadowShaderModule() const;
 
     void InitializeShadowMaps();
     void Update(uint32_t currentFrame);

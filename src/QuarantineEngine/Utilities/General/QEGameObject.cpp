@@ -40,6 +40,11 @@ QEGameObject::QEGameObject(std::string name)
 
 void QEGameObject::QEStart()
 {
+    if (!IsActiveInHierarchy())
+    {
+        return;
+    }
+
     if (_isStarted)
     {
         return;
@@ -128,6 +133,11 @@ void QEGameObject::QEStart()
 
 void QEGameObject::QEInit()
 {
+    if (!IsActiveInHierarchy())
+    {
+        return;
+    }
+
     for (auto gameComponent : this->components)
     {
         if (!gameComponent->QEStarted() || gameComponent->QEInitialized())
@@ -141,6 +151,11 @@ void QEGameObject::QEInit()
 
 void QEGameObject::QEUpdate()
 {
+    if (!IsActiveInHierarchy())
+    {
+        return;
+    }
+
     for (auto gameComponent : this->components)
     {
         if (!gameComponent->QEInitialized())
@@ -167,11 +182,22 @@ void QEGameObject::QEDestroy()
     }
 }
 
+bool QEGameObject::IsActiveInHierarchy() const
+{
+    if (!QEActive)
+    {
+        return false;
+    }
+
+    return parent == nullptr || parent->IsActiveInHierarchy();
+}
+
 YAML::Node QEGameObject::ToYaml() const  
 {  
     YAML::Node node;  
     node["id"] = this->id;  
     node["name"] = this->Name;  
+    node["active"] = this->QEActive;
 
     auto comps = node["components"];
     for (const auto& comp : components)
@@ -215,6 +241,7 @@ std::shared_ptr<QEGameObject> QEGameObject::FromYaml(const YAML::Node& node)
 
     if (node["id"])   go->id = node["id"].as<std::string>();
     if (node["name"]) go->Name = node["name"].as<std::string>();
+    if (node["active"]) go->QEActive = node["active"].as<bool>();
 
     if (node["components"] && node["components"].IsSequence())
     {

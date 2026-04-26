@@ -32,12 +32,13 @@ private:
     std::shared_ptr<ShaderModule> shader_debug_ptr;
     std::shared_ptr<ShaderModule> shader_grid_ptr;
 
-public:
     std::shared_ptr<ShaderModule> csm_shader;
     std::shared_ptr<ShaderModule> omni_shadow_mapping_shader;
 
-private:
     void CreateDefaultPrimitiveMaterial();
+    static std::vector<MaterialDto> GetMaterialDtos(std::ifstream& file);
+    static MaterialDto ReadQEMaterial(std::ifstream& file);
+    void LoadMaterialDtos(std::vector<MaterialDto>& materialDtos);
 
 public:
     MaterialManager();
@@ -53,10 +54,9 @@ public:
     void AddMaterial(QEMaterial mat);
 
     std::string CheckName(std::string nameMaterial);
-    void CreateMaterial(std::string& nameMaterial);
-    void CreateMeshShaderMaterial(std::string& nameMaterial);
-
     bool Exists(std::string materialName);
+    std::shared_ptr<ShaderModule> GetCSMShader() const;
+    std::shared_ptr<ShaderModule> GetOmniShadowMappingShader() const;
 
     void MarkMaterialPersistent(const std::string& materialName);
     bool IsPersistentMaterial(const std::string& materialName) const;
@@ -66,10 +66,6 @@ public:
     void CleanLastResources();
     void UpdateUniforms();
 
-    static std::vector<MaterialDto> GetMaterialDtos(std::ifstream& file);
-    static MaterialDto ReadQEMaterial(std::ifstream& file);
-    void LoadMaterialDtos(std::vector<MaterialDto>& materialDtos);
-    void SaveMaterials(std::ofstream& file);
     YAML::Node SerializeMaterials();
     void DeserializeMaterials(YAML::Node materials);
 };

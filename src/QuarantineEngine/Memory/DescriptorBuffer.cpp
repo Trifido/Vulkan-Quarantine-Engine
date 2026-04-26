@@ -326,7 +326,7 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
         // Light manager (int numLights)
         else if (br.name == "UniformManagerLight")
         {
-            auto lightUBO = lightOverrideUBO ? lightOverrideUBO : this->lightManager->lightUBO;
+            auto lightUBO = lightOverrideUBO ? lightOverrideUBO : this->lightManager->GetLightUBO();
             pushUBO(dstBinding, lightUBO->uniformBuffers[frameIdx], sizeof(LightManagerUniform));
         }
         // Material UBO
@@ -353,23 +353,23 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
         // SSBOs de luces (si los tienes en set0: LightSSBO, LightIndices, ZBins, Tiles)
         else if (br.name == "LightSSBO")
         {
-            auto lightSSBO = lightOverrideSSBO ? lightOverrideSSBO : this->lightManager->lightSSBO;
-            pushSSBO(dstBinding, lightSSBO->uniformBuffers[frameIdx], this->lightManager->lightSSBOSize);
+            auto lightSSBO = lightOverrideSSBO ? lightOverrideSSBO : this->lightManager->GetLightSSBO();
+            pushSSBO(dstBinding, lightSSBO->uniformBuffers[frameIdx], this->lightManager->GetLightSSBOSize());
         }
         else if (br.name == "LightIndices")
         {
-            auto lightIndexSSBO = lightIndexOverrideSSBO ? lightIndexOverrideSSBO : this->lightManager->lightIndexSSBO;
-            pushSSBO(dstBinding, lightIndexSSBO->uniformBuffers[frameIdx], this->lightManager->lightIndexSSBOSize);
+            auto lightIndexSSBO = lightIndexOverrideSSBO ? lightIndexOverrideSSBO : this->lightManager->GetLightIndexSSBO();
+            pushSSBO(dstBinding, lightIndexSSBO->uniformBuffers[frameIdx], this->lightManager->GetLightIndexSSBOSize());
         }
         else if (br.name == "ZBins")
         {
-            auto lightBinSSBO = lightBinOverrideSSBO ? lightBinOverrideSSBO : this->lightManager->lightBinSSBO;
-            pushSSBO(dstBinding, lightBinSSBO->uniformBuffers[frameIdx], this->lightManager->lightBinSSBOSize);
+            auto lightBinSSBO = lightBinOverrideSSBO ? lightBinOverrideSSBO : this->lightManager->GetLightBinSSBO();
+            pushSSBO(dstBinding, lightBinSSBO->uniformBuffers[frameIdx], this->lightManager->GetLightBinSSBOSize());
         }
         else if (br.name == "Tiles")
         {
-            auto lightTilesSSBO = lightTilesOverrideSSBO ? lightTilesOverrideSSBO : this->lightManager->lightTilesSSBO;
-            pushSSBO(dstBinding, lightTilesSSBO->uniformBuffers[frameIdx], this->lightManager->lightTilesSSBOSize);
+            auto lightTilesSSBO = lightTilesOverrideSSBO ? lightTilesOverrideSSBO : this->lightManager->GetLightTilesSSBO();
+            pushSSBO(dstBinding, lightTilesSSBO->uniformBuffers[frameIdx], this->lightManager->GetLightTilesSSBOSize());
         }
 
         // Meshlets SSBOs (si est�n en set0)

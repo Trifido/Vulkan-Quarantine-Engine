@@ -54,22 +54,30 @@ public:
 
     std::shared_ptr<UniformBufferObject> GetCameraUBO() { return this->cameraUBO; }
 
-    std::shared_ptr<QECamera> ActiveCamera() const { return _activeCamera; }
+    std::shared_ptr<QECamera> ActiveCamera() const;
     std::shared_ptr<QECamera> EditorCamera() const { return _editorCamera; }
     std::shared_ptr<QECamera> GameCamera() const { return _gameCamera; }
 
     bool IsEditor() const { return _isEditor; }
 
-public:
-    std::string NameCameraEditor = "QECameraEditor";
-    const QERenderTarget* ExtraRenderTarget = nullptr;
-    std::function<void(VkCommandBuffer&, uint32_t)> ExtraScenePass;
-    std::function<void(VkCommandBuffer&, uint32_t)> ExtraEditorPass;
-    std::function<void(bool)> SetEditorGridVisibilityCallback;
-    std::function<void()> SetupEditorCallback;
-    std::function<void()> CleanEditorResourcesCallback;
+    const QERenderTarget* GetExtraRenderTarget() const { return _extraRenderTarget; }
+    void SetExtraRenderTarget(const QERenderTarget* renderTarget) { _extraRenderTarget = renderTarget; }
+
+    const std::function<void(VkCommandBuffer&, uint32_t)>& GetExtraScenePass() const { return _extraScenePass; }
+    void SetExtraScenePass(std::function<void(VkCommandBuffer&, uint32_t)> callback) { _extraScenePass = std::move(callback); }
+
+    const std::function<void(VkCommandBuffer&, uint32_t)>& GetExtraEditorPass() const { return _extraEditorPass; }
+    void SetExtraEditorPass(std::function<void(VkCommandBuffer&, uint32_t)> callback) { _extraEditorPass = std::move(callback); }
+
+    void SetEditorGridVisibilityHandler(std::function<void(bool)> callback) { _setEditorGridVisibilityCallback = std::move(callback); }
+    void SetSetupEditorHandler(std::function<void()> callback) { _setupEditorCallback = std::move(callback); }
+    void SetCleanEditorResourcesHandler(std::function<void()> callback) { _cleanEditorResourcesCallback = std::move(callback); }
+    void ClearEditorBindings();
 
 private:
+    static constexpr const char* NameCameraEditor = "QECameraEditor";
+    bool IsCameraActiveInHierarchy(const std::shared_ptr<QECamera>& camera) const;
+
     bool _isEditor = false;
     bool _newSceneCamera = false;
 
@@ -82,8 +90,12 @@ private:
     std::shared_ptr<QECamera> _activeCamera = nullptr;
     std::shared_ptr<QECamera> _editorCamera = nullptr;
     std::shared_ptr<QECamera> _gameCamera = nullptr;
-
-public:
+    const QERenderTarget* _extraRenderTarget = nullptr;
+    std::function<void(VkCommandBuffer&, uint32_t)> _extraScenePass;
+    std::function<void(VkCommandBuffer&, uint32_t)> _extraEditorPass;
+    std::function<void(bool)> _setEditorGridVisibilityCallback;
+    std::function<void()> _setupEditorCallback;
+    std::function<void()> _cleanEditorResourcesCallback;
     std::shared_ptr<UniformBufferObject> cameraUBO = nullptr;
 };
 

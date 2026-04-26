@@ -376,39 +376,39 @@ void MaterialPreviewRenderer::InitializePreviewLightingOverrides()
     _previewLightUBO->CreateUniformBuffer(sizeof(LightManagerUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 
     _previewLightSSBO = std::make_shared<UniformBufferObject>();
-    _previewLightSSBO->CreateSSBO(lightManager->lightSSBOSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    _previewLightSSBO->CreateSSBO(lightManager->GetLightSSBOSize(), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 
     _previewLightIndexSSBO = std::make_shared<UniformBufferObject>();
-    _previewLightIndexSSBO->CreateSSBO(lightManager->lightIndexSSBOSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    _previewLightIndexSSBO->CreateSSBO(lightManager->GetLightIndexSSBOSize(), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 
     _previewLightBinSSBO = std::make_shared<UniformBufferObject>();
-    _previewLightBinSSBO->CreateSSBO(lightManager->lightBinSSBOSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    _previewLightBinSSBO->CreateSSBO(lightManager->GetLightBinSSBOSize(), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 
     _previewLightTilesSSBO = std::make_shared<UniformBufferObject>();
-    _previewLightTilesSSBO->CreateSSBO(lightManager->lightTilesSSBOSize, MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    _previewLightTilesSSBO->CreateSSBO(lightManager->GetLightTilesSSBOSize(), MAX_FRAMES_IN_FLIGHT, *deviceModule);
 
     _previewPointShadowDescriptors = std::make_shared<PointShadowDescriptorsManager>();
     _previewDirectionalShadowDescriptors = std::make_shared<CSMDescriptorsManager>();
     _previewSpotShadowDescriptors = std::make_shared<SpotShadowDescriptorsManager>();
 
-    if (lightManager->OmniShadowShaderModule)
+    if (lightManager->GetOmniShadowShaderModule())
     {
-        _previewPointShadowDescriptors->InitializeDescriptorSetLayouts(lightManager->OmniShadowShaderModule);
+        _previewPointShadowDescriptors->InitializeDescriptorSetLayouts(lightManager->GetOmniShadowShaderModule());
     }
 
-    if (lightManager->CSMShaderModule)
+    if (lightManager->GetCSMShaderModule())
     {
-        _previewDirectionalShadowDescriptors->InitializeDescriptorSetLayouts(lightManager->CSMShaderModule);
-        _previewSpotShadowDescriptors->InitializeDescriptorSetLayouts(lightManager->CSMShaderModule);
+        _previewDirectionalShadowDescriptors->InitializeDescriptorSetLayouts(lightManager->GetCSMShaderModule());
+        _previewSpotShadowDescriptors->InitializeDescriptorSetLayouts(lightManager->GetCSMShaderModule());
     }
 
     LightManagerUniform previewLightData{};
     previewLightData.numLights = 1;
 
-    std::vector<uint8_t> previewLights(lightManager->lightSSBOSize, 0);
-    std::vector<uint8_t> previewIndices(lightManager->lightIndexSSBOSize, 0);
-    std::vector<uint32_t> previewBins(lightManager->lightBinSSBOSize / sizeof(uint32_t), 0u);
-    std::vector<uint32_t> previewTiles(lightManager->lightTilesSSBOSize / sizeof(uint32_t), 1u);
+    std::vector<uint8_t> previewLights(lightManager->GetLightSSBOSize(), 0);
+    std::vector<uint8_t> previewIndices(lightManager->GetLightIndexSSBOSize(), 0);
+    std::vector<uint32_t> previewBins(lightManager->GetLightBinSSBOSize() / sizeof(uint32_t), 0u);
+    std::vector<uint32_t> previewTiles(lightManager->GetLightTilesSSBOSize() / sizeof(uint32_t), 1u);
 
     LightUniform directionalLight{};
     directionalLight.position = glm::vec3(0.0f, 2.5f, 2.0f);
@@ -436,20 +436,20 @@ void MaterialPreviewRenderer::InitializePreviewLightingOverrides()
         memcpy(data, &previewLightData, sizeof(LightManagerUniform));
         vkUnmapMemory(deviceModule->device, _previewLightUBO->uniformBuffersMemory[frame]);
 
-        vkMapMemory(deviceModule->device, _previewLightSSBO->uniformBuffersMemory[frame], 0, lightManager->lightSSBOSize, 0, &data);
+        vkMapMemory(deviceModule->device, _previewLightSSBO->uniformBuffersMemory[frame], 0, lightManager->GetLightSSBOSize(), 0, &data);
         memcpy(data, previewLights.data(), previewLights.size());
         vkUnmapMemory(deviceModule->device, _previewLightSSBO->uniformBuffersMemory[frame]);
 
-        vkMapMemory(deviceModule->device, _previewLightIndexSSBO->uniformBuffersMemory[frame], 0, lightManager->lightIndexSSBOSize, 0, &data);
+        vkMapMemory(deviceModule->device, _previewLightIndexSSBO->uniformBuffersMemory[frame], 0, lightManager->GetLightIndexSSBOSize(), 0, &data);
         memcpy(data, previewIndices.data(), previewIndices.size());
         vkUnmapMemory(deviceModule->device, _previewLightIndexSSBO->uniformBuffersMemory[frame]);
 
-        vkMapMemory(deviceModule->device, _previewLightBinSSBO->uniformBuffersMemory[frame], 0, lightManager->lightBinSSBOSize, 0, &data);
-        memcpy(data, previewBins.data(), lightManager->lightBinSSBOSize);
+        vkMapMemory(deviceModule->device, _previewLightBinSSBO->uniformBuffersMemory[frame], 0, lightManager->GetLightBinSSBOSize(), 0, &data);
+        memcpy(data, previewBins.data(), lightManager->GetLightBinSSBOSize());
         vkUnmapMemory(deviceModule->device, _previewLightBinSSBO->uniformBuffersMemory[frame]);
 
-        vkMapMemory(deviceModule->device, _previewLightTilesSSBO->uniformBuffersMemory[frame], 0, lightManager->lightTilesSSBOSize, 0, &data);
-        memcpy(data, previewTiles.data(), lightManager->lightTilesSSBOSize);
+        vkMapMemory(deviceModule->device, _previewLightTilesSSBO->uniformBuffersMemory[frame], 0, lightManager->GetLightTilesSSBOSize(), 0, &data);
+        memcpy(data, previewTiles.data(), lightManager->GetLightTilesSSBOSize());
         vkUnmapMemory(deviceModule->device, _previewLightTilesSSBO->uniformBuffersMemory[frame]);
 
         if (_previewDirectionalShadowDescriptors)

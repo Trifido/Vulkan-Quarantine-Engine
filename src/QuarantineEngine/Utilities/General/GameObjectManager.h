@@ -99,6 +99,9 @@ std::shared_ptr<T> GameObjectManager::FindFirstComponentInScene(const std::strin
             if (!excludedGameObjectName.empty() && go->Name == excludedGameObjectName)
                 continue;
 
+            if (!go->IsActiveInHierarchy())
+                continue;
+
             auto component = go->GetComponent<T>();
             if (component)
                 return component;

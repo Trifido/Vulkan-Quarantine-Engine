@@ -61,14 +61,14 @@ void QEEditorApp::ConfigureEngineBindings()
         return;
     }
 
-    sessionManager->ExtraScenePass = &QEEditorRuntimeBridge::DrawEditorObjects;
-    sessionManager->SetEditorGridVisibilityCallback = &QEEditorRuntimeBridge::SetEditorGridVisible;
-    sessionManager->SetupEditorCallback =
+    sessionManager->SetExtraScenePass(&QEEditorRuntimeBridge::DrawEditorObjects);
+    sessionManager->SetEditorGridVisibilityHandler(&QEEditorRuntimeBridge::SetEditorGridVisible);
+    sessionManager->SetSetupEditorHandler(
         [this]()
         {
             QEEditorRuntimeBridge::SetupEditorRuntime(sessionManager->ShowEditorGrid());
-        };
-    sessionManager->CleanEditorResourcesCallback = &QEEditorRuntimeBridge::CleanupEditorRuntime;
+        });
+    sessionManager->SetCleanEditorResourcesHandler(&QEEditorRuntimeBridge::CleanupEditorRuntime);
 }
 
 void QEEditorApp::OnInitialize()
@@ -179,11 +179,7 @@ void QEEditorApp::OnPreCleanup()
     vkDeviceWaitIdle(deviceModule->device);
     if (sessionManager)
     {
-        sessionManager->ExtraScenePass = {};
-        sessionManager->ExtraEditorPass = {};
-        sessionManager->SetEditorGridVisibilityCallback = {};
-        sessionManager->SetupEditorCallback = {};
-        sessionManager->CleanEditorResourcesCallback = {};
+        sessionManager->ClearEditorBindings();
     }
     panels.clear();
 
@@ -287,7 +283,7 @@ void QEEditorApp::SetAdditionalSceneRenderTarget()
     }
 
     auto sessionManager = QESessionManager::getInstance();
-    sessionManager->ExtraRenderTarget = &viewportResources->GetRenderTarget();
+    sessionManager->SetExtraRenderTarget(&viewportResources->GetRenderTarget());
 }
 
 void QEEditorApp::InitializeImGui()
@@ -438,14 +434,14 @@ void QEEditorApp::CreatePanels()
 
     if (sessionManager && materialEditorPanelPtr)
     {
-        sessionManager->ExtraEditorPass =
+        sessionManager->SetExtraEditorPass(
             [this](VkCommandBuffer& commandBuffer, uint32_t currentFrame)
             {
                 if (materialEditorPanelPtr)
                 {
                     materialEditorPanelPtr->RenderPreview(commandBuffer, currentFrame);
                 }
-            };
+            });
     }
 }
 

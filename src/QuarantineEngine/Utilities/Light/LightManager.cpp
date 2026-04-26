@@ -382,6 +382,101 @@ std::shared_ptr<QELight> LightManager::GetLight(std::string name)
     return nullptr;
 }
 
+const std::shared_ptr<UniformBufferObject>& LightManager::GetLightUBO() const
+{
+    return lightUBO;
+}
+
+const std::shared_ptr<UniformBufferObject>& LightManager::GetLightSSBO() const
+{
+    return lightSSBO;
+}
+
+VkDeviceSize LightManager::GetLightSSBOSize() const
+{
+    return lightSSBOSize;
+}
+
+const std::shared_ptr<UniformBufferObject>& LightManager::GetLightIndexSSBO() const
+{
+    return lightIndexSSBO;
+}
+
+VkDeviceSize LightManager::GetLightIndexSSBOSize() const
+{
+    return lightIndexSSBOSize;
+}
+
+const std::shared_ptr<UniformBufferObject>& LightManager::GetLightTilesSSBO() const
+{
+    return lightTilesSSBO;
+}
+
+VkDeviceSize LightManager::GetLightTilesSSBOSize() const
+{
+    return lightTilesSSBOSize;
+}
+
+const std::shared_ptr<UniformBufferObject>& LightManager::GetLightBinSSBO() const
+{
+    return lightBinSSBO;
+}
+
+VkDeviceSize LightManager::GetLightBinSSBOSize() const
+{
+    return lightBinSSBOSize;
+}
+
+const std::vector<std::shared_ptr<QEDirectionalLight>>& LightManager::GetDirectionalLights() const
+{
+    return DirLights;
+}
+
+const std::vector<std::shared_ptr<QESpotLight>>& LightManager::GetSpotLights() const
+{
+    return SpotLights;
+}
+
+const std::vector<std::shared_ptr<QEPointLight>>& LightManager::GetPointLights() const
+{
+    return PointLights;
+}
+
+const std::shared_ptr<PointShadowDescriptorsManager>& LightManager::GetPointShadowDescriptors() const
+{
+    return PointShadowDescritors;
+}
+
+const std::shared_ptr<CSMDescriptorsManager>& LightManager::GetCSMDescriptors() const
+{
+    return CSMDescritors;
+}
+
+const std::shared_ptr<SpotShadowDescriptorsManager>& LightManager::GetSpotShadowDescriptors() const
+{
+    return SpotShadowDescritors;
+}
+
+const std::shared_ptr<ShadowPipelineModule>& LightManager::GetCSMPipelineModule() const
+{
+    return CSMPipelineModule;
+}
+
+const std::shared_ptr<ShadowPipelineModule>& LightManager::GetOmniShadowPipelineModule() const
+{
+    return OmniShadowPipelineModule;
+}
+
+const std::shared_ptr<ShaderModule>& LightManager::GetCSMShaderModule() const
+{
+    return CSMShaderModule;
+}
+
+const std::shared_ptr<ShaderModule>& LightManager::GetOmniShadowShaderModule() const
+{
+    return OmniShadowShaderModule;
+}
+
 void LightManager::InitializeShadowMaps()
 {
     this->PointShadowDescritors->InitializeDescriptorSetLayouts(this->OmniShadowShaderModule);
@@ -744,9 +839,9 @@ void LightManager::ComputeLightTiles()
 
     VkExtent2D renderExtent = swapChainModule->swapChainExtent;
     auto sessionManager = QESessionManager::getInstance();
-    if (sessionManager && sessionManager->ExtraRenderTarget && sessionManager->ExtraRenderTarget->Valid())
+    if (sessionManager && sessionManager->GetExtraRenderTarget() && sessionManager->GetExtraRenderTarget()->Valid())
     {
-        renderExtent = sessionManager->ExtraRenderTarget->Extent;
+        renderExtent = sessionManager->GetExtraRenderTarget()->Extent;
     }
 
     uint32_t tileXCount = (renderExtent.width + swapChainModule->TILE_SIZE - 1) / swapChainModule->TILE_SIZE;
@@ -841,7 +936,6 @@ void LightManager::ComputeLightTiles()
 
         glm::vec4 aabb(0.0f);
 
-        // Build view space AABB and project it, then calculate screen AABB
         glm::vec3 aabb_min{ FLT_MAX, FLT_MAX ,FLT_MAX }, aabb_max{ -FLT_MAX ,-FLT_MAX ,-FLT_MAX };
 
         for (uint32_t c = 0; c < 8; ++c) {
@@ -849,17 +943,12 @@ void LightManager::ComputeLightTiles()
             corner = corner * radius;
             corner = corner + glm::vec3(pos);
 
-            // transform in view space
             glm::vec4 corner_vs = activeCamera->CameraData->View * glm::vec4(corner, 1.f);
-            // adjust z on the near plane.
-            // En este sistema RH los puntos visibles tienen z negativa.
-            // Clampeamos contra -near para no proyectar vertices por delante del plano near.
             corner_vs.z = glm::min(corner_vs.z, -near_z);
 
             glm::vec4 corner_ndc = activeCamera->CameraData->Projection * corner_vs;
             corner_ndc = corner_ndc / corner_ndc.w;
 
-            // clamp
             aabb_min.x = glm::min(aabb_min.x, corner_ndc.x);
             aabb_min.y = glm::min(aabb_min.y, corner_ndc.y);
 
@@ -869,7 +958,6 @@ void LightManager::ComputeLightTiles()
 
         aabb.x = aabb_min.x;
         aabb.z = aabb_max.x;
-        // Inverted Y aabb
         aabb.w = -1 * aabb_min.y;
         aabb.y = -1 * aabb_max.y;
 

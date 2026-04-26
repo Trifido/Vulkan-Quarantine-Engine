@@ -213,9 +213,9 @@ void QEMaterial::BindDescriptors(VkCommandBuffer& commandBuffer, uint32_t idx)
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->shader->PipelineModule->pipelineLayout, 0, 1, descriptor->getDescriptorSet(idx), 0, nullptr);
     }
 
-    auto* pointShadowDescriptors = pointShadowDescriptorsOverride ? pointShadowDescriptorsOverride.get() : lightManager->PointShadowDescritors.get();
-    auto* directionalShadowDescriptors = directionalShadowDescriptorsOverride ? directionalShadowDescriptorsOverride.get() : lightManager->CSMDescritors.get();
-    auto* spotShadowDescriptors = spotShadowDescriptorsOverride ? spotShadowDescriptorsOverride.get() : lightManager->SpotShadowDescritors.get();
+    auto* pointShadowDescriptors = pointShadowDescriptorsOverride ? pointShadowDescriptorsOverride.get() : lightManager->GetPointShadowDescriptors().get();
+    auto* directionalShadowDescriptors = directionalShadowDescriptorsOverride ? directionalShadowDescriptorsOverride.get() : lightManager->GetCSMDescriptors().get();
+    auto* spotShadowDescriptors = spotShadowDescriptorsOverride ? spotShadowDescriptorsOverride.get() : lightManager->GetSpotShadowDescriptors().get();
 
     if (this->shader->reflectShader.HasPointShadows &&
         pointShadowDescriptors &&

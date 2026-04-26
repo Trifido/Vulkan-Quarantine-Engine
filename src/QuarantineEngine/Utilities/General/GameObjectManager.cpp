@@ -382,6 +382,9 @@ std::shared_ptr<QEGameComponent> GameObjectManager::FindGameComponentInScene(con
 
         for (const auto& model : bucket)
         {
+            if (!model.second || !model.second->IsActiveInHierarchy())
+                continue;
+
             for (const auto& component : model.second->components)
             {
                 if (component->id == id)
@@ -540,6 +543,9 @@ std::vector<QEOrderRenderItem> GameObjectManager::BuildRenderItems() const
             if (!go)
                 continue;
 
+            if (!go->IsActiveInHierarchy())
+                continue;
+
             auto meshRenderer = go->GetComponent<QEMeshRenderer>();
             if (!meshRenderer)
                 continue;
@@ -613,6 +619,9 @@ std::vector<QEOrderRenderItem> GameObjectManager::BuildShadowRenderItems() const
         {
             const auto& go = kv.second;
             if (!go)
+                continue;
+
+            if (!go->IsActiveInHierarchy())
                 continue;
 
             auto meshRenderer = go->GetComponent<QEMeshRenderer>();
@@ -708,27 +717,30 @@ void GameObjectManager::ReindexLightShadowMaps()
     if (!lightManager)
         return;
 
-    for (uint32_t i = 0; i < lightManager->PointLights.size(); ++i)
+    const auto& pointLights = lightManager->GetPointLights();
+    for (uint32_t i = 0; i < pointLights.size(); ++i)
     {
-        if (lightManager->PointLights[i])
+        if (pointLights[i])
         {
-            lightManager->PointLights[i]->idxShadowMap = i;
+            pointLights[i]->idxShadowMap = i;
         }
     }
 
-    for (uint32_t i = 0; i < lightManager->DirLights.size(); ++i)
+    const auto& directionalLights = lightManager->GetDirectionalLights();
+    for (uint32_t i = 0; i < directionalLights.size(); ++i)
     {
-        if (lightManager->DirLights[i])
+        if (directionalLights[i])
         {
-            lightManager->DirLights[i]->idxShadowMap = i;
+            directionalLights[i]->idxShadowMap = i;
         }
     }
 
-    for (uint32_t i = 0; i < lightManager->SpotLights.size(); ++i)
+    const auto& spotLights = lightManager->GetSpotLights();
+    for (uint32_t i = 0; i < spotLights.size(); ++i)
     {
-        if (lightManager->SpotLights[i])
+        if (spotLights[i])
         {
-            lightManager->SpotLights[i]->idxShadowMap = i;
+            spotLights[i]->idxShadowMap = i;
         }
     }
 }

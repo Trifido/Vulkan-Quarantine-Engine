@@ -36,6 +36,7 @@ protected:
     MaterialManager*    materialManager = nullptr;
 
 public:
+    bool QEActive = true;
     std::string Name;
     unsigned int UpdateOrder = 0;
     std::list<std::shared_ptr<QEGameComponent>> components;
@@ -59,6 +60,8 @@ private:
 public:
     QEGameObject(std::string name = "");
     inline std::string ID() const { return id; }
+    bool IsActiveSelf() const { return QEActive; }
+    bool IsActiveInHierarchy() const;
 
     void QEStart();
     void QEInit();
@@ -153,7 +156,7 @@ public:
                 continue;
 
             auto childGO = child->Owner;
-            if (!childGO)
+            if (!childGO || !childGO->IsActiveInHierarchy())
                 continue;
 
             if (auto found = childGO->GetComponent<T>())

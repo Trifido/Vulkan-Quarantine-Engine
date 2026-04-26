@@ -68,8 +68,6 @@ public:
 
     void Run(QEScene scene);
 
-    void InitWindow();
-
 protected:
     virtual void OnInitialize() {}
     virtual void OnShutdown() {}
@@ -87,6 +85,7 @@ protected:
     void LoadCurrentScene();
 
 private:
+    void InitWindow();
     void initVulkan();
     void loadScene(QEScene& scene);
     void mainLoop();
@@ -100,8 +99,6 @@ private:
 
 protected:
     GUIWindow* mainWindow;
-public:
-    bool                    framebufferResized = false;
 
 protected:
     VulkanInstance          vulkanInstance{};
@@ -120,9 +117,6 @@ protected:
     AntiAliasingModule* antialiasingModule;
     RenderPassModule* renderPassModule;
     QEDebugSystem* debugSystem;
-
-    bool show_demo_window = true;
-    bool show_another_window = true;
     bool isRender = false;
 
     QEScene     scene;

@@ -69,9 +69,9 @@ void QESessionManager::SetShowCullingAABBDebug(bool value)
 void QESessionManager::SetShowEditorGrid(bool value)
 {
     _showEditorGrid = value;
-    if (SetEditorGridVisibilityCallback)
+    if (_setEditorGridVisibilityCallback)
     {
-        SetEditorGridVisibilityCallback(value);
+        _setEditorGridVisibilityCallback(value);
     }
 }
 
@@ -88,6 +88,11 @@ void QESessionManager::RegisterActiveSceneCamera()
     }
 
     _activeCamera = (_gameCamera != nullptr) ? _gameCamera : _editorCamera;
+}
+
+bool QESessionManager::IsCameraActiveInHierarchy(const std::shared_ptr<QECamera>& camera) const
+{
+    return camera && camera->Owner && camera->Owner->IsActiveInHierarchy();
 }
 
 void QESessionManager::RegisterSceneCameras()
@@ -122,7 +127,7 @@ void QESessionManager::FreeCameraResources()
 
 void QESessionManager::UpdateActiveCameraGPUData(uint32_t currentFrame)
 {
-    UpdateCameraGPUData(_activeCamera, currentFrame);
+    UpdateCameraGPUData(ActiveCamera(), currentFrame);
 }
 
 void QESessionManager::UpdateCameraGPUData(const std::shared_ptr<QECamera>& camera, uint32_t currentFrame)
@@ -198,18 +203,28 @@ void QESessionManager::SetupEditor()
     auto debugSystem = QEDebugSystem::getInstance();
     debugSystem->SetEnabled(_showColliderDebug);
 
-    if (_isEditor && SetupEditorCallback)
+    if (_isEditor && _setupEditorCallback)
     {
-        SetupEditorCallback();
+        _setupEditorCallback();
     }
 }
 
 void QESessionManager::CleanEditorResources()
 {
-    if (CleanEditorResourcesCallback)
+    if (_cleanEditorResourcesCallback)
     {
-        CleanEditorResourcesCallback();
+        _cleanEditorResourcesCallback();
     }
+}
+
+void QESessionManager::ClearEditorBindings()
+{
+    _extraRenderTarget = nullptr;
+    _extraScenePass = {};
+    _extraEditorPass = {};
+    _setEditorGridVisibilityCallback = {};
+    _setupEditorCallback = {};
+    _cleanEditorResourcesCallback = {};
 }
 
 void QESessionManager::UpdateCullingScene()
@@ -240,6 +255,16 @@ void QESessionManager::FindNewSceneCamera()
 
 void QESessionManager::ResolveActiveCamera()
 {
+    if (!IsCameraActiveInHierarchy(_editorCamera))
+    {
+        _editorCamera = nullptr;
+    }
+
+    if (!IsCameraActiveInHierarchy(_gameCamera))
+    {
+        _gameCamera = nullptr;
+    }
+
     if (_isEditor)
     {
         _activeCamera = _editorCamera ? _editorCamera : _gameCamera;
@@ -248,6 +273,33 @@ void QESessionManager::ResolveActiveCamera()
     {
         _activeCamera = _gameCamera ? _gameCamera : _editorCamera;
     }
+}
+
+std::shared_ptr<QECamera> QESessionManager::ActiveCamera() const
+{
+    if (IsCameraActiveInHierarchy(_activeCamera))
+    {
+        return _activeCamera;
+    }
+
+    if (_isEditor)
+    {
+        if (IsCameraActiveInHierarchy(_editorCamera))
+            return _editorCamera;
+
+        if (IsCameraActiveInHierarchy(_gameCamera))
+            return _gameCamera;
+    }
+    else
+    {
+        if (IsCameraActiveInHierarchy(_gameCamera))
+            return _gameCamera;
+
+        if (IsCameraActiveInHierarchy(_editorCamera))
+            return _editorCamera;
+    }
+
+    return nullptr;
 }
 
 void QESessionManager::ResetSceneState()
