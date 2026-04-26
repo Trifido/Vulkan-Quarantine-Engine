@@ -249,6 +249,25 @@ bool QEProjectManager::DeletePath(const fs::path& targetPath, bool recursive)
     return true;
 }
 
+bool QEProjectManager::OpenQEProject(const std::string& projectName)
+{
+    if (projectName.empty())
+        return false;
+
+    const fs::path projectPath = fs::path(PROJECTS_FOLDER_PATH) / projectName;
+    if (!fs::exists(projectPath) || !fs::is_directory(projectPath))
+        return false;
+
+    const fs::path scenePath = projectPath / SCENE_FOLDER / "default.qescene";
+    if (!fs::exists(scenePath))
+        return false;
+
+    CURRENT_PROJECT_PATH = projectPath;
+    CURRENT_DEFAULT_SCENE_PATH = scenePath;
+
+    return true;
+}
+
 bool QEProjectManager::RenamePath(const fs::path& sourcePath, const std::string& newName)
 {
     if (!HasCurrentProject())

@@ -115,6 +115,11 @@ void QEBaseApp::initVulkan()
     this->cameraContext = QECameraContext::getInstance();
     QERuntimeMode::getInstance()->SetGameplayEnabled(!IsEditorMode());
 
+    if (auto cullingSceneManager = CullingSceneManager::getInstance())
+    {
+        cullingSceneManager->DebugMode = IsEditorMode();
+    }
+
     this->shaderManager = ShaderManager::getInstance();
     this->textureManager = TextureManager::getInstance();
     this->lightManager = LightManager::getInstance();

@@ -32,6 +32,7 @@ private:
 public:
     static bool HasCurrentProject();
     static bool CreateQEProject(const std::string& projectName);
+    static bool OpenQEProject(const std::string& projectName);
     static bool DeletePath(const fs::path& targetPath, bool recursive = true);
     static bool RenamePath(const fs::path& sourcePath, const std::string& newName);
     static bool CreateYamlScene(const std::string& sceneName = "DefaultScene");

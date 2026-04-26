@@ -19,7 +19,7 @@ private:
     std::shared_ptr<QEMaterial> material_aabb_ptr = nullptr;
 
 public:
-    bool DebugMode = true;
+    bool DebugMode = false;
 
 public:
     void EnsureInitialized();
