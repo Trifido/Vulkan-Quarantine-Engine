@@ -1,9 +1,8 @@
-#include "EditorSceneObjectFactory.h"
+ï»¿#include "EditorSceneObjectFactory.h"
 
 #include <GameObjectManager.h>
 #include <MaterialManager.h>
 #include <QuarantineEditor/Core/EditorSelectionManager.h>
-#include <QESessionManager.h>
 
 #include <QEGameObject.h>
 #include <QETransform.h>
@@ -24,11 +23,11 @@ EditorSceneObjectFactory::EditorSceneObjectFactory(
     GameObjectManager* gameObjectManager,
     MaterialManager* materialManager,
     EditorSelectionManager* selectionManager,
-    QESessionManager* sessionManager)
+    std::function<std::shared_ptr<QECamera>()> getEditorCamera)
     : gameObjectManager(gameObjectManager)
     , materialManager(materialManager)
     , selectionManager(selectionManager)
-    , sessionManager(sessionManager)
+    , getEditorCamera(std::move(getEditorCamera))
 {
 }
 
@@ -118,7 +117,7 @@ std::unique_ptr<IQEMeshGenerator> EditorSceneObjectFactory::CreatePrimitiveGener
 
 glm::vec3 EditorSceneObjectFactory::GetSpawnPositionInFrontOfEditorCamera(float distance) const
 {
-    auto editorCamera = sessionManager->EditorCamera();
+    auto editorCamera = getEditorCamera ? getEditorCamera() : nullptr;
     if (!editorCamera)
         return glm::vec3(0.0f);
 
@@ -180,10 +179,10 @@ std::shared_ptr<QEGameObject> EditorSceneObjectFactory::CreateLight(LightType ty
     if (!light)
         return nullptr;
 
-    // 4. Añadir componente
+    // 4. AÃ±adir componente
     newObject->AddComponent(light);
 
-    // 5. Añadir a escena
+    // 5. AÃ±adir a escena
     gameObjectManager->AddGameObject(newObject);
 
     // 6. Inicializar valores por defecto
@@ -229,8 +228,9 @@ std::shared_ptr<QEGameObject> EditorSceneObjectFactory::CreateLight(LightType ty
 
     newObject->Name = finalName;
 
-    // 8. Posición + selección (igual que primitivas)
+    // 8. PosiciÃ³n + selecciÃ³n (igual que primitivas)
     FinalizeCreatedObject(newObject, spawnDistance);
 
     return newObject;
 }
+

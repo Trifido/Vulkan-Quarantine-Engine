@@ -858,9 +858,9 @@ void LightManager::ComputeLightTiles()
 
     VkExtent2D renderExtent = swapChainModule->swapChainExtent;
     auto sessionManager = QESessionManager::getInstance();
-    if (sessionManager && sessionManager->GetExtraRenderTarget() && sessionManager->GetExtraRenderTarget()->Valid())
+    if (sessionManager && sessionManager->GetRenderTargetOverride() && sessionManager->GetRenderTargetOverride()->Valid())
     {
-        renderExtent = sessionManager->GetExtraRenderTarget()->Extent;
+        renderExtent = sessionManager->GetRenderTargetOverride()->Extent;
     }
 
     uint32_t tileXCount = (renderExtent.width + swapChainModule->TILE_SIZE - 1) / swapChainModule->TILE_SIZE;

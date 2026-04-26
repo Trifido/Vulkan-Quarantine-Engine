@@ -86,7 +86,10 @@ void CommandPoolModule::recreateCommandBuffers()
     }
 }
 
-void CommandPoolModule::setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t iCBuffer)
+void CommandPoolModule::setCustomRenderPass(
+    VkFramebuffer& framebuffer,
+    uint32_t iCBuffer,
+    const std::function<void(VkCommandBuffer&, uint32_t)>& extraScenePass)
 {
     VkViewport viewport{};
     viewport.x = 0.0f;
@@ -121,10 +124,9 @@ void CommandPoolModule::setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t
 
     this->atmosphereSystem->DrawCommand(commandBuffers[iCBuffer], iCBuffer);
     this->gameObjectManager->DrawCommand(commandBuffers[iCBuffer], iCBuffer);
-    auto sessionManager = QESessionManager::getInstance();
-    if (sessionManager && sessionManager->GetExtraScenePass())
+    if (extraScenePass)
     {
-        sessionManager->GetExtraScenePass()(commandBuffers[iCBuffer], iCBuffer);
+        extraScenePass(commandBuffers[iCBuffer], iCBuffer);
     }
     this->cullingSceneManager->DrawDebug(commandBuffers[iCBuffer], iCBuffer);
     this->debugSystem->DrawDebugLines(commandBuffers[iCBuffer], iCBuffer);
@@ -461,7 +463,11 @@ void CommandPoolModule::updateCubeMapFace(uint32_t faceIdx, std::shared_ptr<VkRe
     vkCmdEndRenderPass(commandBuffer);
 }
 
-void CommandPoolModule::Render(FramebufferModule* framebufferModule, const QERenderTarget* extraRenderTarget)
+void CommandPoolModule::Render(
+    FramebufferModule* framebufferModule,
+    const QERenderTarget* extraRenderTarget,
+    const std::function<void(VkCommandBuffer&, uint32_t)>& extraScenePass,
+    const std::function<void(VkCommandBuffer&, uint32_t)>& extraOverlayPass)
 {
     uint32_t currentFrame = (uint32_t)SynchronizationModule::GetCurrentFrame();
     VkCommandBuffer cmd = commandBuffers[currentFrame];
@@ -497,19 +503,21 @@ void CommandPoolModule::Render(FramebufferModule* framebufferModule, const QERen
 
     if (hasEditorViewport)
     {
-        this->RenderSceneToTarget(*extraRenderTarget, currentFrame);
+        this->RenderSceneToTarget(*extraRenderTarget, currentFrame, extraScenePass);
 
-        auto sessionManager = QESessionManager::getInstance();
-        if (sessionManager && sessionManager->GetExtraEditorPass())
+        if (extraOverlayPass)
         {
-            sessionManager->GetExtraEditorPass()(commandBuffers[currentFrame], currentFrame);
+            extraOverlayPass(commandBuffers[currentFrame], currentFrame);
         }
 
         this->setSwapchainImGuiRenderPass(framebufferModule->swapChainFramebuffers[swapchainModule->currentImage], currentFrame);
     }
     else
     {
-        this->setCustomRenderPass(framebufferModule->swapChainFramebuffers[swapchainModule->currentImage], currentFrame);
+        this->setCustomRenderPass(
+            framebufferModule->swapChainFramebuffers[swapchainModule->currentImage],
+            currentFrame,
+            extraScenePass);
     }
 
     if (vkEndCommandBuffer(cmd) != VK_SUCCESS)
@@ -518,7 +526,10 @@ void CommandPoolModule::Render(FramebufferModule* framebufferModule, const QERen
     }
 }
 
-void CommandPoolModule::RenderSceneToTarget(const QERenderTarget& renderTarget, uint32_t iCBuffer)
+void CommandPoolModule::RenderSceneToTarget(
+    const QERenderTarget& renderTarget,
+    uint32_t iCBuffer,
+    const std::function<void(VkCommandBuffer&, uint32_t)>& extraScenePass)
 {
     if (!renderTarget.Valid())
     {
@@ -559,10 +570,9 @@ void CommandPoolModule::RenderSceneToTarget(const QERenderTarget& renderTarget, 
 
     this->atmosphereSystem->DrawCommand(commandBuffers[iCBuffer], iCBuffer);
     this->gameObjectManager->DrawCommand(commandBuffers[iCBuffer], iCBuffer);
-    auto sessionManager = QESessionManager::getInstance();
-    if (sessionManager && sessionManager->GetExtraScenePass())
+    if (extraScenePass)
     {
-        sessionManager->GetExtraScenePass()(commandBuffers[iCBuffer], iCBuffer);
+        extraScenePass(commandBuffers[iCBuffer], iCBuffer);
     }
     this->cullingSceneManager->DrawDebug(commandBuffers[iCBuffer], iCBuffer);
     this->debugSystem->DrawDebugLines(commandBuffers[iCBuffer], iCBuffer);
@@ -572,7 +582,7 @@ void CommandPoolModule::RenderSceneToTarget(const QERenderTarget& renderTarget, 
 
 void CommandPoolModule::RenderEditorViewport(const QERenderTarget& renderTarget, uint32_t iCBuffer)
 {
-    RenderSceneToTarget(renderTarget, iCBuffer);
+    RenderSceneToTarget(renderTarget, iCBuffer, {});
 }
 
 void CommandPoolModule::recordComputeCommandBuffer(VkCommandBuffer commandBuffer)

@@ -17,7 +17,6 @@ private:
 
 public:
     string sceneName;
-    std::shared_ptr<QECamera> cameraEditor = NULL;
     AtmosphereDto atmosphereDto;
     float physicsGravity = -20.0f;
 
@@ -28,6 +27,8 @@ public:
     bool InitScene(fs::path filename);
     bool SerializeScene();
     bool DeserializeScene();
+    fs::path GetSceneFilePath() const;
+    fs::path GetSceneDirectoryPath() const;
 };
 
 

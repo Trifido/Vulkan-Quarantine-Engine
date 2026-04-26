@@ -755,7 +755,7 @@ void AtmosphereSystem::UpdateAtmopshereResolution()
     if (this->resolutionUBO == nullptr)
         return;
 
-    auto extraRenderTarget = QESessionManager::getInstance()->GetExtraRenderTarget();
+    auto extraRenderTarget = QESessionManager::getInstance()->GetRenderTargetOverride();
     ScreenResolutionUniform resolution = {};
 
     if (extraRenderTarget != nullptr)

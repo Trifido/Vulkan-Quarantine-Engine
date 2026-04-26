@@ -2,15 +2,16 @@
 
 #include <memory>
 #include <string>
+#include <functional>
 #include <glm/vec3.hpp>
 #include <LightType.h>
 
 class GameObjectManager;
 class MaterialManager;
 class EditorSelectionManager;
-class QESessionManager;
 class QEGameObject;
 class IQEMeshGenerator;
+class QECamera;
 
 enum class QEPrimitiveType
 {
@@ -31,7 +32,7 @@ public:
         GameObjectManager* gameObjectManager,
         MaterialManager* materialManager,
         EditorSelectionManager* selectionManager,
-        QESessionManager* sessionManager);
+        std::function<std::shared_ptr<QECamera>()> getEditorCamera);
 
     std::shared_ptr<QEGameObject> CreatePrimitive(QEPrimitiveType type, float spawnDistance = 5.0f);
     std::shared_ptr<QEGameObject> CreateDroppedMeshObject(const std::string& assetPath, float spawnDistance = 5.0f);
@@ -47,5 +48,5 @@ private:
     GameObjectManager* gameObjectManager = nullptr;
     MaterialManager* materialManager = nullptr;
     EditorSelectionManager* selectionManager = nullptr;
-    QESessionManager* sessionManager = nullptr;
+    std::function<std::shared_ptr<QECamera>()> getEditorCamera;
 };

@@ -1,7 +1,6 @@
 #include "ViewportPanel.h"
 
 #include <imgui.h>
-#include <QESessionManager.h>
 #include <QuarantineEditor/Core/EditorContext.h>
 #include <QuarantineEditor/Core/EditorSelectionManager.h>
 #include <QuarantineEditor/Core/QEGizmoController.h>
@@ -26,13 +25,17 @@ ViewportPanel::ViewportPanel(
     EditorSelectionManager* selectionManager,
     QEGizmoController* gizmoController,
     EditorPickingSystem* pickingSystem,
-    EditorCommandManager* commandManager)
+    EditorCommandManager* commandManager,
+    std::function<std::shared_ptr<QECamera>()> getEditorCamera,
+    std::function<void(uint32_t, uint32_t)> resizeEditorCameraViewport)
     : editorContext(editorContext)
     , viewportResources(viewportResources)
     , selectionManager(selectionManager)
     , gizmoController(gizmoController)
     , pickingSystem(pickingSystem)
     , commandManager(commandManager)
+    , getEditorCamera(std::move(getEditorCamera))
+    , resizeEditorCameraViewport(std::move(resizeEditorCameraViewport))
 {
 }
 
@@ -68,8 +71,10 @@ void ViewportPanel::Draw()
     {
         viewportResources->Resize(renderWidth, renderHeight);
 
-        auto sessionManager = QESessionManager::getInstance();
-        sessionManager->UpdateEditorCameraViewportSize(renderWidth, renderHeight);
+        if (resizeEditorCameraViewport)
+        {
+            resizeEditorCameraViewport(renderWidth, renderHeight);
+        }
     }
 
     if (viewportResources && viewportResources->IsValid())
@@ -105,8 +110,7 @@ void ViewportPanel::Draw()
             editorContext->EditorCameraInputEnabled = false;
         }
 
-        auto sessionManager = QESessionManager::getInstance();
-        auto editorCamera = sessionManager->EditorCamera();
+        auto editorCamera = getEditorCamera ? getEditorCamera() : nullptr;
 
         if (!inputBlocked && selectionManager && gizmoController && editorCamera)
         {
@@ -191,7 +195,7 @@ void ViewportPanel::HandlePicking()
     if (gizmoController->IsOver() || gizmoController->IsUsing())
         return;
 
-    auto editorCamera = QESessionManager::getInstance()->EditorCamera();
+    auto editorCamera = getEditorCamera ? getEditorCamera() : nullptr;
     if (!editorCamera || !editorCamera->CameraData)
         return;
 

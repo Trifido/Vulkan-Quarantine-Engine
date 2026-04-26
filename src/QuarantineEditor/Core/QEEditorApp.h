@@ -26,6 +26,9 @@ class QETextureViewerPanel;
 class MaterialEditorPanel;
 class ShaderEditorPanel;
 class QEMaterial;
+class EditorCameraService;
+class EditorDebugSettings;
+class EditorSceneStateSerializer;
 
 class QEEditorApp : public QEBaseApp
 {
@@ -53,6 +56,9 @@ protected:
     void OnPostInitVulkan() override;
     void OnPreCleanup() override;
     void OnSwapchainRecreated() override;
+    void OnBeforeSceneActivated() override;
+    void RecordAdditionalScenePass(VkCommandBuffer& commandBuffer, uint32_t currentFrame) override;
+    void RecordAdditionalOverlayPass(VkCommandBuffer& commandBuffer, uint32_t currentFrame) override;
 
     bool IsEditorMode() const override { return true; }
 
@@ -76,8 +82,6 @@ private:
     void OpenShaderEditor(const std::filesystem::path& shaderPath);
 
     void SpawnDroppedMesh(const std::string& assetPath);
-    glm::vec3 GetSpawnPositionInFrontOfEditorCamera(float distance) const;
-    void UpdateEditorCameraInputState();
 
     void FlushClosedTextureViewerPanels();
 
@@ -98,6 +102,9 @@ private:
     std::unique_ptr<QEEditorConsole> editorConsole;
     std::unique_ptr<QEEditorConsoleSink> editorConsoleSink;
     std::unique_ptr<QEConsoleLogSink> consoleLogSink;
+    std::unique_ptr<EditorCameraService> editorCameraService;
+    std::unique_ptr<EditorDebugSettings> editorDebugSettings;
+    std::unique_ptr<EditorSceneStateSerializer> editorSceneStateSerializer;
     std::unique_ptr<EditorSceneObjectFactory> sceneObjectFactory;
     std::optional<std::filesystem::path> _pendingSceneOpenPath;
 

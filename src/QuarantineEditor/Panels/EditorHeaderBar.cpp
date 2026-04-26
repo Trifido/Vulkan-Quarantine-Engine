@@ -3,9 +3,8 @@
 #include <imgui.h>
 #include <QuarantineEditor/Core/EditorContext.h>
 #include <QuarantineEditor/Commands/EditorCommandManager.h>
-#include <QESessionManager.h>
+#include <QuarantineEditor/Core/QEEditorCameraController.h>
 #include <QECamera.h>
-#include <QECameraController.h>
 #include <PhysicsModule.h>
 #include <QEGameObject.h>
 
@@ -18,11 +17,23 @@ namespace
 EditorHeaderBar::EditorHeaderBar(
     EditorContext* editorContext,
     EditorCommandManager* commandManager,
-    QESessionManager* sessionManager,
+    std::function<std::shared_ptr<QECamera>()> getEditorCamera,
+    std::function<bool()> getShowEditorGrid,
+    std::function<void(bool)> setShowEditorGrid,
+    std::function<bool()> getShowColliderDebug,
+    std::function<void(bool)> setShowColliderDebug,
+    std::function<bool()> getShowCullingAABBDebug,
+    std::function<void(bool)> setShowCullingAABBDebug,
     PhysicsModule* physicsModule)
     : editorContext(editorContext)
     , commandManager(commandManager)
-    , sessionManager(sessionManager)
+    , getEditorCamera(std::move(getEditorCamera))
+    , getShowEditorGrid(std::move(getShowEditorGrid))
+    , setShowEditorGrid(std::move(setShowEditorGrid))
+    , getShowColliderDebug(std::move(getShowColliderDebug))
+    , setShowColliderDebug(std::move(setShowColliderDebug))
+    , getShowCullingAABBDebug(std::move(getShowCullingAABBDebug))
+    , setShowCullingAABBDebug(std::move(setShowCullingAABBDebug))
     , physicsModule(physicsModule)
 {
 }
@@ -86,29 +97,38 @@ void EditorHeaderBar::DrawWindowMenu()
 
 void EditorHeaderBar::DrawDebugMenu()
 {
-    if (!editorContext || !sessionManager)
+    if (!editorContext)
     {
         return;
     }
 
     if (ImGui::BeginMenu("Debug"))
     {
-        const bool showGrid = sessionManager->ShowEditorGrid();
+        const bool showGrid = getShowEditorGrid ? getShowEditorGrid() : false;
         if (ImGui::MenuItem("Grid", nullptr, showGrid))
         {
-            sessionManager->SetShowEditorGrid(!showGrid);
+            if (setShowEditorGrid)
+            {
+                setShowEditorGrid(!showGrid);
+            }
         }
 
-        const bool showColliders = sessionManager->ShowColliderDebug();
+        const bool showColliders = getShowColliderDebug ? getShowColliderDebug() : false;
         if (ImGui::MenuItem("Colliders", nullptr, showColliders))
         {
-            sessionManager->SetShowColliderDebug(!showColliders);
+            if (setShowColliderDebug)
+            {
+                setShowColliderDebug(!showColliders);
+            }
         }
 
-        const bool showAABBs = sessionManager->ShowCullingAABBDebug();
+        const bool showAABBs = getShowCullingAABBDebug ? getShowCullingAABBDebug() : false;
         if (ImGui::MenuItem("AABB Culling", nullptr, showAABBs))
         {
-            sessionManager->SetShowCullingAABBDebug(!showAABBs);
+            if (setShowCullingAABBDebug)
+            {
+                setShowCullingAABBDebug(!showAABBs);
+            }
         }
 
         ImGui::Separator();
@@ -149,9 +169,9 @@ void EditorHeaderBar::DrawEditorCameraButton()
 
 void EditorHeaderBar::DrawEditorCameraPopup()
 {
-    auto editorCamera = sessionManager ? sessionManager->EditorCamera() : nullptr;
+    auto editorCamera = getEditorCamera ? getEditorCamera() : nullptr;
     auto editorCameraOwner = editorCamera ? editorCamera->Owner : nullptr;
-    auto controller = editorCameraOwner ? editorCameraOwner->GetComponent<QECameraController>() : nullptr;
+    auto controller = editorCameraOwner ? editorCameraOwner->GetComponent<QEEditorCameraController>() : nullptr;
 
     if (ImGui::BeginPopup(kEditorCameraPopupId))
     {
@@ -245,16 +265,16 @@ void EditorHeaderBar::DrawPhysicsSettingsPopup()
 
         ImGui::Separator();
 
-        if (!sessionManager)
+        if (!getShowColliderDebug || !setShowColliderDebug)
         {
-            ImGui::TextUnformatted("Session manager not found.");
+            ImGui::TextUnformatted("Collider debug controls unavailable.");
         }
         else
         {
-            bool showColliders = sessionManager->ShowColliderDebug();
+            bool showColliders = getShowColliderDebug();
             if (ImGui::Checkbox("Show Collider Debug", &showColliders))
             {
-                sessionManager->SetShowColliderDebug(showColliders);
+                setShowColliderDebug(showColliders);
             }
         }
 

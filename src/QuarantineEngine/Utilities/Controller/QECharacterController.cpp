@@ -13,7 +13,7 @@
 #include <Jolt/Physics/Character/CharacterVirtual.h>
 #include <imgui.h>
 #include <Helpers/MathHelpers.h>
-#include <QESessionManager.h>
+#include <QERuntimeMode.h>
 
 namespace
 {
@@ -325,7 +325,7 @@ void QECharacterController::QEUpdate()
         return;
     }
 
-    if (QESessionManager::getInstance()->IsEditor()) return;
+    if (!QERuntimeMode::getInstance()->IsGameplayEnabled()) return;
     if (!mTransform) return;
 
     CheckBlockAnimationDisplacement();

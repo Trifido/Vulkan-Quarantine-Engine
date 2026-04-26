@@ -12,6 +12,7 @@
 #include "PhysicsBody.h"
 #include <CSMResources.h>
 #include <OmniShadowResources.h>
+#include <QERuntimeMode.h>
 
 QEBaseApp::QEBaseApp()
 {
@@ -111,6 +112,7 @@ void QEBaseApp::initVulkan()
 
     // INIT ------------------------- Managers -------------------------------
     this->sessionManager = QESessionManager::getInstance();
+    QERuntimeMode::getInstance()->SetGameplayEnabled(!IsEditorMode());
 
     this->shaderManager = ShaderManager::getInstance();
     this->textureManager = TextureManager::getInstance();
@@ -138,14 +140,9 @@ void QEBaseApp::loadScene(QEScene& scene)
     scene.DeserializeScene();
     physicsModule->SetGravity(scene.physicsGravity);
 
-    sessionManager->SetEditorMode(IsEditorMode());
+    OnBeforeSceneActivated();
     sessionManager->RegisterSceneCameras();
     sessionManager->ResolveActiveCamera();
-
-    if (IsEditorMode())
-    {
-        sessionManager->SetupEditor();
-    }
 
     auto activeCamera = sessionManager->ActiveCamera();
     if (!activeCamera)
@@ -466,7 +463,17 @@ void QEBaseApp::drawFrame(uint32_t currentFrame)
     this->sessionManager->UpdateActiveCameraGPUData(currentFrame);
     this->materialManager->UpdateUniforms();
 
-    commandPoolModule->Render(&framebufferModule, this->sessionManager->GetExtraRenderTarget());
+    commandPoolModule->Render(
+        &framebufferModule,
+        this->sessionManager->GetRenderTargetOverride(),
+        [this](VkCommandBuffer& commandBuffer, uint32_t currentFrame)
+        {
+            RecordAdditionalScenePass(commandBuffer, currentFrame);
+        },
+        [this](VkCommandBuffer& commandBuffer, uint32_t currentFrame)
+        {
+            RecordAdditionalOverlayPass(commandBuffer, currentFrame);
+        });
 
     synchronizationModule.submitCommandBuffer(
         commandPoolModule->getCommandBuffer(currentFrame),

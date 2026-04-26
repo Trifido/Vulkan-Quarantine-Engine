@@ -79,6 +79,9 @@ protected:
     virtual void OnPostInitVulkan() {}
     virtual void OnPreCleanup() {}
     virtual void OnSwapchainRecreated() {}
+    virtual void OnBeforeSceneActivated() {}
+    virtual void RecordAdditionalScenePass(VkCommandBuffer&, uint32_t) {}
+    virtual void RecordAdditionalOverlayPass(VkCommandBuffer&, uint32_t) {}
 
     bool LoadSceneFromPath(const std::filesystem::path& scenePath);
     void UnloadCurrentScene();

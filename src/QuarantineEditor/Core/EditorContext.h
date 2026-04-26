@@ -17,6 +17,9 @@ struct EditorContext
     bool ShowConsole = true;
     bool ShowContentBrowser = true;
     bool ShowDemoWindow = false;
+    bool ShowEditorGrid = true;
+    bool ShowColliderDebug = false;
+    bool ShowCullingAABBDebug = false;
 
     uint32_t ViewportWidth = 1;
     uint32_t ViewportHeight = 1;

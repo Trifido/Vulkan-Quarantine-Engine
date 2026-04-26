@@ -19,7 +19,6 @@ QEScene::QEScene(string sceneName, fs::path scenePath) : QEScene()
 
 QEScene::~QEScene()
 {
-    cameraEditor = NULL;
 }
 
 bool QEScene::InitScene(fs::path scenefile)
@@ -139,4 +138,14 @@ bool QEScene::DeserializeScene()
     }
 
     return true;
+}
+
+fs::path QEScene::GetSceneFilePath() const
+{
+    return scenePath / sceneName;
+}
+
+fs::path QEScene::GetSceneDirectoryPath() const
+{
+    return scenePath;
 }

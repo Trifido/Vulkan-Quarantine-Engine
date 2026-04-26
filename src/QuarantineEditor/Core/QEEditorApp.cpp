@@ -7,10 +7,13 @@
 #include <SyncTool.h>
 
 #include <QuarantineEditor/Core/EditorContext.h>
+#include <QuarantineEditor/Core/EditorCameraService.h>
+#include <QuarantineEditor/Core/EditorDebugSettings.h>
 #include <QuarantineEditor/Core/EditorSelectionManager.h>
 #include <QuarantineEditor/Core/QEGizmoController.h>
 #include <QuarantineEditor/Core/EditorPickingSystem.h>
 #include <QuarantineEditor/Core/EditorSceneObjectFactory.h>
+#include <QuarantineEditor/Core/EditorSceneStateSerializer.h>
 #include <QERenderTarget.h>
 
 #include <QuarantineEditor/Commands/EditorCommandManager.h>
@@ -35,40 +38,26 @@
 #include <MaterialManager.h>
 #include <algorithm>
 
-#include <QECamera.h>
-#include <QECameraController.h>
+#include <CullingSceneManager.h>
+#include <DebugSystem/QEDebugSystem.h>
 
 #include <Logging/QELogger.h>
 #include <Logging/QEConsoleLogSink.h>
 #include <QuarantineEditor/Logs/QEEditorConsole.h>
 #include <QuarantineEditor/Logs/QEEditorConsoleSink.h>
 
-namespace
-{
-    static constexpr const char* kEditorCameraPopupId = "EditorCameraSettingsPopup";
-}
-
 QEEditorApp::QEEditorApp()
 {
+    editorCameraService = std::make_unique<EditorCameraService>();
+    editorDebugSettings = std::make_unique<EditorDebugSettings>();
+    editorSceneStateSerializer = std::make_unique<EditorSceneStateSerializer>();
 }
 
 QEEditorApp::~QEEditorApp() = default;
 
 void QEEditorApp::ConfigureEngineBindings()
 {
-    if (!sessionManager)
-    {
-        return;
-    }
-
-    sessionManager->SetExtraScenePass(&QEEditorRuntimeBridge::DrawEditorObjects);
-    sessionManager->SetEditorGridVisibilityHandler(&QEEditorRuntimeBridge::SetEditorGridVisible);
-    sessionManager->SetSetupEditorHandler(
-        [this]()
-        {
-            QEEditorRuntimeBridge::SetupEditorRuntime(sessionManager->ShowEditorGrid());
-        });
-    sessionManager->SetCleanEditorResourcesHandler(&QEEditorRuntimeBridge::CleanupEditorRuntime);
+    editorCameraService->EnsureEditorCamera(gameObjectManager);
 }
 
 void QEEditorApp::OnInitialize()
@@ -91,6 +80,8 @@ void QEEditorApp::OnInitialize()
         };
 
     editorContext = std::make_unique<EditorContext>();
+    editorDebugSettings->AttachContext(editorContext.get());
+    editorDebugSettings->AttachDebugSystem(debugSystem);
 
     viewportResources = std::make_unique<EditorViewportResources>();
     viewportResources->Initialize(deviceModule, renderPassModule, commandPoolModule, queueModule);
@@ -108,7 +99,13 @@ void QEEditorApp::OnInitialize()
     headerBar = std::make_unique<EditorHeaderBar>(
         editorContext.get(),
         commandManager.get(),
-        sessionManager,
+        [this]() { return editorCameraService->GetEditorCamera(); },
+        [this]() { return editorDebugSettings->ShowEditorGrid(); },
+        [this](bool value) { editorDebugSettings->SetShowEditorGrid(value); },
+        [this]() { return editorDebugSettings->ShowColliderDebug(); },
+        [this](bool value) { editorDebugSettings->SetShowColliderDebug(value); },
+        [this]() { return editorDebugSettings->ShowCullingAABBDebug(); },
+        [this](bool value) { editorDebugSettings->SetShowCullingAABBDebug(value); },
         physicsModule);
 
     headerBar->SetOnSaveRequested([this]()
@@ -120,7 +117,7 @@ void QEEditorApp::OnInitialize()
         gameObjectManager,
         MaterialManager::getInstance(),
         selectionManager.get(),
-        sessionManager);
+        [this]() { return editorCameraService->GetEditorCamera(); });
 
     CreatePanels();
 }
@@ -142,6 +139,8 @@ void QEEditorApp::OnShutdown()
         viewportResources->Cleanup();
         viewportResources.reset();
     }
+
+    QEEditorRuntimeBridge::CleanupEditorRuntime();
 }
 
 void QEEditorApp::OnFrameStart()
@@ -177,14 +176,37 @@ void QEEditorApp::OnPostInitVulkan()
 void QEEditorApp::OnPreCleanup()
 {
     vkDeviceWaitIdle(deviceModule->device);
+    panels.clear();
+    ShutdownImGui();
+}
+
+void QEEditorApp::OnBeforeSceneActivated()
+{
+    editorCameraService->EnsureEditorCamera(gameObjectManager);
+    editorSceneStateSerializer->Load(scene, editorCameraService->GetEditorCamera(), *editorDebugSettings);
+
     if (sessionManager)
     {
-        sessionManager->ClearEditorBindings();
+        sessionManager->SetCameraOverride(editorCameraService->GetEditorCamera());
     }
-    panels.clear();
 
-    sessionManager->CleanEditorResources();
-    ShutdownImGui();
+    QEEditorRuntimeBridge::SetupEditorRuntime(editorDebugSettings->ShowEditorGrid());
+    editorDebugSettings->SetShowEditorGrid(editorDebugSettings->ShowEditorGrid());
+    editorDebugSettings->SetShowColliderDebug(editorDebugSettings->ShowColliderDebug());
+    editorDebugSettings->SetShowCullingAABBDebug(editorDebugSettings->ShowCullingAABBDebug());
+}
+
+void QEEditorApp::RecordAdditionalScenePass(VkCommandBuffer& commandBuffer, uint32_t currentFrame)
+{
+    QEEditorRuntimeBridge::DrawEditorObjects(commandBuffer, currentFrame);
+}
+
+void QEEditorApp::RecordAdditionalOverlayPass(VkCommandBuffer& commandBuffer, uint32_t currentFrame)
+{
+    if (materialEditorPanelPtr)
+    {
+        materialEditorPanelPtr->RenderPreview(commandBuffer, currentFrame);
+    }
 }
 
 void QEEditorApp::OnSwapchainRecreated()
@@ -254,7 +276,7 @@ void QEEditorApp::DrawEditorUI()
         }
     }
 
-    UpdateEditorCameraInputState();
+    editorCameraService->UpdateInputState(editorContext.get());
 
     ClearExternalDroppedFiles();
 
@@ -283,7 +305,7 @@ void QEEditorApp::SetAdditionalSceneRenderTarget()
     }
 
     auto sessionManager = QESessionManager::getInstance();
-    sessionManager->SetExtraRenderTarget(&viewportResources->GetRenderTarget());
+    sessionManager->SetRenderTargetOverride(&viewportResources->GetRenderTarget());
 }
 
 void QEEditorApp::InitializeImGui()
@@ -411,7 +433,15 @@ void QEEditorApp::CreatePanels()
         selectionManager.get(),
         gizmoController.get(),
         pickingSystem.get(),
-        commandManager.get());
+        commandManager.get(),
+        [this]() { return editorCameraService->GetEditorCamera(); },
+        [this](uint32_t width, uint32_t height)
+        {
+            if (sessionManager)
+            {
+                sessionManager->UpdateCameraOverrideViewportSize(width, height);
+            }
+        });
 
     viewportPanelLocal->OnAssetDroppedInViewport = [this](const std::string& assetPath)
         {
@@ -432,17 +462,6 @@ void QEEditorApp::CreatePanels()
     projectBrowserPanelPtr = projectBrowserPanelLocal.get();
     panels.emplace_back(std::move(projectBrowserPanelLocal));
 
-    if (sessionManager && materialEditorPanelPtr)
-    {
-        sessionManager->SetExtraEditorPass(
-            [this](VkCommandBuffer& commandBuffer, uint32_t currentFrame)
-            {
-                if (materialEditorPanelPtr)
-                {
-                    materialEditorPanelPtr->RenderPreview(commandBuffer, currentFrame);
-                }
-            });
-    }
 }
 
 void QEEditorApp::DrawDockspace()
@@ -503,10 +522,10 @@ void QEEditorApp::HandleShortcuts()
 
 void QEEditorApp::SaveScene()
 {
-    scene.cameraEditor = sessionManager->EditorCamera();
     scene.atmosphereDto = atmosphereSystem->CreateAtmosphereDto();
     scene.physicsGravity = physicsModule->GetGravity();
     scene.SerializeScene();
+    editorSceneStateSerializer->Save(scene, editorCameraService->GetEditorCamera(), *editorDebugSettings);
 }
 
 void QEEditorApp::OpenScene(const std::filesystem::path& scenePath)
@@ -545,49 +564,6 @@ void QEEditorApp::SpawnDroppedMesh(const std::string& assetPath)
         return;
 
     sceneObjectFactory->CreateDroppedMeshObject(assetPath, 5.0f);
-}
-
-glm::vec3 QEEditorApp::GetSpawnPositionInFrontOfEditorCamera(float distance) const
-{
-    auto editorCamera = sessionManager->EditorCamera();
-    if (!editorCamera)
-        return glm::vec3(0.0f);
-
-    auto cameraOwner = editorCamera->Owner;
-    if (!cameraOwner)
-        return glm::vec3(0.0f);
-
-    auto cameraTransform = cameraOwner->GetComponent<QETransform>();
-    if (!cameraTransform)
-        return glm::vec3(0.0f);
-
-    const glm::vec3 cameraPos = cameraTransform->GetWorldPosition();
-    const glm::vec3 forward = glm::normalize(cameraTransform->Forward());
-
-    return cameraPos + forward * distance;
-}
-
-void QEEditorApp::UpdateEditorCameraInputState()
-{
-    auto editorCamera = sessionManager->EditorCamera();
-    if (!editorCamera || !editorCamera->Owner)
-        return;
-
-    auto controller = editorCamera->Owner->GetComponent<QECameraController>();
-    if (!controller)
-        return;
-
-    const bool popupOpen =
-        ImGui::IsPopupOpen("AddComponentPopup", ImGuiPopupFlags_AnyPopupId) ||
-        ImGui::IsPopupOpen("Rename GameObject", ImGuiPopupFlags_AnyPopupId);
-
-    const bool allowInput =
-        editorContext &&
-        !popupOpen &&
-        !editorContext->BlockViewportInput &&
-        (editorContext->ViewportFocused || editorContext->ViewportImageHovered);
-
-    controller->SetInputEnabled(allowInput);
 }
 
 void QEEditorApp::FlushClosedTextureViewerPanels()

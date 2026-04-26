@@ -6,8 +6,7 @@
 class EditorContext;
 class EditorCommandManager;
 class QECamera;
-class QECameraController;
-class QESessionManager;
+class QEEditorCameraController;
 class PhysicsModule;
 
 class EditorHeaderBar
@@ -16,7 +15,13 @@ public:
     EditorHeaderBar(
         EditorContext* editorContext,
         EditorCommandManager* commandManager,
-        QESessionManager* sessionManager,
+        std::function<std::shared_ptr<QECamera>()> getEditorCamera,
+        std::function<bool()> getShowEditorGrid,
+        std::function<void(bool)> setShowEditorGrid,
+        std::function<bool()> getShowColliderDebug,
+        std::function<void(bool)> setShowColliderDebug,
+        std::function<bool()> getShowCullingAABBDebug,
+        std::function<void(bool)> setShowCullingAABBDebug,
         PhysicsModule* physicsModule);
 
     void Draw();
@@ -37,7 +42,13 @@ private:
 private:
     EditorContext* editorContext = nullptr;
     EditorCommandManager* commandManager = nullptr;
-    QESessionManager* sessionManager = nullptr;
+    std::function<std::shared_ptr<QECamera>()> getEditorCamera;
+    std::function<bool()> getShowEditorGrid;
+    std::function<void(bool)> setShowEditorGrid;
+    std::function<bool()> getShowColliderDebug;
+    std::function<void(bool)> setShowColliderDebug;
+    std::function<bool()> getShowCullingAABBDebug;
+    std::function<void(bool)> setShowCullingAABBDebug;
     PhysicsModule* physicsModule = nullptr;
 
     std::function<void()> onSaveRequested;

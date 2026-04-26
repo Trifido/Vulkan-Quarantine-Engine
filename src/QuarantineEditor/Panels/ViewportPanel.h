@@ -10,6 +10,8 @@
 #include <QuarantineEditor/Commands/TransformCommand.h>
 #include <functional>
 
+class QECamera;
+
 class ViewportPanel : public IEditorPanel
 {
 public:
@@ -19,7 +21,9 @@ public:
         EditorSelectionManager* selectionManager,
         QEGizmoController* gizmoController,
         EditorPickingSystem* pickingSystem,
-        EditorCommandManager* commandManager);
+        EditorCommandManager* commandManager,
+        std::function<std::shared_ptr<QECamera>()> getEditorCamera,
+        std::function<void(uint32_t, uint32_t)> resizeEditorCameraViewport);
 
     const char* GetName() const override { return "Viewport"; }
     void Draw() override;
@@ -34,6 +38,8 @@ private:
     QEGizmoController* gizmoController = nullptr;
     EditorPickingSystem* pickingSystem = nullptr;
     EditorCommandManager* commandManager = nullptr;
+    std::function<std::shared_ptr<QECamera>()> getEditorCamera;
+    std::function<void(uint32_t, uint32_t)> resizeEditorCameraViewport;
 
     bool wasUsingGizmoLastFrame = false;
     std::string gizmoTrackedObjectId;

@@ -40,7 +40,10 @@ public:
     glm::vec3 ClearColor;
 
 private:
-    void setCustomRenderPass(VkFramebuffer& framebuffer, uint32_t iCBuffer);
+    void setCustomRenderPass(
+        VkFramebuffer& framebuffer,
+        uint32_t iCBuffer,
+        const std::function<void(VkCommandBuffer&, uint32_t)>& extraScenePass);
     void setSwapchainImGuiRenderPass(VkFramebuffer& framebuffer, uint32_t iCBuffer);
     void setDirectionalShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, uint32_t idDirlight, uint32_t iCBuffer);
     void setOmniShadowRenderPass(std::shared_ptr<VkRenderPass> renderPass, uint32_t idPointlight, uint32_t iCBuffer);
@@ -60,8 +63,15 @@ public:
     void createCommandPool(VkSurfaceKHR& surface);
     void createCommandBuffers();
     void recreateCommandBuffers();
-    void Render(FramebufferModule* framebufferModule, const QERenderTarget* extraRenderTarget);
-    void RenderSceneToTarget(const QERenderTarget& renderTarget, uint32_t iCBuffer);
+    void Render(
+        FramebufferModule* framebufferModule,
+        const QERenderTarget* extraRenderTarget,
+        const std::function<void(VkCommandBuffer&, uint32_t)>& extraScenePass,
+        const std::function<void(VkCommandBuffer&, uint32_t)>& extraOverlayPass);
+    void RenderSceneToTarget(
+        const QERenderTarget& renderTarget,
+        uint32_t iCBuffer,
+        const std::function<void(VkCommandBuffer&, uint32_t)>& extraScenePass);
     void RenderEditorViewport(const QERenderTarget& renderTarget, uint32_t iCBuffer);
     void recordComputeCommandBuffer(VkCommandBuffer commandBuffer);
     void cleanup();

@@ -13,6 +13,14 @@
 #include <QESessionManager.h>
 #include <QETransform.h>
 
+namespace
+{
+    bool IsEditorOnlyGameObject(const std::shared_ptr<QEGameObject>& gameObject)
+    {
+        return gameObject && gameObject->Name == "QECameraEditor";
+    }
+}
+
 std::string GameObjectManager::CheckName(std::string nameGameObject)
 {
     std::string newName = nameGameObject;
@@ -304,6 +312,9 @@ YAML::Node GameObjectManager::SerializeGameObjects() const
             if (!go)
                 continue;
 
+            if (IsEditorOnlyGameObject(go))
+                continue;
+
             if (go->GetParent() != nullptr)
                 continue;
 
@@ -322,6 +333,8 @@ void GameObjectManager::DeserializeGameObjects(YAML::Node gameObjects)
     for (auto gameObjectData : gameObjects)
     {
         std::shared_ptr<QEGameObject> root = QEGameObject::FromYaml(gameObjectData);
+        if (IsEditorOnlyGameObject(root))
+            continue;
         AddGameObject(root);
     }
 }
