@@ -75,12 +75,12 @@ protected:
     virtual void OnFrameStart() {}
     virtual void OnBeginFrame() {}
     virtual void OnEndFrame() {}
-    virtual bool IsEditorMode() const { return false; }
     virtual void ConfigureEngineBindings() {}
     virtual void OnPostInitVulkan() {}
     virtual void OnPreCleanup() {}
     virtual void OnSwapchainRecreated() {}
     virtual void OnBeforeSceneActivated() {}
+    virtual void OnMainViewportResized(uint32_t width, uint32_t height);
     virtual void RecordAdditionalScenePass(VkCommandBuffer&, uint32_t) {}
     virtual void RecordAdditionalOverlayPass(VkCommandBuffer&, uint32_t) {}
 

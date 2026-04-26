@@ -33,6 +33,7 @@
 #include "Rendering/EditorViewportResources.h"
 #include "Runtime/QEEditorRuntimeBridge.h"
 #include <QEProjectManager.h>
+#include <QERuntimeMode.h>
 #include <QEMeshRenderer.h>
 #include <Material.h>
 #include <MaterialManager.h>
@@ -57,6 +58,7 @@ QEEditorApp::~QEEditorApp() = default;
 
 void QEEditorApp::ConfigureEngineBindings()
 {
+    QERuntimeMode::getInstance()->SetGameplayEnabled(false);
     editorCameraService->EnsureEditorCamera(gameObjectManager);
 }
 
@@ -194,6 +196,10 @@ void QEEditorApp::OnBeforeSceneActivated()
     editorDebugSettings->SetShowEditorGrid(editorDebugSettings->ShowEditorGrid());
     editorDebugSettings->SetShowColliderDebug(editorDebugSettings->ShowColliderDebug());
     editorDebugSettings->SetShowCullingAABBDebug(editorDebugSettings->ShowCullingAABBDebug());
+}
+
+void QEEditorApp::OnMainViewportResized(uint32_t, uint32_t)
+{
 }
 
 void QEEditorApp::RecordAdditionalScenePass(VkCommandBuffer& commandBuffer, uint32_t currentFrame)

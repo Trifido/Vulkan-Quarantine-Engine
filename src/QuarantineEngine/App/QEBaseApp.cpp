@@ -113,11 +113,11 @@ void QEBaseApp::initVulkan()
 
     // INIT ------------------------- Managers -------------------------------
     this->cameraContext = QECameraContext::getInstance();
-    QERuntimeMode::getInstance()->SetGameplayEnabled(!IsEditorMode());
+    QERuntimeMode::getInstance()->SetGameplayEnabled(true);
 
     if (auto cullingSceneManager = CullingSceneManager::getInstance())
     {
-        cullingSceneManager->DebugMode = IsEditorMode();
+        cullingSceneManager->DebugMode = false;
     }
 
     this->shaderManager = ShaderManager::getInstance();
@@ -235,6 +235,14 @@ void QEBaseApp::LoadCurrentScene()
     if (atmosphereSystem)
     {
         atmosphereSystem->InitializeAtmosphereResources();
+    }
+}
+
+void QEBaseApp::OnMainViewportResized(uint32_t width, uint32_t height)
+{
+    if (this->cameraContext)
+    {
+        this->cameraContext->UpdateGameCameraViewportSize(width, height);
     }
 }
 
@@ -535,12 +543,9 @@ void QEBaseApp::recreateSwapchain()
     cleanUpSwapchain();
     swapchainModule->createSwapChain(windowSurface.getSurface(), mainWindow->getWindow());
 
-    if (!IsEditorMode())
-    {
-        this->cameraContext->UpdateGameCameraViewportSize(
-            swapchainModule->swapChainExtent.width,
-            swapchainModule->swapChainExtent.height);
-    }
+    OnMainViewportResized(
+        swapchainModule->swapChainExtent.width,
+        swapchainModule->swapChainExtent.height);
 
     this->atmosphereSystem->UpdateAtmopshereResolution();
 

@@ -57,10 +57,9 @@ protected:
     void OnPreCleanup() override;
     void OnSwapchainRecreated() override;
     void OnBeforeSceneActivated() override;
+    void OnMainViewportResized(uint32_t width, uint32_t height) override;
     void RecordAdditionalScenePass(VkCommandBuffer& commandBuffer, uint32_t currentFrame) override;
     void RecordAdditionalOverlayPass(VkCommandBuffer& commandBuffer, uint32_t currentFrame) override;
-
-    bool IsEditorMode() const override { return true; }
 
 private:
     void InitializeImGui();
