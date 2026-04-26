@@ -113,7 +113,7 @@ void EditorPickingSystem::CollectCandidates(
 
     outObjects.push_back(root);
 
-    for (const auto& child : root->childs)
+    for (const auto& child : root->GetChildren())
     {
         CollectCandidates(child, outObjects);
     }

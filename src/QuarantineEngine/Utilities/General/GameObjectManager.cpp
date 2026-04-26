@@ -44,7 +44,7 @@ unsigned int GameObjectManager::DecideUpdateBucket(std::shared_ptr<QEGameObject>
     if (!go)
         return defaultOrder;
 
-    return go->UpdateOrder;
+    return go->GetUpdateOrder();
 }
 
 void GameObjectManager::RegisterSingle(std::shared_ptr<QEGameObject> go, std::string name)
@@ -83,7 +83,7 @@ void GameObjectManager::UnregisterHierarchy(const std::shared_ptr<QEGameObject>&
     if (!go)
         return;
 
-    for (auto& child : go->childs)
+    for (auto& child : go->GetChildren())
     {
         UnregisterHierarchy(child);
     }
@@ -96,7 +96,7 @@ void GameObjectManager::DestroyHierarchy(const std::shared_ptr<QEGameObject>& go
     if (!go)
         return;
 
-    for (auto& child : go->childs)
+    for (auto& child : go->GetChildren())
     {
         DestroyHierarchy(child);
     }
@@ -111,9 +111,10 @@ void GameObjectManager::AddGameObject(std::shared_ptr<QEGameObject> object_ptr)
     std::function<void(std::shared_ptr<QEGameObject>)> dfs =
         [&](std::shared_ptr<QEGameObject> node)
         {
-            for (size_t i = 0; i < node->childs.size(); ++i)
+            const auto& children = node->GetChildren();
+            for (size_t i = 0; i < children.size(); ++i)
             {
-                auto& child = node->childs[i];
+                auto& child = children[i];
                 if (!child)
                     continue;
 
@@ -141,9 +142,9 @@ bool GameObjectManager::RemoveGameObject(const std::shared_ptr<QEGameObject>& ob
     if (object_ptr->Name == "QECameraEditor")
         return false;
 
-    if (object_ptr->parent != nullptr)
+    if (object_ptr->GetParent() != nullptr)
     {
-        object_ptr->parent->RemoveChild(object_ptr);
+        object_ptr->GetParent()->RemoveChild(object_ptr);
     }
 
     // Scene editing can delete a hierarchy while its buffers are still
@@ -169,11 +170,11 @@ bool GameObjectManager::SetGameObjectUpdateOrder(const std::shared_ptr<QEGameObj
     if (!objectPtr)
         return false;
 
-    if (objectPtr->UpdateOrder == newOrder)
+    if (objectPtr->GetUpdateOrder() == newOrder)
         return false;
 
     UnregisterSingle(objectPtr);
-    objectPtr->UpdateOrder = newOrder;
+    objectPtr->SetUpdateOrder(newOrder);
     RegisterSingle(objectPtr, objectPtr->Name);
 
     return true;
@@ -303,7 +304,7 @@ YAML::Node GameObjectManager::SerializeGameObjects()
             if (!go)
                 continue;
 
-            if (go->parent != nullptr)
+            if (go->GetParent() != nullptr)
                 continue;
 
             if (!emittedRoots.insert(go->ID()).second)
@@ -385,7 +386,7 @@ std::shared_ptr<QEGameComponent> GameObjectManager::FindGameComponentInScene(con
             if (!model.second || !model.second->IsActiveInHierarchy())
                 continue;
 
-            for (const auto& component : model.second->components)
+            for (const auto& component : model.second->GetComponents())
             {
                 if (component->id == id)
                     return component;
@@ -411,7 +412,7 @@ std::vector<std::shared_ptr<QEGameObject>> GameObjectManager::GetRootGameObjects
             if (!go)
                 continue;
 
-            if (go->parent != nullptr)
+            if (go->GetParent() != nullptr)
                 continue;
 
             if (!emittedRoots.insert(go->ID()).second)
@@ -694,7 +695,7 @@ void GameObjectManager::RemoveLightsFromHierarchy(const std::shared_ptr<QEGameOb
     if (!go)
         return;
 
-    for (const auto& child : go->childs)
+    for (const auto& child : go->GetChildren())
     {
         RemoveLightsFromHierarchy(child);
     }

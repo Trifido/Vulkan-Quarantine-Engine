@@ -673,7 +673,7 @@ namespace
         if (componentTypeName == "QEGameComponent")
             return false;
 
-        for (const auto& component : gameObject->components)
+        for (const auto& component : gameObject->GetComponents())
         {
             if (!component)
                 continue;
@@ -847,8 +847,8 @@ void InspectorPanel::Draw()
 
     ImGui::Text("Name: %s", gameObject->Name.c_str());
     ImGui::Text("ID: %s", gameObject->ID().c_str());
-    ImGui::Text("Children: %d", static_cast<int>(gameObject->childs.size()));
-    ImGui::Text("Components: %d", static_cast<int>(gameObject->components.size()));
+    ImGui::Text("Children: %d", static_cast<int>(gameObject->GetChildCount()));
+    ImGui::Text("Components: %d", static_cast<int>(gameObject->GetComponentCount()));
 
     bool isActive = gameObject->QEActive;
     if (ImGui::Checkbox("Active", &isActive))
@@ -861,7 +861,7 @@ void InspectorPanel::Draw()
         ImGui::TextDisabled("Inactive in hierarchy (parent disabled)");
     }
 
-    int updateOrder = static_cast<int>(gameObject->UpdateOrder);
+    int updateOrder = static_cast<int>(gameObject->GetUpdateOrder());
     if (ImGui::DragInt("Order", &updateOrder, 1.0f, 0, 100000))
     {
         updateOrder = std::max(0, updateOrder);
@@ -874,7 +874,7 @@ void InspectorPanel::Draw()
         }
         else
         {
-            gameObject->UpdateOrder = static_cast<unsigned int>(updateOrder);
+            gameObject->SetUpdateOrder(static_cast<unsigned int>(updateOrder));
         }
     }
 
@@ -884,7 +884,7 @@ void InspectorPanel::Draw()
 
     std::shared_ptr<QEGameComponent> componentToRemove = nullptr;
     int componentIndex = 0;
-    for (auto& component : gameObject->components)
+    for (const auto& component : gameObject->GetComponents())
     {
         if (!component)
             continue;
@@ -933,9 +933,9 @@ void InspectorPanel::Draw()
     if (componentToRemove)
     {
         gameObject->RemoveComponent(componentToRemove);
-        if (selectedComponentIndex >= static_cast<int>(gameObject->components.size()))
+        if (selectedComponentIndex >= static_cast<int>(gameObject->GetComponentCount()))
         {
-            selectedComponentIndex = static_cast<int>(gameObject->components.size()) - 1;
+            selectedComponentIndex = static_cast<int>(gameObject->GetComponentCount()) - 1;
         }
     }
 
@@ -961,21 +961,19 @@ void InspectorPanel::DeleteSelectedComponent(const std::shared_ptr<QEGameObject>
     if (selectedComponentIndex <= 0)
         return;
 
-    if (selectedComponentIndex >= static_cast<int>(gameObject->components.size()))
+    if (selectedComponentIndex >= static_cast<int>(gameObject->GetComponentCount()))
         return;
 
-    auto it = gameObject->components.begin();
-    std::advance(it, selectedComponentIndex);
-    auto component = (it != gameObject->components.end()) ? *it : nullptr;
+    auto component = gameObject->GetComponentAt(static_cast<size_t>(selectedComponentIndex));
     if (!component)
         return;
 
     if (!gameObject->RemoveComponent(component))
         return;
 
-    if (selectedComponentIndex >= static_cast<int>(gameObject->components.size()))
+    if (selectedComponentIndex >= static_cast<int>(gameObject->GetComponentCount()))
     {
-        selectedComponentIndex = static_cast<int>(gameObject->components.size()) - 1;
+        selectedComponentIndex = static_cast<int>(gameObject->GetComponentCount()) - 1;
     }
 }
 

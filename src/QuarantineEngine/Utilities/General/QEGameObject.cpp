@@ -192,6 +192,16 @@ bool QEGameObject::IsActiveInHierarchy() const
     return parent == nullptr || parent->IsActiveInHierarchy();
 }
 
+std::shared_ptr<QEGameComponent> QEGameObject::GetComponentAt(size_t index) const
+{
+    if (index >= components.size())
+        return nullptr;
+
+    auto it = components.begin();
+    std::advance(it, static_cast<std::ptrdiff_t>(index));
+    return it != components.end() ? *it : nullptr;
+}
+
 YAML::Node QEGameObject::ToYaml() const  
 {  
     YAML::Node node;  

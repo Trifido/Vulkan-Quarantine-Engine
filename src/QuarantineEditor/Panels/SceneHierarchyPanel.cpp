@@ -139,7 +139,7 @@ void SceneHierarchyPanel::DrawGameObjectNode(const std::shared_ptr<QEGameObject>
 
     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
 
-    if (gameObject->childs.empty())
+    if (gameObject->GetChildren().empty())
     {
         flags |= ImGuiTreeNodeFlags_Leaf;
     }
@@ -231,7 +231,7 @@ void SceneHierarchyPanel::DrawGameObjectNode(const std::shared_ptr<QEGameObject>
 
     if (isOpen)
     {
-        for (const auto& child : gameObject->childs)
+        for (const auto& child : gameObject->GetChildren())
         {
             DrawGameObjectNode(child);
         }
@@ -271,14 +271,14 @@ bool SceneHierarchyPanel::IsDescendantOf(const std::shared_ptr<QEGameObject>& no
     if (!node || !potentialAncestor)
         return false;
 
-    QEGameObject* current = node->parent;
+    QEGameObject* current = node->GetParent();
 
     while (current)
     {
         if (current == potentialAncestor.get())
             return true;
 
-        current = current->parent;
+        current = current->GetParent();
     }
 
     return false;
@@ -301,19 +301,19 @@ bool SceneHierarchyPanel::ReparentGameObject(const std::shared_ptr<QEGameObject>
     if (newParent && IsDescendantOf(newParent, child))
         return false;
 
-    if (child->parent == newParent.get())
+    if (child->GetParent() == newParent.get())
         return false;
 
-    if (child->parent)
+    if (child->GetParent())
     {
-        auto oldParentShared = gameObjectManager->GetGameObjectById(child->parent->ID());
+        auto oldParentShared = gameObjectManager->GetGameObjectById(child->GetParent()->ID());
         if (oldParentShared)
         {
             oldParentShared->RemoveChild(child);
         }
         else
         {
-            child->parent->RemoveChild(child);
+            child->GetParent()->RemoveChild(child);
         }
     }
 

@@ -38,11 +38,13 @@ protected:
 public:
     bool QEActive = true;
     std::string Name;
+    std::vector<std::shared_ptr<QEMaterial>>    materials;
+
+private:
     unsigned int UpdateOrder = 0;
     std::list<std::shared_ptr<QEGameComponent>> components;
-    std::vector<std::shared_ptr<QEMaterial>>    materials;
-    std::vector<std::shared_ptr<QEGameObject>>    childs;
-    QEGameObject*     parent = nullptr;
+    std::vector<std::shared_ptr<QEGameObject>> childs;
+    QEGameObject* parent = nullptr;
 
 private:
     void InitializeResources();
@@ -62,6 +64,14 @@ public:
     inline std::string ID() const { return id; }
     bool IsActiveSelf() const { return QEActive; }
     bool IsActiveInHierarchy() const;
+    unsigned int GetUpdateOrder() const { return UpdateOrder; }
+    void SetUpdateOrder(unsigned int updateOrder) { UpdateOrder = updateOrder; }
+    QEGameObject* GetParent() const { return parent; }
+    const std::vector<std::shared_ptr<QEGameObject>>& GetChildren() const { return childs; }
+    size_t GetChildCount() const { return childs.size(); }
+    const std::list<std::shared_ptr<QEGameComponent>>& GetComponents() const { return components; }
+    size_t GetComponentCount() const { return components.size(); }
+    std::shared_ptr<QEGameComponent> GetComponentAt(size_t index) const;
 
     void QEStart();
     void QEInit();
