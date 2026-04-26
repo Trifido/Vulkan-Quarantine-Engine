@@ -5,7 +5,6 @@
 
 #include <backends/imgui_impl_vulkan.h>
 #include <SynchronizationModule.h>
-#include <QESessionManager.h>
 
 CommandPoolModule::CommandPoolModule()
 {

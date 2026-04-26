@@ -3,7 +3,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <Timer.h>
-#include <QESessionManager.h>
 #include "QEGameObject.h"
 
 float glm_vec3_dot(glm::vec3 a, glm::vec3 b) {
@@ -140,9 +139,6 @@ void QECamera::QEStart()
     if (_QEStarted) return;
 
     QEGameComponent::QEStart();
-
-    auto sessionManager = QESessionManager::getInstance();
-    sessionManager->SetFindNewSceneCamera(this->id);
 
     this->deviceModule = DeviceModule::getInstance();
     this->_frustumComponent = std::make_shared<FrustumComponent>();

@@ -6,7 +6,7 @@
 #include <yaml-cpp/yaml.h>
 #include <yaml-cpp/node/convert.h> 
 #include "glm_yaml_conversions.h"
-#include <QESessionManager.h>
+#include <QECameraContext.h>
 #include <Helpers/MathHelpers.h>
 #include <QERenderTarget.h>
 #include <Helpers/QEMemoryTrack.h>
@@ -494,7 +494,7 @@ void AtmosphereSystem::CreateDescriptorSet()
         std::vector<VkWriteDescriptorSet> descriptorWrites;
         descriptorWrites.resize(numWrites);
 
-        auto cameraUBO = QESessionManager::getInstance()->GetCameraUBO();
+        auto cameraUBO = QECameraContext::getInstance()->GetActiveCameraUBO();
 
         if (this->atmosphereType != AtmosphereType::PHYSICALLY_BASED_SKY)
         {
@@ -727,7 +727,7 @@ void AtmosphereSystem::CleanLastResources()
 
 void AtmosphereSystem::UpdateSun()
 {
-    auto activeCamera = QESessionManager::getInstance()->ActiveCamera();
+    auto activeCamera = QECameraContext::getInstance()->ActiveCamera();
     if (!activeCamera)
     {
         throw std::runtime_error("AtmosphereSystem requires an active camera before InitializeAtmosphere.");
@@ -755,7 +755,7 @@ void AtmosphereSystem::UpdateAtmopshereResolution()
     if (this->resolutionUBO == nullptr)
         return;
 
-    auto extraRenderTarget = QESessionManager::getInstance()->GetRenderTargetOverride();
+    auto extraRenderTarget = QECameraContext::getInstance()->GetRenderTargetOverride();
     ScreenResolutionUniform resolution = {};
 
     if (extraRenderTarget != nullptr)

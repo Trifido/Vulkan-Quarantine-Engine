@@ -1,7 +1,7 @@
 #include "ComputeDescriptorBuffer.h"
 #include "SynchronizationModule.h"
 #include "Timer.h"
-#include <QESessionManager.h>
+#include <QECameraContext.h>
 #include <Helpers/QEMemoryTrack.h>
 
 ComputeDescriptorBuffer::ComputeDescriptorBuffer()
@@ -254,7 +254,7 @@ std::vector<VkWriteDescriptorSet> ComputeDescriptorBuffer::GetDescriptorWrites(s
         // UBOs
         if (br.name == "UniformCamera")
         {
-            auto cameraUBO = QESessionManager::getInstance()->GetCameraUBO();
+            auto cameraUBO = QECameraContext::getInstance()->GetActiveCameraUBO();
             pushBufferWrite(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, b,
                 cameraUBO->uniformBuffers[frameIdx], sizeof(UniformCamera));
             continue;

@@ -9,7 +9,7 @@
 #include <RenderPassModule.h>
 #include <CommandPoolModule.h>
 #include <QueueModule.h>
-#include <QESessionManager.h>
+#include <QECameraContext.h>
 #include <QEGameObject.h>
 #include <QECamera.h>
 #include <QETransform.h>

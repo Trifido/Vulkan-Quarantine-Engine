@@ -1,6 +1,5 @@
 #include "QEScene.h"
 #include <GameObjectManager.h>
-#include <QESessionManager.h>
 
 namespace
 {

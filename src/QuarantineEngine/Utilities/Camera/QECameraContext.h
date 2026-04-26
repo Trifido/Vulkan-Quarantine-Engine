@@ -9,16 +9,15 @@
 class QECamera;
 class UniformBufferObject;
 
-class QESessionManager : public QESingleton<QESessionManager>
+class QECameraContext : public QESingleton<QECameraContext>
 {
 private:
-    friend class QESingleton<QESessionManager>;
+    friend class QESingleton<QECameraContext>;
 
 public:
-    QESessionManager();
+    QECameraContext();
 
     void RegisterSceneCameras();
-    void SetFindNewSceneCamera(std::string cameraID);
     void FreeCameraResources();
     void SetCameraOverride(const std::shared_ptr<QECamera>& camera);
     void ClearCameraOverride();
@@ -30,16 +29,12 @@ public:
     void UpdateCameraOverrideViewportSize(uint32_t width, uint32_t height);
     void UpdateActiveCameraViewportSize(uint32_t width, uint32_t height);
 
-    void UpdateCullingScene();
-    void CleanCullingResources();
-
-    void FindNewSceneCamera();
     void ResolveActiveCamera();
 
-    void ResetSceneState();
+    void ClearSceneCameras();
     void ShutdownPersistentResources();
 
-    std::shared_ptr<UniformBufferObject> GetCameraUBO() { return this->cameraUBO; }
+    std::shared_ptr<UniformBufferObject> GetActiveCameraUBO() { return this->activeCameraUBO; }
 
     std::shared_ptr<QECamera> ActiveCamera() const;
     std::shared_ptr<QECamera> GameCamera() const { return _gameCamera; }
@@ -51,15 +46,13 @@ public:
 private:
     bool IsCameraActiveInHierarchy(const std::shared_ptr<QECamera>& camera) const;
 
-    bool _newSceneCamera = false;
-
-    std::string newCameraID;
-
     std::shared_ptr<QECamera> _activeCamera = nullptr;
     std::shared_ptr<QECamera> _gameCamera = nullptr;
     std::shared_ptr<QECamera> _cameraOverride = nullptr;
     const QERenderTarget* _renderTargetOverride = nullptr;
-    std::shared_ptr<UniformBufferObject> cameraUBO = nullptr;
+    // GPU-side snapshot for the camera selected as active this frame.
+    // Individual QECamera instances own their CPU-side CameraData.
+    std::shared_ptr<UniformBufferObject> activeCameraUBO = nullptr;
 };
 
 
@@ -67,6 +60,6 @@ namespace QE
 {
     using ::QECamera;
     using ::UniformBufferObject;
-    using ::QESessionManager;
+    using ::QECameraContext;
 } // namespace QE
 // QE namespace aliases

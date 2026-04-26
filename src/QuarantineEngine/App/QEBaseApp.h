@@ -50,7 +50,8 @@
 #include <AtmosphereSystem.h>
 #include <CapsuleCollider.h>
 #include <QEScene.h>
-#include <QESessionManager.h>
+#include <QECameraContext.h>
+#include <CullingSceneManager.h>
 
 enum class ERROR_RESIZE
 {
@@ -124,7 +125,7 @@ protected:
 
     QEScene     scene;
 
-    QESessionManager* sessionManager{};
+    QECameraContext* cameraContext{};
     LightManager* lightManager{};
     ShaderManager* shaderManager{};
     MaterialManager* materialManager{};

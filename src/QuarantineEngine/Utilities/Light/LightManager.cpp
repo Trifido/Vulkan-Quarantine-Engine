@@ -5,7 +5,7 @@
 #include "SpotLight.h"
 #include <SynchronizationModule.h>
 #include <SunLight.h>
-#include <QESessionManager.h>
+#include <QECameraContext.h>
 #include <QEGameObject.h>
 #include "QECamera.h"
 #include <Helpers/QEMemoryTrack.h>
@@ -757,7 +757,7 @@ void LightManager::AddLight(std::shared_ptr<QELight> light_ptr, std::string& nam
 
 void LightManager::SortingLights()
 {
-    auto activeCamera = QESessionManager::getInstance()->ActiveCamera();
+    auto activeCamera = QECameraContext::getInstance()->ActiveCamera();
 
     this->sortedLight.clear();
     this->sortedLight.reserve(this->lightBuffer.size());
@@ -852,15 +852,15 @@ void LightManager::ComputeLightsLUT()
 
 void LightManager::ComputeLightTiles()
 {
-    auto activeCamera = QESessionManager::getInstance()->ActiveCamera();
+    auto activeCamera = QECameraContext::getInstance()->ActiveCamera();
     if (!activeCamera)
         return;
 
     VkExtent2D renderExtent = swapChainModule->swapChainExtent;
-    auto sessionManager = QESessionManager::getInstance();
-    if (sessionManager && sessionManager->GetRenderTargetOverride() && sessionManager->GetRenderTargetOverride()->Valid())
+    auto cameraContext = QECameraContext::getInstance();
+    if (cameraContext && cameraContext->GetRenderTargetOverride() && cameraContext->GetRenderTargetOverride()->Valid())
     {
-        renderExtent = sessionManager->GetRenderTargetOverride()->Extent;
+        renderExtent = cameraContext->GetRenderTargetOverride()->Extent;
     }
 
     uint32_t tileXCount = (renderExtent.width + swapChainModule->TILE_SIZE - 1) / swapChainModule->TILE_SIZE;

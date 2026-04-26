@@ -10,7 +10,7 @@
 #include <SpotLight.h>
 #include <SunLight.h>
 #include <QECamera.h>
-#include <QESessionManager.h>
+#include <QECameraContext.h>
 #include <QETransform.h>
 
 namespace
@@ -532,7 +532,7 @@ std::vector<QEOrderRenderItem> GameObjectManager::BuildRenderItems() const
 {
     std::vector<QEOrderRenderItem> items;
     glm::vec3 cameraPosition(0.0f);
-    if (auto activeCamera = QESessionManager::getInstance()->ActiveCamera())
+    if (auto activeCamera = QECameraContext::getInstance()->ActiveCamera())
     {
         cameraPosition = glm::vec3(activeCamera->CameraData->Position);
     }

@@ -1,6 +1,6 @@
 ﻿#include "DirectionalLight.h"
 #include <SynchronizationModule.h>
-#include <QESessionManager.h>
+#include <QECameraContext.h>
 #include "QECamera.h"
 
 QEDirectionalLight::QEDirectionalLight() : QELight()
@@ -28,7 +28,7 @@ void QEDirectionalLight::UpdateUniform()
     if (!this->shadowMappingResourcesPtr)
         return;
 
-    auto activeCamera = QESessionManager::getInstance()->ActiveCamera();
+    auto activeCamera = QECameraContext::getInstance()->ActiveCamera();
     if (!activeCamera)
         return;
 
@@ -45,7 +45,7 @@ void QEDirectionalLight::UpdateCascades()
 {
     EnsureRuntimeState();
 
-    auto activeCamera = QESessionManager::getInstance()->ActiveCamera();
+    auto activeCamera = QECameraContext::getInstance()->ActiveCamera();
     if (!activeCamera)
         return;
 

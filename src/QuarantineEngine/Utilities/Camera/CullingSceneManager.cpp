@@ -1,7 +1,7 @@
 #include "CullingSceneManager.h"
 #include <MaterialManager.h>
 #include <filesystem>
-#include <QESessionManager.h>
+#include <QECameraContext.h>
 #include "QECamera.h"
 
 void CullingSceneManager::EnsureInitialized()
@@ -142,7 +142,7 @@ void CullingSceneManager::DrawDebug(VkCommandBuffer& commandBuffer, uint32_t idx
 
 void CullingSceneManager::UpdateCullingScene()
 {
-    auto activeCamera = QESessionManager::getInstance()->ActiveCamera();
+    auto activeCamera = QECameraContext::getInstance()->ActiveCamera();
     if (!activeCamera || !activeCamera->_frustumComponent)
         return;
 

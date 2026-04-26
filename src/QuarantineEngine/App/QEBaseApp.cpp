@@ -13,6 +13,7 @@
 #include <CSMResources.h>
 #include <OmniShadowResources.h>
 #include <QERuntimeMode.h>
+#include <CullingSceneManager.h>
 
 QEBaseApp::QEBaseApp()
 {
@@ -111,7 +112,7 @@ void QEBaseApp::initVulkan()
     CSMResources::queueModule = this->queueModule;
 
     // INIT ------------------------- Managers -------------------------------
-    this->sessionManager = QESessionManager::getInstance();
+    this->cameraContext = QECameraContext::getInstance();
     QERuntimeMode::getInstance()->SetGameplayEnabled(!IsEditorMode());
 
     this->shaderManager = ShaderManager::getInstance();
@@ -141,10 +142,10 @@ void QEBaseApp::loadScene(QEScene& scene)
     physicsModule->SetGravity(scene.physicsGravity);
 
     OnBeforeSceneActivated();
-    sessionManager->RegisterSceneCameras();
-    sessionManager->ResolveActiveCamera();
+    cameraContext->RegisterSceneCameras();
+    cameraContext->ResolveActiveCamera();
 
-    auto activeCamera = sessionManager->ActiveCamera();
+    auto activeCamera = cameraContext->ActiveCamera();
     if (!activeCamera)
         throw std::runtime_error("No active camera resolved.");
 
@@ -186,9 +187,9 @@ bool QEBaseApp::LoadSceneFromPath(const std::filesystem::path& scenePath)
 
 void QEBaseApp::UnloadCurrentScene()
 {
-    if (sessionManager)
+    if (cameraContext)
     {
-        sessionManager->ResetSceneState();
+        cameraContext->ClearSceneCameras();
     }
 
     if (lightManager)
@@ -257,14 +258,17 @@ void QEBaseApp::mainLoop()
         this->gameObjectManager->UpdateQEGameObjects();
 
         // UPDATE CULLING SCENE
-        this->sessionManager->UpdateCullingScene();
+        if (auto cullingSceneManager = CullingSceneManager::getInstance())
+        {
+            cullingSceneManager->UpdateCullingScene();
+        }
 
         // UI / editor interaction happens here
         OnBeginFrame();
         OnEndFrame();
 
         // Ensure camera CPU data is up to date after editor interaction
-        if (auto activeCamera = this->sessionManager->ActiveCamera())
+        if (auto activeCamera = this->cameraContext->ActiveCamera())
         {
             activeCamera->UpdateCamera();
         }
@@ -294,7 +298,7 @@ void QEBaseApp::cleanUp()
     this->cleanUpSwapchain();
     this->swapchainModule->CleanScreenDataResources();
 
-    this->sessionManager->ShutdownPersistentResources();
+    this->cameraContext->ShutdownPersistentResources();
     this->lightManager->ShutdownPersistentResources();
     this->materialManager->CleanPipelines();
     this->computePipelineManager->CleanComputePipeline();
@@ -303,7 +307,10 @@ void QEBaseApp::cleanUp()
     this->atmosphereSystem->Cleanup();
     this->gameObjectManager->ReleaseAllGameObjects();
     this->particleSystemManager->Cleanup();
-    this->sessionManager->CleanCullingResources();
+    if (auto cullingSceneManager = CullingSceneManager::getInstance())
+    {
+        cullingSceneManager->ResetSceneState();
+    }
     this->debugSystem->Cleanup();
 
     this->lightManager->CleanShadowMapResources();
@@ -394,7 +401,7 @@ void QEBaseApp::cleanManagers()
     this->lightManager->ResetInstance();
     this->lightManager = nullptr;
 
-    this->sessionManager->FreeCameraResources();
+    this->cameraContext->FreeCameraResources();
 
     this->antialiasingModule->CleanLastResources();
     this->antialiasingModule->ResetInstance();
@@ -434,7 +441,7 @@ void QEBaseApp::computeFrame(uint32_t currentFrame)
     {
         synchronizationModule.synchronizeWaitComputeFences();
 
-        this->sessionManager->UpdateActiveCameraGPUData(currentFrame);
+        this->cameraContext->UpdateActiveCameraGPUData(currentFrame);
 
         this->particleSystemManager->UpdateParticleSystems();
 
@@ -460,12 +467,12 @@ void QEBaseApp::drawFrame(uint32_t currentFrame)
 
     resizeSwapchain(result, ERROR_RESIZE::SWAPCHAIN_ERROR);
 
-    this->sessionManager->UpdateActiveCameraGPUData(currentFrame);
+    this->cameraContext->UpdateActiveCameraGPUData(currentFrame);
     this->materialManager->UpdateUniforms();
 
     commandPoolModule->Render(
         &framebufferModule,
-        this->sessionManager->GetRenderTargetOverride(),
+        this->cameraContext->GetRenderTargetOverride(),
         [this](VkCommandBuffer& commandBuffer, uint32_t currentFrame)
         {
             RecordAdditionalScenePass(commandBuffer, currentFrame);
@@ -525,7 +532,7 @@ void QEBaseApp::recreateSwapchain()
 
     if (!IsEditorMode())
     {
-        this->sessionManager->UpdateGameCameraViewportSize(
+        this->cameraContext->UpdateGameCameraViewportSize(
             swapchainModule->swapChainExtent.width,
             swapchainModule->swapChainExtent.height);
     }

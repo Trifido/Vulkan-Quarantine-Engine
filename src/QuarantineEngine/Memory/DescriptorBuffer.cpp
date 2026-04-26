@@ -1,6 +1,6 @@
 #include "DescriptorBuffer.h"
 #include "SynchronizationModule.h"
-#include <QESessionManager.h>
+#include <QECameraContext.h>
 #include <Helpers/QEMemoryTrack.h>
 
 DescriptorBuffer::DescriptorBuffer()
@@ -315,7 +315,7 @@ std::vector<VkWriteDescriptorSet> DescriptorBuffer::GetDescriptorWrites(std::sha
         // C�mara
         if (br.name == "UniformCamera")
         {
-            auto cameraUBO = cameraOverrideUBO ? cameraOverrideUBO : QESessionManager::getInstance()->GetCameraUBO();
+            auto cameraUBO = cameraOverrideUBO ? cameraOverrideUBO : QECameraContext::getInstance()->GetActiveCameraUBO();
             pushUBO(dstBinding, cameraUBO->uniformBuffers[frameIdx], sizeof(UniformCamera));
         }
         // Pantalla

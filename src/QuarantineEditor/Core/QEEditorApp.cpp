@@ -185,9 +185,9 @@ void QEEditorApp::OnBeforeSceneActivated()
     editorCameraService->EnsureEditorCamera(gameObjectManager);
     editorSceneStateSerializer->Load(scene, editorCameraService->GetEditorCamera(), *editorDebugSettings);
 
-    if (sessionManager)
+    if (cameraContext)
     {
-        sessionManager->SetCameraOverride(editorCameraService->GetEditorCamera());
+        cameraContext->SetCameraOverride(editorCameraService->GetEditorCamera());
     }
 
     QEEditorRuntimeBridge::SetupEditorRuntime(editorDebugSettings->ShowEditorGrid());
@@ -304,8 +304,8 @@ void QEEditorApp::SetAdditionalSceneRenderTarget()
         return;
     }
 
-    auto sessionManager = QESessionManager::getInstance();
-    sessionManager->SetRenderTargetOverride(&viewportResources->GetRenderTarget());
+    auto cameraContext = QECameraContext::getInstance();
+    cameraContext->SetRenderTargetOverride(&viewportResources->GetRenderTarget());
 }
 
 void QEEditorApp::InitializeImGui()
@@ -437,9 +437,9 @@ void QEEditorApp::CreatePanels()
         [this]() { return editorCameraService->GetEditorCamera(); },
         [this](uint32_t width, uint32_t height)
         {
-            if (sessionManager)
+            if (cameraContext)
             {
-                sessionManager->UpdateCameraOverrideViewportSize(width, height);
+                cameraContext->UpdateCameraOverrideViewportSize(width, height);
             }
         });
 
