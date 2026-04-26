@@ -1,8 +1,8 @@
 Material:
-  Name: defaultParticlesMat
-  FilePath: QEAssets/QEMaterials/defaultParticlesMat.qemat
-  ShaderPath: default_particles
-  RenderQueue: 3100
+  Name: editorDebugCollider
+  FilePath: QEAssets/QEMaterials/editorDebugCollider.qemat
+  ShaderPath: shader_debug_lines
+  RenderQueue: 6000
   Scalars:
     Opacity: 1
     BumpScaling: 1

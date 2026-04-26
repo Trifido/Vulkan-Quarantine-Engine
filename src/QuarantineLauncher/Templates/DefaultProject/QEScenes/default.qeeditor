@@ -1,0 +1,10 @@
+EditorCamera:
+  LocalPosition: [6, 4, 6]
+  LocalRotation: [-0.17591989, 0.37739903, 0.07211909, 0.9061274]
+  Fov: 45
+  Near: 0.1
+  Far: 500
+Display:
+  ShowEditorGrid: true
+  ShowColliderDebug: false
+  ShowCullingAABBDebug: false

@@ -1,0 +1,387 @@
+<Window x:Class="QuarantineLauncher.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:models="clr-namespace:QuarantineLauncher.Models"
+        mc:Ignorable="d"
+        Title="Quarantine Engine"
+        Icon="Assets/QE-Icon.ico"
+        Height="760"
+        Width="1220"
+        MinHeight="640"
+        MinWidth="980"
+        WindowStartupLocation="CenterScreen"
+        Background="#0B1016">
+    <Window.Resources>
+        <SolidColorBrush x:Key="PanelBrush" Color="#111A24" />
+        <SolidColorBrush x:Key="PanelBorderBrush" Color="#25384B" />
+        <SolidColorBrush x:Key="AccentBrush" Color="#E4A94B" />
+        <SolidColorBrush x:Key="AccentBrushSecondary" Color="#6BC3D1" />
+        <SolidColorBrush x:Key="TextBrush" Color="#E9F0F6" />
+        <SolidColorBrush x:Key="MutedTextBrush" Color="#95A7B7" />
+
+        <Style TargetType="Button">
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="Background" Value="#1C2A38" />
+            <Setter Property="BorderBrush" Value="{StaticResource PanelBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="20,12" />
+            <Setter Property="Margin" Value="0,0,10,10" />
+            <Setter Property="MinHeight" Value="42" />
+            <Setter Property="MinWidth" Value="128" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#243649" />
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.45" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="AccentButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Foreground" Value="#111A24" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+        </Style>
+
+        <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="#582633" />
+            <Setter Property="BorderBrush" Value="#7E3449" />
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#0A0E14" Offset="0" />
+                <GradientStop Color="#132130" Offset="0.55" />
+                <GradientStop Color="#0E1822" Offset="1" />
+            </LinearGradientBrush>
+        </Grid.Background>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border Margin="28,24,28,18"
+                Padding="28"
+                CornerRadius="24"
+                Background="#0F1721"
+                BorderBrush="#24384B"
+                BorderThickness="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="Quarantine Engine"
+                               FontSize="30"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextBrush}" />
+                    <TextBlock Margin="0,8,0,0"
+                               Text="Welcome to Quarantine Engine. Manage your projects and open the editor with the right workspace for each one."
+                               TextWrapping="Wrap"
+                               Foreground="{StaticResource MutedTextBrush}" />
+                    <TextBlock Margin="0,18,0,0"
+                               Text="{Binding ProjectsRootDisplay}"
+                               Foreground="{StaticResource AccentBrushSecondary}" />
+                </StackPanel>
+
+                <Border Grid.Column="1"
+                        Width="212"
+                        Height="212"
+                        Margin="24,0,0,0"
+                        CornerRadius="28"
+                        BorderBrush="#385069"
+                        BorderThickness="1">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#1E2D3D" Offset="0" />
+                            <GradientStop Color="#162433" Offset="1" />
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Grid>
+                        <Image Source="Assets/QuarantineEngineLogo.png"
+                               Margin="0"
+                               Stretch="Fill"
+                               SnapsToDevicePixels="True"
+                               RenderOptions.BitmapScalingMode="HighQuality"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" Margin="28,0,28,18">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.25*" />
+                <ColumnDefinition Width="0.95*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0"
+                    Margin="0,0,16,0"
+                    Padding="22"
+                    CornerRadius="22"
+                    Background="{StaticResource PanelBrush}"
+                    BorderBrush="{StaticResource PanelBorderBrush}"
+                    BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <DockPanel Margin="0,0,0,16">
+                        <TextBlock DockPanel.Dock="Left"
+                                   Text="Projects"
+                                   FontSize="22"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextBrush}" />
+                        <Button x:Name="ToolbarDeleteProjectButton"
+                                DockPanel.Dock="Right"
+                                Style="{StaticResource DangerButtonStyle}"
+                                Content="Delete Selected"
+                                Click="DeleteProject_Click"
+                                HorizontalAlignment="Right"
+                                Margin="14,0,0,0"
+                                MinWidth="164"
+                                IsEnabled="False" />
+                        <Button x:Name="ToolbarOpenProjectButton"
+                                DockPanel.Dock="Right"
+                                Style="{StaticResource AccentButtonStyle}"
+                                Content="Open Selected"
+                                Click="OpenProject_Click"
+                                HorizontalAlignment="Right"
+                                Margin="14,0,0,0"
+                                MinWidth="154"
+                                IsEnabled="False" />
+                        <Button DockPanel.Dock="Right"
+                                Content="Refresh"
+                                Click="RefreshProjects_Click"
+                                HorizontalAlignment="Right"
+                                Margin="14,0,0,0"
+                                MinWidth="128" />
+                    </DockPanel>
+
+                    <ListBox Grid.Row="1"
+                             x:Name="ProjectsListBox"
+                             ItemsSource="{Binding Projects}"
+                             SelectedItem="{Binding SelectedProject, Mode=TwoWay}"
+                             SelectionChanged="ProjectsListBox_SelectionChanged"
+                             MouseDoubleClick="ProjectsListBox_MouseDoubleClick"
+                             Background="#0D141D"
+                             BorderThickness="0"
+                             Foreground="{StaticResource TextBrush}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Padding" Value="0" />
+                                <Setter Property="Margin" Value="0" />
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="BorderThickness" Value="0" />
+                                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <ContentPresenter />
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="{x:Type models:ProjectEntry}">
+                                <Border x:Name="ProjectCard"
+                                        Margin="0,0,0,10"
+                                        Padding="16"
+                                        Height="88"
+                                        HorizontalAlignment="Stretch"
+                                        CornerRadius="14"
+                                        Background="#152230"
+                                        BorderBrush="#24384B"
+                                        BorderThickness="1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Name}"
+                                                       FontSize="18"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextBrush}" />
+                                            <TextBlock Margin="0,6,0,0"
+                                                       Text="Ready to open"
+                                                       Foreground="{StaticResource MutedTextBrush}" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1"
+                                                    Margin="16,0,0,0"
+                                                    HorizontalAlignment="Right">
+                                            <TextBlock Text="Default Scene"
+                                                       Foreground="{StaticResource AccentBrush}"
+                                                       FontWeight="SemiBold"
+                                                       HorizontalAlignment="Right" />
+                                            <TextBlock Margin="0,6,0,0"
+                                                       Text="{Binding LastModifiedDisplay}"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       HorizontalAlignment="Right" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
+                                        <Setter TargetName="ProjectCard" Property="BorderBrush" Value="#E4A94B" />
+                                        <Setter TargetName="ProjectCard" Property="BorderThickness" Value="2" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Border Padding="22"
+                        CornerRadius="22"
+                        Background="{StaticResource PanelBrush}"
+                        BorderBrush="{StaticResource PanelBorderBrush}"
+                        BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="New Project"
+                                   FontSize="22"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextBrush}" />
+                        <TextBlock Margin="0,8,0,16"
+                                   Text="The template creates a default scene and the base folder structure needed to start working in the editor."
+                                   TextWrapping="Wrap"
+                                   Foreground="{StaticResource MutedTextBrush}" />
+
+                        <TextBlock Text="Name"
+                                   Foreground="{StaticResource AccentBrushSecondary}"
+                                   Margin="0,0,0,8" />
+                        <TextBox x:Name="ProjectNameTextBox"
+                                 Height="44"
+                                 Padding="12,8"
+                                 Background="#0D141D"
+                                 BorderBrush="#30465D"
+                                 BorderThickness="1"
+                                 Foreground="{StaticResource TextBrush}" />
+
+                        <StackPanel Orientation="Horizontal" Margin="0,18,0,0">
+                            <Button Style="{StaticResource AccentButtonStyle}"
+                                    Content="Create Project"
+                                    Click="CreateProject_Click"
+                                    MinWidth="152" />
+                            <Button Content="Clear"
+                                    Click="ClearProjectName_Click"
+                                    MinWidth="116" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Row="1"
+                        Margin="0,16,0,0"
+                        Padding="22"
+                        CornerRadius="22"
+                        Background="{StaticResource PanelBrush}"
+                        BorderBrush="{StaticResource PanelBorderBrush}"
+                        BorderThickness="1">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Text="Selected Project"
+                                   FontSize="22"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextBrush}" />
+
+                        <TextBlock Grid.Row="1"
+                                   Margin="0,16,0,0"
+                                   Text="{Binding SelectedProject.Name, TargetNullValue=Select a project from the list}"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource AccentBrush}" />
+
+                        <StackPanel Grid.Row="2" Margin="0,12,0,0">
+                            <TextBlock Text="Path"
+                                       Foreground="{StaticResource AccentBrushSecondary}" />
+                            <TextBlock Margin="0,4,0,0"
+                                       Text="{Binding SelectedProject.FullPath, TargetNullValue=-}"
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource MutedTextBrush}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="3" Margin="0,18,0,0">
+                            <TextBlock Text="Default Scene"
+                                       Foreground="{StaticResource AccentBrushSecondary}" />
+                            <TextBlock Margin="0,4,0,0"
+                                       Text="{Binding SelectedProject.DefaultScenePath, TargetNullValue=-}"
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource MutedTextBrush}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,18,0,0">
+                            <Button x:Name="OpenProjectButton"
+                                    Style="{StaticResource AccentButtonStyle}"
+                                    Content="Open In Editor"
+                                    Click="OpenProject_Click"
+                                    IsEnabled="False" />
+                            <Button x:Name="DeleteProjectButton"
+                                    Style="{StaticResource DangerButtonStyle}"
+                                    Content="Delete Project"
+                                    Click="DeleteProject_Click"
+                                    IsEnabled="False" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <Border Grid.Row="2"
+                Margin="28,0,28,24"
+                Padding="18,14"
+                CornerRadius="16"
+                Background="#0F1721"
+                BorderBrush="#24384B"
+                BorderThickness="1">
+            <TextBlock Text="{Binding StatusMessage}"
+                       Foreground="{StaticResource MutedTextBrush}"
+                       TextWrapping="Wrap" />
+        </Border>
+    </Grid>
+</Window>

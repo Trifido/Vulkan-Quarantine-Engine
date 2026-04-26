@@ -2,7 +2,7 @@ Material:
   Name: Material_8
   FilePath: QEAssets/QEModels/source/Materials/Material_8.qemat
   ShaderPath: default
-  Layer: 1
+  RenderQueue: 1000
   Scalars:
     Opacity: 1
     BumpScaling: 1
@@ -17,6 +17,7 @@ Material:
     ClearcoatRoughness: 0.1
     AlphaCutoff: 0.5
     AlphaMode: 0
+    DoubleSided: false
   Colors:
     Diffuse:
       - 0.588

@@ -2,7 +2,7 @@ Material:
   Name: defaultPrimitiveMat
   FilePath: QEAssets/QEMaterials/defaultPrimitiveMat.qemat
   ShaderPath: default_primitive
-  Layer: 1
+  RenderQueue: 2000
   Scalars:
     Opacity: 1
     BumpScaling: 1
@@ -17,6 +17,7 @@ Material:
     ClearcoatRoughness: 0.1
     AlphaCutoff: 0.5
     AlphaMode: 0
+    DoubleSided: false
   Colors:
     Diffuse:
       - 1

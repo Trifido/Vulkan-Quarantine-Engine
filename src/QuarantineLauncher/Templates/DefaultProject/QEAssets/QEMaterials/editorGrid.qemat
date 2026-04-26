@@ -1,20 +1,20 @@
 Material:
-  Name: defaultParticlesMat
-  FilePath: QEAssets/QEMaterials/defaultParticlesMat.qemat
-  ShaderPath: default_particles
-  RenderQueue: 3100
+  Name: editorGrid
+  FilePath: QEAssets/QEMaterials/editorGrid.qemat
+  ShaderPath: shader_grid
+  RenderQueue: 2000
   Scalars:
     Opacity: 1
     BumpScaling: 1
     Shininess: 32
     Reflectivity: 0
-    Shininess_Strength: 0
-    Refractivity: 0
+    Shininess_Strength: 1
+    Refractivity: 1
     Metallic: 0
     Roughness: 1
     AO: 1
     Clearcoat: 0
-    ClearcoatRoughness: 0.1
+    ClearcoatRoughness: 0
     AlphaCutoff: 0.5
     AlphaMode: 0
     DoubleSided: false
@@ -25,10 +25,10 @@ Material:
       - 1
       - 1
     Ambient:
-      - 0.1
-      - 0.1
-      - 0.1
-      - 0.1
+      - 1
+      - 1
+      - 1
+      - 1
     Specular:
       - 1
       - 1
@@ -38,12 +38,12 @@ Material:
       - 0
       - 0
       - 0
-      - 0
+      - 1
     Transparent:
-      - 1
-      - 1
-      - 1
-      - 1
+      - 0
+      - 0
+      - 0
+      - 0
     Reflective:
       - 0
       - 0
@@ -51,8 +51,8 @@ Material:
       - 0
   TexturePacking:
     TexMask: 0
-    MetallicChan: 0
-    RoughnessChan: 0
+    MetallicChan: 2
+    RoughnessChan: 1
     AOChan: 0
   Textures:
     Diffuse: NULL_TEXTURE

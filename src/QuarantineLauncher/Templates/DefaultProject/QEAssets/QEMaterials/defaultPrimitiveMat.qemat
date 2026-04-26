@@ -1,8 +1,8 @@
 Material:
-  Name: defaultParticlesMat
-  FilePath: QEAssets/QEMaterials/defaultParticlesMat.qemat
-  ShaderPath: default_particles
-  RenderQueue: 3100
+  Name: defaultPrimitiveMat
+  FilePath: QEAssets/QEMaterials/defaultPrimitiveMat.qemat
+  ShaderPath: default_primitive
+  RenderQueue: 2000
   Scalars:
     Opacity: 1
     BumpScaling: 1

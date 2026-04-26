@@ -2,7 +2,7 @@ Material:
   Name: editorDebugCollider
   FilePath: QEAssets/QEMaterials/editorDebugCollider.qemat
   ShaderPath: shader_debug_lines
-  Layer: 99
+  RenderQueue: 6000
   Scalars:
     Opacity: 1
     BumpScaling: 1
@@ -17,6 +17,7 @@ Material:
     ClearcoatRoughness: 0.1
     AlphaCutoff: 0.5
     AlphaMode: 0
+    DoubleSided: false
   Colors:
     Diffuse:
       - 1

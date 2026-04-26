@@ -21,23 +21,25 @@ AtmosphereDto:
   sunDiskSize: 0
   sunDiskIntensity: 1
   sunGlow: 1
+PhysicsSettings:
+  Gravity: -20
 Materials:
-  - QEAssets/QEMaterials/defaultPrimitiveMat.qemat
-  - QEAssets/QEModels/source/Materials/Material_11.qemat
   - QEAssets/QEModels/source/Materials/Material_20.qemat
   - QEAssets/QEModels/source/Materials/Material_0.qemat
+  - QEAssets/QEMaterials/defaultPrimitiveMat.qemat
+  - QEAssets/QEModels/source/Materials/Material_11.qemat
   - QEAssets/QEMaterials/editorDebugAABB.qemat
   - QEAssets/QEMaterials/defaultParticlesMat.qemat
   - QEAssets/QEMaterials/editorDebugCollider.qemat
   - QEAssets/QEMaterials/editorGrid.qemat
-  - QEAssets/QEModels/source/Materials/Material_1.qemat
   - QEAssets/QEModels/source/Materials/Material_21.qemat
-  - QEAssets/QEModels/source/Materials/Material_2.qemat
+  - QEAssets/QEModels/source/Materials/Material_1.qemat
   - QEAssets/QEModels/source/Materials/Material_22.qemat
-  - QEAssets/QEModels/source/Materials/Material_3.qemat
+  - QEAssets/QEModels/source/Materials/Material_2.qemat
   - QEAssets/QEModels/source/Materials/Material_23.qemat
-  - QEAssets/QEModels/source/Materials/Material_4.qemat
+  - QEAssets/QEModels/source/Materials/Material_3.qemat
   - QEAssets/QEModels/source/Materials/Material_24.qemat
+  - QEAssets/QEModels/source/Materials/Material_4.qemat
   - QEAssets/QEModels/source/Materials/Material_5.qemat
   - QEAssets/QEModels/source/Materials/Material_6.qemat
   - QEAssets/QEModels/source/Materials/Material_7.qemat
@@ -54,28 +56,9 @@ Materials:
   - QEAssets/QEModels/source/Materials/Material_19.qemat
   - QEAssets/QEModels/MaterialBall/Materials/lambert3SG.qemat
 GameObjects:
-  - id: X3g5Ayy61leD
-    name: QECameraEditor
-    components:
-      - type: QETransform
-        id: YT3CEW8K69rk
-        localPosition: [7.3139424, 13.31932, -1.6271604]
-        localRotation: [-0.10668606, 0.53876865, 0.069017746, 0.8328163]
-        localScale: [1, 1, 1]
-        parentId: ""
-      - type: QECamera
-        id: lPGtfUR2IZ2m
-        _near: 0.1
-        _far: 500
-        _fov: 45
-        Width: 3023
-        Height: 951
-      - type: QECameraController
-        id: 3SL3XByImciQ
-        Speed: 10
-        MouseSensitivity: 0.1
   - id: 81nP7VxEE4Fd
     name: scene
+    active: true
     components:
       - type: QETransform
         id: gcL9fOPyc98b
@@ -91,33 +74,84 @@ GameObjects:
         id: Q4GTOPwD7kkq
         IsMeshShaderPipeline: false
     materials:
-      - Material_0
-      - Material_1
-      - Material_2
-      - Material_3
-      - Material_4
-      - Material_5
-      - Material_6
-      - Material_7
-      - Material_8
-      - Material_9
-      - Material_10
-      - Material_11
-      - Material_12
-      - Material_13
-      - Material_14
-      - Material_15
-      - Material_16
-      - Material_17
-      - Material_18
-      - Material_19
-      - Material_20
-      - Material_21
-      - Material_22
-      - Material_23
-      - Material_24
+      - Source: Material_0
+        Bound: Material_0
+        UseCopy: false
+      - Source: Material_1
+        Bound: Material_1
+        UseCopy: false
+      - Source: Material_2
+        Bound: Material_2
+        UseCopy: false
+      - Source: Material_3
+        Bound: Material_3
+        UseCopy: false
+      - Source: Material_4
+        Bound: Material_4
+        UseCopy: false
+      - Source: Material_5
+        Bound: Material_5
+        UseCopy: false
+      - Source: Material_6
+        Bound: Material_6
+        UseCopy: false
+      - Source: Material_7
+        Bound: Material_7
+        UseCopy: false
+      - Source: Material_8
+        Bound: Material_8
+        UseCopy: false
+      - Source: Material_9
+        Bound: Material_9
+        UseCopy: false
+      - Source: Material_10
+        Bound: Material_10
+        UseCopy: false
+      - Source: Material_11
+        Bound: Material_11
+        UseCopy: false
+      - Source: Material_12
+        Bound: Material_12
+        UseCopy: false
+      - Source: Material_13
+        Bound: Material_13
+        UseCopy: false
+      - Source: Material_14
+        Bound: Material_14
+        UseCopy: false
+      - Source: Material_15
+        Bound: Material_15
+        UseCopy: false
+      - Source: Material_16
+        Bound: Material_16
+        UseCopy: false
+      - Source: Material_17
+        Bound: Material_17
+        UseCopy: false
+      - Source: Material_18
+        Bound: Material_18
+        UseCopy: false
+      - Source: Material_19
+        Bound: Material_19
+        UseCopy: false
+      - Source: Material_20
+        Bound: Material_20
+        UseCopy: false
+      - Source: Material_21
+        Bound: Material_21
+        UseCopy: false
+      - Source: Material_22
+        Bound: Material_22
+        UseCopy: false
+      - Source: Material_23
+        Bound: Material_23
+        UseCopy: false
+      - Source: Material_24
+        Bound: Material_24
+        UseCopy: false
   - id: jgnZSCe8nPQH
     name: material_ball
+    active: true
     components:
       - type: QETransform
         id: nppZqt456uNh
@@ -133,4 +167,6 @@ GameObjects:
         id: ECM9T0ci76Ro
         IsMeshShaderPipeline: false
     materials:
-      - lambert3SG
+      - Source: lambert3SG
+        Bound: lambert3SG
+        UseCopy: false

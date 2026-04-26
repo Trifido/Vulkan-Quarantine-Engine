@@ -1,0 +1,14 @@
+AtmosphereDto:
+  hasAtmosphere: true
+  environmentType: 2
+  sunEulerDegrees: [-45.000004, -45.000004, 0]
+  sunBaseIntensity: 100
+PhysicsSettings:
+  Gravity: -20.0
+Materials:
+  - QEAssets/QEMaterials/defaultPrimitiveMat.qemat
+  - QEAssets/QEMaterials/editorDebugAABB.qemat
+  - QEAssets/QEMaterials/defaultParticlesMat.qemat
+  - QEAssets/QEMaterials/editorDebugCollider.qemat
+  - QEAssets/QEMaterials/editorGrid.qemat
+GameObjects: []
