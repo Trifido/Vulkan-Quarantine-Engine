@@ -17,6 +17,17 @@ bool compareDistance(const LightMap& a, const LightMap& b)
     return a.projected_z < b.projected_z;
 }
 
+namespace
+{
+bool IsLightOwnerInactiveInHierarchy(const std::shared_ptr<QELight>& light)
+{
+    if (!light || !light->Owner)
+        return false;
+
+    return !light->Owner->IsActiveInHierarchy();
+}
+}
+
 LightManager::LightManager()
 {
     this->deviceModule = DeviceModule::getInstance();
@@ -500,7 +511,15 @@ void LightManager::UpdateUniform()
 
         if (it.second->uniform)
         {
-            lightBuffer.push_back(*it.second->uniform);
+            auto lightUniform = *it.second->uniform;
+
+            if (IsLightOwnerInactiveInHierarchy(it.second))
+            {
+                lightUniform.diffuse = glm::vec3(0.0f);
+                lightUniform.specular = glm::vec3(0.0f);
+            }
+
+            lightBuffer.push_back(lightUniform);
         }
     }
 
