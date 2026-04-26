@@ -102,50 +102,23 @@ bool QEProjectManager::HasCurrentProject()
     return !CURRENT_PROJECT_PATH.empty() && fs::exists(CURRENT_PROJECT_PATH);
 }
 
-bool QEProjectManager::CreateQEProject(const std::string& projectName)
+bool QEProjectManager::SetCurrentProjectPath(const fs::path& projectPath)
 {
-    fs::path folderName = projectName;
-    fs::path projectPath = PROJECTS_FOLDER_PATH / folderName;
-
-    std::vector<bool> results =
-    {
-        CreateFolder(PROJECTS_FOLDER_PATH, projectName),
-        CreateFolder(projectPath, SCENE_FOLDER),
-        CreateFolder(projectPath, ASSETS_FOLDER),
-        CreateFolder(projectPath, ASSETS_FOLDER + "/" + MODELS_FOLDER),
-        CreateFolder(projectPath, ASSETS_FOLDER + "/" + MATERIALS_FOLDER)
-    };
-
-    const bool foldersOk = std::all_of(results.begin(), results.end(), [](bool r) { return r; });
-
-    if (!foldersOk)
+    if (projectPath.empty())
         return false;
-
-    CURRENT_PROJECT_PATH = projectPath;
-
-    if (!CreateYamlScene("default"))
-        return false;
-
-    if (!CreateDefaultProjectMaterials())
-        return false;
-
-    return true;
-}
-
-bool QEProjectManager::CreateFolder(const fs::path& projectPath, const std::string& folderName)
-{
-    fs::path folderPath = projectPath / folderName;
 
     std::error_code ec;
-    fs::create_directories(folderPath, ec);
-
-    if (ec)
-    {
-        QE_LOG_ERROR_CAT_F("QEProjectManager", "Error creating folder : {} -> {}", folderPath.string(), ec.message());
+    const fs::path normalizedProjectPath = fs::weakly_canonical(projectPath, ec);
+    if (ec || !fs::exists(normalizedProjectPath) || !fs::is_directory(normalizedProjectPath))
         return false;
-    }
 
-    return fs::exists(folderPath);
+    const fs::path defaultScenePath = normalizedProjectPath / SCENE_FOLDER / "default.qescene";
+    if (!fs::exists(defaultScenePath))
+        return false;
+
+    CURRENT_PROJECT_PATH = normalizedProjectPath;
+    CURRENT_DEFAULT_SCENE_PATH = defaultScenePath;
+    return true;
 }
 
 bool QEProjectManager::DeletePath(const fs::path& targetPath, bool recursive)
@@ -245,25 +218,6 @@ bool QEProjectManager::DeletePath(const fs::path& targetPath, bool recursive)
     {
         MaterialManager::getInstance()->RemoveMaterialAsset(resolvedTarget);
     }
-
-    return true;
-}
-
-bool QEProjectManager::OpenQEProject(const std::string& projectName)
-{
-    if (projectName.empty())
-        return false;
-
-    const fs::path projectPath = fs::path(PROJECTS_FOLDER_PATH) / projectName;
-    if (!fs::exists(projectPath) || !fs::is_directory(projectPath))
-        return false;
-
-    const fs::path scenePath = projectPath / SCENE_FOLDER / "default.qescene";
-    if (!fs::exists(scenePath))
-        return false;
-
-    CURRENT_PROJECT_PATH = projectPath;
-    CURRENT_DEFAULT_SCENE_PATH = scenePath;
 
     return true;
 }
@@ -590,25 +544,6 @@ std::string QEProjectManager::ToProjectRelativePath(const fs::path& path)
 
     return relative.lexically_normal().generic_string();
 }
-
-bool QEProjectManager::CreateDefaultProjectMaterials()
-{
-    const fs::path materialFolder = GetMaterialFolderPath();
-
-    MaterialDto primitiveDto = QEMaterialFileHelper::BuildDefaultPrimitiveMaterialDto(CURRENT_PROJECT_PATH);
-    MaterialDto particlesDto = QEMaterialFileHelper::BuildDefaultParticlesMaterialDto(CURRENT_PROJECT_PATH);
-    MaterialDto debugAABBDto = QEMaterialFileHelper::BuildEditorDebugAABBMaterialDto(CURRENT_PROJECT_PATH);
-    MaterialDto debugColliderDto = QEMaterialFileHelper::BuildEditorDebugColliderMaterialDto(CURRENT_PROJECT_PATH);
-    MaterialDto gridDto = QEMaterialFileHelper::BuildEditorGridMaterialDto(CURRENT_PROJECT_PATH);
-
-    return
-        QEMaterialYamlHelper::WriteMaterialFile(materialFolder / "defaultPrimitiveMat.qemat", primitiveDto) &&
-        QEMaterialYamlHelper::WriteMaterialFile(materialFolder / "defaultParticlesMat.qemat", particlesDto) &&
-        QEMaterialYamlHelper::WriteMaterialFile(materialFolder / "editorDebugAABB.qemat", debugAABBDto) &&
-        QEMaterialYamlHelper::WriteMaterialFile(materialFolder / "editorDebugCollider.qemat", debugColliderDto) &&
-        QEMaterialYamlHelper::WriteMaterialFile(materialFolder / "editorGrid.qemat", gridDto);
-}
-
 
 bool QEProjectManager::IsInsideCurrentProject(const fs::path& path)
 {

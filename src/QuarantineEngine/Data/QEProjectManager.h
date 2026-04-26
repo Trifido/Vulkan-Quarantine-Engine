@@ -9,7 +9,6 @@
 
 using QEImportProgressCallback = std::function<void(float, const std::string&, const std::string&)>;
 
-const static std::string PROJECTS_FOLDER_PATH = "../../QEProjects";
 const static std::string SCENE_TEMPLATE = "../../src/QuarantineEngine/Data/SceneTemplates/QETemplate.qescene";
 const static std::string SCENE_FOLDER = "QEScenes";
 const static std::string ASSETS_FOLDER = "QEAssets";
@@ -31,8 +30,7 @@ private:
 
 public:
     static bool HasCurrentProject();
-    static bool CreateQEProject(const std::string& projectName);
-    static bool OpenQEProject(const std::string& projectName);
+    static bool SetCurrentProjectPath(const fs::path& projectPath);
     static bool DeletePath(const fs::path& targetPath, bool recursive = true);
     static bool RenamePath(const fs::path& sourcePath, const std::string& newName);
     static bool CreateYamlScene(const std::string& sceneName = "DefaultScene");
@@ -60,11 +58,9 @@ public:
         const std::string& baseFolderName = "New Folder");
 
 private:
-    static bool CreateFolder(const fs::path& projectPath, const std::string& folderName);
     static fs::path GetScenesFolderPath();
     static fs::path GetAssetsFolderPath();
     static fs::path GetModelsFolderPath();
-    static bool CreateDefaultProjectMaterials();
 };
 
 

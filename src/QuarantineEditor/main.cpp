@@ -8,7 +8,7 @@
 #include <iostream>
 #endif
 
-int main(int, char**)
+int main(int argc, char** argv)
 {
 #ifdef _WIN32
     wchar_t pathBuf[MAX_PATH];
@@ -34,10 +34,25 @@ int main(int, char**)
     std::wcout << L"Working Directory fijado a: " << exePath.wstring() << L"\n\n";
 #endif
 
-    QE::QEProjectManager::CreateQEProject("QETest");
+    if (argc < 2 || argv[1] == nullptr)
+    {
+        QE_LOG_ERROR_CAT("Execution", "No project path provided. Launch QuarantineEditor from QuarantineLauncher.");
+        return -1;
+    }
+
+    const std::filesystem::path projectPath = argv[1];
+    if (!QE::QEProjectManager::SetCurrentProjectPath(projectPath))
+    {
+        QE_LOG_ERROR_CAT_F("Execution", "Could not open project '{}'", projectPath.string());
+        return -1;
+    }
 
     QE::QEScene scene{};
-    QE::QEProjectManager::InitializeDefaultQEScene(scene);
+    if (!QE::QEProjectManager::InitializeDefaultQEScene(scene))
+    {
+        QE_LOG_ERROR_CAT_F("Execution", "Could not initialize default scene for project '{}'", projectPath.string());
+        return -1;
+    }
 
     QEEditorApp app;
     app.Run(scene);
