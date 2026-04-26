@@ -202,6 +202,14 @@ std::shared_ptr<QEGameComponent> QEGameObject::GetComponentAt(size_t index) cons
     return it != components.end() ? *it : nullptr;
 }
 
+std::shared_ptr<QEMaterial> QEGameObject::GetMaterialAt(size_t index) const
+{
+    if (index >= materials.size())
+        return nullptr;
+
+    return materials[index];
+}
+
 YAML::Node QEGameObject::ToYaml() const  
 {  
     YAML::Node node;  

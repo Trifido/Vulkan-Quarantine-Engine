@@ -38,11 +38,11 @@ protected:
 public:
     bool QEActive = true;
     std::string Name;
-    std::vector<std::shared_ptr<QEMaterial>>    materials;
 
 private:
     unsigned int UpdateOrder = 0;
     std::list<std::shared_ptr<QEGameComponent>> components;
+    std::vector<std::shared_ptr<QEMaterial>> materials;
     std::vector<std::shared_ptr<QEGameObject>> childs;
     QEGameObject* parent = nullptr;
 
@@ -72,6 +72,8 @@ public:
     const std::list<std::shared_ptr<QEGameComponent>>& GetComponents() const { return components; }
     size_t GetComponentCount() const { return components.size(); }
     std::shared_ptr<QEGameComponent> GetComponentAt(size_t index) const;
+    size_t GetMaterialCount() const { return materials.size(); }
+    std::shared_ptr<QEMaterial> GetMaterialAt(size_t index) const;
 
     void QEStart();
     void QEInit();

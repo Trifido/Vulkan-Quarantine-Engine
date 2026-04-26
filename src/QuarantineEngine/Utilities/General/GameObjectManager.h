@@ -8,7 +8,6 @@
 #include "QEGameObject.h"
 #include "QEMeshRenderer.h"
 #include "QESingleton.h"
-#include <fstream>
 #include <vector>
 
 class QELight;
@@ -56,7 +55,7 @@ public:
 
     std::shared_ptr<QEGameObject> CreateEmptyGameObject(const std::string& baseName = "Empty GameObject");
 
-    std::shared_ptr<QEGameObject> GetGameObject(const std::string& name);
+    std::shared_ptr<QEGameObject> GetGameObject(const std::string& name) const;
     void DrawCommand(VkCommandBuffer& commandBuffer, uint32_t idx);
     void CSMCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, uint32_t cascadeIndex);
     void OmniShadowCommand(VkCommandBuffer& commandBuffer, uint32_t idx, VkPipelineLayout pipelineLayout, glm::mat4 viewParameter, glm::vec3 lightPosition);
@@ -65,12 +64,11 @@ public:
     void ReleaseAllGameObjects();
     void CleanLastResources();
 
-    YAML::Node SerializeGameObjects();
+    YAML::Node SerializeGameObjects() const;
     void DeserializeGameObjects(YAML::Node gameObjects);
 
     void StartQEGameObjects();
     void UpdateQEGameObjects();
-    void DestroyQEGameObjects();
 
     template<typename T>
     std::shared_ptr<T> FindFirstComponentInScene(const std::string& excludedGameObjectName = "") const;

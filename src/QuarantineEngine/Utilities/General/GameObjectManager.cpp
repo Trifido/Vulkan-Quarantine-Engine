@@ -275,7 +275,7 @@ void GameObjectManager::CleanLastResources()
     _objectsByUpdateOrder.clear();
 }
 
-std::shared_ptr<QEGameObject> GameObjectManager::GetGameObject(const std::string& name)
+std::shared_ptr<QEGameObject> GameObjectManager::GetGameObject(const std::string& name) const
 {
     for (const auto& bucketPair : _objectsByUpdateOrder)
     {
@@ -289,7 +289,7 @@ std::shared_ptr<QEGameObject> GameObjectManager::GetGameObject(const std::string
     return nullptr;
 }
 
-YAML::Node GameObjectManager::SerializeGameObjects()
+YAML::Node GameObjectManager::SerializeGameObjects() const
 {
     YAML::Node gameObjectsNode;
     std::unordered_set<std::string> emittedRoots;
@@ -358,19 +358,6 @@ void GameObjectManager::UpdateQEGameObjects()
         for (const auto& model : bucket)
         {
             model.second->QEUpdate();
-        }
-    }
-}
-
-void GameObjectManager::DestroyQEGameObjects()
-{
-    for (const auto& bucketPair : _objectsByUpdateOrder)
-    {
-        const auto& bucket = bucketPair.second;
-
-        for (const auto& model : bucket)
-        {
-            model.second->QEDestroy();
         }
     }
 }
@@ -461,9 +448,9 @@ void GameObjectManager::RemoveMaterialReferences(const std::string& materialName
                 continue;
 
             bool removedAny = false;
-            for (size_t materialIndex = 0; materialIndex < go->materials.size();)
+            for (size_t materialIndex = 0; materialIndex < go->GetMaterialCount();)
             {
-                const auto& material = go->materials[materialIndex];
+                const auto material = go->GetMaterialAt(materialIndex);
                 if (material && material->Name == materialName)
                 {
                     go->RemoveMaterialAt(materialIndex);
@@ -481,9 +468,12 @@ void GameObjectManager::RemoveMaterialReferences(const std::string& materialName
             {
                 if (auto mesh = geometry->GetMesh())
                 {
-                    if (mesh->MaterialRel.empty() && !go->materials.empty())
+                    if (mesh->MaterialRel.empty() && go->GetMaterialCount() > 0)
                     {
-                        mesh->MaterialRel.resize(mesh->MeshData.size(), go->materials.front()->Name);
+                        if (auto firstMaterial = go->GetMaterialAt(0))
+                        {
+                            mesh->MaterialRel.resize(mesh->MeshData.size(), firstMaterial->Name);
+                        }
                     }
                 }
             }
