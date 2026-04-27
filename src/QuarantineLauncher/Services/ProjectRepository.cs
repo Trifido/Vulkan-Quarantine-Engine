@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text;
 using QuarantineLauncher.Models;
 
 namespace QuarantineLauncher.Services;
@@ -36,6 +37,7 @@ public sealed class ProjectRepository
         Directory.CreateDirectory(projectPath);
         CopyDirectory(templateRoot, projectPath);
         Directory.CreateDirectory(Path.Combine(projectPath, "QEAssets", "QEModels"));
+        MaterializeVisualStudioTemplate(projectPath, normalizedName);
 
         return BuildProjectEntry(projectPath)
             ?? throw new InvalidOperationException("The project template did not produce a valid project.");
@@ -121,5 +123,92 @@ public sealed class ProjectRepository
             Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
             File.Copy(sourceFilePath, destinationPath, overwrite: false);
         }
+    }
+
+    private static void MaterializeVisualStudioTemplate(string projectPath, string projectName)
+    {
+        var placeholders = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["__QE_PROJECT_NAME__"] = projectName,
+            ["__QE_GAME_PROJECT_GUID__"] = Guid.NewGuid().ToString().ToUpperInvariant(),
+            ["__QE_RUNTIME_PROJECT_GUID__"] = Guid.NewGuid().ToString().ToUpperInvariant()
+        };
+
+        RenameTemplatePaths(projectPath, placeholders);
+        ReplaceTemplateContent(projectPath, placeholders);
+    }
+
+    private static void RenameTemplatePaths(string rootPath, IReadOnlyDictionary<string, string> placeholders)
+    {
+        var entries = Directory.EnumerateFileSystemEntries(rootPath, "*", SearchOption.AllDirectories)
+            .OrderByDescending(path => path.Length)
+            .ToList();
+
+        foreach (var originalPath in entries)
+        {
+            var directory = Path.GetDirectoryName(originalPath);
+            var name = Path.GetFileName(originalPath);
+            var renamed = ReplaceTokens(name, placeholders);
+
+            if (directory is null || string.Equals(name, renamed, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var targetPath = Path.Combine(directory, renamed);
+            if (Directory.Exists(originalPath))
+            {
+                Directory.Move(originalPath, targetPath);
+            }
+            else if (File.Exists(originalPath))
+            {
+                File.Move(originalPath, targetPath);
+            }
+        }
+    }
+
+    private static void ReplaceTemplateContent(string rootPath, IReadOnlyDictionary<string, string> placeholders)
+    {
+        foreach (var filePath in Directory.EnumerateFiles(rootPath, "*", SearchOption.AllDirectories))
+        {
+            var extension = Path.GetExtension(filePath);
+            if (!IsTextTemplateFile(extension, Path.GetFileName(filePath)))
+            {
+                continue;
+            }
+
+            var content = File.ReadAllText(filePath, Encoding.UTF8);
+            var updatedContent = ReplaceTokens(content, placeholders);
+            if (!string.Equals(content, updatedContent, StringComparison.Ordinal))
+            {
+                File.WriteAllText(filePath, updatedContent, new UTF8Encoding(false));
+            }
+        }
+    }
+
+    private static bool IsTextTemplateFile(string extension, string fileName)
+    {
+        return extension.Equals(".sln", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".vcxproj", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".filters", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".props", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".cpp", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".h", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".hpp", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".qemat", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".qescene", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".qeeditor", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(fileName, ".gitignore", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string ReplaceTokens(string value, IReadOnlyDictionary<string, string> placeholders)
+    {
+        var result = value;
+        foreach (var entry in placeholders)
+        {
+            result = result.Replace(entry.Key, entry.Value, StringComparison.Ordinal);
+        }
+
+        return result;
     }
 }

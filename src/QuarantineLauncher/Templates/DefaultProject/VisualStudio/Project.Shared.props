@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="UserMacros">
+    <ProjectRoot>$(MSBuildThisFileDirectory)..\</ProjectRoot>
+    <QuarantineEngineRoot>$(MSBuildThisFileDirectory)..\..\..\</QuarantineEngineRoot>
+    <QuarantineEngineBuildDir>$(QuarantineEngineRoot)build\</QuarantineEngineBuildDir>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <OutDir>$(ProjectRoot)Binaries\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectRoot)Intermediate\$(MSBuildProjectName)\$(Configuration)\</IntDir>
+    <TargetName>$(MSBuildProjectName)</TargetName>
+    <QEDebugSuffix Condition="'$(Configuration)' == 'Debug'">d</QEDebugSuffix>
+    <QEDebugSuffix Condition="'$(Configuration)' != 'Debug'"></QEDebugSuffix>
+    <QEEngineLibraryName>QuarantineEngine$(QEDebugSuffix).lib</QEEngineLibraryName>
+    <QEImguiLibraryName>imgui$(QEDebugSuffix).lib</QEImguiLibraryName>
+    <QESpirvReflectLibraryName>SPIRV-Reflect$(QEDebugSuffix).lib</QESpirvReflectLibraryName>
+    <QEGlfwLibraryName>glfw3$(QEDebugSuffix).lib</QEGlfwLibraryName>
+    <QEJoltLibraryName>Jolt$(QEDebugSuffix).lib</QEJoltLibraryName>
+    <QEYamlLibraryName>yaml-cpp$(QEDebugSuffix).lib</QEYamlLibraryName>
+    <QEKtxLibraryName>ktx$(QEDebugSuffix).lib</QEKtxLibraryName>
+    <QEMeshOptimizerLibraryName>meshoptimizer$(QEDebugSuffix).lib</QEMeshOptimizerLibraryName>
+    <QEAssimpLibraryName Condition="'$(Configuration)' == 'Debug'">assimp-vc143-mtd.lib</QEAssimpLibraryName>
+    <QEAssimpLibraryName Condition="'$(Configuration)' != 'Debug'">assimp-vc143-mt.lib</QEAssimpLibraryName>
+    <QEEngineLibraryPath>$(QuarantineEngineBuildDir)$(Configuration)\$(QEEngineLibraryName)</QEEngineLibraryPath>
+    <QEAssimpLibraryPath>$(QuarantineEngineBuildDir)extern\assimp\lib\$(Configuration)\$(QEAssimpLibraryName)</QEAssimpLibraryPath>
+    <QEJoltLibraryPath>$(QuarantineEngineBuildDir)extern\jolt\Build\$(Configuration)\$(QEJoltLibraryName)</QEJoltLibraryPath>
+    <QEMeshOptimizerLibraryPath>$(QuarantineEngineBuildDir)extern\meshoptimizer\$(Configuration)\$(QEMeshOptimizerLibraryName)</QEMeshOptimizerLibraryPath>
+    <QEYamlLibraryPath>$(QuarantineEngineBuildDir)_deps\yaml-cpp-build\$(Configuration)\$(QEYamlLibraryName)</QEYamlLibraryPath>
+    <QEKtxLibraryPath>$(QuarantineEngineBuildDir)_deps\ktx-build\$(Configuration)\$(QEKtxLibraryName)</QEKtxLibraryPath>
+    <QEGlfwLibraryPath>$(QuarantineEngineBuildDir)_deps\glfw-build\src\$(Configuration)\$(QEGlfwLibraryName)</QEGlfwLibraryPath>
+    <QESpirvReflectLibraryPath>$(QuarantineEngineBuildDir)$(Configuration)\$(QESpirvReflectLibraryName)</QESpirvReflectLibraryPath>
+    <QEImguiLibraryPath>$(QuarantineEngineBuildDir)$(Configuration)\$(QEImguiLibraryName)</QEImguiLibraryPath>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectRoot)Source\Game;$(ProjectRoot)Source\Runtime;$(QuarantineEngineRoot)src;$(QuarantineEngineRoot)src\QuarantineEngine;$(QuarantineEngineRoot)src\QuarantineEngine\App;$(QuarantineEngineRoot)src\QuarantineEngine\Data;$(QuarantineEngineRoot)src\QuarantineEngine\Data\Dtos;$(QuarantineEngineRoot)src\QuarantineEngine\Draw;$(QuarantineEngineRoot)src\QuarantineEngine\GraphicsPipeline;$(QuarantineEngineRoot)src\QuarantineEngine\GUI;$(QuarantineEngineRoot)src\QuarantineEngine\Helpers;$(QuarantineEngineRoot)src\QuarantineEngine\Input;$(QuarantineEngineRoot)src\QuarantineEngine\Logging;$(QuarantineEngineRoot)src\QuarantineEngine\Memory;$(QuarantineEngineRoot)src\QuarantineEngine\Presentation;$(QuarantineEngineRoot)src\QuarantineEngine\RayTracing;$(QuarantineEngineRoot)src\QuarantineEngine\SetUp;$(QuarantineEngineRoot)src\QuarantineEngine\Templates;$(QuarantineEngineRoot)src\QuarantineEngine\Utilities;$(QuarantineEngineRoot)src\QuarantineEngine\Utilities\Animation;$(QuarantineEngineRoot)src\QuarantineEngine\Utilities\Atmosphere;$(QuarantineEngineRoot)src\QuarantineEngine\Utilities\Camera;$(QuarantineEngineRoot)src\QuarantineEngine\Utilities\Compute;$(QuarantineEngineRoot)src\QuarantineEngine\Utilities\Controller;$(QuarantineEngineRoot)src\QuarantineEngine\Utilities\DebugSystem;$(QuarantineEngineRoot)src\QuarantineEngine\Utilities\General;$(QuarantineEngineRoot)src\QuarantineEngine\Utilities\Geometry;$(QuarantineEngineRoot)src\QuarantineEngine\Utilities\Light;$(QuarantineEngineRoot)src\QuarantineEngine\Utilities\Material;$(QuarantineEngineRoot)src\QuarantineEngine\Utilities\Particles;$(QuarantineEngineRoot)src\QuarantineEngine\Utilities\Physics;$(QuarantineEngineRoot)extern;$(QuarantineEngineRoot)extern\assimp\include;$(QuarantineEngineRoot)extern\imgui;$(QuarantineEngineRoot)extern\imgui\backends;$(QuarantineEngineRoot)extern\jolt;$(QuarantineEngineRoot)extern\meshoptimizer\src;$(QuarantineEngineRoot)extern\SPIRV-Reflect;$(QuarantineEngineBuildDir)_deps\glfw-src\include;$(QuarantineEngineBuildDir)_deps\glm-src;$(QuarantineEngineBuildDir)_deps\stb-src;$(QuarantineEngineBuildDir)_deps\yaml-cpp-src\include;$(QuarantineEngineBuildDir)_deps\ktx-src\include;$(VULKAN_SDK)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>JPH_DEBUG_RENDERER;GLM_ENABLE_EXPERIMENTAL;_CRT_SECURE_NO_WARNINGS;NOMINMAX;WIN32;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+
+    <Link>
+      <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(QEEngineLibraryPath);$(QEAssimpLibraryPath);$(QEJoltLibraryPath);$(QEMeshOptimizerLibraryPath);$(QEYamlLibraryPath);$(QEKtxLibraryPath);$(QEGlfwLibraryPath);$(QESpirvReflectLibraryPath);$(QEImguiLibraryPath);vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+
+    <PreBuildEvent>
+      <Command>if not exist "$(QEEngineLibraryPath)" (echo Quarantine Engine library not found at "$(QEEngineLibraryPath)". Build the engine first.&amp; exit /b 1)</Command>
+    </PreBuildEvent>
+
+    <PostBuildEvent>
+      <Command>if exist "$(QuarantineEngineBuildDir)$(Configuration)\*.dll" xcopy /Y /D "$(QuarantineEngineBuildDir)$(Configuration)\*.dll" "$(OutDir)" &gt;nul</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+</Project>
