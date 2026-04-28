@@ -2,7 +2,6 @@
 #include "QEBaseApp.h"
 
 #include <backends/imgui_impl_glfw.h>
-#include <backends/imgui_impl_vulkan.h>
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -33,13 +32,13 @@ bool GUIWindow::init(bool fullScreen)
     // 2) Obtener monitor y su video mode
     GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
     if (!primaryMonitor)
-        return false; // debería funcionar salvo error grave de GLFW
+        return false; // deberÃ­a funcionar salvo error grave de GLFW
 
     const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
     if (!mode)
         return false;
 
-    // 3) Calcular tamaño de ventana
+    // 3) Calcular tamaÃ±o de ventana
     if (fullScreen)
     {
         width = mode->width;
@@ -53,7 +52,7 @@ bool GUIWindow::init(bool fullScreen)
     }
     else
     {
-        // Tamaño por defecto en modo ventana
+        // TamaÃ±o por defecto en modo ventana
         width = 1410;
         height = 775;
     }
@@ -85,9 +84,6 @@ bool GUIWindow::init(bool fullScreen)
         printf("GLFW: Vulkan Not Supported\n");
         return false;
     }
-
-    // 8) Inicializar ImGui (tu rutina)
-    setupImgui();
 
     return true;
 }
@@ -193,31 +189,6 @@ void GUIWindow::framebufferResizeCallback(GLFWwindow* window, int width, int hei
 {
     height = height;
     width = width;
-}
-
-void GUIWindow::setupImgui()
-{
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-    //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
-    //io.ConfigViewportsNoAutoMerge = true;
-    //io.ConfigViewportsNoTaskBarIcon = true;
-
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-
-    // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
-    ImGuiStyle& style = ImGui::GetStyle();
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    {
-        style.WindowRounding = 0.0f;
-        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-    }
 }
 
 void GUIWindow::setupNewFrame()

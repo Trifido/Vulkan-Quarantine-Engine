@@ -54,7 +54,6 @@ public:
     void setupNewFrame();
 private:
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
-    void setupImgui();
     static void dropCallback(GLFWwindow* window, int count, const char** paths);
 };
 
