@@ -46,6 +46,9 @@ QEAssetType QEProjectBrowserNavigation::GetAssetTypeFromPath(const std::filesyst
 
 bool QEProjectBrowserNavigation::ShouldDisplayPath(const std::filesystem::path& path) const
 {
+    if (!IsBrowsableProjectPath(path))
+        return false;
+
     if (std::filesystem::is_directory(path))
         return true;
 
@@ -53,6 +56,23 @@ bool QEProjectBrowserNavigation::ShouldDisplayPath(const std::filesystem::path& 
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
     return ext != ".bin";
+}
+
+bool QEProjectBrowserNavigation::IsBrowsableProjectPath(const std::filesystem::path& path) const
+{
+    if (_projectRootPath.empty())
+        return true;
+
+    const std::filesystem::path relativePath = path.lexically_relative(_projectRootPath);
+    if (relativePath.empty() || relativePath == ".")
+        return true;
+
+    const auto relativeIt = relativePath.begin();
+    if (relativeIt == relativePath.end())
+        return false;
+
+    const std::string topLevelFolder = relativeIt->string();
+    return topLevelFolder == "QEAssets" || topLevelFolder == "QEScenes";
 }
 
 bool QEProjectBrowserNavigation::IsItemDraggable(const QEProjectAssetItem* item) const

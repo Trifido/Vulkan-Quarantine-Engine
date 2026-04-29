@@ -33,6 +33,7 @@ public:
     QEProjectAssetItem* FindItemByPathRecursive(QEProjectAssetItem* item, const std::string& absolutePath);
 
     bool ShouldDisplayPath(const std::filesystem::path& path) const;
+    bool IsBrowsableProjectPath(const std::filesystem::path& path) const;
     bool IsItemDraggable(const QEProjectAssetItem* item) const;
 
 private:
