@@ -2,6 +2,7 @@
 #include "QEBaseApp.h"
 
 #include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_vulkan.h>
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -24,27 +25,23 @@ static void ShowDockingDisabledMessage()
 
 bool GUIWindow::init(bool fullScreen)
 {
-    // 1) Error callback y init
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
         return false;
 
-    // 2) Obtener monitor y su video mode
     GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
     if (!primaryMonitor)
-        return false; // debería funcionar salvo error grave de GLFW
+        return false;
 
     const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
     if (!mode)
         return false;
 
-    // 3) Calcular tamaño de ventana
     if (fullScreen)
     {
         width = mode->width;
         height = mode->height;
 
-        // Especificamos el formato de color y refresco para fullscreen
         glfwWindowHint(GLFW_RED_BITS, mode->redBits);
         glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
         glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
@@ -52,19 +49,15 @@ bool GUIWindow::init(bool fullScreen)
     }
     else
     {
-        // Tamaño por defecto en modo ventana
         width = 1410;
         height = 775;
     }
 
     title = "Vulkan Quarantine Engine";
 
-    // 4) Hints comunes
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-    // 5) Crear la ventana:
-    //    - Si fullScreen, pasamos el monitor; si no, pasamos NULL para ventana windowed
     GLFWmonitor* windowMonitor = fullScreen ? primaryMonitor : nullptr;
     window = glfwCreateWindow(width, height, title.c_str(), windowMonitor, nullptr);
     if (!window)
@@ -73,17 +66,17 @@ bool GUIWindow::init(bool fullScreen)
         return false;
     }
 
-    // 6) Callbacks
     glfwSetWindowUserPointer(window, this);
     glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
     glfwSetDropCallback(window, dropCallback);
 
-    // 7) Comprobar Vulkan
     if (!glfwVulkanSupported())
     {
         printf("GLFW: Vulkan Not Supported\n");
         return false;
     }
+
+    setupImgui();
 
     return true;
 }
@@ -130,7 +123,6 @@ void GUIWindow::renderMainWindow()
     if (opt_fullscreen)
         ImGui::PopStyleVar(2);
 
-    // DockSpace
     ImGuiIO& io = ImGui::GetIO();
     if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
     {
@@ -146,8 +138,6 @@ void GUIWindow::renderMainWindow()
     {
         if (ImGui::BeginMenu("Options"))
         {
-            // Disabling fullscreen would allow the window to be moved to the front of other windows,
-            // which we can't undo at the moment without finer window depth/z control.
             ImGui::MenuItem("Fullscreen", NULL, &opt_fullscreen);
             ImGui::MenuItem("Padding", NULL, &opt_padding);
             ImGui::Separator();
@@ -189,6 +179,30 @@ void GUIWindow::framebufferResizeCallback(GLFWwindow* window, int width, int hei
 {
     height = height;
     width = width;
+}
+
+void GUIWindow::setupImgui()
+{
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
+    //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+    //io.ConfigViewportsNoAutoMerge = true;
+    //io.ConfigViewportsNoTaskBarIcon = true;
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+
+    ImGuiStyle& style = ImGui::GetStyle();
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        style.WindowRounding = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+    }
 }
 
 void GUIWindow::setupNewFrame()

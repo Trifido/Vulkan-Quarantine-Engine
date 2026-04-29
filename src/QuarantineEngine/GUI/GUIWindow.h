@@ -52,6 +52,7 @@ public:
     GLFWwindow* getWindow();
     void checkMinimize();
     void setupNewFrame();
+    void setupImgui();
 private:
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
     static void dropCallback(GLFWwindow* window, int count, const char** paths);

@@ -3,11 +3,10 @@
 #ifndef TIMER_H
 #define TIMER_H
 
-#include <Data/QEProjectModuleAPI.h>
 #include <UBO.h>
 #include <QESingleton.h>
 
-class QE_ENGINE_API Timer : public QESingleton<Timer>
+class Timer : public QESingleton<Timer>
 {
 private:
     friend class QESingleton<Timer>;

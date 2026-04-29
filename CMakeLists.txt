@@ -76,6 +76,8 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/KhronosGroup/KTX-Software.git
   GIT_TAG v4.4.2
   GIT_SHALLOW TRUE
+  GIT_SUBMODULES ""
+  GIT_SUBMODULES_RECURSE FALSE
 )
 set(KTX_FEATURE_TESTS OFF CACHE BOOL "" FORCE)
 set(KTX_FEATURE_TOOLS OFF CACHE BOOL "" FORCE)
@@ -208,13 +210,9 @@ qe_collect_source_tree("${CMAKE_SOURCE_DIR}/src/QuarantineEditor" QE_EDITOR_SRC 
 # QuarantineEngine target
 # ------------------------------
 
-add_library(QuarantineEngine SHARED ${QE_SRC} ${QE_HDR})
+add_library(QuarantineEngine STATIC ${QE_SRC} ${QE_HDR})
 qe_configure_msvc(QuarantineEngine)
 qe_assign_source_groups("QuarantineEngine" "${CMAKE_SOURCE_DIR}/src/QuarantineEngine" ${QE_SRC} ${QE_HDR})
-
-if (WIN32)
-  set_target_properties(QuarantineEngine PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-endif()
 
 target_include_directories(QuarantineEngine
   PUBLIC
@@ -320,7 +318,6 @@ assign_vs_folder("Dependencies/GLFW" update_mappings)
 if (WIN32)
   add_custom_command(TARGET QuarantineEditor POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      $<TARGET_FILE:QuarantineEngine>
       $<TARGET_FILE:assimp>
       $<TARGET_FILE:Jolt>
       $<TARGET_FILE:meshoptimizer>
