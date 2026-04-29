@@ -1,5 +1,6 @@
 #include "QuarantineEditor/Core/QEEditorApp.h"
 #include <QEProjectManager.h>
+#include <QEProjectModuleLoader.h>
 #include <Logging/QELogMacros.h>
 
 #ifdef _WIN32
@@ -47,15 +48,31 @@ int main(int argc, char** argv)
         return -1;
     }
 
+    std::string projectModuleLoadError;
+    const bool projectModuleLoaded = QE::QEProjectModuleLoader::LoadForProject(projectPath, &projectModuleLoadError);
+    if (!projectModuleLoaded && !projectModuleLoadError.empty())
+    {
+        QE_LOG_WARN_CAT_F("Execution", "{}", projectModuleLoadError);
+    }
+
     QE::QEScene scene{};
     if (!QE::QEProjectManager::InitializeDefaultQEScene(scene))
     {
         QE_LOG_ERROR_CAT_F("Execution", "Could not initialize default scene for project '{}'", projectPath.string());
+        if (projectModuleLoaded)
+        {
+            QE::QEProjectModuleLoader::Unload();
+        }
         return -1;
     }
 
     QEEditorApp app;
     app.Run(scene);
+
+    if (projectModuleLoaded)
+    {
+        QE::QEProjectModuleLoader::Unload();
+    }
 
     return 0;
 }

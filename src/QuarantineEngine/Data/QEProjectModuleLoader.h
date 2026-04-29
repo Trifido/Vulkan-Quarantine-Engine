@@ -8,9 +8,9 @@
 
 #include "QEProjectModuleAPI.h"
 
-QE_ENGINE_API bool QE_LoadProjectModuleForProject(const std::filesystem::path& projectPath, std::string* errorMessage = nullptr);
-QE_ENGINE_API void QE_UnloadProjectModule();
-QE_ENGINE_API bool QE_IsProjectModuleLoaded();
+bool QE_LoadProjectModuleForProject(const std::filesystem::path& projectPath, std::string* errorMessage = nullptr);
+void QE_UnloadProjectModule();
+bool QE_IsProjectModuleLoaded();
 
 class QEProjectModuleLoader
 {
