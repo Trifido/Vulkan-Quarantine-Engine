@@ -202,6 +202,7 @@ void TextureManagerModule::createImage(uint32_t width, uint32_t height, VkFormat
     if (vkAllocateMemory(deviceModule->device, &allocInfo, nullptr, &deviceMemory) != VK_SUCCESS) {
         throw std::runtime_error("failed to allocate image memory!");
     }
+    QE_TRACK_MEMORY_ALLOCATION(deviceMemory, "TextureManagerModule::createImage");
 
     vkBindImageMemory(deviceModule->device, image, deviceMemory, 0);
 }

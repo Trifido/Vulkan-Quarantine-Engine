@@ -209,6 +209,7 @@ void SpotShadowDescriptorsManager::CreateShadowPlaceholder()
     {
         throw std::runtime_error("failed to allocate spot placeholder image memory!");
     }
+    QE_TRACK_MEMORY_ALLOCATION(this->placeholderMemory, "SpotShadowDescriptorsManager::CreatePlaceholderResources");
 
     vkBindImageMemory(deviceModule->device, this->placeholderImage, this->placeholderMemory, 0);
 

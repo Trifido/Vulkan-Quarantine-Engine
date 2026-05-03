@@ -56,6 +56,7 @@ void SpotShadowResources::CreateSpotShadowResources(std::shared_ptr<VkRenderPass
     {
         throw std::runtime_error("failed to allocate spot shadow image memory!");
     }
+    QE_TRACK_MEMORY_ALLOCATION(this->shadowImageMemory, "SpotShadowResources::Initialize");
 
     vkBindImageMemory(deviceModule->device, this->shadowImage, this->shadowImageMemory, 0);
 

@@ -58,6 +58,7 @@ VkImage CSMResources::AllocateImage(VkDevice device, VkPhysicalDevice physicalDe
     if (vkAllocateMemory(device, &allocInfo, nullptr, &mapMemory) != VK_SUCCESS) {
         throw std::runtime_error("failed to allocate cascade map image memory!");
     }
+    QE_TRACK_MEMORY_ALLOCATION(mapMemory, "CSMResources::AllocateImage");
 
     vkBindImageMemory(device, result, mapMemory, 0);
 

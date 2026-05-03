@@ -247,6 +247,7 @@ bool QEProjectIconCache::CreateBuffer(
         buffer = VK_NULL_HANDLE;
         return false;
     }
+    QE_TRACK_MEMORY_ALLOCATION(bufferMemory, "QEProjectIconCache::CreateBuffer");
 
     vkBindBufferMemory(device->device, buffer, bufferMemory, 0);
     return true;
@@ -294,6 +295,7 @@ bool QEProjectIconCache::CreateImage(
         image = VK_NULL_HANDLE;
         return false;
     }
+    QE_TRACK_MEMORY_ALLOCATION(imageMemory, "QEProjectIconCache::CreateImage");
 
     vkBindImageMemory(device->device, image, imageMemory, 0);
     return true;

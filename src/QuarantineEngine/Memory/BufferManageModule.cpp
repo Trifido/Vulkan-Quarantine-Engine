@@ -70,6 +70,7 @@ void BufferManageModule::createBuffer(VkDeviceSize size, VkBufferUsageFlags usag
         QE_DESTROY_BUFFER(deviceModule.device, buffer, "BufferManageModule::createBuffer");
         throw std::runtime_error("failed to allocate buffer memory!");
     }
+    QE_TRACK_MEMORY_ALLOCATION(bufferMemory, "BufferManageModule::createBuffer");
 
     // Bind memory
     if (vkBindBufferMemory(deviceModule.device, buffer, bufferMemory, 0) != VK_SUCCESS)
@@ -111,6 +112,7 @@ void BufferManageModule::createSharedBuffer(VkDeviceSize size, VkBufferUsageFlag
     if (vkAllocateMemory(deviceModule.device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
         throw std::runtime_error("failed to allocate vertex buffer memory!");
     }
+    QE_TRACK_MEMORY_ALLOCATION(bufferMemory, "BufferManageModule::createSharedBuffer");
 
     vkBindBufferMemory(deviceModule.device, buffer, bufferMemory, 0);
 }

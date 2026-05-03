@@ -10,8 +10,8 @@ public sealed class EditorLaunchService
         var repositoryRoot = WorkspaceLocator.FindRepositoryRoot();
         var candidates = new[]
         {
-            Path.Combine(repositoryRoot, "build", "Debug", "QuarantineEditor.exe"),
             Path.Combine(repositoryRoot, "build", "Release", "QuarantineEditor.exe"),
+            Path.Combine(repositoryRoot, "build", "Debug", "QuarantineEditor.exe"),
             Path.Combine(repositoryRoot, "build", "RelWithDebInfo", "QuarantineEditor.exe"),
             Path.Combine(repositoryRoot, "build", "MinSizeRel", "QuarantineEditor.exe")
         };

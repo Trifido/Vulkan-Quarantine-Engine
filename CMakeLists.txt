@@ -338,14 +338,9 @@ if (MSVC)
   endfunction()
 
   foreach(dep
-    glfw
     glm
     stb
     assimp
-    SPIRV-Reflect
-    meshoptimizer
-    imgui
-    imguizmo
     zlibstatic
   )
     exclude_from_vs_build(${dep})

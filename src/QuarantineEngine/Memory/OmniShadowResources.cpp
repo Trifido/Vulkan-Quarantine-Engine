@@ -57,6 +57,7 @@ VkImage OmniShadowResources::CreateFramebufferDepthImage(VkDeviceMemory& deviceI
     memAlloc.allocationSize = memReqs.size;
     memAlloc.memoryTypeIndex = IMT::findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, deviceModule->physicalDevice);
     vkAllocateMemory(this->deviceModule->device, &memAlloc, nullptr, &deviceImageMemory);
+    QE_TRACK_MEMORY_ALLOCATION(deviceImageMemory, "OmniShadowResources::AllocateImage");
     vkBindImageMemory(this->deviceModule->device, resultImage, deviceImageMemory, 0);
 
     return resultImage;
@@ -122,6 +123,7 @@ VkImage OmniShadowResources::AllocateCubemapImage(VkDevice device, VkPhysicalDev
     if (vkAllocateMemory(device, &allocInfo, nullptr, &mapMemory) != VK_SUCCESS) {
         throw std::runtime_error("failed to allocate cube map image memory!");
     }
+    QE_TRACK_MEMORY_ALLOCATION(mapMemory, "OmniShadowResources::AllocateCubemapImage");
 
     vkBindImageMemory(device, result, mapMemory, 0);
 
