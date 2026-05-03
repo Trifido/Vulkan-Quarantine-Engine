@@ -7,10 +7,10 @@
         mc:Ignorable="d"
         Title="Quarantine Engine"
         Icon="Assets/QE-Icon.ico"
-        Height="760"
-        Width="1220"
-        MinHeight="640"
-        MinWidth="980"
+        Height="856"
+        Width="1360"
+        MinHeight="660"
+        MinWidth="1000"
         WindowStartupLocation="CenterScreen"
         Background="#0B1016">
     <Window.Resources>
@@ -290,8 +290,10 @@
                                    Foreground="{StaticResource AccentBrushSecondary}"
                                    Margin="0,0,0,8" />
                         <TextBox x:Name="ProjectNameTextBox"
-                                 Height="44"
-                                 Padding="12,8"
+                                 Height="48"
+                                 Padding="12,0"
+                                 FontSize="18"
+                                 VerticalContentAlignment="Center"
                                  Background="#0D141D"
                                  BorderBrush="#30465D"
                                  BorderThickness="1"

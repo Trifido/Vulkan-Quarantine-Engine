@@ -33,6 +33,14 @@
 namespace
 {
     constexpr size_t INSPECTOR_TEXT_BUFFER_SIZE = 512;
+    const std::unordered_set<std::string> kHiddenAddComponentTypes = {
+        "QELight",
+        "QEDirectionalLight",
+        "QEPointLight",
+        "QESpotLight",
+        "QESunLight",
+        "QEEditorCameraController"
+    };
 
     bool ShouldSkipField(const QEMetaField& field)
     {
@@ -72,6 +80,14 @@ namespace
         default:
             return false;
         }
+    }
+
+    bool ShouldHideFromAddComponentPopup(const std::string& componentTypeName)
+    {
+        if (componentTypeName.empty())
+            return true;
+
+        return kHiddenAddComponentTypes.contains(componentTypeName);
     }
 
     bool IsSupportedFieldType(const std::type_index& type)
@@ -671,6 +687,9 @@ namespace
             return false;
 
         if (componentTypeName == "QEGameComponent")
+            return false;
+
+        if (ShouldHideFromAddComponentPopup(componentTypeName))
             return false;
 
         for (const auto& component : gameObject->GetComponents())

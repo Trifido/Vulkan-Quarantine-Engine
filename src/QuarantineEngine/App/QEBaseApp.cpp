@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <QEProjectManager.h>
 #include <QEMeshRenderer.h>
+#include <QECameraController.h>
 #include <QESpringArmComponent.h>
 #include <PlaneCollider.h>
 #include <BoxCollider.h>
