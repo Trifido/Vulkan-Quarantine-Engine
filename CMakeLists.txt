@@ -254,6 +254,12 @@ add_executable(QuarantineEditor ${QE_EDITOR_SRC} ${QE_EDITOR_HDR})
 qe_configure_msvc(QuarantineEditor)
 qe_assign_source_groups("QuarantineEditor" "${CMAKE_SOURCE_DIR}/src/QuarantineEditor" ${QE_EDITOR_SRC} ${QE_EDITOR_HDR})
 
+if (WIN32)
+  set_target_properties(QuarantineEditor PROPERTIES
+    WIN32_EXECUTABLE $<NOT:$<CONFIG:Debug>>
+  )
+endif()
+
 target_include_directories(QuarantineEditor
   PRIVATE
     ${CMAKE_SOURCE_DIR}/src
@@ -272,6 +278,12 @@ target_link_libraries(QuarantineEditor
 )
 
 target_compile_definitions(QuarantineEditor PRIVATE GLM_ENABLE_EXPERIMENTAL)
+
+if (MSVC)
+  target_link_options(QuarantineEditor PRIVATE
+    $<$<NOT:$<CONFIG:Debug>>:/ENTRY:mainCRTStartup>
+  )
+endif()
 
 # ------------------------------
 # Visual Studio folders
