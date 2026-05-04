@@ -337,6 +337,12 @@ if (WIN32)
       $<TARGET_FILE:glfw>
       $<TARGET_FILE_DIR:QuarantineEditor>
   )
+
+  add_custom_command(TARGET QuarantineEditor POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      ${CMAKE_SOURCE_DIR}/resources/editor/imgui_default.ini
+      $<TARGET_FILE_DIR:QuarantineEditor>/imgui_default.ini
+  )
 endif()
 
 if (MSVC)

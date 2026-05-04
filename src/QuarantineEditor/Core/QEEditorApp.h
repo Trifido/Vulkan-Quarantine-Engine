@@ -62,6 +62,7 @@ protected:
     void RecordAdditionalOverlayPass(VkCommandBuffer& commandBuffer, uint32_t currentFrame) override;
 
 private:
+    void InitializeImGuiSettingsFile();
     void InitializeImGui();
     void BeginImGuiFrame();
     void DrawEditorUI();
@@ -86,6 +87,8 @@ private:
 
 private:
     VkDescriptorPool imguiPool{};
+    std::filesystem::path imguiIniPath;
+    std::string imguiIniPathString;
     std::unique_ptr<EditorContext> editorContext;
     std::unique_ptr<EditorViewportResources> viewportResources;
     std::unique_ptr<EditorSelectionManager> selectionManager;

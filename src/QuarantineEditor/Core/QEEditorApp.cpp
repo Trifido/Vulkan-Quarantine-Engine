@@ -38,6 +38,7 @@
 #include <Material.h>
 #include <MaterialManager.h>
 #include <algorithm>
+#include <filesystem>
 
 #include <CullingSceneManager.h>
 #include <DebugSystem/QEDebugSystem.h>
@@ -309,8 +310,41 @@ void QEEditorApp::SetAdditionalSceneRenderTarget()
     cameraContext->SetRenderTargetOverride(&viewportResources->GetRenderTarget());
 }
 
+void QEEditorApp::InitializeImGuiSettingsFile()
+{
+    std::error_code ec;
+    const std::filesystem::path workingDirectory = std::filesystem::current_path(ec);
+    if (ec)
+    {
+        QE_LOG_WARN_CAT_F("Editor", "Could not resolve editor working directory for ImGui settings: {}", ec.message());
+        return;
+    }
+
+    imguiIniPath = workingDirectory / "imgui.ini";
+    const std::filesystem::path defaultIniPath = workingDirectory / "imgui_default.ini";
+
+    if (std::filesystem::exists(imguiIniPath))
+    {
+        return;
+    }
+
+    if (!std::filesystem::exists(defaultIniPath))
+    {
+        QE_LOG_WARN_CAT_F("Editor", "Default ImGui settings file not found: {}", defaultIniPath.string());
+        return;
+    }
+
+    std::filesystem::copy_file(defaultIniPath, imguiIniPath, std::filesystem::copy_options::none, ec);
+    if (ec)
+    {
+        QE_LOG_WARN_CAT_F("Editor", "Could not create default ImGui settings file '{}': {}", imguiIniPath.string(), ec.message());
+    }
+}
+
 void QEEditorApp::InitializeImGui()
 {
+    InitializeImGuiSettingsFile();
+
     VkDescriptorPoolSize pool_sizes[] =
     {
         { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
@@ -338,6 +372,12 @@ void QEEditorApp::InitializeImGui()
     ImGui::CreateContext();
 
     ImGuiIO& io = ImGui::GetIO();
+    if (!imguiIniPath.empty())
+    {
+        imguiIniPathString = imguiIniPath.string();
+        io.IniFilename = imguiIniPathString.c_str();
+    }
+
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
