@@ -36,6 +36,10 @@ public:
     float lineWidth = 1.0f;
     VkBool32 depthTestEnabled = VK_TRUE;
     VkBool32 depthWriteEnabled = VK_TRUE;
+    VkBool32 depthBiasEnabled = VK_FALSE;
+    float depthBiasConstantFactor = 0.0f;
+    float depthBiasSlopeFactor = 0.0f;
+    float depthBiasClamp = 0.0f;
 
 public:
     GraphicsPipelineModule();

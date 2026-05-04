@@ -20,6 +20,10 @@ struct GraphicsPipelineData
     bool IsMeshShader = false;
     bool DepthTestEnabled = true;
     bool DepthWriteEnabled = true;
+    bool DepthBiasEnabled = false;
+    float DepthBiasConstantFactor = 0.0f;
+    float DepthBiasSlopeFactor = 0.0f;
+    float DepthBiasClamp = 0.0f;
     ShadowMappingMode shadowMode = ShadowMappingMode::NONE;
 
     GraphicsPipelineData() {}

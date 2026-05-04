@@ -51,10 +51,10 @@ void GraphicsPipelineModule::CompileGraphicsPipeline(std::vector<VkPipelineShade
     rasterizer.cullMode = this->cullMode;
     rasterizer.frontFace = this->frontFace;
 
-    rasterizer.depthBiasEnable = VK_FALSE;
-    rasterizer.depthBiasConstantFactor = 0.0f; // Optional
-    rasterizer.depthBiasClamp = 0.0f; // Optional
-    rasterizer.depthBiasSlopeFactor = 0.0f; // Optional
+    rasterizer.depthBiasEnable = this->depthBiasEnabled;
+    rasterizer.depthBiasConstantFactor = this->depthBiasConstantFactor;
+    rasterizer.depthBiasClamp = this->depthBiasClamp;
+    rasterizer.depthBiasSlopeFactor = this->depthBiasSlopeFactor;
 
     VkPipelineMultisampleStateCreateInfo multisampling{};
     multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -93,7 +93,8 @@ void GraphicsPipelineModule::CompileGraphicsPipeline(std::vector<VkPipelineShade
         VK_DYNAMIC_STATE_DEPTH_TEST_ENABLE,
         VK_DYNAMIC_STATE_CULL_MODE,
         VK_DYNAMIC_STATE_FRONT_FACE,
-        VK_DYNAMIC_STATE_DEPTH_WRITE_ENABLE
+        VK_DYNAMIC_STATE_DEPTH_WRITE_ENABLE,
+        VK_DYNAMIC_STATE_DEPTH_BIAS
     };
 
     VkPipelineDynamicStateCreateInfo dynamicState{};

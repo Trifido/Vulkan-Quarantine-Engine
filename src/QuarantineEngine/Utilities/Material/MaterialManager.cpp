@@ -119,6 +119,9 @@ MaterialManager::MaterialManager()
 
     gpData = {};
     gpData.HasVertexData = false;
+    gpData.DepthBiasEnabled = true;
+    gpData.DepthBiasConstantFactor = -1.0f;
+    gpData.DepthBiasSlopeFactor = -1.0f;
 
     this->shader_grid_ptr = std::make_shared<ShaderModule>(ShaderModule("shader_grid", absolute_grid_vertex_shader_path, absolute_grid_frag_shader_path, gpData));
     shaderManager->AddShader(shader_grid_ptr);

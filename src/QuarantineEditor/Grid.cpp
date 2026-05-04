@@ -87,6 +87,7 @@ void Grid::Draw(VkCommandBuffer& commandBuffer, uint32_t idx)
 
     vkCmdSetDepthTestEnable(commandBuffer, VK_TRUE);
     vkCmdSetDepthWriteEnable(commandBuffer, VK_FALSE);
+    vkCmdSetDepthBias(commandBuffer, -1.0f, 0.0f, -1.0f);
     vkCmdSetFrontFace(commandBuffer, VK_FRONT_FACE_CLOCKWISE);
     vkCmdSetCullMode(commandBuffer, VK_CULL_MODE_NONE);
 

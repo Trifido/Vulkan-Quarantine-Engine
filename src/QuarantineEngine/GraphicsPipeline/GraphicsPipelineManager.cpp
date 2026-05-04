@@ -98,6 +98,10 @@ std::shared_ptr<GraphicsPipelineModule> GraphicsPipelineManager::RegisterNewGrap
     this->_graphicsPipelines[shader.id]->lineWidth = pipelineData.lineWidth;
     this->_graphicsPipelines[shader.id]->depthTestEnabled = pipelineData.DepthTestEnabled ? VK_TRUE : VK_FALSE;
     this->_graphicsPipelines[shader.id]->depthWriteEnabled = pipelineData.DepthWriteEnabled ? VK_TRUE : VK_FALSE;
+    this->_graphicsPipelines[shader.id]->depthBiasEnabled = pipelineData.DepthBiasEnabled ? VK_TRUE : VK_FALSE;
+    this->_graphicsPipelines[shader.id]->depthBiasConstantFactor = pipelineData.DepthBiasConstantFactor;
+    this->_graphicsPipelines[shader.id]->depthBiasSlopeFactor = pipelineData.DepthBiasSlopeFactor;
+    this->_graphicsPipelines[shader.id]->depthBiasClamp = pipelineData.DepthBiasClamp;
     this->_graphicsPipelines[shader.id]->renderPass = this->defaultRenderPass;
     this->_graphicsPipelines[shader.id]->CompileGraphicsPipeline(shader.shaderStages, shader.vertexInputInfo, descriptorLayouts);
     return this->_graphicsPipelines[shader.id];
