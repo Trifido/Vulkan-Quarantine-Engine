@@ -100,19 +100,17 @@ void SpotShadowResources::UpdateOffscreenUBOShadowMap()
     bufferData.cascadeViewProj[2] = glm::mat4(1.0f);
     bufferData.cascadeViewProj[3] = glm::mat4(1.0f);
 
-    for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
-    {
-        void* data = nullptr;
-        vkMapMemory(
-            this->deviceModule->device,
-            this->OffscreenShadowMapUBO->uniformBuffersMemory[currentFrame],
-            0,
-            sizeof(CSMUniform),
-            0,
-            &data);
-        memcpy(data, &bufferData, sizeof(CSMUniform));
-        vkUnmapMemory(this->deviceModule->device, this->OffscreenShadowMapUBO->uniformBuffersMemory[currentFrame]);
-    }
+    const uint32_t currentFrame = static_cast<uint32_t>(SynchronizationModule::GetCurrentFrame());
+    void* data = nullptr;
+    vkMapMemory(
+        this->deviceModule->device,
+        this->OffscreenShadowMapUBO->uniformBuffersMemory[currentFrame],
+        0,
+        sizeof(CSMUniform),
+        0,
+        &data);
+    memcpy(data, &bufferData, sizeof(CSMUniform));
+    vkUnmapMemory(this->deviceModule->device, this->OffscreenShadowMapUBO->uniformBuffersMemory[currentFrame]);
 }
 
 void SpotShadowResources::Cleanup()

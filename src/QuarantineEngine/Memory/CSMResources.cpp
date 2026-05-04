@@ -199,13 +199,11 @@ void CSMResources::UpdateOffscreenUBOShadowMap()
         bufferData.cascadeViewProj[i] = this->CascadeResourcesPtr->at(i).viewProjMatrix;
     }
 
-    for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
-    {
-        void* data;
-        vkMapMemory(this->deviceModule->device, this->OffscreenShadowMapUBO->uniformBuffersMemory[currentFrame], 0, sizeof(CSMUniform), 0, &data);
-        memcpy(data, &bufferData, sizeof(CSMUniform));
-        vkUnmapMemory(this->deviceModule->device, this->OffscreenShadowMapUBO->uniformBuffersMemory[currentFrame]);
-    }
+    const uint32_t currentFrame = static_cast<uint32_t>(SynchronizationModule::GetCurrentFrame());
+    void* data;
+    vkMapMemory(this->deviceModule->device, this->OffscreenShadowMapUBO->uniformBuffersMemory[currentFrame], 0, sizeof(CSMUniform), 0, &data);
+    memcpy(data, &bufferData, sizeof(CSMUniform));
+    vkUnmapMemory(this->deviceModule->device, this->OffscreenShadowMapUBO->uniformBuffersMemory[currentFrame]);
 }
 
 void CSMResources::TransitionImageLayout(VkDevice device, VkImage& newImage, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t layerCount)

@@ -263,12 +263,15 @@ void QEBaseApp::mainLoop()
         // Start GameObjects
         this->gameObjectManager->StartQEGameObjects();
 
+        // UI / editor interaction happens here
+        OnBeginFrame();
+
         // PHYSICS
         int physicsSteps = Timer::getInstance()->ComputeFixedSteps();
         for (int i = 0; i < physicsSteps; ++i)
             physicsModule->ComputePhysics(Timer::getInstance()->FixedDelta);
 
-        // UPDATE GameObjects
+        // UPDATE GameObjects after UI/input so editor controllers consume fresh ImGui state.
         this->gameObjectManager->UpdateQEGameObjects();
 
         // UPDATE CULLING SCENE
@@ -277,8 +280,6 @@ void QEBaseApp::mainLoop()
             cullingSceneManager->UpdateCullingScene();
         }
 
-        // UI / editor interaction happens here
-        OnBeginFrame();
         OnEndFrame();
 
         // Ensure camera CPU data is up to date after editor interaction

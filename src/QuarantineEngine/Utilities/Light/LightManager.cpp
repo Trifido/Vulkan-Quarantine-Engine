@@ -530,24 +530,22 @@ void LightManager::UpdateUBOLight()
 {
     const size_t lightCount = lightBuffer.size();
     const size_t uploadSize = lightCount * sizeof(LightUniform);
+    const uint32_t currentFrame = static_cast<uint32_t>(SynchronizationModule::GetCurrentFrame());
 
-    for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
+    void* data = nullptr;
+    vkMapMemory(this->deviceModule->device, this->lightUBO->uniformBuffersMemory[currentFrame], 0, sizeof(LightManagerUniform), 0, &data);
+    memcpy(data, static_cast<const void*>(this->lightManagerUniform.get()), sizeof(LightManagerUniform));
+    vkUnmapMemory(this->deviceModule->device, this->lightUBO->uniformBuffersMemory[currentFrame]);
+
+    void* data2 = nullptr;
+    vkMapMemory(this->deviceModule->device, this->lightSSBO->uniformBuffersMemory[currentFrame], 0, this->lightSSBOSize, 0, &data2);
+
+    if (uploadSize > 0 && !lightBuffer.empty())
     {
-        void* data = nullptr;
-        vkMapMemory(this->deviceModule->device, this->lightUBO->uniformBuffersMemory[currentFrame], 0, sizeof(LightManagerUniform), 0, &data);
-        memcpy(data, static_cast<const void*>(this->lightManagerUniform.get()), sizeof(LightManagerUniform));
-        vkUnmapMemory(this->deviceModule->device, this->lightUBO->uniformBuffersMemory[currentFrame]);
-
-        void* data2 = nullptr;
-        vkMapMemory(this->deviceModule->device, this->lightSSBO->uniformBuffersMemory[currentFrame], 0, this->lightSSBOSize, 0, &data2);
-
-        if (uploadSize > 0 && !lightBuffer.empty())
-        {
-            memcpy(data2, lightBuffer.data(), uploadSize);
-        }
-
-        vkUnmapMemory(this->deviceModule->device, this->lightSSBO->uniformBuffersMemory[currentFrame]);
+        memcpy(data2, lightBuffer.data(), uploadSize);
     }
+
+    vkUnmapMemory(this->deviceModule->device, this->lightSSBO->uniformBuffersMemory[currentFrame]);
 }
 
 void LightManager::UpdateCSMLights()

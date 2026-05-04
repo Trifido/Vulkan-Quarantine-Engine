@@ -400,13 +400,11 @@ void OmniShadowResources::PrepareFramebuffers(std::shared_ptr<VkRenderPass> rend
 
 void OmniShadowResources::UpdateUBOShadowMap(OmniShadowUniform omniParameters)
 {
-    for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
-    {
-        void* data;
-        vkMapMemory(this->deviceModule->device, this->shadowMapUBO->uniformBuffersMemory[currentFrame], 0, sizeof(OmniShadowUniform), 0, &data);
-        memcpy(data, &omniParameters, sizeof(OmniShadowUniform));
-        vkUnmapMemory(this->deviceModule->device, this->shadowMapUBO->uniformBuffersMemory[currentFrame]);
-    }
+    const uint32_t currentFrame = static_cast<uint32_t>(SynchronizationModule::GetCurrentFrame());
+    void* data;
+    vkMapMemory(this->deviceModule->device, this->shadowMapUBO->uniformBuffersMemory[currentFrame], 0, sizeof(OmniShadowUniform), 0, &data);
+    memcpy(data, &omniParameters, sizeof(OmniShadowUniform));
+    vkUnmapMemory(this->deviceModule->device, this->shadowMapUBO->uniformBuffersMemory[currentFrame]);
 }
 
 void OmniShadowResources::Cleanup()
