@@ -11,6 +11,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -30,6 +31,10 @@ public:
         QEParamType NewParameterType = QEParamType::Bool;
         std::string LoadedGraphAssetPath;
         std::string RenameGraphNameBuffer;
+        bool AnimationClipCacheBuilt = false;
+        std::string CachedAnimationRootPath;
+        std::vector<std::string> AvailableAnimationClips;
+        std::unordered_map<std::string, std::string> AnimationClipSourcePaths;
     };
 
     AnimationGraphPanel(

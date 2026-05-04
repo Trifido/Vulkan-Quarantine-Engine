@@ -2,11 +2,15 @@
 
 #include <imgui.h>
 
+#include <Animation.h>
+#include <AnimationImporter.h>
 #include <Data/QEAnimationGraphAssetHelper.h>
+#include <Data/QEProjectManager.h>
 #include <QuarantineEditor/Animation/QEAnimationGraphRuntimeAdapter.h>
 #include <QuarantineEditor/Core/EditorContext.h>
 #include <QuarantineEditor/Core/EditorSelectionManager.h>
 #include <QEAnimationComponent.h>
+#include <QEGeometryComponent.h>
 #include <QEGameObject.h>
 
 #include <algorithm>
@@ -207,6 +211,161 @@ namespace
         }
 
         return std::filesystem::path(graphAssetPath).stem().string();
+    }
+
+    std::filesystem::path ResolveAnimationFolderPath(QEAnimationComponent& component)
+    {
+        if (!component.Owner)
+        {
+            return {};
+        }
+
+        auto geometryComponent = component.Owner->GetComponent<QEGeometryComponent>();
+        if (!geometryComponent)
+        {
+            return {};
+        }
+
+        auto* mesh = geometryComponent->GetMesh();
+        if (!mesh || mesh->FilePath.empty() || mesh->FilePath == "QECore")
+        {
+            return {};
+        }
+
+        const std::filesystem::path resolvedMeshPath =
+            QEProjectManager::ResolveProjectPath(mesh->FilePath).lexically_normal();
+        if (resolvedMeshPath.empty())
+        {
+            return {};
+        }
+
+        return (resolvedMeshPath.parent_path().parent_path() / ANIMATION_FOLDER).lexically_normal();
+    }
+
+    void RefreshAnimationClipCache(AnimationGraphPanel::SessionGraphState& sessionGraph, QEAnimationComponent& component)
+    {
+        const std::filesystem::path animationFolderPath = ResolveAnimationFolderPath(component);
+        const std::string animationFolderKey = animationFolderPath.generic_string();
+        if (sessionGraph.AnimationClipCacheBuilt &&
+            sessionGraph.CachedAnimationRootPath == animationFolderKey)
+        {
+            return;
+        }
+
+        sessionGraph.AnimationClipCacheBuilt = true;
+        sessionGraph.CachedAnimationRootPath = animationFolderKey;
+        sessionGraph.AvailableAnimationClips.clear();
+        sessionGraph.AnimationClipSourcePaths.clear();
+
+        std::unordered_set<std::string> discoveredClipNames;
+        const auto loadedClipNames = component.GetAnimationClipNames();
+        sessionGraph.AvailableAnimationClips.reserve(loadedClipNames.size());
+
+        for (const auto& clipName : loadedClipNames)
+        {
+            if (discoveredClipNames.insert(clipName).second)
+            {
+                sessionGraph.AvailableAnimationClips.push_back(clipName);
+            }
+        }
+
+        if (animationFolderPath.empty())
+        {
+            return;
+        }
+
+        std::error_code ec;
+        if (!std::filesystem::exists(animationFolderPath, ec) ||
+            !std::filesystem::is_directory(animationFolderPath, ec))
+        {
+            return;
+        }
+
+        auto geometryComponent = component.Owner ? component.Owner->GetComponent<QEGeometryComponent>() : nullptr;
+        auto* mesh = geometryComponent ? geometryComponent->GetMesh() : nullptr;
+        if (!mesh)
+        {
+            return;
+        }
+
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(
+                 animationFolderPath,
+                 std::filesystem::directory_options::skip_permission_denied,
+                 ec))
+        {
+            if (ec)
+            {
+                ec.clear();
+                continue;
+            }
+
+            if (!entry.is_regular_file(ec))
+            {
+                ec.clear();
+                continue;
+            }
+
+            std::string extension = entry.path().extension().string();
+            std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
+            if (extension != ".glb")
+            {
+                continue;
+            }
+
+            const std::vector<AnimationData> animations =
+                AnimationImporter::LoadAnimation(entry.path().string(), mesh->BonesInfoMap);
+            for (const auto& animation : animations)
+            {
+                if (animation.animationName.empty())
+                {
+                    continue;
+                }
+
+                sessionGraph.AnimationClipSourcePaths.try_emplace(
+                    animation.animationName,
+                    entry.path().lexically_normal().string());
+
+                if (discoveredClipNames.insert(animation.animationName).second)
+                {
+                    sessionGraph.AvailableAnimationClips.push_back(animation.animationName);
+                }
+            }
+        }
+
+        std::sort(sessionGraph.AvailableAnimationClips.begin(), sessionGraph.AvailableAnimationClips.end());
+    }
+
+    bool EnsureAnimationClipLoaded(
+        QEAnimationComponent& component,
+        const std::string& clipName,
+        const std::unordered_map<std::string, std::string>& clipSourcePaths)
+    {
+        if (clipName.empty() || component.GetAnimation(clipName))
+        {
+            return true;
+        }
+
+        const auto clipPathIt = clipSourcePaths.find(clipName);
+        if (clipPathIt == clipSourcePaths.end() || !component.Owner)
+        {
+            return false;
+        }
+
+        auto geometryComponent = component.Owner->GetComponent<QEGeometryComponent>();
+        auto* mesh = geometryComponent ? geometryComponent->GetMesh() : nullptr;
+        if (!mesh)
+        {
+            return false;
+        }
+
+        const std::vector<AnimationData> animations =
+            AnimationImporter::LoadAnimation(clipPathIt->second, mesh->BonesInfoMap);
+        for (const auto& animation : animations)
+        {
+            component.AddAnimation(Animation(animation));
+        }
+
+        return component.GetAnimation(clipName) != nullptr;
     }
 
     void NormalizeLinks(QEAnimationGraphEditorData& graphData)
@@ -1214,7 +1373,8 @@ void AnimationGraphPanel::DrawPropertiesPane(QEAnimationComponent& component, Se
                 }
             }
 
-            const auto clipNames = component.GetAnimationClipNames();
+            RefreshAnimationClipCache(sessionGraph, component);
+            const auto& clipNames = sessionGraph.AvailableAnimationClips;
             if (ImGui::BeginCombo("Animation Clip", state.AnimationClip.empty() ? "<none>" : state.AnimationClip.c_str()))
             {
                 for (const auto& clipName : clipNames)
@@ -1222,8 +1382,11 @@ void AnimationGraphPanel::DrawPropertiesPane(QEAnimationComponent& component, Se
                     const bool selected = (state.AnimationClip == clipName);
                     if (ImGui::Selectable(clipName.c_str(), selected))
                     {
-                        state.AnimationClip = clipName;
-                        UpdateState(sessionGraph, component, state.Id, state);
+                        if (EnsureAnimationClipLoaded(component, clipName, sessionGraph.AnimationClipSourcePaths))
+                        {
+                            state.AnimationClip = clipName;
+                            UpdateState(sessionGraph, component, state.Id, state);
+                        }
                     }
 
                     if (selected)
