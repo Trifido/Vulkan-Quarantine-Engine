@@ -14,7 +14,7 @@ namespace
     bool IsEditorInputBlocked()
     {
         return
-            ImGui::IsPopupOpen("AddComponentPopup", ImGuiPopupFlags_AnyPopupId) ||
+            ImGui::IsPopupOpen("Add Component", ImGuiPopupFlags_AnyPopupId) ||
             ImGui::IsPopupOpen("Rename GameObject", ImGuiPopupFlags_AnyPopupId);
     }
 }

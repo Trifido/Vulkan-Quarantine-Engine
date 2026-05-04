@@ -90,7 +90,6 @@ void EditorHeaderBar::DrawWindowMenu()
         ImGui::MenuItem("Viewport", nullptr, &editorContext->ShowViewport);
         ImGui::MenuItem("Console", nullptr, &editorContext->ShowConsole);
         ImGui::MenuItem("Content Browser", nullptr, &editorContext->ShowContentBrowser);
-        ImGui::MenuItem("ImGui Demo", nullptr, &editorContext->ShowDemoWindow);
         ImGui::EndMenu();
     }
 }

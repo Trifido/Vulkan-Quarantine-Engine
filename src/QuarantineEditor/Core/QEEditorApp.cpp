@@ -285,11 +285,6 @@ void QEEditorApp::DrawEditorUI()
     editorCameraService->UpdateInputState(editorContext.get());
 
     ClearExternalDroppedFiles();
-
-    if (editorContext && editorContext->ShowDemoWindow)
-    {
-        ImGui::ShowDemoWindow(&editorContext->ShowDemoWindow);
-    }
 }
 
 void QEEditorApp::EndImGuiFrame()

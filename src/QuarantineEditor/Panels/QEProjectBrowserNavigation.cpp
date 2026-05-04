@@ -55,7 +55,7 @@ bool QEProjectBrowserNavigation::ShouldDisplayPath(const std::filesystem::path& 
     std::string ext = path.extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
-    return ext != ".bin";
+    return ext != ".bin" && ext != ".qeeditor";
 }
 
 bool QEProjectBrowserNavigation::IsBrowsableProjectPath(const std::filesystem::path& path) const

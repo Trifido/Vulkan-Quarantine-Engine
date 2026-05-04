@@ -711,7 +711,7 @@ namespace
 
         if (ImGui::Button("Add Component"))
         {
-            ImGui::OpenPopup("AddComponentPopup");
+            ImGui::OpenPopup("Add Component");
         }
 
         ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -720,13 +720,10 @@ namespace
         ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
         ImGui::SetNextWindowSize(ImVec2(420.0f, 360.0f), ImGuiCond_Appearing);
 
-        if (ImGui::BeginPopupModal("AddComponentPopup", nullptr, ImGuiWindowFlags_NoResize))
+        if (ImGui::BeginPopupModal("Add Component", nullptr, ImGuiWindowFlags_NoResize))
         {
             static char filterBuffer[128] = "";
             static bool setFocusToSearch = true;
-
-            ImGui::TextUnformatted("Add Component");
-            ImGui::Separator();
 
             if (setFocusToSearch)
             {
