@@ -4,7 +4,10 @@
 #include <QECamera.h>
 #include <QETransform.h>
 #include <PhysicsModule.h>
+#include <QERuntimeMode.h>
+#include <GUIWindow.h>
 #include <glm/common.hpp>
+#include <GLFW/glfw3.h>
 
 #include <Jolt/Jolt.h>
 #include <Jolt/Physics/PhysicsSystem.h>
@@ -28,6 +31,21 @@ namespace {
         explicit IgnoreBodyFilter(JPH::BodyID id) : ignore(id) {}
         bool ShouldCollide(const JPH::BodyID& other) const override { return other != ignore; }
     };
+
+    bool TryGetRuntimeWindow(GLFWwindow*& outWindow)
+    {
+        outWindow = nullptr;
+
+        if (!QERuntimeMode::getInstance()->IsGameplayEnabled())
+            return false;
+
+        auto* guiWindow = GUIWindow::getInstance();
+        if (!guiWindow)
+            return false;
+
+        outWindow = guiWindow->getWindow();
+        return outWindow != nullptr;
+    }
 }
 
 QESpringArmComponent::QESpringArmComponent()
@@ -126,18 +144,47 @@ void QESpringArmComponent::AddZoomInput(float dLen)
 void QESpringArmComponent::QEStart()
 {
     if (QEStarted()) return;
+
+    m_smoothedPivot = ComputePivotWorldPos();
+    m_camRot = ComputeDesiredRotation();
+
+    const glm::vec3 initialForward = m_camRot * glm::vec3(0, 0, -1);
+    const glm::vec3 initialSocket = m_smoothedPivot + SocketOffset;
+    m_camPos = initialSocket - initialForward * std::clamp(m_currentArmLen, MinArmLength, MaxArmLength);
+
+    QEGameComponent::QEStart();
 }
 
 void QESpringArmComponent::QEUpdate()
 {
-    float dt = Timer::DeltaTime;
+    GLFWwindow* window = nullptr;
+    if (!TryGetRuntimeWindow(window))
+        return;
 
-    ImGuiIO& io = ImGui::GetIO();
-    ImVec2 d = io.MouseDelta;
-    if (d.x != 0.0f || d.y != 0.0f)
+    float dt = Timer::DeltaTime;
+    if (dt <= 0.0f)
+        return;
+
+    double mouseX = 0.0;
+    double mouseY = 0.0;
+    glfwGetCursorPos(window, &mouseX, &mouseY);
+
+    if (m_firstMouseSample)
     {
-        AddYawInput(d.x * g_camMouse.sensX);
-        AddPitchInput((g_camMouse.invertY ? 1.0f : -1.0f) * d.y * g_camMouse.sensY);
+        m_lastMouseX = mouseX;
+        m_lastMouseY = mouseY;
+        m_firstMouseSample = false;
+    }
+    else
+    {
+        const float deltaX = static_cast<float>(mouseX - m_lastMouseX);
+        const float deltaY = static_cast<float>(mouseY - m_lastMouseY);
+
+        AddYawInput(deltaX * g_camMouse.sensX);
+        AddPitchInput((g_camMouse.invertY ? 1.0f : -1.0f) * deltaY * g_camMouse.sensY);
+
+        m_lastMouseX = mouseX;
+        m_lastMouseY = mouseY;
     }
 
     // 1) Objetivo deseado

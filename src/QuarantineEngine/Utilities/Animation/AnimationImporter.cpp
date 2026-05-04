@@ -312,7 +312,7 @@ std::vector<fs::path> AnimationImporter::ListGlbInDir(const fs::path& dir)
         return out;
     }
 
-    for (const auto& e : fs::directory_iterator(dir, fs::directory_options::skip_permission_denied, ec))
+    for (const auto& e : fs::recursive_directory_iterator(dir, fs::directory_options::skip_permission_denied, ec))
     {
         if (ec) { ec.clear(); continue; }
         if (!e.is_regular_file(ec)) { ec.clear(); continue; }
@@ -324,3 +324,4 @@ std::vector<fs::path> AnimationImporter::ListGlbInDir(const fs::path& dir)
     std::sort(out.begin(), out.end());
     return out;
 }
+

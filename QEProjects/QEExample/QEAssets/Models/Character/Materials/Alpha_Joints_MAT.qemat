@@ -1,12 +1,12 @@
 Material:
-  Name: defaultParticlesMat
-  FilePath: QEAssets/QEMaterials/defaultParticlesMat.qemat
-  ShaderPath: default_particles
-  RenderQueue: 3100
+  Name: Alpha_Joints_MAT
+  FilePath: QEAssets/Models/Character/Materials/Alpha_Joints_MAT.qemat
+  ShaderPath: default
+  RenderQueue: 2000
   Scalars:
     Opacity: 1
     BumpScaling: 1
-    Shininess: 32
+    Shininess: 20.000006
     Reflectivity: 0
     Shininess_Strength: 0
     Refractivity: 0
@@ -17,12 +17,12 @@ Material:
     ClearcoatRoughness: 0.1
     AlphaCutoff: 0.5
     AlphaMode: 0
-    DoubleSided: false
+    DoubleSided: true
   Colors:
     Diffuse:
-      - 1
-      - 1
-      - 1
+      - 0.15355153
+      - 0.21289387
+      - 0.22221714
       - 1
     Ambient:
       - 0.1
@@ -38,7 +38,7 @@ Material:
       - 0
       - 0
       - 0
-      - 0
+      - 1
     Transparent:
       - 1
       - 1

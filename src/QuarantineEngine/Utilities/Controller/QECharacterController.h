@@ -35,6 +35,8 @@ class QECharacterController : public QEGameComponent
         glm::vec3 mVelocity{ 0.0f };
         bool pendingJump = false;
         bool blockAnimationDisplacement = false;
+        bool mWasCtrlPressed = false;
+        bool mWasSpacePressed = false;
 
         int mStartupLockFrames = 0;
 
@@ -53,6 +55,7 @@ class QECharacterController : public QEGameComponent
         static inline glm::vec3  ToGLM(const JPH::RVec3& v) { return glm::vec3((float)v.GetX(), (float)v.GetY(), (float)v.GetZ()); }
         static inline glm::quat  ToGLM(const JPH::Quat& q) { return glm::quat(q.GetW(), q.GetX(), q.GetY(), q.GetZ()); }
 
+        glm::vec2 ReadMoveAxes() const;
         glm::vec3 ReadMoveInput() const;
         void      BuildOrUpdateCharacter();
         void      SyncFromCharacter();

@@ -32,6 +32,9 @@ private:
 
     glm::vec3 m_camPos{};
     glm::quat m_camRot{ 1,0,0,0 };
+    bool m_firstMouseSample = true;
+    double m_lastMouseX = 0.0;
+    double m_lastMouseY = 0.0;
 
 public:
     REFLECT_PROPERTY(float, TargetArmLength)

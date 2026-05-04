@@ -408,7 +408,14 @@ bool QEAnimationComponent::ExitTimeOk(const QETransition& t, const AnimationStat
     }
     else
     {
-        return this->animator->GetNormalizedTime() >= t.exitTimeNormalized;
+        const float normalizedTime = this->animator->GetNormalizedTime();
+        const float exitTime = glm::clamp(t.exitTimeNormalized, 0.0f, 1.0f);
+        const float eps = 1e-3f;
+
+        if (exitTime >= (1.0f - eps))
+            return normalizedTime >= (1.0f - eps);
+
+        return normalizedTime >= exitTime;
     }
 }
 

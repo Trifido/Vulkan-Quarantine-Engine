@@ -375,7 +375,17 @@ namespace QEAnimationGraphAssetHelper
         QEAnimationComponent& component,
         const YAML::Node& componentNode)
     {
-        if (!componentNode || !componentNode["GraphAssetPath"])
+        if (!componentNode)
+        {
+            return false;
+        }
+
+        if (componentNode["AutoStart"])
+        {
+            component.SetAutoStart(componentNode["AutoStart"].as<bool>());
+        }
+
+        if (!componentNode["GraphAssetPath"])
         {
             return false;
         }

@@ -8,12 +8,12 @@
 #include <QESpringArmComponent.h>
 #include <QEAnimationComponent.h>
 #include <Timer.h>
-
 #include <Jolt/Core/TempAllocator.h>
 #include <Jolt/Physics/Character/CharacterVirtual.h>
-#include <imgui.h>
 #include <Helpers/MathHelpers.h>
 #include <QERuntimeMode.h>
+#include <GUIWindow.h>
+#include <GLFW/glfw3.h>
 
 namespace
 {
@@ -34,6 +34,13 @@ namespace
             Layers::PLAYER
         );
     }
+
+    GLFWwindow* GetRuntimeWindow()
+    {
+        auto* guiWindow = GUIWindow::getInstance();
+        return guiWindow ? guiWindow->getWindow() : nullptr;
+    }
+
 }
 
 QECharacterController::QECharacterController()
@@ -147,13 +154,31 @@ void QECharacterController::BuildOrUpdateCharacter()
     );
 }
 
+glm::vec2 QECharacterController::ReadMoveAxes() const
+{
+    GLFWwindow* window = GetRuntimeWindow();
+    if (!window)
+        return glm::vec2(0.0f);
+
+    glm::vec2 move(0.0f);
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) move.y += 1.0f;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) move.y -= 1.0f;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) move.x += 1.0f;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) move.x -= 1.0f;
+
+    if (glm::length2(move) > 1.0f)
+        move = glm::normalize(move);
+
+    return move;
+}
+
 glm::vec3 QECharacterController::ReadMoveInput() const
 {
-    glm::vec2 move(0.0f);
-    if (ImGui::IsKeyDown(ImGuiKey_W)) move.y += 1.0f;  // adelante
-    if (ImGui::IsKeyDown(ImGuiKey_S)) move.y -= 1.0f;  // atrás
-    if (ImGui::IsKeyDown(ImGuiKey_D)) move.x += 1.0f;  // derecha
-    if (ImGui::IsKeyDown(ImGuiKey_A)) move.x -= 1.0f;  // izquierda
+    GLFWwindow* window = GetRuntimeWindow();
+    if (!window)
+        return glm::vec3(0.0f);
+
+    const glm::vec2 move = ReadMoveAxes();
 
     if (move.x == 0.0f && move.y == 0.0f)
         return glm::vec3(0.0f);
@@ -179,8 +204,12 @@ glm::vec3 QECharacterController::ReadMoveInput() const
     if (glm::length2(dir) > 0.0f)
         dir = glm::normalize(dir);
 
-    const bool sprint = ImGui::IsKeyDown(ImGuiKey_ModShift);
-    animationComponentPtr->SetBool("sprint", sprint);
+    const bool sprint =
+        glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
+        glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
+
+    if (animationComponentPtr)
+        animationComponentPtr->SetBool("sprint", sprint);
 
     const float spd = sprint ? SprintSpeed : MoveSpeed;
     return dir * spd;
@@ -222,9 +251,7 @@ void QECharacterController::UpdateCharacterOrientation(glm::vec3 dir, const floa
     // Rotación actual del root (mundo)
     const glm::quat currentRootWorldRot = ToGLM(mCharacter->GetRotation());
 
-    // Interpolar con límite de velocidad angular
-    // maxTurnSpeedRad = cuántos radianes/seg puede girar el root
-    constexpr float maxTurnSpeedRad = 6.0f; // ~343°/s, ajusta
+    const float maxTurnSpeedRad = glm::radians(TurnSpeedDeg);
     const float t = glm::clamp(maxTurnSpeedRad * dt, 0.0f, 1.0f);
 
     const glm::quat newRootWorldRot = glm::normalize(glm::slerp(currentRootWorldRot, targetRootWorldRot, t));
@@ -234,20 +261,33 @@ void QECharacterController::UpdateCharacterOrientation(glm::vec3 dir, const floa
 
 void QECharacterController::UpdateCharacterAnimation(glm::vec3 velocity)
 {
+    if (!animationComponentPtr)
+        return;
+
     float vLength = glm::length(velocity);
     animationComponentPtr->SetFloat("speed", vLength);
     constexpr float kMoveEpsilon = 0.01f;
     animationComponentPtr->SetFloat("forward", float(vLength > kMoveEpsilon));
 
-    if (ImGui::IsKeyReleased(ImGuiKey_LeftCtrl))
+    GLFWwindow* window = GetRuntimeWindow();
+    const bool ctrlPressed = window && (
+        glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS ||
+        glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS);
+
+    if (!ctrlPressed && mWasCtrlPressed)
     {
         mCrouched = !mCrouched;
         animationComponentPtr->SetBool("crouch", mCrouched);
     }
+
+    mWasCtrlPressed = ctrlPressed;
 }
 
 void QECharacterController::UpdateJumpAnimation(const float dt)
 {
+    if (!mCharacter)
+        return;
+
     const bool grounded = mCharacter->IsSupported();
 
     if (!grounded)
@@ -255,13 +295,20 @@ void QECharacterController::UpdateJumpAnimation(const float dt)
     else
         mVelocity.y = std::min(mVelocity.y, 0.0f);
 
-    if (grounded && ImGui::IsKeyPressed(ImGuiKey_Space))
+    GLFWwindow* window = GetRuntimeWindow();
+    const bool spacePressed = window && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
+
+    if (grounded && spacePressed && !mWasSpacePressed && animationComponentPtr)
     {
-        animationComponentPtr->SetTrigger("jump", true);
+        animationComponentPtr->SetBool("jump", true);
         pendingJump = true;
     }
+    else if (animationComponentPtr)
+    {
+        animationComponentPtr->SetBool("jump", false);
+    }
 
-    if (pendingJump && animationComponentPtr->GetCurrentState().Id == "Jumping")
+    if (pendingJump && animationComponentPtr && animationComponentPtr->GetCurrentState().Id == "Jump")
     {
         if (animationComponentPtr->animator->GetNormalizedTime() >= JumpAnimDelay)
         {
@@ -277,15 +324,25 @@ void QECharacterController::UpdateJumpAnimation(const float dt)
         }
     }
 
-    animationComponentPtr->SetBool("grounded", grounded);
+    if (animationComponentPtr)
+        animationComponentPtr->SetBool("grounded", grounded);
 
     const float fallThreshold = 0.05f;
     const bool falling = (!grounded) && (mVelocity.y < -fallThreshold);
-    animationComponentPtr->SetBool("falling", falling);
+    if (animationComponentPtr)
+        animationComponentPtr->SetBool("falling", falling);
+
+    mWasSpacePressed = spacePressed;
 }
 
 void QECharacterController::CheckBlockAnimationDisplacement()
 {
+        if (!animationComponentPtr)
+        {
+            blockAnimationDisplacement = false;
+            return;
+        }
+
         blockAnimationDisplacement =
             animationComponentPtr->GetCurrentState().Id == "Landing" ||
             animationComponentPtr->GetCurrentState().Id == "StandToCrouch" ||
@@ -331,16 +388,22 @@ void QECharacterController::QEUpdate()
     CheckBlockAnimationDisplacement();
     UpdateJumpAnimation(dt);
 
-    if (blockAnimationDisplacement) return;
+    glm::vec3 wishVel = ReadMoveInput();
+    if (blockAnimationDisplacement)
+    {
+        wishVel.x = 0.0f;
+        wishVel.z = 0.0f;
+    }
 
-    const glm::vec3 wishVel = ReadMoveInput();
     mVelocity.x = wishVel.x;
     mVelocity.z = wishVel.z;
 
     mCharacter->SetLinearVelocity(JPH::Vec3(mVelocity.x, mVelocity.y, mVelocity.z));
 
-    // Orientation
-    UpdateCharacterOrientation(wishVel, dt);
+    if (!blockAnimationDisplacement)
+    {
+        UpdateCharacterOrientation(wishVel, dt);
+    }
 
     JPH::TempAllocatorImpl temp_alloc(4 * 1024 * 1024);
     auto bp_filter = MakeBPFilter();

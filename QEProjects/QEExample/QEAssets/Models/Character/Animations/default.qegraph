@@ -1,0 +1,223 @@
+Version: 1
+EntryStateId: Idle
+States:
+  - Id: Walk
+    Loop: true
+    AnimationClip: Walking
+  - Id: Run
+    Loop: true
+    AnimationClip: Running
+  - Id: Jump
+    Loop: false
+    AnimationClip: Jumping
+  - Id: Fall
+    Loop: true
+    AnimationClip: Falling
+  - Id: Land
+    Loop: false
+    AnimationClip: Landing
+  - Id: IdleCrouch
+    Loop: true
+    AnimationClip: IdleCrouch
+  - Id: WalkCrouch
+    Loop: true
+    AnimationClip: WalkCrouch
+  - Id: Idle
+    Loop: true
+    AnimationClip: Idle
+Transitions:
+  - from: Idle
+    to: Run
+    priority: 20
+    hasExitTime: false
+    exitTimeNormalized: 1
+    blendDuration: 0.2
+    conditions:
+      - param: speed
+        op: Greater
+        value: 0.1
+      - param: sprint
+        op: Equal
+        value: 1
+  - from: Idle
+    to: Walk
+    priority: 20
+    hasExitTime: false
+    exitTimeNormalized: 1
+    blendDuration: 0.2
+    conditions:
+      - param: speed
+        op: Greater
+        value: 0.1
+      - param: sprint
+        op: Equal
+        value: 0
+  - from: Walk
+    to: Run
+    priority: 20
+    hasExitTime: true
+    exitTimeNormalized: 1
+    blendDuration: 0.2
+    conditions:
+      - param: sprint
+        op: Equal
+        value: 1
+      - param: speed
+        op: Greater
+        value: 0.1
+  - from: Run
+    to: Walk
+    priority: 20
+    hasExitTime: false
+    exitTimeNormalized: 1
+    blendDuration: 0.2
+    conditions:
+      - param: sprint
+        op: Equal
+        value: 0
+  - from: Run
+    to: Idle
+    priority: 30
+    hasExitTime: true
+    exitTimeNormalized: 0.2
+    blendDuration: 0.2
+    conditions:
+      - param: speed
+        op: Less
+        value: 0.05
+  - from: Walk
+    to: Idle
+    priority: 10
+    hasExitTime: true
+    exitTimeNormalized: 0.2
+    blendDuration: 0.2
+    conditions:
+      - param: speed
+        op: Less
+        value: 0.05
+  - from: Walk
+    to: Jump
+    priority: 10
+    hasExitTime: false
+    exitTimeNormalized: 1
+    blendDuration: 0.2
+    conditions:
+      - param: jump
+        op: Equal
+        value: 1
+  - from: Idle
+    to: Jump
+    priority: 10
+    hasExitTime: false
+    exitTimeNormalized: 1
+    blendDuration: 0.2
+    conditions:
+      - param: jump
+        op: Equal
+        value: 1
+  - from: Jump
+    to: Fall
+    priority: 20
+    hasExitTime: false
+    exitTimeNormalized: 1
+    blendDuration: 0.2
+    conditions:
+      - param: falling
+        op: Equal
+        value: 1
+  - from: Idle
+    to: Fall
+    priority: 30
+    hasExitTime: false
+    exitTimeNormalized: 1
+    blendDuration: 0.2
+    conditions:
+      - param: grounded
+        op: Equal
+        value: 0
+  - from: Walk
+    to: Fall
+    priority: 30
+    hasExitTime: false
+    exitTimeNormalized: 1
+    blendDuration: 0.2
+    conditions:
+      - param: grounded
+        op: Equal
+        value: 0
+  - from: Fall
+    to: Land
+    priority: 20
+    hasExitTime: false
+    exitTimeNormalized: 1
+    blendDuration: 0.2
+    conditions:
+      - param: grounded
+        op: Equal
+        value: 1
+  - from: Land
+    to: Idle
+    priority: 10
+    hasExitTime: true
+    exitTimeNormalized: 1
+    blendDuration: 0.2
+    conditions:
+      []
+  - from: Idle
+    to: IdleCrouch
+    priority: 10
+    hasExitTime: false
+    exitTimeNormalized: 1
+    blendDuration: 0.2
+    conditions:
+      - param: crouch
+        op: Equal
+        value: 1
+  - from: IdleCrouch
+    to: Idle
+    priority: 10
+    hasExitTime: false
+    exitTimeNormalized: 1
+    blendDuration: 0.2
+    conditions:
+      - param: crouch
+        op: Equal
+        value: 0
+  - from: IdleCrouch
+    to: WalkCrouch
+    priority: 10
+    hasExitTime: false
+    exitTimeNormalized: 1
+    blendDuration: 0.2
+    conditions:
+      - param: crouch
+        op: Equal
+        value: 1
+      - param: speed
+        op: Greater
+        value: 0.1
+  - from: WalkCrouch
+    to: IdleCrouch
+    priority: 10
+    hasExitTime: false
+    exitTimeNormalized: 1
+    blendDuration: 0.2
+    conditions:
+      - param: crouch
+        op: Equal
+        value: 1
+      - param: speed
+        op: Less
+        value: 0.05
+BoolParameters:
+  - sprint
+  - jump
+  - falling
+  - grounded
+  - crouch
+IntParameters:
+  []
+FloatParameters:
+  - speed
+TriggerParameters:
+  []
