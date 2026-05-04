@@ -16,5 +16,5 @@ layout(location = 0) out vec3 fragColor;
 void main() 
 {
     fragColor = inColor.rgb;
-    gl_Position = cameraData.viewproj * inPosition;
+    gl_Position = cameraData.viewProjection * inPosition;
 }

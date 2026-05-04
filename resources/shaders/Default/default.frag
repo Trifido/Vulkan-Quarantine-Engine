@@ -16,7 +16,6 @@
 #define BIN_WIDTH ( 1.0 / NUM_BINS )
 #define MAX_NUM_LIGHTS 64
 #define NUM_WORDS ( ( MAX_NUM_LIGHTS + 31 ) / 32 )
-#define FAR_PLANE 500.0
 
 layout(location = 0) in VS_OUT {
     vec3 FragPos;
@@ -67,7 +66,8 @@ layout(set = 0, binding = 7) uniform sampler2D texSampler[QE_NUM_TEX];
 
 layout(set = 0, binding = 8) uniform ScreenData 
 {
-    uvec2 pix_tile_size;
+    uvec2 tilePixelSize;
+    uvec2 tileCount;
 } screenData;
 
 layout(set = 1, binding = 0) uniform samplerCube QE_PointShadowCubemaps[10];
@@ -84,15 +84,22 @@ layout (set = 2, binding = 2) readonly buffer cascadeViewProjs
     mat4 QE_CascadeViewProj[];
 };
 
+layout(set = 3, binding = 0) uniform sampler2D QE_SpotShadowmaps[10];
+
+layout (set = 3, binding = 1) readonly buffer spotViewProjs
+{
+    mat4 QE_SpotViewProj[];
+};
+
 void main()
 {
     vec4 base = QE_GetBaseColorAlpha(uboMaterial, texSampler, fs_in.TexCoords);
-    //if (uboMaterial.AlphaMode == 1u && base.a < uboMaterial.AlphaCutoff)
-    //    discard;
+    if (QE_ShouldDiscardAlpha(uboMaterial, base))
+        discard;
         
     vec4 pos_camera_space = cameraData.view * vec4(fs_in.FragPos, 1.0);
-    float z_far = FAR_PLANE;
-    float z_near = 0.1;
+    float z_far = cameraData.cameraParams[1];
+    float z_near = cameraData.cameraParams[0];
     float linear_d = (-pos_camera_space.z - z_near) / (z_far - z_near);
     linear_d = clamp(linear_d, 0.0, 0.999999);
     int bin_index = int( linear_d / BIN_WIDTH );
@@ -102,9 +109,12 @@ void main()
     uint min_light_id = bin_value & 0xFFFF;
     uint max_light_id = ( bin_value >> 16 ) & 0xFFFF;
 
-    uvec2 tile = uvec2(gl_FragCoord.xy / screenData.pix_tile_size);
-    uint stride = uint( NUM_WORDS ) * screenData.pix_tile_size.x;
-    uint address = tile.y * stride + tile.x;
+    uvec2 tile = uvec2(gl_FragCoord.xy / vec2(screenData.tilePixelSize));
+    tile.x = min(tile.x, max(screenData.tileCount.x, 1u) - 1u);
+    tile.y = min(tile.y, max(screenData.tileCount.y, 1u) - 1u);
+
+    uint stride = uint(NUM_WORDS) * screenData.tileCount.x;
+    uint address = tile.y * stride + tile.x * uint(NUM_WORDS);
 
     vec3 fragPos = fs_in.FragPos;
     vec3 V = normalize(cameraData.position.xyz - fragPos);
@@ -118,7 +128,7 @@ void main()
     float coatRough = clamp(uboMaterial.ClearcoatRoughness, 0.03, 1.0);
 
     vec3 albedoColor = base.rgb;
-    float alpha = base.a * uboMaterial.Opacity;
+    float alpha = QE_GetEffectiveAlpha(uboMaterial, base);
 
     vec3 emissiveColor = QE_GetEmissiveColor(uboMaterial, texSampler, fs_in.TexCoords);
 
@@ -173,6 +183,7 @@ void main()
                         lights[gli], fragPos, N_base, N_coat, V,
                         albedoColor, metallic, roughness,
                         clearcoat, coatRough,
+                        uboMaterial.AlphaMode,
                         QE_DirectionalShadowmaps[nonuniformEXT(si)],
                         splits, viewDepth,
                         vp0, vp1, c0, c1
@@ -180,10 +191,15 @@ void main()
                 }
                 else
                 {
+                    uint si = lights[gli].idxShadowMap;
+
                     resultSpot += ComputeSpotLightPBR(
                         lights[gli], fragPos, N_base, N_coat, V,
                         albedoColor, metallic, roughness,
-                        clearcoat, coatRough
+                        clearcoat, coatRough,
+                        uboMaterial.AlphaMode,
+                        QE_SpotShadowmaps[nonuniformEXT(si)],
+                        QE_SpotViewProj[si]
                     );
                 }
             }

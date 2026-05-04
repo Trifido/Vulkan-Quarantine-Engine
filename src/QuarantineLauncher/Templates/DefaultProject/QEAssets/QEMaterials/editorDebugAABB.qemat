@@ -1,0 +1,65 @@
+Material:
+  Name: editorDebugAABB
+  FilePath: QEAssets/QEMaterials/editorDebugAABB.qemat
+  ShaderPath: shader_aabb_debug
+  RenderQueue: 2000
+  Scalars:
+    Opacity: 1
+    BumpScaling: 1
+    Shininess: 32
+    Reflectivity: 0
+    Shininess_Strength: 1
+    Refractivity: 1
+    Metallic: 0
+    Roughness: 1
+    AO: 1
+    Clearcoat: 0
+    ClearcoatRoughness: 0
+    AlphaCutoff: 0.5
+    AlphaMode: 0
+    DoubleSided: false
+  Colors:
+    Diffuse:
+      - 0
+      - 1
+      - 0
+      - 1
+    Ambient:
+      - 1
+      - 1
+      - 1
+      - 1
+    Specular:
+      - 1
+      - 1
+      - 1
+      - 1
+    Emissive:
+      - 0
+      - 0
+      - 0
+      - 1
+    Transparent:
+      - 0
+      - 0
+      - 0
+      - 0
+    Reflective:
+      - 0
+      - 0
+      - 0
+      - 0
+  TexturePacking:
+    TexMask: 0
+    MetallicChan: 2
+    RoughnessChan: 1
+    AOChan: 0
+  Textures:
+    Diffuse: NULL_TEXTURE
+    Normal: NULL_TEXTURE
+    Specular: NULL_TEXTURE
+    Emissive: NULL_TEXTURE
+    Height: NULL_TEXTURE
+    Metallic: NULL_TEXTURE
+    Roughness: NULL_TEXTURE
+    AO: NULL_TEXTURE

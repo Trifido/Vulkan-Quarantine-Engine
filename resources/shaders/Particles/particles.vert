@@ -86,7 +86,7 @@ void main()
     vec3 vertexCoord = center + (particleHalfUp * quad.y) - (particleHalfRight * quad.x);
 
     vec4 position = constants.model * vec4(vertexCoord, 1.0);
-    gl_Position = cameraData.viewproj * position;
+    gl_Position = cameraData.viewProjection * position;
     
     fragColor = pa.color;
     currentTexCoord = uv / vec2(uboParticleTexture.numCols, uboParticleTexture.numRows) + pa.currentOffset;

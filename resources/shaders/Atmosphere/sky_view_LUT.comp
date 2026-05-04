@@ -4,8 +4,8 @@ layout(local_size_x = 16, local_size_y = 16) in;
 
 #include "../Includes/QECommon.glsl"
 
-layout(binding = 0, rgba32f) uniform image2D InputImage;
-layout(binding = 1, rgba32f) uniform image2D InputImage_2;
+layout(binding = 0) uniform sampler2D InputImage;     // TLUT
+layout(binding = 1) uniform sampler2D InputImage_2;   // MSLUT
 layout(binding = 2, rgba32f) uniform image2D OutputImage;
 
 layout(set = 0, binding = 3, std140) uniform UniformCamera
@@ -13,250 +13,188 @@ layout(set = 0, binding = 3, std140) uniform UniformCamera
     QECameraData cameraData;
 };
 
-layout(set = 0, binding = 4) uniform SunUniform
+layout(set = 0, binding = 4, std140) uniform SunUniform
 {
-	vec3 direction;
+    vec3 direction;
     float intensity;
-}  sunData;
+} sunData;
 
-// Math resources
-const float PI = 3.14159265358;
-
-float safeacos(const float x)
+layout(set = 0, binding = 5, std140) uniform AtmosphereUniform
 {
-    return acos(clamp(x, -1.0, 1.0));
-}
+    vec4 RayleighScattering_Height;
+    vec4 MieScattering_Height;
+    vec4 OzoneAbsorption_Density;
+    vec4 SunColor_Intensity;
+    vec4 Planet_Atmosphere_G_Exposure;
+    vec4 Sky_Horizon_Multi_SunDisk;
+    vec4 SunDiskIntensity_Glow_Padding;
+} atmosphereData;
 
-// From https://gamedev.stackexchange.com/questions/96459/fast-ray-sphere-collision-code.
-float rayIntersectSphere(vec3 ro, vec3 rd, float rad) {
-    float b = dot(ro, rd);
-    float c = dot(ro, ro) - rad*rad;
-    if (c > 0.0f && b > 0.0) return -1.0;
-    float discr = b*b - c;
-    if (discr < 0.0) return -1.0;
-    // Special case: inside sphere, use far discriminant
-    if (discr > b*b) return (-b + sqrt(discr));
-    return -b - sqrt(discr);
-}
+#include "../Includes/Atmosphere/QEAtmosphereCommon.glsl"
 
-// From https://www.shadertoy.com/view/wlBXWK
-vec2 rayIntersectSphere2D(
-    vec3 start, // starting position of the ray
-    vec3 dir, // the direction of the ray
-    float radius // and the sphere radius
-) {
-    // ray-sphere intersection that assumes
-    // the sphere is centered at the origin.
-    // No intersection when result.x > result.y
-    float a = dot(dir, dir);
-    float b = 2.0 * dot(dir, start);
-    float c = dot(start, start) - (radius * radius);
-    float d = (b*b) - 4.0*a*c;
-    if (d < 0.0) return vec2(1e5,-1e5);
-    return vec2(
-        (-b - sqrt(d))/(2.0*a),
-        (-b + sqrt(d))/(2.0*a)
-    );
-}
-
-// Unidades en Megametros (KM)
 const float numScatteringSteps = 32.0;
-const float PlanetRadius = 6.360;
-const float AtmosphereRadius = 6.460;
-
-// Coeficientes de dispersión y absorción por KM
-// Rayleight & Mie parameters
-const vec3 rayleighScatteringBase = vec3(5.802, 13.558, 33.1);
-const float mieScatteringBase = 3.996;
-const float mieExtinctionBase = 4.4;
-const float rayleighAbsorptionBase = 0.0;
-const vec3 ozoneAbsorptionBase = vec3(0.650, 1.881, 0.085);
-
-float getMiePhase(float cosTheta)
-{
-    const float g = 0.8;
-    const float scale = 3.0 / (8.0 * PI);
-    
-    float num = (1.0 - g * g) * (1.0 + cosTheta * cosTheta);
-    float denom = (2.0 + g * g) * pow((1.0 + g * g - 2.0 * g * cosTheta), 1.5);
-    
-    return scale * num / denom;
-}
-
-float getRayleighPhase(float cosTheta)
-{
-    const float k = 3.0 / (16.0 * PI);
-    return k * (1.0 + cosTheta * cosTheta);
-}
-
-void getScatteringValues(vec3 pos, 
-                         out vec3 rayleighScattering, 
-                         out float mieScattering,
-                         out vec3 extinction) 
-{
-    float altitudeKM = (length(pos)-PlanetRadius)*1000.0;
-    float rayleighDensity = exp(-altitudeKM / 8.0);
-    float mieDensity = exp(-altitudeKM / 1.2);
-    
-    rayleighScattering = rayleighScatteringBase * rayleighDensity;
-    float rayleighAbsorption = rayleighAbsorptionBase * rayleighDensity;
-    
-    mieScattering = mieScatteringBase * mieDensity;
-    float mieAbsorption = mieExtinctionBase * mieDensity;
-    
-    vec3 ozoneAbsorption = ozoneAbsorptionBase * max(0.0, 1.0 - abs(altitudeKM - 25.0) / 15.0);
-    
-    extinction = rayleighScattering + rayleighAbsorption + mieScattering + mieAbsorption + ozoneAbsorption;
-}
 
 vec3 getValFromTLUT(vec3 pos, vec3 sunDir)
 {
     float height = length(pos);
-    vec3 up = pos / height;
+    vec3 up = pos / max(height, 1e-6);
     float sunCosZenithAngle = dot(sunDir, up);
 
-    vec2 tLUTRes = vec2(imageSize(InputImage));
-    vec2 uv = vec2(tLUTRes.x * clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0),
-                   tLUTRes.y * max(0.0, min(1.0, (height - PlanetRadius) / (AtmosphereRadius - PlanetRadius))));
+    float planetRadius = GetPlanetRadius();
+    float atmosphereRadius = GetAtmosphereRadius();
 
-    return imageLoad(InputImage, ivec2(uv)).rgb;
+    vec2 uv = vec2(
+        clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0),
+        clamp((height - planetRadius) / max(atmosphereRadius - planetRadius, 1e-6), 0.0, 1.0)
+    );
+
+    return texture(InputImage, uv).rgb;
 }
 
 vec3 getValFromMultiScattLUT(vec3 pos, vec3 sunDir)
 {
     float height = length(pos);
-    vec3 up = pos / height;
-	float sunCosZenithAngle = dot(sunDir, up);
+    vec3 up = pos / max(height, 1e-6);
+    float sunCosZenithAngle = dot(sunDir, up);
 
-    vec2 msLUTRes = vec2(imageSize(InputImage_2));
-    vec2 uv = vec2(msLUTRes.x*clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0),
-                   msLUTRes.y*max(0.0, min(1.0, (height - PlanetRadius) / (AtmosphereRadius - PlanetRadius))));
-    
-    return imageLoad(InputImage_2, ivec2(uv)).rgb;
+    float planetRadius = GetPlanetRadius();
+    float atmosphereRadius = GetAtmosphereRadius();
+
+    vec2 uv = vec2(
+        clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0),
+        clamp((height - planetRadius) / max(atmosphereRadius - planetRadius, 1e-6), 0.0, 1.0)
+    );
+
+    return texture(InputImage_2, uv).rgb;
 }
 
-vec3 raymarchScattering(    vec3 viewPos,
-                            vec3 rayDir,
-                            vec3 sunDir,
-                            float numSteps) 
-{              
-    vec2 atmos_intercept = rayIntersectSphere2D(viewPos, rayDir, AtmosphereRadius);
-    float terra_intercept = rayIntersectSphere(viewPos, rayDir, PlanetRadius);
+vec3 raymarchScattering(vec3 viewPos, vec3 rayDir, vec3 sunDir, float numSteps)
+{
+    float atmosphereRadius = GetAtmosphereRadius();
+    float planetRadius = GetPlanetRadius();
 
-    float mindist, maxdist;
+    vec2 atmosIntercept = rayIntersectSphere2D(viewPos, rayDir, atmosphereRadius);
+    float groundIntercept = rayIntersectSphere(viewPos, rayDir, planetRadius);
 
-    if (atmos_intercept.x < atmos_intercept.y){
-        // there is an atmosphere intercept!
-        // start at the closest atmosphere intercept
-        // trace the distance between the closest and farthest intercept
-        mindist = atmos_intercept.x > 0.0 ? atmos_intercept.x : 0.0;
-		maxdist = atmos_intercept.y > 0.0 ? atmos_intercept.y : 0.0;
-    } else {
-        // no atmosphere intercept means no atmosphere!
+    float minDist;
+    float maxDist;
+
+    if (atmosIntercept.x < atmosIntercept.y)
+    {
+        minDist = atmosIntercept.x > 0.0 ? atmosIntercept.x : 0.0;
+        maxDist = atmosIntercept.y > 0.0 ? atmosIntercept.y : 0.0;
+    }
+    else
+    {
         return vec3(0.0);
     }
 
-    // if in the atmosphere start at the camera
-    if (length(viewPos) < AtmosphereRadius) mindist=0.0;
+    if (length(viewPos) < atmosphereRadius)
+        minDist = 0.0;
 
+    if (groundIntercept > 0.0)
+        maxDist = groundIntercept;
 
-    // if there's a terra intercept that's closer than the atmosphere one,
-    // use that instead!
-    if (terra_intercept > 0.0){ // confirm valid intercepts			
-        maxdist = terra_intercept;
-    }
+    vec3 pos = viewPos + minDist * rayDir;
 
-    // start marching at the min dist
-    vec3 pos = viewPos + mindist * rayDir;
-                              
-    float cosTheta = dot(rayDir, sunDir);
-
-	float miePhaseValue = getMiePhase(cosTheta);
-	float rayleighPhaseValue = getRayleighPhase(-cosTheta);
+    float cosTheta = clamp(dot(rayDir, sunDir), -0.9995, 0.9995);
+    float miePhaseValue = getMiePhase(cosTheta);
+    float rayleighPhaseValue = getRayleighPhase(-cosTheta);
 
     vec3 lum = vec3(0.0);
     vec3 transmittance = vec3(1.0);
     float t = 0.0;
-    for (float i = 0.0; i < numSteps; i += 1.0) {
-        float newT = ((i + 0.3)/numSteps)*(maxdist-mindist);
+
+    vec3 sunRadiance = GetSunColor() * GetSunIntensityMultiplier() * sunData.intensity;
+
+    for (float i = 0.0; i < numSteps; i += 1.0)
+    {
+        float newT = ((i + 0.3) / numSteps) * (maxDist - minDist);
         float dt = newT - t;
         t = newT;
 
-        vec3 newPos = pos + t*rayDir;
+        vec3 newPos = pos + t * rayDir;
 
-        vec3 rayleighScattering, extinction;
+        vec3 rayleighScattering;
+        vec3 extinction;
         float mieScattering;
-        
         getScatteringValues(newPos, rayleighScattering, mieScattering, extinction);
 
-        vec3 sampleTransmittance = exp(-dt*extinction);
+        vec3 sampleTransmittance = exp(-dt * extinction);
 
-        vec3 sunTransmittance = getValFromTLUT(newPos, sunDir);
-        vec3 psiMS = 0.0*getValFromMultiScattLUT(newPos, sunDir);
+        vec3 sunTransmittance = getValFromTLUT(newPos, sunDir) * sunRadiance;
+        vec3 psiMS = getValFromMultiScattLUT(newPos, sunDir) * GetMultiScatteringFactor();
 
-        vec3 rayleighInScattering = rayleighScattering*(rayleighPhaseValue*sunTransmittance + psiMS);
-        vec3 mieInScattering = mieScattering*(miePhaseValue*sunTransmittance + psiMS);
-        vec3 inScattering = (rayleighInScattering + mieInScattering);
+        vec3 rayleighInScattering = rayleighScattering * (rayleighPhaseValue * sunTransmittance + psiMS);
+        vec3 mieInScattering = vec3(mieScattering) * (miePhaseValue * sunTransmittance + psiMS);
+        vec3 inScattering = rayleighInScattering + mieInScattering;
 
-        // Integrated scattering within path segment.
-        vec3 scatteringIntegral = (inScattering - inScattering * sampleTransmittance) / extinction;
+        vec3 safeExtinction = max(extinction, vec3(1e-6));
+        vec3 scatteringIntegral = (inScattering - inScattering * sampleTransmittance) / safeExtinction;
 
-        lum += scatteringIntegral*transmittance;
-
+        lum += scatteringIntegral * transmittance;
         transmittance *= sampleTransmittance;
     }
+
     return lum;
 }
 
 void main()
 {
-    vec2 dimensions = imageSize(OutputImage);
-    
-    if (gl_GlobalInvocationID.x >= (dimensions.x+1.5) || gl_GlobalInvocationID.y >= (dimensions.y+1.5))
-    {
-        return;
-    }
-    
-    ivec2 resolution = imageSize(OutputImage);
+    vec2 dimensions = vec2(imageSize(OutputImage));
 
-    float u = clamp(gl_GlobalInvocationID.x, 0.0, dimensions.x-1.0)/dimensions.x;
-    float v = clamp(gl_GlobalInvocationID.y, 0.0, dimensions.y-1.0)/dimensions.y;
+    if (gl_GlobalInvocationID.x >= uint(dimensions.x) || gl_GlobalInvocationID.y >= uint(dimensions.y))
+        return;
+
+    float u = (float(gl_GlobalInvocationID.x) + 0.5) / dimensions.x;
+    float v = (float(gl_GlobalInvocationID.y) + 0.5) / dimensions.y;
 
     vec2 uv = vec2(u, v);
 
     float azimuthAngle = (uv.x - 0.5) * 2.0 * PI;
-    // Non-linear mapping of altitude. See Section 5.3 of the paper.
+
     float adjV;
     if (uv.y > 0.5)
     {
-		float coord = 1.0 - 2.0 * uv.y;
-		adjV = -coord * coord;
-	} 
+        float coord = 1.0 - 2.0 * uv.y;
+        adjV = -coord * coord;
+    }
     else
     {
-		float coord = uv.y * 2.0 - 1.0;
-		adjV = coord * coord;
-	}
+        float coord = uv.y * 2.0 - 1.0;
+        adjV = coord * coord;
+    }
+
+    float planetRadius = GetPlanetRadius();
 
     vec3 viewPos = cameraData.position.xyz * 1e-6;
-    viewPos.y += PlanetRadius;
-    viewPos.y = max(PlanetRadius + 1e-6, viewPos.y);
+    viewPos.y += planetRadius;
+    viewPos.y = max(planetRadius + 1e-6, viewPos.y);
 
     float height = length(viewPos);
-    
-    float horizonAngle = safeacos(sqrt(height * height - PlanetRadius * PlanetRadius) / height) - 0.5 * PI;
+    float horizonAngle = safeacos(sqrt(max(height * height - planetRadius * planetRadius, 0.0)) / max(height, 1e-6)) - 0.5 * PI;
     float altitudeAngle = adjV * 0.5 * PI - horizonAngle;
     float cosAltitude = cos(altitudeAngle);
 
-    vec3 rayDir = vec3(cosAltitude * sin(azimuthAngle), sin(altitudeAngle), -cosAltitude * cos(azimuthAngle));
+    vec3 rayDir = normalize(vec3(
+        cosAltitude * sin(azimuthAngle),
+        sin(altitudeAngle),
+        -cosAltitude * cos(azimuthAngle)
+    ));
 
-    vec3 sunDir = normalize(sunData.direction);
+    vec3 sunDirWorld = normalize(sunData.direction);
 
-    vec3 up = viewPos / height;
-    float sunAltitude = (0.5 * PI) - acos(dot(sunDir, -up));
-    vec3 resultSunDir = vec3(0.0, sin(sunAltitude), -cos(sunAltitude));
-    
-    vec3 lum = raymarchScattering(viewPos, rayDir, resultSunDir, numScatteringSteps);
+    vec3 up = viewPos / max(height, 1e-6);
+    vec3 refAxis = (abs(up.y) < 0.999) ? vec3(0.0, 1.0, 0.0) : vec3(0.0, 0.0, 1.0);
+    vec3 right = normalize(cross(up, refAxis));
+    vec3 forward = normalize(cross(right, up));
 
+    vec3 localSunDir = normalize(vec3(
+        dot(sunDirWorld, right),
+        -dot(sunDirWorld, up),
+        dot(sunDirWorld, -forward)
+    ));
+
+    vec3 lum = raymarchScattering(viewPos, rayDir, localSunDir, numScatteringSteps);
     imageStore(OutputImage, ivec2(gl_GlobalInvocationID.xy), vec4(lum, 1.0));
 }

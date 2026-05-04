@@ -68,6 +68,8 @@ vec3 ComputeDirectionalLight(
         splitsEnd,
         viewDepth,
         fragPosWorld,
+        N,
+        L,
         vp0,
         vp1,
         c0,

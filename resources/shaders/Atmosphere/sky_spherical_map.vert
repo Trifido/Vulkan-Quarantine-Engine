@@ -22,5 +22,5 @@ void main() {
     QE_out.UVW = inPosition.xyz;
 
     mat4 viewMat = mat4(mat3(cameraData.view));
-    gl_Position = cameraData.proj * viewMat * inPosition;
+    gl_Position = cameraData.projection * viewMat * inPosition;
 }

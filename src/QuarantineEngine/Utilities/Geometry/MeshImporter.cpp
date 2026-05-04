@@ -1,0 +1,1180 @@
+#include "MeshImporter.h"
+#include <fstream>
+#include <memory>
+#include <assimp/Exporter.hpp>
+#include <assimp/postprocess.h>
+#include <assimp/config.h>
+#include <unordered_set>
+#include "MaterialData.h"
+#include "Material.h"
+#include <SanitizerHelper.h>
+#include <QEMaterialYamlHelper.h>
+#include <QEProjectManager.h>
+#include <Helpers/ScopedTimer.h>
+#include <QETextureImporter.h>
+
+static bool ImportMaterialTextureIfNeeded(
+    std::string& sourcePath,
+    std::string& importedPath,
+    TEXTURE_TYPE semantic,
+    QEColorSpace colorSpace)
+{
+    if (sourcePath.empty() || sourcePath == "NULL_TEXTURE")
+        return false;
+
+    if (!importedPath.empty() && std::filesystem::exists(importedPath))
+        return false;
+
+    QETextureImportSettings settings{};
+    settings.semantic = semantic;
+    settings.colorSpace = colorSpace;
+    settings.generateMipmaps = true;
+    settings.overwrite = false;
+
+    std::string outPath = QETextureImporter::BuildImportedPath(sourcePath);
+    QETextureImportResult result = QETextureImporter::ImportToKtx2(sourcePath, outPath, settings);
+
+    if (result.success)
+    {
+        importedPath = result.importedPath;
+        return true;
+    }
+    else
+    {
+        QE_LOG_ERROR_CAT_F("TextureImporter", "{}", result.error);
+        importedPath.clear();
+        return false;
+    }
+}
+
+void MeshImporter::RecreateNormals(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices)
+{
+    for (size_t v = 0; v < vertices.size(); v++)
+    {
+        vertices.at(v).Normal = glm::vec4(0.0f);
+    }
+
+    for (size_t idTr = 0; idTr < indices.size(); idTr += 3)
+    {
+        size_t idx0 = indices[idTr];
+        size_t idx1 = indices[idTr + 1];
+        size_t idx2 = indices[idTr + 2];
+
+        glm::vec3 pos0 = glm::vec3(vertices[idx0].Position);
+        glm::vec3 pos1 = glm::vec3(vertices[idx1].Position);
+        glm::vec3 pos2 = glm::vec3(vertices[idx2].Position);
+
+        glm::vec3 edge1 = pos1 - pos0;
+        glm::vec3 edge2 = pos2 - pos0;
+        glm::vec3 crossProduct = glm::cross(edge1, edge2);
+        glm::vec4 crossProduct4 = glm::vec4(crossProduct.x, crossProduct.y, crossProduct.z, 0.0f);
+
+        vertices[idx0].Normal += crossProduct4;
+        vertices[idx1].Normal += crossProduct4;
+        vertices[idx2].Normal += crossProduct4;
+    }
+
+    for (size_t v = 0; v < vertices.size(); v++)
+    {
+        vertices.at(v).Normal = glm::normalize(vertices.at(v).Normal);
+    }
+}
+
+void MeshImporter::SetVertexBoneDataToDefault(AnimationVertexData& animData)
+{
+    for (int i = 0; i < 4; i++)
+    {
+        animData.boneIDs[i] = -1;
+        animData.boneWeights[i] = 0.0f;
+    }
+}
+
+void MeshImporter::SetVertexBoneData(AnimationVertexData& animData, int boneID, float weight)
+{
+    if (weight == 0.0f)
+    {
+        return;
+    }
+
+    for (int i = 0; i < 4; ++i)
+    {
+        if (animData.boneWeights[i] == 0.0f)
+        {
+            animData.boneWeights[i] = weight;
+            animData.boneIDs[i] = boneID;
+
+            if (i == 4)
+            {
+                float sum = animData.boneWeights[0] + animData.boneWeights[1] + animData.boneWeights[2] + animData.boneWeights[3];
+
+                if (sum < 1.0f)
+                {
+                    float rest = 1.0f - sum;
+                    rest = rest / 4.0f;
+
+                    if (rest > 0.0f)
+                    {
+                        animData.boneWeights[0] += rest;
+                        animData.boneWeights[1] += rest;
+                        animData.boneWeights[2] += rest;
+                        animData.boneWeights[3] += rest;
+                    }
+                }
+            }
+            return;
+        }
+    }
+}
+
+void MeshImporter::ExtractBoneWeightForVertices(QEMeshData& data, aiMesh* mesh, std::unordered_map<std::string, BoneInfo>& m_BoneInfoMap)
+{
+    for (unsigned int boneIndex = 0; boneIndex < mesh->mNumBones; boneIndex++)
+    {
+        int boneID = -1;
+        std::string boneName = mesh->mBones[boneIndex]->mName.C_Str();
+
+        if (m_BoneInfoMap.find(boneName) == m_BoneInfoMap.end())
+        {
+            glm::mat4 offset = ConvertMatrixToGLMFormat(mesh->mBones[boneIndex]->mOffsetMatrix);
+            m_BoneInfoMap[boneName] = { static_cast<uint32_t>(m_BoneInfoMap.size()), offset };
+            boneID = (int)m_BoneInfoMap.size() - 1;
+        }
+        else
+        {
+            boneID = m_BoneInfoMap[boneName].id;
+        }
+        assert(boneID != -1);
+        auto weights = mesh->mBones[boneIndex]->mWeights;
+        int numWeights = mesh->mBones[boneIndex]->mNumWeights;
+
+        if (weights != NULL)
+        {
+            for (int weightIndex = 0; weightIndex < numWeights; weightIndex++)
+            {
+                int vertexId = weights[weightIndex].mVertexId;
+                float weight = weights[weightIndex].mWeight;
+
+                assert(vertexId <= data.Vertices.size());
+
+                SetVertexBoneData(data.AnimationVertexData[vertexId], boneID, weight);
+            }
+        }
+    }
+}
+
+void MeshImporter::RemapGeometry(QEMeshData& data)
+{
+    std::vector<unsigned int> remap(data.NumIndices);
+
+    std::vector<uint32_t> resultIndices;
+    std::vector<Vertex> resultVertices;
+
+    size_t total_vertices = meshopt_generateVertexRemap(&remap[0], &data.Indices[0], data.NumIndices, &data.Vertices[0], data.NumIndices, sizeof(Vertex));
+
+    data.NumVertices = total_vertices;
+    resultIndices.resize(data.NumIndices);
+    meshopt_remapIndexBuffer(&resultIndices[0], &data.Indices[0], data.NumIndices, &remap[0]);
+
+    resultVertices.resize(total_vertices);
+    meshopt_remapVertexBuffer(&resultVertices[0], &data.Vertices[0], data.NumIndices, sizeof(Vertex), &remap[0]);
+
+    data.Indices = resultIndices;
+    data.Vertices = resultVertices;
+}
+
+void MeshImporter::ComputeAABB(const glm::vec4& coord, std::pair<glm::vec3, glm::vec3>& AABBData)
+{
+    if (AABBData.first.x > coord.x)
+        AABBData.first.x = coord.x;
+    if (AABBData.first.y > coord.y)
+        AABBData.first.y = coord.y;
+    if (AABBData.first.z > coord.z)
+        AABBData.first.z = coord.z;
+
+    if (AABBData.second.x < coord.x)
+        AABBData.second.x = coord.x;
+    if (AABBData.second.y < coord.y)
+        AABBData.second.y = coord.y;
+    if (AABBData.second.z < coord.z)
+        AABBData.second.z = coord.z;
+}
+
+void MeshImporter::RecreateTangents(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices)
+{
+    for (size_t idTr = 0; idTr < indices.size(); idTr += 3)
+    {
+        size_t idx0 = indices[idTr];
+        size_t idx1 = indices[idTr + 1];
+        size_t idx2 = indices[idTr + 2];
+
+
+        glm::vec3 pos0 = glm::vec3(vertices[idx0].Position);
+        glm::vec3 pos1 = glm::vec3(vertices[idx1].Position);
+        glm::vec3 pos2 = glm::vec3(vertices[idx2].Position);
+
+
+        glm::vec3 edge1 = pos1 - pos0;
+        glm::vec3 edge2 = pos2 - pos0;
+        glm::vec2 deltaUV1 = vertices[idx1].UV - vertices[idx0].UV;
+        glm::vec2 deltaUV2 = vertices[idx2].UV - vertices[idx0].UV;
+
+        float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+        glm::vec4 tangent;
+
+        tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+        tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+        tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+        tangent.w = 0.0f;
+        tangent = glm::normalize(tangent);
+
+        vertices[idx0].Tangent = tangent;
+        vertices[idx1].Tangent = tangent;
+        vertices[idx2].Tangent = tangent;
+    }
+}
+
+QEMesh MeshImporter::LoadMesh(std::string path)
+{
+    fs::path filepath = fs::path(path);
+    std::string name = filepath.stem().string();
+    fs::path matpath = filepath.parent_path().parent_path() / "Materials";
+
+    QEMesh mesh;
+    mesh.Name = name;
+    mesh.FilePath = path;
+
+    Assimp::Importer importer;
+    (void)importer.SetPropertyInteger(AI_CONFIG_PP_LBW_MAX_WEIGHTS, 4);
+    auto scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_LimitBoneWeights);
+
+    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+    {
+        fprintf(stderr, "ERROR::ASSIMP::%s", importer.GetErrorString());
+        return mesh;
+    }
+
+    bool hasAnimation = scene->HasAnimations();
+
+    if (!hasAnimation)
+    {
+        scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices | aiProcess_PopulateArmatureData);
+    }
+
+    glm::vec3 aabbMax = glm::vec3(-std::numeric_limits<float>::infinity());
+    glm::vec3 aabbMin = glm::vec3(std::numeric_limits<float>::infinity());
+
+    glm::mat4 parentTransform = glm::mat4(1.0f);
+    ProcessNode(scene->mRootNode, scene, parentTransform, mesh, matpath);
+
+    mesh.MaterialRel.resize(mesh.MeshData.size());
+    for (int i = 0; i < mesh.MeshData.size(); i++)
+    {
+        mesh.MaterialRel[i] = mesh.MeshData[i].MaterialID;
+    }
+
+    return mesh;
+}
+
+void MeshImporter::ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 parentTransform, QEMesh& mesh, const fs::path& matpath)
+{
+    glm::mat4 localTransform = GetGLMMatrix(node->mTransformation);
+    glm::mat4 currentTransform = glm::identity<glm::mat4>();
+
+    // process all the node's meshes (if any)
+    for (unsigned int i = 0; i < node->mNumMeshes; i++)
+    {
+        PROFILE_SCOPE("ProcessMesh");
+        QEMeshData result = ProcessMesh(scene->mMeshes[node->mMeshes[i]], scene, mesh.BonesInfoMap);
+        result.ModelTransform = currentTransform;
+
+        ProcessMaterial(scene->mMeshes[node->mMeshes[i]], scene, result, matpath);
+
+        mesh.MeshData.push_back(result);
+    }
+
+    // then do the same for each of its children
+    for (unsigned int i = 0; i < node->mNumChildren; i++)
+    {
+        ProcessNode(node->mChildren[i], scene, currentTransform, mesh, matpath);
+    }
+}
+
+QEMeshData MeshImporter::ProcessMesh(aiMesh* mesh, const aiScene* scene, std::unordered_map<std::string, BoneInfo>& m_BoneInfoMap)
+{
+    QEMeshData data = {};
+
+    bool existTangent = mesh->HasTangentsAndBitangents();
+    bool existNormal = mesh->HasNormals();
+
+    std::vector<CustomTexture> textures;
+
+    data.NumVertices = mesh->mNumVertices;
+    data.NumFaces = mesh->mNumFaces;
+    data.NumIndices = mesh->mNumFaces * 3;
+
+    data.Vertices.resize(data.NumVertices);
+    data.AnimationVertexData.resize(data.NumVertices);
+    data.HasAnimation = scene->HasAnimations();
+
+    for (unsigned int i = 0; i < data.NumVertices; i++)
+    {
+        Vertex vertex;
+        AnimationVertexData animData;
+
+        SetVertexBoneDataToDefault(animData);
+
+        glm::vec4 vector;
+        vector.x = mesh->mVertices[i].x;
+        vector.y = mesh->mVertices[i].y;
+        vector.z = mesh->mVertices[i].z;
+        vector.w = 1.0f;
+        vertex.Position = vector;
+
+        ComputeAABB(vertex.Position, data.BoundingBox);
+
+        if (existNormal)
+        {
+            vector.x = mesh->mNormals[i].x;
+            vector.y = mesh->mNormals[i].y;
+            vector.z = mesh->mNormals[i].z;
+            vector.w = 0.0f;
+            vertex.Normal = vector;
+        }
+
+        if (existTangent)
+        {
+            vector.x = mesh->mTangents[i].x;
+            vector.y = mesh->mTangents[i].y;
+            vector.z = mesh->mTangents[i].z;
+            vector.w = 0.0f;
+            vertex.Tangent = vector;
+        }
+
+        if (mesh->mTextureCoords[0])
+        {
+            glm::vec2 vec;
+            vec.x = mesh->mTextureCoords[0][i].x;
+            vec.y = mesh->mTextureCoords[0][i].y;
+            vertex.UV = vec;
+        }
+        else
+        {
+            vertex.UV = glm::vec2(0.0f, 0.0f);
+        }
+
+        data.Vertices.at(i) = vertex;
+        data.AnimationVertexData.at(i) = animData;
+    }
+
+    // process indices
+    data.NumIndices = mesh->mNumFaces * mesh->mFaces[0].mNumIndices;
+    data.Indices.reserve(data.NumIndices);
+
+    for (unsigned int i = 0; i < mesh->mNumFaces; i++)
+    {
+        aiFace face = mesh->mFaces[i];
+        for (unsigned int j = 0; j < face.mNumIndices; j++)
+        {
+            data.Indices.push_back(face.mIndices[j]);
+        }
+    }
+
+    if (!existNormal)
+    {
+        RecreateNormals(data.Vertices, data.Indices);
+    }
+
+    if (!existTangent)
+    {
+        RecreateTangents(data.Vertices, data.Indices);
+    }
+
+    ExtractBoneWeightForVertices(data, mesh, m_BoneInfoMap);
+
+    RemapGeometry(data);
+
+    return data;
+}
+
+QEMeshData MeshImporter::LoadRawMesh(float rawData[], unsigned int numData, unsigned int offset)
+{
+    QEMeshData data = {};
+    unsigned int NUMCOMP = offset;
+    for (unsigned int i = 0; i < numData; i++)
+    {
+        unsigned int index = i * NUMCOMP;
+
+        Vertex vertex;
+        // process vertex positions, normals and texture coordinates
+        glm::vec4 vector;
+        vector.x = rawData[index];
+        vector.y = rawData[index + 1];
+        vector.z = rawData[index + 2];
+        vector.w = 1.0f;
+        vertex.Position = vector;
+
+        vector.x = rawData[index + 3];
+        vector.y = rawData[index + 4];
+        vector.z = rawData[index + 5];
+        vector.w = 0.0f;
+        vertex.Normal = vector;
+
+        glm::vec2 vec;
+        vec.x = rawData[index + 6];
+        vec.y = rawData[index + 7];
+        vertex.UV = vec;
+
+        data.Vertices.push_back(vertex);
+        data.Indices.push_back(i);
+    }
+
+    RecreateTangents(data.Vertices, data.Indices);
+
+    return data;
+}
+
+glm::mat4 MeshImporter::GetGLMMatrix(aiMatrix4x4 transform)
+{
+    glm::mat4 result;
+
+    result[0][0] = transform.a1;
+    result[0][1] = transform.a2;
+    result[0][2] = transform.a3;
+    result[0][3] = transform.a4;
+
+    result[1][0] = transform.b1;
+    result[1][1] = transform.b2;
+    result[1][2] = transform.b3;
+    result[1][3] = transform.b4;
+
+    result[2][0] = transform.c1;
+    result[2][1] = transform.c2;
+    result[2][2] = transform.c3;
+    result[2][3] = transform.c4;
+
+    result[3][0] = transform.d1;
+    result[3][1] = transform.d2;
+    result[3][2] = transform.d3;
+    result[3][3] = transform.d4;
+
+    return result;
+}
+
+void MeshImporter::ProcessMaterial(aiMesh* mesh, const aiScene* scene, QEMeshData& meshData, const fs::path& matpath)
+{
+    if (mesh->mMaterialIndex < 0)
+        return;
+
+    aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+    if (material == nullptr)
+        return;
+
+    aiReturn ret;
+    aiString rawName;
+    ret = material->Get(AI_MATKEY_NAME, rawName);
+    if (ret != AI_SUCCESS)
+        rawName = "";
+
+    std::string materialName = rawName.C_Str();
+    std::shared_ptr<QEMaterial> mat_ptr;
+
+    auto materialManager = MaterialManager::getInstance();
+
+    if (!materialManager->Exists(materialName))
+    {
+        fs::path materialPath = matpath / (materialName + ".qemat");
+
+        MaterialDto matDto;
+        if (!QEMaterialYamlHelper::ReadMaterialFile(materialPath, matDto))
+        {
+            QE_LOG_ERROR_CAT_F("MeshImporter", "Error opening the material {}", materialPath.string());
+        }
+        else
+        {
+            auto shaderManager = ShaderManager::getInstance();
+            auto shader = shaderManager->GetShader(matDto.ShaderPath);
+            if (shader == nullptr)
+            {
+                QE_LOG_ERROR_CAT_F("MeshImporter", "Shader not found for material {}", materialName);
+                return;
+            }
+
+            matDto.UpdateTexturePaths(matpath);
+
+            mat_ptr = std::make_shared<QEMaterial>(shader, matDto);
+            materialManager->AddMaterial(mat_ptr);
+        }
+    }
+    else
+    {
+        mat_ptr = materialManager->GetMaterial(materialName);
+    }
+
+    meshData.MaterialID = materialName;
+    material = nullptr;
+}
+std::string MeshImporter::GetTextureTypeName(aiTextureType type)
+{
+    switch (type) {
+    case aiTextureType_DIFFUSE:
+    case aiTextureType_BASE_COLOR:     return "Diffuse";
+    case aiTextureType_SPECULAR:       return "Specular";
+    case aiTextureType_AMBIENT:        return "Ambient";
+    case aiTextureType_EMISSIVE:
+    case aiTextureType_EMISSION_COLOR: return "Emissive";
+    case aiTextureType_HEIGHT:         return "Height";
+    case aiTextureType_NORMALS:
+    case aiTextureType_NORMAL_CAMERA:  return "Normals";
+    case aiTextureType_SHININESS:
+    case aiTextureType_DIFFUSE_ROUGHNESS: return "Roughness";
+    case aiTextureType_OPACITY:        return "Opacity";
+    case aiTextureType_DISPLACEMENT:   return "Displacement";
+    case aiTextureType_LIGHTMAP:       return "Lightmap";
+    case aiTextureType_REFLECTION:     return "Reflection";
+    case aiTextureType_METALNESS:      return "Metalness";
+    case aiTextureType_AMBIENT_OCCLUSION: return "AO";
+    default: return "Unknown";
+    }
+}
+
+void MeshImporter::SaveTextureToFile(const aiTexture* texture, const std::string& outputPath)
+{
+    if (filesystem::exists(outputPath))
+    {
+        return;
+    }
+
+    std::ofstream outFile(outputPath, std::ios::binary);
+    if (outFile)
+    {
+        outFile.write(reinterpret_cast<const char*>(texture->pcData), texture->mWidth);
+        outFile.close();
+        QE_LOG_INFO_CAT_F("MeshImporter", "Saved texture: {}", outputPath);
+    }
+}
+
+void MeshImporter::CopyTextureFile(const std::string& sourcePath, const std::string& destPath)
+{
+    if (filesystem::exists(destPath))
+    {
+        return;
+    }
+
+    try
+    {
+        filesystem::copy(sourcePath, destPath, filesystem::copy_options::overwrite_existing);
+        QE_LOG_INFO_CAT_F("MeshImporter", "Copied texture: {}", destPath);
+    }
+    catch (std::exception& e)
+    {
+        QE_LOG_ERROR_CAT_F("MeshImporter", "Failed to copy texture: {}", e.what());
+    }
+}
+
+void MeshImporter::ExtractAndUpdateTextures(
+    aiScene* scene,
+    const std::string& outputTextureFolder,
+    const std::string& modelDirectory,
+    const QEImportProgressCallback& onProgress)
+{
+    std::vector<aiTextureType> textureTypes = {
+        aiTextureType_DIFFUSE, aiTextureType_SPECULAR, aiTextureType_NORMALS,
+        aiTextureType_EMISSIVE, aiTextureType_HEIGHT, aiTextureType_AMBIENT,
+        aiTextureType_SHININESS, aiTextureType_OPACITY, aiTextureType_DISPLACEMENT,
+        aiTextureType_LIGHTMAP, aiTextureType_REFLECTION, aiTextureType_BASE_COLOR,
+        aiTextureType_METALNESS, aiTextureType_DIFFUSE_ROUGHNESS, aiTextureType_AMBIENT_OCCLUSION, aiTextureType_GLTF_METALLIC_ROUGHNESS
+    };
+
+    const std::string parentFolder = filesystem::path(outputTextureFolder).filename().string();
+    std::unordered_map<int, std::string> embeddedIndexToFinalPath;
+    std::unordered_map<std::string, std::string> externalAbsToFinalPath;
+
+    auto isAbsolutePath = [](const std::string& p) -> bool
+        {
+            if (p.size() > 2 && std::isalpha((unsigned char)p[0]) && p[1] == ':' && (p[2] == '\\' || p[2] == '/'))
+                return true; // "C:\..."
+            if (!p.empty() && (p[0] == '/' || p[0] == '\\'))
+                return true; // "/..." o "\..."
+            return false;
+        };
+
+    auto normalizePath = [](const filesystem::path& p) -> std::string
+        {
+            try
+            {
+                return filesystem::weakly_canonical(p).generic_string();
+            }
+            catch (...)
+            {
+                return filesystem::absolute(p).lexically_normal().generic_string();
+            }
+        };
+
+    auto pickExtensionForEmbedded = [&](const aiTexture* tex) -> std::string
+        {
+            if (tex->mHeight == 0)
+            {
+                std::string hint = tex->achFormatHint;
+                for (auto& ch : hint) ch = (char)std::tolower((unsigned char)ch);
+
+                if (hint.find("png") != std::string::npos) return ".png";
+                if (hint.find("jpg") != std::string::npos || hint.find("jpeg") != std::string::npos) return ".jpg";
+                if (hint.find("dds") != std::string::npos) return ".dds";
+                if (hint.find("ktx") != std::string::npos) return ".ktx";
+                if (hint.find("tga") != std::string::npos) return ".tga";
+                if (hint.find("bmp") != std::string::npos) return ".bmp";
+                return ".bin";
+            }
+
+            return ".raw";
+        };
+
+    for (unsigned int i = 0; i < scene->mNumMaterials; i++)
+    {
+        aiMaterial* material = scene->mMaterials[i];
+
+        for (aiTextureType type : textureTypes)
+        {
+            const unsigned int texCount = material->GetTextureCount(type);
+            if (texCount == 0) continue;
+
+            std::vector<aiString> newPaths;
+            newPaths.reserve(texCount);
+
+            for (unsigned int j = 0; j < texCount; ++j)
+            {
+                aiString texturePath;
+                if (material->GetTexture(type, j, &texturePath) != AI_SUCCESS)
+                {
+                    newPaths.emplace_back(aiString(""));
+                    continue;
+                }
+
+                std::string original = texturePath.C_Str();
+                if (original.empty())
+                {
+                    newPaths.emplace_back(aiString(""));
+                    continue;
+                }
+
+                // -----------------------------
+                // EMBEDDED: "*N"
+                // -----------------------------
+                if (original[0] == '*')
+                {
+                    int textureIndex = -1;
+                    try { textureIndex = std::stoi(original.substr(1)); }
+                    catch (...) { textureIndex = -1; }
+
+                    if (textureIndex < 0 || textureIndex >= (int)scene->mNumTextures)
+                    {
+                        newPaths.emplace_back(aiString(""));
+                        continue;
+                    }
+
+                    auto itSaved = embeddedIndexToFinalPath.find(textureIndex);
+                    if (itSaved != embeddedIndexToFinalPath.end())
+                    {
+                        newPaths.emplace_back(aiString(itSaved->second));
+                        continue;
+                    }
+
+                    aiTexture* embeddedTexture = scene->mTextures[textureIndex];
+
+                    std::string filename = embeddedTexture->mFilename.C_Str();
+                    if (filename.empty())
+                    {
+                        std::string ext = pickExtensionForEmbedded(embeddedTexture);
+                        filename = "Embedded_" + std::to_string(textureIndex) + ext;
+                    }
+                    else
+                    {
+                        filesystem::path fp(filename);
+                        if (!fp.has_extension())
+                        {
+                            filename += pickExtensionForEmbedded(embeddedTexture);
+                        }
+                        filename = filesystem::path(filename).filename().string();
+                    }
+
+                    std::string diskPath = (filesystem::path(outputTextureFolder) / filename).string();
+                    SaveTextureToFile(embeddedTexture, diskPath);
+
+                    std::string finalPath = "../" + parentFolder + "/" + filesystem::path(diskPath).filename().string();
+                    embeddedIndexToFinalPath[textureIndex] = finalPath;
+
+                    newPaths.emplace_back(aiString(finalPath));
+                    continue;
+                }
+
+                // -----------------------------
+                // EXTERNAL FILE
+                // -----------------------------
+                filesystem::path srcPath;
+                if (isAbsolutePath(original))
+                    srcPath = filesystem::path(original);
+                else
+                    srcPath = filesystem::path(modelDirectory) / original;
+
+                std::string srcAbsNorm = normalizePath(srcPath);
+
+                auto itExt = externalAbsToFinalPath.find(srcAbsNorm);
+                if (itExt != externalAbsToFinalPath.end())
+                {
+                    newPaths.emplace_back(aiString(itExt->second));
+                    continue;
+                }
+
+                std::string dstFile = srcPath.filename().string();
+                std::string dstDiskPath = (filesystem::path(outputTextureFolder) / dstFile).string();
+
+                CopyTextureFile(srcAbsNorm, dstDiskPath);
+
+                std::string finalPath = "../" + parentFolder + "/" + filesystem::path(dstDiskPath).filename().string();
+                externalAbsToFinalPath[srcAbsNorm] = finalPath;
+
+                newPaths.emplace_back(aiString(finalPath));
+            }
+
+            // Update material properties
+            for (unsigned int j = 0; j < texCount; ++j)
+            {
+                if (newPaths[j].length == 0) continue;
+                material->AddProperty(&newPaths[j], AI_MATKEY_TEXTURE(type, j));
+            }
+        }
+    }
+}
+
+void MeshImporter::ExtractAndUpdateMaterials(
+    aiScene* scene,
+    const std::string& outputTextureFolder,
+    const std::string& outputMaterialPath,
+    const std::string& modelDirectory,
+    const QEImportProgressCallback& onProgress)
+{
+    auto report = [&](float value, const std::string& stage, const std::string& msg)
+        {
+            if (onProgress)
+                onProgress(value, stage, msg);
+        };
+
+    auto matManager = MaterialManager::getInstance();
+
+    std::vector<std::vector<aiTextureType>> textureSlots = {
+        { aiTextureType_BASE_COLOR, aiTextureType_DIFFUSE }, // 0 BaseColor
+        { aiTextureType_NORMAL_CAMERA, aiTextureType_NORMALS, aiTextureType_HEIGHT }, // 1 Normal
+        { aiTextureType_METALNESS }, // 2 Metallic
+        { aiTextureType_DIFFUSE_ROUGHNESS, aiTextureType_SHININESS, aiTextureType_MAYA_SPECULAR_ROUGHNESS }, // 3 Roughness
+        { aiTextureType_AMBIENT_OCCLUSION, aiTextureType_LIGHTMAP }, // 4 AO
+        { aiTextureType_EMISSION_COLOR, aiTextureType_EMISSIVE }, // 5 Emissive
+        { aiTextureType_DISPLACEMENT, aiTextureType_HEIGHT }, // 6 Height
+        { aiTextureType_SPECULAR, aiTextureType_REFLECTION, aiTextureType_MAYA_SPECULAR_COLOR } // 7 Specular
+    };
+
+    const fs::path materialDir = fs::path(outputMaterialPath);
+    const fs::path tempTextureDir = fs::path(outputTextureFolder);
+    const fs::path finalTextureDir = tempTextureDir.parent_path() / "Textures";
+
+    fs::create_directories(finalTextureDir);
+
+    auto ResolveFirstTexture = [&](aiMaterial* material, const std::vector<aiTextureType>& fallbacks) -> std::string
+        {
+            aiString texPath;
+            for (aiTextureType t : fallbacks)
+            {
+                if (material->GetTexture(t, 0, &texPath) == AI_SUCCESS)
+                    return std::string(texPath.C_Str());
+            }
+            return "";
+        };
+
+    auto ResolveTextureToDiskPath = [&](const std::string& texRef) -> std::string
+        {
+            if (texRef.empty())
+                return "";
+
+            fs::path p(texRef);
+
+            if (p.is_absolute())
+                return p.lexically_normal().string();
+
+            std::string filename = p.filename().string();
+            if (filename.empty())
+                return "";
+
+            return (tempTextureDir / filename).lexically_normal().string();
+        };
+
+    auto ToMaterialRelativePath = [&](const std::string& assetPath, const fs::path& materialFilePath) -> std::string
+        {
+            if (assetPath.empty() || assetPath == "NULL_TEXTURE")
+                return "NULL_TEXTURE";
+
+            fs::path p(assetPath);
+            fs::path materialFolder = materialFilePath.parent_path();
+
+            std::error_code ec;
+            fs::path rel = fs::relative(p, materialFolder, ec);
+
+            if (ec)
+                return p.lexically_normal().generic_string();
+
+            return rel.lexically_normal().generic_string();
+        };
+
+    auto WouldRequireImport = [&](const std::string& sourcePath) -> bool
+        {
+            if (sourcePath.empty() || sourcePath == "NULL_TEXTURE")
+                return false;
+
+            std::string outPath = QETextureImporter::BuildImportedPath(sourcePath);
+            return !fs::exists(outPath);
+        };
+
+    int totalKtxTasks = 0;
+
+    // Primera pasada: contar conversiones KTX2 reales
+    for (unsigned int i = 0; i < scene->mNumMaterials; i++)
+    {
+        aiMaterial* material = scene->mMaterials[i];
+        if (!material)
+            continue;
+
+        aiString rawName;
+        std::string materialName;
+
+        if (material->Get(AI_MATKEY_NAME, rawName) == AI_SUCCESS && rawName.length > 0)
+            materialName = matManager->CheckName(rawName.C_Str());
+
+        if (materialName.empty())
+            materialName = "Material_" + std::to_string(i);
+
+        fs::path materialPath = materialDir / (materialName + ".qemat");
+        if (fs::exists(materialPath))
+            continue;
+
+        std::vector<std::string> rawPaths(textureSlots.size(), "");
+        for (size_t slot = 0; slot < textureSlots.size(); ++slot)
+            rawPaths[slot] = ResolveFirstTexture(material, textureSlots[slot]);
+
+        aiString mrPath;
+        const bool hasMR = (material->GetTexture(aiTextureType_GLTF_METALLIC_ROUGHNESS, 0, &mrPath) == AI_SUCCESS);
+        if (hasMR)
+        {
+            rawPaths[2] = std::string(mrPath.C_Str());
+            rawPaths[3] = std::string(mrPath.C_Str());
+        }
+
+        std::vector<std::string> sourceDiskPaths(rawPaths.size(), "");
+        for (size_t slot = 0; slot < rawPaths.size(); ++slot)
+            sourceDiskPaths[slot] = ResolveTextureToDiskPath(rawPaths[slot]);
+
+        for (const auto& src : sourceDiskPaths)
+        {
+            if (WouldRequireImport(src))
+                ++totalKtxTasks;
+        }
+    }
+
+    int completedKtxTasks = 0;
+
+    auto reportKtxProgress = [&]()
+        {
+            if (totalKtxTasks <= 0)
+            {
+                report(0.85f, "Textures", "No KTX2 conversions needed");
+                return;
+            }
+
+            float local = static_cast<float>(completedKtxTasks) / static_cast<float>(totalKtxTasks);
+            float global = 0.35f + local * 0.50f;
+
+            report(
+                global,
+                "Textures",
+                "Compressing KTX2 " + std::to_string(completedKtxTasks) + "/" + std::to_string(totalKtxTasks));
+        };
+
+    reportKtxProgress();
+
+    for (unsigned int i = 0; i < scene->mNumMaterials; i++)
+    {
+        aiMaterial* material = scene->mMaterials[i];
+        if (!material)
+            continue;
+
+        aiString rawName;
+        std::string materialName;
+
+        if (material->Get(AI_MATKEY_NAME, rawName) != AI_SUCCESS || rawName.length == 0)
+        {
+            QE_LOG_INFO_CAT_F("MeshImporter", "Material not listed in the index {}, using a fallback", i);
+        }
+
+        if (material->Get(AI_MATKEY_NAME, rawName) == AI_SUCCESS && rawName.length > 0)
+            materialName = matManager->CheckName(rawName.C_Str());
+
+        if (materialName.empty())
+            materialName = "Material_" + std::to_string(i);
+
+        aiString newName(materialName);
+        material->AddProperty(&newName, AI_MATKEY_NAME);
+
+        fs::path materialPath = materialDir / (materialName + ".qemat");
+        if (fs::exists(materialPath))
+            continue;
+
+        std::vector<std::string> rawPaths(textureSlots.size(), "");
+        for (size_t slot = 0; slot < textureSlots.size(); ++slot)
+            rawPaths[slot] = ResolveFirstTexture(material, textureSlots[slot]);
+
+        uint32_t metallicChan = 0;
+        uint32_t roughnessChan = 0;
+        uint32_t aoChan = 0;
+
+        aiString mrPath;
+        const bool hasMR = (material->GetTexture(aiTextureType_GLTF_METALLIC_ROUGHNESS, 0, &mrPath) == AI_SUCCESS);
+
+        if (hasMR)
+        {
+            rawPaths[2] = std::string(mrPath.C_Str());
+            rawPaths[3] = std::string(mrPath.C_Str());
+
+            roughnessChan = 1; // G
+            metallicChan = 2;  // B
+        }
+
+        if (!rawPaths[4].empty())
+            aoChan = 0; // R
+
+        std::vector<std::string> sourceDiskPaths(rawPaths.size(), "");
+        for (size_t slot = 0; slot < rawPaths.size(); ++slot)
+            sourceDiskPaths[slot] = ResolveTextureToDiskPath(rawPaths[slot]);
+
+        MaterialData matData;
+        matData.ImportAssimpMaterial(material);
+
+        MaterialDto dto;
+        dto.Name = materialName;
+        dto.FilePath = QEProjectManager::ToProjectRelativePath(materialPath);
+        dto.ShaderPath = "default";
+        dto.RenderQueue = static_cast<unsigned int>(RenderQueue::Geometry);
+
+        dto.Opacity = matData.Opacity;
+        dto.BumpScaling = matData.BumpScaling;
+        dto.Shininess = matData.Shininess;
+        dto.Reflectivity = matData.Reflectivity;
+        dto.Shininess_Strength = matData.Shininess_Strength;
+        dto.Refractivity = matData.Refractivity;
+        dto.Metallic = matData.Metallic;
+        dto.Roughness = matData.Roughness;
+        dto.AO = matData.AO;
+        dto.Clearcoat = matData.Clearcoat;
+        dto.ClearcoatRoughness = matData.ClearcoatRoughness;
+        dto.AlphaCutoff = matData.AlphaCutoff;
+
+        dto.Diffuse = matData.Diffuse;
+        dto.Ambient = matData.Ambient;
+        dto.Specular = matData.Specular;
+        dto.Emissive = matData.Emissive;
+        dto.Transparent = matData.Transparent;
+        dto.Reflective = matData.Reflective;
+
+        dto.metallicChan = metallicChan;
+        dto.roughnessChan = roughnessChan;
+        dto.aoChan = aoChan;
+        dto.AlphaMode = matData.AlphaMode;
+        dto.DoubleSided = matData.DoubleSided;
+
+        if (dto.AlphaMode == 2u)
+        {
+            dto.RenderQueue = static_cast<unsigned int>(RenderQueue::Transparent);
+        }
+
+        auto importSlot = [&](std::string& src, std::string& dst, TEXTURE_TYPE semantic, QEColorSpace colorSpace)
+            {
+                const bool shouldImport = WouldRequireImport(src);
+
+                ImportMaterialTextureIfNeeded(src, dst, semantic, colorSpace);
+
+                if (shouldImport)
+                {
+                    ++completedKtxTasks;
+                    reportKtxProgress();
+                }
+            };
+
+        importSlot(sourceDiskPaths[0], dto.diffuseTexturePath, TEXTURE_TYPE::DIFFUSE_TYPE, QEColorSpace::SRGB);
+        importSlot(sourceDiskPaths[1], dto.normalTexturePath, TEXTURE_TYPE::NORMAL_TYPE, QEColorSpace::Linear);
+        importSlot(sourceDiskPaths[2], dto.metallicTexturePath, TEXTURE_TYPE::METALNESS_TYPE, QEColorSpace::Linear);
+        importSlot(sourceDiskPaths[3], dto.roughnessTexturePath, TEXTURE_TYPE::ROUGHNESS_TYPE, QEColorSpace::Linear);
+        importSlot(sourceDiskPaths[4], dto.aoTexturePath, TEXTURE_TYPE::AO_TYPE, QEColorSpace::Linear);
+        importSlot(sourceDiskPaths[5], dto.emissiveTexturePath, TEXTURE_TYPE::EMISSIVE_TYPE, QEColorSpace::SRGB);
+        importSlot(sourceDiskPaths[6], dto.heightTexturePath, TEXTURE_TYPE::HEIGHT_TYPE, QEColorSpace::Linear);
+        importSlot(sourceDiskPaths[7], dto.specularTexturePath, TEXTURE_TYPE::SPECULAR_TYPE, QEColorSpace::Linear);
+
+        dto.diffuseTexturePath = ToMaterialRelativePath(dto.diffuseTexturePath, materialPath);
+        dto.normalTexturePath = ToMaterialRelativePath(dto.normalTexturePath, materialPath);
+        dto.metallicTexturePath = ToMaterialRelativePath(dto.metallicTexturePath, materialPath);
+        dto.roughnessTexturePath = ToMaterialRelativePath(dto.roughnessTexturePath, materialPath);
+        dto.aoTexturePath = ToMaterialRelativePath(dto.aoTexturePath, materialPath);
+        dto.emissiveTexturePath = ToMaterialRelativePath(dto.emissiveTexturePath, materialPath);
+        dto.heightTexturePath = ToMaterialRelativePath(dto.heightTexturePath, materialPath);
+        dto.specularTexturePath = ToMaterialRelativePath(dto.specularTexturePath, materialPath);
+
+        uint32_t texMask = 0;
+        if (!IsNullTex(dto.diffuseTexturePath))   texMask |= (1u << 0);
+        if (!IsNullTex(dto.normalTexturePath))    texMask |= (1u << 1);
+        if (!IsNullTex(dto.metallicTexturePath))  texMask |= (1u << 2);
+        if (!IsNullTex(dto.roughnessTexturePath)) texMask |= (1u << 3);
+        if (!IsNullTex(dto.aoTexturePath))        texMask |= (1u << 4);
+        if (!IsNullTex(dto.emissiveTexturePath))  texMask |= (1u << 5);
+        if (!IsNullTex(dto.heightTexturePath))    texMask |= (1u << 6);
+        if (!IsNullTex(dto.specularTexturePath))  texMask |= (1u << 7);
+        dto.texMask = texMask;
+
+        if (!QEMaterialYamlHelper::WriteMaterialFile(materialPath, dto))
+        {
+            QE_LOG_ERROR_CAT_F("MeshImporter", "Error writing YAML content: {}", materialPath.string());
+            continue;
+        }
+    }
+
+    report(0.85f, "Materials", "Material generation finished");
+}
+
+void MeshImporter::RemoveOnlyEmbeddedTextures(aiScene* scene)
+{
+    if (!scene->mTextures || scene->mNumTextures == 0) return;
+
+    std::vector<aiTexture*> texturesToKeep;
+
+    for (unsigned int i = 0; i < scene->mNumTextures; i++) {
+        aiTexture* texture = scene->mTextures[i];
+
+        // Las texturas embebidas tienen nombres que empiezan con '*'
+        if (texture->mFilename.length > 0 && texture->mFilename.C_Str()[0] != '*') {
+            texturesToKeep.push_back(texture); // Conservar las externas
+        }
+        else {
+            delete texture; // Eliminar embebida
+        }
+    }
+
+    // Actualizar la escena con solo las texturas externas
+    if (!texturesToKeep.empty()) {
+        scene->mNumTextures = static_cast<unsigned int>(texturesToKeep.size());
+        scene->mTextures = new aiTexture * [scene->mNumTextures];
+
+        for (size_t i = 0; i < texturesToKeep.size(); i++)
+        {
+            scene->mTextures[i] = texturesToKeep[i];
+        }
+    }
+    else {
+        scene->mNumTextures = 0;
+        scene->mTextures = nullptr;
+    }
+}
+
+bool MeshImporter::LoadAndExportModel(
+    const std::string& inputPath,
+    const std::string& outputMeshPath,
+    const std::string& outputMaterialPath,
+    const std::string& outputTexturePath,
+    const std::string& outputAnimationPath,
+    const QEImportProgressCallback& onProgress)
+{
+    auto report = [&](float value, const std::string& stage, const std::string& msg)
+        {
+            if (onProgress)
+                onProgress(value, stage, msg);
+        };
+
+    report(0.02f, "Loading", "Reading source model");
+
+    unsigned int flags = aiProcess_EmbedTextures | aiProcess_Triangulate | aiProcess_GenNormals;
+    Assimp::Importer importer;
+    const aiScene* scene = importer.ReadFile(inputPath, flags);
+
+    if (!scene)
+    {
+        QE_LOG_ERROR_CAT_F("MeshImporter", "Error loading the model: {}", importer.GetErrorString());
+        report(0.0f, "Failed", "Could not read source model");
+        return false;
+    }
+
+    report(0.12f, "Animation", "Importing animations");
+    AnimationImporter::ImportAnimation(scene, outputAnimationPath);
+
+    if (scene->HasMaterials())
+    {
+        std::string modelDirectory = filesystem::path(inputPath).parent_path().string();
+
+        fs::path modelRoot = fs::path(outputTexturePath).parent_path();
+        fs::path tempTextureFolder = modelRoot / "__TempTextures";
+        fs::path legacyImportedFolder = modelRoot / "ImportedTextures";
+
+        fs::create_directories(tempTextureFolder);
+
+        report(0.22f, "Textures", "Extracting source textures");
+        ExtractAndUpdateTextures(
+            const_cast<aiScene*>(scene),
+            tempTextureFolder.string(),
+            modelDirectory,
+            onProgress);
+
+        report(0.35f, "Materials", "Generating materials and KTX2");
+        ExtractAndUpdateMaterials(
+            const_cast<aiScene*>(scene),
+            tempTextureFolder.string(),
+            outputMaterialPath,
+            modelDirectory,
+            onProgress);
+
+        std::error_code ec;
+
+        report(0.90f, "Cleanup", "Cleaning temporary files");
+        fs::remove_all(tempTextureFolder, ec);
+        if (ec)
+        {
+            QE_LOG_WARN_CAT_F("MeshImporter", "Could not remove temp texture folder: {}", tempTextureFolder.string());
+        }
+
+        ec.clear();
+        if (fs::exists(legacyImportedFolder))
+        {
+            fs::remove_all(legacyImportedFolder, ec);
+            if (ec)
+            {
+                QE_LOG_WARN_CAT_F("MeshImporter", "Could not remove legacy ImportedTextures folder: {}", legacyImportedFolder.string());
+            }
+        }
+    }
+
+    report(0.95f, "Mesh", "Exporting glTF");
+
+    Assimp::Exporter exporter;
+
+    aiScene* editableScene = new aiScene();
+    aiCopyScene(scene, &editableScene);
+    RemoveOnlyEmbeddedTextures(editableScene);
+
+    SanitizerHelper::SanitizeSceneNames(editableScene);
+
+    if (exporter.Export(editableScene, "gltf2", outputMeshPath) != AI_SUCCESS)
+    {
+        QE_LOG_ERROR_CAT_F("MeshImporter", "Error exporting to glTF: {}", exporter.GetErrorString());
+        AnimationImporter::DestroyScene(editableScene);
+        report(0.95f, "Failed", "glTF export failed");
+        return false;
+    }
+
+    AnimationImporter::DestroyScene(editableScene);
+
+    report(1.0f, "Completed", "Import finished");
+    QE_LOG_INFO_CAT_F("MeshImporter", "Successful export: {}", outputMeshPath);
+    return true;
+}

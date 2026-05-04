@@ -13,156 +13,161 @@ layout(set = 0, binding = 2, std140) uniform UniformCamera
 
 layout(set = 0, binding = 3) uniform ScreenResolution
 {
-	vec2 data;
+    vec2 data;
 } screenResolution;
 
 layout(set = 0, binding = 4) uniform SunUniform
 {
-	vec3 direction;
+    vec3 direction;
     float intensity;
-}  sunData;
+} sunData;
+
+layout(set = 0, binding = 5, std140) uniform AtmosphereUniform
+{
+    vec4 RayleighScattering_Height;
+    vec4 MieScattering_Height;
+    vec4 OzoneAbsorption_Density;
+    vec4 SunColor_Intensity;
+    vec4 Planet_Atmosphere_G_Exposure;
+    vec4 Sky_Horizon_Multi_SunDisk;
+    vec4 SunDiskIntensity_Glow_Padding;
+} atmosphereData;
+
+#include "../Includes/Atmosphere/QEAtmosphereCommon.glsl"
+#include "../Includes/Atmosphere/QEAtmosphereFragCommon.glsl"
 
 layout(location = 0) out vec4 outColor;
 
-const float PI = 3.14159265358;
-
-// Unidades en Megametros (MM)
-const float PlanetRadius = 6.360;
-const float AtmosphereRadius = 6.460;
-
-float safeAcos(float x) 
-{
-    return acos(clamp(x, -1.0, 1.0));
-}
-
-float rayIntersectSphere(vec3 ro, vec3 rd, float radius) 
-{
-    float b = dot(ro, rd);
-    float c = dot(ro, ro) - radius * radius;
-    float delta = b * b - c;
-    if (delta < 0.0) return -1.0; // No hay intersección
-
-    float sqrtDelta = sqrt(delta);
-    float t1 = -b - sqrtDelta;
-    float t2 = -b + sqrtDelta;
-
-    if (t1 > 0.0) return t1; // Primer impacto
-    if (t2 > 0.0) return t2; // Segundo impacto (si el origen está dentro)
-    return -1.0; // No hay intersección válida
-}
-
 const vec2 tLUTRes = vec2(256.0, 64.0);
+const vec2 skyLUTRes = vec2(640.0, 360.0);
+
 vec3 getValFromTLUT(vec3 viewPos, vec3 sunDir)
 {
     float height = length(viewPos);
     vec3 up = viewPos / height;
+
     float sunCosZenithAngle = dot(sunDir, up);
-    
+
+    float planetRadius = GetPlanetRadius();
+    float atmosphereRadius = GetAtmosphereRadius();
+
     vec2 uv = vec2(
-        tLUTRes.x * clamp((height - PlanetRadius)/(AtmosphereRadius - PlanetRadius),0.0,1.0),
-        tLUTRes.y * clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0)
-    ) / tLUTRes;
-    
+        clamp(0.5 + 0.5 * sunCosZenithAngle, 0.0, 1.0),
+        clamp((height - planetRadius) / (atmosphereRadius - planetRadius), 0.0, 1.0)
+    );
+
     return texture(InputImage, uv).rgb;
 }
 
-const vec2 skyLUTRes = vec2(640.0, 360.0);
-vec3 getValFromSkyLUT(vec3 viewPos, vec3 rayDir, vec3 sunDir)
+vec3 getValFromSkyLUT(vec3 viewPos, vec3 localRayDir)
 {
     float height = length(viewPos);
-    vec3 up = viewPos / height;
-    
-    float horizonAngle = safeAcos(sqrt(height * height - PlanetRadius * PlanetRadius) / height);
-    float altitudeAngle = horizonAngle - acos(dot(rayDir, up)); // Between -PI/2 and PI/2
-    float azimuthAngle; // Between 0 and 2*PI
-    if (abs(altitudeAngle) > (0.5*PI - 0.0001)) {
-        // Looking nearly straight up or down.
-        azimuthAngle = 0.0;
-    } else {
-        vec3 right = cross(sunDir, up);
-        vec3 forward = cross(up, right);
-        
-        vec3 projectedDir = normalize(rayDir - up*(dot(rayDir, up)));
-        float sinTheta = dot(projectedDir, right);
-        float cosTheta = dot(projectedDir, forward);
-        azimuthAngle = atan(sinTheta, cosTheta) + PI;
+    float planetRadius = GetPlanetRadius();
+
+    float horizonAngle = safeAcos(sqrt(height * height - planetRadius * planetRadius) / height) - 0.5 * PI;
+
+    float altitudeAngle = asin(clamp(localRayDir.y, -1.0, 1.0));
+    float azimuthAngle = atan(localRayDir.x, -localRayDir.z);
+
+    float u = azimuthAngle / (2.0 * PI) + 0.5;
+
+    float adjV = (altitudeAngle + horizonAngle) / (0.5 * PI);
+    adjV = clamp(adjV, -1.0, 1.0);
+
+    float v;
+    if (adjV >= 0.0)
+    {
+        v = 0.5 * (1.0 - sqrt(adjV));
     }
-    
-    // Non-linear mapping of altitude angle. See Section 5.3 of the paper.
-    float v = 0.5 + 0.5*sign(altitudeAngle)*sqrt(abs(altitudeAngle)*2.0/PI);
-    vec2 uv = vec2(azimuthAngle / (2.0*PI), v);
+    else
+    {
+        v = 0.5 * (1.0 + sqrt(-adjV));
+    }
 
-    return texture(InputImage_2, uv).rgb;
-}
-
-vec3 jodieReinhardTonemap(vec3 c)
-{
-    // From: https://www.shadertoy.com/view/tdSXzD
-    float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
-    vec3 tc = c / (c + 1.0);
-    return mix(c / (l + 1.0), tc, tc);
-}
-
-vec3 sunWithBloom(vec3 rayDir, vec3 sunDir)
-{
-    const float sunSolidAngle = 0.53*PI/180.0;
-    const float minSunCosTheta = cos(sunSolidAngle);
-
-    float cosTheta = dot(rayDir, sunDir);
-    if (cosTheta >= minSunCosTheta) return vec3(1.0);
-
-    float offset = minSunCosTheta - cosTheta;
-    float gaussianBloom = exp(-offset*50000.0)*0.5;
-    float invBloom = 1.0/(0.02 + offset*300.0)*0.01;
-    return vec3(gaussianBloom+invBloom);
+    return texture(InputImage_2, vec2(u, v)).rgb;
 }
 
 void main()
 {
-    vec3 sunDir = normalize(sunData.direction);
     vec2 iResolution = screenResolution.data;
-    vec3 viewPos = cameraData.position.xyz * 1e-6; 
-    viewPos.y += PlanetRadius;
-    viewPos.y = max(PlanetRadius, viewPos.y);
 
-    vec3 camDir = normalize(cameraData.view[2].xyz);
-    float camFOVWidth = 0.785398;
-    float camWidthScale = 2.0 * tan(camFOVWidth / 2.0);
-    float camHeightScale = camWidthScale * iResolution.y / iResolution.x;
+    float planetRadius = GetPlanetRadius();
 
-    vec3 upVector = vec3(0.0, 1.0, 0.0);
-    vec3 camRight = normalize(cross(camDir, upVector));
-    vec3 camUp = cross(camRight, camDir);
+    vec3 viewPos = cameraData.position.xyz * 1e-6;
+    viewPos.y += planetRadius;
+    viewPos.y = max(planetRadius + 1e-6, viewPos.y);
 
-    vec2 xy = (gl_FragCoord.xy / iResolution.xy) * 2.0 - 1.0;
-    xy.x= -xy.x;
-    
-    vec3 rayDirView = normalize(vec3(xy.x * camWidthScale, xy.y * camHeightScale, 1.0));
-    mat4 viewToWorld = inverse(cameraData.view);
-    // Convertir la dirección del rayo a espacio mundial
-    vec3 rayDir = normalize((viewToWorld * vec4(rayDirView, 0.0)).xyz);
-    
-    vec3 lum = getValFromSkyLUT(viewPos, rayDir, sunDir);
+    vec2 ndc = (gl_FragCoord.xy / iResolution) * 2.0 - 1.0;
 
-    // Bloom should be added at the end, but this is subtle and works well.
+    vec4 clip = vec4(ndc, 1.0, 1.0);
+    vec4 viewPosFar = cameraData.invProj * clip;
+    viewPosFar /= viewPosFar.w;
 
-    vec3 sunLum = sunWithBloom(rayDir, sunDir);
-    sunLum = smoothstep(0.002, 1.0, sunLum);
-    if (length(sunLum) > 0.0)
-    {
-        if (rayIntersectSphere(viewPos, rayDir, PlanetRadius) < 0.0)
-        {
-            sunLum *= 0.0;
-        } 
-        else 
-        {
-            // If the sun value is applied to this pixel, we need to calculate the transmittance to obscure it.
-            sunLum *= getValFromTLUT(viewPos, sunDir);
-        }
-    }
+    vec3 rayDirView = normalize(-viewPosFar.xyz);
+    vec3 rayDir = normalize((cameraData.invView * vec4(rayDirView, 0.0)).xyz);
 
-    lum += sunLum;
-    lum *= sunData.intensity;
-    lum = jodieReinhardTonemap(lum);
-    outColor = vec4(lum, 1.0);
+    vec3 sunDirWorld = normalize(sunData.direction);
+
+    float height = length(viewPos);
+    vec3 up = viewPos / height;
+
+    vec3 refAxis = (abs(up.y) < 0.999) ? vec3(0.0, 1.0, 0.0) : vec3(0.0, 0.0, 1.0);
+    vec3 right = normalize(cross(up, refAxis));
+    vec3 forward = normalize(cross(right, up));
+
+    vec3 localRayDir = normalize(vec3(
+        dot(rayDir, right),
+        -dot(rayDir, up),
+        dot(rayDir, -forward)
+    ));
+
+    vec3 skyLum = getValFromSkyLUT(viewPos, localRayDir);
+
+    vec3 sunDirForDisk = normalize(sunData.direction);
+    vec3 sunDirForTlut = normalize(-sunData.direction);
+
+    vec3 disk = sunDisk(rayDir, sunDirForDisk);
+    vec3 bloom = sunBloom(rayDir, sunDirForDisk);
+    vec3 sunTransmittance = getValFromTLUT(viewPos, sunDirForTlut);
+
+    float horizonAngle = safeAcos(sqrt(height * height - planetRadius * planetRadius) / height) + HorizonBias;
+    float viewZenithAngle = acos(clamp(dot(rayDir, up), -1.0, 1.0));
+    float altitudeAngle = viewZenithAngle - horizonAngle;
+
+    float diskVisible = smoothstep(-0.0005, 0.0005, altitudeAngle);
+    float bloomVisible = smoothstep(-0.003, 0.003, altitudeAngle);
+
+    disk *= diskVisible;
+    bloom *= bloomVisible;
+
+    float sunHeight = clamp(dot(sunDirWorld, -up), 0.0, 1.0);
+
+    float diskDayAmount  = smoothstep(0.02, 0.30, sunHeight);
+    float bloomDayAmount = smoothstep(-0.05, 0.18, sunHeight);
+
+    float sunsetFactor = 1.0 - smoothstep(0.0, 0.12, sunHeight);
+    sunsetFactor = pow(sunsetFactor, 2.0);
+
+    vec3 sunsetDiskTint  = vec3(1.0, 0.55, 0.28);
+    vec3 dayDiskTint     = vec3(1.0, 0.99, 0.97);
+
+    vec3 sunsetBloomTint = vec3(1.0, 0.65, 0.35);
+    vec3 dayBloomTint    = vec3(1.0, 0.98, 0.95);
+
+    vec3 sunDiskTint  = mix(sunsetDiskTint,  dayDiskTint,  diskDayAmount);
+    vec3 sunBloomTint = mix(sunsetBloomTint, dayBloomTint, bloomDayAmount);
+
+    // boost solo muy cerca del horizonte
+    sunDiskTint  = mix(sunDiskTint,  vec3(1.0, 0.35, 0.08), sunsetFactor);
+    sunBloomTint = mix(sunBloomTint, vec3(1.0, 0.45, 0.12), sunsetFactor);
+
+    disk *= sunDiskTint;
+    bloom *= sunBloomTint;
+
+    vec3 sky = jodieReinhardTonemap(skyLum * GetExposure());
+
+    vec3 sun = sunTransmittance * (disk * 4.0 + bloom * 6.0);
+    vec3 finalColor = sky + sun;
+
+    outColor = vec4(finalColor, 1.0);
 }

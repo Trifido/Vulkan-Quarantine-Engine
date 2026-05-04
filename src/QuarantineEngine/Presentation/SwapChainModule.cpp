@@ -1,0 +1,243 @@
+#include "SwapChainModule.h"
+#include "QueueFamiliesModule.h"
+#include <stdexcept>
+
+#include "ImageMemoryTools.h"
+#include "SwapChainTool.hpp"
+#include <SynchronizationModule.h>
+#include <Helpers/QEMemoryTrack.h>
+
+SwapChainModule::SwapChainModule()
+{
+    deviceModule = DeviceModule::getInstance();
+    this->currentTileSize = (float)this->TILE_SIZE;
+    this->screenDataDirty.assign(MAX_FRAMES_IN_FLIGHT, true);
+}
+
+void SwapChainModule::createSwapChain(VkSurfaceKHR& surface, GLFWwindow* window)
+{
+    SwapChainSupportDetails swapChainSupport = SwapChainSupportDetails::querySwapChainSupport(deviceModule->physicalDevice, surface);
+
+    VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
+    VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
+    VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities, window);
+
+    numSwapChainImages = swapChainSupport.capabilities.minImageCount + 1;
+    if (swapChainSupport.capabilities.maxImageCount > 0 && numSwapChainImages > swapChainSupport.capabilities.maxImageCount) {
+        numSwapChainImages = swapChainSupport.capabilities.maxImageCount;
+    }
+
+    VkSwapchainCreateInfoKHR createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    createInfo.surface = surface;
+    createInfo.minImageCount = numSwapChainImages;
+    createInfo.imageFormat = surfaceFormat.format;
+    createInfo.imageColorSpace = surfaceFormat.colorSpace;
+    createInfo.imageExtent = extent;
+    createInfo.imageArrayLayers = 1;
+    createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+
+    QueueFamilyIndices indices = QueueFamilyIndices::findQueueFamilies(deviceModule->physicalDevice, surface);
+    uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.computeFamily.value(), indices.presentFamily.value() };
+
+    if (indices.graphicsFamily != indices.presentFamily) {
+        createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+        createInfo.queueFamilyIndexCount = 3;
+        createInfo.pQueueFamilyIndices = queueFamilyIndices;
+    }
+    else {
+        createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        createInfo.queueFamilyIndexCount = 0; // Optional
+        createInfo.pQueueFamilyIndices = nullptr; // Optional
+    }
+
+    createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
+    createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    createInfo.presentMode = presentMode;
+    createInfo.clipped = VK_TRUE;
+    createInfo.oldSwapchain = VK_NULL_HANDLE;
+
+    if (vkCreateSwapchainKHR(deviceModule->device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create swap chain!");
+    }
+
+    vkGetSwapchainImagesKHR(deviceModule->device, swapChain, &numSwapChainImages, nullptr);
+    swapChainImages.resize(numSwapChainImages);
+    vkGetSwapchainImagesKHR(deviceModule->device, swapChain, &numSwapChainImages, swapChainImages.data());
+
+    swapChainImageFormat = surfaceFormat.format;
+    swapChainExtent = extent;
+
+    swapChainImageViews.resize(this->numSwapChainImages);
+
+    for (size_t i = 0; i < this->numSwapChainImages; i++)
+    {
+        swapChainImageViews[i] = IMT::createImageView(deviceModule->device, this->swapChainImages[i], VK_IMAGE_VIEW_TYPE_2D, this->swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
+    }
+
+    this->UpdateScreenData();
+}
+
+void SwapChainModule::cleanup()
+{
+    for (auto imageView : swapChainImageViews) {
+        vkDestroyImageView(deviceModule->device, imageView, nullptr);
+    }
+
+    vkDestroySwapchainKHR(deviceModule->device, swapChain, nullptr);
+}
+
+VkSurfaceFormatKHR SwapChainModule::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
+{
+    for (const auto& availableFormat : availableFormats) {
+        if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+        {
+            return availableFormat;
+        }
+    }
+
+    return availableFormats[0];
+}
+
+VkPresentModeKHR SwapChainModule::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
+{
+    if (!this->enabledVSync)
+    {
+        for (const auto& availablePresentMode : availablePresentModes) {
+            if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
+                return availablePresentMode;
+            }
+        }
+    }
+
+    return VK_PRESENT_MODE_FIFO_KHR;
+}
+
+VkExtent2D SwapChainModule::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, GLFWwindow* window) {
+    if (capabilities.currentExtent.width != UINT32_MAX) {
+        return capabilities.currentExtent;
+    }
+    else {
+        int width, height;
+        glfwGetFramebufferSize(window, &width, &height);
+
+        VkExtent2D actualExtent = {
+            static_cast<uint32_t>(width),
+            static_cast<uint32_t>(height)
+        };
+
+        actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
+        actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));
+
+        return actualExtent;
+    }
+}
+
+void SwapChainModule::UpdateScreenData()
+{
+    UpdateScreenData(this->swapChainExtent);
+}
+
+void SwapChainModule::UpdateScreenData(const VkExtent2D& extent)
+{
+    if (!this->screenData)
+    {
+        return;
+    }
+
+    const uint32_t tileSize = std::max(1u, static_cast<uint32_t>(this->currentTileSize));
+    const uint32_t safeWidth = std::max(1u, extent.width);
+    const uint32_t safeHeight = std::max(1u, extent.height);
+    const uint32_t tileCountX = std::max(1u, (safeWidth + tileSize - 1u) / tileSize);
+    const uint32_t tileCountY = std::max(1u, (safeHeight + tileSize - 1u) / tileSize);
+
+    ScreenDataUniform newValues{};
+    newValues.tilePixelSize = glm::uvec2(tileSize, tileSize);
+    newValues.tileCount = glm::uvec2(tileCountX, tileCountY);
+
+    if (this->screenDataValues.tilePixelSize != newValues.tilePixelSize ||
+        this->screenDataValues.tileCount != newValues.tileCount)
+    {
+        this->screenDataValues = newValues;
+        std::fill(this->screenDataDirty.begin(), this->screenDataDirty.end(), true);
+    }
+
+    for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
+    {
+        if (!this->screenDataDirty[currentFrame])
+        {
+            continue;
+        }
+
+        void* data;
+        vkMapMemory(deviceModule->device, this->screenData->uniformBuffersMemory[currentFrame], 0, sizeof(ScreenDataUniform), 0, &data);
+        memcpy(data, &this->screenDataValues, sizeof(ScreenDataUniform));
+        vkUnmapMemory(deviceModule->device, this->screenData->uniformBuffersMemory[currentFrame]);
+        this->screenDataDirty[currentFrame] = false;
+    }
+}
+
+void SwapChainModule::UpdateScreenData(const VkExtent2D& extent, uint32_t frameIndex)
+{
+    if (!this->screenData || frameIndex >= MAX_FRAMES_IN_FLIGHT)
+    {
+        return;
+    }
+
+    const uint32_t tileSize = std::max(1u, static_cast<uint32_t>(this->currentTileSize));
+    const uint32_t safeWidth = std::max(1u, extent.width);
+    const uint32_t safeHeight = std::max(1u, extent.height);
+    const uint32_t tileCountX = std::max(1u, (safeWidth + tileSize - 1u) / tileSize);
+    const uint32_t tileCountY = std::max(1u, (safeHeight + tileSize - 1u) / tileSize);
+
+    ScreenDataUniform newValues{};
+    newValues.tilePixelSize = glm::uvec2(tileSize, tileSize);
+    newValues.tileCount = glm::uvec2(tileCountX, tileCountY);
+
+    if (this->screenDataValues.tilePixelSize != newValues.tilePixelSize ||
+        this->screenDataValues.tileCount != newValues.tileCount)
+    {
+        this->screenDataValues = newValues;
+        std::fill(this->screenDataDirty.begin(), this->screenDataDirty.end(), true);
+    }
+
+    if (!this->screenDataDirty[frameIndex])
+    {
+        return;
+    }
+
+    void* data = nullptr;
+    vkMapMemory(deviceModule->device, this->screenData->uniformBuffersMemory[frameIndex], 0, sizeof(ScreenDataUniform), 0, &data);
+    memcpy(data, &this->screenDataValues, sizeof(ScreenDataUniform));
+    vkUnmapMemory(deviceModule->device, this->screenData->uniformBuffersMemory[frameIndex]);
+    this->screenDataDirty[frameIndex] = false;
+}
+
+void SwapChainModule::InitializeScreenDataResources()
+{
+    this->screenData = std::make_shared<UniformBufferObject>();
+    this->screenData->CreateUniformBuffer(sizeof(ScreenDataUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+}
+
+void SwapChainModule::CleanScreenDataResources()
+{
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        if (this->screenData != nullptr)
+        {
+            QE_DESTROY_BUFFER(deviceModule->device, this->screenData->uniformBuffers[i], "SwapChainModule::CleanScreenDataResources");
+            QE_FREE_MEMORY(deviceModule->device, this->screenData->uniformBuffersMemory[i], "SwapChainModule::CleanScreenDataResources");
+        }
+    }
+}
+
+void SwapChainModule::UpdateTileSize(float newTileSize)
+{
+    if (this->currentTileSize == newTileSize)
+    {
+        return;
+    }
+
+    this->currentTileSize = newTileSize;
+    std::fill(this->screenDataDirty.begin(), this->screenDataDirty.end(), true);
+}

@@ -1,0 +1,78 @@
+#pragma once
+
+#ifndef CSM_MODULE_H
+#define CSM_MODULE_H
+
+#include <vulkan/vulkan.hpp>
+#include <DeviceModule.h>
+#include <SwapChainModule.h>
+
+constexpr uint32_t  SHADOW_MAP_CASCADE_COUNT = 4;
+
+struct CascadeResource {
+    VkFramebuffer frameBuffer;
+    VkImageView view;
+    float splitDepth;
+    glm::mat4 viewProjMatrix;
+    void destroy(VkDevice device)
+    {
+        vkDestroyImageView(device, view, nullptr);
+        vkDestroyFramebuffer(device, frameBuffer, nullptr);
+    }
+};
+
+class CSMResources
+{
+private:
+    DeviceModule* deviceModule;
+    SwapChainModule* swapchainModule = nullptr;
+
+    // CSM image
+    VkImage CSMImage = VK_NULL_HANDLE;
+    VkDeviceMemory CSMImageMemory = { VK_NULL_HANDLE };
+
+public:
+    static QueueModule* queueModule;
+    static VkCommandPool commandPool;
+    static uint32_t TextureSize;
+    VkFormat shadowFormat;
+
+    float DepthBiasConstant = 0.10f;
+    float DepthBiasSlope = 0.50f;
+
+public:
+    std::shared_ptr<UniformBufferObject> OffscreenShadowMapUBO = nullptr;
+    std::shared_ptr<std::array<CascadeResource, SHADOW_MAP_CASCADE_COUNT>> CascadeResourcesPtr;
+
+    VkImageView CSMImageView = VK_NULL_HANDLE;
+    VkSampler CSMSampler = VK_NULL_HANDLE;
+
+private:
+    void CreateCSMResources(std::shared_ptr<VkRenderPass> renderPass);
+    void PrepareFramebuffer(std::shared_ptr<VkRenderPass> renderPass, int iCascade);
+
+public:
+    CSMResources();
+    CSMResources(std::shared_ptr<VkRenderPass> renderPass);
+    void UpdateOffscreenUBOShadowMap();
+    static VkFormat GetSupportedShadowFormat(DeviceModule* deviceModule);
+    static bool HasStencilComponent(VkFormat format);
+    static void TransitionImageLayout(VkDevice device, VkImage& newImage, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t layerCount = SHADOW_MAP_CASCADE_COUNT);
+
+    static VkSampler CreateCSMSampler(VkDevice device);
+    static VkImageView CreateImageView(VkDevice device, VkImage& image, VkFormat format, VkImageAspectFlags aspectFlags, int baseArrayLayer, int layerCount, uint32_t mipLevels = 1);
+    static VkImage AllocateImage(VkDevice device, VkPhysicalDevice physicalDevice, VkDeviceMemory& mapMemory, uint32_t pixelSize,
+        VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkSampleCountFlagBits numSamples = VK_SAMPLE_COUNT_1_BIT);
+
+    void Cleanup();
+};
+
+
+
+namespace QE
+{
+    using ::CascadeResource;
+    using ::CSMResources;
+} // namespace QE
+// QE namespace aliases
+#endif // !CSM_MODULE_H

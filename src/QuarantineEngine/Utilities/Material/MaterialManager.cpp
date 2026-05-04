@@ -1,0 +1,677 @@
+#include "MaterialManager.h"
+#include "Material.h"
+
+#include <RenderPassModule.h>
+
+#include "ShaderManager.h"
+#include <GraphicsPipelineModule.h>
+#include <filesystem>
+#include <Vertex.h>
+#include <QEProjectManager.h>
+#include <QEMaterialYamlHelper.h>
+#include <QEShaderAssetLoader.h>
+#include <GameObjectManager.h>
+#include <Helpers/ScopedTimer.h>
+
+std::string MaterialManager::CheckName(std::string nameMaterial)
+{
+    std::unordered_map<std::string, std::shared_ptr<QEMaterial>>::const_iterator got;
+
+    std::string newName = nameMaterial;
+    unsigned int id = 0;
+
+    do
+    {
+        got = _materials.find(newName);
+
+        if (got != _materials.end())
+        {
+            id++;
+            newName = nameMaterial + "_" + std::to_string(id);
+        }
+    } while (got != _materials.end());
+
+    return newName;
+}
+
+MaterialManager::MaterialManager()
+{
+    this->renderPassModule = RenderPassModule::getInstance();
+
+    auto absPath = std::filesystem::absolute("../../resources/shaders").generic_string();
+
+    const std::string absolute_default_vertex_shader_path = absPath + "/Default/default_vert.spv";
+    const std::string absolute_default_frag_shader_path = absPath + "/Default/default_frag.spv";
+    const std::string absolute_csm_vertex_shader_path = absPath + "/Shadow/csm_vert.spv";
+    const std::string absolute_csm_frag_shader_path = absPath + "/Shadow/csm_frag.spv";
+    const std::string absolute_omni_shadow_vertex_shader_path = absPath + "/Shadow/omni_shadow_vert.spv";
+    const std::string absolute_omni_shadow_frag_shader_path = absPath + "/Shadow/omni_shadow_frag.spv";
+    const std::string absolute_particles_vert_shader_path = absPath + "/Particles/particles_vert.spv";
+    const std::string absolute_particles_frag_shader_path = absPath + "/Particles/particles_frag.spv";
+    const std::string absolute_mesh_task_shader_path = absPath + "/mesh/mesh_task.spv";
+    const std::string absolute_mesh_mesh_shader_path = absPath + "/mesh/mesh_mesh.spv";
+    const std::string absolute_mesh_frag_shader_path = absPath + "/mesh/mesh_frag.spv";
+    const std::string absolute_debugBB_vertex_shader_path = absPath + "/Debug/debugAABB_vert.spv";
+    const std::string absolute_debugBB_frag_shader_path = absPath + "/Debug/debugAABB_frag.spv";
+    const std::string absolute_debug_vertex_shader_path = absPath + "/Debug/debug_vert.spv";
+    const std::string absolute_debug_frag_shader_path = absPath + "/Debug/debug_frag.spv";
+    const std::string absolute_grid_vertex_shader_path = absPath + "/Grid/grid_vert.spv";
+    const std::string absolute_grid_frag_shader_path = absPath + "/Grid/grid_frag.spv";
+
+    auto shaderManager = ShaderManager::getInstance();
+    this->default_shader = std::make_shared<ShaderModule>(
+        ShaderModule("default", absolute_default_vertex_shader_path, absolute_default_frag_shader_path)
+    );
+    shaderManager->AddShader(this->default_shader);
+
+    this->default_primitive_shader = std::make_shared<ShaderModule>(
+        ShaderModule("default_primitive", absolute_default_vertex_shader_path, absolute_default_frag_shader_path)
+    );
+    shaderManager->AddShader(this->default_primitive_shader);
+
+    GraphicsPipelineData pipelineParticleShader = {};
+    pipelineParticleShader.HasVertexData = false;
+    this->default_particles_shader = std::make_shared<ShaderModule>(
+        ShaderModule("default_particles", absolute_particles_vert_shader_path, absolute_particles_frag_shader_path, pipelineParticleShader)
+    );
+    shaderManager->AddShader(this->default_particles_shader);
+
+    //GraphicsPipelineData pipelineMeshShader = {};
+    //pipelineMeshShader.HasVertexData = false;
+    //pipelineMeshShader.IsMeshShader = true;
+    //this->mesh_shader_test = std::make_shared<ShaderModule>(
+    //    ShaderModule("mesh_shader", absolute_mesh_task_shader_path, absolute_mesh_mesh_shader_path, absolute_mesh_frag_shader_path, pipelineMeshShader)
+    //);
+    //shaderManager->AddShader(this->mesh_shader_test);
+
+    GraphicsPipelineData pipelineShadowShader = {};
+
+    pipelineShadowShader.shadowMode = ShadowMappingMode::DIRECTIONAL_SHADOW;
+    pipelineShadowShader.renderPass = this->renderPassModule->DirShadowMappingRenderPass;
+    this->csm_shader = std::make_shared<ShaderModule>(ShaderModule("csm_shader", absolute_csm_vertex_shader_path, absolute_csm_frag_shader_path, pipelineShadowShader));
+    shaderManager->AddShader(this->csm_shader);
+
+    pipelineShadowShader.shadowMode = ShadowMappingMode::OMNI_SHADOW;
+    pipelineShadowShader.renderPass = this->renderPassModule->OmniShadowMappingRenderPass;
+    this->omni_shadow_mapping_shader = std::make_shared<ShaderModule>(ShaderModule("omni_shadow_mapping_shader", absolute_omni_shadow_vertex_shader_path, absolute_omni_shadow_frag_shader_path, pipelineShadowShader));
+    shaderManager->AddShader(this->omni_shadow_mapping_shader);
+
+    GraphicsPipelineData gpData = {};
+    gpData.HasVertexData = true;
+    gpData.polygonMode = VK_POLYGON_MODE_LINE;
+    gpData.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+    gpData.vertexBufferStride = sizeof(glm::vec4);
+    gpData.lineWidth = 2.0f;
+
+    this->shader_aabb_ptr = std::make_shared<ShaderModule>(ShaderModule("shader_aabb_debug", absolute_debugBB_vertex_shader_path, absolute_debugBB_frag_shader_path, gpData));
+    shaderManager->AddShader(shader_aabb_ptr);
+
+    {
+        gpData.HasVertexData = true;
+        gpData.polygonMode = VK_POLYGON_MODE_LINE;
+        gpData.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+        gpData.vertexBufferStride = sizeof(DebugVertex);
+        gpData.lineWidth = 1.0f;
+
+        this->shader_debug_ptr = std::make_shared<ShaderModule>(ShaderModule("shader_debug_lines", absolute_debug_vertex_shader_path, absolute_debug_frag_shader_path, gpData));
+        shaderManager->AddShader(shader_debug_ptr);
+    }
+
+    gpData = {};
+    gpData.HasVertexData = false;
+    gpData.DepthBiasEnabled = true;
+    gpData.DepthBiasConstantFactor = -1.0f;
+    gpData.DepthBiasSlopeFactor = -1.0f;
+
+    this->shader_grid_ptr = std::make_shared<ShaderModule>(ShaderModule("shader_grid", absolute_grid_vertex_shader_path, absolute_grid_frag_shader_path, gpData));
+    shaderManager->AddShader(shader_grid_ptr);
+}
+
+void MaterialManager::InitializeMaterialManager()
+{
+    this->CreateDefaultPrimitiveMaterial();
+    MarkMaterialPersistent("defaultPrimitiveMat");
+    MarkMaterialPersistent("defaultMeshPrimitiveMat");
+
+    if (!this->Exists("defaultParticlesMat"))
+    {
+        if (this->default_particles_shader != nullptr)
+        {
+            auto mat = std::make_shared<QEMaterial>("defaultParticlesMat", this->default_particles_shader);
+            this->AddMaterial(mat);
+            this->_materials["defaultParticlesMat"]->renderQueue = static_cast<unsigned int>(RenderQueue::Particles);
+        }
+    }
+
+    MarkMaterialPersistent("defaultParticlesMat");
+}
+
+std::shared_ptr<QEMaterial> MaterialManager::GetMaterial(std::string nameMaterial)
+{
+    if (_materials.empty())
+        return nullptr;
+
+    std::unordered_map<std::string, std::shared_ptr<QEMaterial>>::const_iterator got = _materials.find(nameMaterial);
+
+    if (got == _materials.end())
+        return nullptr;
+
+    return _materials[nameMaterial];
+}
+
+std::shared_ptr<QEMaterial> MaterialManager::LoadMaterialFromFile(const std::filesystem::path& materialPath)
+{
+    if (materialPath.empty())
+        return nullptr;
+
+    const fs::path resolvedPath = QEProjectManager::ResolveProjectPath(materialPath);
+
+    MaterialDto materialDto;
+    if (!QEMaterialYamlHelper::ReadMaterialFile(resolvedPath, materialDto))
+    {
+        QE_LOG_ERROR_CAT_F("QEMaterial", "Error reading the material: {}", resolvedPath.string());
+        return nullptr;
+    }
+
+    materialDto.UpdateTexturePaths(resolvedPath.parent_path());
+
+    materialDto.Name = resolvedPath.stem().string();
+
+    materialDto.FilePath = QEProjectManager::ToProjectRelativePath(resolvedPath);
+
+    auto shaderManager = ShaderManager::getInstance();
+    std::shared_ptr<ShaderModule> shader;
+
+    {
+        std::string shaderPathLower = materialDto.ShaderPath;
+        std::transform(shaderPathLower.begin(), shaderPathLower.end(), shaderPathLower.begin(), ::tolower);
+
+        if (!materialDto.ShaderPath.empty() && QEShaderAssetLoader::IsShaderAssetPath(materialDto.ShaderPath))
+        {
+            shader = QEShaderAssetLoader::LoadShaderAsset(materialDto.ShaderPath);
+        }
+        else
+        {
+            shader = shaderManager->GetShader(materialDto.ShaderPath);
+        }
+    }
+
+    if (!shader)
+    {
+        shader = default_shader;
+    }
+
+    auto existing = GetMaterial(materialDto.Name);
+    if (existing)
+    {
+        return existing;
+    }
+
+    auto material = std::make_shared<QEMaterial>(shader, materialDto);
+    if (QEShaderAssetLoader::IsShaderAssetPath(materialDto.ShaderPath))
+    {
+        material->SetShaderAssetPath(materialDto.ShaderPath);
+    }
+    AddMaterial(material);
+    return GetMaterial(material->Name);
+}
+
+bool MaterialManager::ReloadShaderAsset(const std::filesystem::path& shaderAssetPath)
+{
+    const fs::path resolvedShaderPath = QEProjectManager::ResolveProjectPath(shaderAssetPath).lexically_normal();
+    const std::string relativeShaderPath = QEProjectManager::ToProjectRelativePath(resolvedShaderPath);
+
+    auto shader = QEShaderAssetLoader::LoadShaderAsset(relativeShaderPath, true);
+    if (!shader)
+        return false;
+
+    bool anyUpdated = false;
+
+    for (auto& [name, material] : _materials)
+    {
+        if (!material)
+            continue;
+
+        if (material->GetShaderAssetPath() != relativeShaderPath)
+            continue;
+
+        if (material->ApplyShader(shader, relativeShaderPath))
+            anyUpdated = true;
+    }
+
+    return anyUpdated;
+}
+
+bool MaterialManager::RemoveMaterialAsset(const std::filesystem::path& materialPath)
+{
+    if (materialPath.empty())
+        return false;
+
+    const fs::path resolvedPath = QEProjectManager::ResolveProjectPath(materialPath).lexically_normal();
+    const std::string materialName = resolvedPath.stem().string();
+
+    auto it = _materials.find(materialName);
+    if (it == _materials.end())
+        return false;
+
+    if (IsPersistentMaterial(materialName))
+    {
+        QE_LOG_WARN_CAT_F(
+            "MaterialManager",
+            "Material '{}' is persistent and will not be removed from memory.",
+            materialName);
+        return false;
+    }
+
+    GameObjectManager::getInstance()->RemoveMaterialReferences(materialName);
+
+    if (it->second)
+    {
+        it->second->cleanup();
+        it->second.reset();
+    }
+
+    _materials.erase(it);
+    _persistentMaterialNames.erase(materialName);
+    return true;
+}
+
+bool MaterialManager::SyncRenamedMaterialAsset(const std::filesystem::path& oldPath, const std::filesystem::path& newPath)
+{
+    const fs::path resolvedOldPath = QEProjectManager::ResolveProjectPath(oldPath).lexically_normal();
+    const fs::path resolvedNewPath = QEProjectManager::ResolveProjectPath(newPath).lexically_normal();
+    const std::string newMaterialName = resolvedNewPath.stem().string();
+
+    for (auto it = _materials.begin(); it != _materials.end(); ++it)
+    {
+        const auto& material = it->second;
+        if (!material)
+            continue;
+
+        fs::path materialPath = QEProjectManager::ResolveProjectPath(material->GetMaterialFilePath()).lexically_normal();
+        if (materialPath != resolvedOldPath)
+            continue;
+
+        std::shared_ptr<QEMaterial> materialPtr = material;
+        const std::string oldMaterialName = it->first;
+        const bool wasPersistent = IsPersistentMaterial(oldMaterialName);
+
+        _materials.erase(it);
+        _persistentMaterialNames.erase(oldMaterialName);
+
+        materialPtr->RenameMaterial(newMaterialName);
+        materialPtr->SetMaterialFilePath(resolvedNewPath.string());
+        _materials[newMaterialName] = materialPtr;
+
+        if (wasPersistent)
+        {
+            _persistentMaterialNames.insert(newMaterialName);
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+void MaterialManager::AddMaterial(std::shared_ptr<QEMaterial> mat_ptr)
+{
+    std::string nameMaterial = CheckName(mat_ptr->Name);
+    mat_ptr->RenameMaterial(nameMaterial);
+    _materials[nameMaterial] = mat_ptr;
+}
+
+void MaterialManager::AddMaterial(QEMaterial mat)
+{
+    std::shared_ptr<QEMaterial> mat_ptr = std::make_shared<QEMaterial>(mat);
+    std::string nameMaterial = CheckName(mat.Name);
+    mat_ptr->Name = nameMaterial;
+    _materials[nameMaterial] = mat_ptr;
+}
+
+void MaterialManager::CreateDefaultPrimitiveMaterial()
+{
+    if (!this->Exists("defaultPrimitiveMat"))
+    {
+        if (this->default_primitive_shader != nullptr)
+        {
+            auto mat = std::make_shared<QEMaterial>("defaultPrimitiveMat", this->default_primitive_shader);
+            this->AddMaterial(mat);
+        }
+    }
+
+    if (!this->Exists("defaultMeshPrimitiveMat"))
+    {
+        if (this->mesh_shader_test != nullptr)
+        {
+            auto mat = std::make_shared<QEMaterial>("defaultMeshPrimitiveMat", this->mesh_shader_test);
+            this->AddMaterial(mat);
+            this->_materials["defaultMeshPrimitiveMat"]->SetMeshShaderPipeline(true);
+        }
+    }
+}
+
+bool MaterialManager::Exists(std::string materialName)
+{
+    std::unordered_map<std::string, std::shared_ptr<QEMaterial>>::const_iterator got = _materials.find(materialName);
+
+    if (got == _materials.end())
+        return false;
+
+    return true;
+}
+
+std::shared_ptr<ShaderModule> MaterialManager::GetCSMShader() const
+{
+    return csm_shader;
+}
+
+std::shared_ptr<ShaderModule> MaterialManager::GetOmniShadowMappingShader() const
+{
+    return omni_shadow_mapping_shader;
+}
+
+void MaterialManager::CleanPipelines()
+{
+    for (auto& it : _materials)
+    {
+        if (it.second)
+        {
+            it.second->cleanup();
+        }
+    }
+}
+
+void MaterialManager::CleanLastResources()
+{
+    for (auto& mat : this->_materials)
+    {
+        if (mat.second)
+        {
+            mat.second->CleanLastResources();
+            mat.second.reset();
+        }
+    }
+
+    this->_materials.clear();
+    this->_persistentMaterialNames.clear();
+
+    this->default_shader.reset();
+    this->default_primitive_shader.reset();
+    this->default_particles_shader.reset();
+    this->mesh_shader_test.reset();
+    this->shader_aabb_ptr.reset();
+    this->shader_debug_ptr.reset();
+    this->shader_grid_ptr.reset();
+    this->csm_shader.reset();
+    this->omni_shadow_mapping_shader.reset();
+
+    this->default_shader = nullptr;
+    this->default_primitive_shader = nullptr;
+    this->default_particles_shader = nullptr;
+    this->mesh_shader_test = nullptr;
+    this->shader_aabb_ptr = nullptr;
+    this->shader_debug_ptr = nullptr;
+    this->shader_grid_ptr = nullptr;
+    this->csm_shader = nullptr;
+    this->omni_shadow_mapping_shader = nullptr;
+}
+
+void MaterialManager::UpdateUniforms()
+{
+    for (auto& it : _materials)
+    {
+        if (it.second)
+        {
+            it.second->UpdateUniformData();
+        }
+    }
+}
+
+std::vector<MaterialDto> MaterialManager::GetMaterialDtos(std::ifstream& file)
+{
+    // Read the materials
+    int numMaterials;
+    file.read(reinterpret_cast<char*>(&numMaterials), sizeof(int));
+
+    int materialPathLength;
+
+    std::vector<std::string> materialPaths(numMaterials);
+
+    for (int i = 0; i < numMaterials; i++)
+    {
+        file.read(reinterpret_cast<char*>(&materialPathLength), sizeof(materialPathLength));
+        materialPaths[i].resize(materialPathLength);
+        file.read(&materialPaths[i][0], materialPathLength);
+    }
+
+    try
+    {
+        std::vector<MaterialDto> materialDtos;
+    
+        for (int i = 0; i < numMaterials; i++)
+        {
+            std::ifstream matfile(materialPaths[i], std::ios::binary);
+            if (!matfile.is_open())
+            {
+                QE_LOG_ERROR_CAT_F("QEMaterial", "Error opening the material: {}", materialPaths[i]);
+                continue;
+            }
+
+            MaterialDto materialDto = ReadQEMaterial(matfile);
+
+            matfile.close();
+
+            materialDtos.push_back(materialDto);
+        }
+
+        return materialDtos;
+    }
+    catch (const std::bad_alloc& e)
+    {
+        QE_LOG_ERROR_CAT_F("QEMaterial", "Error allocating memory for the materials: {}", e.what());
+        return {};
+    }
+}
+
+MaterialDto MaterialManager::ReadQEMaterial(std::ifstream& matfile)
+{
+    MaterialDto materialDto{};
+
+    auto readString = [&](std::string& out)
+        {
+            int len = 0;
+            matfile.read(reinterpret_cast<char*>(&len), sizeof(int));
+            if (len > 0)
+            {
+                out.resize(len);
+                matfile.read(out.data(), len);
+            }
+            else
+            {
+                out.clear();
+            }
+        };
+
+    // Header strings
+    readString(materialDto.Name);
+    readString(materialDto.FilePath);
+    readString(materialDto.ShaderPath);
+
+    // Layer
+    matfile.read(reinterpret_cast<char*>(&materialDto.RenderQueue), sizeof(int));
+
+    // Scalars legacy
+    matfile.read(reinterpret_cast<char*>(&materialDto.Opacity), sizeof(float));
+    matfile.read(reinterpret_cast<char*>(&materialDto.BumpScaling), sizeof(float));
+    matfile.read(reinterpret_cast<char*>(&materialDto.Shininess), sizeof(float));
+    matfile.read(reinterpret_cast<char*>(&materialDto.Reflectivity), sizeof(float));
+    matfile.read(reinterpret_cast<char*>(&materialDto.Shininess_Strength), sizeof(float));
+    matfile.read(reinterpret_cast<char*>(&materialDto.Refractivity), sizeof(float));
+
+    // PBR factors
+    matfile.read(reinterpret_cast<char*>(&materialDto.Metallic), sizeof(float));
+    matfile.read(reinterpret_cast<char*>(&materialDto.Roughness), sizeof(float));
+    matfile.read(reinterpret_cast<char*>(&materialDto.AO), sizeof(float));
+    matfile.read(reinterpret_cast<char*>(&materialDto.Clearcoat), sizeof(float));
+    matfile.read(reinterpret_cast<char*>(&materialDto.ClearcoatRoughness), sizeof(float));
+
+    // Colors
+    matfile.read(reinterpret_cast<char*>(&materialDto.Diffuse), sizeof(glm::vec4));
+    matfile.read(reinterpret_cast<char*>(&materialDto.Ambient), sizeof(glm::vec4));
+    matfile.read(reinterpret_cast<char*>(&materialDto.Specular), sizeof(glm::vec4));
+    matfile.read(reinterpret_cast<char*>(&materialDto.Emissive), sizeof(glm::vec4));
+    matfile.read(reinterpret_cast<char*>(&materialDto.Transparent), sizeof(glm::vec4));
+    matfile.read(reinterpret_cast<char*>(&materialDto.Reflective), sizeof(glm::vec4));
+
+    // Mask + channels (NEW)
+    matfile.read(reinterpret_cast<char*>(&materialDto.texMask), sizeof(uint32_t));
+    matfile.read(reinterpret_cast<char*>(&materialDto.metallicChan), sizeof(uint32_t));
+    matfile.read(reinterpret_cast<char*>(&materialDto.roughnessChan), sizeof(uint32_t));
+    matfile.read(reinterpret_cast<char*>(&materialDto.aoChan), sizeof(uint32_t));
+
+    // 8 texture slots
+    readString(materialDto.diffuseTexturePath);    // slot 0
+    readString(materialDto.normalTexturePath);     // slot 1
+    readString(materialDto.metallicTexturePath);   // slot 2
+    readString(materialDto.roughnessTexturePath);  // slot 3
+    readString(materialDto.aoTexturePath);         // slot 4
+    readString(materialDto.emissiveTexturePath);   // slot 5
+    readString(materialDto.heightTexturePath);     // slot 6
+    readString(materialDto.specularTexturePath);   // slot 7
+
+    return materialDto;
+}
+
+void MaterialManager::LoadMaterialDtos(std::vector<MaterialDto>& materialDtos)
+{
+    auto shaderManager = ShaderManager::getInstance();
+    for (auto& it : materialDtos)
+    {
+        std::shared_ptr<ShaderModule> shader;
+
+        if (!it.ShaderPath.empty() && QEShaderAssetLoader::IsShaderAssetPath(it.ShaderPath))
+        {
+            shader = QEShaderAssetLoader::LoadShaderAsset(it.ShaderPath);
+        }
+        else
+        {
+            shader = shaderManager->GetShader(it.ShaderPath);
+        }
+
+        if (!shader)
+        {
+            QE_LOG_WARN_CAT_F(
+                "MaterialManager",
+                "Shader '{}' could not be resolved while loading material '{}'. Falling back to default shader.",
+                it.ShaderPath,
+                it.Name);
+            shader = default_shader;
+        }
+
+        if (!this->Exists(it.Name))
+        {
+            auto material = std::make_shared<QEMaterial>(QEMaterial(shader, it));
+            if (QEShaderAssetLoader::IsShaderAssetPath(it.ShaderPath))
+            {
+                material->SetShaderAssetPath(it.ShaderPath);
+            }
+
+            this->AddMaterial(material);
+        }
+    }
+}
+
+YAML::Node MaterialManager::SerializeMaterials()
+{
+    YAML::Node materialsNode;
+
+    for (auto& it : _materials)
+    {
+        std::string savedPath = it.second->SaveMaterialFile();
+        std::string relativePath = QEProjectManager::ToProjectRelativePath(savedPath);
+        materialsNode.push_back(relativePath);
+    }
+
+    return materialsNode;
+}
+
+void MaterialManager::DeserializeMaterials(YAML::Node materials)
+{
+    std::vector<MaterialDto> materialDtos;
+
+    try
+    {
+        if (materials && materials.IsSequence())
+        {
+            for (const auto& materialPath : materials)
+            {
+                std::string matPath = materialPath.as<std::string>();
+                fs::path resolvedPath = QEProjectManager::ResolveProjectPath(matPath);
+
+                MaterialDto materialDto;
+
+                if (!QEMaterialYamlHelper::ReadMaterialFile(resolvedPath, materialDto))
+                {
+                    QE_LOG_ERROR_CAT_F("QEMaterial", "Error reading the material: {}", resolvedPath.string());
+                    continue;
+                }
+
+                materialDto.UpdateTexturePaths(resolvedPath.parent_path());
+                materialDto.Name = resolvedPath.stem().string();
+                materialDto.FilePath = QEProjectManager::ToProjectRelativePath(resolvedPath);
+
+                materialDtos.push_back(materialDto);
+            }
+        }
+    }
+    catch (const std::bad_alloc& e)
+    {
+        QE_LOG_ERROR_CAT_F("QEMaterial", "Error allocating memory for the materials: {}", e.what());
+        return;
+    }
+
+    this->LoadMaterialDtos(materialDtos);
+}
+
+void MaterialManager::MarkMaterialPersistent(const std::string& materialName)
+{
+    if (!materialName.empty())
+    {
+        _persistentMaterialNames.insert(materialName);
+    }
+}
+
+bool MaterialManager::IsPersistentMaterial(const std::string& materialName) const
+{
+    return _persistentMaterialNames.find(materialName) != _persistentMaterialNames.end();
+}
+
+void MaterialManager::ResetSceneState()
+{
+    std::vector<std::string> materialsToRemove;
+    materialsToRemove.reserve(_materials.size());
+
+    for (const auto& it : _materials)
+    {
+        if (!IsPersistentMaterial(it.first))
+        {
+            materialsToRemove.push_back(it.first);
+        }
+    }
+
+    for (const auto& materialName : materialsToRemove)
+    {
+        auto it = _materials.find(materialName);
+        if (it == _materials.end())
+            continue;
+
+        if (it->second)
+        {
+            it->second->cleanup();
+            it->second.reset();
+        }
+
+        _materials.erase(materialName);
+    }
+}

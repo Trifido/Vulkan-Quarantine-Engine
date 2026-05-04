@@ -88,9 +88,9 @@ void main()
     uint vertex_index = lid * 3;
 
     
-    gl_MeshVerticesEXT[vertex_index].gl_Position  = cameraData.viewproj * constants.model * vertex[face_indices.x].pos;
-    gl_MeshVerticesEXT[vertex_index + 1].gl_Position  = cameraData.viewproj * constants.model * vertex[face_indices.y].pos;
-    gl_MeshVerticesEXT[vertex_index + 2].gl_Position  = cameraData.viewproj * constants.model * vertex[face_indices.z].pos;
+    gl_MeshVerticesEXT[vertex_index].gl_Position  = cameraData.viewProjection * constants.model * vertex[face_indices.x].pos;
+    gl_MeshVerticesEXT[vertex_index + 1].gl_Position  = cameraData.viewProjection * constants.model * vertex[face_indices.y].pos;
+    gl_MeshVerticesEXT[vertex_index + 2].gl_Position  = cameraData.viewProjection * constants.model * vertex[face_indices.z].pos;
 
     gl_PrimitiveTriangleIndicesEXT[lid].x = vertex_index;
     gl_PrimitiveTriangleIndicesEXT[lid].y = vertex_index + 1;

@@ -93,7 +93,7 @@ void main()
     for(uint i = 0; i < GPU_INDICES_PER_PRIMITIVE; i++)
     {
         uint cur_index = indices[index_base_id + i];
-        gl_MeshVerticesEXT[vertex_base_id + i].gl_Position = cameraData.viewproj * constants.model * vertex[cur_index].pos;
+        gl_MeshVerticesEXT[vertex_base_id + i].gl_Position = cameraData.viewProjection * constants.model * vertex[cur_index].pos;
         
         customData[vertex_base_id + i].color = meshletcolors[ind % MAX_COLORS];
         //customData[vertex_base_id + i].color = 0.5 * (resultModel * vertex[cur_index].norm) + 0.5;

@@ -1,0 +1,700 @@
+#include "QEEditorApp.h"
+
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_vulkan.h>
+#include <ImGuizmo.h>
+#include <SyncTool.h>
+
+#include <QuarantineEditor/Core/EditorContext.h>
+#include <QuarantineEditor/Core/EditorCameraService.h>
+#include <QuarantineEditor/Core/EditorDebugSettings.h>
+#include <QuarantineEditor/Core/EditorSelectionManager.h>
+#include <QuarantineEditor/Core/QEGizmoController.h>
+#include <QuarantineEditor/Core/EditorPickingSystem.h>
+#include <QuarantineEditor/Core/EditorSceneObjectFactory.h>
+#include <QuarantineEditor/Core/EditorSceneStateSerializer.h>
+#include <QERenderTarget.h>
+
+#include <QuarantineEditor/Commands/EditorCommandManager.h>
+
+#include "Panels/IEditorPanel.h"
+#include "Panels/SceneHierarchyPanel.h"
+#include "Panels/InspectorPanel.h"
+#include "Panels/AnimationGraphPanel.h"
+#include "Panels/ViewportPanel.h"
+#include "Panels/EditorHeaderBar.h"
+#include "Panels/QEProjectBrowserPanel.h"
+#include "Panels/ConsolePanel.h"
+#include "Panels/MaterialInspectorPanel.h"
+#include "Panels/MaterialEditorPanel.h"
+#include "Panels/ShaderEditorPanel.h"
+#include "Panels/QETextureViewerPanel.h"
+#include "Rendering/EditorViewportResources.h"
+#include "Runtime/QEEditorRuntimeBridge.h"
+#include <QEProjectManager.h>
+#include <QERuntimeMode.h>
+#include <QEMeshRenderer.h>
+#include <Material.h>
+#include <MaterialManager.h>
+#include <algorithm>
+#include <filesystem>
+
+#include <CullingSceneManager.h>
+#include <DebugSystem/QEDebugSystem.h>
+
+#include <Logging/QELogger.h>
+#include <Logging/QEConsoleLogSink.h>
+#include <QuarantineEditor/Logs/QEEditorConsole.h>
+#include <QuarantineEditor/Logs/QEEditorConsoleSink.h>
+
+QEEditorApp::QEEditorApp()
+{
+    editorCameraService = std::make_unique<EditorCameraService>();
+    editorDebugSettings = std::make_unique<EditorDebugSettings>();
+    editorSceneStateSerializer = std::make_unique<EditorSceneStateSerializer>();
+}
+
+QEEditorApp::~QEEditorApp() = default;
+
+void QEEditorApp::ConfigureEngineBindings()
+{
+    QERuntimeMode::getInstance()->SetGameplayEnabled(false);
+    editorCameraService->EnsureEditorCamera(gameObjectManager);
+}
+
+void QEEditorApp::OnInitialize()
+{
+    // Log
+    editorConsole = std::make_unique<QEEditorConsole>();
+    editorConsoleSink = std::make_unique<QEEditorConsoleSink>(editorConsole.get());
+    consoleLogSink = std::make_unique<QEConsoleLogSink>();
+
+    QELogger::Get().AddSink(consoleLogSink.get());
+    QELogger::Get().AddSink(editorConsoleSink.get());
+
+    // Main window & panels
+    mainWindow->OnExternalFilesDropped = [this](const std::vector<std::filesystem::path>& paths)
+        {
+            for (const auto& path : paths)
+            {
+                QueueExternalDroppedFile(path);
+            }
+        };
+
+    editorContext = std::make_unique<EditorContext>();
+    editorDebugSettings->AttachContext(editorContext.get());
+    editorDebugSettings->AttachDebugSystem(debugSystem);
+
+    viewportResources = std::make_unique<EditorViewportResources>();
+    viewportResources->Initialize(deviceModule, renderPassModule, commandPoolModule, queueModule);
+    viewportResources->Resize(1280, 720);
+
+    SetAdditionalSceneRenderTarget();
+    atmosphereSystem->UpdateAtmopshereResolution();
+
+    selectionManager = std::make_unique<EditorSelectionManager>();
+    gizmoController = std::make_unique<QEGizmoController>();
+    gizmoController->SetOperation(QEGizmoController::Operation::Translate);
+    pickingSystem = std::make_unique<EditorPickingSystem>();
+    commandManager = std::make_unique<EditorCommandManager>();
+
+    headerBar = std::make_unique<EditorHeaderBar>(
+        editorContext.get(),
+        commandManager.get(),
+        [this]() { return editorCameraService->GetEditorCamera(); },
+        [this]() { return editorDebugSettings->ShowEditorGrid(); },
+        [this](bool value) { editorDebugSettings->SetShowEditorGrid(value); },
+        [this]() { return editorDebugSettings->ShowColliderDebug(); },
+        [this](bool value) { editorDebugSettings->SetShowColliderDebug(value); },
+        [this]() { return editorDebugSettings->ShowCullingAABBDebug(); },
+        [this](bool value) { editorDebugSettings->SetShowCullingAABBDebug(value); },
+        physicsModule);
+
+    headerBar->SetOnSaveRequested([this]()
+        {
+            SaveScene();
+        });
+
+    sceneObjectFactory = std::make_unique<EditorSceneObjectFactory>(
+        gameObjectManager,
+        MaterialManager::getInstance(),
+        selectionManager.get(),
+        [this]() { return editorCameraService->GetEditorCamera(); });
+
+    CreatePanels();
+}
+
+void QEEditorApp::OnShutdown()
+{
+    if (editorConsoleSink)
+    {
+        QELogger::Get().RemoveSink(editorConsoleSink.get());
+    }
+
+    if (consoleLogSink)
+    {
+        QELogger::Get().RemoveSink(consoleLogSink.get());
+    }
+
+    if (viewportResources)
+    {
+        viewportResources->Cleanup();
+        viewportResources.reset();
+    }
+
+    QEEditorRuntimeBridge::CleanupEditorRuntime();
+}
+
+void QEEditorApp::OnFrameStart()
+{
+    FlushClosedTextureViewerPanels();
+
+    if (_pendingSceneOpenPath.has_value())
+    {
+        const auto scenePath = *_pendingSceneOpenPath;
+        _pendingSceneOpenPath.reset();
+        OpenScene(scenePath);
+    }
+}
+
+void QEEditorApp::OnBeginFrame()
+{
+    BeginImGuiFrame();
+    DrawEditorUI();
+}
+
+void QEEditorApp::OnEndFrame()
+{
+    EndImGuiFrame();
+    physicsModule->SyncEditorBodies();
+    physicsModule->UpdateDebugPhysicsDrawer();
+}
+
+void QEEditorApp::OnPostInitVulkan()
+{
+    InitializeImGui();
+}
+
+void QEEditorApp::OnPreCleanup()
+{
+    vkDeviceWaitIdle(deviceModule->device);
+    panels.clear();
+    ShutdownImGui();
+}
+
+void QEEditorApp::OnBeforeSceneActivated()
+{
+    editorCameraService->EnsureEditorCamera(gameObjectManager);
+    editorSceneStateSerializer->Load(scene, editorCameraService->GetEditorCamera(), *editorDebugSettings);
+
+    if (cameraContext)
+    {
+        cameraContext->SetCameraOverride(editorCameraService->GetEditorCamera());
+    }
+
+    QEEditorRuntimeBridge::SetupEditorRuntime(editorDebugSettings->ShowEditorGrid());
+    editorDebugSettings->SetShowEditorGrid(editorDebugSettings->ShowEditorGrid());
+    editorDebugSettings->SetShowColliderDebug(editorDebugSettings->ShowColliderDebug());
+    editorDebugSettings->SetShowCullingAABBDebug(editorDebugSettings->ShowCullingAABBDebug());
+}
+
+void QEEditorApp::OnMainViewportResized(uint32_t, uint32_t)
+{
+}
+
+void QEEditorApp::RecordAdditionalScenePass(VkCommandBuffer& commandBuffer, uint32_t currentFrame)
+{
+    QEEditorRuntimeBridge::DrawEditorObjects(commandBuffer, currentFrame);
+}
+
+void QEEditorApp::RecordAdditionalOverlayPass(VkCommandBuffer& commandBuffer, uint32_t currentFrame)
+{
+    if (materialEditorPanelPtr)
+    {
+        materialEditorPanelPtr->RenderPreview(commandBuffer, currentFrame);
+    }
+}
+
+void QEEditorApp::OnSwapchainRecreated()
+{
+    if (viewportResources)
+    {
+        viewportResources->Rebuild();
+        SetAdditionalSceneRenderTarget();
+        atmosphereSystem->UpdateAtmopshereResolution();
+    }
+
+    if (materialEditorPanelPtr)
+    {
+        materialEditorPanelPtr->RebuildPreview();
+    }
+}
+
+void QEEditorApp::BeginImGuiFrame()
+{
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+    ImGuizmo::BeginFrame();
+}
+
+void QEEditorApp::DrawEditorUI()
+{
+    HandleShortcuts();
+    DrawDockspace();
+
+    if (projectBrowserPanelPtr != nullptr)
+    {
+        projectBrowserPanelPtr->SetPendingExternalDrops(GetExternalDroppedFiles());
+    }
+
+    for (auto& panel : panels)
+    {
+        panel->Draw();
+    }
+
+    DrawTextureViewerPanels();
+
+    if (projectBrowserPanelPtr != nullptr)
+    {
+        auto pendingSceneOpen = projectBrowserPanelPtr->ConsumePendingSceneOpenRequest();
+        if (pendingSceneOpen.has_value())
+        {
+            _pendingSceneOpenPath = *pendingSceneOpen;
+        }
+
+        auto pendingTextureOpen = projectBrowserPanelPtr->ConsumePendingTextureOpenRequest();
+        if (pendingTextureOpen.has_value())
+        {
+            OpenTextureViewer(*pendingTextureOpen);
+        }
+
+        auto pendingMaterialOpen = projectBrowserPanelPtr->ConsumePendingMaterialOpenRequest();
+        if (pendingMaterialOpen.has_value())
+        {
+            OpenMaterialEditor(*pendingMaterialOpen);
+        }
+
+        auto pendingShaderOpen = projectBrowserPanelPtr->ConsumePendingShaderOpenRequest();
+        if (pendingShaderOpen.has_value())
+        {
+            OpenShaderEditor(*pendingShaderOpen);
+        }
+    }
+
+    editorCameraService->UpdateInputState(editorContext.get());
+
+    ClearExternalDroppedFiles();
+}
+
+void QEEditorApp::EndImGuiFrame()
+{
+    ImGui::Render();
+
+    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault();
+    }
+}
+
+void QEEditorApp::SetAdditionalSceneRenderTarget()
+{
+    if (!viewportResources || !viewportResources->IsValid())
+    {
+        return;
+    }
+
+    auto cameraContext = QECameraContext::getInstance();
+    cameraContext->SetRenderTargetOverride(&viewportResources->GetRenderTarget());
+}
+
+void QEEditorApp::InitializeImGuiSettingsFile()
+{
+    std::error_code ec;
+    const std::filesystem::path workingDirectory = std::filesystem::current_path(ec);
+    if (ec)
+    {
+        QE_LOG_WARN_CAT_F("Editor", "Could not resolve editor working directory for ImGui settings: {}", ec.message());
+        return;
+    }
+
+    imguiIniPath = workingDirectory / "imgui.ini";
+    const std::filesystem::path defaultIniPath = workingDirectory / "imgui_default.ini";
+
+    if (std::filesystem::exists(imguiIniPath))
+    {
+        return;
+    }
+
+    if (!std::filesystem::exists(defaultIniPath))
+    {
+        QE_LOG_WARN_CAT_F("Editor", "Default ImGui settings file not found: {}", defaultIniPath.string());
+        return;
+    }
+
+    std::filesystem::copy_file(defaultIniPath, imguiIniPath, std::filesystem::copy_options::none, ec);
+    if (ec)
+    {
+        QE_LOG_WARN_CAT_F("Editor", "Could not create default ImGui settings file '{}': {}", imguiIniPath.string(), ec.message());
+    }
+}
+
+void QEEditorApp::InitializeImGui()
+{
+    InitializeImGuiSettingsFile();
+
+    VkDescriptorPoolSize pool_sizes[] =
+    {
+        { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+        { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+    };
+
+    VkDescriptorPoolCreateInfo pool_info = {};
+    pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+    pool_info.maxSets = 1000;
+    pool_info.poolSizeCount = (uint32_t)std::size(pool_sizes);
+    pool_info.pPoolSizes = pool_sizes;
+
+    vkCreateDescriptorPool(deviceModule->device, &pool_info, nullptr, &imguiPool);
+
+    ImGui::CreateContext();
+
+    ImGuiIO& io = ImGui::GetIO();
+    if (!imguiIniPath.empty())
+    {
+        imguiIniPathString = imguiIniPath.string();
+        io.IniFilename = imguiIniPathString.c_str();
+    }
+
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+
+    ImGui_ImplGlfw_InitForVulkan(mainWindow->window, true);
+
+    ImGui_ImplVulkan_InitInfo init_info = {};
+    init_info.Instance = vulkanInstance.getInstance();
+    init_info.PhysicalDevice = deviceModule->physicalDevice;
+    init_info.Device = deviceModule->device;
+    init_info.Queue = queueModule->graphicsQueue;
+    init_info.DescriptorPool = imguiPool;
+    init_info.Subpass = 0;
+    init_info.RenderPass = *renderPassModule->DefaultRenderPass;
+    init_info.MinImageCount = 3;
+    init_info.ImageCount = 3;
+    init_info.MSAASamples = *deviceModule->getMsaaSamples();
+
+    ImGui_ImplVulkan_Init(&init_info);
+
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands(
+        deviceModule->device,
+        commandPoolModule->getCommandPool());
+
+    ImGui_ImplVulkan_CreateFontsTexture();
+
+    endSingleTimeCommands(
+        deviceModule->device,
+        queueModule->graphicsQueue,
+        commandPoolModule->getCommandPool(),
+        commandBuffer);
+}
+
+void QEEditorApp::ShutdownImGui()
+{
+    ImGui_ImplVulkan_Shutdown();
+    vkDestroyDescriptorPool(deviceModule->device, imguiPool, nullptr);
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+}
+
+void QEEditorApp::CreatePanels()
+{
+    panels.clear();
+
+    panels.emplace_back(std::make_unique<SceneHierarchyPanel>(
+        gameObjectManager,
+        editorContext.get(),
+        selectionManager.get(),
+        sceneObjectFactory.get()));
+
+    panels.emplace_back(std::make_unique<InspectorPanel>(
+        gameObjectManager,
+        editorContext.get(),
+        selectionManager.get(),
+        commandManager.get()));
+
+    panels.emplace_back(std::make_unique<AnimationGraphPanel>(
+        editorContext.get(),
+        selectionManager.get()));
+
+    panels.emplace_back(std::make_unique<MaterialInspectorPanel>(
+        gameObjectManager,
+        MaterialManager::getInstance(),
+        editorContext.get(),
+        selectionManager.get(),
+        [this](const std::shared_ptr<QEMaterial>& material)
+        {
+            OpenMaterialEditor(material);
+        }));
+
+    auto materialEditorPanelLocal = std::make_unique<MaterialEditorPanel>(
+        editorContext.get(),
+        MaterialManager::getInstance(),
+        deviceModule,
+        renderPassModule,
+        commandPoolModule,
+        queueModule);
+
+    materialEditorPanelPtr = materialEditorPanelLocal.get();
+    panels.emplace_back(std::move(materialEditorPanelLocal));
+
+    auto shaderEditorPanelLocal = std::make_unique<ShaderEditorPanel>(
+        editorContext.get());
+    shaderEditorPanelPtr = shaderEditorPanelLocal.get();
+    panels.emplace_back(std::move(shaderEditorPanelLocal));
+
+    panels.emplace_back(std::make_unique<ConsolePanel>(
+        editorContext.get(),
+        editorConsole.get()));
+
+    auto viewportPanelLocal = std::make_unique<ViewportPanel>(
+        editorContext.get(),
+        viewportResources.get(),
+        selectionManager.get(),
+        gizmoController.get(),
+        pickingSystem.get(),
+        commandManager.get(),
+        [this]() { return editorCameraService->GetEditorCamera(); },
+        [this](uint32_t width, uint32_t height)
+        {
+            if (cameraContext)
+            {
+                cameraContext->UpdateCameraOverrideViewportSize(width, height);
+            }
+        });
+
+    viewportPanelLocal->OnAssetDroppedInViewport = [this](const std::string& assetPath)
+        {
+            SpawnDroppedMesh(assetPath);
+        };
+
+    panels.emplace_back(std::move(viewportPanelLocal));
+
+    auto projectBrowserPanelLocal = std::make_unique<QEProjectBrowserPanel>();
+
+    if (QEProjectManager::HasCurrentProject())
+    {
+        projectBrowserPanelLocal->SetProjectRootPath(QEProjectManager::GetCurrentProjectPath());
+    }
+
+    projectBrowserPanelLocal->InitializeIcons();
+
+    projectBrowserPanelPtr = projectBrowserPanelLocal.get();
+    panels.emplace_back(std::move(projectBrowserPanelLocal));
+
+}
+
+void QEEditorApp::DrawDockspace()
+{
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+
+    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(viewport->WorkSize);
+    ImGui::SetNextWindowViewport(viewport->ID);
+
+    window_flags |= ImGuiWindowFlags_NoTitleBar;
+    window_flags |= ImGuiWindowFlags_NoCollapse;
+    window_flags |= ImGuiWindowFlags_NoResize;
+    window_flags |= ImGuiWindowFlags_NoMove;
+    window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
+    window_flags |= ImGuiWindowFlags_NoNavFocus;
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+
+    ImGui::Begin("MainDockspace", nullptr, window_flags);
+
+    ImGui::PopStyleVar(2);
+
+    ImGuiID dockspace_id = ImGui::GetID("QE_MainDockspace");
+    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
+
+    if (headerBar)
+    {
+        headerBar->Draw();
+    }
+
+    ImGui::End();
+}
+
+void QEEditorApp::HandleShortcuts()
+{
+    ImGuiIO& io = ImGui::GetIO();
+
+    if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false))
+    {
+        SaveScene();
+    }
+
+    if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_Z, false))
+    {
+        if (commandManager)
+            commandManager->Undo();
+    }
+
+    if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_Y, false))
+    {
+        if (commandManager)
+            commandManager->Redo();
+    }
+}
+
+void QEEditorApp::SaveScene()
+{
+    scene.atmosphereDto = atmosphereSystem->CreateAtmosphereDto();
+    scene.physicsGravity = physicsModule->GetGravity();
+    scene.SerializeScene();
+    editorSceneStateSerializer->Save(scene, editorCameraService->GetEditorCamera(), *editorDebugSettings);
+}
+
+void QEEditorApp::OpenScene(const std::filesystem::path& scenePath)
+{
+    if (scenePath.empty())
+        return;
+
+    try
+    {
+        if (selectionManager)
+        {
+            selectionManager->ClearSelection();
+        }
+
+        if (commandManager)
+        {
+            commandManager->Clear();
+        }
+
+        LoadSceneFromPath(scenePath);
+
+        if (projectBrowserPanelPtr != nullptr)
+        {
+            projectBrowserPanelPtr->SetProjectRootPath(QEProjectManager::GetCurrentProjectPath());
+        }
+    }
+    catch (const std::exception& e)
+    {
+        QE_LOG_ERROR_CAT_F("QEEditorApp", "Failed to open scene: {}", e.what());
+    }
+}
+
+void QEEditorApp::SpawnDroppedMesh(const std::string& assetPath)
+{
+    if (!sceneObjectFactory)
+        return;
+
+    sceneObjectFactory->CreateDroppedMeshObject(assetPath, 5.0f);
+}
+
+void QEEditorApp::FlushClosedTextureViewerPanels()
+{
+    if (_textureViewerPanelsPendingDestroy.empty())
+        return;
+
+    if (deviceModule && deviceModule->device != VK_NULL_HANDLE)
+    {
+        vkDeviceWaitIdle(deviceModule->device);
+    }
+
+    _textureViewerPanelsPendingDestroy.clear();
+}
+
+void QEEditorApp::QueueExternalDroppedFile(const std::filesystem::path& path)
+{
+    _externalDroppedFiles.push_back(path);
+}
+
+const std::vector<std::filesystem::path>& QEEditorApp::GetExternalDroppedFiles() const
+{
+    return _externalDroppedFiles;
+}
+
+void QEEditorApp::ClearExternalDroppedFiles()
+{
+    _externalDroppedFiles.clear();
+}
+
+void QEEditorApp::OpenTextureViewer(const std::filesystem::path& texturePath)
+{
+    auto it = std::find_if(
+        _textureViewerPanels.begin(),
+        _textureViewerPanels.end(),
+        [&](const std::unique_ptr<QETextureViewerPanel>& panel)
+        {
+            return panel && panel->GetTexturePath() == texturePath;
+        });
+
+    if (it != _textureViewerPanels.end())
+        return;
+
+    _textureViewerPanels.push_back(std::make_unique<QETextureViewerPanel>(texturePath));
+}
+
+void QEEditorApp::OpenMaterialEditor(const std::filesystem::path& materialPath)
+{
+    if (!materialEditorPanelPtr)
+        return;
+
+    materialEditorPanelPtr->OpenMaterialFromFile(materialPath);
+}
+
+void QEEditorApp::OpenShaderEditor(const std::filesystem::path& shaderPath)
+{
+    if (!shaderEditorPanelPtr)
+        return;
+
+    shaderEditorPanelPtr->OpenShaderFromFile(shaderPath);
+}
+
+void QEEditorApp::OpenMaterialEditor(const std::shared_ptr<QEMaterial>& material)
+{
+    if (!materialEditorPanelPtr)
+        return;
+
+    materialEditorPanelPtr->OpenMaterial(material);
+}
+
+void QEEditorApp::DrawTextureViewerPanels()
+{
+    for (auto it = _textureViewerPanels.begin(); it != _textureViewerPanels.end();)
+    {
+        if (!(*it))
+        {
+            it = _textureViewerPanels.erase(it);
+            continue;
+        }
+
+        (*it)->Draw();
+
+        if (!(*it)->IsOpen())
+        {
+            _textureViewerPanelsPendingDestroy.push_back(std::move(*it));
+            it = _textureViewerPanels.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+}

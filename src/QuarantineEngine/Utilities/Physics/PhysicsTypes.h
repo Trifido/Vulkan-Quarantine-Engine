@@ -1,0 +1,42 @@
+#pragma once
+
+#ifndef PHYSICS_TYPES_H
+#define PHYSICS_TYPES_H
+
+enum PhysicBodyType
+{
+    STATIC_BODY = 0,
+    RIGID_BODY = 1 << 0,
+    KINEMATIC_BODY = 1 << 1,
+};
+
+enum CollisionFlag
+{
+    COL_NOTHING = 0,
+    COL_DEFAULT = 1 << 0,
+    COL_PLAYER = 1 << 1,
+    COL_SCENE = 1 << 2,
+    COL_ENEMY = 1 << 3,
+    COL_TRIGGER = 1 << 4,
+    COL_ALL = -1
+};
+
+inline constexpr unsigned int QEPhysicsCollisionMaskAll()
+{
+    return static_cast<unsigned int>(COL_DEFAULT)
+        | static_cast<unsigned int>(COL_PLAYER)
+        | static_cast<unsigned int>(COL_SCENE)
+        | static_cast<unsigned int>(COL_ENEMY)
+        | static_cast<unsigned int>(COL_TRIGGER);
+}
+
+
+
+namespace QE
+{
+    using ::PhysicBodyType;
+    using ::CollisionFlag;
+} // namespace QE
+// QE namespace aliases
+#endif // !PHYSICS_TYPES_H
+

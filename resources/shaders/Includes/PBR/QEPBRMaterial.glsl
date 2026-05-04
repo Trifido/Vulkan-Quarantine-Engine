@@ -47,7 +47,7 @@ struct QEPBRMaterialData
     float Clearcoat;
     float ClearcoatRoughness;
 
-    float AlphaCutoff;  // típico 0.5
+    float AlphaCutoff;  // tÃ­pico 0.5
 };
 
 bool QE_HasTex(uint mask, uint slot)
@@ -63,6 +63,11 @@ float QE_ReadChan(vec4 t, uint ch)
 }
 
 float QE_Saturate(float x) { return clamp(x, 0.0, 1.0); }
+
+float QE_GetEffectiveAlpha(QEPBRMaterialData mat, vec4 baseColor)
+{
+    return baseColor.a * mat.Opacity;
+}
 
 // --- Sampling helpers ---
 vec3 QE_GetBaseColor(QEPBRMaterialData mat, sampler2D texSampler[QE_NUM_TEX], vec2 uv)
@@ -103,7 +108,7 @@ float QE_GetRoughness(QEPBRMaterialData mat, sampler2D texSampler[QE_NUM_TEX], v
         vec4 t = texture(texSampler[nonuniformEXT(mat.idxRoughness)], uv);
         r = QE_ReadChan(t, mat.roughnessChan);
     }
-    // mínimo para estabilidad GGX
+    // mÃ­nimo para estabilidad GGX
     return clamp(r, 0.045, 1.0);
 }
 
@@ -157,6 +162,11 @@ float QE_GetClearcoat(QEPBRMaterialData mat, vec2 uv)
 float QE_GetClearcoatRoughness(QEPBRMaterialData mat, vec2 uv)
 {
     return clamp(mat.ClearcoatRoughness, 0.03, 1.0);
+}
+
+bool QE_ShouldDiscardAlpha(QEPBRMaterialData mat, vec4 baseColor)
+{
+    return (mat.AlphaMode == 1u) && (QE_GetEffectiveAlpha(mat, baseColor) < mat.AlphaCutoff);
 }
 
 #endif // QE_PBR_MATERIAL_GLSL
