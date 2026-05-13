@@ -52,13 +52,13 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake"
 
 
-      # 7) Build
-      - name: Build with CMake
-        run: cmake --build build --config Release --parallel 8
+      # 7) Build only QuarantineEngine in Release
+      - name: Build QuarantineEngine (Release)
+        run: cmake --build build --config Release --target QuarantineEngine --parallel 8
 
-      # 8) Upload executable
-      - name: Upload QuarantineEngine.exe
+      # 8) Upload engine library artifact
+      - name: Upload QuarantineEngine.lib
         uses: actions/upload-artifact@v4
         with:
           name: QuarantineEngine
-          path: build/Release/QuarantineEngine.exe
+          path: build/Release/QuarantineEngine.lib
