@@ -510,7 +510,7 @@ GameObjects:
             IsMeshShaderPipeline: false
           - type: QEAnimationComponent
             id: gVNcJNzs08I7
-            AutoStart: true
+            AutoStart: false
             GraphAssetPath: QEAssets/Models/Character/Animations/default.qegraph
         materials:
           - Source: Alpha_Joints_MAT
