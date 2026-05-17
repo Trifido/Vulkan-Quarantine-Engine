@@ -76,6 +76,17 @@ function Copy-FileIfExists {
     return $false
 }
 
+function Get-RelativePathNormalized {
+    param(
+        [string]$BasePath,
+        [string]$TargetPath
+    )
+
+    $baseUri = New-Object System.Uri(((Resolve-Path $BasePath).Path.TrimEnd('\') + '\'))
+    $targetUri = New-Object System.Uri((Resolve-Path $TargetPath).Path)
+    return $baseUri.MakeRelativeUri($targetUri).ToString().Replace('/', '/')
+}
+
 function Require-Files {
     param(
         [string]$Label,
@@ -143,26 +154,29 @@ function Update-FeedIndex {
     }
 
     $packages = New-Object System.Collections.Generic.List[object]
-    $manifestPaths = Get-ChildItem -Path $FeedRoot -Filter manifest.json -Recurse -File -ErrorAction SilentlyContinue |
-        Sort-Object FullName
+    $versionDirectories = Get-ChildItem -Path $FeedRoot -Directory -ErrorAction SilentlyContinue | Sort-Object Name
 
-    foreach ($manifestFile in $manifestPaths) {
-        try {
-            $manifest = Get-Content -LiteralPath $manifestFile.FullName -Raw | ConvertFrom-Json
-            if ([string]::IsNullOrWhiteSpace($manifest.version)) {
+    foreach ($versionDirectory in $versionDirectories) {
+        $platformDirectories = Get-ChildItem -Path $versionDirectory.FullName -Directory -ErrorAction SilentlyContinue | Sort-Object Name
+        foreach ($platformDirectory in $platformDirectories) {
+            $manifestPath = Join-Path $platformDirectory.FullName "metadata\manifest.json"
+            if (-not (Test-Path -LiteralPath $manifestPath)) {
                 continue
             }
 
-            $relativeManifestPath = [System.IO.Path]::GetRelativePath($FeedRoot, $manifestFile.FullName).Replace('\', '/')
+            $archivePath = Join-Path $platformDirectory.FullName "package.zip"
             $packages.Add([ordered]@{
-                displayName = "Quarantine Engine $($manifest.version)"
-                version = $manifest.version
-                platform = if ([string]::IsNullOrWhiteSpace($manifest.platform)) { "win-x64" } else { $manifest.platform }
-                manifest = $relativeManifestPath
+                displayName = "Quarantine Engine $($versionDirectory.Name)"
+                version = $versionDirectory.Name
+                platform = $platformDirectory.Name
+                manifest = Get-RelativePathNormalized -BasePath $FeedRoot -TargetPath $manifestPath
+                archive = if (Test-Path -LiteralPath $archivePath) {
+                    Get-RelativePathNormalized -BasePath $FeedRoot -TargetPath $archivePath
+                }
+                else {
+                    $null
+                }
             })
-        }
-        catch {
-            Write-Warning "Skipping invalid manifest: $($manifestFile.FullName)"
         }
     }
 
@@ -174,6 +188,19 @@ function Update-FeedIndex {
 
     $indexPath = Join-Path $FeedRoot "index.json"
     $index | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $indexPath -Encoding utf8
+}
+
+function New-PackageArchive {
+    param(
+        [string]$PackageRoot
+    )
+
+    $archivePath = Join-Path $PackageRoot "package.zip"
+    if (Test-Path -LiteralPath $archivePath) {
+        Remove-Item -LiteralPath $archivePath -Force
+    }
+
+    Compress-Archive -Path (Join-Path $PackageRoot '*') -DestinationPath $archivePath -CompressionLevel Optimal
 }
 
 $configs = Get-Configurations
@@ -240,6 +267,7 @@ foreach ($cfg in $configs) {
 $metadataDir = Join-Path $packageRoot "metadata"
 New-Item -ItemType Directory -Path $metadataDir -Force | Out-Null
 New-Manifest -DestinationPath (Join-Path $metadataDir "manifest.json") -Configurations $configs
+New-PackageArchive -PackageRoot $packageRoot
 Update-FeedIndex -FeedRoot (Join-Path $OutputRoot "quarantine-engine")
 
 Write-Host "Package created successfully at $packageRoot" -ForegroundColor Green

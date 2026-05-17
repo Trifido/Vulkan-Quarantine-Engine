@@ -1,10 +1,78 @@
 using System.IO;
+using System.IO.Compression;
+using System.Net.Http;
 using System.Text.Json;
+using QuarantineLauncher.Models;
 
 namespace QuarantineLauncher.Services;
 
 public sealed class EnginePackageImportService
 {
+    private static readonly HttpClient HttpClient = new();
+
+    public string InstallFromFeedPackage(EngineInstallation installation, bool overwriteExisting = false)
+    {
+        if (installation.ManifestPath is not null && File.Exists(installation.ManifestPath))
+        {
+            return InstallFromPackageManifest(installation.ManifestPath, overwriteExisting);
+        }
+
+        if (string.IsNullOrWhiteSpace(installation.PackageSource))
+        {
+            throw new InvalidOperationException("The selected feed package does not expose a local manifest or downloadable archive.");
+        }
+
+        var installationsRoot = WorkspaceLocator.FindEngineInstallationsRoot()
+            ?? throw new DirectoryNotFoundException("EngineInstallationsRoot is not configured.");
+
+        Directory.CreateDirectory(installationsRoot);
+
+        var destinationRoot = Path.Combine(installationsRoot, installation.Version, installation.Platform);
+        if (Directory.Exists(destinationRoot))
+        {
+            if (!overwriteExisting)
+            {
+                throw new InvalidOperationException(
+                    $"Engine {installation.Version} ({installation.Platform}) is already installed.");
+            }
+
+            DeleteDirectorySafe(destinationRoot);
+        }
+
+        var temporaryArchivePath = TryPrepareArchive(installation.PackageSource);
+        try
+        {
+            Directory.CreateDirectory(destinationRoot);
+            ZipFile.ExtractToDirectory(temporaryArchivePath, destinationRoot, overwriteFiles: true);
+        }
+        catch
+        {
+            if (Directory.Exists(destinationRoot))
+            {
+                DeleteDirectorySafe(destinationRoot);
+            }
+
+            throw;
+        }
+        finally
+        {
+            if (!string.Equals(temporaryArchivePath, installation.PackageSource, StringComparison.OrdinalIgnoreCase) &&
+                File.Exists(temporaryArchivePath))
+            {
+                File.Delete(temporaryArchivePath);
+            }
+        }
+
+        var manifestPath = Path.Combine(destinationRoot, "metadata", "manifest.json");
+        if (!File.Exists(manifestPath))
+        {
+            DeleteDirectorySafe(destinationRoot);
+            throw new InvalidOperationException("The downloaded engine archive is missing metadata/manifest.json.");
+        }
+
+        return destinationRoot;
+    }
+
     public string InstallFromPackageManifest(string manifestPath, bool overwriteExisting = false)
     {
         if (!File.Exists(manifestPath))
@@ -102,6 +170,33 @@ public sealed class EnginePackageImportService
 
         File.SetAttributes(rootPath, FileAttributes.Normal);
         Directory.Delete(rootPath, recursive: true);
+    }
+
+    private static string TryPrepareArchive(string packageSource)
+    {
+        if (Uri.TryCreate(packageSource, UriKind.Absolute, out var packageUri))
+        {
+            if (packageUri.IsFile)
+            {
+                return packageUri.LocalPath;
+            }
+
+            if (packageUri.Scheme == Uri.UriSchemeHttp || packageUri.Scheme == Uri.UriSchemeHttps)
+            {
+                var temporaryArchivePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.zip");
+                using var responseStream = HttpClient.GetStreamAsync(packageUri).GetAwaiter().GetResult();
+                using var outputStream = File.Create(temporaryArchivePath);
+                responseStream.CopyTo(outputStream);
+                return temporaryArchivePath;
+            }
+        }
+
+        if (File.Exists(packageSource))
+        {
+            return packageSource;
+        }
+
+        throw new FileNotFoundException("The package archive could not be located.", packageSource);
     }
 
     private sealed class EngineManifest

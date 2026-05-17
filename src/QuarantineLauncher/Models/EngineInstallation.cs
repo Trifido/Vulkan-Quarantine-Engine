@@ -6,6 +6,7 @@ public sealed class EngineInstallation
 {
     public required string DisplayName { get; init; }
     public string? ManifestPath { get; init; }
+    public string? PackageSource { get; init; }
     public required string Version { get; init; }
     public required string Platform { get; init; }
     public required string RootPath { get; init; }

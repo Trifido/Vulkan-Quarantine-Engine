@@ -1,4 +1,5 @@
 using System.IO;
+using System.Net.Http;
 using System.Text.Json;
 using QuarantineLauncher.Models;
 
@@ -6,6 +7,8 @@ namespace QuarantineLauncher.Services;
 
 public sealed class EngineInstallationService
 {
+    private static readonly HttpClient HttpClient = new();
+
     public IReadOnlyList<EngineInstallation> GetAvailableInstallations()
     {
         var results = new List<EngineInstallation>();
@@ -34,30 +37,25 @@ public sealed class EngineInstallationService
         string? indexPath,
         string defaultEngineRoot)
     {
-        if (string.IsNullOrWhiteSpace(indexPath) || !File.Exists(indexPath))
+        if (string.IsNullOrWhiteSpace(indexPath))
         {
             return false;
         }
 
         try
         {
-            using var stream = File.OpenRead(indexPath);
-            var index = JsonSerializer.Deserialize<EngineFeedIndex>(stream, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var (index, indexDirectory, indexUri) = LoadFeedIndex(indexPath);
 
             if (index?.Packages is null || index.Packages.Count == 0)
             {
                 return false;
             }
 
-            var indexDirectory = Path.GetDirectoryName(indexPath) ?? string.Empty;
             var addedAny = false;
 
             foreach (var package in index.Packages)
             {
-                var installation = TryCreateFromFeedPackage(package, indexDirectory);
+                var installation = TryCreateFromFeedPackage(package, indexDirectory, indexUri);
                 if (installation is null || HasEquivalentInstallation(results, installation))
                 {
                     continue;
@@ -73,6 +71,34 @@ public sealed class EngineInstallationService
         {
             return false;
         }
+    }
+
+    private static (EngineFeedIndex? Index, string IndexDirectory, Uri? IndexUri) LoadFeedIndex(string indexPathOrUrl)
+    {
+        if (Uri.TryCreate(indexPathOrUrl, UriKind.Absolute, out var indexUri) &&
+            (indexUri.Scheme == Uri.UriSchemeHttp || indexUri.Scheme == Uri.UriSchemeHttps))
+        {
+            using var stream = HttpClient.GetStreamAsync(indexUri).GetAwaiter().GetResult();
+            var index = JsonSerializer.Deserialize<EngineFeedIndex>(stream, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            return (index, string.Empty, indexUri);
+        }
+
+        if (!File.Exists(indexPathOrUrl))
+        {
+            return (null, string.Empty, null);
+        }
+
+        using var localStream = File.OpenRead(indexPathOrUrl);
+        var localIndex = JsonSerializer.Deserialize<EngineFeedIndex>(localStream, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        return (localIndex, Path.GetDirectoryName(indexPathOrUrl) ?? string.Empty, null);
     }
 
     private static void AddInstallationsFromRoot(
@@ -117,6 +143,7 @@ public sealed class EngineInstallationService
         {
             DisplayName = name,
             ManifestPath = isInstalledPackage ? manifestPath : null,
+            PackageSource = null,
             Version = isInstalledPackage ? manifest?.Version ?? Path.GetFileName(enginePaths.EngineRoot) : "workspace",
             Platform = manifest?.Platform ?? "win-x64",
             RootPath = enginePaths.EngineRoot,
@@ -151,6 +178,7 @@ public sealed class EngineInstallationService
             {
                 DisplayName = $"Quarantine Engine {manifest.Version}",
                 ManifestPath = manifestPath,
+                PackageSource = null,
                 Version = manifest.Version,
                 Platform = string.IsNullOrWhiteSpace(manifest.Platform) ? "win-x64" : manifest.Platform,
                 RootPath = rootPath,
@@ -168,20 +196,31 @@ public sealed class EngineInstallationService
         }
     }
 
-    private static EngineInstallation? TryCreateFromFeedPackage(EngineFeedPackage package, string indexDirectory)
+    private static EngineInstallation? TryCreateFromFeedPackage(EngineFeedPackage package, string indexDirectory, Uri? indexUri)
     {
-        if (string.IsNullOrWhiteSpace(package.Manifest))
+        var resolvedManifestPath = ResolveFeedReference(package.Manifest, indexDirectory, indexUri);
+        var resolvedArchivePath = ResolveFeedReference(package.Archive, indexDirectory, indexUri);
+
+        if (string.IsNullOrWhiteSpace(resolvedManifestPath) &&
+            string.IsNullOrWhiteSpace(resolvedArchivePath) &&
+            (string.IsNullOrWhiteSpace(package.Version) || string.IsNullOrWhiteSpace(package.Platform)))
         {
             return null;
         }
 
-        var manifestPath = Path.GetFullPath(Path.Combine(indexDirectory, package.Manifest));
-        if (!File.Exists(manifestPath))
+        EngineInstallation? installation = null;
+
+        if (!string.IsNullOrWhiteSpace(resolvedManifestPath) && File.Exists(resolvedManifestPath))
+        {
+            installation = TryCreateFromManifest(resolvedManifestPath, managedInstallation: false);
+        }
+
+        if (installation is null && string.IsNullOrWhiteSpace(package.Version))
         {
             return null;
         }
 
-        var installation = TryCreateFromManifest(manifestPath, managedInstallation: false);
+        installation ??= CreateFromFeedMetadata(package, resolvedManifestPath, resolvedArchivePath);
         if (installation is null)
         {
             return null;
@@ -196,6 +235,7 @@ public sealed class EngineInstallationService
         {
             DisplayName = package.DisplayName,
             ManifestPath = installation.ManifestPath,
+            PackageSource = resolvedArchivePath ?? installation.PackageSource,
             Version = installation.Version,
             Platform = installation.Platform,
             RootPath = installation.RootPath,
@@ -205,6 +245,39 @@ public sealed class EngineInstallationService
             IsInstalledInLauncher = installation.IsInstalledInLauncher,
             Configurations = installation.Configurations,
             EnginePaths = installation.EnginePaths
+        };
+    }
+
+    private static EngineInstallation? CreateFromFeedMetadata(
+        EngineFeedPackage package,
+        string? resolvedManifestPath,
+        string? resolvedArchivePath)
+    {
+        if (string.IsNullOrWhiteSpace(package.Version))
+        {
+            return null;
+        }
+
+        var displayName = string.IsNullOrWhiteSpace(package.DisplayName)
+            ? $"Quarantine Engine {package.Version}"
+            : package.DisplayName;
+        var platform = string.IsNullOrWhiteSpace(package.Platform) ? "win-x64" : package.Platform;
+        var sourcePath = resolvedArchivePath ?? resolvedManifestPath ?? displayName;
+
+        return new EngineInstallation
+        {
+            DisplayName = displayName,
+            ManifestPath = File.Exists(resolvedManifestPath ?? string.Empty) ? resolvedManifestPath : null,
+            PackageSource = resolvedArchivePath,
+            Version = package.Version,
+            Platform = platform,
+            RootPath = sourcePath,
+            IsInstalledPackage = true,
+            IsManagedInstallation = false,
+            IsDefault = false,
+            IsInstalledInLauncher = false,
+            Configurations = new[] { "Release" },
+            EnginePaths = new EngineIntegrationPaths(sourcePath, Path.Combine(sourcePath, "bin"))
         };
     }
 
@@ -265,6 +338,7 @@ public sealed class EngineInstallationService
         {
             DisplayName = installation.DisplayName,
             ManifestPath = installation.ManifestPath,
+            PackageSource = installation.PackageSource,
             Version = installation.Version,
             Platform = installation.Platform,
             RootPath = installation.RootPath,
@@ -292,6 +366,29 @@ public sealed class EngineInstallationService
     private sealed class EngineFeedPackage
     {
         public string? DisplayName { get; set; }
+        public string? Version { get; set; }
+        public string? Platform { get; set; }
         public string? Manifest { get; set; }
+        public string? Archive { get; set; }
+    }
+
+    private static string? ResolveFeedReference(string? reference, string indexDirectory, Uri? indexUri)
+    {
+        if (string.IsNullOrWhiteSpace(reference))
+        {
+            return null;
+        }
+
+        if (Uri.TryCreate(reference, UriKind.Absolute, out var absoluteUri))
+        {
+            return absoluteUri.IsFile ? absoluteUri.LocalPath : absoluteUri.ToString();
+        }
+
+        if (indexUri is not null)
+        {
+            return new Uri(indexUri, reference).ToString();
+        }
+
+        return Path.GetFullPath(Path.Combine(indexDirectory, reference));
     }
 }

@@ -50,7 +50,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         : $"Engine root: {SelectedEngineInstallation.RootPath}";
 
     public string EngineInstallationsRootDisplay => $"Installed engines: {WorkspaceLocator.FindEngineInstallationsRoot() ?? "-"}";
-    public bool CanInstallSelectedEngine => SelectedFeedEngine?.ManifestPath is not null;
+    public bool CanInstallSelectedEngine => SelectedFeedEngine is { ManifestPath: not null } or { PackageSource: not null };
     public bool CanUninstallSelectedEngine => SelectedInstalledEngine is { IsManagedInstallation: true, IsDefault: false };
     public string InstallSelectedEngineButtonLabel => SelectedFeedEngine?.IsInstalledInLauncher == true
         ? "Reinstall Selected"
@@ -336,18 +336,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void InstallSelectedEngine_Click(object sender, RoutedEventArgs e)
     {
-        if (SelectedFeedEngine?.ManifestPath is null)
+        if (SelectedFeedEngine is not { ManifestPath: not null } && SelectedFeedEngine?.PackageSource is null)
         {
             ShowError("Select a package version from the feed to install it.");
             return;
         }
 
         var selectedEngineName = SelectedFeedEngine.DisplayName;
-        var selectedManifestPath = SelectedFeedEngine.ManifestPath;
+        var selectedFeedEngine = SelectedFeedEngine;
 
         try
         {
-            _enginePackageImportService.InstallFromPackageManifest(selectedManifestPath);
+            _enginePackageImportService.InstallFromFeedPackage(selectedFeedEngine);
             LoadEngineInstallations();
             IsInstallVersionPanelOpen = false;
             StatusMessage = $"Installed engine package '{selectedEngineName}'.";
@@ -366,7 +366,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 return;
             }
 
-            _enginePackageImportService.InstallFromPackageManifest(selectedManifestPath, overwriteExisting: true);
+            _enginePackageImportService.InstallFromFeedPackage(selectedFeedEngine, overwriteExisting: true);
             LoadEngineInstallations();
             IsInstallVersionPanelOpen = false;
             StatusMessage = $"Reinstalled engine package '{selectedEngineName}'.";
@@ -488,6 +488,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             DisplayName = installation.DisplayName,
             ManifestPath = installation.ManifestPath,
+            PackageSource = installation.PackageSource,
             Version = installation.Version,
             Platform = installation.Platform,
             RootPath = installation.RootPath,
