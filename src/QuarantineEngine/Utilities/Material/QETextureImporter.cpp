@@ -1,4 +1,4 @@
-#include "QETextureImporter.h"
+﻿#include "QETextureImporter.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -24,7 +24,7 @@ static bool RunProcessAndWait(
 
     PROCESS_INFORMATION pi{};
 
-    // CreateProcess puede modificar el buffer, as� que necesita char*
+    // CreateProcess puede modificar el buffer, así que necesita char*
     std::vector<char> buffer(cmdLine.begin(), cmdLine.end());
     buffer.push_back('\0');
 
@@ -63,6 +63,47 @@ static bool RunProcessAndWait(
 std::string QETextureImporter::Quote(const std::string& s)
 {
     return "\"" + s + "\"";
+}
+
+std::filesystem::path QETextureImporter::ResolveToktxPath()
+{
+    namespace fs = std::filesystem;
+
+    std::error_code ec;
+    const fs::path workingDirectory = fs::current_path(ec);
+
+    if (!ec)
+    {
+        const fs::path runtimeCandidates[] = {
+            workingDirectory / "Tools" / "toktx.exe",
+            workingDirectory / "toktx.exe"
+        };
+
+        for (const fs::path& candidate : runtimeCandidates)
+        {
+            if (fs::exists(candidate))
+            {
+                return fs::weakly_canonical(candidate, ec);
+            }
+        }
+    }
+
+    const fs::path developmentCandidates[] = {
+        fs::absolute("../../extern/KTX-Software/bin/toktx.exe"),
+        fs::absolute("../../extern/ktx/bin/toktx.exe"),
+        fs::absolute("extern/KTX-Software/bin/toktx.exe"),
+        fs::absolute("extern/ktx/bin/toktx.exe")
+    };
+
+    for (const fs::path& candidate : developmentCandidates)
+    {
+        if (fs::exists(candidate))
+        {
+            return candidate.lexically_normal();
+        }
+    }
+
+    return fs::path();
 }
 
 std::string QETextureImporter::BuildImportedPath(const std::string& sourcePath)
@@ -120,19 +161,17 @@ QETextureImportResult QETextureImporter::ImportToKtx2(
 
     fs::create_directories(fs::path(result.importedPath).parent_path());
 
-    const std::string toktxExe =
-        fs::absolute("../../extern/KTX-Software/bin/toktx.exe")
-        .lexically_normal()
-        .string();
+    const fs::path toktxExePath = ResolveToktxPath();
+    if (toktxExePath.empty() || !fs::exists(toktxExePath))
+    {
+        result.error = "toktx.exe not found in runtime Tools/ or development extern folders.";
+        return result;
+    }
+
+    const std::string toktxExe = toktxExePath.string();
 
     const int testRc = std::system((Quote(toktxExe) + " --version").c_str());
     QE_LOG_INFO_CAT_F("TextureImporter", "toktx test rc: {}", testRc);
-
-    if (!fs::exists(toktxExe))
-    {
-        result.error = "toktx.exe not found: " + toktxExe;
-        return result;
-    }
 
     std::ostringstream args;
     args << "--t2 ";
@@ -190,3 +229,4 @@ QETextureImportResult QETextureImporter::ImportToKtx2(
     result.success = true;
     return result;
 }
+

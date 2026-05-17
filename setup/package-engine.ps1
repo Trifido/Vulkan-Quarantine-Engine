@@ -77,6 +77,20 @@ function Copy-FileIfExists {
     return $false
 }
 
+function Get-FirstExistingPath {
+    param(
+        [string[]]$CandidatePaths
+    )
+
+    foreach ($candidate in $CandidatePaths) {
+        if (Test-Path -LiteralPath $candidate) {
+            return $candidate
+        }
+    }
+
+    return $null
+}
+
 function Get-RelativePathNormalized {
     param(
         [string]$BasePath,
@@ -299,6 +313,14 @@ foreach ($cfg in $configs) {
     $editorIconsSource = Join-Path $projectRoot "src\QuarantineEditor\Icons"
     if (Test-Path -LiteralPath $editorIconsSource) {
         Copy-DirectoryContents -Source $editorIconsSource -Destination (Join-Path $editorTargetDir "Icons")
+    }
+
+    $ktxToolsSource = Get-FirstExistingPath -CandidatePaths @(
+        (Join-Path $projectRoot "extern\KTX-Software\bin"),
+        (Join-Path $projectRoot "extern\ktx\bin")
+    )
+    if ($null -ne $ktxToolsSource) {
+        Copy-DirectoryContents -Source $ktxToolsSource -Destination (Join-Path $editorTargetDir "Tools")
     }
 }
 

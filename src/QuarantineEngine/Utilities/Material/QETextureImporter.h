@@ -43,6 +43,7 @@ public:
 
 private:
     static std::string Quote(const std::string& s);
+    static std::filesystem::path ResolveToktxPath();
 };
 
 

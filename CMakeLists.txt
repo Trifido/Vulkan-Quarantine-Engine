@@ -328,6 +328,14 @@ assign_vs_folder("Dependencies/GLFW" update_mappings)
 # ------------------------------
 
 if (WIN32)
+  if (EXISTS "${CMAKE_SOURCE_DIR}/extern/KTX-Software/bin")
+    set(QE_KTX_BIN_DIR "${CMAKE_SOURCE_DIR}/extern/KTX-Software/bin")
+  elseif (EXISTS "${CMAKE_SOURCE_DIR}/extern/ktx/bin")
+    set(QE_KTX_BIN_DIR "${CMAKE_SOURCE_DIR}/extern/ktx/bin")
+  else()
+    set(QE_KTX_BIN_DIR "")
+  endif()
+
   add_custom_command(TARGET QuarantineEditor POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       $<TARGET_FILE:assimp>
@@ -349,6 +357,16 @@ if (WIN32)
       ${CMAKE_SOURCE_DIR}/src/QuarantineEditor/Icons
       $<TARGET_FILE_DIR:QuarantineEditor>/Icons
   )
+
+  if (NOT QE_KTX_BIN_DIR STREQUAL "")
+    add_custom_command(TARGET QuarantineEditor POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E make_directory
+        $<TARGET_FILE_DIR:QuarantineEditor>/Tools
+      COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${QE_KTX_BIN_DIR}
+        $<TARGET_FILE_DIR:QuarantineEditor>/Tools
+    )
+  endif()
 endif()
 
 if (MSVC)
