@@ -52,6 +52,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public string EngineInstallationsRootDisplay => $"Installed engines: {WorkspaceLocator.FindEngineInstallationsRoot() ?? "-"}";
     public bool CanInstallSelectedEngine => SelectedFeedEngine?.ManifestPath is not null;
     public bool CanUninstallSelectedEngine => SelectedInstalledEngine is { IsManagedInstallation: true, IsDefault: false };
+    public string InstallSelectedEngineButtonLabel => SelectedFeedEngine?.IsInstalledInLauncher == true
+        ? "Reinstall Selected"
+        : "Install Selected";
+    public string FeedVersionsSummary => FeedEngines.Count == 0
+        ? "No published versions were found in the configured feed."
+        : $"{FeedEngines.Count} published version(s) available in the feed.";
+    public string InstalledVersionsSummary => InstalledManagedEngines.Count == 0
+        ? "No launcher-managed engine versions are currently installed."
+        : $"{InstalledManagedEngines.Count} installed version(s) managed by the launcher.";
 
     public bool IsInstallVersionPanelOpen
     {
@@ -108,6 +117,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _selectedFeedEngine = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(CanInstallSelectedEngine));
+            OnPropertyChanged(nameof(InstallSelectedEngineButtonLabel));
         }
     }
 
@@ -165,7 +175,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         FeedEngines.Clear();
         InstalledManagedEngines.Clear();
 
-        foreach (var installation in _engineInstallationService.GetAvailableInstallations())
+        var installations = _engineInstallationService.GetAvailableInstallations().ToList();
+        var installedVersionKeys = installations
+            .Where(item => item.IsManagedInstallation)
+            .Select(GetVersionKey)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var installation in installations)
         {
             EngineInstallations.Add(installation);
 
@@ -176,7 +192,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
             if (installation.IsInstalledPackage && !installation.IsManagedInstallation)
             {
-                FeedEngines.Add(installation);
+                FeedEngines.Add(WithInstalledFlag(installation, installedVersionKeys.Contains(GetVersionKey(installation))));
             }
 
             if (installation.IsManagedInstallation)
@@ -197,6 +213,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         SelectedInstalledEngine = InstalledManagedEngines.FirstOrDefault(item =>
             string.Equals(item.RootPath, previousInstalledRootPath, StringComparison.OrdinalIgnoreCase))
             ?? InstalledManagedEngines.FirstOrDefault();
+
+        OnPropertyChanged(nameof(FeedVersionsSummary));
+        OnPropertyChanged(nameof(InstalledVersionsSummary));
+        OnPropertyChanged(nameof(InstallSelectedEngineButtonLabel));
+        OnPropertyChanged(nameof(CanInstallSelectedEngine));
+        OnPropertyChanged(nameof(CanUninstallSelectedEngine));
     }
 
     private void RefreshProjects()
@@ -448,6 +470,34 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         StatusMessage = message;
         MessageBox.Show(this, message, "Quarantine Engine", MessageBoxButton.OK, MessageBoxImage.Error);
+    }
+
+    private static string GetVersionKey(EngineInstallation installation)
+    {
+        return $"{installation.Version}|{installation.Platform}";
+    }
+
+    private static EngineInstallation WithInstalledFlag(EngineInstallation installation, bool isInstalledInLauncher)
+    {
+        if (installation.IsInstalledInLauncher == isInstalledInLauncher)
+        {
+            return installation;
+        }
+
+        return new EngineInstallation
+        {
+            DisplayName = installation.DisplayName,
+            ManifestPath = installation.ManifestPath,
+            Version = installation.Version,
+            Platform = installation.Platform,
+            RootPath = installation.RootPath,
+            IsInstalledPackage = installation.IsInstalledPackage,
+            IsManagedInstallation = installation.IsManagedInstallation,
+            IsDefault = installation.IsDefault,
+            IsInstalledInLauncher = isInstalledInLauncher,
+            Configurations = installation.Configurations,
+            EnginePaths = installation.EnginePaths
+        };
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)

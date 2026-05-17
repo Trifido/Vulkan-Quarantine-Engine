@@ -600,7 +600,11 @@
                                        FontWeight="SemiBold"
                                        Foreground="{StaticResource TextBrush}" />
                             <TextBlock Margin="0,8,0,0"
-                                       Text="Choose a version from the package feed to install it into the launcher-managed engines folder."
+                                       Text="Choose a published version from the feed to install it into the launcher-managed engines folder."
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource MutedTextBrush}" />
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="{Binding FeedVersionsSummary}"
                                        TextWrapping="Wrap"
                                        Foreground="{StaticResource MutedTextBrush}" />
                         </StackPanel>
@@ -629,10 +633,27 @@
                                             BorderBrush="#24384B"
                                             BorderThickness="1">
                                         <StackPanel>
-                                            <TextBlock Text="{Binding DisplayName}"
-                                                       FontSize="18"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="{StaticResource TextBrush}" />
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding DisplayName}"
+                                                           FontSize="18"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource TextBrush}" />
+                                                <Border Grid.Column="1"
+                                                        Padding="10,4"
+                                                        CornerRadius="999"
+                                                        Background="#203240"
+                                                        BorderBrush="{StaticResource PanelBorderBrush}"
+                                                        BorderThickness="1">
+                                                    <TextBlock Text="{Binding AvailabilityDisplay}"
+                                                               Foreground="{StaticResource AccentBrush}"
+                                                               FontSize="12"
+                                                               FontWeight="SemiBold" />
+                                                </Border>
+                                            </Grid>
                                             <TextBlock Margin="0,6,0,0"
                                                        Text="{Binding Summary}"
                                                        Foreground="{StaticResource MutedTextBrush}" />
@@ -648,7 +669,7 @@
 
                         <StackPanel Grid.Row="2" Orientation="Horizontal">
                             <Button Style="{StaticResource AccentButtonStyle}"
-                                    Content="Install Selected"
+                                    Content="{Binding InstallSelectedEngineButtonLabel}"
                                     Click="InstallSelectedEngine_Click"
                                     IsEnabled="{Binding CanInstallSelectedEngine}"
                                     MinWidth="164" />
@@ -687,6 +708,10 @@
                                        Foreground="{StaticResource TextBrush}" />
                             <TextBlock Margin="0,8,0,0"
                                        Text="Choose an installed engine version to remove it from the launcher-managed engines folder."
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource MutedTextBrush}" />
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="{Binding InstalledVersionsSummary}"
                                        TextWrapping="Wrap"
                                        Foreground="{StaticResource MutedTextBrush}" />
                         </StackPanel>

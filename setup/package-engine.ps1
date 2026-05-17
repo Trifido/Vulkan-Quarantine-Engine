@@ -133,6 +133,49 @@ function New-Manifest {
     Set-Content -LiteralPath $DestinationPath -Value $json -Encoding utf8
 }
 
+function Update-FeedIndex {
+    param(
+        [string]$FeedRoot
+    )
+
+    if (-not (Test-Path -LiteralPath $FeedRoot)) {
+        return
+    }
+
+    $packages = New-Object System.Collections.Generic.List[object]
+    $manifestPaths = Get-ChildItem -Path $FeedRoot -Filter manifest.json -Recurse -File -ErrorAction SilentlyContinue |
+        Sort-Object FullName
+
+    foreach ($manifestFile in $manifestPaths) {
+        try {
+            $manifest = Get-Content -LiteralPath $manifestFile.FullName -Raw | ConvertFrom-Json
+            if ([string]::IsNullOrWhiteSpace($manifest.version)) {
+                continue
+            }
+
+            $relativeManifestPath = [System.IO.Path]::GetRelativePath($FeedRoot, $manifestFile.FullName).Replace('\', '/')
+            $packages.Add([ordered]@{
+                displayName = "Quarantine Engine $($manifest.version)"
+                version = $manifest.version
+                platform = if ([string]::IsNullOrWhiteSpace($manifest.platform)) { "win-x64" } else { $manifest.platform }
+                manifest = $relativeManifestPath
+            })
+        }
+        catch {
+            Write-Warning "Skipping invalid manifest: $($manifestFile.FullName)"
+        }
+    }
+
+    $index = [ordered]@{
+        id = "quarantine-engine-feed"
+        generatedAtUtc = [DateTime]::UtcNow.ToString("o")
+        packages = $packages
+    }
+
+    $indexPath = Join-Path $FeedRoot "index.json"
+    $index | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $indexPath -Encoding utf8
+}
+
 $configs = Get-Configurations
 
 Write-Host "Packaging QuarantineEngine $Version for $Platform" -ForegroundColor Cyan
@@ -197,5 +240,6 @@ foreach ($cfg in $configs) {
 $metadataDir = Join-Path $packageRoot "metadata"
 New-Item -ItemType Directory -Path $metadataDir -Force | Out-Null
 New-Manifest -DestinationPath (Join-Path $metadataDir "manifest.json") -Configurations $configs
+Update-FeedIndex -FeedRoot (Join-Path $OutputRoot "quarantine-engine")
 
 Write-Host "Package created successfully at $packageRoot" -ForegroundColor Green

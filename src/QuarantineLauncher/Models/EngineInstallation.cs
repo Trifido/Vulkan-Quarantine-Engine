@@ -12,12 +12,15 @@ public sealed class EngineInstallation
     public required bool IsInstalledPackage { get; init; }
     public required bool IsManagedInstallation { get; init; }
     public required bool IsDefault { get; init; }
+    public bool IsInstalledInLauncher { get; init; }
     public required IReadOnlyList<string> Configurations { get; init; }
     public required EngineIntegrationPaths EnginePaths { get; init; }
 
     public string KindDisplay => IsInstalledPackage
         ? (IsManagedInstallation ? "Installed package" : "Package feed")
         : "Development workspace";
+
+    public string AvailabilityDisplay => IsInstalledInLauncher ? "Installed" : "Available";
 
     public string Summary => IsInstalledPackage
         ? $"{Version} ({Platform})"

@@ -33,6 +33,11 @@ internal static class WorkspaceLocator
         return _cachedPaths.Value.EnginePackageFeedRoot;
     }
 
+    public static string? FindEngineFeedIndexPath()
+    {
+        return _cachedPaths.Value.EngineFeedIndexPath;
+    }
+
     public static string FindProjectsRoot()
     {
         return _cachedPaths.Value.ProjectsRoot;
@@ -78,12 +83,13 @@ internal static class WorkspaceLocator
 
         var installationsRoot = ResolveEngineInstallationsRoot(settings, settingsDirectory, repositoryRoot);
         var packageFeedRoot = ResolveEnginePackageFeedRoot(settings, settingsDirectory, repositoryRoot);
+        var feedIndexPath = ResolveEngineFeedIndexPath(settings, settingsDirectory, packageFeedRoot);
         var enginePaths = ResolveEngineIntegrationPaths(settings, settingsDirectory, repositoryRoot);
         var projectsRoot = ResolveProjectsRoot(settings, settingsDirectory, repositoryRoot);
         var templatesRoot = ResolveTemplatesRoot(settings, settingsDirectory, repositoryRoot);
         var editorPath = ResolveEditorPath(settings, settingsDirectory);
 
-        return new ResolvedLauncherPaths(installationsRoot, packageFeedRoot, enginePaths, projectsRoot, templatesRoot, editorPath);
+        return new ResolvedLauncherPaths(installationsRoot, packageFeedRoot, feedIndexPath, enginePaths, projectsRoot, templatesRoot, editorPath);
     }
 
     private static LauncherSettings LoadSettings(string settingsPath)
@@ -214,6 +220,24 @@ internal static class WorkspaceLocator
         return null;
     }
 
+    private static string? ResolveEngineFeedIndexPath(
+        LauncherSettings settings,
+        string settingsDirectory,
+        string? packageFeedRoot)
+    {
+        if (!string.IsNullOrWhiteSpace(settings.EngineFeedIndexPath))
+        {
+            return NormalizeConfiguredPath(settings.EngineFeedIndexPath, settingsDirectory);
+        }
+
+        if (string.IsNullOrWhiteSpace(packageFeedRoot))
+        {
+            return null;
+        }
+
+        return Path.Combine(packageFeedRoot, "index.json");
+    }
+
     private static string? ResolveEditorPath(LauncherSettings settings, string settingsDirectory)
     {
         if (string.IsNullOrWhiteSpace(settings.EditorPath))
@@ -243,6 +267,7 @@ internal static class WorkspaceLocator
     private sealed record ResolvedLauncherPaths(
         string? EngineInstallationsRoot,
         string? EnginePackageFeedRoot,
+        string? EngineFeedIndexPath,
         EngineIntegrationPaths EnginePaths,
         string ProjectsRoot,
         string TemplatesRoot,
