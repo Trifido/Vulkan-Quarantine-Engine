@@ -66,6 +66,25 @@
             <Setter Property="BorderBrush" Value="#7E3449" />
         </Style>
 
+        <Style x:Key="ComboToggleButtonStyle" TargetType="ToggleButton">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="Stretch"
+                                              VerticalAlignment="Stretch" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="LauncherComboBoxItemStyle" TargetType="ComboBoxItem">
             <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
             <Setter Property="Background" Value="#152230" />
@@ -128,6 +147,7 @@
                                                       ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}" />
 
                                     <ToggleButton Grid.ColumnSpan="2"
+                                                  Style="{StaticResource ComboToggleButtonStyle}"
                                                   Focusable="False"
                                                   ClickMode="Press"
                                                   Background="Transparent"
