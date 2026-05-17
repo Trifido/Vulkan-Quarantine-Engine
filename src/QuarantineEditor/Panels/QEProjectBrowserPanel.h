@@ -59,6 +59,7 @@ private:
     QEProjectBrowserNavigation _navigation;
     QEProjectBrowserActions _actions;
     QEProjectIconCache _iconCache;
+    bool _refreshNavigationNextFrame = false;
 
     std::vector<std::filesystem::path> _pendingExternalDrops;
     std::optional<std::filesystem::path> _pendingSceneOpenRequest;
