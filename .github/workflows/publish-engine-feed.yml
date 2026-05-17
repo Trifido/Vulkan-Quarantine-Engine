@@ -1,0 +1,95 @@
+name: Publish Engine Feed
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: publish-engine-feed
+  cancel-in-progress: true
+
+jobs:
+  package-engine:
+    runs-on: windows-latest
+
+    outputs:
+      engine_version: ${{ steps.version.outputs.engine_version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Compute engine version
+        id: version
+        shell: pwsh
+        run: |
+          $shortSha = "${{ github.sha }}".Substring(0, 7)
+          $dateStamp = Get-Date -Format "yyyyMMdd"
+          $version = "0.1.0-dev.$dateStamp.${{ github.run_number }}-$shortSha"
+          "engine_version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "Publishing engine version $version"
+
+      - name: Build engine
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File ".\setup\build.ps1" -Configuration Release
+
+      - name: Package engine
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File ".\setup\package-engine.ps1" `
+            -Version "${{ steps.version.outputs.engine_version }}" `
+            -Channel "dev" `
+            -Configuration Release
+
+      - name: Prepare GitHub Pages content
+        shell: pwsh
+        run: |
+          $pagesRoot = Join-Path $PWD "pages"
+          $feedSource = Join-Path $PWD "artifacts\packages\quarantine-engine"
+          $feedTarget = Join-Path $pagesRoot "feed\quarantine-engine"
+
+          if (Test-Path -LiteralPath $pagesRoot) {
+            Remove-Item -LiteralPath $pagesRoot -Recurse -Force
+          }
+
+          New-Item -ItemType Directory -Path $feedTarget -Force | Out-Null
+          Copy-Item -LiteralPath (Join-Path $feedSource "*") -Destination $feedTarget -Recurse -Force
+
+      - name: Upload packaged engine artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: quarantine-engine-${{ steps.version.outputs.engine_version }}
+          path: artifacts/packages/quarantine-engine/${{ steps.version.outputs.engine_version }}/win-x64
+          if-no-files-found: error
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: pages
+
+  deploy-pages:
+    runs-on: ubuntu-latest
+    needs: package-engine
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

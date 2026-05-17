@@ -10,6 +10,7 @@
 
 param(
     [string]$Version = "0.1.0-dev",
+    [string]$Channel = "dev",
     [ValidateSet("Debug", "Release", "Both")]
     [string]$Configuration = "Release",
     [string]$Platform = "win-x64",
@@ -124,6 +125,7 @@ function New-Manifest {
     $manifest = [ordered]@{
         id = "quarantine-engine"
         version = $Version
+        channel = $Channel
         platform = $Platform
         layoutVersion = 1
         generatedAtUtc = [DateTime]::UtcNow.ToString("o")
@@ -165,9 +167,11 @@ function Update-FeedIndex {
             }
 
             $archivePath = Join-Path $platformDirectory.FullName "package.zip"
+            $channelName = if ($versionDirectory.Name -match "dev") { "dev" } else { "stable" }
             $packages.Add([ordered]@{
                 displayName = "Quarantine Engine $($versionDirectory.Name)"
                 version = $versionDirectory.Name
+                channel = $channelName
                 platform = $platformDirectory.Name
                 manifest = Get-RelativePathNormalized -BasePath $FeedRoot -TargetPath $manifestPath
                 archive = if (Test-Path -LiteralPath $archivePath) {
