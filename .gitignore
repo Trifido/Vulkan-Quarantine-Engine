@@ -29,8 +29,6 @@ bld/
 [Bb]in/
 !extern/KTX-Software/bin/
 !extern/KTX-Software/bin/**
-!extern/ktx/bin/
-!extern/ktx/bin/**
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/

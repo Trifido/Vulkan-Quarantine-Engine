@@ -316,8 +316,7 @@ foreach ($cfg in $configs) {
     }
 
     $ktxToolsSource = Get-FirstExistingPath -CandidatePaths @(
-        (Join-Path $projectRoot "extern\KTX-Software\bin"),
-        (Join-Path $projectRoot "extern\ktx\bin")
+        (Join-Path $projectRoot "extern\KTX-Software\bin")
     )
     if ($null -ne $ktxToolsSource) {
         Copy-DirectoryContents -Source $ktxToolsSource -Destination (Join-Path $editorTargetDir "Tools")

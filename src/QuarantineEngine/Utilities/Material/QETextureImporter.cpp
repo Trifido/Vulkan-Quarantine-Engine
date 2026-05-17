@@ -92,9 +92,7 @@ std::filesystem::path QETextureImporter::ResolveToktxPath()
 
     const fs::path developmentCandidates[] = {
         fs::absolute("../../extern/KTX-Software/bin/toktx.exe"),
-        fs::absolute("../../extern/ktx/bin/toktx.exe"),
-        fs::absolute("extern/KTX-Software/bin/toktx.exe"),
-        fs::absolute("extern/ktx/bin/toktx.exe")
+        fs::absolute("extern/KTX-Software/bin/toktx.exe")
     };
 
     for (const fs::path& candidate : developmentCandidates)
@@ -123,9 +121,7 @@ static std::string BuildToktxSearchSummary()
     }
 
     out << fs::absolute("../../extern/KTX-Software/bin/toktx.exe").lexically_normal().string() << "; ";
-    out << fs::absolute("../../extern/ktx/bin/toktx.exe").lexically_normal().string() << "; ";
-    out << fs::absolute("extern/KTX-Software/bin/toktx.exe").lexically_normal().string() << "; ";
-    out << fs::absolute("extern/ktx/bin/toktx.exe").lexically_normal().string();
+    out << fs::absolute("extern/KTX-Software/bin/toktx.exe").lexically_normal().string();
 
     return out.str();
 }
