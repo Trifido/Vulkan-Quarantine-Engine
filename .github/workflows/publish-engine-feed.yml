@@ -19,6 +19,9 @@ jobs:
   package-engine:
     runs-on: windows-latest
 
+    outputs:
+      engine_version: ${{ steps.version.outputs.engine_version }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -29,26 +32,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9.0.x
-
-      - name: Set up CMake
-        uses: jwlawson/actions-setup-cmake@v2
-
-      - name: Install Vulkan SDK
-        shell: pwsh
-        run: |
-          winget install --id KhronosGroup.VulkanSDK --exact --accept-package-agreements --accept-source-agreements --silent
-
-          $sdkRoot = Get-ChildItem -Path 'C:\VulkanSDK' -Directory -ErrorAction Stop |
-            Sort-Object Name -Descending |
-            Select-Object -First 1 -ExpandProperty FullName
-
-          if (-not $sdkRoot) {
-            throw "Vulkan SDK installation completed, but no SDK folder was found under C:\VulkanSDK."
-          }
-
-          "VULKAN_SDK=$sdkRoot" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          "$sdkRoot\Bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
-          Write-Host "Using Vulkan SDK at $sdkRoot"
 
       - name: Compute engine version
         id: version

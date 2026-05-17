@@ -15,6 +15,9 @@
   <ItemGroup>
     <Resource Include="Assets\QE-Icon.ico" />
     <Resource Include="Assets\QuarantineEngineLogo.png" />
+    <None Include="launcher.settings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Content Include="Templates\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
