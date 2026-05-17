@@ -15,7 +15,8 @@
 
 param(
     [ValidateSet("Debug", "Release", "Both")]
-    [string]$Configuration = "Both"
+    [string]$Configuration = "Both",
+    [switch]$SkipLauncherBuild
 )
 
 $ErrorActionPreference = "Stop"
@@ -226,11 +227,13 @@ foreach ($cfg in $configs) {
     }
 }
 
-Write-Host "Building QuarantineLauncher..." -ForegroundColor Cyan
-dotnet build $launcherProject
+if (-not $SkipLauncherBuild) {
+    Write-Host "Building QuarantineLauncher..." -ForegroundColor Cyan
+    dotnet build $launcherProject
 
-if ($LASTEXITCODE -ne 0) {
-    throw "Launcher build failed (exit code $LASTEXITCODE)."
+    if ($LASTEXITCODE -ne 0) {
+        throw "Launcher build failed (exit code $LASTEXITCODE)."
+    }
 }
 
 Write-Host "Build succeeded!" -ForegroundColor Green

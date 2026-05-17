@@ -91,7 +91,7 @@ jobs:
       - name: Build engine
         shell: pwsh
         run: |
-          powershell -ExecutionPolicy Bypass -File ".\setup\build.ps1" -Configuration Release
+          powershell -ExecutionPolicy Bypass -File ".\setup\build.ps1" -Configuration Release -SkipLauncherBuild
 
       - name: Package engine
         shell: pwsh
