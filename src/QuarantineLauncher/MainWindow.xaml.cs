@@ -12,8 +12,10 @@ namespace QuarantineLauncher;
 public partial class MainWindow : Window, INotifyPropertyChanged
 {
     private readonly ProjectRepository _projectRepository = new();
+    private readonly EngineInstallationService _engineInstallationService = new();
     private readonly EditorLaunchService _editorLaunchService = new();
     private ProjectEntry? _selectedProject;
+    private EngineInstallation? _selectedEngineInstallation;
     private string _statusMessage = "Listo.";
 
     public MainWindow()
@@ -21,12 +23,37 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         InitializeComponent();
         DataContext = this;
         ProjectsRootDisplay = $"Workspace projects: {_projectRepository.ProjectsRoot}";
+        LoadEngineInstallations();
         RefreshProjects();
     }
 
     public ObservableCollection<ProjectEntry> Projects { get; } = new();
+    public ObservableCollection<EngineInstallation> EngineInstallations { get; } = new();
 
     public string ProjectsRootDisplay { get; }
+
+    public string SelectedEngineDisplay => SelectedEngineInstallation is null
+        ? "No engine selected."
+        : $"Engine: {SelectedEngineInstallation.DisplayName}";
+
+    public string EngineRootDisplay => SelectedEngineInstallation is null
+        ? "Engine root: -"
+        : $"Engine root: {SelectedEngineInstallation.RootPath}";
+
+    public EngineInstallation? SelectedEngineInstallation
+    {
+        get => _selectedEngineInstallation;
+        set
+        {
+            if (ReferenceEquals(_selectedEngineInstallation, value))
+                return;
+
+            _selectedEngineInstallation = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(SelectedEngineDisplay));
+            OnPropertyChanged(nameof(EngineRootDisplay));
+        }
+    }
 
     public ProjectEntry? SelectedProject
     {
@@ -56,6 +83,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void LoadEngineInstallations()
+    {
+        EngineInstallations.Clear();
+        foreach (var installation in _engineInstallationService.GetAvailableInstallations())
+        {
+            EngineInstallations.Add(installation);
+        }
+
+        SelectedEngineInstallation = EngineInstallations.FirstOrDefault();
+    }
 
     private void RefreshProjects()
     {
@@ -89,12 +127,20 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         try
         {
-            var project = _projectRepository.CreateProject(ProjectNameTextBox.Text);
+            if (SelectedEngineInstallation is null)
+            {
+                throw new InvalidOperationException("Select an engine installation before creating a project.");
+            }
+
+            var project = _projectRepository.CreateProject(
+                ProjectNameTextBox.Text,
+                SelectedEngineInstallation.EnginePaths,
+                SelectedEngineInstallation);
             RefreshProjects();
             SelectedProject = Projects.FirstOrDefault(item =>
                 string.Equals(item.Name, project.Name, StringComparison.OrdinalIgnoreCase));
             ProjectNameTextBox.Clear();
-            StatusMessage = $"Project '{project.Name}' was created successfully.";
+            StatusMessage = $"Project '{project.Name}' was created with {SelectedEngineInstallation.DisplayName}.";
         }
         catch (Exception ex)
         {
@@ -152,6 +198,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void RefreshProjects_Click(object sender, RoutedEventArgs e)
     {
+        LoadEngineInstallations();
         RefreshProjects();
     }
 
@@ -172,6 +219,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             OpenSelectedProject();
         }
+    }
+
+    private void EngineInstallationsComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        SelectedEngineInstallation = EngineInstallationsComboBox.SelectedItem as EngineInstallation;
     }
 
     private void ShowError(string message)
