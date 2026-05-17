@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - 'v*'
     paths:
       - '.github/workflows/publish-launcher.yml'
       - 'setup/package-launcher.ps1'
@@ -12,7 +14,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: publish-launcher
@@ -45,14 +47,30 @@ jobs:
         id: version
         shell: pwsh
         run: |
-          $shortSha = "${{ github.sha }}".Substring(0, 7)
-          $dateStamp = Get-Date -Format "yyyyMMdd"
-          $fullVersion = "0.1.0-dev.$dateStamp.${{ github.run_number }}-$shortSha"
-          $displayVersion = "0.1.0"
+          $ref = "${{ github.ref }}"
+          $refName = "${{ github.ref_name }}"
+
+          if ($ref.StartsWith("refs/tags/v")) {
+            $displayVersion = $refName.Substring(1)
+            $fullVersion = $displayVersion
+            $releaseTag = $refName
+            $isRelease = "true"
+          }
+          else {
+            $shortSha = "${{ github.sha }}".Substring(0, 7)
+            $dateStamp = Get-Date -Format "yyyyMMdd"
+            $fullVersion = "0.1.0-dev.$dateStamp.${{ github.run_number }}-$shortSha"
+            $displayVersion = "0.1.0"
+            $releaseTag = ""
+            $isRelease = "false"
+          }
+
           $installerBaseName = "quarantine-launcher-installer-$displayVersion"
           "launcher_version_full=$fullVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "launcher_version_display=$displayVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "launcher_installer_base_name=$installerBaseName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "launcher_release_tag=$releaseTag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "launcher_is_release=$isRelease" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           Write-Host "Publishing launcher version $fullVersion"
           Write-Host "Display version $displayVersion"
 
@@ -105,3 +123,11 @@ jobs:
           name: quarantine-launcher-installer-${{ steps.version.outputs.launcher_version_display }}
           path: artifacts/launcher/${{ steps.version.outputs.launcher_version_full }}/win-x64/installer
           if-no-files-found: error
+
+      - name: Publish installer to GitHub Release
+        if: steps.version.outputs.launcher_is_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.launcher_release_tag }}
+          name: ${{ steps.version.outputs.launcher_release_tag }}
+          files: artifacts/launcher/${{ steps.version.outputs.launcher_version_full }}/win-x64/installer/${{ steps.version.outputs.launcher_installer_base_name }}.exe
