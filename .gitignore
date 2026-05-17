@@ -372,6 +372,7 @@ QEProjects/
 
 !extern/ImGuizmo/
 !extern/ImGuizmo/**
+!src/QuarantineLauncher/Assets/*.png
 # --- Allow tracking shader files under resources/shaders ---
 # Unignore shaders directory and everything inside
 !resources/shaders/
