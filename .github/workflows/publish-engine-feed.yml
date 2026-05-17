@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 permissions:
@@ -83,10 +85,23 @@ jobs:
         shell: pwsh
         run: |
           $shortSha = "${{ github.sha }}".Substring(0, 7)
-          $dateStamp = Get-Date -Format "yyyyMMdd"
-          $version = "0.1.0-dev.$dateStamp.${{ github.run_number }}-$shortSha"
+          $ref = "${{ github.ref }}"
+          $refName = "${{ github.ref_name }}"
+
+          if ($ref.StartsWith("refs/tags/v")) {
+            $version = $refName.Substring(1)
+            $channel = "stable"
+          }
+          else {
+            $dateStamp = Get-Date -Format "yyyyMMdd"
+            $version = "0.1.0-dev.$dateStamp.${{ github.run_number }}-$shortSha"
+            $channel = "dev"
+          }
+
           "engine_version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "engine_channel=$channel" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           Write-Host "Publishing engine version $version"
+          Write-Host "Publishing engine channel $channel"
 
       - name: Build engine
         shell: pwsh
@@ -98,7 +113,7 @@ jobs:
         run: |
           powershell -ExecutionPolicy Bypass -File ".\setup\package-engine.ps1" `
             -Version "${{ steps.version.outputs.engine_version }}" `
-            -Channel "dev" `
+            -Channel "${{ steps.version.outputs.engine_channel }}" `
             -Configuration Release
 
       - name: Prepare GitHub Pages content

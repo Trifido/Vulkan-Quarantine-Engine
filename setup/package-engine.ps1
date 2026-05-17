@@ -168,7 +168,13 @@ function Update-FeedIndex {
             }
 
             $archivePath = Join-Path $platformDirectory.FullName "package.zip"
-            $channelName = if ($versionDirectory.Name -match "dev") { "dev" } else { "stable" }
+            $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+            $channelName = if ([string]::IsNullOrWhiteSpace($manifest.channel)) {
+                if ($versionDirectory.Name -match "dev") { "dev" } else { "stable" }
+            }
+            else {
+                $manifest.channel
+            }
             $packages.Add([ordered]@{
                 displayName = "Quarantine Engine $($versionDirectory.Name)"
                 version = $versionDirectory.Name

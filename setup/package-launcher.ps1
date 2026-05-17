@@ -1,10 +1,11 @@
 <#
 .SYNOPSIS
-  Empaqueta QuarantineLauncher como distribución portable para Windows.
+  Empaqueta QuarantineLauncher como distribucion portable para Windows.
 
 .DESCRIPTION
-  Publica el launcher con dotnet publish, copia la configuración y genera
-  un layout estable listo para distribuir como zip o como base de un instalador.
+  Publica el launcher con dotnet publish, conserva la configuracion inicial
+  y genera un layout estable listo para distribuir como zip o como base de
+  un instalador.
 #>
 
 param(
@@ -27,6 +28,7 @@ if ([string]::IsNullOrWhiteSpace($OutputRoot)) {
 $packageRoot = Join-Path $OutputRoot "$Version\$Runtime"
 $publishDir = Join-Path $packageRoot "app"
 $archivePath = Join-Path $packageRoot "quarantine-launcher-$Version-$Runtime.zip"
+$manifestPath = Join-Path $packageRoot "launcher-manifest.json"
 
 function Ensure-CleanDirectory {
     param([string]$PathToCreate)
@@ -65,7 +67,6 @@ $manifest = [ordered]@{
     feedIndex = "https://trifido.github.io/Vulkan-Quarantine-Engine/feed/quarantine-engine/index.json"
 }
 
-$manifestPath = Join-Path $packageRoot "launcher-manifest.json"
 $manifest | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $manifestPath -Encoding utf8
 
 if (Test-Path -LiteralPath $archivePath) {

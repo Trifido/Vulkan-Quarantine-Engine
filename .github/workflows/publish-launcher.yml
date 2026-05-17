@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/publish-launcher.yml'
       - 'setup/package-launcher.ps1'
+      - 'setup/installer/**'
       - 'src/QuarantineLauncher/**'
   workflow_dispatch:
 
@@ -35,6 +36,11 @@ jobs:
       - name: Set up MSBuild
         uses: microsoft/setup-msbuild@v2
 
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+
       - name: Compute launcher version
         id: version
         shell: pwsh
@@ -53,9 +59,42 @@ jobs:
             -Runtime "win-x64" `
             -Configuration Release
 
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.launcher_version }}"
+          $packageRoot = Join-Path $PWD "artifacts\launcher\$version\win-x64"
+          $sourceDir = Join-Path $packageRoot "app"
+          $outputDir = Join-Path $packageRoot "installer"
+          $iconPath = Join-Path $PWD "src\QuarantineLauncher\Assets\QE-Icon.ico"
+          New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+
+          $isccPath = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path -LiteralPath $isccPath)) {
+            throw "ISCC.exe was not found at $isccPath"
+          }
+
+          & $isccPath `
+            "/DMyAppVersion=$version" `
+            "/DMySourceDir=$sourceDir" `
+            "/DMyOutputDir=$outputDir" `
+            "/DMyIconPath=$iconPath" `
+            ".\setup\installer\QuarantineLauncher.iss"
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Inno Setup compilation failed with exit code $LASTEXITCODE."
+          }
+
       - name: Upload portable launcher artifact
         uses: actions/upload-artifact@v4
         with:
-          name: quarantine-launcher-${{ steps.version.outputs.launcher_version }}
+          name: quarantine-launcher-portable-${{ steps.version.outputs.launcher_version }}
           path: artifacts/launcher/${{ steps.version.outputs.launcher_version }}/win-x64
+          if-no-files-found: error
+
+      - name: Upload launcher installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: quarantine-launcher-installer-${{ steps.version.outputs.launcher_version }}
+          path: artifacts/launcher/${{ steps.version.outputs.launcher_version }}/win-x64/installer
           if-no-files-found: error
