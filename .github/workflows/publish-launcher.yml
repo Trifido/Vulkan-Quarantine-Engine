@@ -1,0 +1,61 @@
+name: Publish Launcher
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/publish-launcher.yml'
+      - 'setup/package-launcher.ps1'
+      - 'src/QuarantineLauncher/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-launcher
+  cancel-in-progress: true
+
+jobs:
+  package-launcher:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Compute launcher version
+        id: version
+        shell: pwsh
+        run: |
+          $shortSha = "${{ github.sha }}".Substring(0, 7)
+          $dateStamp = Get-Date -Format "yyyyMMdd"
+          $version = "0.1.0-dev.$dateStamp.${{ github.run_number }}-$shortSha"
+          "launcher_version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "Publishing launcher version $version"
+
+      - name: Package launcher
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File ".\setup\package-launcher.ps1" `
+            -Version "${{ steps.version.outputs.launcher_version }}" `
+            -Runtime "win-x64" `
+            -Configuration Release
+
+      - name: Upload portable launcher artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: quarantine-launcher-${{ steps.version.outputs.launcher_version }}
+          path: artifacts/launcher/${{ steps.version.outputs.launcher_version }}/win-x64
+          if-no-files-found: error
