@@ -102,6 +102,10 @@ StyleCopReport.xml
 *.spv
 *.bat
 *.fbx
+!src/QuarantineEditor/Icons/
+!src/QuarantineEditor/Icons/*.png
+!src/QuarantineLauncher/Assets/
+!src/QuarantineLauncher/Assets/*.png
 
 # Chutzpah Test files
 _Chutzpah*
