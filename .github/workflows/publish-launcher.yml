@@ -47,26 +47,32 @@ jobs:
         run: |
           $shortSha = "${{ github.sha }}".Substring(0, 7)
           $dateStamp = Get-Date -Format "yyyyMMdd"
-          $version = "0.1.0-dev.$dateStamp.${{ github.run_number }}-$shortSha"
-          "launcher_version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          Write-Host "Publishing launcher version $version"
+          $fullVersion = "0.1.0-dev.$dateStamp.${{ github.run_number }}-$shortSha"
+          $displayVersion = "0.1.0"
+          $installerBaseName = "quarantine-launcher-installer-$displayVersion"
+          "launcher_version_full=$fullVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "launcher_version_display=$displayVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "launcher_installer_base_name=$installerBaseName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "Publishing launcher version $fullVersion"
+          Write-Host "Display version $displayVersion"
 
       - name: Package launcher
         shell: pwsh
         run: |
           powershell -ExecutionPolicy Bypass -File ".\setup\package-launcher.ps1" `
-            -Version "${{ steps.version.outputs.launcher_version }}" `
+            -Version "${{ steps.version.outputs.launcher_version_full }}" `
             -Runtime "win-x64" `
             -Configuration Release
 
       - name: Build installer
         shell: pwsh
         run: |
-          $version = "${{ steps.version.outputs.launcher_version }}"
+          $version = "${{ steps.version.outputs.launcher_version_full }}"
           $packageRoot = Join-Path $PWD "artifacts\launcher\$version\win-x64"
           $sourceDir = Join-Path $packageRoot "app"
           $outputDir = Join-Path $packageRoot "installer"
           $iconPath = Join-Path $PWD "src\QuarantineLauncher\Assets\QE-Icon.ico"
+          $baseName = "${{ steps.version.outputs.launcher_installer_base_name }}"
           New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
 
           $isccPath = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
@@ -75,7 +81,8 @@ jobs:
           }
 
           & $isccPath `
-            "/DMyAppVersion=$version" `
+            "/DMyAppVersion=${{ steps.version.outputs.launcher_version_display }}" `
+            "/DMyOutputBaseFilename=$baseName" `
             "/DMySourceDir=$sourceDir" `
             "/DMyOutputDir=$outputDir" `
             "/DMyIconPath=$iconPath" `
@@ -88,13 +95,13 @@ jobs:
       - name: Upload portable launcher artifact
         uses: actions/upload-artifact@v4
         with:
-          name: quarantine-launcher-portable-${{ steps.version.outputs.launcher_version }}
-          path: artifacts/launcher/${{ steps.version.outputs.launcher_version }}/win-x64
+          name: quarantine-launcher-portable-${{ steps.version.outputs.launcher_version_full }}
+          path: artifacts/launcher/${{ steps.version.outputs.launcher_version_full }}/win-x64
           if-no-files-found: error
 
       - name: Upload launcher installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: quarantine-launcher-installer-${{ steps.version.outputs.launcher_version }}
-          path: artifacts/launcher/${{ steps.version.outputs.launcher_version }}/win-x64/installer
+          name: quarantine-launcher-installer-${{ steps.version.outputs.launcher_version_display }}
+          path: artifacts/launcher/${{ steps.version.outputs.launcher_version_full }}/win-x64/installer
           if-no-files-found: error

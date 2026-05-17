@@ -6,6 +6,10 @@
   #define MyAppVersion "0.1.0-dev"
 #endif
 
+#ifndef MyOutputBaseFilename
+  #define MyOutputBaseFilename "quarantine-launcher-installer"
+#endif
+
 #ifndef MySourceDir
   #error "MySourceDir must point to the portable launcher app directory."
 #endif
@@ -29,7 +33,7 @@ DisableProgramGroupPage=yes
 AllowNoIcons=yes
 LicenseFile=
 OutputDir={#MyOutputDir}
-OutputBaseFilename=QuarantineLauncherSetup-{#MyAppVersion}
+OutputBaseFilename={#MyOutputBaseFilename}
 #if MyIconPath != ""
 SetupIconFile={#MyIconPath}
 #endif
