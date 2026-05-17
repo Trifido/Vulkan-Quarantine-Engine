@@ -20,6 +20,13 @@ internal static class WorkspaceLocator
 
     public static EngineIntegrationPaths ResolveEngineIntegrationPaths()
     {
+        return _cachedPaths.Value.EnginePaths
+            ?? throw new DirectoryNotFoundException(
+                "Could not resolve EngineRoot. Configure EngineRoot in launcher.settings.json or install/select an engine version.");
+    }
+
+    public static EngineIntegrationPaths? TryResolveEngineIntegrationPaths()
+    {
         return _cachedPaths.Value.EnginePaths;
     }
 
@@ -84,7 +91,7 @@ internal static class WorkspaceLocator
         var installationsRoot = ResolveEngineInstallationsRoot(settings, settingsDirectory, repositoryRoot);
         var packageFeedRoot = ResolveEnginePackageFeedRoot(settings, settingsDirectory, repositoryRoot);
         var feedIndexPath = ResolveEngineFeedIndexPath(settings, settingsDirectory, packageFeedRoot);
-        var enginePaths = ResolveEngineIntegrationPaths(settings, settingsDirectory, repositoryRoot);
+        var enginePaths = TryResolveEngineIntegrationPaths(settings, settingsDirectory, repositoryRoot);
         var projectsRoot = ResolveProjectsRoot(settings, settingsDirectory, repositoryRoot);
         var templatesRoot = ResolveTemplatesRoot(settings, settingsDirectory, repositoryRoot);
         var editorPath = ResolveEditorPath(settings, settingsDirectory);
@@ -166,7 +173,7 @@ internal static class WorkspaceLocator
         throw new DirectoryNotFoundException("Could not locate the default project template.");
     }
 
-    private static EngineIntegrationPaths ResolveEngineIntegrationPaths(
+    private static EngineIntegrationPaths? TryResolveEngineIntegrationPaths(
         LauncherSettings settings,
         string settingsDirectory,
         string? repositoryRoot)
@@ -177,8 +184,7 @@ internal static class WorkspaceLocator
 
         if (string.IsNullOrWhiteSpace(engineRoot))
         {
-            throw new DirectoryNotFoundException(
-                "Could not resolve EngineRoot. Configure EngineRoot in launcher.settings.json.");
+            return null;
         }
 
         var engineBuildDir = !string.IsNullOrWhiteSpace(settings.EngineBuildDir)
@@ -275,7 +281,7 @@ internal static class WorkspaceLocator
         string? EngineInstallationsRoot,
         string? EnginePackageFeedRoot,
         string? EngineFeedIndexPath,
-        EngineIntegrationPaths EnginePaths,
+        EngineIntegrationPaths? EnginePaths,
         string ProjectsRoot,
         string TemplatesRoot,
         string? EditorPath);

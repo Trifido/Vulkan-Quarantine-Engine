@@ -12,10 +12,13 @@ public sealed class EngineInstallationService
     public IReadOnlyList<EngineInstallation> GetAvailableInstallations()
     {
         var results = new List<EngineInstallation>();
-        var defaultEngineRoot = WorkspaceLocator.ResolveEngineIntegrationPaths().EngineRoot;
+        var configuredEngine = WorkspaceLocator.TryResolveEngineIntegrationPaths();
+        var defaultEngineRoot = configuredEngine?.EngineRoot;
 
-        var configuredEngine = WorkspaceLocator.ResolveEngineIntegrationPaths();
-        results.Add(CreateFromConfiguredEngine(configuredEngine, defaultEngineRoot));
+        if (configuredEngine is not null)
+        {
+            results.Add(CreateFromConfiguredEngine(configuredEngine, defaultEngineRoot));
+        }
 
         AddInstallationsFromRoot(results, WorkspaceLocator.FindEngineInstallationsRoot(), defaultEngineRoot, managedInstallation: true);
         var feedIndexLoaded = AddInstallationsFromIndex(results, WorkspaceLocator.FindEngineFeedIndexPath(), defaultEngineRoot);
@@ -35,7 +38,7 @@ public sealed class EngineInstallationService
     private static bool AddInstallationsFromIndex(
         ICollection<EngineInstallation> results,
         string? indexPath,
-        string defaultEngineRoot)
+        string? defaultEngineRoot)
     {
         if (string.IsNullOrWhiteSpace(indexPath))
         {
@@ -104,7 +107,7 @@ public sealed class EngineInstallationService
     private static void AddInstallationsFromRoot(
         ICollection<EngineInstallation> results,
         string? root,
-        string defaultEngineRoot,
+        string? defaultEngineRoot,
         bool managedInstallation)
     {
         if (string.IsNullOrWhiteSpace(root) || !Directory.Exists(root))
@@ -130,7 +133,7 @@ public sealed class EngineInstallationService
         }
     }
 
-    private static EngineInstallation CreateFromConfiguredEngine(EngineIntegrationPaths enginePaths, string defaultEngineRoot)
+    private static EngineInstallation CreateFromConfiguredEngine(EngineIntegrationPaths enginePaths, string? defaultEngineRoot)
     {
         var isInstalledPackage = File.Exists(Path.Combine(enginePaths.EngineRoot, "metadata", "manifest.json"));
         var manifestPath = Path.Combine(enginePaths.EngineRoot, "metadata", "manifest.json");
@@ -331,7 +334,7 @@ public sealed class EngineInstallationService
                 existing.IsManagedInstallation == installation.IsManagedInstallation);
     }
 
-    private static EngineInstallation ApplyDefaultFlag(EngineInstallation installation, string defaultEngineRoot)
+    private static EngineInstallation ApplyDefaultFlag(EngineInstallation installation, string? defaultEngineRoot)
     {
         if (installation.IsDefault == string.Equals(installation.RootPath, defaultEngineRoot, StringComparison.OrdinalIgnoreCase))
         {
