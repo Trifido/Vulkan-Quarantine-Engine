@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <stdexcept>
+#include <array>
 
 #include <imgui_impl_vulkan.h>
 #include <stb_image.h>
@@ -23,17 +24,48 @@ bool QEProjectIconCache::Initialize()
     Cleanup();
 
     bool ok = true;
-    ok &= LoadIconTexture(QEAssetType::Folder, "../../src/QuarantineEditor/Icons/folder.png");
-    ok &= LoadIconTexture(QEAssetType::Scene, "../../src/QuarantineEditor/Icons/scene.png");
-    ok &= LoadIconTexture(QEAssetType::Material, "../../src/QuarantineEditor/Icons/material.png");
-    ok &= LoadIconTexture(QEAssetType::Shader, "../../src/QuarantineEditor/Icons/shader.png");
-    ok &= LoadIconTexture(QEAssetType::Graph, "../../src/QuarantineEditor/Icons/graph.png");
-    ok &= LoadIconTexture(QEAssetType::Spv, "../../src/QuarantineEditor/Icons/spv.png");
-    ok &= LoadIconTexture(QEAssetType::Texture, "../../src/QuarantineEditor/Icons/texture.png");
-    ok &= LoadIconTexture(QEAssetType::Mesh, "../../src/QuarantineEditor/Icons/mesh.png");
-    ok &= LoadIconTexture(QEAssetType::Animation, "../../src/QuarantineEditor/Icons/animation.png");
-    ok &= LoadIconTexture(QEAssetType::NavigateUp, "../../src/QuarantineEditor/Icons/up.png");
+    ok &= LoadIconTexture(QEAssetType::Folder, ResolveIconPath("folder.png"));
+    ok &= LoadIconTexture(QEAssetType::Scene, ResolveIconPath("scene.png"));
+    ok &= LoadIconTexture(QEAssetType::Material, ResolveIconPath("material.png"));
+    ok &= LoadIconTexture(QEAssetType::Shader, ResolveIconPath("shader.png"));
+    ok &= LoadIconTexture(QEAssetType::Graph, ResolveIconPath("graph.png"));
+    ok &= LoadIconTexture(QEAssetType::Spv, ResolveIconPath("spv.png"));
+    ok &= LoadIconTexture(QEAssetType::Texture, ResolveIconPath("texture.png"));
+    ok &= LoadIconTexture(QEAssetType::Mesh, ResolveIconPath("mesh.png"));
+    ok &= LoadIconTexture(QEAssetType::Animation, ResolveIconPath("animation.png"));
+    ok &= LoadIconTexture(QEAssetType::NavigateUp, ResolveIconPath("up.png"));
     return ok;
+}
+
+std::filesystem::path QEProjectIconCache::ResolveIconPath(const std::string& fileName) const
+{
+    std::error_code ec;
+    const std::filesystem::path workingDirectory = std::filesystem::current_path(ec);
+
+    if (!ec)
+    {
+        const std::filesystem::path runtimePath = workingDirectory / "Icons" / fileName;
+        if (std::filesystem::exists(runtimePath))
+        {
+            return runtimePath;
+        }
+    }
+
+    static constexpr std::array<const char*, 2> fallbackPaths = {
+        "../../src/QuarantineEditor/Icons/",
+        "src/QuarantineEditor/Icons/"
+    };
+
+    for (const char* fallbackPath : fallbackPaths)
+    {
+        const std::filesystem::path candidate = std::filesystem::path(fallbackPath) / fileName;
+        if (std::filesystem::exists(candidate))
+        {
+            return candidate;
+        }
+    }
+
+    return std::filesystem::path("Icons") / fileName;
 }
 
 void QEProjectIconCache::Cleanup()

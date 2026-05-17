@@ -295,6 +295,11 @@ foreach ($cfg in $configs) {
     if (Test-Path -LiteralPath $editorIniSource) {
         Copy-Item -LiteralPath $editorIniSource -Destination $editorTargetDir -Force
     }
+
+    $editorIconsSource = Join-Path $projectRoot "src\QuarantineEditor\Icons"
+    if (Test-Path -LiteralPath $editorIconsSource) {
+        Copy-DirectoryContents -Source $editorIconsSource -Destination (Join-Path $editorTargetDir "Icons")
+    }
 }
 
 $metadataDir = Join-Path $packageRoot "metadata"

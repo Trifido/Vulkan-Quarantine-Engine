@@ -34,6 +34,7 @@ public:
     const QEIconTexture* GetIcon(QEAssetType type) const;
 
 private:
+    std::filesystem::path ResolveIconPath(const std::string& fileName) const;
     bool LoadIconTexture(QEAssetType type, const std::filesystem::path& filePath);
 
     bool CreateBuffer(

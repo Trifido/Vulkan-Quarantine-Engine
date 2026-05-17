@@ -343,6 +343,12 @@ if (WIN32)
       ${CMAKE_SOURCE_DIR}/resources/editor/imgui_default.ini
       $<TARGET_FILE_DIR:QuarantineEditor>/imgui_default.ini
   )
+
+  add_custom_command(TARGET QuarantineEditor POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+      ${CMAKE_SOURCE_DIR}/src/QuarantineEditor/Icons
+      $<TARGET_FILE_DIR:QuarantineEditor>/Icons
+  )
 endif()
 
 if (MSVC)
