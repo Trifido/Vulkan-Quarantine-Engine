@@ -4,6 +4,7 @@
 #include <memory>
 #include <functional>
 #include <filesystem>
+#include <string>
 
 class GameObjectManager;
 class MaterialManager;
@@ -39,4 +40,6 @@ private:
     EditorContext* editorContext = nullptr;
     EditorSelectionManager* selectionManager = nullptr;
     std::function<void(const std::shared_ptr<QEMaterial>&)> onOpenMaterialEditor;
+    std::string _selectedGameObjectId;
+    int _selectedMaterialIndex = -1;
 };

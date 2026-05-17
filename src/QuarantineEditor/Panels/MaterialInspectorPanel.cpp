@@ -72,6 +72,15 @@ void MaterialInspectorPanel::Draw()
     }
 
     const auto& materials = gameObject->GetMaterials();
+    if (_selectedGameObjectId != gameObject->ID())
+    {
+        _selectedGameObjectId = gameObject->ID();
+        _selectedMaterialIndex = -1;
+    }
+    if (_selectedMaterialIndex >= static_cast<int>(materials.size()))
+    {
+        _selectedMaterialIndex = -1;
+    }
 
     ImGui::Text("GameObject: %s", gameObject->Name.c_str());
     ImGui::Text("Materials: %d", static_cast<int>(materials.size()));
@@ -85,6 +94,7 @@ void MaterialInspectorPanel::Draw()
 
     if (materials.empty())
     {
+        _selectedMaterialIndex = -1;
         ImGui::TextUnformatted("This GameObject has no bound materials.");
         DrawAddMaterialPopup(gameObject, "AddMaterialPopup");
         ImGui::End();
@@ -106,6 +116,21 @@ void MaterialInspectorPanel::DrawToolbar(const std::shared_ptr<QEGameObject>& ga
     {
         ImGui::OpenPopup("AddMaterialPopup");
     }
+
+    ImGui::SameLine();
+
+    const bool canRemove =
+        gameObject &&
+        _selectedMaterialIndex >= 0 &&
+        _selectedMaterialIndex < static_cast<int>(gameObject->GetMaterials().size());
+
+    ImGui::BeginDisabled(!canRemove);
+    if (ImGui::Button("Remove Selected"))
+    {
+        DeleteMaterialAt(gameObject, _selectedMaterialIndex);
+        _selectedMaterialIndex = -1;
+    }
+    ImGui::EndDisabled();
 }
 
 void MaterialInspectorPanel::DrawMaterialEntry(
@@ -128,10 +153,48 @@ void MaterialInspectorPanel::DrawMaterialEntry(
     const std::string label =
         material->Name + " [" + shaderName + "]" + (useCopy ? " (Copy)" : "");
 
-    const float checkboxWidth = ImGui::CalcTextSize("UseCopy").x + ImGui::GetFrameHeight() + 16.0f;
-    const float selectableWidth = std::max(1.0f, ImGui::GetContentRegionAvail().x - checkboxWidth);
+    const float checkboxWidth = ImGui::CalcTextSize("Use Copy").x + ImGui::GetFrameHeight() + 16.0f;
+    const float selectableWidth = std::max(
+        1.0f,
+        ImGui::GetContentRegionAvail().x - checkboxWidth - 8.0f);
 
-    ImGui::Selectable(label.c_str(), false, 0, ImVec2(selectableWidth, 0.0f));
+    const bool isSelected = (_selectedMaterialIndex == materialIndex);
+    ImGui::Selectable(label.c_str(), isSelected, 0, ImVec2(selectableWidth, 0.0f));
+
+    if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
+    {
+        _selectedMaterialIndex = materialIndex;
+    }
+
+    const std::string popupId = "MaterialEntryContext_" + std::to_string(materialIndex);
+    if (ImGui::BeginPopupContextItem(popupId.c_str()))
+    {
+        _selectedMaterialIndex = materialIndex;
+
+        if (ImGui::MenuItem("Open Material Editor"))
+        {
+            if (onOpenMaterialEditor)
+            {
+                onOpenMaterialEditor(material);
+            }
+        }
+
+        if (useCopy && ImGui::MenuItem("Disable Copy"))
+        {
+            gameObject->SetMaterialUseCopy(static_cast<size_t>(materialIndex), false);
+        }
+
+        if (ImGui::MenuItem("Remove Material"))
+        {
+            DeleteMaterialAt(gameObject, materialIndex);
+            _selectedMaterialIndex = -1;
+            ImGui::EndPopup();
+            ImGui::PopID();
+            return;
+        }
+
+        ImGui::EndPopup();
+    }
 
     if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
     {
@@ -156,22 +219,6 @@ void MaterialInspectorPanel::DrawMaterialEntry(
     if (useCopy != useCopyToggle)
     {
         gameObject->SetMaterialUseCopy(static_cast<size_t>(materialIndex), useCopyToggle);
-    }
-
-    const std::string popupId = "MaterialEntryContext_" + std::to_string(materialIndex);
-    if (ImGui::BeginPopupContextItem(popupId.c_str()))
-    {
-        if (useCopy && ImGui::MenuItem("Disable Copy"))
-        {
-            gameObject->SetMaterialUseCopy(static_cast<size_t>(materialIndex), false);
-        }
-
-        if (ImGui::MenuItem("Remove Material"))
-        {
-            DeleteMaterialAt(gameObject, materialIndex);
-        }
-
-        ImGui::EndPopup();
     }
 
     ImGui::PopID();

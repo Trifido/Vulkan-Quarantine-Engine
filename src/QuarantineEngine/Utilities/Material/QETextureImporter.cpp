@@ -21,6 +21,8 @@ static bool RunProcessAndWait(
 
     STARTUPINFOA si{};
     si.cb = sizeof(si);
+    si.dwFlags = STARTF_USESHOWWINDOW;
+    si.wShowWindow = SW_HIDE;
 
     PROCESS_INFORMATION pi{};
 
@@ -34,7 +36,7 @@ static bool RunProcessAndWait(
         nullptr,                // process attrs
         nullptr,                // thread attrs
         FALSE,                  // inherit handles
-        0,                      // creation flags
+        CREATE_NO_WINDOW,       // creation flags
         nullptr,                // env
         nullptr,                // current dir
         &si,
