@@ -44,7 +44,7 @@
 
   <PropertyGroup>
     <TargetName>__QE_PROJECT_NAME__</TargetName>
-    <LocalDebuggerWorkingDirectory>$(QuarantineEngineBuildDir)$(Configuration)</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>$(QEEngineBinaryDir)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
 
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

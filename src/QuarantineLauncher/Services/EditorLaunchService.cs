@@ -7,18 +7,23 @@ public sealed class EditorLaunchService
 {
     public string ResolveEditorPath()
     {
-        var repositoryRoot = WorkspaceLocator.FindRepositoryRoot();
-        var candidates = new[]
+        var configuredEditorPath = WorkspaceLocator.FindConfiguredEditorPath();
+        if (!string.IsNullOrWhiteSpace(configuredEditorPath))
         {
-            Path.Combine(repositoryRoot, "build", "Release", "QuarantineEditor.exe"),
-            Path.Combine(repositoryRoot, "build", "Debug", "QuarantineEditor.exe"),
-            Path.Combine(repositoryRoot, "build", "RelWithDebInfo", "QuarantineEditor.exe"),
-            Path.Combine(repositoryRoot, "build", "MinSizeRel", "QuarantineEditor.exe")
-        };
+            if (File.Exists(configuredEditorPath))
+            {
+                return configuredEditorPath;
+            }
+
+            throw new FileNotFoundException(
+                $"Configured EditorPath was not found: '{configuredEditorPath}'.");
+        }
+
+        var candidates = GetDevelopmentEditorCandidates();
 
         return candidates.FirstOrDefault(File.Exists)
             ?? throw new FileNotFoundException(
-                "Could not find QuarantineEditor.exe. Build the editor first with CMake/MSBuild.");
+                "Could not find QuarantineEditor.exe. Configure EditorPath in launcher.settings.json or build the editor in the development workspace.");
     }
 
     public void LaunchEditor(string projectPath)
@@ -35,5 +40,24 @@ public sealed class EditorLaunchService
         startInfo.ArgumentList.Add(projectPath);
 
         Process.Start(startInfo);
+    }
+
+    private static IReadOnlyList<string> GetDevelopmentEditorCandidates()
+    {
+        var candidates = new List<string>
+        {
+            Path.Combine(AppContext.BaseDirectory, "QuarantineEditor.exe")
+        };
+
+        var repositoryRoot = WorkspaceLocator.FindRepositoryRoot();
+        if (!string.IsNullOrWhiteSpace(repositoryRoot))
+        {
+            candidates.Add(Path.Combine(repositoryRoot, "build", "Release", "QuarantineEditor.exe"));
+            candidates.Add(Path.Combine(repositoryRoot, "build", "Debug", "QuarantineEditor.exe"));
+            candidates.Add(Path.Combine(repositoryRoot, "build", "RelWithDebInfo", "QuarantineEditor.exe"));
+            candidates.Add(Path.Combine(repositoryRoot, "build", "MinSizeRel", "QuarantineEditor.exe"));
+        }
+
+        return candidates;
     }
 }
