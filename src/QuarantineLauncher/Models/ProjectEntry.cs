@@ -13,7 +13,18 @@ public sealed class ProjectEntry
     public string EngineDisplay => string.IsNullOrWhiteSpace(EngineDisplayName)
         ? "Engine not recorded"
         : EngineDisplayName;
-    public string EngineSummaryDisplay => string.IsNullOrWhiteSpace(EngineVersion) || string.Equals(EngineVersion, "workspace", StringComparison.OrdinalIgnoreCase)
-        ? EngineDisplay
-        : $"{EngineDisplay} - {EngineVersion}";
+    public string EngineSummaryDisplay
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(EngineVersion) || string.Equals(EngineVersion, "workspace", StringComparison.OrdinalIgnoreCase))
+            {
+                return EngineDisplay;
+            }
+
+            return EngineDisplay.Contains(EngineVersion, StringComparison.OrdinalIgnoreCase)
+                ? EngineDisplay
+                : $"{EngineDisplay} - {EngineVersion}";
+        }
+    }
 }

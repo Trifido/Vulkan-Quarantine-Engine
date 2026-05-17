@@ -209,6 +209,8 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </Window.Resources>
 
     <Grid>
@@ -255,6 +257,10 @@
                                Foreground="{StaticResource AccentBrush}" />
                     <TextBlock Margin="0,6,0,0"
                                Text="{Binding EngineRootDisplay}"
+                               TextWrapping="Wrap"
+                               Foreground="{StaticResource MutedTextBrush}" />
+                    <TextBlock Margin="0,6,0,0"
+                               Text="{Binding EngineInstallationsRootDisplay}"
                                TextWrapping="Wrap"
                                Foreground="{StaticResource MutedTextBrush}" />
                 </StackPanel>
@@ -455,7 +461,7 @@
                                    Margin="0,16,0,8" />
                         <ComboBox x:Name="EngineInstallationsComboBox"
                                   Style="{StaticResource LauncherComboBoxStyle}"
-                                  ItemsSource="{Binding EngineInstallations}"
+                                  ItemsSource="{Binding ProjectEngines}"
                                   SelectedItem="{Binding SelectedEngineInstallation, Mode=TwoWay}"
                                   SelectionChanged="EngineInstallationsComboBox_SelectionChanged"
                                   TextSearch.TextPath="DisplayName"
@@ -473,9 +479,13 @@
                                     Content="Create Project"
                                     Click="CreateProject_Click"
                                     MinWidth="152" />
-                            <Button Content="Clear"
-                                    Click="ClearProjectName_Click"
-                                    MinWidth="116" />
+                            <Button Content="Install Version"
+                                    Click="OpenInstallVersionPanel_Click"
+                                    MinWidth="164" />
+                            <Button Style="{StaticResource DangerButtonStyle}"
+                                    Content="Uninstall Version"
+                                    Click="OpenUninstallVersionPanel_Click"
+                                    MinWidth="164" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -563,6 +573,178 @@
             <TextBlock Text="{Binding StatusMessage}"
                        Foreground="{StaticResource MutedTextBrush}"
                        TextWrapping="Wrap" />
+        </Border>
+
+        <Border Grid.RowSpan="3"
+                Background="#99060A0F"
+                Visibility="{Binding IsInstallVersionPanelOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid>
+                <Border Width="720"
+                        Padding="24"
+                        CornerRadius="22"
+                        Background="{StaticResource PanelBrush}"
+                        BorderBrush="{StaticResource PanelBorderBrush}"
+                        BorderThickness="1"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel>
+                            <TextBlock Text="Install Version"
+                                       FontSize="24"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextBrush}" />
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="Choose a version from the package feed to install it into the launcher-managed engines folder."
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource MutedTextBrush}" />
+                        </StackPanel>
+
+                        <ListBox Grid.Row="1"
+                                 x:Name="FeedEnginesListBox"
+                                 Margin="0,20,0,20"
+                                 ItemsSource="{Binding FeedEngines}"
+                                 SelectedItem="{Binding SelectedFeedEngine, Mode=TwoWay}"
+                                 SelectionChanged="FeedEnginesListBox_SelectionChanged"
+                                 Background="#0D141D"
+                                 BorderThickness="0"
+                                 Foreground="{StaticResource TextBrush}">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    <Setter Property="Padding" Value="0" />
+                                    <Setter Property="Margin" Value="0,0,0,10" />
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="{x:Type models:EngineInstallation}">
+                                    <Border Padding="16"
+                                            CornerRadius="14"
+                                            Background="#152230"
+                                            BorderBrush="#24384B"
+                                            BorderThickness="1">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding DisplayName}"
+                                                       FontSize="18"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextBrush}" />
+                                            <TextBlock Margin="0,6,0,0"
+                                                       Text="{Binding Summary}"
+                                                       Foreground="{StaticResource MutedTextBrush}" />
+                                            <TextBlock Margin="0,4,0,0"
+                                                       Text="{Binding RootPath}"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="{StaticResource MutedTextBrush}" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <StackPanel Grid.Row="2" Orientation="Horizontal">
+                            <Button Style="{StaticResource AccentButtonStyle}"
+                                    Content="Install Selected"
+                                    Click="InstallSelectedEngine_Click"
+                                    IsEnabled="{Binding CanInstallSelectedEngine}"
+                                    MinWidth="164" />
+                            <Button Content="Close"
+                                    Click="CloseInstallVersionPanel_Click"
+                                    MinWidth="116" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+
+        <Border Grid.RowSpan="3"
+                Background="#99060A0F"
+                Visibility="{Binding IsUninstallVersionPanelOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid>
+                <Border Width="720"
+                        Padding="24"
+                        CornerRadius="22"
+                        Background="{StaticResource PanelBrush}"
+                        BorderBrush="{StaticResource PanelBorderBrush}"
+                        BorderThickness="1"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel>
+                            <TextBlock Text="Uninstall Version"
+                                       FontSize="24"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextBrush}" />
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="Choose an installed engine version to remove it from the launcher-managed engines folder."
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource MutedTextBrush}" />
+                        </StackPanel>
+
+                        <ListBox Grid.Row="1"
+                                 x:Name="InstalledEnginesListBox"
+                                 Margin="0,20,0,20"
+                                 ItemsSource="{Binding InstalledManagedEngines}"
+                                 SelectedItem="{Binding SelectedInstalledEngine, Mode=TwoWay}"
+                                 SelectionChanged="InstalledEnginesListBox_SelectionChanged"
+                                 Background="#0D141D"
+                                 BorderThickness="0"
+                                 Foreground="{StaticResource TextBrush}">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    <Setter Property="Padding" Value="0" />
+                                    <Setter Property="Margin" Value="0,0,0,10" />
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="{x:Type models:EngineInstallation}">
+                                    <Border Padding="16"
+                                            CornerRadius="14"
+                                            Background="#152230"
+                                            BorderBrush="#24384B"
+                                            BorderThickness="1">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding DisplayName}"
+                                                       FontSize="18"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextBrush}" />
+                                            <TextBlock Margin="0,6,0,0"
+                                                       Text="{Binding Summary}"
+                                                       Foreground="{StaticResource MutedTextBrush}" />
+                                            <TextBlock Margin="0,4,0,0"
+                                                       Text="{Binding RootPath}"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="{StaticResource MutedTextBrush}" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <StackPanel Grid.Row="2" Orientation="Horizontal">
+                            <Button Style="{StaticResource DangerButtonStyle}"
+                                    Content="Uninstall Selected"
+                                    Click="UninstallSelectedEngine_Click"
+                                    IsEnabled="{Binding CanUninstallSelectedEngine}"
+                                    MinWidth="164" />
+                            <Button Content="Close"
+                                    Click="CloseUninstallVersionPanel_Click"
+                                    MinWidth="116" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
         </Border>
     </Grid>
 </Window>

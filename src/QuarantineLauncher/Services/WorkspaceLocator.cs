@@ -6,31 +6,46 @@ namespace QuarantineLauncher.Services;
 internal static class WorkspaceLocator
 {
     private const string SettingsFileName = "launcher.settings.json";
-    private static readonly Lazy<ResolvedLauncherPaths> CachedPaths = new(ResolvePaths);
+    private static Lazy<ResolvedLauncherPaths> _cachedPaths = new(ResolvePaths);
+
+    public static string GetSettingsPath()
+    {
+        return Path.Combine(AppContext.BaseDirectory, SettingsFileName);
+    }
+
+    public static void Reload()
+    {
+        _cachedPaths = new Lazy<ResolvedLauncherPaths>(ResolvePaths);
+    }
 
     public static EngineIntegrationPaths ResolveEngineIntegrationPaths()
     {
-        return CachedPaths.Value.EnginePaths;
+        return _cachedPaths.Value.EnginePaths;
     }
 
     public static string? FindEngineInstallationsRoot()
     {
-        return CachedPaths.Value.EngineInstallationsRoot;
+        return _cachedPaths.Value.EngineInstallationsRoot;
+    }
+
+    public static string? FindEnginePackageFeedRoot()
+    {
+        return _cachedPaths.Value.EnginePackageFeedRoot;
     }
 
     public static string FindProjectsRoot()
     {
-        return CachedPaths.Value.ProjectsRoot;
+        return _cachedPaths.Value.ProjectsRoot;
     }
 
     public static string FindLauncherTemplateRoot()
     {
-        return CachedPaths.Value.TemplatesRoot;
+        return _cachedPaths.Value.TemplatesRoot;
     }
 
     public static string? FindConfiguredEditorPath()
     {
-        return CachedPaths.Value.EditorPath;
+        return _cachedPaths.Value.EditorPath;
     }
 
     public static string? FindRepositoryRoot()
@@ -62,12 +77,13 @@ internal static class WorkspaceLocator
         var repositoryRoot = FindRepositoryRoot();
 
         var installationsRoot = ResolveEngineInstallationsRoot(settings, settingsDirectory, repositoryRoot);
+        var packageFeedRoot = ResolveEnginePackageFeedRoot(settings, settingsDirectory, repositoryRoot);
         var enginePaths = ResolveEngineIntegrationPaths(settings, settingsDirectory, repositoryRoot);
         var projectsRoot = ResolveProjectsRoot(settings, settingsDirectory, repositoryRoot);
         var templatesRoot = ResolveTemplatesRoot(settings, settingsDirectory, repositoryRoot);
         var editorPath = ResolveEditorPath(settings, settingsDirectory);
 
-        return new ResolvedLauncherPaths(installationsRoot, enginePaths, projectsRoot, templatesRoot, editorPath);
+        return new ResolvedLauncherPaths(installationsRoot, packageFeedRoot, enginePaths, projectsRoot, templatesRoot, editorPath);
     }
 
     private static LauncherSettings LoadSettings(string settingsPath)
@@ -176,6 +192,20 @@ internal static class WorkspaceLocator
             return NormalizeConfiguredPath(settings.EngineInstallationsRoot, settingsDirectory);
         }
 
+        var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        return Path.Combine(documentsPath, "Quarantine Engine", "Engines");
+    }
+
+    private static string? ResolveEnginePackageFeedRoot(
+        LauncherSettings settings,
+        string settingsDirectory,
+        string? repositoryRoot)
+    {
+        if (!string.IsNullOrWhiteSpace(settings.EnginePackageFeedRoot))
+        {
+            return NormalizeConfiguredPath(settings.EnginePackageFeedRoot, settingsDirectory);
+        }
+
         if (!string.IsNullOrWhiteSpace(repositoryRoot))
         {
             return Path.Combine(repositoryRoot, "artifacts", "packages", "quarantine-engine");
@@ -212,6 +242,7 @@ internal static class WorkspaceLocator
 
     private sealed record ResolvedLauncherPaths(
         string? EngineInstallationsRoot,
+        string? EnginePackageFeedRoot,
         EngineIntegrationPaths EnginePaths,
         string ProjectsRoot,
         string TemplatesRoot,

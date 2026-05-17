@@ -4,6 +4,8 @@ public sealed class LauncherSettings
 {
     public string? EngineInstallationsRoot { get; set; }
 
+    public string? EnginePackageFeedRoot { get; set; }
+
     public string? EngineRoot { get; set; }
 
     public string? EngineBuildDir { get; set; }

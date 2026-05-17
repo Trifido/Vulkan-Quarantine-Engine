@@ -54,7 +54,11 @@ function Copy-DirectoryContents {
     }
 
     New-Item -ItemType Directory -Path $Destination -Force | Out-Null
-    Copy-Item -Path (Join-Path $Source "*") -Destination $Destination -Recurse -Force
+    Get-ChildItem -LiteralPath $Source -Force |
+        Where-Object { $_.Name -ne ".git" } |
+        ForEach-Object {
+            Copy-Item -LiteralPath $_.FullName -Destination $Destination -Recurse -Force
+        }
 }
 
 function Copy-FileIfExists {
