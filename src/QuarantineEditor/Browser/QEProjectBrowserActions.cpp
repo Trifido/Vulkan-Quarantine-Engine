@@ -10,11 +10,16 @@ QEProjectBrowserActions::QEProjectBrowserActions(QEProjectBrowserNavigation& nav
     _renamePopupBuffer.fill('\0');
 }
 
+void QEProjectBrowserActions::RequestRefresh()
+{
+    _hasPendingRefresh = true;
+}
+
 void QEProjectBrowserActions::TryCreateNewFolderInPath(const std::filesystem::path& parentFolderPath)
 {
     if (QEProjectManager::CreateUniqueFolderAt(parentFolderPath, "New Folder"))
     {
-        _navigation.Refresh();
+        RequestRefresh();
     }
 }
 
@@ -36,8 +41,17 @@ void QEProjectBrowserActions::ProcessPendingDelete()
 
     if (QEProjectManager::DeletePath(targetPath, true))
     {
-        _navigation.Refresh();
+        RequestRefresh();
     }
+}
+
+void QEProjectBrowserActions::ProcessPendingRefresh()
+{
+    if (!_hasPendingRefresh)
+        return;
+
+    _hasPendingRefresh = false;
+    _navigation.Refresh();
 }
 
 void QEProjectBrowserActions::RequestRename(const std::filesystem::path& targetPath)
@@ -75,7 +89,7 @@ bool QEProjectBrowserActions::ExecuteRename()
     if (!QEProjectManager::RenamePath(_renamePopupTargetPath, newName))
         return false;
 
-    _navigation.Refresh();
+    RequestRefresh();
     _renamePopupTargetPath.clear();
     _renamePopupTargetItem = nullptr;
     _renamePopupBuffer.fill('\0');

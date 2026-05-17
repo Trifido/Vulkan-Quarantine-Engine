@@ -106,6 +106,28 @@ std::filesystem::path QETextureImporter::ResolveToktxPath()
     return fs::path();
 }
 
+static std::string BuildToktxSearchSummary()
+{
+    namespace fs = std::filesystem;
+
+    std::ostringstream out;
+    std::error_code ec;
+    const fs::path workingDirectory = fs::current_path(ec);
+
+    if (!ec)
+    {
+        out << (workingDirectory / "Tools" / "toktx.exe").lexically_normal().string() << "; ";
+        out << (workingDirectory / "toktx.exe").lexically_normal().string() << "; ";
+    }
+
+    out << fs::absolute("../../extern/KTX-Software/bin/toktx.exe").lexically_normal().string() << "; ";
+    out << fs::absolute("../../extern/ktx/bin/toktx.exe").lexically_normal().string() << "; ";
+    out << fs::absolute("extern/KTX-Software/bin/toktx.exe").lexically_normal().string() << "; ";
+    out << fs::absolute("extern/ktx/bin/toktx.exe").lexically_normal().string();
+
+    return out.str();
+}
+
 std::string QETextureImporter::BuildImportedPath(const std::string& sourcePath)
 {
     namespace fs = std::filesystem;
@@ -164,7 +186,7 @@ QETextureImportResult QETextureImporter::ImportToKtx2(
     const fs::path toktxExePath = ResolveToktxPath();
     if (toktxExePath.empty() || !fs::exists(toktxExePath))
     {
-        result.error = "toktx.exe not found in runtime Tools/ or development extern folders.";
+        result.error = "toktx.exe not found. Searched: " + BuildToktxSearchSummary();
         return result;
     }
 

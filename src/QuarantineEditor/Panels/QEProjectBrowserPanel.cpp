@@ -368,6 +368,12 @@ void QEProjectBrowserPanel::DrawAssetTile(QEProjectAssetItem* item, float tileSi
 
 void QEProjectBrowserPanel::Draw()
 {
+    if (_refreshNavigationNextFrame)
+    {
+        _refreshNavigationNextFrame = false;
+        _navigation.Refresh();
+    }
+
     QEAssetImportManager::Get().UpdateMainThread();
     if (QEAssetImportManager::Get().ConsumeFinishedSuccessfulImports() > 0)
     {
@@ -381,6 +387,7 @@ void QEProjectBrowserPanel::Draw()
     {
         _actions.DrawRenamePopup();
         _actions.ProcessPendingDelete();
+        _actions.ProcessPendingRefresh();
         ImGui::End();
         return;
     }
@@ -399,6 +406,7 @@ void QEProjectBrowserPanel::Draw()
 
         _actions.DrawRenamePopup();
         _actions.ProcessPendingDelete();
+        _actions.ProcessPendingRefresh();
         ImGui::End();
 
         return;
@@ -451,6 +459,7 @@ void QEProjectBrowserPanel::Draw()
 
     _actions.DrawRenamePopup();
     _actions.ProcessPendingDelete();
+    _actions.ProcessPendingRefresh();
     ImGui::End();
 }
 
@@ -657,7 +666,7 @@ void QEProjectBrowserPanel::DrawCreateMenu(QEProjectAssetItem* currentFolder)
         {
             if (QEProjectAssetCreator::CreateSceneAt(currentFolder->AbsolutePath, "New Scene"))
             {
-                _navigation.Refresh();
+                _refreshNavigationNextFrame = true;
             }
         }
 
@@ -665,7 +674,7 @@ void QEProjectBrowserPanel::DrawCreateMenu(QEProjectAssetItem* currentFolder)
         {
             if (QEProjectAssetCreator::CreateMaterialAt(currentFolder->AbsolutePath, "New Material"))
             {
-                _navigation.Refresh();
+                _refreshNavigationNextFrame = true;
             }
         }
 
@@ -673,7 +682,7 @@ void QEProjectBrowserPanel::DrawCreateMenu(QEProjectAssetItem* currentFolder)
         {
             if (QEProjectAssetCreator::CreateShaderAt(currentFolder->AbsolutePath, "New Shader"))
             {
-                _navigation.Refresh();
+                _refreshNavigationNextFrame = true;
             }
         }
 

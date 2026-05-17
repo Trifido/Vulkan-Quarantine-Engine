@@ -16,9 +16,11 @@ public:
 
     void DrawRenamePopup();
     void ProcessPendingDelete();
+    void ProcessPendingRefresh();
 
 private:
     void TryCreateNewFolderInPath(const std::filesystem::path& parentFolderPath);
+    void RequestRefresh();
 
     void RequestRename(const std::filesystem::path& targetPath);
     bool ExecuteRename();
@@ -30,6 +32,7 @@ private:
 
 private:
     QEProjectBrowserNavigation& _navigation;
+    bool _hasPendingRefresh = false;
 
     bool _hasPendingDelete = false;
     std::filesystem::path _pendingDeletePath;
