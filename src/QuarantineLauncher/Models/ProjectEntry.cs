@@ -8,6 +8,7 @@ public sealed class ProjectEntry
     public required DateTime LastModifiedUtc { get; init; }
     public string? EngineDisplayName { get; init; }
     public string? EngineVersion { get; init; }
+    public string? EngineRootPath { get; init; }
 
     public string LastModifiedDisplay => LastModifiedUtc.ToLocalTime().ToString("g");
     public string EngineDisplay => string.IsNullOrWhiteSpace(EngineDisplayName)

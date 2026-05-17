@@ -250,6 +250,13 @@ internal static class WorkspaceLocator
 
     private static string NormalizeConfiguredPath(string path, string baseDirectory)
     {
+        if (Uri.TryCreate(path, UriKind.Absolute, out var absoluteUri) &&
+            (absoluteUri.Scheme == Uri.UriSchemeHttp ||
+             absoluteUri.Scheme == Uri.UriSchemeHttps))
+        {
+            return absoluteUri.ToString();
+        }
+
         if (Path.IsPathRooted(path))
         {
             return Path.GetFullPath(path);

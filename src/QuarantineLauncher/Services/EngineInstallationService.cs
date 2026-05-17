@@ -145,6 +145,7 @@ public sealed class EngineInstallationService
             ManifestPath = isInstalledPackage ? manifestPath : null,
             PackageSource = null,
             Version = isInstalledPackage ? manifest?.Version ?? Path.GetFileName(enginePaths.EngineRoot) : "workspace",
+            Channel = manifest?.Channel,
             Platform = manifest?.Platform ?? "win-x64",
             RootPath = enginePaths.EngineRoot,
             IsInstalledPackage = isInstalledPackage,
@@ -180,6 +181,7 @@ public sealed class EngineInstallationService
                 ManifestPath = manifestPath,
                 PackageSource = null,
                 Version = manifest.Version,
+                Channel = manifest.Channel,
                 Platform = string.IsNullOrWhiteSpace(manifest.Platform) ? "win-x64" : manifest.Platform,
                 RootPath = rootPath,
                 IsInstalledPackage = true,
@@ -237,6 +239,7 @@ public sealed class EngineInstallationService
             ManifestPath = installation.ManifestPath,
             PackageSource = resolvedArchivePath ?? installation.PackageSource,
             Version = installation.Version,
+            Channel = installation.Channel ?? package.Channel,
             Platform = installation.Platform,
             RootPath = installation.RootPath,
             IsInstalledPackage = installation.IsInstalledPackage,
@@ -270,6 +273,7 @@ public sealed class EngineInstallationService
             ManifestPath = File.Exists(resolvedManifestPath ?? string.Empty) ? resolvedManifestPath : null,
             PackageSource = resolvedArchivePath,
             Version = package.Version,
+            Channel = package.Channel,
             Platform = platform,
             RootPath = sourcePath,
             IsInstalledPackage = true,
@@ -340,6 +344,7 @@ public sealed class EngineInstallationService
             ManifestPath = installation.ManifestPath,
             PackageSource = installation.PackageSource,
             Version = installation.Version,
+            Channel = installation.Channel,
             Platform = installation.Platform,
             RootPath = installation.RootPath,
             IsInstalledPackage = installation.IsInstalledPackage,
@@ -354,6 +359,7 @@ public sealed class EngineInstallationService
     private sealed class EngineManifest
     {
         public string? Version { get; set; }
+        public string? Channel { get; set; }
         public string? Platform { get; set; }
         public List<string>? Configurations { get; set; }
     }
@@ -367,6 +373,7 @@ public sealed class EngineInstallationService
     {
         public string? DisplayName { get; set; }
         public string? Version { get; set; }
+        public string? Channel { get; set; }
         public string? Platform { get; set; }
         public string? Manifest { get; set; }
         public string? Archive { get; set; }

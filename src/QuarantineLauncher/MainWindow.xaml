@@ -263,6 +263,10 @@
                                Text="{Binding EngineInstallationsRootDisplay}"
                                TextWrapping="Wrap"
                                Foreground="{StaticResource MutedTextBrush}" />
+                    <TextBlock Margin="0,6,0,0"
+                               Text="{Binding EditorAvailabilityMessage}"
+                               TextWrapping="Wrap"
+                               Foreground="{StaticResource MutedTextBrush}" />
                 </StackPanel>
 
                 <Border Grid.Column="1"
@@ -579,7 +583,7 @@
                 Background="#99060A0F"
                 Visibility="{Binding IsInstallVersionPanelOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
             <Grid>
-                <Border Width="720"
+                <Border Width="780"
                         Padding="24"
                         CornerRadius="22"
                         Background="{StaticResource PanelBrush}"
@@ -614,10 +618,11 @@
                                  Margin="0,20,0,20"
                                  ItemsSource="{Binding FeedEngines}"
                                  SelectedItem="{Binding SelectedFeedEngine, Mode=TwoWay}"
-                                 SelectionChanged="FeedEnginesListBox_SelectionChanged"
+                                  SelectionChanged="FeedEnginesListBox_SelectionChanged"
                                  Background="#0D141D"
                                  BorderThickness="0"
-                                 Foreground="{StaticResource TextBrush}">
+                                 Foreground="{StaticResource TextBrush}"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem">
                                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -667,15 +672,30 @@
                             </ListBox.ItemTemplate>
                         </ListBox>
 
-                        <StackPanel Grid.Row="2" Orientation="Horizontal">
+                        <StackPanel Grid.Row="2">
+                            <StackPanel Margin="0,0,0,14">
+                                <ProgressBar Height="10"
+                                             Minimum="0"
+                                             Maximum="100"
+                                             Value="{Binding InstallProgressValue}"
+                                             IsIndeterminate="{Binding IsInstallProgressIndeterminate}"
+                                             Visibility="{Binding IsInstallInProgress, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                <TextBlock Margin="0,8,0,0"
+                                           Text="{Binding InstallProgressText}"
+                                           Visibility="{Binding IsInstallInProgress, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                           Foreground="{StaticResource MutedTextBrush}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
                             <Button Style="{StaticResource AccentButtonStyle}"
                                     Content="{Binding InstallSelectedEngineButtonLabel}"
                                     Click="InstallSelectedEngine_Click"
-                                    IsEnabled="{Binding CanInstallSelectedEngine}"
+                                    IsEnabled="{Binding CanInstallSelectedEngineAction}"
                                     MinWidth="164" />
                             <Button Content="Close"
                                     Click="CloseInstallVersionPanel_Click"
+                                    IsEnabled="{Binding CanCloseInstallVersionPanel}"
                                     MinWidth="116" />
+                            </StackPanel>
                         </StackPanel>
                     </Grid>
                 </Border>

@@ -1,10 +1,10 @@
 {
-  "EngineInstallationsRoot": "",
-  "EnginePackageFeedRoot": "",
-  "EngineFeedIndexPath": "",
-  "EngineRoot": "",
-  "EngineBuildDir": "",
-  "EditorPath": "",
-  "ProjectsRoot": "",
-  "TemplatesRoot": ""
+    "EngineInstallationsRoot": "",
+    "EnginePackageFeedRoot": "",
+    "EngineFeedIndexPath": "https://trifido.github.io/Vulkan-Quarantine-Engine/feed/quarantine-engine/index.json",
+    "EngineRoot": "",
+    "EngineBuildDir": "",
+    "EditorPath": "",
+    "ProjectsRoot": "",
+    "TemplatesRoot": ""
 }

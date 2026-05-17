@@ -134,6 +134,7 @@ function New-Manifest {
         paths = [ordered]@{
             binaries = "bin"
             libraries = "lib"
+            editor = "editor"
             engineSource = "src"
             thirdPartyHeaders = "extern"
             fetchedHeaders = "_deps"
@@ -235,8 +236,10 @@ Copy-DirectoryContents -Source (Join-Path $projectRoot "src\QuarantineEngine\Dat
 foreach ($cfg in $configs) {
     $libTargetDir = Join-Path $packageRoot "lib\$cfg"
     $binTargetDir = Join-Path $packageRoot "bin\$cfg"
+    $editorTargetDir = Join-Path $packageRoot "editor\$cfg"
     New-Item -ItemType Directory -Path $libTargetDir -Force | Out-Null
     New-Item -ItemType Directory -Path $binTargetDir -Force | Out-Null
+    New-Item -ItemType Directory -Path $editorTargetDir -Force | Out-Null
 
     $debugSuffix = if ($cfg -eq "Debug") { "d" } else { "" }
     $assimpLibName = if ($cfg -eq "Debug") { "assimp-vc143-mtd.lib" } else { "assimp-vc143-mt.lib" }
@@ -265,6 +268,26 @@ foreach ($cfg in $configs) {
             ForEach-Object {
                 Copy-Item -LiteralPath $_.FullName -Destination $binTargetDir -Force
             }
+    }
+
+    $editorExecutable = Join-Path $buildRoot "$cfg\QuarantineEditor.exe"
+    if (-not (Test-Path -LiteralPath $editorExecutable)) {
+        throw "QuarantineEditor.exe is missing for configuration $cfg. Build the editor before packaging."
+    }
+
+    Copy-Item -LiteralPath $editorExecutable -Destination $editorTargetDir -Force
+
+    $editorRuntimePatterns = @("*.dll", "*.pdb")
+    foreach ($pattern in $editorRuntimePatterns) {
+        Get-ChildItem -Path (Join-Path $buildRoot $cfg) -Filter $pattern -File -ErrorAction SilentlyContinue |
+            ForEach-Object {
+                Copy-Item -LiteralPath $_.FullName -Destination $editorTargetDir -Force
+            }
+    }
+
+    $editorIniSource = Join-Path $projectRoot "resources\editor\imgui_default.ini"
+    if (Test-Path -LiteralPath $editorIniSource) {
+        Copy-Item -LiteralPath $editorIniSource -Destination $editorTargetDir -Force
     }
 }
 

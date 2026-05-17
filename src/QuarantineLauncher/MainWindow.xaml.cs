@@ -22,6 +22,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private EngineInstallation? _selectedInstalledEngine;
     private bool _isInstallVersionPanelOpen;
     private bool _isUninstallVersionPanelOpen;
+    private bool _isInstallInProgress;
+    private double _installProgressValue;
+    private bool _isInstallProgressIndeterminate;
+    private string _installProgressText = "Ready to install.";
+    private string _editorAvailabilityMessage = "Editor: checking availability...";
     private string _statusMessage = "Listo.";
 
     public MainWindow()
@@ -52,6 +57,70 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public string EngineInstallationsRootDisplay => $"Installed engines: {WorkspaceLocator.FindEngineInstallationsRoot() ?? "-"}";
     public bool CanInstallSelectedEngine => SelectedFeedEngine is { ManifestPath: not null } or { PackageSource: not null };
     public bool CanUninstallSelectedEngine => SelectedInstalledEngine is { IsManagedInstallation: true, IsDefault: false };
+    public bool IsInstallInProgress
+    {
+        get => _isInstallInProgress;
+        set
+        {
+            if (_isInstallInProgress == value)
+                return;
+
+            _isInstallInProgress = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(CanInstallSelectedEngineAction));
+            OnPropertyChanged(nameof(CanCloseInstallVersionPanel));
+        }
+    }
+    public bool CanInstallSelectedEngineAction => CanInstallSelectedEngine && !IsInstallInProgress;
+    public bool CanCloseInstallVersionPanel => !IsInstallInProgress;
+    public double InstallProgressValue
+    {
+        get => _installProgressValue;
+        set
+        {
+            if (Math.Abs(_installProgressValue - value) < 0.001)
+                return;
+
+            _installProgressValue = value;
+            OnPropertyChanged();
+        }
+    }
+    public bool IsInstallProgressIndeterminate
+    {
+        get => _isInstallProgressIndeterminate;
+        set
+        {
+            if (_isInstallProgressIndeterminate == value)
+                return;
+
+            _isInstallProgressIndeterminate = value;
+            OnPropertyChanged();
+        }
+    }
+    public string InstallProgressText
+    {
+        get => _installProgressText;
+        set
+        {
+            if (_installProgressText == value)
+                return;
+
+            _installProgressText = value;
+            OnPropertyChanged();
+        }
+    }
+    public string EditorAvailabilityMessage
+    {
+        get => _editorAvailabilityMessage;
+        set
+        {
+            if (_editorAvailabilityMessage == value)
+                return;
+
+            _editorAvailabilityMessage = value;
+            OnPropertyChanged();
+        }
+    }
     public string InstallSelectedEngineButtonLabel => SelectedFeedEngine?.IsInstalledInLauncher == true
         ? "Reinstall Selected"
         : "Install Selected";
@@ -117,6 +186,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _selectedFeedEngine = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(CanInstallSelectedEngine));
+            OnPropertyChanged(nameof(CanInstallSelectedEngineAction));
             OnPropertyChanged(nameof(InstallSelectedEngineButtonLabel));
         }
     }
@@ -146,6 +216,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _selectedProject = value;
             OnPropertyChanged();
             UpdateActionButtons();
+            UpdateEditorAvailability();
         }
     }
 
@@ -218,7 +289,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         OnPropertyChanged(nameof(InstalledVersionsSummary));
         OnPropertyChanged(nameof(InstallSelectedEngineButtonLabel));
         OnPropertyChanged(nameof(CanInstallSelectedEngine));
+        OnPropertyChanged(nameof(CanInstallSelectedEngineAction));
         OnPropertyChanged(nameof(CanUninstallSelectedEngine));
+        UpdateEditorAvailability();
     }
 
     private void RefreshProjects()
@@ -243,9 +316,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void UpdateActionButtons()
     {
         var hasSelection = SelectedProject is not null;
-        OpenProjectButton.IsEnabled = hasSelection;
+        var canOpen = hasSelection && _editorLaunchService.TryResolveEditorPath(SelectedProject, out _, out _);
+        OpenProjectButton.IsEnabled = canOpen;
         DeleteProjectButton.IsEnabled = hasSelection;
-        ToolbarOpenProjectButton.IsEnabled = hasSelection;
+        ToolbarOpenProjectButton.IsEnabled = canOpen;
         ToolbarDeleteProjectButton.IsEnabled = hasSelection;
     }
 
@@ -313,7 +387,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         try
         {
-            _editorLaunchService.LaunchEditor(SelectedProject.FullPath);
+            _editorLaunchService.LaunchEditor(SelectedProject);
             StatusMessage = $"Opening QuarantineEditor with '{SelectedProject.Name}'.";
         }
         catch (Exception ex)
@@ -334,7 +408,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         IsInstallVersionPanelOpen = true;
     }
 
-    private void InstallSelectedEngine_Click(object sender, RoutedEventArgs e)
+    private async void InstallSelectedEngine_Click(object sender, RoutedEventArgs e)
     {
         if (SelectedFeedEngine is not { ManifestPath: not null } && SelectedFeedEngine?.PackageSource is null)
         {
@@ -344,10 +418,27 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         var selectedEngineName = SelectedFeedEngine.DisplayName;
         var selectedFeedEngine = SelectedFeedEngine;
+        var progress = new Progress<EnginePackageInstallProgress>(update =>
+        {
+            InstallProgressText = update.Message;
+            if (update.Fraction.HasValue)
+            {
+                IsInstallProgressIndeterminate = false;
+                InstallProgressValue = update.Fraction.Value * 100.0;
+            }
+            else
+            {
+                IsInstallProgressIndeterminate = true;
+            }
+        });
 
         try
         {
-            _enginePackageImportService.InstallFromFeedPackage(selectedFeedEngine);
+            IsInstallInProgress = true;
+            InstallProgressText = "Preparing installation...";
+            IsInstallProgressIndeterminate = true;
+            InstallProgressValue = 0;
+            await _enginePackageImportService.InstallFromFeedPackageAsync(selectedFeedEngine, progress: progress);
             LoadEngineInstallations();
             IsInstallVersionPanelOpen = false;
             StatusMessage = $"Installed engine package '{selectedEngineName}'.";
@@ -366,7 +457,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 return;
             }
 
-            _enginePackageImportService.InstallFromFeedPackage(selectedFeedEngine, overwriteExisting: true);
+            IsInstallInProgress = true;
+            InstallProgressText = "Preparing installation...";
+            IsInstallProgressIndeterminate = true;
+            InstallProgressValue = 0;
+            await _enginePackageImportService.InstallFromFeedPackageAsync(selectedFeedEngine, overwriteExisting: true, progress: progress);
             LoadEngineInstallations();
             IsInstallVersionPanelOpen = false;
             StatusMessage = $"Reinstalled engine package '{selectedEngineName}'.";
@@ -374,6 +469,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         catch (Exception ex)
         {
             ShowError(ex.Message);
+        }
+        finally
+        {
+            IsInstallInProgress = false;
+            InstallProgressText = "Ready to install.";
+            IsInstallProgressIndeterminate = false;
         }
     }
 
@@ -458,6 +559,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void CloseInstallVersionPanel_Click(object sender, RoutedEventArgs e)
     {
+        if (IsInstallInProgress)
+        {
+            return;
+        }
+
         IsInstallVersionPanelOpen = false;
     }
 
@@ -490,6 +596,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             ManifestPath = installation.ManifestPath,
             PackageSource = installation.PackageSource,
             Version = installation.Version,
+            Channel = installation.Channel,
             Platform = installation.Platform,
             RootPath = installation.RootPath,
             IsInstalledPackage = installation.IsInstalledPackage,
@@ -499,6 +606,20 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             Configurations = installation.Configurations,
             EnginePaths = installation.EnginePaths
         };
+    }
+
+    private void UpdateEditorAvailability()
+    {
+        if (_editorLaunchService.TryResolveEditorPath(SelectedProject, out var editorPath, out _))
+        {
+            EditorAvailabilityMessage = $"Editor: {editorPath}";
+        }
+        else
+        {
+            EditorAvailabilityMessage = "Editor: not available. Configure EditorPath or build QuarantineEditor locally.";
+        }
+
+        UpdateActionButtons();
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)

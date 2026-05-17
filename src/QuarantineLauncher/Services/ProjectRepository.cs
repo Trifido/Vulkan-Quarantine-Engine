@@ -88,7 +88,8 @@ public sealed class ProjectRepository
             DefaultScenePath = scenePath,
             LastModifiedUtc = directoryInfo.LastWriteTimeUtc,
             EngineDisplayName = metadata?.DisplayName,
-            EngineVersion = metadata?.Version
+            EngineVersion = metadata?.Version,
+            EngineRootPath = metadata?.RootPath
         };
     }
 
@@ -200,6 +201,7 @@ public sealed class ProjectRepository
         {
             DisplayName = engineInstallation.DisplayName,
             Version = engineInstallation.Version,
+            Channel = engineInstallation.Channel,
             RootPath = engineInstallation.RootPath,
             Platform = engineInstallation.Platform
         };

@@ -1,11 +1,39 @@
 using System.IO;
 using System.Diagnostics;
+using QuarantineLauncher.Models;
 
 namespace QuarantineLauncher.Services;
 
 public sealed class EditorLaunchService
 {
-    public string ResolveEditorPath()
+    public bool TryResolveEditorPath(ProjectEntry? project, out string? editorPath, out string? errorMessage)
+    {
+        try
+        {
+            editorPath = ResolveEditorPath(project);
+            errorMessage = null;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            editorPath = null;
+            errorMessage = ex.Message;
+            return false;
+        }
+    }
+
+    public string ResolveEditorPath(ProjectEntry? project = null)
+    {
+        var packagedEditorPath = ResolvePackagedEditorPath(project);
+        if (!string.IsNullOrWhiteSpace(packagedEditorPath))
+        {
+            return packagedEditorPath;
+        }
+
+        return ResolveFallbackEditorPath();
+    }
+
+    public string ResolveFallbackEditorPath()
     {
         var configuredEditorPath = WorkspaceLocator.FindConfiguredEditorPath();
         if (!string.IsNullOrWhiteSpace(configuredEditorPath))
@@ -26,20 +54,62 @@ public sealed class EditorLaunchService
                 "Could not find QuarantineEditor.exe. Configure EditorPath in launcher.settings.json or build the editor in the development workspace.");
     }
 
-    public void LaunchEditor(string projectPath)
+    public void LaunchEditor(ProjectEntry project)
     {
-        var editorPath = ResolveEditorPath();
+        var editorPath = ResolveEditorPath(project);
+        var workingDirectory = ResolveWorkingDirectory(editorPath, project);
 
         var startInfo = new ProcessStartInfo
         {
             FileName = editorPath,
-            WorkingDirectory = Path.GetDirectoryName(editorPath)!,
+            WorkingDirectory = workingDirectory,
             UseShellExecute = true
         };
 
-        startInfo.ArgumentList.Add(projectPath);
+        startInfo.ArgumentList.Add(project.FullPath);
 
         Process.Start(startInfo);
+    }
+
+    private static string? ResolvePackagedEditorPath(ProjectEntry? project)
+    {
+        if (string.IsNullOrWhiteSpace(project?.EngineRootPath))
+        {
+            return null;
+        }
+
+        var editorRoot = Path.Combine(project.EngineRootPath, "editor");
+        if (!Directory.Exists(editorRoot))
+        {
+            return null;
+        }
+
+        foreach (var configuration in new[] { "Release", "Debug", "RelWithDebInfo", "MinSizeRel" })
+        {
+            var candidate = Path.Combine(editorRoot, configuration, "QuarantineEditor.exe");
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private static string ResolveWorkingDirectory(string editorPath, ProjectEntry? project)
+    {
+        if (!string.IsNullOrWhiteSpace(project?.EngineRootPath))
+        {
+            var packagedEditorRoot = Path.Combine(project.EngineRootPath, "editor");
+            var editorDirectory = Path.GetDirectoryName(editorPath);
+            if (!string.IsNullOrWhiteSpace(editorDirectory) &&
+                editorDirectory.StartsWith(packagedEditorRoot, StringComparison.OrdinalIgnoreCase))
+            {
+                return project.EngineRootPath;
+            }
+        }
+
+        return Path.GetDirectoryName(editorPath)!;
     }
 
     private static IReadOnlyList<string> GetDevelopmentEditorCandidates()
@@ -49,6 +119,9 @@ public sealed class EditorLaunchService
             Path.Combine(AppContext.BaseDirectory, "QuarantineEditor.exe")
         };
 
+        var enginePaths = WorkspaceLocator.ResolveEngineIntegrationPaths();
+        AddCandidatesFromBuildRoot(candidates, enginePaths.EngineBuildDir);
+
         var repositoryRoot = WorkspaceLocator.FindRepositoryRoot();
         if (!string.IsNullOrWhiteSpace(repositoryRoot))
         {
@@ -56,8 +129,29 @@ public sealed class EditorLaunchService
             candidates.Add(Path.Combine(repositoryRoot, "build", "Debug", "QuarantineEditor.exe"));
             candidates.Add(Path.Combine(repositoryRoot, "build", "RelWithDebInfo", "QuarantineEditor.exe"));
             candidates.Add(Path.Combine(repositoryRoot, "build", "MinSizeRel", "QuarantineEditor.exe"));
+            AddCandidatesFromBuildRoot(candidates, Path.Combine(repositoryRoot, "build"));
         }
 
-        return candidates;
+        return candidates
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static void AddCandidatesFromBuildRoot(ICollection<string> candidates, string? buildRoot)
+    {
+        if (string.IsNullOrWhiteSpace(buildRoot) || !Directory.Exists(buildRoot))
+        {
+            return;
+        }
+
+        candidates.Add(Path.Combine(buildRoot, "Release", "QuarantineEditor.exe"));
+        candidates.Add(Path.Combine(buildRoot, "Debug", "QuarantineEditor.exe"));
+        candidates.Add(Path.Combine(buildRoot, "RelWithDebInfo", "QuarantineEditor.exe"));
+        candidates.Add(Path.Combine(buildRoot, "MinSizeRel", "QuarantineEditor.exe"));
+
+        foreach (var candidate in Directory.EnumerateFiles(buildRoot, "QuarantineEditor.exe", SearchOption.AllDirectories))
+        {
+            candidates.Add(candidate);
+        }
     }
 }
