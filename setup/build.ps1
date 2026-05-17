@@ -182,11 +182,29 @@ else {
 }
 
 Write-Host "Running CMake configure..." -ForegroundColor Cyan
-cmake -S $projectRoot -B $buildDir `
-    -G "Visual Studio 17 2022" `
-    -A x64 `
-    -DCMAKE_CONFIGURATION_TYPES="Debug;Release" `
-    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+$cmakeArgs = @(
+    "-S", $projectRoot,
+    "-B", $buildDir,
+    "-G", "Visual Studio 17 2022",
+    "-A", "x64",
+    "-DCMAKE_CONFIGURATION_TYPES=Debug;Release",
+    "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+)
+
+if ($env:VULKAN_SDK) {
+    $vulkanIncludeDir = Join-Path $env:VULKAN_SDK "Include"
+    $vulkanLibraryPath = Join-Path $env:VULKAN_SDK "Lib\vulkan-1.lib"
+
+    if (Test-Path $vulkanIncludeDir) {
+        $cmakeArgs += "-DVulkan_INCLUDE_DIR=$vulkanIncludeDir"
+    }
+
+    if (Test-Path $vulkanLibraryPath) {
+        $cmakeArgs += "-DVulkan_LIBRARY=$vulkanLibraryPath"
+    }
+}
+
+cmake @cmakeArgs
 
 if ($LASTEXITCODE -ne 0) {
     throw "CMake configuration failed (exit code $LASTEXITCODE)."

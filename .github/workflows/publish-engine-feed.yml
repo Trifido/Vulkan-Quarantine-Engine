@@ -33,6 +33,51 @@ jobs:
         with:
           dotnet-version: 9.0.x
 
+      - name: Set up CMake
+        uses: jwlawson/actions-setup-cmake@v2
+
+      - name: Install Vulkan SDK
+        shell: pwsh
+        run: |
+          $sdkVersion = (Invoke-RestMethod 'https://vulkan.lunarg.com/sdk/latest/windows.txt').Trim()
+          if (-not $sdkVersion) {
+            throw "Could not resolve the latest Vulkan SDK version."
+          }
+
+          $installerPath = Join-Path $env:RUNNER_TEMP 'vulkan_sdk.exe'
+          Invoke-WebRequest `
+            -Uri 'https://sdk.lunarg.com/sdk/download/latest/windows/vulkan_sdk.exe?Human=true' `
+            -OutFile $installerPath
+
+          $sdkRoot = Join-Path 'C:\VulkanSDK' $sdkVersion
+          $installArgs = @(
+            "--root", $sdkRoot,
+            "--accept-licenses",
+            "--default-answer",
+            "--confirm-command",
+            "install"
+          )
+
+          $process = Start-Process -FilePath $installerPath -ArgumentList $installArgs -Wait -PassThru -NoNewWindow
+          if ($process.ExitCode -ne 0) {
+            throw "Vulkan SDK installer failed with exit code $($process.ExitCode)."
+          }
+
+          $requiredPaths = @(
+            (Join-Path $sdkRoot 'Include'),
+            (Join-Path $sdkRoot 'Lib\vulkan-1.lib'),
+            (Join-Path $sdkRoot 'Bin\glslc.exe')
+          )
+
+          $missingPaths = @($requiredPaths | Where-Object { -not (Test-Path $_) })
+          if ($missingPaths.Count -gt 0) {
+            throw "Vulkan SDK installation is incomplete. Missing:`n$($missingPaths -join "`n")"
+          }
+
+          "VULKAN_SDK=$sdkRoot" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "$sdkRoot\Bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          Write-Host "Using Vulkan SDK at $sdkRoot"
+
       - name: Compute engine version
         id: version
         shell: pwsh
