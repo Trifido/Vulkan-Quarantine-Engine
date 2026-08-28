@@ -142,7 +142,14 @@ jobs:
         shell: pwsh
         run: |
           msbuild '.\QEProjects\QEExample\QEExample.sln' /t:Build /p:Configuration=Debug /p:Platform=x64 /v:minimal
+          if ($LASTEXITCODE -ne 0) {
+            throw "QEExample Debug build failed with exit code $LASTEXITCODE."
+          }
+
           msbuild '.\QEProjects\QEExample\QEExample.sln' /t:Build /p:Configuration=Release /p:Platform=x64 /v:minimal
+          if ($LASTEXITCODE -ne 0) {
+            throw "QEExample Release build failed with exit code $LASTEXITCODE."
+          }
 
       - name: Package engine SDK
         shell: pwsh
@@ -156,8 +163,8 @@ jobs:
           $requiredPackageFiles = @(
             "$packageRoot\metadata\manifest.json",
             "$packageRoot\package.zip",
-            "$packageRoot\lib\Debug\Joltd.lib",
-            "$packageRoot\lib\Debug\ktxd.lib",
+            "$packageRoot\lib\Debug\Jolt.lib",
+            "$packageRoot\lib\Debug\ktx.lib",
             "$packageRoot\lib\Release\Jolt.lib",
             "$packageRoot\lib\Release\ktx.lib"
           )

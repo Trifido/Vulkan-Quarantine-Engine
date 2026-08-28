@@ -16,9 +16,9 @@
     <QEImguiLibraryName>imgui$(QEDebugSuffix).lib</QEImguiLibraryName>
     <QESpirvReflectLibraryName>SPIRV-Reflect$(QEDebugSuffix).lib</QESpirvReflectLibraryName>
     <QEGlfwLibraryName>glfw3$(QEDebugSuffix).lib</QEGlfwLibraryName>
-    <QEJoltLibraryName>Jolt$(QEDebugSuffix).lib</QEJoltLibraryName>
+    <QEJoltLibraryName>Jolt.lib</QEJoltLibraryName>
     <QEYamlLibraryName>yaml-cpp$(QEDebugSuffix).lib</QEYamlLibraryName>
-    <QEKtxLibraryName>ktx$(QEDebugSuffix).lib</QEKtxLibraryName>
+    <QEKtxLibraryName>ktx.lib</QEKtxLibraryName>
     <QEMeshOptimizerLibraryName>meshoptimizer$(QEDebugSuffix).lib</QEMeshOptimizerLibraryName>
     <QEAssimpLibraryName Condition="'$(Configuration)' == 'Debug'">assimp-vc143-mtd.lib</QEAssimpLibraryName>
     <QEAssimpLibraryName Condition="'$(Configuration)' != 'Debug'">assimp-vc143-mt.lib</QEAssimpLibraryName>
