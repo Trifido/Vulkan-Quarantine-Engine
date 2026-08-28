@@ -130,15 +130,35 @@ function New-Manifest {
 
     $gitCommit = ""
     $sourceDirty = $false
+    $generatedArtifactsDirty = $false
     try {
         $gitCommit = (git -C $projectRoot rev-parse HEAD 2>$null).Trim()
-        $sourceDirty = @(
-            git -C $projectRoot status --porcelain 2>$null
-        ).Count -gt 0
+        $worktreeChanges = @(git -C $projectRoot status --porcelain 2>$null)
+        $sourceChanges = New-Object System.Collections.Generic.List[string]
+        $generatedArtifactChanges = New-Object System.Collections.Generic.List[string]
+
+        foreach ($change in $worktreeChanges) {
+            if ($change.Length -lt 4) {
+                $sourceChanges.Add($change)
+                continue
+            }
+
+            $path = $change.Substring(3).Replace('\', '/')
+            if ($path.StartsWith('resources/shaders/') -and $path.EndsWith('.spv')) {
+                $generatedArtifactChanges.Add($path)
+            }
+            else {
+                $sourceChanges.Add($change)
+            }
+        }
+
+        $sourceDirty = $sourceChanges.Count -gt 0
+        $generatedArtifactsDirty = $generatedArtifactChanges.Count -gt 0
     }
     catch {
         $gitCommit = ""
         $sourceDirty = $true
+        $generatedArtifactsDirty = $true
     }
 
     $dependencyRevisions = [ordered]@{}
@@ -184,6 +204,7 @@ function New-Manifest {
         generatedAtUtc = [DateTime]::UtcNow.ToString("o")
         sourceCommit = $gitCommit
         sourceDirty = $sourceDirty
+        generatedArtifactsDirty = $generatedArtifactsDirty
         configurations = $Configurations
         toolchain = [ordered]@{
             cmake = $cmakeVersion

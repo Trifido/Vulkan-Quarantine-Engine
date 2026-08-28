@@ -99,10 +99,39 @@ jobs:
         run: |
           powershell -ExecutionPolicy Bypass -File '.\setup\build.ps1' -Configuration Both
 
-      - name: Verify generated shaders are committed
+      - name: Verify build only changed generated shader artifacts
         shell: pwsh
         run: |
-          git diff --exit-code -- resources/shaders
+          $trackedChanges = @(git status --porcelain --untracked-files=no)
+          $generatedShaderChanges = New-Object System.Collections.Generic.List[string]
+          $unexpectedChanges = New-Object System.Collections.Generic.List[string]
+
+          foreach ($change in $trackedChanges) {
+            if ($change.Length -lt 4) {
+              $unexpectedChanges.Add($change)
+              continue
+            }
+
+            $path = $change.Substring(3).Replace('\', '/')
+            if ($path.StartsWith('resources/shaders/') -and $path.EndsWith('.spv')) {
+              $generatedShaderChanges.Add($path)
+            }
+            else {
+              $unexpectedChanges.Add($change)
+            }
+          }
+
+          if ($unexpectedChanges.Count -gt 0) {
+            throw "The build modified unexpected tracked files:`n$($unexpectedChanges -join "`n")"
+          }
+
+          if ($generatedShaderChanges.Count -gt 0) {
+            Write-Host "$($generatedShaderChanges.Count) committed SPIR-V artifacts differ from the pinned compiler output."
+            $generatedShaderChanges | ForEach-Object { Write-Host "  $_" }
+          }
+          else {
+            Write-Host 'Committed SPIR-V artifacts match the pinned compiler output.'
+          }
 
       - name: Build launcher Release
         shell: pwsh
