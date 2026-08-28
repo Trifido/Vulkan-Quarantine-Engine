@@ -34,6 +34,7 @@ public:
 
     void OpenMaterial(const std::shared_ptr<QEMaterial>& material);
     bool OpenMaterialFromFile(const std::filesystem::path& materialPath);
+    void ReleasePreviewForSwapchainRecreation();
     void RebuildPreview();
     void RenderPreview(VkCommandBuffer& commandBuffer, uint32_t currentFrame);
 

@@ -40,6 +40,7 @@
 #include <MaterialManager.h>
 #include <algorithm>
 #include <filesystem>
+#include <stdexcept>
 
 #include <CullingSceneManager.h>
 #include <DebugSystem/QEDebugSystem.h>
@@ -220,8 +221,25 @@ void QEEditorApp::RecordAdditionalOverlayPass(VkCommandBuffer& commandBuffer, ui
     }
 }
 
+void QEEditorApp::OnBeforeSwapchainCleanup()
+{
+    if (viewportResources)
+        viewportResources->ReleaseForSwapchainRecreation();
+
+    if (materialEditorPanelPtr)
+        materialEditorPanelPtr->ReleasePreviewForSwapchainRecreation();
+}
+
+void QEEditorApp::OnBeforeSwapchainRendererRecreated()
+{
+    ShutdownImGuiVulkanBackend();
+}
+
 void QEEditorApp::OnSwapchainRecreated()
 {
+    if (!imguiVulkanBackendInitialized)
+        InitializeImGuiVulkanBackend();
+
     if (viewportResources)
     {
         viewportResources->Rebuild();
@@ -371,9 +389,11 @@ void QEEditorApp::InitializeImGui()
     pool_info.poolSizeCount = (uint32_t)std::size(pool_sizes);
     pool_info.pPoolSizes = pool_sizes;
 
-    vkCreateDescriptorPool(deviceModule->device, &pool_info, nullptr, &imguiPool);
+    if (vkCreateDescriptorPool(deviceModule->device, &pool_info, nullptr, &imguiPool) != VK_SUCCESS)
+        throw std::runtime_error("failed to create the ImGui descriptor pool");
 
-    ImGui::CreateContext();
+    if (ImGui::GetCurrentContext() == nullptr)
+        ImGui::CreateContext();
 
     ImGuiIO& io = ImGui::GetIO();
     if (!imguiIniPath.empty())
@@ -385,7 +405,16 @@ void QEEditorApp::InitializeImGui()
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-    ImGui_ImplGlfw_InitForVulkan(mainWindow->window, true);
+    if (!ImGui_ImplGlfw_InitForVulkan(mainWindow->window, true))
+        throw std::runtime_error("failed to initialize the ImGui GLFW backend");
+
+    InitializeImGuiVulkanBackend();
+}
+
+void QEEditorApp::InitializeImGuiVulkanBackend()
+{
+    if (imguiVulkanBackendInitialized)
+        return;
 
     ImGui_ImplVulkan_InitInfo init_info = {};
     init_info.Instance = vulkanInstance.getInstance();
@@ -395,11 +424,14 @@ void QEEditorApp::InitializeImGui()
     init_info.DescriptorPool = imguiPool;
     init_info.Subpass = 0;
     init_info.RenderPass = *renderPassModule->DefaultRenderPass;
-    init_info.MinImageCount = 3;
-    init_info.ImageCount = 3;
+    init_info.MinImageCount = std::max(2u, swapchainModule->getMinSwapChainImageCount());
+    init_info.ImageCount = std::max(init_info.MinImageCount, swapchainModule->getNumSwapChainImages());
     init_info.MSAASamples = *deviceModule->getMsaaSamples();
 
-    ImGui_ImplVulkan_Init(&init_info);
+    if (!ImGui_ImplVulkan_Init(&init_info))
+        throw std::runtime_error("failed to initialize the ImGui Vulkan backend");
+
+    imguiVulkanBackendInitialized = true;
 
     VkCommandBuffer commandBuffer = beginSingleTimeCommands(
         deviceModule->device,
@@ -416,10 +448,26 @@ void QEEditorApp::InitializeImGui()
 
 void QEEditorApp::ShutdownImGui()
 {
-    ImGui_ImplVulkan_Shutdown();
-    vkDestroyDescriptorPool(deviceModule->device, imguiPool, nullptr);
+    ShutdownImGuiVulkanBackend();
+
+    if (imguiPool != VK_NULL_HANDLE)
+    {
+        vkDestroyDescriptorPool(deviceModule->device, imguiPool, nullptr);
+        imguiPool = VK_NULL_HANDLE;
+    }
+
     ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
+    if (ImGui::GetCurrentContext() != nullptr)
+        ImGui::DestroyContext();
+}
+
+void QEEditorApp::ShutdownImGuiVulkanBackend()
+{
+    if (!imguiVulkanBackendInitialized)
+        return;
+
+    ImGui_ImplVulkan_Shutdown();
+    imguiVulkanBackendInitialized = false;
 }
 
 void QEEditorApp::CreatePanels()

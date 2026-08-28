@@ -91,9 +91,13 @@ std::array<VkFramebuffer, 6> FramebufferModule::CreateOmniShadowFramebuffer(std:
 
 void FramebufferModule::cleanup()
 {
-    for (auto framebuffer : swapChainFramebuffers) {
-        vkDestroyFramebuffer(deviceModule->device, framebuffer, nullptr);
+    for (auto framebuffer : swapChainFramebuffers)
+    {
+        if (framebuffer != VK_NULL_HANDLE)
+            vkDestroyFramebuffer(deviceModule->device, framebuffer, nullptr);
     }
+
+    swapChainFramebuffers.clear();
 }
 
 //void FramebufferModule::cleanupShadowBuffer()

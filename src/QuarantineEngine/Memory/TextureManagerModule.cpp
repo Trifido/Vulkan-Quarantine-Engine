@@ -212,15 +212,20 @@ void TextureManagerModule::cleanup()
     if (this->imageView != VK_NULL_HANDLE)
     {
         vkDestroyImageView(deviceModule->device, imageView, nullptr);
+        imageView = VK_NULL_HANDLE;
     }
 
     if (this->image != VK_NULL_HANDLE)
     {
         vkDestroyImage(deviceModule->device, image, nullptr);
+        image = VK_NULL_HANDLE;
     }
 
     if (this->deviceMemory != VK_NULL_HANDLE)
     {
         QE_FREE_MEMORY(deviceModule->device, deviceMemory, "TextureManagerModule::cleanup");
+        deviceMemory = VK_NULL_HANDLE;
     }
+
+    currentLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 }

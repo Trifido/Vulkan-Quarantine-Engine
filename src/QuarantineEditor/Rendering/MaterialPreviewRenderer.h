@@ -39,6 +39,7 @@ public:
         CommandPoolModule* commandPoolModule,
         QueueModule* queueModule);
     void Cleanup();
+    void ReleaseForSwapchainRecreation();
     void Rebuild();
 
     void SetMaterial(const std::shared_ptr<QEMaterial>& material);

@@ -147,6 +147,12 @@ void MaterialPreviewRenderer::Rebuild()
     _renderResources.Rebuild();
 }
 
+void MaterialPreviewRenderer::ReleaseForSwapchainRecreation()
+{
+    if (_initialized)
+        _renderResources.ReleaseForSwapchainRecreation();
+}
+
 void MaterialPreviewRenderer::SetMaterial(const std::shared_ptr<QEMaterial>& material)
 {
     _material = material;

@@ -122,20 +122,38 @@ VkResult SynchronizationModule::presentSwapchain(VkSwapchainKHR& swapChain, cons
 
 SynchronizationModule::SynchronizationModule()
 {
+    currentFrame = 0;
     deviceModule = DeviceModule::getInstance();
     queueModule = QueueModule::getInstance();
 }
 
 void SynchronizationModule::synchronizeWaitFences()
 {
-    vkWaitForFences(deviceModule->device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
-    vkResetFences(deviceModule->device, 1, &inFlightFences[currentFrame]);
+    if (vkWaitForFences(deviceModule->device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed waiting for the current frame fence!");
+    }
+}
+
+void SynchronizationModule::resetCurrentFrameFence()
+{
+    if (vkResetFences(deviceModule->device, 1, &inFlightFences[currentFrame]) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed resetting the current frame fence!");
+    }
 }
 
 void SynchronizationModule::synchronizeWaitComputeFences()
 {
-    vkWaitForFences(deviceModule->device, 1, &computeInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
-    vkResetFences(deviceModule->device, 1, &computeInFlightFences[currentFrame]);
+    if (vkWaitForFences(deviceModule->device, 1, &computeInFlightFences[currentFrame], VK_TRUE, UINT64_MAX) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed waiting for the current compute fence!");
+    }
+
+    if (vkResetFences(deviceModule->device, 1, &computeInFlightFences[currentFrame]) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed resetting the current compute fence!");
+    }
 }
 
 size_t SynchronizationModule::GetCurrentFrame()

@@ -55,6 +55,8 @@ protected:
 
     void OnPostInitVulkan() override;
     void OnPreCleanup() override;
+    void OnBeforeSwapchainCleanup() override;
+    void OnBeforeSwapchainRendererRecreated() override;
     void OnSwapchainRecreated() override;
     void OnBeforeSceneActivated() override;
     void OnMainViewportResized(uint32_t width, uint32_t height) override;
@@ -64,11 +66,13 @@ protected:
 private:
     void InitializeImGuiSettingsFile();
     void InitializeImGui();
+    void InitializeImGuiVulkanBackend();
     void BeginImGuiFrame();
     void DrawEditorUI();
     void EndImGuiFrame();
     void SetAdditionalSceneRenderTarget();
     void ShutdownImGui();
+    void ShutdownImGuiVulkanBackend();
 
     void CreatePanels();
     void DrawDockspace();
@@ -87,6 +91,7 @@ private:
 
 private:
     VkDescriptorPool imguiPool{};
+    bool imguiVulkanBackendInitialized = false;
     std::filesystem::path imguiIniPath;
     std::string imguiIniPathString;
     std::unique_ptr<EditorContext> editorContext;

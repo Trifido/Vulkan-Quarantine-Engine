@@ -166,20 +166,45 @@ GLFWwindow* GUIWindow::getWindow()
     return window;
 }
 
-void GUIWindow::checkMinimize()
+bool GUIWindow::WaitForUsableFramebufferSize()
 {
-    width = 0; height = 0;
     glfwGetFramebufferSize(window, &width, &height);
-    while (width == 0 || height == 0) {
-        glfwGetFramebufferSize(window, &width, &height);
+    while (width == 0 || height == 0)
+    {
+        if (glfwWindowShouldClose(window))
+            return false;
+
         glfwWaitEvents();
+        glfwGetFramebufferSize(window, &width, &height);
     }
+
+    return true;
+}
+
+bool GUIWindow::HasUsableFramebufferSize() const
+{
+    int framebufferWidth = 0;
+    int framebufferHeight = 0;
+    glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
+    return framebufferWidth > 0 && framebufferHeight > 0;
+}
+
+bool GUIWindow::ConsumeFramebufferResized()
+{
+    const bool wasResized = framebufferResized;
+    framebufferResized = false;
+    return wasResized;
 }
 
 void GUIWindow::framebufferResizeCallback(GLFWwindow* window, int width, int height)
 {
-    height = height;
-    width = width;
+    auto* guiWindow = static_cast<GUIWindow*>(glfwGetWindowUserPointer(window));
+    if (!guiWindow)
+        return;
+
+    guiWindow->width = width;
+    guiWindow->height = height;
+    guiWindow->framebufferResized = true;
 }
 
 void GUIWindow::setupImgui()

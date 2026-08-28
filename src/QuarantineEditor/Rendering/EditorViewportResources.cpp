@@ -44,6 +44,15 @@ void EditorViewportResources::Cleanup()
     queueModule = nullptr;
 }
 
+void EditorViewportResources::ReleaseForSwapchainRecreation()
+{
+    if (!deviceModule)
+        return;
+
+    UnregisterImGuiTexture();
+    CleanupImages();
+}
+
 bool EditorViewportResources::IsValid() const
 {
     return renderTarget.Valid() &&

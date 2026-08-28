@@ -21,6 +21,7 @@ public:
         CommandPoolModule* commandPoolModule,
         QueueModule* queueModule);
     void Cleanup();
+    void ReleaseForSwapchainRecreation();
 
     void Resize(uint32_t width, uint32_t height);
 

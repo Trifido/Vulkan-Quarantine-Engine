@@ -34,6 +34,7 @@ public:
     void submitComputeCommandBuffer(VkCommandBuffer& commandBuffer);
     VkResult presentSwapchain(VkSwapchainKHR& swapChain, const uint32_t& imageIdx);
     void synchronizeWaitFences();
+    void resetCurrentFrameFence();
     void synchronizeWaitComputeFences();
     static size_t GetCurrentFrame();
 };

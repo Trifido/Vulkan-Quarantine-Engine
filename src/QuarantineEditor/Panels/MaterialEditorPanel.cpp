@@ -162,6 +162,11 @@ void MaterialEditorPanel::RebuildPreview()
     _previewRenderer.Rebuild();
 }
 
+void MaterialEditorPanel::ReleasePreviewForSwapchainRecreation()
+{
+    _previewRenderer.ReleaseForSwapchainRecreation();
+}
+
 void MaterialEditorPanel::RenderPreview(VkCommandBuffer& commandBuffer, uint32_t currentFrame)
 {
     if (!editorContext || !editorContext->ShowMaterialEditor)

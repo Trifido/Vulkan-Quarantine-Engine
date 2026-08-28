@@ -78,11 +78,26 @@ void CommandPoolModule::recreateCommandBuffers()
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.commandPool = this->commandPool;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
+    allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 
-    if (vkAllocateCommandBuffers(deviceModule->device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
+    if (vkAllocateCommandBuffers(deviceModule->device, &allocInfo, commandBuffers.data()) != VK_SUCCESS)
+    {
+        commandBuffers.clear();
         throw std::runtime_error("failed to allocate command buffers!");
     }
+}
+
+void CommandPoolModule::freeGraphicsCommandBuffers()
+{
+    if (commandPool == VK_NULL_HANDLE || commandBuffers.empty())
+        return;
+
+    vkFreeCommandBuffers(
+        deviceModule->device,
+        commandPool,
+        static_cast<uint32_t>(commandBuffers.size()),
+        commandBuffers.data());
+    commandBuffers.clear();
 }
 
 void CommandPoolModule::setCustomRenderPass(
@@ -605,8 +620,20 @@ void CommandPoolModule::recordComputeCommandBuffer(VkCommandBuffer commandBuffer
 
 void CommandPoolModule::cleanup()
 {
-    vkDestroyCommandPool(deviceModule->device, computeCommandPool, nullptr);
-    vkDestroyCommandPool(deviceModule->device, commandPool, nullptr);
+    commandBuffers.clear();
+    computeCommandBuffers.clear();
+
+    if (computeCommandPool != VK_NULL_HANDLE)
+    {
+        vkDestroyCommandPool(deviceModule->device, computeCommandPool, nullptr);
+        computeCommandPool = VK_NULL_HANDLE;
+    }
+
+    if (commandPool != VK_NULL_HANDLE)
+    {
+        vkDestroyCommandPool(deviceModule->device, commandPool, nullptr);
+        commandPool = VK_NULL_HANDLE;
+    }
 }
 
 void CommandPoolModule::CleanLastResources()

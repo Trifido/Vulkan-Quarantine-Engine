@@ -22,7 +22,8 @@ void SwapChainModule::createSwapChain(VkSurfaceKHR& surface, GLFWwindow* window)
     VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
     VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities, window);
 
-    numSwapChainImages = swapChainSupport.capabilities.minImageCount + 1;
+    minSwapChainImageCount = swapChainSupport.capabilities.minImageCount;
+    numSwapChainImages = minSwapChainImageCount + 1;
     if (swapChainSupport.capabilities.maxImageCount > 0 && numSwapChainImages > swapChainSupport.capabilities.maxImageCount) {
         numSwapChainImages = swapChainSupport.capabilities.maxImageCount;
     }
@@ -80,11 +81,23 @@ void SwapChainModule::createSwapChain(VkSurfaceKHR& surface, GLFWwindow* window)
 
 void SwapChainModule::cleanup()
 {
-    for (auto imageView : swapChainImageViews) {
-        vkDestroyImageView(deviceModule->device, imageView, nullptr);
+    for (auto imageView : swapChainImageViews)
+    {
+        if (imageView != VK_NULL_HANDLE)
+            vkDestroyImageView(deviceModule->device, imageView, nullptr);
+    }
+    swapChainImageViews.clear();
+    swapChainImages.clear();
+
+    if (swapChain != VK_NULL_HANDLE)
+    {
+        vkDestroySwapchainKHR(deviceModule->device, swapChain, nullptr);
+        swapChain = VK_NULL_HANDLE;
     }
 
-    vkDestroySwapchainKHR(deviceModule->device, swapChain, nullptr);
+    numSwapChainImages = 0;
+    minSwapChainImageCount = 0;
+    currentImage = 0;
 }
 
 VkSurfaceFormatKHR SwapChainModule::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)

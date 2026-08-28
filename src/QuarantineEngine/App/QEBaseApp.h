@@ -78,6 +78,8 @@ protected:
     virtual void ConfigureEngineBindings() {}
     virtual void OnPostInitVulkan() {}
     virtual void OnPreCleanup() {}
+    virtual void OnBeforeSwapchainCleanup() {}
+    virtual void OnBeforeSwapchainRendererRecreated() {}
     virtual void OnSwapchainRecreated() {}
     virtual void OnBeforeSceneActivated() {}
     virtual void OnMainViewportResized(uint32_t width, uint32_t height);
@@ -96,9 +98,8 @@ private:
     void computeFrame(uint32_t currentFrame);
     void drawFrame(uint32_t currentFrame);
     void cleanUp();
-    void cleanUpSwapchain();
+    void cleanUpSwapchain(bool destroyRenderResources = true);
     void cleanManagers();
-    void resizeSwapchain(VkResult result, ERROR_RESIZE errorResize);
     void recreateSwapchain();
 
 protected:

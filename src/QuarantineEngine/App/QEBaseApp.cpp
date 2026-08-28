@@ -333,7 +333,6 @@ void QEBaseApp::mainLoop()
         // UPDATE DEBUG BUFFERS
         this->debugSystem->UpdateGraphicBuffers();
 
-        this->computeFrame(currentFrame);
         this->drawFrame(currentFrame);
     }
 
@@ -406,19 +405,21 @@ void QEBaseApp::cleanUp()
     this->mainWindow = nullptr;
 }
 
-void QEBaseApp::cleanUpSwapchain()
+void QEBaseApp::cleanUpSwapchain(bool destroyRenderResources)
 {
     antialiasingModule->cleanup();
     depthBufferModule->cleanup();
     framebufferModule.cleanup();
 
-    vkFreeCommandBuffers(deviceModule->device, commandPoolModule->getCommandPool(), commandPoolModule->getNumCommandBuffers(), commandPoolModule->getCommandBuffers().data());
+    commandPoolModule->freeGraphicsCommandBuffers();
 
-    renderPassModule->cleanup();
-
-    //Limpiamos los VKPipelines, VkPipelineLayouts y shader del material
-    graphicsPipelineManager->CleanGraphicsPipeline();
-    shadowPipelineManager->CleanShadowPipelines();
+    if (destroyRenderResources)
+    {
+        // Pipelines must be destroyed before the render passes they use.
+        graphicsPipelineManager->CleanGraphicsPipeline();
+        shadowPipelineManager->CleanShadowPipelines();
+        renderPassModule->cleanup();
+    }
 
     swapchainModule->cleanup();
 }
@@ -528,6 +529,12 @@ void QEBaseApp::drawFrame(uint32_t currentFrame)
 {
     synchronizationModule.synchronizeWaitFences();
 
+    if (!mainWindow->HasUsableFramebufferSize())
+    {
+        recreateSwapchain();
+        return;
+    }
+
     VkResult result = vkAcquireNextImageKHR(
         deviceModule->device,
         swapchainModule->getSwapchain(),
@@ -536,7 +543,23 @@ void QEBaseApp::drawFrame(uint32_t currentFrame)
         VK_NULL_HANDLE,
         &swapchainModule->currentImage);
 
-    resizeSwapchain(result, ERROR_RESIZE::SWAPCHAIN_ERROR);
+    if (result == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        recreateSwapchain();
+        return;
+    }
+
+    if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+    {
+        throw std::runtime_error("failed to acquire swap chain image!");
+    }
+
+    const bool acquiredSuboptimalSwapchain = result == VK_SUBOPTIMAL_KHR;
+
+    // Compute submission must happen only after a swapchain image was acquired.
+    // Otherwise its binary semaphore could remain signaled without a graphics
+    // submission consuming it.
+    this->computeFrame(currentFrame);
 
     this->cameraContext->UpdateActiveCameraGPUData(currentFrame);
     this->materialManager->UpdateUniforms();
@@ -553,6 +576,9 @@ void QEBaseApp::drawFrame(uint32_t currentFrame)
             RecordAdditionalOverlayPass(commandBuffer, currentFrame);
         });
 
+    // Reset only when this frame is guaranteed to submit work. If acquisition
+    // returned OUT_OF_DATE, the fence remains signaled for the next frame.
+    synchronizationModule.resetCurrentFrameFence();
     synchronizationModule.submitCommandBuffer(
         commandPoolModule->getCommandBuffer(currentFrame),
         this->isRender);
@@ -561,45 +587,49 @@ void QEBaseApp::drawFrame(uint32_t currentFrame)
         swapchainModule->getSwapchain(),
         swapchainModule->currentImage);
 
-    resizeSwapchain(result, ERROR_RESIZE::IMAGE_ERROR);
     this->isRender = true;
-}
 
-void QEBaseApp::resizeSwapchain(VkResult result, ERROR_RESIZE errorResize)
-{
-    if (errorResize == ERROR_RESIZE::SWAPCHAIN_ERROR)
+    if (result != VK_SUCCESS &&
+        result != VK_ERROR_OUT_OF_DATE_KHR &&
+        result != VK_SUBOPTIMAL_KHR)
     {
-        if (result == VK_ERROR_OUT_OF_DATE_KHR)
-        {
-            recreateSwapchain();
-            return;
-        }
-        else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
-        {
-            throw std::runtime_error("failed to acquire swap chain image!");
-        }
+        throw std::runtime_error("failed to present swap chain image!");
     }
-    else
+
+    const bool framebufferResized = mainWindow->ConsumeFramebufferResized();
+    if (result == VK_ERROR_OUT_OF_DATE_KHR ||
+        result == VK_SUBOPTIMAL_KHR ||
+        acquiredSuboptimalSwapchain ||
+        framebufferResized)
     {
-        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
-        {
-            recreateSwapchain();
-        }
-        else if (result != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to present swap chain image!");
-        }
+        recreateSwapchain();
     }
 }
 
 void QEBaseApp::recreateSwapchain()
 {
-    mainWindow->checkMinimize();
+    if (!mainWindow->WaitForUsableFramebufferSize())
+        return;
 
     vkDeviceWaitIdle(deviceModule->device);
 
-    cleanUpSwapchain();
+    const VkFormat previousFormat = swapchainModule->swapChainImageFormat;
+    const uint32_t previousMinImageCount = swapchainModule->getMinSwapChainImageCount();
+    const uint32_t previousImageCount = swapchainModule->getNumSwapChainImages();
+
+    OnBeforeSwapchainCleanup();
+    cleanUpSwapchain(false);
     swapchainModule->createSwapChain(windowSurface.getSurface(), mainWindow->getWindow());
+
+    const bool renderPassCompatibilityChanged =
+        previousFormat != swapchainModule->swapChainImageFormat;
+    const bool rendererConfigurationChanged =
+        renderPassCompatibilityChanged ||
+        previousMinImageCount != swapchainModule->getMinSwapChainImageCount() ||
+        previousImageCount != swapchainModule->getNumSwapChainImages();
+
+    if (rendererConfigurationChanged)
+        OnBeforeSwapchainRendererRecreated();
 
     OnMainViewportResized(
         swapchainModule->swapChainExtent.width,
@@ -610,27 +640,35 @@ void QEBaseApp::recreateSwapchain()
     antialiasingModule->createColorResources();
     depthBufferModule->createDepthResources(swapchainModule->swapChainExtent, commandPoolModule->getCommandPool());
 
-    renderPassModule->CreateRenderPass(
-        swapchainModule->swapChainImageFormat,
-        depthBufferModule->findDepthFormat(),
-        *antialiasingModule->msaaSamples);
+    if (renderPassCompatibilityChanged)
+    {
+        graphicsPipelineManager->CleanGraphicsPipeline();
+        shadowPipelineManager->CleanShadowPipelines();
+        renderPassModule->cleanup();
 
-    renderPassModule->CreateDirShadowRenderPass(CSMResources::GetSupportedShadowFormat(deviceModule));
-    renderPassModule->CreateOmniShadowRenderPass(
-        OmniShadowResources::GetSupportedColorFormat(deviceModule),
-        OmniShadowResources::GetSupportedDepthFormat(deviceModule));
-    renderPassModule->CreateViewportRenderPass(
-        swapchainModule->swapChainImageFormat,
-        depthBufferModule->findDepthFormat(),
-        *antialiasingModule->msaaSamples);
+        renderPassModule->CreateRenderPass(
+            swapchainModule->swapChainImageFormat,
+            depthBufferModule->findDepthFormat(),
+            *antialiasingModule->msaaSamples);
 
-    graphicsPipelineManager->RegisterDefaultRenderPass(renderPassModule->DefaultRenderPass);
-    shaderManager->RecreateShaderGraphicsPipelines();
+        renderPassModule->CreateDirShadowRenderPass(CSMResources::GetSupportedShadowFormat(deviceModule));
+        renderPassModule->CreateOmniShadowRenderPass(
+            OmniShadowResources::GetSupportedColorFormat(deviceModule),
+            OmniShadowResources::GetSupportedDepthFormat(deviceModule));
+        renderPassModule->CreateViewportRenderPass(
+            swapchainModule->swapChainImageFormat,
+            depthBufferModule->findDepthFormat(),
+            *antialiasingModule->msaaSamples);
+
+        graphicsPipelineManager->RegisterDefaultRenderPass(renderPassModule->DefaultRenderPass);
+        shaderManager->RecreateShaderGraphicsPipelines();
+    }
 
     framebufferModule.createFramebuffer(renderPassModule->DefaultRenderPass);
 
     commandPoolModule->recreateCommandBuffers();
 
     OnSwapchainRecreated();
+    mainWindow->ConsumeFramebufferResized();
 }
 

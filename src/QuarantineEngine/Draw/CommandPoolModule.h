@@ -31,8 +31,8 @@ private:
     AtmosphereSystem*               atmosphereSystem;
     QEDebugSystem*                  debugSystem;
 
-    VkCommandPool                   commandPool;
-    VkCommandPool                   computeCommandPool;
+    VkCommandPool                   commandPool{ VK_NULL_HANDLE };
+    VkCommandPool                   computeCommandPool{ VK_NULL_HANDLE };
     std::vector<VkCommandBuffer>    commandBuffers;
     std::vector<VkCommandBuffer>    computeCommandBuffers;
 
@@ -62,6 +62,7 @@ public:
 
     void createCommandPool(VkSurfaceKHR& surface);
     void createCommandBuffers();
+    void freeGraphicsCommandBuffers();
     void recreateCommandBuffers();
     void Render(
         FramebufferModule* framebufferModule,

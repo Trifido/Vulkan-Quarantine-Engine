@@ -20,17 +20,18 @@ public:
     std::vector<VkImage> swapChainImages;
     std::vector<VkImageView> swapChainImageViews;
 
-    VkFormat swapChainImageFormat;
-    VkExtent2D swapChainExtent;
+    VkFormat swapChainImageFormat{ VK_FORMAT_UNDEFINED };
+    VkExtent2D swapChainExtent{};
     std::shared_ptr<UniformBufferObject> screenData = nullptr;
     uint32_t  currentImage = 0;
 
     const uint32_t TILE_SIZE = 8;
 
 private:
-    DeviceModule* deviceModule;
-    VkSwapchainKHR swapChain;
-    uint32_t numSwapChainImages;
+    DeviceModule* deviceModule{};
+    VkSwapchainKHR swapChain{ VK_NULL_HANDLE };
+    uint32_t minSwapChainImageCount{};
+    uint32_t numSwapChainImages{};
     ScreenDataUniform screenDataValues{};
     std::vector<bool> screenDataDirty;
     float currentTileSize;
@@ -41,6 +42,7 @@ public:
     void createSwapChain(VkSurfaceKHR& surface, GLFWwindow* window);
     void cleanup();
     uint32_t getNumSwapChainImages() { return numSwapChainImages; }
+    uint32_t getMinSwapChainImageCount() const { return minSwapChainImageCount; }
     VkSwapchainKHR &getSwapchain() { return swapChain; }
     void InitializeScreenDataResources();
     void CleanScreenDataResources();

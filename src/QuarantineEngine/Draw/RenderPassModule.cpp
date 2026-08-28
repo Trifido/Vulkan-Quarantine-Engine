@@ -18,10 +18,19 @@ RenderPassModule::~RenderPassModule()
 
 void RenderPassModule::cleanup()
 {
-    vkDestroyRenderPass(device_ptr->device, *DefaultRenderPass, nullptr);
-    vkDestroyRenderPass(device_ptr->device, *DirShadowMappingRenderPass, nullptr);
-    vkDestroyRenderPass(device_ptr->device, *OmniShadowMappingRenderPass, nullptr);
-    vkDestroyRenderPass(device_ptr->device, *ViewportRenderPass, nullptr);
+    const auto destroyRenderPass = [this](const std::shared_ptr<VkRenderPass>& renderPass)
+        {
+            if (renderPass && *renderPass != VK_NULL_HANDLE)
+            {
+                vkDestroyRenderPass(device_ptr->device, *renderPass, nullptr);
+                *renderPass = VK_NULL_HANDLE;
+            }
+        };
+
+    destroyRenderPass(DefaultRenderPass);
+    destroyRenderPass(DirShadowMappingRenderPass);
+    destroyRenderPass(OmniShadowMappingRenderPass);
+    destroyRenderPass(ViewportRenderPass);
 }
 
 void RenderPassModule::CreateRenderPass(VkFormat swapchainFormat, VkFormat depthFormat, VkSampleCountFlagBits msaaSamples)

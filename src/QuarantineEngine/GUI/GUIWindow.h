@@ -38,6 +38,7 @@ private:
     std::string title;
     bool isRunning;
     GLFWmonitor* monitor;
+    bool framebufferResized = false;
 
 public:
     GLFWwindow* window;
@@ -50,7 +51,9 @@ public:
     void renderGUIWindow();
     void renderMainWindow();
     GLFWwindow* getWindow();
-    void checkMinimize();
+    bool WaitForUsableFramebufferSize();
+    bool HasUsableFramebufferSize() const;
+    bool ConsumeFramebufferResized();
     void setupNewFrame();
     void setupImgui();
 private:
