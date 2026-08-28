@@ -334,6 +334,7 @@ public sealed class ProjectRepository
             $@"{engineRoot}\src\QuarantineEngine\Utilities\Particles",
             $@"{engineRoot}\src\QuarantineEngine\Utilities\Physics",
             $@"{engineRoot}\extern",
+            $@"{engineBuildDir}\extern\assimp\include",
             $@"{engineRoot}\extern\assimp\include",
             $@"{engineRoot}\extern\imgui",
             $@"{engineRoot}\extern\imgui\backends",

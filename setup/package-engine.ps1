@@ -307,6 +307,17 @@ Ensure-CleanDirectory -PathToCreate $packageRoot
 
 Copy-DirectoryContents -Source (Join-Path $projectRoot "src\QuarantineEngine") -Destination (Join-Path $packageRoot "src\QuarantineEngine")
 Copy-DirectoryContents -Source (Join-Path $projectRoot "extern\assimp\include") -Destination (Join-Path $packageRoot "extern\assimp\include")
+
+$assimpGeneratedHeaders = @(
+    (Join-Path $buildRoot "extern\assimp\include\assimp\config.h"),
+    (Join-Path $buildRoot "extern\assimp\include\assimp\revision.h")
+)
+Require-Files -Label "Generated Assimp headers" -Paths $assimpGeneratedHeaders
+$assimpPackageIncludeDir = Join-Path $packageRoot "extern\assimp\include\assimp"
+foreach ($generatedHeader in $assimpGeneratedHeaders) {
+    Copy-Item -LiteralPath $generatedHeader -Destination $assimpPackageIncludeDir -Force
+}
+
 Copy-DirectoryContents -Source (Join-Path $projectRoot "extern\imgui") -Destination (Join-Path $packageRoot "extern\imgui")
 Copy-DirectoryContents -Source (Join-Path $projectRoot "extern\jolt") -Destination (Join-Path $packageRoot "extern\jolt")
 Copy-DirectoryContents -Source (Join-Path $projectRoot "extern\meshoptimizer\src") -Destination (Join-Path $packageRoot "extern\meshoptimizer\src")
