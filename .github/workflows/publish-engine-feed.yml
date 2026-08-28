@@ -25,7 +25,7 @@ env:
 
 jobs:
   package-engine:
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     outputs:
       engine_version: ${{ steps.version.outputs.engine_version }}
@@ -45,6 +45,11 @@ jobs:
         uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: ${{ env.QE_CMAKE_VERSION }}
+
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@v2
+        with:
+          vs-version: '[17.0,18.0)'
 
       - name: Install Vulkan SDK
         shell: pwsh

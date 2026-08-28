@@ -23,7 +23,7 @@ env:
 jobs:
   windows-build:
     name: Windows build and package
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
       - name: Checkout repository
@@ -44,6 +44,8 @@ jobs:
 
       - name: Set up MSBuild
         uses: microsoft/setup-msbuild@v2
+        with:
+          vs-version: '[17.0,18.0)'
 
       - name: Install pinned Vulkan SDK
         shell: pwsh
