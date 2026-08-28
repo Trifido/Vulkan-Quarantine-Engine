@@ -93,9 +93,11 @@ public:
     std::vector<std::shared_ptr<QEImportJob>> GetJobsSnapshot() const;
     bool HasActiveJobs() const;
     int ConsumeFinishedSuccessfulImports();
+    void Shutdown();
 
 private:
     void WorkerLoop();
+    bool TryQueueJob(const std::shared_ptr<QEImportJob>& job);
 
     QEAssetImportManager(const QEAssetImportManager&) = delete;
     QEAssetImportManager& operator=(const QEAssetImportManager&) = delete;

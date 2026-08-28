@@ -3,7 +3,6 @@
 #ifndef QESingleton_H
 #define QESingleton_H
 
-#include <iostream>
 #include <memory>
 #include <mutex>
 
@@ -11,42 +10,42 @@ template <typename T>
 class QESingleton
 {
 public:
-    // Prohibimos la copia y asignación
+    // Singleton instances cannot be copied or assigned.
     QESingleton(const QESingleton&) = delete;
     QESingleton& operator=(const QESingleton&) = delete;
 
-    static T* getInstance() {
-        std::call_once(initFlag, []() {
+    static T* getInstance()
+    {
+        std::lock_guard<std::mutex> lock(instanceMutex);
+        if (!instance)
+        {
             instance.reset(new T());
-            });
+        }
+
         return instance.get();
     }
 
     static void ResetInstance()
     {
-        if (instance != NULL)
+        std::unique_ptr<T> instanceToDestroy;
         {
-            instance.reset();
+            std::lock_guard<std::mutex> lock(instanceMutex);
+            instanceToDestroy = std::move(instance);
         }
+
+        // Destroy outside the mutex in case T accesses another singleton from
+        // its destructor.
+        instanceToDestroy.reset();
     }
 
 protected:
-    QESingleton() = default; // Constructor protegido para evitar instanciación directa
+    QESingleton() = default;
     virtual ~QESingleton() = default; // Destructor virtual
 
 private:
-    static std::unique_ptr<T> instance;
-    static std::once_flag initFlag;
+    inline static std::mutex instanceMutex{};
+    inline static std::unique_ptr<T> instance{};
 };
-
-// Definición de los miembros estáticos
-template <typename T>
-std::unique_ptr<T> QESingleton<T>::instance = nullptr;
-
-template <typename T>
-std::once_flag QESingleton<T>::initFlag;
-
-
 
 namespace QE
 {

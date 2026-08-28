@@ -33,6 +33,7 @@
 #include "Rendering/EditorViewportResources.h"
 #include "Runtime/QEEditorRuntimeBridge.h"
 #include <QEProjectManager.h>
+#include <QEAssetImportManager.h>
 #include <QERuntimeMode.h>
 #include <QEMeshRenderer.h>
 #include <Material.h>
@@ -127,6 +128,9 @@ void QEEditorApp::OnInitialize()
 
 void QEEditorApp::OnShutdown()
 {
+    // No worker may outlive the services and resources used by imports.
+    QEAssetImportManager::Get().Shutdown();
+
     if (editorConsoleSink)
     {
         QELogger::Get().RemoveSink(editorConsoleSink.get());

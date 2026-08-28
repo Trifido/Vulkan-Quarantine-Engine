@@ -2,6 +2,7 @@
 #include <QEProjectManager.h>
 #include <QEProjectModuleLoader.h>
 #include <Logging/QELogMacros.h>
+#include <exception>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -66,13 +67,27 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    QEEditorApp app;
-    app.Run(scene);
+    int exitCode = 0;
+    try
+    {
+        QEEditorApp app;
+        app.Run(scene);
+    }
+    catch (const std::exception& e)
+    {
+        QE_LOG_ERROR_CAT_F("Execution", "Unhandled editor error: {}", e.what());
+        exitCode = -1;
+    }
+    catch (...)
+    {
+        QE_LOG_ERROR_CAT("Execution", "Unhandled unknown editor error");
+        exitCode = -1;
+    }
 
     if (projectModuleLoaded)
     {
         QE::QEProjectModuleLoader::Unload();
     }
 
-    return 0;
+    return exitCode;
 }

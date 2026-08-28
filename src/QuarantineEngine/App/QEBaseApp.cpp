@@ -15,6 +15,8 @@
 #include <OmniShadowResources.h>
 #include <QERuntimeMode.h>
 #include <CullingSceneManager.h>
+#include <exception>
+#include <stdexcept>
 
 QEBaseApp::QEBaseApp()
 {
@@ -37,18 +39,52 @@ void QEBaseApp::Run(QEScene scene)
     InitWindow();
     initVulkan();
 
-    OnInitialize();
+    std::exception_ptr failure;
 
-    mainLoop();
+    try
+    {
+        OnInitialize();
+        mainLoop();
+    }
+    catch (...)
+    {
+        failure = std::current_exception();
+    }
 
-    OnShutdown();
-    cleanUp();
+    try
+    {
+        OnShutdown();
+    }
+    catch (...)
+    {
+        if (!failure)
+            failure = std::current_exception();
+    }
+
+    try
+    {
+        cleanUp();
+    }
+    catch (...)
+    {
+        if (!failure)
+            failure = std::current_exception();
+    }
+
+    if (failure)
+        std::rethrow_exception(failure);
 }
 
 void QEBaseApp::InitWindow()
 {
     this->mainWindow = GUIWindow::getInstance();
-    this->mainWindow->init();
+    if (!this->mainWindow->init())
+    {
+        GUIWindow::ResetInstance();
+        this->mainWindow = nullptr;
+        glfwTerminate();
+        throw std::runtime_error("Failed to initialize the application window");
+    }
 }
 
 void QEBaseApp::initVulkan()
@@ -306,6 +342,11 @@ void QEBaseApp::mainLoop()
 
 void QEBaseApp::cleanUp()
 {
+    if (this->deviceModule && this->deviceModule->device != VK_NULL_HANDLE)
+    {
+        vkDeviceWaitIdle(this->deviceModule->device);
+    }
+
     OnPreCleanup();
 
     this->shaderManager->Clean();
@@ -336,7 +377,15 @@ void QEBaseApp::cleanUp()
     this->synchronizationModule.cleanup();
     this->commandPoolModule->cleanup();
 
+    // Destroy all services while their DeviceModule dependency is still alive.
+    this->cleanManagers();
+
     this->deviceModule->cleanup();
+    DeviceModule::ResetInstance();
+    this->deviceModule = nullptr;
+
+    QueueModule::ResetInstance();
+    this->queueModule = nullptr;
 
     if (enableValidationLayers)
     {
@@ -346,11 +395,15 @@ void QEBaseApp::cleanUp()
     this->windowSurface.cleanUp(vulkanInstance.getInstance());
     this->vulkanInstance.destroyInstance();
 
-    glfwDestroyWindow(mainWindow->getWindow());
+    if (mainWindow && mainWindow->getWindow())
+    {
+        glfwDestroyWindow(mainWindow->getWindow());
+        mainWindow->window = nullptr;
+    }
 
     glfwTerminate();
-
-    this->cleanManagers();
+    GUIWindow::ResetInstance();
+    this->mainWindow = nullptr;
 }
 
 void QEBaseApp::cleanUpSwapchain()
@@ -372,82 +425,85 @@ void QEBaseApp::cleanUpSwapchain()
 
 void QEBaseApp::cleanManagers()
 {
-    //delete this->renderPassModule;
-    this->renderPassModule = nullptr;
-
-    this->graphicsPipelineManager->ResetInstance();
+    GraphicsPipelineManager::ResetInstance();
     this->graphicsPipelineManager = nullptr;
 
-    this->shadowPipelineManager->ResetInstance();
+    this->shadowPipelineManager->CleanLastResources();
+    ShadowPipelineManager::ResetInstance();
     this->shadowPipelineManager = nullptr;
 
-    this->computePipelineManager->ResetInstance();
+    ComputePipelineManager::ResetInstance();
     this->computePipelineManager = nullptr;
 
+    RenderPassModule::ResetInstance();
+    this->renderPassModule = nullptr;
+
     this->atmosphereSystem->CleanLastResources();
-    this->atmosphereSystem->ResetInstance();
+    AtmosphereSystem::ResetInstance();
     this->atmosphereSystem = nullptr;
 
     this->gameObjectManager->CleanLastResources();
-    this->gameObjectManager->ResetInstance();
+    GameObjectManager::ResetInstance();
     this->gameObjectManager = nullptr;
 
     this->particleSystemManager->CleanLastResources();
-    this->particleSystemManager->ResetInstance();
+    ParticleSystemManager::ResetInstance();
     this->particleSystemManager = nullptr;
 
     this->textureManager->CleanLastResources();
-    this->textureManager->ResetInstance();
+    TextureManager::ResetInstance();
     this->textureManager = nullptr;
 
     this->keyboard_ptr->CleanLastResources();
-    this->keyboard_ptr->ResetInstance();
+    KeyboardController::ResetInstance();
     this->keyboard_ptr = nullptr;
 
     this->materialManager->CleanLastResources();
-    this->materialManager->ResetInstance();
+    MaterialManager::ResetInstance();
     this->materialManager = nullptr;
 
     this->shaderManager->CleanLastResources();
-    this->shaderManager->ResetInstance();
+    ShaderManager::ResetInstance();
     this->shaderManager = nullptr;
 
     this->lightManager->CleanLastResources();
-    this->lightManager->ResetInstance();
+    LightManager::ResetInstance();
     this->lightManager = nullptr;
 
     this->cameraContext->FreeCameraResources();
+    this->cameraContext->ClearSceneCameras();
+    QECameraContext::ResetInstance();
+    this->cameraContext = nullptr;
+
+    QEDebugSystem::ResetInstance();
+    this->debugSystem = nullptr;
+
+    CullingSceneManager::ResetInstance();
 
     this->antialiasingModule->CleanLastResources();
-    this->antialiasingModule->ResetInstance();
+    AntiAliasingModule::ResetInstance();
     this->antialiasingModule = nullptr;
 
     this->depthBufferModule->CleanLastResources();
-    this->depthBufferModule->ResetInstance();
+    DepthBufferModule::ResetInstance();
     this->depthBufferModule = nullptr;
 
-    this->shadowPipelineManager->ResetInstance();
-    this->shadowPipelineManager = nullptr;
-
-    this->physicsModule->ResetInstance();
+    PhysicsModule::ResetInstance();
     this->physicsModule = nullptr;
 
     this->computeNodeManager->CleanLastResources();
-    this->computeNodeManager->ResetInstance();
+    ComputeNodeManager::ResetInstance();
     this->computeNodeManager = nullptr;
 
     this->commandPoolModule->CleanLastResources();
-    this->commandPoolModule->ResetInstance();
+    CommandPoolModule::ResetInstance();
     this->commandPoolModule = nullptr;
 
-    this->swapchainModule->ResetInstance();
+    SwapChainModule::ResetInstance();
     this->swapchainModule = nullptr;
 
-    this->queueModule->ResetInstance();
-    this->queueModule = nullptr;
-
-    this->deviceModule->ResetInstance();
-    this->deviceModule = nullptr;
+    Timer::ResetInstance();
+    QERuntimeMode::ResetInstance();
 }
 
 void QEBaseApp::computeFrame(uint32_t currentFrame)

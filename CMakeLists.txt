@@ -286,6 +286,23 @@ target_link_libraries(QuarantineEditor
 
 target_compile_definitions(QuarantineEditor PRIVATE GLM_ENABLE_EXPERIMENTAL)
 
+option(QE_BUILD_TESTS "Build Quarantine Engine lifecycle tests" ON)
+if (QE_BUILD_TESTS)
+  enable_testing()
+
+  add_executable(QESingletonLifecycleTests
+    tests/QESingletonLifecycleTests.cpp
+  )
+  target_include_directories(QESingletonLifecycleTests PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/QuarantineEngine/Templates
+  )
+
+  add_test(
+    NAME QESingletonLifecycle
+    COMMAND QESingletonLifecycleTests
+  )
+endif()
+
 if (MSVC)
   target_link_options(QuarantineEditor PRIVATE
     $<$<NOT:$<CONFIG:Debug>>:/ENTRY:mainCRTStartup>
@@ -310,6 +327,7 @@ endfunction()
 
 assign_vs_folder("Engine" QuarantineEngine)
 assign_vs_folder("Editor" QuarantineEditor)
+assign_vs_folder("Tests" QESingletonLifecycleTests)
 assign_vs_folder("Dependencies"
   Jolt
   SPIRV-Reflect

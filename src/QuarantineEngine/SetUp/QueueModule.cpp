@@ -2,9 +2,11 @@
 #include <iostream>
 
 QueueModule* QueueModule::instance = nullptr;
+std::mutex QueueModule::instanceMutex;
 
 QueueModule* QueueModule::getInstance()
 {
+    std::lock_guard<std::mutex> lock(instanceMutex);
     if (instance == NULL)
         instance = new QueueModule();
 
@@ -13,6 +15,12 @@ QueueModule* QueueModule::getInstance()
 
 void QueueModule::ResetInstance()
 {
-	delete instance;
-	instance = nullptr;
+    QueueModule* instanceToDestroy = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(instanceMutex);
+        instanceToDestroy = instance;
+        instance = nullptr;
+    }
+
+    delete instanceToDestroy;
 }

@@ -21,12 +21,12 @@ private:
     VkPhysicalDeviceDescriptorIndexingFeatures indexing_features{};
     VkPhysicalDeviceMemoryProperties    memoryProperties;
     QueueModule                         queueModule;
-    bool                                bindless_supported;
-    bool                                meshShader_supported;
+    bool                                bindless_supported{};
+    bool                                meshShader_supported{};
 
 public:
-    VkDevice                            device;
-    VkPhysicalDevice                    physicalDevice;
+    VkDevice                            device{ VK_NULL_HANDLE };
+    VkPhysicalDevice                    physicalDevice{ VK_NULL_HANDLE };
     QueueFamilyIndices                  queueIndices;
 
 public:

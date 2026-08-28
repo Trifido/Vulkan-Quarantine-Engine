@@ -99,6 +99,19 @@ jobs:
         run: |
           powershell -ExecutionPolicy Bypass -File '.\setup\build.ps1' -Configuration Both
 
+      - name: Run engine lifecycle tests
+        shell: pwsh
+        run: |
+          ctest --test-dir '.\build' --build-config Debug --output-on-failure
+          if ($LASTEXITCODE -ne 0) {
+            throw "Debug lifecycle tests failed with exit code $LASTEXITCODE."
+          }
+
+          ctest --test-dir '.\build' --build-config Release --output-on-failure
+          if ($LASTEXITCODE -ne 0) {
+            throw "Release lifecycle tests failed with exit code $LASTEXITCODE."
+          }
+
       - name: Verify build only changed generated shader artifacts
         shell: pwsh
         run: |

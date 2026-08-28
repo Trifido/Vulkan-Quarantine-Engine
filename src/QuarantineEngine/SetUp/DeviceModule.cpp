@@ -228,8 +228,13 @@ void DeviceModule::createLogicalDevice(VkSurfaceKHR& surface, QueueModule& nQueu
 
 void DeviceModule::cleanup()
 {
-    vkDestroyDevice(device, nullptr);
-    this->ResetInstance();
+    if (device != VK_NULL_HANDLE)
+    {
+        vkDestroyDevice(device, nullptr);
+        device = VK_NULL_HANDLE;
+    }
+
+    physicalDevice = VK_NULL_HANDLE;
 }
 
 VkFormat DeviceModule::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)

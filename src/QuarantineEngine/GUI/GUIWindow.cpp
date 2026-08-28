@@ -10,6 +10,7 @@ static void glfw_error_callback(int error, const char* description)
 }
 
 GUIWindow::GUIWindow()
+    : title(), isRunning(false), monitor(nullptr), window(nullptr), width(0), height(0)
 {
 }
 
