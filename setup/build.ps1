@@ -175,6 +175,10 @@ finally {
 
 $glslcPath = Find-Glslc
 if ($null -eq $glslcPath) {
+    if ($env:CI -eq "true") {
+        throw "No se encontro glslc.exe en CI. No se puede validar la compilacion de shaders."
+    }
+
     Write-Warning "No se encontro glslc.exe. La compilacion de shaders sera saltada. Asegura que VULKAN_SDK este configurado o instala Vulkan SDK."
 }
 else {

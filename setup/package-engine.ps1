@@ -129,11 +129,70 @@ function New-Manifest {
     )
 
     $gitCommit = ""
+    $sourceDirty = $false
+    $generatedArtifactsDirty = $false
     try {
-        $gitCommit = (git -C $projectRoot rev-parse --short HEAD 2>$null).Trim()
+        $gitCommit = (git -C $projectRoot rev-parse HEAD 2>$null).Trim()
+        $worktreeChanges = @(git -C $projectRoot status --porcelain 2>$null)
+        $sourceChanges = New-Object System.Collections.Generic.List[string]
+        $generatedArtifactChanges = New-Object System.Collections.Generic.List[string]
+
+        foreach ($change in $worktreeChanges) {
+            if ($change.Length -lt 4) {
+                $sourceChanges.Add($change)
+                continue
+            }
+
+            $path = $change.Substring(3).Replace('\', '/')
+            if ($path.StartsWith('resources/shaders/') -and $path.EndsWith('.spv')) {
+                $generatedArtifactChanges.Add($path)
+            }
+            else {
+                $sourceChanges.Add($change)
+            }
+        }
+
+        $sourceDirty = $sourceChanges.Count -gt 0
+        $generatedArtifactsDirty = $generatedArtifactChanges.Count -gt 0
     }
     catch {
         $gitCommit = ""
+        $sourceDirty = $true
+        $generatedArtifactsDirty = $true
+    }
+
+    $dependencyRevisions = [ordered]@{}
+    $dependencyManifestPath = Join-Path $projectRoot "cmake\Dependencies.cmake"
+    if (Test-Path -LiteralPath $dependencyManifestPath) {
+        foreach ($line in Get-Content -LiteralPath $dependencyManifestPath) {
+            if ($line -match '^set\(QE_([A-Z0-9_]+)_REVISION\s+"([^"]+)"\)') {
+                $dependencyName = $Matches[1].ToLowerInvariant().Replace('_', '-')
+                $dependencyRevisions[$dependencyName] = $Matches[2]
+            }
+        }
+    }
+
+    $cmakeVersion = ""
+    try {
+        $cmakeVersion = ((cmake --version | Select-Object -First 1) -replace '^cmake version\s+', '').Trim()
+    }
+    catch {
+        $cmakeVersion = ""
+    }
+
+    $dotnetVersion = ""
+    try {
+        $dotnetVersion = (dotnet --version).Trim()
+    }
+    catch {
+        $dotnetVersion = ""
+    }
+
+    $vulkanSdkVersion = if ($env:VULKAN_SDK) {
+        Split-Path -Leaf $env:VULKAN_SDK.TrimEnd('\', '/')
+    }
+    else {
+        ""
     }
 
     $manifest = [ordered]@{
@@ -144,7 +203,15 @@ function New-Manifest {
         layoutVersion = 1
         generatedAtUtc = [DateTime]::UtcNow.ToString("o")
         sourceCommit = $gitCommit
+        sourceDirty = $sourceDirty
+        generatedArtifactsDirty = $generatedArtifactsDirty
         configurations = $Configurations
+        toolchain = [ordered]@{
+            cmake = $cmakeVersion
+            dotnetSdk = $dotnetVersion
+            vulkanSdk = $vulkanSdkVersion
+        }
+        dependencies = $dependencyRevisions
         paths = [ordered]@{
             binaries = "bin"
             libraries = "lib"
@@ -240,6 +307,17 @@ Ensure-CleanDirectory -PathToCreate $packageRoot
 
 Copy-DirectoryContents -Source (Join-Path $projectRoot "src\QuarantineEngine") -Destination (Join-Path $packageRoot "src\QuarantineEngine")
 Copy-DirectoryContents -Source (Join-Path $projectRoot "extern\assimp\include") -Destination (Join-Path $packageRoot "extern\assimp\include")
+
+$assimpGeneratedHeaders = @(
+    (Join-Path $buildRoot "extern\assimp\include\assimp\config.h"),
+    (Join-Path $buildRoot "extern\assimp\include\assimp\revision.h")
+)
+Require-Files -Label "Generated Assimp headers" -Paths $assimpGeneratedHeaders
+$assimpPackageIncludeDir = Join-Path $packageRoot "extern\assimp\include\assimp"
+foreach ($generatedHeader in $assimpGeneratedHeaders) {
+    Copy-Item -LiteralPath $generatedHeader -Destination $assimpPackageIncludeDir -Force
+}
+
 Copy-DirectoryContents -Source (Join-Path $projectRoot "extern\imgui") -Destination (Join-Path $packageRoot "extern\imgui")
 Copy-DirectoryContents -Source (Join-Path $projectRoot "extern\jolt") -Destination (Join-Path $packageRoot "extern\jolt")
 Copy-DirectoryContents -Source (Join-Path $projectRoot "extern\meshoptimizer\src") -Destination (Join-Path $packageRoot "extern\meshoptimizer\src")
@@ -263,6 +341,7 @@ foreach ($cfg in $configs) {
 
     $debugSuffix = if ($cfg -eq "Debug") { "d" } else { "" }
     $assimpLibName = if ($cfg -eq "Debug") { "assimp-vc143-mtd.lib" } else { "assimp-vc143-mt.lib" }
+    $joltLibName = "Jolt.lib"
 
     $requiredLibs = @(
         (Join-Path $buildRoot "$cfg\QuarantineEngine$debugSuffix.lib"),
@@ -271,7 +350,7 @@ foreach ($cfg in $configs) {
         (Join-Path $buildRoot "_deps\glfw-build\src\$cfg\glfw3$debugSuffix.lib"),
         (Join-Path $buildRoot "_deps\yaml-cpp-build\$cfg\yaml-cpp$debugSuffix.lib"),
         (Join-Path $buildRoot "_deps\ktx-build\$cfg\ktx.lib"),
-        (Join-Path $buildRoot "extern\jolt\Build\$cfg\Jolt.lib"),
+        (Join-Path $buildRoot "extern\jolt\Build\$cfg\$joltLibName"),
         (Join-Path $buildRoot "extern\meshoptimizer\$cfg\meshoptimizer$debugSuffix.lib"),
         (Join-Path $buildRoot "extern\assimp\lib\$cfg\$assimpLibName")
     )

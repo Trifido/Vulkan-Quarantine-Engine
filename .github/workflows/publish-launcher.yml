@@ -20,9 +20,12 @@ concurrency:
   group: publish-launcher
   cancel-in-progress: true
 
+env:
+  QE_DOTNET_SDK_VERSION: 9.0.312
+
 jobs:
   package-launcher:
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
       - name: Checkout repository
@@ -33,10 +36,12 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: ${{ env.QE_DOTNET_SDK_VERSION }}
 
       - name: Set up MSBuild
         uses: microsoft/setup-msbuild@v2
+        with:
+          vs-version: '[17.0,18.0)'
 
       - name: Install Inno Setup
         shell: pwsh

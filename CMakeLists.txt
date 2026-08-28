@@ -14,6 +14,7 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
 include(FetchContent)
 include(GNUInstallDirs)
+include(cmake/Dependencies.cmake)
 
 # ------------------------------
 # Vulkan SDK
@@ -34,7 +35,7 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(
   glfw
   GIT_REPOSITORY https://github.com/glfw/glfw.git
-  GIT_TAG 3.4
+  GIT_TAG ${QE_GLFW_REVISION}
   GIT_SHALLOW TRUE
 )
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
@@ -47,7 +48,7 @@ set_target_properties(glfw PROPERTIES DEBUG_POSTFIX "d")
 FetchContent_Declare(
   glm
   GIT_REPOSITORY https://github.com/g-truc/glm.git
-  GIT_TAG 1.0.1
+  GIT_TAG ${QE_GLM_REVISION}
   GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(glm)
@@ -55,15 +56,14 @@ FetchContent_MakeAvailable(glm)
 FetchContent_Declare(
   stb
   GIT_REPOSITORY https://github.com/nothings/stb.git
-  GIT_TAG master
-  GIT_SHALLOW TRUE
+  GIT_TAG ${QE_STB_REVISION}
 )
 FetchContent_MakeAvailable(stb)
 
 FetchContent_Declare(
   yaml-cpp
   GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
-  GIT_TAG master
+  GIT_TAG ${QE_YAML_CPP_REVISION}
   GIT_SHALLOW TRUE
 )
 set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -74,7 +74,7 @@ FetchContent_MakeAvailable(yaml-cpp)
 FetchContent_Declare(
   ktx
   GIT_REPOSITORY https://github.com/KhronosGroup/KTX-Software.git
-  GIT_TAG v4.4.2
+  GIT_TAG ${QE_KTX_REVISION}
   GIT_SHALLOW TRUE
   GIT_SUBMODULES ""
   GIT_SUBMODULES_RECURSE FALSE
@@ -85,6 +85,7 @@ set(KTX_FEATURE_GL_UPLOAD OFF CACHE BOOL "" FORCE)
 set(KTX_FEATURE_VK_UPLOAD ON CACHE BOOL "" FORCE)
 set(KTX_FEATURE_LOADTEST_APPS OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(ktx)
+set_target_properties(ktx PROPERTIES DEBUG_POSTFIX "")
 
 # ------------------------------
 # Submodules as libraries
@@ -97,6 +98,7 @@ set(JPH_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
 set(JPH_BUILD_DOCUMENTATION OFF CACHE BOOL "" FORCE)
 set(CPP_RTTI_ENABLED ON CACHE BOOL "" FORCE)
 add_subdirectory(extern/jolt/Build EXCLUDE_FROM_ALL)
+set_target_properties(Jolt PROPERTIES DEBUG_POSTFIX "")
 
 set(ASSIMP_BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -109,12 +111,14 @@ file(GLOB SPIRV_REFLECT_SRC
   extern/SPIRV-Reflect/spirv_reflect.h
 )
 add_library(SPIRV-Reflect STATIC ${SPIRV_REFLECT_SRC})
+set_target_properties(SPIRV-Reflect PROPERTIES DEBUG_POSTFIX "d")
 target_include_directories(SPIRV-Reflect PUBLIC extern/SPIRV-Reflect)
 
 set(MESHOPT_BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
 set(MESHOPT_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(MESHOPT_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 add_subdirectory(extern/meshoptimizer EXCLUDE_FROM_ALL)
+set_target_properties(meshoptimizer PROPERTIES DEBUG_POSTFIX "d")
 
 # ------------------------------
 # ImGui
@@ -130,6 +134,7 @@ add_library(imgui STATIC
   ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
   ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp
 )
+set_target_properties(imgui PROPERTIES DEBUG_POSTFIX "d")
 target_include_directories(imgui PUBLIC
   ${IMGUI_DIR}
   ${IMGUI_DIR}/backends
@@ -146,6 +151,7 @@ add_library(imguizmo STATIC
   ${IMGUIZMO_DIR}/ImGuizmo.cpp
   ${IMGUIZMO_DIR}/GraphEditor.cpp
 )
+set_target_properties(imguizmo PROPERTIES DEBUG_POSTFIX "d")
 target_include_directories(imguizmo PUBLIC
   ${IMGUIZMO_DIR}
   ${IMGUI_DIR}
@@ -211,6 +217,7 @@ qe_collect_source_tree("${CMAKE_SOURCE_DIR}/src/QuarantineEditor" QE_EDITOR_SRC 
 # ------------------------------
 
 add_library(QuarantineEngine STATIC ${QE_SRC} ${QE_HDR})
+set_target_properties(QuarantineEngine PROPERTIES DEBUG_POSTFIX "d")
 qe_configure_msvc(QuarantineEngine)
 qe_assign_source_groups("QuarantineEngine" "${CMAKE_SOURCE_DIR}/src/QuarantineEngine" ${QE_SRC} ${QE_HDR})
 
