@@ -402,10 +402,10 @@ public sealed class ProjectRepository
         {
             $@"{engineBuildDir}\$(Configuration)\QuarantineEngine$(QEDebugSuffix).lib",
             $@"{engineBuildDir}\extern\assimp\lib\$(Configuration)\$(QEAssimpLibraryName)",
-            $@"{engineBuildDir}\extern\jolt\Build\$(Configuration)\Jolt.lib",
+            $@"{engineBuildDir}\extern\jolt\Build\$(Configuration)\$(QEJoltLibraryName)",
             $@"{engineBuildDir}\extern\meshoptimizer\$(Configuration)\meshoptimizer$(QEDebugSuffix).lib",
             $@"{engineBuildDir}\_deps\yaml-cpp-build\$(Configuration)\yaml-cpp$(QEDebugSuffix).lib",
-            $@"{engineBuildDir}\_deps\ktx-build\$(Configuration)\ktx.lib",
+            $@"{engineBuildDir}\_deps\ktx-build\$(Configuration)\$(QEKtxLibraryName)",
             $@"{engineBuildDir}\_deps\glfw-build\src\$(Configuration)\glfw3$(QEDebugSuffix).lib",
             $@"{engineBuildDir}\$(Configuration)\SPIRV-Reflect$(QEDebugSuffix).lib",
             $@"{engineBuildDir}\$(Configuration)\imgui$(QEDebugSuffix).lib"
@@ -418,10 +418,10 @@ public sealed class ProjectRepository
         {
             $@"{engineRoot}\lib\$(Configuration)\QuarantineEngine$(QEDebugSuffix).lib",
             $@"{engineRoot}\lib\$(Configuration)\$(QEAssimpLibraryName)",
-            $@"{engineRoot}\lib\$(Configuration)\Jolt.lib",
+            $@"{engineRoot}\lib\$(Configuration)\$(QEJoltLibraryName)",
             $@"{engineRoot}\lib\$(Configuration)\meshoptimizer$(QEDebugSuffix).lib",
             $@"{engineRoot}\lib\$(Configuration)\yaml-cpp$(QEDebugSuffix).lib",
-            $@"{engineRoot}\lib\$(Configuration)\ktx.lib",
+            $@"{engineRoot}\lib\$(Configuration)\$(QEKtxLibraryName)",
             $@"{engineRoot}\lib\$(Configuration)\glfw3$(QEDebugSuffix).lib",
             $@"{engineRoot}\lib\$(Configuration)\SPIRV-Reflect$(QEDebugSuffix).lib",
             $@"{engineRoot}\lib\$(Configuration)\imgui$(QEDebugSuffix).lib"

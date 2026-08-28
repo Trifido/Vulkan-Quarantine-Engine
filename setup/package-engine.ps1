@@ -129,11 +129,50 @@ function New-Manifest {
     )
 
     $gitCommit = ""
+    $sourceDirty = $false
     try {
-        $gitCommit = (git -C $projectRoot rev-parse --short HEAD 2>$null).Trim()
+        $gitCommit = (git -C $projectRoot rev-parse HEAD 2>$null).Trim()
+        $sourceDirty = @(
+            git -C $projectRoot status --porcelain 2>$null
+        ).Count -gt 0
     }
     catch {
         $gitCommit = ""
+        $sourceDirty = $true
+    }
+
+    $dependencyRevisions = [ordered]@{}
+    $dependencyManifestPath = Join-Path $projectRoot "cmake\Dependencies.cmake"
+    if (Test-Path -LiteralPath $dependencyManifestPath) {
+        foreach ($line in Get-Content -LiteralPath $dependencyManifestPath) {
+            if ($line -match '^set\(QE_([A-Z0-9_]+)_REVISION\s+"([^"]+)"\)') {
+                $dependencyName = $Matches[1].ToLowerInvariant().Replace('_', '-')
+                $dependencyRevisions[$dependencyName] = $Matches[2]
+            }
+        }
+    }
+
+    $cmakeVersion = ""
+    try {
+        $cmakeVersion = ((cmake --version | Select-Object -First 1) -replace '^cmake version\s+', '').Trim()
+    }
+    catch {
+        $cmakeVersion = ""
+    }
+
+    $dotnetVersion = ""
+    try {
+        $dotnetVersion = (dotnet --version).Trim()
+    }
+    catch {
+        $dotnetVersion = ""
+    }
+
+    $vulkanSdkVersion = if ($env:VULKAN_SDK) {
+        Split-Path -Leaf $env:VULKAN_SDK.TrimEnd('\', '/')
+    }
+    else {
+        ""
     }
 
     $manifest = [ordered]@{
@@ -144,7 +183,14 @@ function New-Manifest {
         layoutVersion = 1
         generatedAtUtc = [DateTime]::UtcNow.ToString("o")
         sourceCommit = $gitCommit
+        sourceDirty = $sourceDirty
         configurations = $Configurations
+        toolchain = [ordered]@{
+            cmake = $cmakeVersion
+            dotnetSdk = $dotnetVersion
+            vulkanSdk = $vulkanSdkVersion
+        }
+        dependencies = $dependencyRevisions
         paths = [ordered]@{
             binaries = "bin"
             libraries = "lib"
@@ -263,6 +309,7 @@ foreach ($cfg in $configs) {
 
     $debugSuffix = if ($cfg -eq "Debug") { "d" } else { "" }
     $assimpLibName = if ($cfg -eq "Debug") { "assimp-vc143-mtd.lib" } else { "assimp-vc143-mt.lib" }
+    $joltLibName = "Jolt$debugSuffix.lib"
 
     $requiredLibs = @(
         (Join-Path $buildRoot "$cfg\QuarantineEngine$debugSuffix.lib"),
@@ -270,8 +317,8 @@ foreach ($cfg in $configs) {
         (Join-Path $buildRoot "$cfg\imgui$debugSuffix.lib"),
         (Join-Path $buildRoot "_deps\glfw-build\src\$cfg\glfw3$debugSuffix.lib"),
         (Join-Path $buildRoot "_deps\yaml-cpp-build\$cfg\yaml-cpp$debugSuffix.lib"),
-        (Join-Path $buildRoot "_deps\ktx-build\$cfg\ktx.lib"),
-        (Join-Path $buildRoot "extern\jolt\Build\$cfg\Jolt.lib"),
+        (Join-Path $buildRoot "_deps\ktx-build\$cfg\ktx$debugSuffix.lib"),
+        (Join-Path $buildRoot "extern\jolt\Build\$cfg\$joltLibName"),
         (Join-Path $buildRoot "extern\meshoptimizer\$cfg\meshoptimizer$debugSuffix.lib"),
         (Join-Path $buildRoot "extern\assimp\lib\$cfg\$assimpLibName")
     )

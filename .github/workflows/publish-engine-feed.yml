@@ -17,6 +17,12 @@ concurrency:
   group: publish-engine-feed
   cancel-in-progress: true
 
+env:
+  QE_DOTNET_SDK_VERSION: 9.0.312
+  QE_CMAKE_VERSION: 4.0.2
+  QE_VULKAN_SDK_VERSION: 1.4.357.0
+  QE_VULKAN_SDK_SHA256: 81f474711e9042f4cd22b31b2f7a8870db2e428b21586fb43dd80150be97310d
+
 jobs:
   package-engine:
     runs-on: windows-latest
@@ -33,23 +39,26 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: ${{ env.QE_DOTNET_SDK_VERSION }}
 
       - name: Set up CMake
         uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: ${{ env.QE_CMAKE_VERSION }}
 
       - name: Install Vulkan SDK
         shell: pwsh
         run: |
-          $sdkVersion = (Invoke-RestMethod 'https://vulkan.lunarg.com/sdk/latest/windows.txt').Trim()
-          if (-not $sdkVersion) {
-            throw "Could not resolve the latest Vulkan SDK version."
-          }
-
-          $installerPath = Join-Path $env:RUNNER_TEMP 'vulkan_sdk.exe'
+          $sdkVersion = $env:QE_VULKAN_SDK_VERSION
+          $installerPath = Join-Path $env:RUNNER_TEMP "vulkan-sdk-$sdkVersion.exe"
           Invoke-WebRequest `
-            -Uri 'https://sdk.lunarg.com/sdk/download/latest/windows/vulkan_sdk.exe?Human=true' `
+            -Uri "https://sdk.lunarg.com/sdk/download/$sdkVersion/windows/vulkan_sdk.exe?Human=true" `
             -OutFile $installerPath
+
+          $actualSha256 = (Get-FileHash -LiteralPath $installerPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actualSha256 -ne $env:QE_VULKAN_SDK_SHA256) {
+            throw "Vulkan SDK checksum mismatch. Expected $env:QE_VULKAN_SDK_SHA256, got $actualSha256."
+          }
 
           $sdkRoot = Join-Path 'C:\VulkanSDK' $sdkVersion
           $installArgs = @(
@@ -60,7 +69,7 @@ jobs:
             "install"
           )
 
-          $process = Start-Process -FilePath $installerPath -ArgumentList $installArgs -Wait -PassThru -NoNewWindow
+          $process = Start-Process -FilePath $installerPath -ArgumentList $installArgs -Wait -PassThru -WindowStyle Hidden
           if ($process.ExitCode -ne 0) {
             throw "Vulkan SDK installer failed with exit code $($process.ExitCode)."
           }
