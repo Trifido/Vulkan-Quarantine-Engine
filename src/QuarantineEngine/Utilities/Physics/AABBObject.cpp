@@ -12,7 +12,7 @@ void AABBObject::CreateVertexBuffers()
     {
         return;
     }
-    VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
     CreateGeometryBuffer(bufferSize, usageFlags, vertices.data(), vertexBuffer[0], vertexBufferMemory[0]);
 }
 
@@ -28,7 +28,7 @@ void AABBObject::CreateIndexBuffers()
         return;
     }
 
-    VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+    VkBufferUsageFlags usageFlags = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
     CreateGeometryBuffer(bufferSize, usageFlags, indices.data(), indexBuffer[0], indexBufferMemory[0]);
 }
 

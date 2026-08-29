@@ -21,31 +21,12 @@ struct LayerProperties
     std::vector<VkExtensionProperties>  extensions;
 };
 
-const std::vector<const char*> deviceExtensions = {
-    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-    //VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
-    //VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
-    VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME,
-    VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME,
-    VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
-    VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME,
-    VK_KHR_MAINTENANCE3_EXTENSION_NAME,
-    VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME,
-    //VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
-    VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
-    VK_EXT_MESH_SHADER_EXTENSION_NAME,
+const std::vector<const char*> requiredDeviceExtensions = {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
 const std::vector<const char*> validationLayers = {
-    "VK_LAYER_KHRONOS_validation",
-    "VK_LAYER_LUNARG_monitor"
-};
-
-const std::vector<const char*> instanceExtensions = {
-    VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-    VK_KHR_SURFACE_EXTENSION_NAME,
-    "VK_KHR_win32_surface",
-    VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME
+    "VK_LAYER_KHRONOS_validation"
 };
 
 bool checkValidationLayerSupport();
@@ -56,7 +37,7 @@ void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& create
 class VulkanLayerAndExtension
 {
 public:
-    VkDebugUtilsMessengerEXT debugMessenger;
+    VkDebugUtilsMessengerEXT debugMessenger{ VK_NULL_HANDLE };
 public:
     VkResult getExtensionProperties(LayerProperties& layerProps, VkPhysicalDevice* gpu = NULL);
     void getInstanceExtensions();

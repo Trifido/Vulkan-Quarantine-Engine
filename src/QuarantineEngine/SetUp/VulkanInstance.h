@@ -9,7 +9,7 @@
 class VulkanInstance
 {
 private:
-    VkInstance instance;
+    VkInstance instance{ VK_NULL_HANDLE };
 public:
     DEBUG_LEVEL debug_level;
 

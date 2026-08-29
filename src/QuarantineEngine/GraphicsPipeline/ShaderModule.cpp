@@ -136,6 +136,15 @@ void ShaderModule::createShaderModule(const std::string& filename_vertex, const 
 
 void ShaderModule::createMeshShaderModule(const std::string& filename_task, const std::string& filename_mesh, const std::string& filename_fragment)
 {
+    if (!deviceModule->supportsMeshShaders())
+    {
+        throw std::runtime_error("This shader asset requires VK_EXT_mesh_shader, but the selected GPU does not support mesh shaders");
+    }
+    if (!filename_task.empty() && !deviceModule->supportsTaskShaders())
+    {
+        throw std::runtime_error("This shader asset contains a task stage, but the selected GPU does not support task shaders");
+    }
+
     this->graphicsPipelineData.HasVertexData = false;
 
     if (filename_task != "")

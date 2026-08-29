@@ -11,7 +11,18 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     messageType = messageType;
     pUserData = pUserData;
 
-    QE_LOG_ERROR_CAT_F("Validation Layer", "{}", pCallbackData->pMessage);
+    if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+    {
+        QE_LOG_ERROR_CAT_F("Validation Layer", "{}", pCallbackData->pMessage);
+    }
+    else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+    {
+        QE_LOG_WARN_CAT_F("Validation Layer", "{}", pCallbackData->pMessage);
+    }
+    else
+    {
+        QE_LOG_INFO_CAT_F("Validation Layer", "{}", pCallbackData->pMessage);
+    }
 
     return VK_FALSE;
 }
@@ -50,7 +61,7 @@ bool checkDeviceExtensionSupport(VkPhysicalDevice device)
     std::vector<VkExtensionProperties> availableExtensions(extensionCount);
     vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
 
-    std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
+    std::set<std::string> requiredExtensions(requiredDeviceExtensions.begin(), requiredDeviceExtensions.end());
 
     for (const auto& extension : availableExtensions) {
         requiredExtensions.erase(extension.extensionName);
@@ -189,8 +200,14 @@ VkResult VulkanLayerAndExtension::CreateDebugUtilsMessengerEXT(VkInstance instan
 
 void VulkanLayerAndExtension::DestroyDebugUtilsMessengerEXT(VkInstance instance, const VkAllocationCallbacks* pAllocator)
 {
+    if (debugMessenger == VK_NULL_HANDLE)
+    {
+        return;
+    }
+
     auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
     if (func != nullptr) {
         func(instance, debugMessenger, pAllocator);
+        debugMessenger = VK_NULL_HANDLE;
     }
 }

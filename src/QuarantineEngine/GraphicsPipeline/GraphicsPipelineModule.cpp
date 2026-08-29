@@ -17,6 +17,15 @@ GraphicsPipelineModule::~GraphicsPipelineModule()
 
 void GraphicsPipelineModule::CompileGraphicsPipeline(std::vector<VkPipelineShaderStageCreateInfo> shaderInfo, VkPipelineVertexInputStateCreateInfo vertexInfo, std::vector<VkDescriptorSetLayout> descriptorLayouts)
 {
+    if (this->PoligonMode != VK_POLYGON_MODE_FILL && !deviceModule->supportsFillModeNonSolid())
+    {
+        throw std::runtime_error("This graphics pipeline requests a non-solid polygon mode that the selected GPU does not support");
+    }
+    if (this->lineWidth != 1.0f && !deviceModule->supportsWideLines())
+    {
+        throw std::runtime_error("This graphics pipeline requests wide lines that the selected GPU does not support");
+    }
+
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     inputAssembly.topology = this->inputTopology;
@@ -58,8 +67,8 @@ void GraphicsPipelineModule::CompileGraphicsPipeline(std::vector<VkPipelineShade
 
     VkPipelineMultisampleStateCreateInfo multisampling{};
     multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    multisampling.sampleShadingEnable = VK_TRUE;
-    multisampling.minSampleShading = .2f;
+    multisampling.sampleShadingEnable = deviceModule->supportsSampleRateShading() ? VK_TRUE : VK_FALSE;
+    multisampling.minSampleShading = multisampling.sampleShadingEnable ? .2f : 0.0f;
     multisampling.rasterizationSamples = *antialiasingModule->msaaSamples;
     multisampling.pSampleMask = nullptr; // Optional
     multisampling.alphaToCoverageEnable = VK_FALSE; // Optional

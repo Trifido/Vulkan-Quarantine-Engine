@@ -340,6 +340,11 @@ void RayTracingModule::addModules(BufferManageModule& bufferModule, QueueModule&
 
 void RayTracingModule::initRayTracing()
 {
+    if (!deviceModule->supportsBufferDeviceAddress())
+    {
+        throw std::runtime_error("Ray tracing requires bufferDeviceAddress, but it was not enabled on the selected GPU");
+    }
+
     // Requesting ray tracing properties
     VkPhysicalDeviceRayTracingPipelinePropertiesKHR pipelineProps = {};
     pipelineProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;

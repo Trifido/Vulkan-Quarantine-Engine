@@ -86,6 +86,7 @@ Current submodule-backed dependencies in this repository:
 ### Prerequisites
 
 - Vulkan SDK installed and `VULKAN_SDK` available in the environment
+- GPU and driver compatible with the [stable Vulkan 1.3 profile](docs/VULKAN_COMPATIBILITY.md)
 - CMake 3.16 or newer
 - Git with submodule support
 - Visual Studio 2022 with Desktop Development with C++

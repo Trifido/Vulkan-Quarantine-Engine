@@ -24,15 +24,10 @@ VkResult VulkanInstance::createInstance()
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &appInfo;
 
-    uint32_t glfwExtensionCount = 0;
-    const char** glfwExtensions;
-    glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-
-
     auto extensions = getRequiredExtensions();
 
-    createInfo.enabledExtensionCount = static_cast<uint32_t>(instanceExtensions.size());
-    createInfo.ppEnabledExtensionNames = instanceExtensions.data();
+    createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+    createInfo.ppEnabledExtensionNames = extensions.data();
 
 
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
@@ -53,7 +48,11 @@ VkResult VulkanInstance::createInstance()
 
 void VulkanInstance::destroyInstance()
 {
-    vkDestroyInstance(instance, NULL);
+    if (instance != VK_NULL_HANDLE)
+    {
+        vkDestroyInstance(instance, nullptr);
+        instance = VK_NULL_HANDLE;
+    }
 }
 
 VkInstance& VulkanInstance::getInstance()

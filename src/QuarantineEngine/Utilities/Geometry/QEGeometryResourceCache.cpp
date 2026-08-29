@@ -156,7 +156,6 @@ std::shared_ptr<QEGeometrySharedResource> QEGeometryResourceCache::CreateResourc
                 vertexBufferSize,
                 VK_BUFFER_USAGE_TRANSFER_DST_BIT |
                 VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
-                VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                 subMesh.Vertices.data(),
                 *deviceModule);
@@ -168,8 +167,7 @@ std::shared_ptr<QEGeometrySharedResource> QEGeometryResourceCache::CreateResourc
             resource->IndexBuffers[i] = CreateBufferAllocation(
                 indexBufferSize,
                 VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-                VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
-                VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+                VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                 subMesh.Indices.data(),
                 *deviceModule);
         }
@@ -182,7 +180,6 @@ std::shared_ptr<QEGeometrySharedResource> QEGeometryResourceCache::CreateResourc
                 animationBufferSize,
                 VK_BUFFER_USAGE_TRANSFER_DST_BIT |
                 VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
-                VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                 subMesh.AnimationVertexData.data(),
                 *deviceModule);

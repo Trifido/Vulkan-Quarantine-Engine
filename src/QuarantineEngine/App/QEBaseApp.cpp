@@ -90,7 +90,11 @@ void QEBaseApp::InitWindow()
 void QEBaseApp::initVulkan()
 {
     vulkanInstance.debug_level = DEBUG_LEVEL::ONLY_ERROR;
-    vulkanInstance.createInstance();
+    const VkResult instanceResult = vulkanInstance.createInstance();
+    if (instanceResult != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create Vulkan instance (VkResult " + std::to_string(instanceResult) + ")");
+    }
     layerExtensionModule.setupDebugMessenger(vulkanInstance.getInstance(), vulkanInstance.debug_level);
     windowSurface.createSurface(vulkanInstance.getInstance(), mainWindow->getWindow());
     deviceModule->pickPhysicalDevice(vulkanInstance.getInstance(), windowSurface.getSurface());

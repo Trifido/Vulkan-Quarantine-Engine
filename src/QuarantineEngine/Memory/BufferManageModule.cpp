@@ -42,15 +42,7 @@ void BufferManageModule::createBuffer(VkDeviceSize size, VkBufferUsageFlags usag
     VkMemoryAllocateFlagsInfo allocFlagsInfo{};
     if (wantsDeviceAddress)
     {
-        VkPhysicalDeviceBufferDeviceAddressFeatures bdaFeat{};
-        bdaFeat.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
-        VkPhysicalDeviceFeatures2 feats2{};
-        feats2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-        feats2.pNext = &bdaFeat;
-
-        vkGetPhysicalDeviceFeatures2(deviceModule.physicalDevice, &feats2);
-
-        if (bdaFeat.bufferDeviceAddress == VK_TRUE)
+        if (deviceModule.supportsBufferDeviceAddress())
         {
             allocFlagsInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
             allocFlagsInfo.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
@@ -60,7 +52,7 @@ void BufferManageModule::createBuffer(VkDeviceSize size, VkBufferUsageFlags usag
         else
         {
             QE_DESTROY_BUFFER(deviceModule.device, buffer, "BufferManageModule::createBuffer");
-            throw std::runtime_error("Buffer requests VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT but device doesn't have bufferDeviceAddress enabled");
+            throw std::runtime_error("Buffer requests a device address but bufferDeviceAddress was not enabled");
         }
     }
 

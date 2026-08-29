@@ -3,6 +3,7 @@
 #define DEVICEMODULE_H
 
 #include <vulkan/vulkan.hpp>
+#include <string>
 #include <vector>
 
 #include "VulkanLayerAndExtension.h"
@@ -14,15 +15,26 @@
 class DeviceModule : public QESingleton<DeviceModule>
 {
 private:
-    friend class QESingleton<DeviceModule>; // Permitir acceso al constructor
-    VkSampleCountFlagBits               msaaSamples = VK_SAMPLE_COUNT_1_BIT;
-    VkPhysicalDeviceProperties          physicalDeviceProps;
-    VkPhysicalDeviceFeatures            physicalDeviceFeatures{};
-    VkPhysicalDeviceDescriptorIndexingFeatures indexing_features{};
-    VkPhysicalDeviceMemoryProperties    memoryProperties;
-    QueueModule                         queueModule;
-    bool                                bindless_supported{};
-    bool                                meshShader_supported{};
+    friend class QESingleton<DeviceModule>;
+
+    struct DeviceCapabilities
+    {
+        uint32_t apiVersion{};
+        bool samplerAnisotropy{};
+        bool sampleRateShading{};
+        bool fillModeNonSolid{};
+        bool wideLines{};
+        bool sampledImageNonUniformIndexing{};
+        bool bufferDeviceAddress{};
+        bool extendedDynamicState{};
+        bool meshShader{};
+        bool taskShader{};
+        bool meshShaderExtension{};
+    };
+
+    VkSampleCountFlagBits      msaaSamples{ VK_SAMPLE_COUNT_1_BIT };
+    VkPhysicalDeviceProperties physicalDeviceProps{};
+    DeviceCapabilities         capabilities{};
 
 public:
     VkDevice                            device{ VK_NULL_HANDLE };
@@ -35,9 +47,15 @@ public:
     VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
     void cleanup();
     VkSampleCountFlagBits* getMsaaSamples();
-    void InitializeMeshShaderExtension();
+    bool supportsBufferDeviceAddress() const noexcept;
+    bool supportsMeshShaders() const noexcept;
+    bool supportsTaskShaders() const noexcept;
+    bool supportsSampleRateShading() const noexcept;
+    bool supportsFillModeNonSolid() const noexcept;
+    bool supportsWideLines() const noexcept;
 private:
-    bool isDeviceSuitable(VkPhysicalDevice newDevice, VkSurfaceKHR& surface);
+    DeviceCapabilities queryDeviceCapabilities(VkPhysicalDevice newDevice) const;
+    bool isDeviceSuitable(VkPhysicalDevice newDevice, VkSurfaceKHR& surface, DeviceCapabilities& candidateCapabilities, std::string& rejectionReason) const;
     VkSampleCountFlagBits getMaxUsableSampleCount();
 };
 
