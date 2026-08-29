@@ -67,11 +67,11 @@ void BufferManageModule::createBuffer(VkDeviceSize size, VkBufferUsageFlags usag
     // Bind memory
     if (vkBindBufferMemory(deviceModule.device, buffer, bufferMemory, 0) != VK_SUCCESS)
     {
-        QE_FREE_MEMORY(deviceModule.device, bufferMemory, "BufferManageModule::createBuffer");
         QE_DESTROY_BUFFER(deviceModule.device, buffer, "BufferManageModule::createBuffer");
+        QE_FREE_MEMORY(deviceModule.device, bufferMemory, "BufferManageModule::createBuffer");
 
-        //vkFreeMemory(deviceModule.device, bufferMemory, nullptr);
         //vkDestroyBuffer(deviceModule.device, buffer, nullptr);
+        //vkFreeMemory(deviceModule.device, bufferMemory, nullptr);
         throw std::runtime_error("failed to bind buffer memory!");
     }
 }

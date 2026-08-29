@@ -1,5 +1,7 @@
 #include "VulkanInstance.h"
 
+#include <array>
+
 VkResult VulkanInstance::createInstance()
 {
     if (!glfwVulkanSupported())
@@ -30,13 +32,23 @@ VkResult VulkanInstance::createInstance()
     createInfo.ppEnabledExtensionNames = extensions.data();
 
 
-    VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
+    VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
+    VkValidationFeaturesEXT validationFeatures{};
+    const std::array<VkValidationFeatureEnableEXT, 2> enabledValidationFeatures =
+    {
+        VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT,
+        VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT
+    };
     if (enableValidationLayers) {
         createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
         createInfo.ppEnabledLayerNames = validationLayers.data();
 
         populateDebugMessengerCreateInfo(debugCreateInfo, debug_level);
-        createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
+        validationFeatures.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+        validationFeatures.enabledValidationFeatureCount = static_cast<uint32_t>(enabledValidationFeatures.size());
+        validationFeatures.pEnabledValidationFeatures = enabledValidationFeatures.data();
+        debugCreateInfo.pNext = &validationFeatures;
+        createInfo.pNext = &debugCreateInfo;
     }
     else {
         createInfo.enabledLayerCount = 0;

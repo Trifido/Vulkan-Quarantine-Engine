@@ -47,6 +47,8 @@ void QELogger::Push(QELogLevel level, const std::string& msg, const std::string&
     entry.Message = msg;
     entry.Category = category;
     entry.FrameIndex = 0;
+    entry.Timestamp = std::chrono::system_clock::now();
+    entry.ThreadId = std::this_thread::get_id();
 
     std::vector<IQELogSink*> sinksCopy;
     {

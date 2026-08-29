@@ -1,5 +1,7 @@
 #pragma once
+#include <chrono>
 #include <string>
+#include <thread>
 #include <vector>
 #include <mutex>
 #include <cstdint>
@@ -18,6 +20,8 @@ struct QELogEntry
     std::string Message;
     std::string Category;
     uint64_t FrameIndex = 0;
+    std::chrono::system_clock::time_point Timestamp{};
+    std::thread::id ThreadId{};
 };
 
 

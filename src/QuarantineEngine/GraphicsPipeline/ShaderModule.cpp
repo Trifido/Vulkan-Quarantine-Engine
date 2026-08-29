@@ -198,16 +198,36 @@ void ShaderModule::CreateShaderBindings()
 void ShaderModule::cleanup()
 {
     shaderStages.clear();
-    if (vertex_shader != nullptr)
+    if (vertex_shader != VK_NULL_HANDLE)
+    {
         vkDestroyShaderModule(deviceModule->device, vertex_shader, nullptr);
-    if (fragment_shader != nullptr)
+        vertex_shader = VK_NULL_HANDLE;
+    }
+    if (fragment_shader != VK_NULL_HANDLE)
+    {
         vkDestroyShaderModule(deviceModule->device, fragment_shader, nullptr);
-    if (compute_shader != nullptr)
+        fragment_shader = VK_NULL_HANDLE;
+    }
+    if (geometry_shader != VK_NULL_HANDLE)
+    {
+        vkDestroyShaderModule(deviceModule->device, geometry_shader, nullptr);
+        geometry_shader = VK_NULL_HANDLE;
+    }
+    if (compute_shader != VK_NULL_HANDLE)
+    {
         vkDestroyShaderModule(deviceModule->device, compute_shader, nullptr);
-    if (task_shader != nullptr)
+        compute_shader = VK_NULL_HANDLE;
+    }
+    if (task_shader != VK_NULL_HANDLE)
+    {
         vkDestroyShaderModule(deviceModule->device, task_shader, nullptr);
-    if (mesh_shader != nullptr)
+        task_shader = VK_NULL_HANDLE;
+    }
+    if (mesh_shader != VK_NULL_HANDLE)
+    {
         vkDestroyShaderModule(deviceModule->device, mesh_shader, nullptr);
+        mesh_shader = VK_NULL_HANDLE;
+    }
 }
 
 void ShaderModule::RecreatePipeline()

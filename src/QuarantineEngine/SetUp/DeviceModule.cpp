@@ -224,6 +224,13 @@ void DeviceModule::pickPhysicalDevice(const VkInstance& newInstance, VkSurfaceKH
     queueIndices = QueueFamilyIndices::findQueueFamilies(physicalDevice, surface);
     msaaSamples = getMaxUsableSampleCount();
 
+    VkPhysicalDeviceDriverProperties driverProperties{};
+    driverProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES;
+    VkPhysicalDeviceProperties2 extendedProperties{};
+    extendedProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+    extendedProperties.pNext = &driverProperties;
+    vkGetPhysicalDeviceProperties2(physicalDevice, &extendedProperties);
+
     QE_LOG_INFO_CAT_F(
         "Vulkan",
         "Selected GPU '{}' | Vulkan {} | vendor 0x{:04X} device 0x{:04X} | driver {}",
@@ -232,6 +239,11 @@ void DeviceModule::pickPhysicalDevice(const VkInstance& newInstance, VkSurfaceKH
         physicalDeviceProps.vendorID,
         physicalDeviceProps.deviceID,
         physicalDeviceProps.driverVersion);
+    QE_LOG_INFO_CAT_F(
+        "Vulkan",
+        "Driver: {} | {}",
+        driverProperties.driverName,
+        driverProperties.driverInfo);
     QE_LOG_INFO_CAT_F(
         "Vulkan",
         "Capabilities: BDA={} non-uniform textures={} dynamic-state={} mesh={} task={} sample-shading={} wireframe={} wide-lines={}",

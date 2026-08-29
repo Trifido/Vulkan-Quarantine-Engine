@@ -2,6 +2,7 @@
 #include <QEProjectManager.h>
 #include <QEProjectModuleLoader.h>
 #include <Logging/QELogMacros.h>
+#include <Logging/QELogSession.h>
 #include <exception>
 
 #ifdef _WIN32
@@ -36,6 +37,8 @@ int main(int argc, char** argv)
     std::wcout << L"Working Directory fijado a: " << exePath.wstring() << L"\n\n";
 #endif
 
+    QELogSession logSession("QuarantineEditor");
+
     if (argc < 2 || argv[1] == nullptr)
     {
         QE_LOG_ERROR_CAT("Execution", "No project path provided. Launch QuarantineEditor from QuarantineLauncher.");
@@ -43,6 +46,7 @@ int main(int argc, char** argv)
     }
 
     const std::filesystem::path projectPath = argv[1];
+    QE_LOG_INFO_CAT_F("Project", "Requested project path: {}", projectPath.string());
     if (!QE::QEProjectManager::SetCurrentProjectPath(projectPath))
     {
         QE_LOG_ERROR_CAT_F("Execution", "Could not open project '{}'", projectPath.string());

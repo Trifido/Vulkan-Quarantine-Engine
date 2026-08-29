@@ -434,10 +434,14 @@ void ComputeDescriptorBuffer::Cleanup()
             {
                 if (this->ssboData[j]->uniformBuffers[i] != VK_NULL_HANDLE)
                 {
-                    QE_FREE_MEMORY(deviceModule->device, this->ssboData[j]->uniformBuffersMemory[i], "ComputeDescriptorBuffer::Cleanup.ssboData");
                     QE_DESTROY_BUFFER(deviceModule->device, this->ssboData[j]->uniformBuffers[i], "ComputeDescriptorBuffer::Cleanup.ssboData");
-
                     this->ssboData[j]->uniformBuffers[i] = VK_NULL_HANDLE;
+                }
+
+                if (this->ssboData[j]->uniformBuffersMemory[i] != VK_NULL_HANDLE)
+                {
+                    QE_FREE_MEMORY(deviceModule->device, this->ssboData[j]->uniformBuffersMemory[i], "ComputeDescriptorBuffer::Cleanup.ssboData");
+                    this->ssboData[j]->uniformBuffersMemory[i] = VK_NULL_HANDLE;
                 }
             }
         }

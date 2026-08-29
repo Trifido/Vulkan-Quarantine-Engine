@@ -19,7 +19,6 @@ class ViewportPanel;
 class EditorHeaderBar;
 class QEEditorConsole;
 class QEEditorConsoleSink;
-class QEConsoleLogSink;
 class ConsolePanel;
 class EditorSceneObjectFactory;
 class QETextureViewerPanel;
@@ -108,7 +107,6 @@ private:
     std::vector<std::filesystem::path> _externalDroppedFiles;
     std::unique_ptr<QEEditorConsole> editorConsole;
     std::unique_ptr<QEEditorConsoleSink> editorConsoleSink;
-    std::unique_ptr<QEConsoleLogSink> consoleLogSink;
     std::unique_ptr<EditorCameraService> editorCameraService;
     std::unique_ptr<EditorDebugSettings> editorDebugSettings;
     std::unique_ptr<EditorSceneStateSerializer> editorSceneStateSerializer;

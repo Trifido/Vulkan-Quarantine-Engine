@@ -3,6 +3,7 @@
 #include <QEProjectManager.h>
 #include <QEProjectModuleLoader.h>
 #include <Logging/QELogMacros.h>
+#include <Logging/QELogSession.h>
 
 #include <filesystem>
 #include <iostream>
@@ -33,6 +34,8 @@ namespace
 
 int main(int argc, char** argv)
 {
+    QELogSession logSession("QEExampleRuntime");
+
     const std::filesystem::path executableDirectory = ResolveExecutableDirectory();
     if (executableDirectory.empty())
     {
@@ -41,6 +44,7 @@ int main(int argc, char** argv)
     }
 
     const std::filesystem::path projectPath = std::filesystem::weakly_canonical(executableDirectory / ".." / "..");
+    QE_LOG_INFO_CAT_F("Project", "Runtime project path: {}", projectPath.string());
 
 #ifdef _DEBUG
     const std::filesystem::path engineWorkingDirectory = std::filesystem::weakly_canonical(projectPath / ".." / ".." / "build" / "Debug");

@@ -89,7 +89,7 @@ void QEBaseApp::InitWindow()
 
 void QEBaseApp::initVulkan()
 {
-    vulkanInstance.debug_level = DEBUG_LEVEL::ONLY_ERROR;
+    vulkanInstance.debug_level = DEBUG_LEVEL::NOT_VERBOSE;
     const VkResult instanceResult = vulkanInstance.createInstance();
     if (instanceResult != VK_SUCCESS)
     {

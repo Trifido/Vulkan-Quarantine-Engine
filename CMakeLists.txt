@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(QuarantineEngine)
+project(QuarantineEngine VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -15,6 +15,18 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 include(FetchContent)
 include(GNUInstallDirs)
 include(cmake/Dependencies.cmake)
+
+set(QE_GENERATED_INCLUDE_DIR "${CMAKE_BINARY_DIR}/generated")
+set(QE_BUILD_INFO_HEADER "${QE_GENERATED_INCLUDE_DIR}/QEBuildInfo.generated.h")
+add_custom_target(QEGenerateBuildInfo
+  COMMAND ${CMAKE_COMMAND}
+    "-DQE_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
+    "-DQE_OUTPUT_FILE=${QE_BUILD_INFO_HEADER}"
+    "-DQE_ENGINE_VERSION=${PROJECT_VERSION}"
+    -P "${CMAKE_SOURCE_DIR}/cmake/GenerateBuildInfo.cmake"
+  BYPRODUCTS "${QE_BUILD_INFO_HEADER}"
+  VERBATIM
+)
 
 # ------------------------------
 # Vulkan SDK
@@ -217,11 +229,14 @@ qe_collect_source_tree("${CMAKE_SOURCE_DIR}/src/QuarantineEditor" QE_EDITOR_SRC 
 # ------------------------------
 
 add_library(QuarantineEngine STATIC ${QE_SRC} ${QE_HDR})
+add_dependencies(QuarantineEngine QEGenerateBuildInfo)
 set_target_properties(QuarantineEngine PROPERTIES DEBUG_POSTFIX "d")
 qe_configure_msvc(QuarantineEngine)
 qe_assign_source_groups("QuarantineEngine" "${CMAKE_SOURCE_DIR}/src/QuarantineEngine" ${QE_SRC} ${QE_HDR})
 
 target_include_directories(QuarantineEngine
+  PRIVATE
+    ${QE_GENERATED_INCLUDE_DIR}
   PUBLIC
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/src/QuarantineEngine/Utilities
@@ -301,6 +316,21 @@ if (QE_BUILD_TESTS)
     NAME QESingletonLifecycle
     COMMAND QESingletonLifecycleTests
   )
+
+  add_executable(QEFileLoggingTests
+    tests/QEFileLoggingTests.cpp
+    src/QuarantineEngine/Logging/QEFileLogSink.cpp
+    src/QuarantineEngine/Logging/QELogger.cpp
+  )
+  target_include_directories(QEFileLoggingTests PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/QuarantineEngine
+  )
+  qe_configure_msvc(QEFileLoggingTests)
+
+  add_test(
+    NAME QEFileLogging
+    COMMAND QEFileLoggingTests
+  )
 endif()
 
 if (MSVC)
@@ -327,7 +357,7 @@ endfunction()
 
 assign_vs_folder("Engine" QuarantineEngine)
 assign_vs_folder("Editor" QuarantineEditor)
-assign_vs_folder("Tests" QESingletonLifecycleTests)
+assign_vs_folder("Tests" QESingletonLifecycleTests QEFileLoggingTests)
 assign_vs_folder("Dependencies"
   Jolt
   SPIRV-Reflect

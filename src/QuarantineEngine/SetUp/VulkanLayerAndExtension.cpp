@@ -1,17 +1,94 @@
 #include "VulkanLayerAndExtension.h"
+#include <mutex>
 #include <set>
+#include <string>
+#include <unordered_map>
 #include <Logging/QELogMacros.h>
+
+namespace
+{
+    constexpr uint32_t ValidationRepeatLimit = 5;
+
+    struct ValidationMessageDecision
+    {
+        bool ShouldLog{};
+        bool IsSuppressionNotice{};
+        uint32_t Occurrence{};
+        std::string Key;
+    };
+
+    ValidationMessageDecision TrackValidationMessage(
+        const VkDebugUtilsMessengerCallbackDataEXT* callbackData)
+    {
+        static std::mutex mutex;
+        static std::unordered_map<std::string, uint32_t> occurrences;
+
+        const std::string key = callbackData->pMessageIdName != nullptr
+            ? callbackData->pMessageIdName
+            : std::to_string(callbackData->messageIdNumber);
+
+        std::scoped_lock lock(mutex);
+        const uint32_t occurrence = ++occurrences[key];
+        return {
+            occurrence <= ValidationRepeatLimit ||
+                occurrence == ValidationRepeatLimit + 1 ||
+                occurrence % 1000 == 0,
+            occurrence == ValidationRepeatLimit + 1,
+            occurrence,
+            key
+        };
+    }
+}
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
     VkDebugUtilsMessageTypeFlagsEXT messageType,
     const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
     void* pUserData) {
-    messageSeverity = messageSeverity;
-    messageType = messageType;
-    pUserData = pUserData;
+    (void)messageType;
+    (void)pUserData;
 
-    if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+    const ValidationMessageDecision decision = TrackValidationMessage(pCallbackData);
+    if (!decision.ShouldLog)
+    {
+        return VK_FALSE;
+    }
+
+    if (decision.IsSuppressionNotice)
+    {
+        QE_LOG_WARN_CAT_F(
+            "Validation Layer",
+            "Further '{}' messages are suppressed; a progress entry is kept every 1000 occurrences",
+            decision.Key);
+    }
+    else if (decision.Occurrence > ValidationRepeatLimit)
+    {
+        if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+        {
+            QE_LOG_ERROR_CAT_F(
+                "Validation Layer",
+                "Validation message '{}' has occurred {} times",
+                decision.Key,
+                decision.Occurrence);
+        }
+        else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+        {
+            QE_LOG_WARN_CAT_F(
+                "Validation Layer",
+                "Validation message '{}' has occurred {} times",
+                decision.Key,
+                decision.Occurrence);
+        }
+        else
+        {
+            QE_LOG_INFO_CAT_F(
+                "Validation Layer",
+                "Validation message '{}' has occurred {} times",
+                decision.Key,
+                decision.Occurrence);
+        }
+    }
+    else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
     {
         QE_LOG_ERROR_CAT_F("Validation Layer", "{}", pCallbackData->pMessage);
     }
@@ -84,6 +161,7 @@ std::vector<const char*> getRequiredExtensions() {
 
     if (enableValidationLayers) {
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+        extensions.push_back(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
     }
 
     return extensions;
@@ -185,6 +263,8 @@ void VulkanLayerAndExtension::setupDebugMessenger(VkInstance instance, DEBUG_LEV
     if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
         throw std::runtime_error("failed to set up debug messenger!");
     }
+
+    QE_LOG_INFO_CAT("Vulkan", "Validation layers enabled with synchronization validation and best practices");
 }
 
 VkResult VulkanLayerAndExtension::CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger)

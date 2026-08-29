@@ -46,7 +46,6 @@
 #include <DebugSystem/QEDebugSystem.h>
 
 #include <Logging/QELogger.h>
-#include <Logging/QEConsoleLogSink.h>
 #include <QuarantineEditor/Logs/QEEditorConsole.h>
 #include <QuarantineEditor/Logs/QEEditorConsoleSink.h>
 
@@ -70,9 +69,6 @@ void QEEditorApp::OnInitialize()
     // Log
     editorConsole = std::make_unique<QEEditorConsole>();
     editorConsoleSink = std::make_unique<QEEditorConsoleSink>(editorConsole.get());
-    consoleLogSink = std::make_unique<QEConsoleLogSink>();
-
-    QELogger::Get().AddSink(consoleLogSink.get());
     QELogger::Get().AddSink(editorConsoleSink.get());
 
     // Main window & panels
@@ -135,11 +131,6 @@ void QEEditorApp::OnShutdown()
     if (editorConsoleSink)
     {
         QELogger::Get().RemoveSink(editorConsoleSink.get());
-    }
-
-    if (consoleLogSink)
-    {
-        QELogger::Get().RemoveSink(consoleLogSink.get());
     }
 
     if (viewportResources)
