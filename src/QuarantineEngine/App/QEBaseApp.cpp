@@ -15,8 +15,40 @@
 #include <OmniShadowResources.h>
 #include <QERuntimeMode.h>
 #include <CullingSceneManager.h>
+#include <Logging/QELogMacros.h>
+#include <algorithm>
+#include <cstdlib>
 #include <exception>
+#include <limits>
 #include <stdexcept>
+
+namespace
+{
+uint32_t GetStabilitySmokeFrameLimit()
+{
+    const char* rawValue = std::getenv("QE_STABILITY_SMOKE_FRAMES");
+    if (rawValue == nullptr || rawValue[0] == '\0')
+        return 0;
+
+    char* end = nullptr;
+    const unsigned long parsedValue = std::strtoul(rawValue, &end, 10);
+    if (end == rawValue ||
+        *end != '\0' ||
+        parsedValue == 0 ||
+        parsedValue > std::numeric_limits<uint32_t>::max())
+    {
+        QE_LOG_WARN_CAT_F(
+            "Stability",
+            "Ignoring invalid QE_STABILITY_SMOKE_FRAMES value '{}'",
+            rawValue);
+        return 0;
+    }
+
+    // Eight rendered frames leave enough time for both resize callbacks and
+    // their corresponding swapchain recreations to complete before shutdown.
+    return static_cast<uint32_t>(std::max(parsedValue, 8UL));
+}
+}
 
 QEBaseApp::QEBaseApp()
 {
@@ -289,9 +321,36 @@ void QEBaseApp::OnMainViewportResized(uint32_t width, uint32_t height)
 
 void QEBaseApp::mainLoop()
 {
+    const uint32_t stabilitySmokeFrameLimit = GetStabilitySmokeFrameLimit();
+    uint32_t stabilitySmokeFrame = 0;
+
+    if (stabilitySmokeFrameLimit > 0)
+    {
+        QE_LOG_INFO_CAT_F(
+            "Stability",
+            "Automated editor smoke test enabled for {} frames",
+            stabilitySmokeFrameLimit);
+    }
+
     while (!glfwWindowShouldClose(mainWindow->getWindow()))
     {
         glfwPollEvents();
+
+        if (stabilitySmokeFrameLimit > 0)
+        {
+            ++stabilitySmokeFrame;
+
+            if (stabilitySmokeFrame == 2)
+            {
+                QE_LOG_INFO_CAT("Stability", "Requesting smoke-test resize to 1280x720");
+                glfwSetWindowSize(mainWindow->getWindow(), 1280, 720);
+            }
+            else if (stabilitySmokeFrame == 4)
+            {
+                QE_LOG_INFO_CAT("Stability", "Requesting smoke-test resize to 1410x775");
+                glfwSetWindowSize(mainWindow->getWindow(), 1410, 775);
+            }
+        }
 
         OnFrameStart();
 
@@ -338,6 +397,16 @@ void QEBaseApp::mainLoop()
         this->debugSystem->UpdateGraphicBuffers();
 
         this->drawFrame(currentFrame);
+
+        if (stabilitySmokeFrameLimit > 0 &&
+            stabilitySmokeFrame >= stabilitySmokeFrameLimit)
+        {
+            QE_LOG_INFO_CAT_F(
+                "Stability",
+                "Automated editor smoke test completed after {} frames",
+                stabilitySmokeFrame);
+            glfwSetWindowShouldClose(mainWindow->getWindow(), GLFW_TRUE);
+        }
     }
 
     vkDeviceWaitIdle(deviceModule->device);
@@ -674,5 +743,12 @@ void QEBaseApp::recreateSwapchain()
 
     OnSwapchainRecreated();
     mainWindow->ConsumeFramebufferResized();
+
+    QE_LOG_INFO_CAT_F(
+        "Swapchain",
+        "Swapchain recreated at {}x{} with {} images",
+        swapchainModule->swapChainExtent.width,
+        swapchainModule->swapChainExtent.height,
+        swapchainModule->getNumSwapChainImages());
 }
 

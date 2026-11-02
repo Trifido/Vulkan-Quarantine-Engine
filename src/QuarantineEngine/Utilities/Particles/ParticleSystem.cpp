@@ -50,7 +50,7 @@ void ParticleSystem::InitializeMaterial()
     newMatInstance->descriptor->ssboSize["ParticleSSBO"] = computeNodeUpdateParticles->computeDescriptor->ssboSize[0];
 
     newMatInstance->descriptor->ubos["particleSystemUBO"] = std::make_shared<UniformBufferObject>();
-    newMatInstance->descriptor->ubos["particleSystemUBO"]->CreateUniformBuffer(sizeof(ParticleTextureParamsUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    newMatInstance->descriptor->ubos["particleSystemUBO"]->CreateUniformBuffer(sizeof(ParticleTextureParamsUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule, "ParticleSystem::particleSystemUBO");
     newMatInstance->descriptor->uboSizes["particleSystemUBO"] = sizeof(ParticleTextureParamsUniform);
     for (int currentFrame = 0; currentFrame < MAX_FRAMES_IN_FLIGHT; currentFrame++)
     {

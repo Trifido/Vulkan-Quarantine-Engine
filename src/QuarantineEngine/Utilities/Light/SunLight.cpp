@@ -6,7 +6,7 @@ QESunLight::QESunLight() : QEDirectionalLight()
 {
     this->lightType = LightType::SUN_LIGHT;
     this->sunUBO = std::make_shared<UniformBufferObject>();
-    this->sunUBO->CreateUniformBuffer(sizeof(SunUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->sunUBO->CreateUniformBuffer(sizeof(SunUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule, "QESunLight::sunUBO");
 
     this->baseIntensity = 100.0f;
     this->diffuse = glm::vec3(0.6f);

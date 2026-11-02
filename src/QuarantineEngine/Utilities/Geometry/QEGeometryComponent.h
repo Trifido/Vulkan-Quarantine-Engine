@@ -27,7 +27,7 @@ protected:
     virtual void CreateIndexBuffers();
     virtual void CreateVertexBuffers();
     void CreateAnimationVertexBuffers();
-    void CreateGeometryBuffer(VkDeviceSize bufferSize, VkBufferUsageFlags usageFlags, const void* dataArray, VkBuffer& buffer, VkDeviceMemory& memory);
+    void CreateGeometryBuffer(VkDeviceSize bufferSize, VkBufferUsageFlags usageFlags, const void* dataArray, VkBuffer& buffer, VkDeviceMemory& memory, const char* owner);
 
 private:
     std::unique_ptr<IQEMeshGenerator> generator;

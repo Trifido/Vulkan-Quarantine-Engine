@@ -26,6 +26,23 @@ bool IsLightOwnerInactiveInHierarchy(const std::shared_ptr<QELight>& light)
 
     return !light->Owner->IsActiveInHierarchy();
 }
+
+void CleanupDirectionalLightResources(const std::shared_ptr<QEDirectionalLight>& light)
+{
+    if (!light)
+        return;
+
+    if (light->lightType == LightType::SUN_LIGHT)
+    {
+        if (auto sunLight = std::dynamic_pointer_cast<QESunLight>(light))
+        {
+            sunLight->CleanupSunResources();
+            return;
+        }
+    }
+
+    light->CleanShadowMapResources();
+}
 }
 
 LightManager::LightManager()
@@ -36,7 +53,7 @@ LightManager::LightManager()
 
     this->lightManagerUniform = std::make_shared<LightManagerUniform>();
     this->lightUBO = std::make_shared<UniformBufferObject>();
-    this->lightUBO->CreateUniformBuffer(sizeof(LightManagerUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->lightUBO->CreateUniformBuffer(sizeof(LightManagerUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule, "LightManager::lightUBO");
 
     this->lightSSBOSize = sizeof(LightUniform) * this->MAX_NUM_LIGHT;
     this->lightSSBO = std::make_shared<UniformBufferObject>();
@@ -640,8 +657,7 @@ void LightManager::ResetShadowSceneState()
 
     for (auto& dLight : this->DirLights)
     {
-        if (dLight)
-            dLight->CleanShadowMapResources();
+        CleanupDirectionalLightResources(dLight);
     }
 
     for (auto& sLight : this->SpotLights)
@@ -708,8 +724,7 @@ void LightManager::CleanShadowMapResources()
 
     for (auto& dLight : this->DirLights)
     {
-        if (dLight)
-            dLight->CleanShadowMapResources();
+        CleanupDirectionalLightResources(dLight);
     }
 
     for (auto& sLight : this->SpotLights)

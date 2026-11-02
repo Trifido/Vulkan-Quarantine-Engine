@@ -32,7 +32,8 @@ namespace
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
             stagingBuffer,
             stagingBufferMemory,
-            deviceModule);
+            deviceModule,
+            "QEGeometryResourceCache::stagingBuffer");
 
         void* data = nullptr;
         vkMapMemory(deviceModule.device, stagingBufferMemory, 0, bufferSize, 0, &data);
@@ -45,7 +46,8 @@ namespace
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
             allocation.Buffer,
             allocation.Memory,
-            deviceModule);
+            deviceModule,
+            "QEGeometryResourceCache::geometryBuffer");
         BufferManageModule::copyBuffer(stagingBuffer, allocation.Buffer, bufferSize, deviceModule);
 
         QE_DESTROY_BUFFER(deviceModule.device, stagingBuffer, "QEGeometryResourceCache::CreateBufferAllocation");

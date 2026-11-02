@@ -14,7 +14,7 @@ BufferManageModule::BufferManageModule()
 {
 }
 
-void BufferManageModule::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory, DeviceModule& deviceModule)
+void BufferManageModule::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory, DeviceModule& deviceModule, const char* owner)
 {
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -25,6 +25,7 @@ void BufferManageModule::createBuffer(VkDeviceSize size, VkBufferUsageFlags usag
     if (vkCreateBuffer(deviceModule.device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
         throw std::runtime_error("failed to create buffer!");
     }
+    QE_TRACK_BUFFER_ALLOCATION(buffer, size, usage, owner);
 
     VkMemoryRequirements memRequirements;
     vkGetBufferMemoryRequirements(deviceModule.device, buffer, &memRequirements);
@@ -62,7 +63,7 @@ void BufferManageModule::createBuffer(VkDeviceSize size, VkBufferUsageFlags usag
         QE_DESTROY_BUFFER(deviceModule.device, buffer, "BufferManageModule::createBuffer");
         throw std::runtime_error("failed to allocate buffer memory!");
     }
-    QE_TRACK_MEMORY_ALLOCATION(bufferMemory, "BufferManageModule::createBuffer");
+    QE_TRACK_MEMORY_ALLOCATION(bufferMemory, owner);
 
     // Bind memory
     if (vkBindBufferMemory(deviceModule.device, buffer, bufferMemory, 0) != VK_SUCCESS)
@@ -77,7 +78,7 @@ void BufferManageModule::createBuffer(VkDeviceSize size, VkBufferUsageFlags usag
 }
 
 
-void BufferManageModule::createSharedBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory, DeviceModule& deviceModule)
+void BufferManageModule::createSharedBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory, DeviceModule& deviceModule, const char* owner)
 {
     std::vector<uint32_t> queueIndices = { deviceModule.queueIndices.graphicsFamily.value(), deviceModule.queueIndices.computeFamily.value() };
 
@@ -92,6 +93,7 @@ void BufferManageModule::createSharedBuffer(VkDeviceSize size, VkBufferUsageFlag
     if (vkCreateBuffer(deviceModule.device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
         throw std::runtime_error("failed to create vertex buffer!");
     }
+    QE_TRACK_BUFFER_ALLOCATION(buffer, size, usage, owner);
 
     VkMemoryRequirements memRequirements;
     vkGetBufferMemoryRequirements(deviceModule.device, buffer, &memRequirements);
@@ -102,11 +104,17 @@ void BufferManageModule::createSharedBuffer(VkDeviceSize size, VkBufferUsageFlag
     allocInfo.memoryTypeIndex = IMT::findMemoryType(memRequirements.memoryTypeBits, properties, deviceModule.physicalDevice);
 
     if (vkAllocateMemory(deviceModule.device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
+        QE_DESTROY_BUFFER(deviceModule.device, buffer, "BufferManageModule::createSharedBuffer");
         throw std::runtime_error("failed to allocate vertex buffer memory!");
     }
-    QE_TRACK_MEMORY_ALLOCATION(bufferMemory, "BufferManageModule::createSharedBuffer");
+    QE_TRACK_MEMORY_ALLOCATION(bufferMemory, owner);
 
-    vkBindBufferMemory(deviceModule.device, buffer, bufferMemory, 0);
+    if (vkBindBufferMemory(deviceModule.device, buffer, bufferMemory, 0) != VK_SUCCESS)
+    {
+        QE_DESTROY_BUFFER(deviceModule.device, buffer, "BufferManageModule::createSharedBuffer");
+        QE_FREE_MEMORY(deviceModule.device, bufferMemory, "BufferManageModule::createSharedBuffer");
+        throw std::runtime_error("failed to bind shared buffer memory!");
+    }
 }
 
 void BufferManageModule::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, DeviceModule& deviceModule)

@@ -42,44 +42,59 @@ void ComputeDescriptorBuffer::StartResources(std::shared_ptr<ShaderModule> shade
         if (br.name == "UniformDeltaTime")
         {
             if (this->ubos.find("UniformDeltaTime") == this->ubos.end())
+            {
                 this->ubos["UniformDeltaTime"] = std::make_shared<UniformBufferObject>();
+                this->ownedUbos.insert("UniformDeltaTime");
+            }
 
             this->uboSizes["UniformDeltaTime"] = sizeof(DeltaTimeUniform);
-            this->ubos["UniformDeltaTime"]->CreateUniformBuffer(this->uboSizes["UniformDeltaTime"], MAX_FRAMES_IN_FLIGHT, *deviceModule);
+            this->ubos["UniformDeltaTime"]->CreateUniformBuffer(this->uboSizes["UniformDeltaTime"], MAX_FRAMES_IN_FLIGHT, *deviceModule, "ComputeDescriptorBuffer::UniformDeltaTime");
 
             this->deltaTimeUniform = std::make_shared<DeltaTimeUniform>();
         }
         else if (br.name == "UniformVertexParam")
         {
             if (this->ubos.find("UniformVertexParam") == this->ubos.end())
+            {
                 this->ubos["UniformVertexParam"] = std::make_shared<UniformBufferObject>();
+                this->ownedUbos.insert("UniformVertexParam");
+            }
 
             this->uboSizes["UniformVertexParam"] = sizeof(int);
-            this->ubos["UniformVertexParam"]->CreateUniformBuffer(this->uboSizes["UniformVertexParam"], MAX_FRAMES_IN_FLIGHT, *deviceModule);
+            this->ubos["UniformVertexParam"]->CreateUniformBuffer(this->uboSizes["UniformVertexParam"], MAX_FRAMES_IN_FLIGHT, *deviceModule, "ComputeDescriptorBuffer::UniformVertexParam");
         }
         else if (br.name == "UniformParticleSystem")
         {
             if (this->ubos.find("UniformParticleSystem") == this->ubos.end())
+            {
                 this->ubos["UniformParticleSystem"] = std::make_shared<UniformBufferObject>();
+                this->ownedUbos.insert("UniformParticleSystem");
+            }
 
             this->uboSizes["UniformParticleSystem"] = sizeof(ParticleSystemUniform);
-            this->ubos["UniformParticleSystem"]->CreateUniformBuffer(this->uboSizes["UniformParticleSystem"], MAX_FRAMES_IN_FLIGHT, *deviceModule);
+            this->ubos["UniformParticleSystem"]->CreateUniformBuffer(this->uboSizes["UniformParticleSystem"], MAX_FRAMES_IN_FLIGHT, *deviceModule, "ComputeDescriptorBuffer::UniformParticleSystem");
         }
         else if (br.name == "UniformParticleTexture")
         {
             if (this->ubos.find("UniformParticleTexture") == this->ubos.end())
+            {
                 this->ubos["UniformParticleTexture"] = std::make_shared<UniformBufferObject>();
+                this->ownedUbos.insert("UniformParticleTexture");
+            }
 
             this->uboSizes["UniformParticleTexture"] = sizeof(ParticleTextureParamsUniform);
-            this->ubos["UniformParticleTexture"]->CreateUniformBuffer(this->uboSizes["UniformParticleTexture"], MAX_FRAMES_IN_FLIGHT, *deviceModule);
+            this->ubos["UniformParticleTexture"]->CreateUniformBuffer(this->uboSizes["UniformParticleTexture"], MAX_FRAMES_IN_FLIGHT, *deviceModule, "ComputeDescriptorBuffer::UniformParticleTexture");
         }
         else if (br.name == "UniformNewParticles")
         {
             if (this->ubos.find("UniformNewParticles") == this->ubos.end())
+            {
                 this->ubos["UniformNewParticles"] = std::make_shared<UniformBufferObject>();
+                this->ownedUbos.insert("UniformNewParticles");
+            }
 
             this->uboSizes["UniformNewParticles"] = sizeof(NewParticleUniform);
-            this->ubos["UniformNewParticles"]->CreateUniformBuffer(this->uboSizes["UniformNewParticles"], MAX_FRAMES_IN_FLIGHT, *deviceModule);
+            this->ubos["UniformNewParticles"]->CreateUniformBuffer(this->uboSizes["UniformNewParticles"], MAX_FRAMES_IN_FLIGHT, *deviceModule, "ComputeDescriptorBuffer::UniformNewParticles");
         }
         else if (br.name == "SunUniform")
         {
@@ -447,7 +462,42 @@ void ComputeDescriptorBuffer::Cleanup()
         }
     }
 
+    for (const std::string& name : this->ownedUbos)
+    {
+        const auto uboIt = this->ubos.find(name);
+        if (uboIt == this->ubos.end() || !uboIt->second)
+        {
+            continue;
+        }
+
+        auto& ubo = *uboIt->second;
+        const size_t resourceCount = std::max(
+            ubo.uniformBuffers.size(),
+            ubo.uniformBuffersMemory.size());
+        for (size_t i = 0; i < resourceCount; ++i)
+        {
+            if (i < ubo.uniformBuffers.size() && ubo.uniformBuffers[i] != VK_NULL_HANDLE)
+            {
+                QE_DESTROY_BUFFER(
+                    deviceModule->device,
+                    ubo.uniformBuffers[i],
+                    "ComputeDescriptorBuffer::Cleanup.ownedUbo");
+            }
+
+            if (i < ubo.uniformBuffersMemory.size() &&
+                ubo.uniformBuffersMemory[i] != VK_NULL_HANDLE)
+            {
+                QE_FREE_MEMORY(
+                    deviceModule->device,
+                    ubo.uniformBuffersMemory[i],
+                    "ComputeDescriptorBuffer::Cleanup.ownedUbo");
+            }
+        }
+    }
+
+    this->ownedUbos.clear();
     this->ubos.clear();
+    this->uboSizes.clear();
 
     this->ssboData.clear();
 

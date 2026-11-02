@@ -229,7 +229,7 @@ void SwapChainModule::UpdateScreenData(const VkExtent2D& extent, uint32_t frameI
 void SwapChainModule::InitializeScreenDataResources()
 {
     this->screenData = std::make_shared<UniformBufferObject>();
-    this->screenData->CreateUniformBuffer(sizeof(ScreenDataUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    this->screenData->CreateUniformBuffer(sizeof(ScreenDataUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule, "SwapChainModule::screenData");
 }
 
 void SwapChainModule::CleanScreenDataResources()

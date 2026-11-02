@@ -264,10 +264,10 @@ void AtmosphereSystem::SetUpResources()
             return;
 
         this->resolutionUBO = std::make_shared<UniformBufferObject>();
-        this->resolutionUBO->CreateUniformBuffer(sizeof(ScreenResolutionUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+        this->resolutionUBO->CreateUniformBuffer(sizeof(ScreenResolutionUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule, "AtmosphereSystem::resolutionUBO");
 
         this->atmosphereUBO = std::make_shared<UniformBufferObject>();
-        this->atmosphereUBO->CreateUniformBuffer(sizeof(AtmosphereUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+        this->atmosphereUBO->CreateUniformBuffer(sizeof(AtmosphereUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule, "AtmosphereSystem::atmosphereUBO");
         this->UpdateAtmosphereUBO();
 
         this->UpdateAtmopshereResolution();

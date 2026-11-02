@@ -6,6 +6,7 @@
 #include "ShaderModule.h"
 #include "CustomTexture.h"
 #include "UBO.h"
+#include <unordered_set>
 
 class ComputeDescriptorBuffer
 {
@@ -21,6 +22,7 @@ private:
     std::shared_ptr<SunUniform> sunUniform;
 
     uint32_t _numSSBOs = 0;
+    std::unordered_set<std::string> ownedUbos;
 
 public:
     std::vector<VkDescriptorSet>    descriptorSets;

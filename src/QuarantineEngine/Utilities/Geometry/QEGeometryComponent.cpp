@@ -249,20 +249,20 @@ void QEGeometryComponent::CreateAnimationVertexBuffers()
     SyncResourceViews();
 }
 
-void QEGeometryComponent::CreateGeometryBuffer(VkDeviceSize bufferSize, VkBufferUsageFlags usageFlags, const void* dataArray, VkBuffer& buffer, VkDeviceMemory& memory)
+void QEGeometryComponent::CreateGeometryBuffer(VkDeviceSize bufferSize, VkBufferUsageFlags usageFlags, const void* dataArray, VkBuffer& buffer, VkDeviceMemory& memory, const char* owner)
 {
     ownsBuffersDirectly = true;
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
-    BufferManageModule::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory, *deviceModule_ptr);
+    BufferManageModule::createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory, *deviceModule_ptr, owner);
 
     void* data;
     vkMapMemory(deviceModule_ptr->device, stagingBufferMemory, 0, bufferSize, 0, &data);
     memcpy(data, dataArray, (size_t)bufferSize);
     vkUnmapMemory(deviceModule_ptr->device, stagingBufferMemory);
 
-    BufferManageModule::createBuffer(bufferSize, usageFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, buffer, memory, *deviceModule_ptr);
+    BufferManageModule::createBuffer(bufferSize, usageFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, buffer, memory, *deviceModule_ptr, owner);
     BufferManageModule::copyBuffer(stagingBuffer, buffer, bufferSize, *deviceModule_ptr);
 
     QE_DESTROY_BUFFER(deviceModule_ptr->device, stagingBuffer, "QEGeometryComponent::CreateGeometryBuffer");

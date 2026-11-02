@@ -218,7 +218,7 @@ public:
     std::vector<VkBuffer>           uniformBuffers;
     std::vector<VkDeviceMemory>     uniformBuffersMemory;
 
-    void CreateUniformBuffer(VkDeviceSize bufferSize, uint32_t numImages, DeviceModule& device);
+    void CreateUniformBuffer(VkDeviceSize bufferSize, uint32_t numImages, DeviceModule& device, const char* owner = "UniformBufferObject::CreateUniformBuffer");
     void CreateSSBO(VkDeviceSize bufferSize, uint32_t numImages, DeviceModule& device);
     void FillSSBO(VkBuffer stagingBuffer, VkDeviceSize bufferSize, uint32_t numImages, DeviceModule& device);
 };

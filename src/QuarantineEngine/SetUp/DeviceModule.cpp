@@ -6,6 +6,7 @@
 #include <unordered_set>
 
 #include "QueueFamiliesModule.h"
+#include <Helpers/QEMemoryTrack.h>
 #include <Logging/QELogMacros.h>
 
 namespace
@@ -350,6 +351,7 @@ void DeviceModule::cleanup()
 {
     if (device != VK_NULL_HANDLE)
     {
+        QEReportLiveBuffers();
         vkDestroyDevice(device, nullptr);
         device = VK_NULL_HANDLE;
     }

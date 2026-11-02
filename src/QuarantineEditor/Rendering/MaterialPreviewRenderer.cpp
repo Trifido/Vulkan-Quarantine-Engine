@@ -349,7 +349,7 @@ void MaterialPreviewRenderer::EnsurePreviewScene()
     _cameraObject->AddComponent(std::make_shared<QECamera>(512.0f, 512.0f));
     _camera = _cameraObject->GetComponent<QECamera>();
     _previewCameraUBO = std::make_shared<UniformBufferObject>();
-    _previewCameraUBO->CreateUniformBuffer(sizeof(UniformCamera), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    _previewCameraUBO->CreateUniformBuffer(sizeof(UniformCamera), MAX_FRAMES_IN_FLIGHT, *deviceModule, "MaterialPreviewRenderer::cameraUBO");
     InitializePreviewLightingOverrides();
 
     if (auto transform = _cameraObject->GetComponent<QETransform>())
@@ -379,7 +379,7 @@ void MaterialPreviewRenderer::InitializePreviewLightingOverrides()
         return;
 
     _previewLightUBO = std::make_shared<UniformBufferObject>();
-    _previewLightUBO->CreateUniformBuffer(sizeof(LightManagerUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule);
+    _previewLightUBO->CreateUniformBuffer(sizeof(LightManagerUniform), MAX_FRAMES_IN_FLIGHT, *deviceModule, "MaterialPreviewRenderer::lightUBO");
 
     _previewLightSSBO = std::make_shared<UniformBufferObject>();
     _previewLightSSBO->CreateSSBO(lightManager->GetLightSSBOSize(), MAX_FRAMES_IN_FLIGHT, *deviceModule);
