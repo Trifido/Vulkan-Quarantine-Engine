@@ -8,6 +8,8 @@
 
 #include <algorithm>
 #include <fstream>
+#include <Data/QEAssetSchema.h>
+#include <Data/QEAtomicFile.h>
 #include <vector>
 
 namespace fs = std::filesystem;
@@ -101,17 +103,34 @@ namespace
             return false;
         }
 
-        YAML::Emitter out;
-        out << assetNode;
+        YAML::Node versionedAsset = YAML::Clone(assetNode);
+        QE::AssetSchema::Stamp(
+            versionedAsset,
+            "AnimationGraph",
+            QE::AssetSchema::AnimationGraphVersion);
 
-        std::ofstream file(assetPath, std::ios::binary | std::ios::trunc);
-        if (!file.is_open())
+        YAML::Emitter out;
+        out << versionedAsset;
+        if (!out.good())
         {
-            QE_LOG_ERROR_CAT_F("QEAnimationGraphAssetHelper", "Could not open graph asset {}", assetPath.string());
+            QE_LOG_ERROR_CAT_F(
+                "QEAnimationGraphAssetHelper",
+                "Could not serialize graph asset {} ({})",
+                assetPath.string(),
+                out.GetLastError());
             return false;
         }
 
-        file << out.c_str();
+        std::string error;
+        if (!QE::Persistence::WriteTextFileAtomically(assetPath, out.c_str(), {}, &error))
+        {
+            QE_LOG_ERROR_CAT_F(
+                "QEAnimationGraphAssetHelper",
+                "Could not save graph asset {} atomically ({})",
+                assetPath.string(),
+                error);
+            return false;
+        }
         return true;
     }
 
@@ -122,6 +141,21 @@ namespace
 
     bool ApplyGraphAssetNode(QEAnimationComponent& component, const YAML::Node& root)
     {
+        std::string schemaError;
+        if (!QE::AssetSchema::ValidateReadable(
+            root,
+            "AnimationGraph",
+            QE::AssetSchema::AnimationGraphVersion,
+            nullptr,
+            &schemaError))
+        {
+            QE_LOG_ERROR_CAT_F(
+                "QEAnimationGraphAssetHelper",
+                "Unsupported animation graph schema: {}",
+                schemaError);
+            return false;
+        }
+
         const std::vector<AnimationState> states =
             root["States"] ? root["States"].as<std::vector<AnimationState>>() : std::vector<AnimationState>{};
         const std::vector<QETransition> transitions =

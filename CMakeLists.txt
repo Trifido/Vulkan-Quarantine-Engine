@@ -344,6 +344,21 @@ if (QE_BUILD_TESTS)
     NAME QETeardownStack
     COMMAND QETeardownStackTests
   )
+
+  add_executable(QEAssetPersistenceTests
+    tests/QEAssetPersistenceTests.cpp
+    src/QuarantineEngine/Data/QEAtomicFile.cpp
+  )
+  target_include_directories(QEAssetPersistenceTests PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/QuarantineEngine
+  )
+  target_link_libraries(QEAssetPersistenceTests PRIVATE yaml-cpp)
+  qe_configure_msvc(QEAssetPersistenceTests)
+
+  add_test(
+    NAME QEAssetPersistence
+    COMMAND QEAssetPersistenceTests
+  )
 endif()
 
 if (MSVC)
@@ -370,7 +385,7 @@ endfunction()
 
 assign_vs_folder("Engine" QuarantineEngine)
 assign_vs_folder("Editor" QuarantineEditor)
-assign_vs_folder("Tests" QESingletonLifecycleTests QEFileLoggingTests QETeardownStackTests)
+assign_vs_folder("Tests" QESingletonLifecycleTests QEFileLoggingTests QETeardownStackTests QEAssetPersistenceTests)
 assign_vs_folder("Dependencies"
   Jolt
   SPIRV-Reflect

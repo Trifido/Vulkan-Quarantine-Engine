@@ -3,6 +3,8 @@
 #include <fstream>
 #include <system_error>
 
+#include <Data/QEAssetSchema.h>
+#include <Data/QEAtomicFile.h>
 #include <Logging/QELogMacros.h>
 
 namespace fs = std::filesystem;
@@ -156,6 +158,7 @@ ShadowMappingMode QEShaderYamlHelper::ShadowModeFromString(const std::string& va
 YAML::Node QEShaderYamlHelper::SerializeShaderAsset(const QEShaderAsset& asset)
 {
     YAML::Node root;
+    QE::AssetSchema::Stamp(root, "Shader", QE::AssetSchema::ShaderVersion);
     YAML::Node shader;
 
     shader["Name"] = asset.Name;
@@ -198,6 +201,18 @@ YAML::Node QEShaderYamlHelper::SerializeShaderAsset(const QEShaderAsset& asset)
 
 bool QEShaderYamlHelper::DeserializeShaderAsset(const YAML::Node& root, QEShaderAsset& asset)
 {
+    std::string schemaError;
+    if (!QE::AssetSchema::ValidateReadable(
+        root,
+        "Shader",
+        QE::AssetSchema::ShaderVersion,
+        nullptr,
+        &schemaError))
+    {
+        QE_LOG_ERROR_CAT_F("QEShaderYamlHelper", "Unsupported shader schema: {}", schemaError);
+        return false;
+    }
+
     const YAML::Node shader = root["Shader"];
     if (!shader)
         return false;
@@ -267,16 +282,26 @@ bool QEShaderYamlHelper::WriteShaderFile(const fs::path& filePath, const QEShade
 
     YAML::Emitter out;
     out << SerializeShaderAsset(asset);
-
-    std::ofstream file(filePath, std::ios::out | std::ios::trunc);
-    if (!file.is_open())
+    if (!out.good())
     {
-        QE_LOG_ERROR_CAT_F("QEShaderYamlHelper", "Error opening shader asset file: {}", filePath.string());
+        QE_LOG_ERROR_CAT_F(
+            "QEShaderYamlHelper",
+            "Error serializing shader asset: {} ({})",
+            filePath.string(),
+            out.GetLastError());
         return false;
     }
 
-    file << out.c_str();
-    file.close();
+    std::string error;
+    if (!QE::Persistence::WriteTextFileAtomically(filePath, out.c_str(), {}, &error))
+    {
+        QE_LOG_ERROR_CAT_F(
+            "QEShaderYamlHelper",
+            "Error saving shader asset atomically: {} ({})",
+            filePath.string(),
+            error);
+        return false;
+    }
     return true;
 }
 

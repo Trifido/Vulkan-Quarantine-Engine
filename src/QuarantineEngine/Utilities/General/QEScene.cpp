@@ -1,5 +1,7 @@
 #include "QEScene.h"
 #include <GameObjectManager.h>
+#include <Data/QEAssetSchema.h>
+#include <Data/QEAtomicFile.h>
 
 namespace
 {
@@ -42,6 +44,7 @@ bool QEScene::SerializeScene()
     auto lightManager = LightManager::getInstance();
 
     YAML::Node root;
+    QE::AssetSchema::Stamp(root, "Scene", QE::AssetSchema::SceneVersion);
     root["AtmosphereDto"] = SerializeAtmosphere(atmosphereDto);
     root["PhysicsSettings"]["Gravity"] = physicsGravity;
     root["Materials"] = materialManager->SerializeMaterials();
@@ -49,16 +52,24 @@ bool QEScene::SerializeScene()
 
     fs::path filePath = this->scenePath / this->sceneName;
 
-    std::ofstream file(filePath, std::ios::binary | std::ios::trunc);
-
-    if (!file.is_open())
+    YAML::Emitter output;
+    output << root;
+    if (!output.good())
     {
-        QE_LOG_ERROR_CAT_F("QEScene", "Error saving the scene {}", this->sceneName);
+        QE_LOG_ERROR_CAT_F("QEScene", "Error serializing the scene {}", this->sceneName);
         return false;
     }
 
-    file << root;
-    file.close();
+    std::string error;
+    if (!QE::Persistence::WriteTextFileAtomically(filePath, output.c_str(), {}, &error))
+    {
+        QE_LOG_ERROR_CAT_F(
+            "QEScene",
+            "Error saving the scene {} atomically: {}",
+            this->sceneName,
+            error);
+        return false;
+    }
 
     return true;
 }
@@ -86,6 +97,22 @@ bool QEScene::DeserializeScene()
     catch (const YAML::ParserException& e)
     {
         QE_LOG_ERROR_CAT_F("QEScene", "Invalid YAML {} ({})", filePath.string(), e.what());
+        return false;
+    }
+
+    std::string schemaError;
+    if (!QE::AssetSchema::ValidateReadable(
+        root,
+        "Scene",
+        QE::AssetSchema::SceneVersion,
+        nullptr,
+        &schemaError))
+    {
+        QE_LOG_ERROR_CAT_F(
+            "QEScene",
+            "Unsupported scene schema '{}': {}",
+            filePath.string(),
+            schemaError);
         return false;
     }
 

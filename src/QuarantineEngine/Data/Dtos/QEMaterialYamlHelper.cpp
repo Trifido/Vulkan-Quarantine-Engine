@@ -3,6 +3,8 @@
 #include <fstream>
 #include <iostream>
 #include <system_error>
+#include <Data/QEAssetSchema.h>
+#include <Data/QEAtomicFile.h>
 #include <Logging/QELogMacros.h>
 
 namespace fs = std::filesystem;
@@ -42,6 +44,7 @@ std::string QEMaterialYamlHelper::NormalizeYamlTexturePath(const std::string& pa
 YAML::Node QEMaterialYamlHelper::SerializeMaterialDto(const MaterialDto& dto)
 {
     YAML::Node root;
+    QE::AssetSchema::Stamp(root, "Material", QE::AssetSchema::MaterialVersion);
     YAML::Node material;
 
     material["Name"] = dto.Name;
@@ -99,6 +102,18 @@ YAML::Node QEMaterialYamlHelper::SerializeMaterialDto(const MaterialDto& dto)
 
 bool QEMaterialYamlHelper::DeserializeMaterialDto(const YAML::Node& root, MaterialDto& dto)
 {
+    std::string schemaError;
+    if (!QE::AssetSchema::ValidateReadable(
+        root,
+        "Material",
+        QE::AssetSchema::MaterialVersion,
+        nullptr,
+        &schemaError))
+    {
+        QE_LOG_ERROR_CAT_F("QEMaterialYamlHelper", "Unsupported material schema: {}", schemaError);
+        return false;
+    }
+
     const YAML::Node material = root["Material"];
     if (!material)
         return false;
@@ -173,16 +188,26 @@ bool QEMaterialYamlHelper::WriteMaterialFile(const fs::path& filePath, const Mat
 
     YAML::Emitter out;
     out << SerializeMaterialDto(dto);
-
-    std::ofstream file(filePath, std::ios::out | std::ios::trunc);
-    if (!file.is_open())
+    if (!out.good())
     {
-        QE_LOG_ERROR_CAT_F("QEMaterialYamlHelper", "ImportAnimationFile - Error opening the file: {}", filePath.string());
+        QE_LOG_ERROR_CAT_F(
+            "QEMaterialYamlHelper",
+            "Error serializing material: {} ({})",
+            filePath.string(),
+            out.GetLastError());
         return false;
     }
 
-    file << out.c_str();
-    file.close();
+    std::string error;
+    if (!QE::Persistence::WriteTextFileAtomically(filePath, out.c_str(), {}, &error))
+    {
+        QE_LOG_ERROR_CAT_F(
+            "QEMaterialYamlHelper",
+            "Error saving material atomically: {} ({})",
+            filePath.string(),
+            error);
+        return false;
+    }
     return true;
 }
 

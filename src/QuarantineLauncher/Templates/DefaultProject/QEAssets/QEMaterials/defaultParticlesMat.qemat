@@ -1,3 +1,5 @@
+AssetType: Material
+SchemaVersion: 1
 Material:
   Name: defaultParticlesMat
   FilePath: QEAssets/QEMaterials/defaultParticlesMat.qemat

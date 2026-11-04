@@ -1,3 +1,5 @@
+AssetType: Scene
+SchemaVersion: 1
 AtmosphereDto:
   hasAtmosphere: true
   environmentType: 2

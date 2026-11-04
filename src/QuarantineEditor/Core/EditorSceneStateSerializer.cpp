@@ -6,6 +6,8 @@
 #include <QETransform.h>
 #include <glm_yaml_conversions.h>
 #include <yaml-cpp/yaml.h>
+#include <Data/QEAssetSchema.h>
+#include <Data/QEAtomicFile.h>
 #include <Logging/QELogMacros.h>
 #include <fstream>
 
@@ -34,6 +36,22 @@ bool EditorSceneStateSerializer::Load(
     catch (const std::exception& e)
     {
         QE_LOG_WARN_CAT_F("EditorSceneStateSerializer", "Failed to load editor scene state '{}': {}", statePath.string(), e.what());
+        return false;
+    }
+
+    std::string schemaError;
+    if (!QE::AssetSchema::ValidateReadable(
+        root,
+        "EditorSceneState",
+        QE::AssetSchema::EditorSceneStateVersion,
+        nullptr,
+        &schemaError))
+    {
+        QE_LOG_WARN_CAT_F(
+            "EditorSceneStateSerializer",
+            "Unsupported editor scene state schema '{}': {}",
+            statePath.string(),
+            schemaError);
         return false;
     }
 
@@ -119,6 +137,10 @@ bool EditorSceneStateSerializer::Save(
     }
 
     YAML::Node root;
+    QE::AssetSchema::Stamp(
+        root,
+        "EditorSceneState",
+        QE::AssetSchema::EditorSceneStateVersion);
     root["EditorCamera"]["LocalPosition"] = transform->localPosition;
     root["EditorCamera"]["LocalRotation"] = transform->localRotation;
     root["EditorCamera"]["Fov"] = editorCamera->GetFOV();
@@ -128,14 +150,28 @@ bool EditorSceneStateSerializer::Save(
     root["Display"]["ShowColliderDebug"] = debugSettings.ShowColliderDebug();
     root["Display"]["ShowCullingAABBDebug"] = debugSettings.ShowCullingAABBDebug();
 
-    std::ofstream out(statePath, std::ios::binary | std::ios::trunc);
-    if (!out.is_open())
+    YAML::Emitter output;
+    output << root;
+    if (!output.good())
     {
-        QE_LOG_WARN_CAT_F("EditorSceneStateSerializer", "Failed to save editor scene state '{}'", statePath.string());
+        QE_LOG_WARN_CAT_F(
+            "EditorSceneStateSerializer",
+            "Failed to serialize editor scene state '{}': {}",
+            statePath.string(),
+            output.GetLastError());
         return false;
     }
 
-    out << root;
+    std::string error;
+    if (!QE::Persistence::WriteTextFileAtomically(statePath, output.c_str(), {}, &error))
+    {
+        QE_LOG_WARN_CAT_F(
+            "EditorSceneStateSerializer",
+            "Failed to save editor scene state '{}' atomically: {}",
+            statePath.string(),
+            error);
+        return false;
+    }
     return true;
 }
 

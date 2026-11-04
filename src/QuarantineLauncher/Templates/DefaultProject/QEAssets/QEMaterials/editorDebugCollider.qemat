@@ -1,3 +1,5 @@
+AssetType: Material
+SchemaVersion: 1
 Material:
   Name: editorDebugCollider
   FilePath: QEAssets/QEMaterials/editorDebugCollider.qemat

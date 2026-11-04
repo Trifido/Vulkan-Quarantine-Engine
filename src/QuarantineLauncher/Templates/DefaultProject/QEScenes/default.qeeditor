@@ -1,3 +1,5 @@
+AssetType: EditorSceneState
+SchemaVersion: 1
 EditorCamera:
   LocalPosition: [6, 4, 6]
   LocalRotation: [-0.17591989, 0.37739903, 0.07211909, 0.9061274]
