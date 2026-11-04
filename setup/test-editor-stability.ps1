@@ -86,7 +86,10 @@ try
             "\[Error\]",
             "SYNC-HAZARD",
             "Live VkBuffer",
-            "VUID-vkDestroyDevice-device-05137"
+            "VUID-vkDestroyDevice-device-05137",
+            "UNASSIGNED-BestPractices-TransitionUndefinedToReadOnly",
+            "UNASSIGNED-BestPractices-vkCreateFramebuffer-attachment-should-not-be-transient",
+            "UNASSIGNED-BestPractices-vkCreateRenderPass-image-requires-memory"
         )
 
         foreach ($pattern in $failurePatterns)

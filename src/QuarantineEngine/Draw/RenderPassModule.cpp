@@ -69,7 +69,9 @@ void RenderPassModule::CreateRenderPass(VkFormat swapchainFormat, VkFormat depth
     colorAttachment.format = swapchainFormat;
     colorAttachment.samples = msaaSamples;
     colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    // The multisampled attachment is resolved in the same subpass and is
+    // never consumed afterwards. Avoid forcing transient memory to be stored.
+    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     colorAttachment.finalLayout = VK_IMAGE_LAYOUT_GENERAL;
 
@@ -271,7 +273,8 @@ void RenderPassModule::CreateViewportRenderPass(VkFormat colorFormat, VkFormat d
     colorAttachment.format = colorFormat;
     colorAttachment.samples = msaaSamples;
     colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    // Only the single-sample resolve image is sampled by the editor.
+    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;

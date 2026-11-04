@@ -97,9 +97,10 @@ private:
     void mainLoop();
     void computeFrame(uint32_t currentFrame);
     void drawFrame(uint32_t currentFrame);
-    void cleanUp();
+    void shutdownEngine();
+    void shutdownWindow();
     void cleanUpSwapchain(bool destroyRenderResources = true);
-    void cleanManagers();
+    void shutdownEngineServices();
     void recreateSwapchain();
 
 protected:

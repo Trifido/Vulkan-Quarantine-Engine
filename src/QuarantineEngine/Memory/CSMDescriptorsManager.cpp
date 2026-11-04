@@ -210,15 +210,15 @@ void CSMDescriptorsManager::CreateCSMPlaceHolder()
         1,
         shadowFormat,
         VK_IMAGE_TILING_OPTIMAL,
-        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
+            VK_IMAGE_USAGE_SAMPLED_BIT |
+            VK_IMAGE_USAGE_TRANSFER_DST_BIT,
         1);
 
-    CSMResources::TransitionImageLayout(
+    CSMResources::InitializeDepthImageForSampling(
         deviceModule->device,
         this->placeholderImage,
-        shadowFormat,
-        VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
+        shadowFormat);
 
     this->placeholderImageView = CSMResources::CreateImageView(
         this->deviceModule->device,

@@ -184,7 +184,9 @@ void SpotShadowDescriptorsManager::CreateShadowPlaceholder()
     imageInfo.arrayLayers = 1;
     imageInfo.format = shadowFormat;
     imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
+        VK_IMAGE_USAGE_SAMPLED_BIT |
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT;
     imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -213,12 +215,10 @@ void SpotShadowDescriptorsManager::CreateShadowPlaceholder()
 
     vkBindImageMemory(deviceModule->device, this->placeholderImage, this->placeholderMemory, 0);
 
-    CSMResources::TransitionImageLayout(
+    CSMResources::InitializeDepthImageForSampling(
         deviceModule->device,
         this->placeholderImage,
         shadowFormat,
-        VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
         1);
 
     this->placeholderImageView = IMT::createImageView(

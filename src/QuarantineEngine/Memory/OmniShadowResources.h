@@ -61,6 +61,10 @@ public:
     static bool HasStencilComponent(VkFormat format);
     static VkSampler CreateCubemapSampler(VkDevice device);
     static VkImageView CreateCubemapImageView(VkDevice device, VkImage& image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels = 1);
+    static void InitializeColorImageForSampling(
+        VkDevice device,
+        VkImage image,
+        VkImageSubresourceRange subresourceRange);
     static VkImage AllocateCubemapImage(VkDevice device, VkPhysicalDevice physicalDevice, VkDeviceMemory& mapMemory, uint32_t pixelSize,
         VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkSampleCountFlagBits numSamples = VK_SAMPLE_COUNT_1_BIT);
     static void TransitionMultiImagesLayout(VkDevice device, VkImage& newImage, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageSubresourceRange subresourceRange);

@@ -155,15 +155,15 @@ void CSMResources::CreateCSMResources(std::shared_ptr<VkRenderPass> renderPass)
         this->TextureSize,
         this->shadowFormat,
         VK_IMAGE_TILING_OPTIMAL,
-        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
+            VK_IMAGE_USAGE_SAMPLED_BIT |
+            VK_IMAGE_USAGE_TRANSFER_DST_BIT,
         1);
 
-    this->TransitionImageLayout(
+    this->InitializeDepthImageForSampling(
         deviceModule->device,
         this->CSMImage,
-        this->shadowFormat,
-        VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL);
+        this->shadowFormat);
 
     this->CSMImageView = this->CreateImageView(this->deviceModule->device, this->CSMImage, this->shadowFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 0, SHADOW_MAP_CASCADE_COUNT);
     this->CSMSampler = CreateCSMSampler(this->deviceModule->device);
@@ -239,6 +239,77 @@ void CSMResources::TransitionImageLayout(VkDevice device, VkImage& newImage, VkF
         0, nullptr,
         1, &barrier
     );
+
+    endSingleTimeCommands(device, queueModule->graphicsQueue, commandPool, commandBuffer);
+}
+
+void CSMResources::InitializeDepthImageForSampling(
+    VkDevice device,
+    VkImage image,
+    VkFormat format,
+    uint32_t layerCount)
+{
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands(device, commandPool);
+
+    VkImageSubresourceRange range{};
+    range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+    if (HasStencilComponent(format))
+    {
+        range.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+    }
+    range.baseMipLevel = 0;
+    range.levelCount = 1;
+    range.baseArrayLayer = 0;
+    range.layerCount = layerCount;
+
+    VkImageMemoryBarrier toTransfer{};
+    toTransfer.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    toTransfer.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    toTransfer.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    toTransfer.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    toTransfer.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    toTransfer.image = image;
+    toTransfer.subresourceRange = range;
+    toTransfer.srcAccessMask = 0;
+    toTransfer.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+    vkCmdPipelineBarrier(
+        commandBuffer,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        0,
+        0, nullptr,
+        0, nullptr,
+        1, &toTransfer);
+
+    const VkClearDepthStencilValue clearValue{ 1.0f, 0 };
+    vkCmdClearDepthStencilImage(
+        commandBuffer,
+        image,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        &clearValue,
+        1,
+        &range);
+
+    VkImageMemoryBarrier toReadOnly{};
+    toReadOnly.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    toReadOnly.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    toReadOnly.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+    toReadOnly.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    toReadOnly.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    toReadOnly.image = image;
+    toReadOnly.subresourceRange = range;
+    toReadOnly.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    toReadOnly.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+    vkCmdPipelineBarrier(
+        commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        0,
+        0, nullptr,
+        0, nullptr,
+        1, &toReadOnly);
 
     endSingleTimeCommands(device, queueModule->graphicsQueue, commandPool, commandBuffer);
 }

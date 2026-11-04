@@ -15,6 +15,7 @@
 #include <OmniShadowResources.h>
 #include <QERuntimeMode.h>
 #include <CullingSceneManager.h>
+#include <Helpers/QETeardownStack.h>
 #include <Logging/QELogMacros.h>
 #include <algorithm>
 #include <cstdlib>
@@ -67,14 +68,20 @@ QEBaseApp::QEBaseApp()
 void QEBaseApp::Run(QEScene scene)
 {
     this->scene = scene;
-
-    InitWindow();
-    initVulkan();
-
     std::exception_ptr failure;
+    QE::QETeardownStack teardown;
 
     try
     {
+        InitWindow();
+        teardown.Add("Window and GLFW", [this]() { shutdownWindow(); });
+
+        initVulkan();
+        teardown.Add("Engine resources", [this]() { shutdownEngine(); });
+        teardown.Add("Application GPU resources", [this]() { OnPreCleanup(); });
+        teardown.Add("Application services", [this]() { OnShutdown(); });
+
+        OnPostInitVulkan();
         OnInitialize();
         mainLoop();
     }
@@ -83,25 +90,9 @@ void QEBaseApp::Run(QEScene scene)
         failure = std::current_exception();
     }
 
-    try
-    {
-        OnShutdown();
-    }
-    catch (...)
-    {
-        if (!failure)
-            failure = std::current_exception();
-    }
-
-    try
-    {
-        cleanUp();
-    }
-    catch (...)
-    {
-        if (!failure)
-            failure = std::current_exception();
-    }
+    // Close explicitly to preserve the first teardown exception for main().
+    // The stack destructor is a no-throw fallback if this function exits early.
+    teardown.Close(failure);
 
     if (failure)
         std::rethrow_exception(failure);
@@ -211,7 +202,6 @@ void QEBaseApp::initVulkan()
 
     this->synchronizationModule.createSyncObjects();
 
-    OnPostInitVulkan();
 }
 
 void QEBaseApp::loadScene(QEScene& scene)
@@ -412,14 +402,12 @@ void QEBaseApp::mainLoop()
     vkDeviceWaitIdle(deviceModule->device);
 }
 
-void QEBaseApp::cleanUp()
+void QEBaseApp::shutdownEngine()
 {
     if (this->deviceModule && this->deviceModule->device != VK_NULL_HANDLE)
     {
         vkDeviceWaitIdle(this->deviceModule->device);
     }
-
-    OnPreCleanup();
 
     this->shaderManager->Clean();
 
@@ -450,7 +438,7 @@ void QEBaseApp::cleanUp()
     this->commandPoolModule->cleanup();
 
     // Destroy all services while their DeviceModule dependency is still alive.
-    this->cleanManagers();
+    this->shutdownEngineServices();
 
     this->deviceModule->cleanup();
     DeviceModule::ResetInstance();
@@ -467,6 +455,10 @@ void QEBaseApp::cleanUp()
     this->windowSurface.cleanUp(vulkanInstance.getInstance());
     this->vulkanInstance.destroyInstance();
 
+}
+
+void QEBaseApp::shutdownWindow()
+{
     if (mainWindow && mainWindow->getWindow())
     {
         glfwDestroyWindow(mainWindow->getWindow());
@@ -497,7 +489,7 @@ void QEBaseApp::cleanUpSwapchain(bool destroyRenderResources)
     swapchainModule->cleanup();
 }
 
-void QEBaseApp::cleanManagers()
+void QEBaseApp::shutdownEngineServices()
 {
     GraphicsPipelineManager::ResetInstance();
     this->graphicsPipelineManager = nullptr;

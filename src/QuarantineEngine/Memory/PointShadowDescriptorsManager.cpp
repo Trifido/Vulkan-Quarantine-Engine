@@ -139,7 +139,9 @@ void PointShadowDescriptorsManager::CreateCubemapPlaceHolder()
         1,
         shadowColorFormat,
         VK_IMAGE_TILING_OPTIMAL,
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+            VK_IMAGE_USAGE_SAMPLED_BIT |
+            VK_IMAGE_USAGE_TRANSFER_DST_BIT,
         1);
 
     VkImageSubresourceRange subresourceRange{};
@@ -148,11 +150,9 @@ void PointShadowDescriptorsManager::CreateCubemapPlaceHolder()
     subresourceRange.levelCount = 1;
     subresourceRange.layerCount = 6;
 
-    OmniShadowResources::TransitionMultiImagesLayout(
+    OmniShadowResources::InitializeColorImageForSampling(
         this->deviceModule->device,
         this->placeholderImage,
-        VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
         subresourceRange);
 
     this->placeholderSampler = OmniShadowResources::CreateCubemapSampler(this->deviceModule->device);

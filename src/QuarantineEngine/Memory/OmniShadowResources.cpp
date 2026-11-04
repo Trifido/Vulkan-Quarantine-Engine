@@ -4,6 +4,7 @@
 #include <SynchronizationModule.h>
 #include <SyncTool.h>
 #include <Helpers/QEMemoryTrack.h>
+#include <limits>
 
 QueueModule* OmniShadowResources::queueModule;
 VkCommandPool OmniShadowResources::commandPool;
@@ -327,6 +328,69 @@ void OmniShadowResources::TransitionMultiImagesLayout(VkDevice device, VkImage& 
     endSingleTimeCommands(device, queueModule->graphicsQueue, commandPool, commandBuffer);
 }
 
+void OmniShadowResources::InitializeColorImageForSampling(
+    VkDevice device,
+    VkImage image,
+    VkImageSubresourceRange subresourceRange)
+{
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands(device, commandPool);
+
+    VkImageMemoryBarrier toTransfer{};
+    toTransfer.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    toTransfer.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    toTransfer.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    toTransfer.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    toTransfer.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    toTransfer.image = image;
+    toTransfer.subresourceRange = subresourceRange;
+    toTransfer.srcAccessMask = 0;
+    toTransfer.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+    vkCmdPipelineBarrier(
+        commandBuffer,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        0,
+        0, nullptr,
+        0, nullptr,
+        1, &toTransfer);
+
+    VkClearColorValue clearValue{};
+    clearValue.float32[0] = std::numeric_limits<float>::max();
+    clearValue.float32[1] = std::numeric_limits<float>::max();
+    clearValue.float32[2] = std::numeric_limits<float>::max();
+    clearValue.float32[3] = 1.0f;
+    vkCmdClearColorImage(
+        commandBuffer,
+        image,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        &clearValue,
+        1,
+        &subresourceRange);
+
+    VkImageMemoryBarrier toReadOnly{};
+    toReadOnly.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    toReadOnly.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    toReadOnly.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    toReadOnly.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    toReadOnly.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    toReadOnly.image = image;
+    toReadOnly.subresourceRange = subresourceRange;
+    toReadOnly.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    toReadOnly.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+    vkCmdPipelineBarrier(
+        commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        0,
+        0, nullptr,
+        0, nullptr,
+        1, &toReadOnly);
+
+    endSingleTimeCommands(device, queueModule->graphicsQueue, commandPool, commandBuffer);
+}
+
 void OmniShadowResources::CreateOmniShadowMapResources(std::shared_ptr<VkRenderPass> renderPass)
 {
     //Cubemap images
@@ -337,7 +401,9 @@ void OmniShadowResources::CreateOmniShadowMapResources(std::shared_ptr<VkRenderP
         this->TextureSize,
         this->shadowFormat,
         VK_IMAGE_TILING_OPTIMAL,
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+            VK_IMAGE_USAGE_SAMPLED_BIT |
+            VK_IMAGE_USAGE_TRANSFER_DST_BIT,
         1);
 
     VkImageSubresourceRange subresourceRange = {};
@@ -345,7 +411,10 @@ void OmniShadowResources::CreateOmniShadowMapResources(std::shared_ptr<VkRenderP
     subresourceRange.baseMipLevel = 0;
     subresourceRange.levelCount = 1;
     subresourceRange.layerCount = 6;
-    this->TransitionMultiImagesLayout(this->deviceModule->device, this->cubemapImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
+    this->InitializeColorImageForSampling(
+        this->deviceModule->device,
+        this->cubemapImage,
+        subresourceRange);
 
     this->CubemapSampler = this->CreateCubemapSampler(this->deviceModule->device);
     this->CubemapImageView = this->CreateCubemapImageView(this->deviceModule->device, this->cubemapImage, this->shadowFormat, VK_IMAGE_ASPECT_COLOR_BIT);
